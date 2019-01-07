@@ -1,0 +1,828 @@
+! module element_dynamics
+!
+! Updating values on elements during simulation time stepping
+!
+!==========================================================================
+!
+ module element_dynamics
+! 
+    use array_index
+    use adjustments
+    use bc
+    use data_keys
+    use globals
+    use setting_definition
+    use utility
+    
+    implicit none
+    
+    private
+    
+    public  :: element_dynamics_update 
+
+    integer :: debuglevel = 0
+    
+ contains
+! 
+!========================================================================== 
+!==========================================================================
+!
+ subroutine element_dynamics_update &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+     bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, &
+     e2r_Volume_new, eMr_Volume_new, thisTime)
+!
+! update the flow dynamics on an element given new velocity values stored
+! in the array given by the column index e#r_Velocity_new 
+!
+ character(64) :: subroutine_name = 'element_dynamics_update'
+ 
+ real,      target,     intent(in out)  ::  elem2R(:,:),  elemMR(:,:)
+ real,      target,     intent(in)      ::  faceR(:,:)
+ integer,               intent(in)      ::  elem2I(:,:),  elemMI(:,:)
+ logical,   target,     intent(in out)  ::  elem2YN(:,:), elemMYN(:,:)
+ type(bcType),          intent(in out)  ::  bcdataDn(:),  bcdataUp(:)
+ real,                  intent(in)      ::  thisTime
+ integer,               intent(in)      ::  e2r_Velocity_new, eMr_Velocity_new
+ integer,               intent(in)      ::  e2r_Volume_new,   eMr_Volume_new
+ 
+ logical,   pointer :: isadhocflowrate(:) 
+ integer            :: idx
+    
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+
+!% velocity limiter on channels
+ call adjust_channel_velocity_limiter &
+    (elem2R, elem2YN, elem2I, &
+     e2i_elem_type, eChannel, e2YN_IsAdhocFlowrate, e2r_Velocity_new )
+
+!% velocity limiter on junction (handled on main element only)     
+ call adjust_channel_velocity_limiter &
+    (elemMR, elemMYN, elemMI, &
+     eMi_elem_type, eJunctionChannel, eMYN_IsAdhocFlowrate,  eMr_Velocity_new)    
+
+!%  For small volumes, compute a velocity that is blended from the update value
+!%  and a Chezy-Manning computed using the free surface slope of the element 
+ if (setting%SmallVolume%UseSmallVolumes) then 
+    call blended_smallvolume_velocity &
+        (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  &
+        e2r_Velocity_new, eMr_Velocity_new)
+ endif
+ 
+!% for extremely small volumes - perform a separate reset
+ if (setting%ZeroValue%Volume > zeroR) then
+    call adjust_zero_velocity_at_zero_volume &
+        (elem2R, elem2YN, eMr_Velocity_new, e2r_Volume_new, &
+         elemMR, elemMYN, eMr_Velocity_new, eMr_Volume_new   )   
+ endif
+
+!%  flowrate updated from velocity 
+ call element_flowrate_update  &
+     (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Velocity_new, eMr_Velocity_new)
+     
+!%  apply the boundary conditions on velocity and flowrate     
+ call bc_applied_onelement &
+    (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_inflowrate, e2r_Velocity_new)    
+
+!% compute the timescales up and down
+ call element_timescale &
+    (elem2R, elem2I, elemMR, elemMI, bcdataDn, bcdataUp, e2r_Velocity_new)   
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine element_dynamics_update
+!
+!========================================================================== 
+! PRIVATE BELOW HERE
+!========================================================================== 
+!
+ subroutine element_flowrate_update &
+    (elem2R, elemMR, faceR, elem2I, elemMI, &
+     e2r_Velocity_new, eMr_Velocity_new)
+!
+! given a velocity and update areas in elemR, provide updates
+! for flow rate of the element and junction branches
+! 
+ character(64) :: subroutine_name = 'element_flowrate_update'
+ 
+ real,      target, intent(in out)  ::  elem2R(:,:), elemMR(:,:)
+ real,      target, intent(in)      ::  faceR(:,:)
+ integer,   target, intent(in)      ::  elem2I(:,:), elemMI(:,:)
+ integer,           intent(in)      ::  e2r_Velocity_new, eMr_Velocity_new
+ 
+ real,      pointer :: totalarea(:)
+ 
+ integer :: mm, eMR_totalarea
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+!%  assign total area from the temp space
+ eMR_totalarea = eMr_Temp(next_eMr_temparray)
+ totalarea  => elemMR(:,eMR_totalarea)
+ next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
+
+!%  update the channel flow rates with the velocity (may be from an RK step)    
+ call flowrate_from_velocity &
+    ( elem2R, elem2I, &
+      e2r_Flowrate, e2r_Area, e2r_Velocity_new, e2i_elem_type, eChannel)
+ 
+ call flowrate_from_velocity &
+    ( elemMR, elemMI, &
+      eMr_Flowrate, eMr_Area, eMr_Velocity_new, eMi_elem_type, eJunctionChannel)
+ 
+!%  FLOWS AND VELOCITIES IN JUNCTION BRANCHES -----------------
+!%  The total flowrate is distributed among both outflow and inflow branches
+!%  Note that this does NOT mean that the inflows and outflows are exactly 
+!%  equal - the branch values are what are used in the face interpolation 
+!%  to get the inflow/outflows at the faces.
+
+!%  get the total outflow branch areas
+ totalarea = zeroR ! ensure temporary array is zero
+ call sum_junction_areas_by_direction &
+    (eMR_totalarea, &
+     dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
+     upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
+     elemMR, elemMI, faceR)
+     
+!%  distribute flow proportionally among outflows     
+ call flowrates_in_junction_by_area &
+    (eMR_totalarea, eMR_Flowrate, &
+     dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
+     eMr_FlowrateDn, eMr_VelocityDn, &
+     upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
+     eMr_FlowrateUp, eMr_VelocityUp, &
+     elemMR, elemMI, faceR)    
+     
+!%  get the total branch inflow areas 
+ totalarea = zeroR  
+ call sum_junction_areas_by_direction &
+    (eMR_totalarea, &
+     upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
+     dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
+     elemMR, elemMI, faceR)    
+     
+!%  distribute flow proportionally among inflows 
+ call flowrates_in_junction_by_area &
+    (eMR_totalarea, eMR_Flowrate, &
+     upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
+     eMr_FlowrateUp, eMr_VelocityUp, &
+     dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
+     eMr_FlowrateDn, eMr_VelocityDn, &
+     elemMR, elemMI, faceR)    
+
+!%  enforce maximum velocities in junction branches
+ call adjust_channel_junction_velocity_limit (elemMR, elemMI)
+
+!%  release the temp array
+ totalarea = nullvalueR
+ nullify(totalarea)
+ next_eMr_temparray = next_eMr_temparray-1
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine element_flowrate_update
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine flowrate_from_velocity &
+    ( elemR, elemI, &
+      er_Flowrate, er_Area, er_Velocity, ei_elem_type, eThisElemType)
+!
+! compute flowrate from velocity and area for eThisElemType
+! 
+ character(64) :: subroutine_name = 'flowrate_from_velocity'
+ 
+ real,  target, intent(in out)  :: elemR(:,:)
+ integer,       intent(in)      :: elemI(:,:)
+ 
+ integer,       intent(in)  :: er_Flowrate, er_Area, er_Velocity, ei_elem_type
+ integer,       intent(in)  :: eThisElemType
+ 
+ real,  pointer :: flowrate(:), area(:), velocity(:)
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ flowrate => elemR(:,er_Flowrate)
+ area     => elemR(:,er_Area)
+ velocity => elemR(:,er_Velocity)
+ 
+ where (elemI(:,ei_elem_type) == eThisElemType)
+    flowrate = area * velocity
+ endwhere
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine flowrate_from_velocity
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine sum_junction_areas_by_direction &
+    (eMR_totalarea, &
+     this_face_per_element, eMr_AreaThis, eMi_MfaceThis, eMi_nfaces_This, &
+     rdir_face_per_element, eMr_AreaRdir, eMi_MfaceRdir, eMi_nfaces_Rdir, &
+     elemMR, elemMI, faceR)
+!
+! Sum of the areas in each branch of a junction for outflows or inflows
+! Called for outflow areas with this = downstream, and rdir = upstream
+! Called for inflow  areas with this = upstream    and rdir = downstream
+!
+! HACK- This could be cleaned up with two calls to a separate function, 
+! but we have to be careful that we don'tend up introducing a pass-by-value
+! into the function.
+! 
+ character(64) :: subroutine_name = 'sum_junction_areas_by_direction'
+ 
+ integer, intent(in) :: eMR_totalarea
+ integer, intent(in) :: this_face_per_element, rdir_face_per_element
+ 
+ integer, intent(in) :: eMr_AreaThis(:), eMi_MfaceThis(:)
+ integer, intent(in) :: eMr_AreaRdir(:), eMi_MfaceRdir(:)  
+ integer, intent(in) :: eMi_nfaces_This, eMi_nfaces_Rdir
+ 
+ real,      target, intent(in out)  :: elemMR(:,:)
+ real,              intent(in)      :: faceR(:,:)
+ integer,   target, intent(in)      :: elemMI(:,:)
+ 
+ real,      pointer :: area(:), totalarea(:)
+ integer,   pointer :: fThis(:), fRdir(:)
+ 
+ integer :: mm
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ totalarea => elemMR(:,eMR_totalarea)
+ 
+!%  get the outflow area for downstream branches (or inflow area for upstream)
+ do mm=1,this_face_per_element
+    area  => elemMR(:,eMr_AreaThis(mm))
+    fThis => elemMI(:,eMi_MfaceThis(mm))
+    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+            (elemMI(:,eMi_nfaces_This) >= mm) .and. &
+            (faceR(fThis,fr_Flowrate) > 0.0) )
+        totalarea= totalarea + area
+    endwhere
+ enddo 
+ 
+!%  add the area for any reversing upstream branches (or reversing downstream)
+ do mm=1,rdir_face_per_element
+    area  => elemMR(:,eMr_AreaRdir(mm))
+    fRdir => elemMI(:,eMi_MfaceRdir(mm))
+    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+            (elemMI(:,eMi_nfaces_Rdir) >= mm) .and. &
+            (faceR(fRdir,fr_Flowrate) < 0.0) )
+        totalarea = totalarea + area
+    endwhere
+ enddo 
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine sum_junction_areas_by_direction
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine flowrates_in_junction_by_area &
+    (eMR_totalarea, eMR_totalflowrate, &
+     this_face_per_elem, eMr_AreaThis, eMi_MfaceThis, eMi_nfaces_This, &
+     eMr_FlowrateThis, eMr_VelocityThis, &
+     rdir_face_per_elem, eMr_AreaRdir, eMi_MfaceRdir, eMi_nfaces_Rdir, &
+     eMr_FlowrateRdir, eMr_VelocityRdir, &
+     elemMR, elemMI, faceR)
+!
+! Flowrates in each branch of a junction
+! Total flowrate is distributed proportionally over the areas
+!
+! HACK - this can be cleaned up with 2 calls to a function, but we have to be
+! careful that we don't introduce pass-by-value in the call
+! 
+ character(64) :: subroutine_name = 'flowrates_in_junction_by_area'
+ 
+ integer, intent(in) :: eMi_nfaces_This,     eMi_nfaces_Rdir 
+ integer, intent(in) :: eMR_totalarea,       eMR_totalflowrate
+ integer, intent(in) :: this_face_per_elem,  rdir_face_per_elem
+
+ integer, intent(in) :: eMr_AreaThis(:),     eMi_MfaceThis(:)
+ integer, intent(in) :: eMr_AreaRdir(:),     eMi_MfaceRdir(:)  
+ integer, intent(in) :: eMr_FlowrateThis(:), eMr_FlowrateRdir(:)
+ integer, intent(in) :: eMr_VelocityThis(:), eMr_VelocityRdir(:)
+ 
+ real,      target, intent(in out)  :: elemMR(:,:)
+ real,              intent(in)      :: faceR(:,:)
+ integer,   target, intent(in)      :: elemMI(:,:)
+ 
+ real,      pointer :: area(:), totalarea(:), totalflowrate(:)
+ real,      pointer :: flowrate(:), velocity(:)
+ integer,   pointer :: fThis(:), fRdir(:)
+ 
+ integer :: mm
+   
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ totalarea     => elemMR(:,eMR_totalarea) 
+ totalflowrate => elemMR(:,eMR_totalflowrate)
+ 
+!%  distribute flow proportionally over the downstream outflow branches
+!%  or opposite call for the upstream inflow branches
+ do mm=1,this_face_per_elem
+    area     => elemMR(:, eMr_AreaThis(mm))
+    flowrate => elemMR(:, eMr_FlowrateThis(mm))
+    velocity => elemMR(:, eMr_VelocityThis(mm))        
+    fThis    => elemMI(:, eMi_MfaceThis(mm))
+    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+            (elemMI(:,eMi_nfaces_This) >= mm) .and. &
+            (faceR(fThis,fr_Flowrate) > 0.0) )
+        flowrate = totalflowrate * area / totalarea     
+        velocity = flowrate / area
+    endwhere
+ enddo
+ 
+!%  distribute flow proportionally over the upstream outflow branches
+!%  or opposite call for downstream inflow branches
+ do mm=1,rdir_face_per_elem
+    area     => elemMR(:, eMr_AreaRdir(mm))
+    flowrate => elemMR(:, eMr_FlowrateRdir(mm))
+    velocity => elemMR(:, eMr_VelocityRdir(mm))        
+    fRdir    => elemMI(:, eMi_MfaceRdir(mm))
+    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+            (elemMI(:,eMi_nfaces_Rdir) >= mm) .and. &
+            (faceR(fRdir,fr_Flowrate) < 0.0) )
+        flowrate = -totalflowrate * area / totalarea     
+        velocity =  flowrate / area
+    endwhere
+ enddo
+      
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine flowrates_in_junction_by_area
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine blended_smallvolume_velocity &
+    (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  &
+     e2r_Velocity_new, eMr_Velocity_new)
+!
+! any volume IsSmallVolume will be have its velocity blended with
+! a Chezy velocity so that the small volumes reduce to a small finite value
+! as the volume decreases.
+!
+! Note that the direction of the blended velocity will follow the 
+! decrease in the free surface slope.
+! 
+ character(64) :: subroutine_name = 'blended_smallvolume_velocity'
+ 
+ real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+ real,      target, intent(in)      :: faceR(:,:)
+ integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+ logical,           intent(in)      :: elem2YN(:,:), elemMYN(:,:)
+ 
+ integer, intent(in) :: e2r_Velocity_new, eMr_Velocity_new
+    
+ integer :: e2r_tSlope, e2r_tManningsN, e2r_tSmallVelocity
+ integer :: eMr_tSlope, eMr_tManningsN, eMr_tSmallVelocity
+  
+ integer :: mm
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+
+!%  velocity blend for channel elements 
+ call velocity_blend_with_mask &
+    (elem2R, elem2I, elem2YN, faceR, &
+     next_e2r_temparray, e2r_n_temp, e2r_Temp, &
+     e2r_Velocity_new, e2r_Flowrate, e2r_Length,  &
+     e2r_Area, e2r_HydRadius, e2r_SmallVolumeRatio, &
+     e2YN_IsSmallVolume, e2i_roughness_type, e2r_Roughness, &
+     e2i_elem_type, eChannel, e2i_Mface_u, e2i_Mface_d)
+
+!%  velocity blend for junction elements 
+!%  HACK - this arbitrarily uses the u1 and d1 for the slope
+ call velocity_blend_with_mask &
+    (elemMR, elemMI, elemMYN, faceR, &
+     next_eMr_temparray, eMr_n_temp, eMr_Temp, &
+     eMr_Velocity_new, eMr_Flowrate, eMr_Length,  &
+     eMr_Area, eMr_HydRadius, eMr_SmallVolumeRatio, &
+     eMYN_IsSmallVolume, eMi_roughness_type, eMr_Roughness, &
+     eMi_elem_type, eJunctionChannel, eMi_Mface_u1, eMi_Mface_d1)
+ 
+!%  perform small volume velocity bend for junction branches
+ do mm=1,upstream_face_per_elemM
+    !%  HACK this arbitrarily uses d1 for the slope
+    call velocity_blend_with_mask &
+        (elemMR, elemMI, elemMYN, faceR, &
+         next_eMr_temparray, eMr_n_temp, eMr_Temp, &
+         eMr_VelocityUp(mm), eMr_FlowrateUp(mm), eMr_LengthUp(mm),  &
+         eMr_AreaUp(mm), eMr_HydRadius, eMr_SmallVolumeRatio, &
+         eMYN_IsSmallVolume, eMi_roughness_type, eMr_Roughness, &
+         eMi_elem_type, eJunctionChannel, eMi_MfaceUp(mm), eMi_Mface_d1)
+ end do
+ 
+ do mm=1,dnstream_face_per_elemM
+    !%  HACK this arbitrarily uses u1 for the slope
+    call velocity_blend_with_mask &
+        (elemMR, elemMI, elemMYN, faceR, &
+         next_eMr_temparray, eMr_n_temp, eMr_Temp, &
+         eMr_VelocityDn(mm), eMr_FlowrateDn(mm), eMr_LengthDn(mm),  &
+         eMr_AreaDn(mm), eMr_HydRadius, eMr_SmallVolumeRatio, &
+         eMYN_IsSmallVolume, eMi_roughness_type, eMr_Roughness, &
+         eMi_elem_type, eJunctionChannel, eMi_Mface_u1, eMi_MfaceDn(mm))
+ end do
+
+! HACK - the above applies a ManningsN approach to elements that might have
+! other drag approaches.
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine blended_smallvolume_velocity
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine velocity_blend_with_mask &
+    (elemR, elemI, elemYN, faceR, &
+     next_er_temparray, er_n_temp, er_Temp, &
+     er_Velocity_new, er_Flowrate, er_Length,  &
+     er_Area, er_HydRadius, er_SmallVolumeRatio, &
+     eYN_IsSmallVolume, ei_roughness_type, er_Roughness, &
+     ei_elem_type, elemType, ei_Mface_u, ei_Mface_d)
+!
+! Performs the velocity blending between a Chezy-Manning solution and
+! the simulated solution for small volumes
+!
+ character(64) :: subroutine_name = 'velocity_blend_with_mask'
+
+ real,      target,     intent(in out)  :: elemR(:,:)
+ real,                  intent(in)      :: faceR(:,:)
+ integer,   target,     intent(in)      :: elemI(:,:)
+ logical,               intent(in)      :: elemYN(:,:)
+ 
+ integer,               intent(in out)  :: next_er_temparray
+ integer,               intent(in)      :: er_n_temp, er_Temp(:)
+    
+ integer, intent(in) :: er_Velocity_new, er_Flowrate, er_Length
+ integer, intent(in) :: er_HydRadius, er_SmallVolumeRatio, er_Area 
+ integer, intent(in) :: eYN_IsSmallVolume, ei_roughness_type, er_Roughness
+ integer, intent(in) :: ei_elem_type, elemType, ei_Mface_u, ei_Mface_d
+
+ integer  :: er_tSlope, er_tSmallVelocity, er_tManningsN
+ 
+ integer,   pointer :: fUp(:), fDn(:)
+ real,      pointer :: Length(:), Velocity(:), Flowrate(:), HydRadius(:)
+ real,      pointer :: SmallVolumeRatio(:), Area(:)
+ real,      pointer :: Slope(:), smallVelocity(:), ManningsN(:)
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ er_tSlope = er_Temp(next_er_temparray)
+ next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+ 
+ er_tManningsN = er_Temp(next_er_temparray)
+ next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+    
+ er_tSmallVelocity = er_Temp(next_er_temparray)
+ next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+
+ fUp => elemI(:,ei_Mface_u)
+ fDn => elemI(:,ei_Mface_d)
+ 
+ Length           => elemR(:, er_Length)
+ Velocity         => elemR(:, er_Velocity_new)
+ Flowrate         => elemR(:, er_Flowrate)
+ HydRadius        => elemR(:, er_HydRadius)
+ SmallVolumeRatio => elemR(:, er_SmallVolumeRatio)
+ Area             => elemR(:, er_Area)
+ Slope            => elemR(:, er_tSlope)
+ smallVelocity    => elemR(:, er_tSmallVelocity)
+ ManningsN        => elemR(:, er_tManningsN)
+ 
+ call smallvolume_ManningsN &
+    (elemR, elemI, elemYN, er_tManningsN, er_tSmallVelocity, &
+     eYN_IsSmallVolume, ei_roughness_type, er_Roughness)
+
+ where ( (elemYN(:,eYN_IsSmallVolume)) .and. &
+         (elemI(:,ei_elem_type) == elemType) .and. &
+         (SmallVolumeRatio < oneR))
+    Slope = ( faceR(fUp, fr_Eta_d) - faceR(fDn, fr_Eta_u) ) / Length
+    
+    !%  a small velocity based on Chezy-Manning and the free-surface slope
+    smallVelocity = small_chezy_velocity (ManningsN,HydRadius,Slope)  
+    
+    !%  blend with the actual velocity, depending on the small volume ratio                  
+    smallVelocity = velocity_blend (SmallVolumeRatio, Velocity, smallVelocity)
+    
+    !%  take the smaller value, with the sign of the C-M velocity            
+    Velocity = sign(min(abs(smallVelocity), abs(Velocity)),smallVelocity)  
+    Flowrate = Velocity * Area
+ endwhere
+
+ Slope          = nullvalueR
+ ManningsN      = nullvalueR
+ smallVelocity  = nullvalueR
+ nullify(Slope, smallVelocity, ManningsN)
+ next_er_temparray = next_er_temparray -3
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine velocity_blend_with_mask
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine smallvolume_ManningsN &
+    (elemR, elemI, elemYN, er_tManningsN, er_tSmallVelocity, &
+     eYN_IsSmallVolume, ei_roughness_type, er_Roughness)
+ 
+ character(64) :: subroutine_name = 'smallvolume_ManningsN'
+!
+! Stores a temporary ManningsN and zero velocity for small volumes.
+! We use a temporary storage so that we can set Manning's N to the larger value 
+! of the actual Manning's N for the channel and a setting value (typically 
+! larger)for small depths. 
+!
+ real,      target,     intent(in out)  :: elemR(:,:)  
+ integer,               intent(in)      :: elemI(:,:)
+ logical,               intent(in)      :: elemYN(:,:)
+ 
+ integer,   intent(in) :: er_tManningsN, er_tSmallVelocity
+ integer,   intent(in) :: eYN_IsSmallVolume, ei_roughness_type, er_Roughness
+ 
+ real,  pointer :: ManningsN(:), smallVelocity(:)
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ ManningsN     => elemR(:,er_tManningsN)
+ smallVelocity => elemR(:,er_tSmallVelocity)
+ 
+!%  set the temporary ManningsN and zero velocity for small volumes
+ where ( elemYN(:,eYN_IsSmallVolume) )
+    ManningsN = setting%SmallVolume%ManningsN
+    smallVelocity = zeroR
+ endwhere
+ 
+!%  reset the temporary ManningsN whereever the actual value is larger
+ where ( (elemYN(:,eYN_IsSmallVolume))              .and. &
+         (elemI(:,ei_roughness_type) == eManningsN) .and. &
+         (elemR(:,er_Roughness) > ManningsN) )
+    ManningsN = elemR(:,er_Roughness)
+ endwhere
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine smallvolume_ManningsN
+!
+!========================================================================== 
+!========================================================================== 
+!
+ subroutine element_timescale &
+    (elem2R, elem2I, elemMR, elemMI, bcdataDn, bcdataUp, e2r_Velocity_new)
+!
+! timescale of channel and junction elements  
+! Computed using new velocity for channel elements
+! Assumes that new velocity has been stored in channel branches for junctions
+!  
+ character(64) :: subroutine_name = 'element_timescale'
+ 
+ real,      target, intent(in out)  :: elem2R(:,:), elemMR(:,:)
+ integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:)
+ type(bcType),      intent(in)      :: bcdataDn(:), bcdataUp(:)
+ integer,           intent(in)      :: e2r_Velocity_new 
+ 
+ integer,   dimension(2)    :: indx
+ 
+ integer    :: mm
+ 
+ real,  pointer ::  wavespeed(:), length(:)
+ real,  pointer ::  tscale(:), tscale_up(:), tscale_dn(:)
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ call timescale_value_channel (elem2R, elem2I, e2r_Velocity_new)
+    
+ call timescale_value_junction (elemMR, elemMI)
+ 
+ call bc_timescale_value (elem2R, bcdataDn)
+
+ call bc_timescale_value (elem2R, bcdataUp)
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine element_timescale
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine timescale_value_channel &
+    (elem2R, elem2I, e2r_Velocity_new)
+ 
+ character(64) :: subroutine_name = 'timescale_value_channel'
+    
+ integer,           intent(in)      :: e2r_Velocity_new   
+ 
+ real,  target,     intent(in out)  :: elem2R(:,:)
+ integer,           intent(in)      :: elem2I(:,:)
+ 
+ integer    ::  indx(2)
+ 
+ real,  pointer :: wavespeed(:), tscale_up(:), tscale_dn(:), velocity(:)
+ real,  pointer :: length(:)
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ wavespeed => elem2R(:,e2r_Temp(next_e2r_temparray))
+ next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+ 
+ wavespeed = zeroR
+ 
+ tscale_up => elem2R(:,e2r_Timescale_u)
+ tscale_dn => elem2R(:,e2r_Timescale_d)
+ velocity  => elem2R(:,e2r_Velocity_new)
+ length    => elem2R(:,e2r_Length)
+ 
+!%  compute timescale 
+ where (elem2I(:,e2i_elem_type) == eChannel) 
+    wavespeed = sqrt( grav * elem2R(:,e2r_HydDepth ))
+    tscale_up = - onehalfR * length / (velocity - wavespeed)
+    tscale_dn = + onehalfR * length / (velocity + wavespeed)
+ endwhere
+ 
+!%  limiter for large, negative, and small values
+ indx(1) = e2r_Timescale_u
+ indx(2) = e2r_Timescale_d
+ call timescale_limiter &
+    (elem2R, elem2I, indx, e2i_elem_type, eChannel )
+ 
+ wavespeed = nullvalueR
+ nullify(wavespeed)
+ next_e2r_temparray = next_e2r_temparray-1
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine timescale_value_channel
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine timescale_value_junction &
+    (elemMR, elemMI)
+ 
+ character(64) :: subroutine_name = 'timescale_value_junction'
+ 
+ real,  target,     intent(in out)  :: elemMR(:,:)
+ integer,           intent(in)      :: elemMI(:,:)
+ 
+ real,  pointer ::  wavespeed(:), length(:), velocity(:), tscale(:)
+    
+ integer :: mm
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ wavespeed => elemMR(:,eMr_Temp(next_eMr_temparray))
+ next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
+ 
+ wavespeed = zeroR
+
+!%  compute wave speed
+ where (elemMI(:,eMi_elem_type) == eJunctionChannel) 
+    wavespeed = sqrt( grav * elemMR(:,eMr_HydDepth ))
+ endwhere
+ 
+!%  timescale on upstream faces 
+ do mm=1,upstream_face_per_elemM
+    length   => elemMR(:,eMr_LengthUp(mm))
+    velocity => elemMR(:,eMr_VelocityUp(mm))
+    tscale   => elemMR(:,eMr_TimescaleUp(mm))
+    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+            (elemMI(:,eMi_nfaces_u)  >= mm) )
+        tscale = - length / (velocity - wavespeed)    
+    endwhere
+ end do
+ 
+!%  timescale on downstream faces 
+ do mm=1,dnstream_face_per_elemM
+    length   => elemMR(:,eMr_LengthDn(mm))
+    velocity => elemMR(:,eMr_VelocityDn(mm))
+    tscale   => elemMR(:,eMr_TimescaleDn(mm))
+    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+            (elemMI(:,eMi_nfaces_d)  >= mm) )
+        tscale = + length / (velocity + wavespeed)    
+    endwhere
+ end do
+
+!%  apply limiters for negative, large, and small values 
+ call timescale_limiter &
+    (elemMR, elemMI, eMr_TimescaleAll, eMi_elem_type, eJunctionChannel )
+ 
+ wavespeed = nullvalueR
+ nullify(wavespeed)
+ next_eMr_temparray = next_eMr_temparray-1
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine timescale_value_junction
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine timescale_limiter &
+    (elemR, elemI, indx, ei_elem_type, elemType )
+!
+! limits the timescales to prevent negatives, small values, or large values
+! 
+ character(64) :: subroutine_name = 'timescale_limiter'
+ 
+ real,  target,     intent(in out)  :: elemR(:,:)
+ integer,           intent(in)      :: elemI(:,:)
+ integer,           intent(in)      :: indx(:)
+ integer,           intent(in)      :: ei_elem_type, elemType
+ 
+ real,  pointer :: tscale(:)
+ integer        :: mm
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ do mm=1,size(indx)
+ 
+    tscale => elemR(:,indx(mm))    
+ 
+    !%  ensure negative time scales are stored as large values
+    call apply_limiter_with_mask &
+        (tscale, &
+        ((elemI(:,ei_elem_type) == elemType).and.( tscale < 0.0 )), &
+        setting%Limiter%Timescale%Maximum)
+        
+    !%  ensure small time scales are not below the minimum
+    call apply_limiter_with_mask &
+        (tscale, &
+        ( (elemI(:,ei_elem_type) == elemType).and. &
+          ( tscale < setting%Limiter%Timescale%Minimum ) ), &
+         setting%Limiter%Timescale%Minimum)
+         
+    !%  ensure large time scales are not above the maximum
+    call apply_limiter_with_mask &
+        (tscale, &
+        ( (elemI(:,ei_elem_type) == elemType).and.&
+          ( tscale > setting%Limiter%Timescale%Maximum ) ), &
+         setting%Limiter%Timescale%Maximum)
+ enddo
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine timescale_limiter
+!
+!========================================================================== 
+!========================================================================== 
+!
+ pure subroutine apply_limiter_with_mask (inoutarray, maskarray, limitvalue) 
+!
+! limits the inoutarray to the limitvalue where maskarray is true
+! 
+ real,      intent(in out)  :: inoutarray(:)
+ logical,   intent(in)      :: maskarray(:)
+ real,      intent(in)      :: limitvalue
+!-------------------------------------------------------------------------- 
+
+ where (maskarray)
+    inoutarray = limitvalue
+ endwhere
+ 
+ end subroutine apply_limiter_with_mask
+!
+!========================================================================== 
+!========================================================================== 
+!
+ pure elemental function small_chezy_velocity (ManningsN,HydRadius,Slope)
+!
+! provides a chezy-manning velocity used for small volumes
+!    
+    real                :: small_chezy_velocity   
+    real,   intent(in)  :: ManningsN, HydRadius, Slope
+ 
+    small_chezy_velocity = sign(  (oneR / ManningsN)       &
+                                * (HydRadius**(twothirdR))  &
+                                * sqrt(abs(Slope)), Slope  )  
+                              
+ end function small_chezy_velocity
+!
+!========================================================================== 
+!========================================================================== 
+!
+ pure elemental function velocity_blend (SmallVolumeRatio, velocity, smallVelocity)
+!
+! Blends two velocity solutions based on small volume ratio
+!  
+    real                :: velocity_blend
+    real,   intent(in)  :: SmallVolumeRatio, velocity, smallVelocity
+    
+! HACK - need to ensure that 0 < SmallVolumeRatio < 1 
+! Cannot do it here without removing the pure elemental nature.   
+
+    velocity_blend = SmallVolumeRatio * velocity &
+                    + (oneR - SmallVolumeRatio) * smallVelocity
+
+
+ end function velocity_blend
+!
+!========================================================================== 
+! END OF MODULE element_dynamics
+!========================================================================== 
+ end module element_dynamics
