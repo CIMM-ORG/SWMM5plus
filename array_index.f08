@@ -30,9 +30,9 @@
 !%  SIZES FOR MULTI_FACE ELEMENTS --------------------------------------------      
     ! design of array depends on faces per element and elements per face
     ! CODE NOTE: face_per_elemM must equal sum of upstream and downstream
-    integer, parameter :: face_per_elemM          = 2  !maximum number of faces per elemM 6,3 and 3
-    integer, parameter :: upstream_face_per_elemM = 1  !maximum number of upstream faces 
-    integer, parameter :: dnstream_face_per_elemM = 1
+    integer, parameter :: face_per_elemM          = 6  !maximum number of faces per elemM 6,3 and 3
+    integer, parameter :: upstream_face_per_elemM = 3  !maximum number of upstream faces 
+    integer, parameter :: dnstream_face_per_elemM = 3
     integer, parameter :: links_per_node = face_per_elemM    
     
 !%  SIZE FOR elem2 (DO NOT CHANGE) -------------------------------------------    
@@ -68,12 +68,11 @@
     integer, parameter :: eMi_nfaces_u        = 5    ! number of upstream faces for each element
     integer, parameter :: eMi_nfaces_d        = 6    ! number of downstream faces for each element
     integer, parameter :: eMi_roughness_type  = 7    ! roughness type
-    integer, parameter :: eMi_link_ID         = 8    ! ID of link in the link/node space
-    integer, parameter :: eMi_link_Pos        = 9    ! position (elem from upstream to downstream) in link
-    integer, parameter :: eMi_temp1           = 10
-    integer, parameter :: eMi_temp2           = 11
+    integer, parameter :: eMi_node_ID         = 8    ! ID of node in the link/node space
+    integer, parameter :: eMi_temp1           = 9
+    integer, parameter :: eMi_temp2           = 10
     
-    integer, parameter :: eMi_idx_base1       = 11    ! number of base data stored 
+    integer, parameter :: eMi_idx_base1       = 10    ! number of base data stored 
     
     integer, parameter :: eMi_n_temp          = 2     ! matching the the number of eMi_tempX arrays
     ! storage for temp array index positions
@@ -92,6 +91,8 @@
     
     integer, dimension(upstream_face_per_elemM) :: eMi_MfaceUp = nullvalueI
     integer, dimension(dnstream_face_per_elemM) :: eMi_MfaceDn = nullvalueI
+    integer, dimension(upstream_face_per_elemM + dnstream_face_per_elemM) :: eMi_MfaceAll = nullvalueI
+    
    
 !%  faceI ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
     ! column index for integer data in the faceI array

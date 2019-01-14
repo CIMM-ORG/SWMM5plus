@@ -301,7 +301,7 @@
  
  ! set velocities and upstream values on faces (without hydraulic jump)  
  call adjust_face_dynamic_limits &
-    (faceR, faceI, elem2R, ( (faceI(:,fi_etype_u) == eChannel) .and. (faceI(:,fi_etype_d) == eChannel) ) )
+    (faceR, faceI, newvolume, newvolume, ( (faceI(:,fi_etype_u) == eChannel) .and. (faceI(:,fi_etype_d) == eChannel) ) )
 
  !call bc_applied (faceR, bcdataDn, bcdataUp, thistime+dt)
  

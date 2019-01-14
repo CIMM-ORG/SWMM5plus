@@ -46,8 +46,6 @@
         real    :: ThisTime
         real    :: ThisFlowrate
     end type bcType
-
-    character(len=99), private  :: emsg
     
     integer :: debuglevel = 0
     

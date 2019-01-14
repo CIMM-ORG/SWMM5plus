@@ -73,21 +73,28 @@
  logical,    dimension(:,:), allocatable, target    :: faceYN      ! logical data for face
 
  type(string), dimension(:), allocatable, target    :: faceName    ! array of character strings
+ 
+ integer :: ii
 
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
 
 !%   assign links to nodes
  call network_node_assignment (nodeI, linkI) 
-   
+
 !%   confirm that the link-node network is valid   
  call network_check_node_link_match (linkI, nodeI)
-    
+  
 !%   check that sufficient BC locations have been identified 
  call network_check_BC (nodeI, N_node)
-  
+      
 !%   get the slope of each link given the node Z values
  call network_get_link_slope (linkR, nodeR, linkI, nodeI)
+ 
+! HACK - need a check here to look for non-monotonic zbottom in the link/node
+! system. Where found the system needs to be subdivided into monotonic links.
+! Typically this should only be an issue where the links are representing a
+! high-resolution natural channel. 
 
 !%   add sections of links to the nodes to create junctions 
  call network_adjust_link_length (linkR, nodeR, linkI, nodeI)      
@@ -99,20 +106,97 @@
  call allocate_data_storage &
     (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
      elem2Name, elemMname, faceName)
-    
+   
 !%   ensure elemMR (junction) array has zero values in the multiple geometry storage
  call initialize_array_zerovalues (elemMR) 
-
+ 
 !%   store the data from the network in the element and face arrays
  call network_data_create &
     (elem2R, elemMR, faceR, linkR, nodeR, elem2I, elemMI, faceI, &
      linkI, nodeI, nodeYN, elem2Name, elemMName, faceName, linkName, nodeName)   
- 
-!%   setup the geometric relationships between the junction branches and the main values
- call junction_geometry_from_branches (elemMR, elemMI) 
 
+!%   setup the geometric relationships between the junction branches and the main values
+ call junction_geometry_setup (elemMR, elemMI) 
+ 
 !%   assign branch mappings for faces 
- call junction_branches_assigned_to_faces (faceI, elemMI)
+ call junction_branch_assigned_to_faces (faceI, elemMI)
+    
+!% Debug output
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) then
+    print *, subroutine_name,'----------------------------------------'
+    print *, first_elem2_index, first_elem2_index+N_elem2-1
+    ! Printout network for debugging
+    print *
+    print *, 'a)       ii  ,   e2i_idx  ,  e2i_elem_type  '
+    do ii=first_elem2_index, first_elem2_index+N_elem2-1
+        print *, ii, elem2I(ii,e2i_idx), elem2I(ii,e2i_elem_type)
+    enddo
+
+    print *
+    print *, 'b)       ii  ,e2i_geometry, e2i_link_ID, e2i_link_Pos'
+    do ii=first_elem2_index, first_elem2_index+N_elem2-1
+        print *, ii, elem2I(ii,e2i_geometry), elem2I(ii,e2i_link_ID), elem2I(ii,e2i_link_Pos)
+    enddo
+    print *
+    print *, 'c)       ii  ,e2i_roughness_type, e2i_link_ID, e2i_link_Pos'
+    do ii=first_elem2_index, first_elem2_index+N_elem2-1
+        print *, ii, elem2I(ii,e2i_roughness_type), elem2I(ii,e2i_link_ID), elem2I(ii,e2i_link_Pos)
+    enddo
+
+    print *
+    print *, 'd)       ii  ,e2i_Mface_u, e2i_Mface_d,  e2i_link_ID, e2i_link_Pos'
+    do ii=first_elem2_index, first_elem2_index+N_elem2-1
+        print *, ii, elem2I(ii,e2i_Mface_u), elem2I(ii,e2i_Mface_d), elem2I(ii,e2i_link_ID), elem2I(ii,e2i_link_Pos)
+    enddo
+    
+    print *
+    print *, 'e)       ii  ,e2r_Length, e2r_Topwidth, e2r_Zbottom'
+    do ii=first_elem2_index, first_elem2_index+N_elem2-1
+        print *, ii, elem2R(ii,e2r_Length), elem2R(ii,e2r_Topwidth), elem2R(ii,e2r_Zbottom)
+    enddo
+    
+    print *
+    print *, '------------- faces -----------------expecting ',N_face
+    print *
+    print *, 'h)       ii,         idx,     Melem_u,    Melem_d,    etype_u,    etype_d'
+    do ii=first_face_index, first_face_index+N_face-1
+        print *, ii, faceI(ii,fi_idx), faceI(ii,fi_Melem_u), faceI(ii,fi_Melem_d), &
+                     faceI(ii,fi_etype_u), faceI(ii,fi_etype_d)
+    enddo
+    
+    print * 
+    print *, 'i)       ii,         Zbottom,     Topwidth'
+    do ii=first_face_index, first_face_index+N_face-1
+        print *, ii, faceR(ii,fr_Zbottom), faceR(ii,fr_Topwidth)
+    enddo
+    
+    print *
+    print *, '------------- junctions ---------------------'
+    print *
+    print *, 'j)       ii  , face maps u1, u2, d1 '
+    do ii= first_elemM_index, first_elemM_index+N_elemM-1
+        print *, ii, elemMI(ii,eMi_Mface_u1), elemMI(ii,eMi_Mface_u2), elemMI(ii,eMi_Mface_d1) 
+    enddo
+    
+    print *
+    print *, 'k)       ii  , Length, u1,  u2, d1, '
+    do ii= first_elemM_index, first_elemM_index+N_elemM-1
+        print *, ii, elemMR(ii,eMr_Length), elemMR(ii,eMr_Length_u1), elemMR(ii,eMr_Length_u2), elemMR(ii,eMr_Length_d1) 
+    enddo
+
+    print *
+    print *, 'l)       ii  , Topwidth, u1, u2, d1 '
+    do ii= first_elemM_index, first_elemM_index+N_elemM-1
+        print *, ii, elemMR(ii,eMr_Topwidth), elemMR(ii,eMr_Topwidth_u1), elemMR(ii,eMr_Topwidth_u2), elemMR(ii,eMr_Topwidth_d1) 
+    enddo
+    
+    print *
+    print *, 'm)       ii  , Zbottom, u1, u2, d1 '
+    do ii= first_elemM_index, first_elemM_index+N_elemM-1
+        print *, ii, elemMR(ii,eMr_Zbottom), elemMR(ii,eMr_Zbottom_u1), elemMR(ii,eMr_Zbottom_u2), elemMR(ii,eMr_Zbottom_d1) 
+    enddo
+ endif 
+ 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine network_initiation
@@ -126,7 +210,8 @@
  subroutine network_node_assignment &
     (nodeI, linkI)
 !
-! assign maps from nodes to links
+! assign maps from nodes to links that are consistent with link maps
+! This assumes that all links are assigned with maps to nodes correctly
 !
  character(64) :: subroutine_name = 'network_node_assignment'
  
@@ -138,46 +223,146 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
+! assign zeros for accumulators
+ nodeI(:,ni_N_link_d) = 0    
+ nodeI(:,ni_N_link_u) = 0    
+ 
+ nodeI(:,ni_Mlink_d1) = nullvalueI
+ nodeI(:,ni_Mlink_d2) = nullvalueI
+ nodeI(:,ni_Mlink_d3) = nullvalueI 
+ nodeI(:,ni_Mlink_u1) = nullvalueI
+ nodeI(:,ni_Mlink_u2) = nullvalueI
+ nodeI(:,ni_Mlink_u3) = nullvalueI  
+  
 !%  cycle through links to assign nodes
  do ii=1,N_link
- 
-    !%  get the upstream node of the link (if it exists)    
+    !%  get the upstream node of the link  
     thisnode = linkI(ii,li_Mnode_u)
-    
-    !%  look for next available downstream link position
-    if (thisnode > 0) then
-        if (nodeI(thisnode,ni_Mlink_d1) == nullvalueI) then
+    print *, thisnode
+    if ((thisnode < 1) .or. (thisnode > N_node)) then
+        print *, ii,'= this link'
+        print *, thisnode,'= upstream node assigned'
+        print *, 'error: problem in link-node definitions'
+        stop
+    else
+        nodeI(thisnode,ni_N_link_d) = nodeI(thisnode,ni_N_link_d) +1     
+    endif
+
+    if (nodeI(thisnode,ni_N_link_d) > dnstream_face_per_elemM) then
+        print *, dnstream_face_per_elemM,' = allowed downstream links per node'
+        print *, ii,'= this link'
+        print *, thisnode,'= this node'
+        print *, 'error: attempt to assign too many downstream links to one node'
+        stop
+    endif
+
+    select case (nodeI(thisnode,ni_N_link_d))
+        case (1)
             nodeI(thisnode,ni_Mlink_d1) = ii
-        else
-            print *, 'node ',thisnode
-            print *, 'error: attempt to assign 2 downstream links to 1 node in ',subroutine_name
+        case (2)
+            nodeI(thisnode,ni_Mlink_d2) = ii
+        case (3)
+            nodeI(thisnode,ni_Mlink_d3) = ii
+        case default
+            print *, 'error - attempt to assign more than 3 downstream links to one node'
             stop
-        endif
-        
-        !%  increment the downstream link counter
-        nodeI(thisnode,ni_N_link_d) = nodeI(thisnode,ni_N_link_d)+1
-    endif
+    end select
     
-    !%  get the downstream node of the link (if it exists)
+!    print *, '----------'
+!    print *, ii
+!    print *, nodeI(:,ni_Mlink_d1)
+!    print *, nodeI(:,ni_Mlink_d2)
+!    print *, nodeI(:,ni_Mlink_d3)
+!    print *, nodeI(:,ni_N_link_d)
+!
+    !% get the downstream node of the link
     thisnode = linkI(ii,li_Mnode_d)
-    
-    !%  look for the next available upstream link position
-    if (thisnode > 0) then
-        if (nodeI(thisnode,ni_Mlink_u1) == nullvalueI) then
-            nodeI(thisnode,ni_Mlink_u1) = ii
-        elseif (nodeI(thisnode,ni_Mlink_u2) == nullvalueI) then
-                nodeI(thisnode,ni_Mlink_u2) = ii
-        else
-            print *, 'node ',thisnode
-            print *, 'error: attempt to assign 3 upstream links to 1 node in ',subroutine_name
-            stop
-        endif
-        
-        !%  increment the upstream link counter
-        nodeI(thisnode,ni_N_link_u) = nodeI(thisnode,ni_N_link_u)+1
+    if ((thisnode < 1) .or. (thisnode > N_node)) then
+        print *, ii,'= this link'
+        print *, thisnode,'= downstream node assigned'
+        print *, 'error: problem in link-node definitions'
+        stop
+    else
+        nodeI(thisnode,ni_N_link_u) = nodeI(thisnode,ni_N_link_u) +1     
     endif
- enddo 
- 
+    
+    if (nodeI(thisnode,ni_N_link_u) > upstream_face_per_elemM) then
+        print *,upstream_face_per_elemM,' = allowed upstream links per node'
+        print *, ii,'= this link'
+        print *, thisnode,'= this node'
+        print *, 'error: attempt to assign too many upstream links to one node'
+        stop
+    endif
+
+    select case (nodeI(thisnode,ni_N_link_u))
+        case (1)
+            nodeI(thisnode,ni_Mlink_u1) = ii
+        case (2)
+            nodeI(thisnode,ni_Mlink_u2) = ii
+        case (3)
+            nodeI(thisnode,ni_Mlink_u3) = ii
+        case default
+            print *, 'error - attempt to assign more than 3 uptream links to one node'
+            stop
+    end select   
+
+!    print *, '----------'
+!    print *, ii
+!    print *, nodeI(:,ni_Mlink_u1)
+!    print *, nodeI(:,ni_Mlink_u2)
+!    print *, nodeI(:,ni_Mlink_u3)
+!    print *, nodeI(:,ni_N_link_u)
+!
+    
+ end do
+  
+!%  cycle through links to assign nodes
+! do ii=1,N_link
+! 
+!    !%  get the upstream node of the link (if it exists)    
+!    thisnode = linkI(ii,li_Mnode_u)
+!    
+!    print *, ii,'=Link; ', thisnode,'= upstream node assigned'
+!    
+!    !%  look for next available downstream link position
+!    if (thisnode > 0) then
+!        if (nodeI(thisnode,ni_Mlink_d1) == nullvalueI) then
+!            nodeI(thisnode,ni_Mlink_d1) = ii
+!        else
+!            print *, 'node ',thisnode
+!            print *, 'error: attempt to assign 2 downstream links to 1 node in ',subroutine_name
+!            stop
+!        endif
+!        
+!        !%  increment the downstream link counter
+!        nodeI(thisnode,ni_N_link_d) = nodeI(thisnode,ni_N_link_d)+1
+!    endif
+!    
+!    !%  get the downstream node of the link (if it exists)
+!    thisnode = linkI(ii,li_Mnode_d)
+!    
+!    print *, ii,'=Link; ', thisnode,'= downstream node assigned'
+!    
+!    !%  look for the next available upstream link position
+!    if (thisnode > 0) then
+!
+!        if (nodeI(thisnode,ni_Mlink_u1) == nullvalueI) then
+!            nodeI(thisnode,ni_Mlink_u1) = ii
+!        elseif (nodeI(thisnode,ni_Mlink_u2) == nullvalueI) then
+!                nodeI(thisnode,ni_Mlink_u2) = ii
+!        else
+!            print *, 'node ',thisnode
+!            print *, 'error: attempt to assign 3 upstream links to 1 node in ',subroutine_name
+!            stop
+!        endif
+!        
+!        !%  increment the upstream link counter
+!        nodeI(thisnode,ni_N_link_u) = nodeI(thisnode,ni_N_link_u)+1
+!    endif
+! enddo 
+! 
+
+
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine network_node_assignment
 !
@@ -325,6 +510,7 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
+
  do mm = 1,N_link  
     nUp => linkI(mm,li_Mnode_u)
     nDn => linkI(mm,li_Mnode_d)
@@ -341,7 +527,7 @@
         print *, mm, linkR(mm,lr_Slope), linkR(mm,lr_Length)
     end do 
  endif
- 
+
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine network_get_link_slope
 !
@@ -349,7 +535,7 @@
 !==========================================================================
 !
  subroutine network_adjust_link_length &
-    (linkR, nodeR, linkI, nodeI)
+    (linkR, nodeR, linkI, nodeI )
 !    
 ! Adjust the link lengths so that a portion goes to each junction
 ! when the junctions need physical dimensions. This is necessary when
@@ -376,7 +562,7 @@
  real,    pointer   :: linkLength(:)
  integer, pointer   :: linkNelem(:)
  
- real :: element_nominal_length
+ real,    pointer   :: element_nominal_length
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name  
@@ -384,8 +570,9 @@
  linkLength => linkR(:,lr_Length)
  linkNelem  => linkI(:,li_N_element)
  
+
  do ii = 1,N_node 
- 
+    element_nominal_length => linkR(ii,lr_ElementLength)
     !%   only applies to nJm junctions -- not to nJ2 junctions
     if (nodeI(ii,ni_node_type) == nJm) then 
     
@@ -404,13 +591,14 @@
         endif
     endif
  enddo
- 
+    
+  
 !%  get the uniform elements that subdivide a link
  do ii = 1,N_link
- 
-    !%  store the target length for elements in this link
-    element_nominal_length = linkR(ii,lr_ElementLength)
     
+    !%  store the target length for elements in this link
+    element_nominal_length => linkR(ii,lr_ElementLength)
+        
     linkNelem(ii) = floor(linkLength(ii)/element_nominal_length)
     
     if (linkNelem(ii) > 0) then
@@ -423,6 +611,7 @@
         linkR(ii,lr_ElementLength) = linkLength(ii)
     endif
  enddo
+ 
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
     !%  debugging output
@@ -662,85 +851,7 @@
           elem2I, elemMI, faceI, linkI, nodeI, elem2R, elemMR, faceR, linkR, nodeR, &
           elem2Name, elemMName, faceName, linkName, nodeName)        
  enddo
- 
-!% Debug output
- if ((debuglevel > 0) .or. (debuglevelall > 0)) then
-    print *, subroutine_name,'----------------------------------------'
-    ! temporary array reset 
-    nodesDownstream    = nullvalueI
-    nodeYNmask         = nullvalueL
-    print *, first_elem2_index, first_elem2_index+N_elem2-1
-    ! Printout network for debugging
-    print *
-    print *, 'a)       ii  ,   e2i_idx  ,  e2i_elem_type  '
-    do ii=first_elem2_index, first_elem2_index+N_elem2-1
-        print *, ii, elem2I(ii,e2i_idx), elem2I(ii,e2i_elem_type)
-    enddo
-
-    print *
-    print *, 'b)       ii  ,e2i_geometry, e2i_link_ID, e2i_link_Pos'
-    do ii=first_elem2_index, first_elem2_index+N_elem2-1
-        print *, ii, elem2I(ii,e2i_geometry), elem2I(ii,e2i_link_ID), elem2I(ii,e2i_link_Pos)
-    enddo
-    print *
-    print *, 'c)       ii  ,e2i_roughness_type, e2i_link_ID, e2i_link_Pos'
-    do ii=first_elem2_index, first_elem2_index+N_elem2-1
-        print *, ii, elem2I(ii,e2i_roughness_type), elem2I(ii,e2i_link_ID), elem2I(ii,e2i_link_Pos)
-    enddo
-
-    print *
-    print *, 'd)       ii  ,e2i_Mface_u, e2i_Mface_d,  e2i_link_ID, e2i_link_Pos'
-    do ii=first_elem2_index, first_elem2_index+N_elem2-1
-        print *, ii, elem2I(ii,e2i_Mface_u), elem2I(ii,e2i_Mface_d), elem2I(ii,e2i_link_ID), elem2I(ii,e2i_link_Pos)
-    enddo
     
-    print *
-    print *, 'e)       ii  ,e2r_Length, e2r_Topwidth, e2r_Zbottom'
-    do ii=first_elem2_index, first_elem2_index+N_elem2-1
-        print *, ii, elem2R(ii,e2r_Length), elem2R(ii,e2r_Topwidth), elem2R(ii,e2r_Zbottom)
-    enddo
-    
-    print *
-    print *, '------------- faces -----------------expecting ',N_face
-    print *
-    print *, 'h)       ii,         idx,     Melem_u,    Melem_d,    etype_u,    etype_d'
-    do ii=first_face_index, first_face_index+N_face-1
-        print *, ii, faceI(ii,fi_idx), faceI(ii,fi_Melem_u), faceI(ii,fi_Melem_d), &
-                     faceI(ii,fi_etype_u), faceI(ii,fi_etype_d)
-    enddo
-    
-    print * 
-    print *, 'i)       ii,         Zbottom,     Topwidth'
-    do ii=first_face_index, first_face_index+N_face-1
-        print *, ii, faceR(ii,fr_Zbottom), faceR(ii,fr_Topwidth)
-    enddo
-    
-    print *
-    print *, '------------- junctions ---------------------'
-    print *
-    print *, 'j)       ii  , face maps u1, u2, d1 '
-    do ii= first_elemM_index, first_elemM_index+N_elemM-1
-        print *, ii, elemMI(ii,eMi_Mface_u1), elemMI(ii,eMi_Mface_u2), elemMI(ii,eMi_Mface_d1) 
-    enddo
-    
-    print *
-    print *, 'k)       ii  , Length, u1,  u2, d1, '
-    do ii= first_elemM_index, first_elemM_index+N_elemM-1
-        print *, ii, elemMR(ii,eMr_Length), elemMR(ii,eMr_Length_u1), elemMR(ii,eMr_Length_u2), elemMR(ii,eMr_Length_d1) 
-    enddo
-
-    print *
-    print *, 'l)       ii  , Topwidth, u1, u2, d1 '
-    do ii= first_elemM_index, first_elemM_index+N_elemM-1
-        print *, ii, elemMR(ii,eMr_Topwidth), elemMR(ii,eMr_Topwidth_u1), elemMR(ii,eMr_Topwidth_u2), elemMR(ii,eMr_Topwidth_d1) 
-    enddo
-    
-    print *
-    print *, 'm)       ii  , Zbottom, u1, u2, d1 '
-    do ii= first_elemM_index, first_elemM_index+N_elemM-1
-        print *, ii, elemMR(ii,eMr_Zbottom), elemMR(ii,eMr_Zbottom_u1), elemMR(ii,eMr_Zbottom_u2), elemMR(ii,eMr_Zbottom_d1) 
-    enddo
- endif 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine network_data_create
@@ -956,8 +1067,8 @@
     elemMI(jElem,eMi_nfaces_d)        = nodeI(thisNode,ni_N_link_d)
     elemMI(jElem,eMi_nfaces_u)        = nodeI(thisNode,ni_N_link_u)
     elemMI(jElem,eMi_roughness_type)  = nullvalueI            
-    elemMI(jElem,eMi_link_ID)         = nullvalueI
-    elemMI(jElem,eMi_link_Pos)        = nullvalueI 
+    elemMI(jElem,eMi_node_ID)         = thisNode
+    !elemMI(jElem,eMi_link_Pos)        = nullvalueI 
     
     !%  the following assumes the topwidth and length are functions of branches
     elemMR(jElem,eMr_Topwidth)        = zeroR ! do not use nullvalueR with geometry
@@ -1317,12 +1428,14 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
     
+
 !%  iterate through the up/down (X) links at this node
  do mm=1,nodeI(thisNode,niNlinkX)
  
     !%  use pointers to simplify code
     elemLength => nodeR(thisNode,nrElementLengthX(mm)) ! elem length location
     tlink      => nodeI(thisNode,niMlinkX(mm)) ! link index up or down
+      
     if (tlink > 0) then
         if ( linkLength(tlink) .LE. 1.5*element_nominal_length ) then
             !%  where there is only one element in a link
@@ -1336,7 +1449,12 @@
         !%  store junction length in nodeR (target)
         elemLength = delta
     endif
+
+
  enddo
+ 
+
+ 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine link_shortening 

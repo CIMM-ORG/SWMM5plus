@@ -10,6 +10,7 @@
     use array_index
     use bc
     use case_simple_channel
+    use case_y_channel
     use data_keys
     use globals
     use setting_definition
@@ -45,13 +46,19 @@
  type(string), dimension(:),   allocatable, intent(out) :: nodeName
  type(bcType), dimension(:),   allocatable, intent(out) :: bcdataUp, bcdataDn
  
- real :: Froude, CFL, breadth, ManningsN, total_length, lowerZ
- real :: subdivide_length, area, velocity, flowrate, upperZ
- real :: depth_dnstream, depth_upstream
+ real, dimension(:), allocatable :: depth_dnstream, depth_upstream
+ real, dimension(:), allocatable :: subdivide_length, channel_length, channel_breadth
+ real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
+ real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
  
- integer :: first_step, last_step, display_interval, idepth_type
+ integer, dimension(:), allocatable :: idepth_type
  
- real :: climit, cvel
+ real :: CFL
+ 
+ integer :: first_step, last_step, display_interval, mm
+ 
+ real :: climit, cvel, uz, lz
+    
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -61,48 +68,156 @@
     !% Write a new case statement for each unique test case
     case ('simple_channel_001')
     
+        N_link = 1
+        N_node = 1
+        N_BCupstream = 1
+        N_BCdnstream = 1
+ 
+        !% create the local variables that must be populated to set up the test case
+        call control_variable_allocation &
+            (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, subdivide_length, flowrate, area, &
+             velocity, Froude, ManningsN, idepth_type)
+ 
         ! step controls
-        display_interval = 10000
+        display_interval = 100
         first_step = 1
-        last_step  =  500000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+        last_step  =  10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
     
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5
-        Froude       = 1.5   ! determines flowrate and slope to get Froude
-        CFL          = 0.025  ! determines dt from subdivide_length
+        Froude       = 0.25   ! determines flowrate and slope to get Froude
+        CFL          = 0.25  ! determines dt from subdivide_length
     
         ! keep these physics fixed
-        breadth         = 3.0
-        depth_upstream  = 0.25
-        depth_dnstream  = 25.0
+        channel_breadth = 3.0
+        depth_upstream  = 0.5
+        depth_dnstream  = 1.0
         idepth_type     = 3  !1 = uniform, 2=linear, 3=exponential decay
         ManningsN       = 0.03
-        total_length    = 10000.0   
+        channel_length    = 10000.0   
         lowerZ          = 1.0
-        subdivide_length = 250.0            
+        subdivide_length = 100.0            
 
         call froude_driven_setup &
-            (area, flowrate, velocity, upperZ, &
-             Froude, depth_upstream, breadth, ManningsN, &
-             lowerZ, total_length)
-
+            (upperZ(1), area(1), flowrate(1), velocity(1),  &
+             Froude(1),  channel_breadth(1), ManningsN(1), channel_length(1), &
+             lowerZ(1),  depth_upstream(1) )
+            
         call this_setting_for_time_and_steps &
-            (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, & 
-             display_interval)   
+            (CFL, velocity, depth_upstream, subdivide_length, &
+             first_step, last_step, display_interval,2)   
         
         call case_simple_channel_initialize &
-            (total_length, breadth, subdivide_length, lowerZ, upperZ, &
-             flowrate, depth_upstream, depth_dnstream, ManningsN,     &
-             lManningsN, idepth_type,                                  &
-             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
+            (channel_length(1), channel_breadth(1), subdivide_length(1), &
+             lowerZ(1), upperZ(1), flowrate(1), depth_upstream(1), depth_dnstream(1), &
+             ManningsN(1), lManningsN, idepth_type(1),                                   &
+             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
              bcdataDn, bcdataUp)    
-        
+                
         if (.not. setting%Debugout%SuppressAllFiles) then
             call write_testcase_setup_file &
                 (Froude, CFL, flowrate, velocity, depth_upstream,   &
-                 depth_dnstream, breadth, area, total_length, subdivide_length, &
+                 depth_dnstream, channel_breadth, area, &
+                 channel_length, subdivide_length, &
                  lowerZ, upperZ, ManningsN)
         endif         
+        
+        
+    case ('y_channel_002')
+
+        N_link = 3
+        N_node = 4
+        N_BCupstream = 2
+        N_BCdnstream = 1
+
+        call control_variable_allocation &
+            (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, subdivide_length, flowrate, area, &
+             velocity,  Froude, ManningsN, idepth_type)
+
+        ! step controls
+        display_interval = 100
+        first_step = 1
+        last_step  =  10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+    
+        ! set up flow and time step for differen subcases
+        ! tests that ran:  Fr = 0.25, 0.5
+        Froude(1)       = 0.25   ! determines flowrate and slope to get Froude
+        Froude(2)       = 0.25   ! determines flowrate and slope to get Froude
+        Froude(3)       = 0.25   ! determines flowrate and slope to get Froude
+        
+        CFL          = 0.25  ! determines dt from subdivide_length
+
+        depth_dnstream(1)  = 1.0
+        depth_upstream(1)  = 0.7 ! junction
+        
+        depth_dnstream(2:3) = depth_upstream(1) ! junction should be consistent
+
+        depth_upstream(2)  = 0.5 ! upstream bc right
+        depth_upstream(3)  = 0.4 ! upstream bc left
+        idepth_type     = 3  !1 = uniform, 2=linear, 3=exponential decay
+        ManningsN       = 0.03
+        
+        channel_breadth(1)   = 3.0
+        channel_breadth(2)   = 3.0
+        channel_breadth(3)   = 3.0
+        
+        channel_length(1)    = 10000.0   
+        channel_length(2)    = 3000.0   
+        channel_length(3)    = 5000.0   
+        
+        lowerZ(1)           = 1.0
+        subdivide_length(1) = 100.0    
+        subdivide_length(2) = 100.0           
+        subdivide_length(3) = 100.0   
+        
+        
+        ! get consistent bottom Z values for the desired Froude number in each link
+        do mm=1,N_link
+            if (mm==1) then
+                ! start with the Z for the inflow link
+                lz = lowerZ(1) 
+            end if
+            call froude_driven_setup &
+                (uz, area(mm), flowrate(mm), velocity(mm),                               &
+                 Froude(mm), channel_breadth(mm), ManningsN(mm), channel_length(mm), &
+                 lz, depth_upstream(mm) )
+            select case (mm)
+                case (1)
+                    ! the upstream z of the downstream link becomes the lower z of the upstream links 
+                    lz = uz 
+                    upperZ(1) = uz
+                case (2,3)
+                    lowerZ(mm) = upperZ(1)
+                    upperZ(mm) = uz
+                    lz = upperZ(1)
+            end select 
+        end do
+
+        call this_setting_for_time_and_steps &
+            (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, & 
+             display_interval, 2)   
+             
+        call case_y_channel_initialize &
+            (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
+             flowrate, depth_upstream, depth_dnstream,                  &
+             ManningsN, lManningsN, idepth_type,                            &
+             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
+             bcdataDn, bcdataUp)      
+
+        if (.not. setting%Debugout%SuppressAllFiles) then
+            call write_testcase_setup_file &
+                (Froude, CFL, flowrate, velocity, depth_upstream,   &
+                 depth_dnstream, channel_breadth, area, channel_length, subdivide_length, &
+                 lowerZ, upperZ, ManningsN)
+        endif         
+        
+        
+        !print *, flowrate
+        !print *, linkR(:,lr_InitialFlowrate)
+        !print *, trim(subroutine_name)
+        !stop
         
     case default
         print *, setting%TestCase%TestName
@@ -120,20 +235,73 @@
 !
 !==========================================================================
 !
+ subroutine control_variable_allocation &
+    (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+     channel_breadth, subdivide_length, flowrate, area, &
+     velocity,  Froude, ManningsN, idepth_type)
+ 
+ character(64) :: subroutine_name = 'control_variable_allocation'
+ 
+ real, dimension(:), allocatable, intent(out) :: depth_dnstream, depth_upstream
+ real, dimension(:), allocatable, intent(out) :: subdivide_length, channel_length, channel_breadth
+ real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate
+ real, dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
+    
+ integer, dimension(:), allocatable, intent(out) :: idepth_type  
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+    allocate(depth_dnstream(N_link))
+    allocate(depth_upstream(N_link))
+    allocate(lowerZ(N_link))        
+    allocate(upperZ(N_link))    
+    allocate(channel_length(N_link))
+    allocate(channel_breadth(N_link))       
+    allocate(subdivide_length(N_link))   
+    !allocate(initial_flowrate(N_link))
+    allocate(area(N_link))
+    allocate(velocity(N_link))
+    allocate(flowrate(N_link))
+    allocate(Froude(N_link)) 
+    allocate(ManningsN(N_link)) 
+    allocate(idepth_type(N_link))     
+        
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine control_variable_allocation
+!
+!========================================================================== 
+!==========================================================================
+!
  subroutine this_setting_for_time_and_steps &
     (CFL, velocity, depth, subdivide_length, first_step, last_step, & 
-     display_interval)
+     display_interval, dt_significant_digits)
  
  character(64) :: subroutine_name = 'this_setting_for_time_and_steps'
  
- real,  intent(in) :: CFL, velocity, depth, subdivide_length
+ real,  intent(in) :: CFL, velocity(:), depth(:), subdivide_length(:)
  
- integer, intent(in) :: first_step, last_step, display_interval
+ integer, intent(in) :: first_step, last_step, display_interval, dt_significant_digits
+ 
+ real,  dimension(size(velocity)) :: dtSet, CFLset
+ 
+ real       :: dtmin
+ integer    :: dtscale
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
- setting%Time%dt = get_dt_from_CFL (CFL, velocity, depth, subdivide_length)
+! use the same CFL in every link
+ CFLset = CFL
+! get the set of time step (dt) base on every branch 
+ dtSet = get_dt_from_CFL (CFL, velocity, depth, subdivide_length)
+! get the minimum dt value
+ dtmin  = minval(dtSet)
+! get the largest n for 10^n relative to the dtmin 
+ dtscale = utility_scale_of_number(dtmin)
+ 
+ 
+ setting%Time%dt = utility_round_to_significant_digits(dtmin,dt_significant_digits)
 
  setting%Step%Current = 1
 
@@ -153,9 +321,9 @@
 !==========================================================================
 !
  subroutine froude_driven_setup &
-    (area, flowrate, velocity, upperZ, &
-     Froude, depth, breadth, ManningsN, &
-     lowerZ, total_length)
+    (upperZ, area, flowrate, velocity,  &
+     Froude,  breadth, ManningsN, total_length, &
+     lowerZ, depth)
  
  character(64) :: subroutine_name = 'froude_driven_setup'
   
@@ -200,9 +368,10 @@
  
  character(64) :: subroutine_name = ' write_testcase_setup_file'
  
- real,  intent(in)  :: Froude, CFL, flowrate, velocity,  breadth
- real,  intent(in)  :: area, total_length, subdivide_length, lowerZ, upperZ
- real,  intent(in)  :: ManningsN, depth_upstream, depth_dnstream
+ real,  intent(in)  :: CFL
+ real,  intent(in)  :: Froude(:),  flowrate(:), velocity(:),  breadth(:)
+ real,  intent(in)  :: area(:), total_length(:), subdivide_length(:), lowerZ(:), upperZ(:)
+ real,  intent(in)  :: ManningsN(:), depth_upstream(:), depth_dnstream(:)
     
  integer        :: UnitNumber
  
@@ -294,11 +463,11 @@
 !========================================================================== 
 !==========================================================================
 !
- function get_dt_from_CFL &
+ elemental function get_dt_from_CFL &
     (CFL, velocity, depth, element_length) &
     result (dt)
     
- character(64) :: subroutine_name = 'get_dt_from_CFL'   
+! character(64) :: subroutine_name = 'get_dt_from_CFL'   
  
  real,  intent(in) :: CFL, velocity, depth, element_length   
  real :: dt
@@ -306,14 +475,6 @@
 !-------------------------------------------------------------------------- 
     
  dt = CFL * onehalfR * element_length / (velocity + sqrt(grav * depth))
- 
-! print *, subroutine_name
-! print *, 'ad hoc cut of time step *******************************'
-! dt = 0.25 * dt
- 
- if (floor(dt) > 19) then
-    dt = real(floor(dt))
- endif
  
  end function get_dt_from_CFL
 !

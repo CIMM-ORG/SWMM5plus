@@ -26,6 +26,7 @@
     real,    parameter :: twoR       = 2.0
     real,    parameter :: threeR     = 3.0  
     real,    parameter :: fourR      = 4.0   
+    real,    parameter :: tenR       = 10.0
     
     real,    parameter :: onefourthR   = oneR   / fourR 
     real,    parameter :: onethirdR    = oneR   / threeR
@@ -41,6 +42,8 @@
     integer :: N_elem2
     integer :: N_elemM
     integer :: N_face
+    integer :: N_BCupstream
+    integer :: N_BCdnstream
     
     integer :: next_e2i_temparray = 1  
     integer :: next_e2r_temparray = 1

@@ -32,7 +32,8 @@
 !
  subroutine face_update &
     (elem2R, elemMR, faceR, faceI, faceYN, &
-     bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, thisTime, thisIter)
+     bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, &
+     eMr_Volume_new, thisTime, thisIter)
 !
 ! top-level computation of all face values from adjacent elements
 ! 
@@ -45,29 +46,24 @@
  real,          intent(in)      :: thisTime
     
  integer,       intent(in)      :: e2r_Velocity_new, eMr_Velocity_new, thisIter
+ integer,       intent(in)      :: e2r_Volume_new, eMr_Volume_new
  
  logical,   intent(in out)  :: faceYN(:,:)
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
- call face_interp_for_elem2 (elem2R, faceR, faceI, faceYN, bcdataDn, bcdataUp)
- 
- if (N_elemM > 0) then
-     print *, 'likely logical errors in the face interp in ',subroutine_name
-     stop
- endif
+ call face_interp_for_elem2 &
+    (elem2R, faceR, faceI, faceYN, bcdataDn, bcdataUp, e2r_Volume_new)
 
  call bc_applied_onface (faceR, faceI, elem2R, bcdataDn, bcdataUp, thisTime)
  
- !print *, faceR(:,fr_flowrate)
- !print *, faceR(:,fr_Velocity_u)
- !print *, faceR(:,fr_Velocity_d)
- 
  if (N_elemM > 0) then
-    call face_interp_for_junctionchannel_down(elem2R, elemMR, faceR, faceI, faceYN)
+    call face_interp_for_upstreamchannel_to_downstreamjunction &
+        (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
  
-    call face_interp_for_junctionchannel_up  (elem2R, elemMR, faceR, faceI, faceYN)
+    call face_interp_for_downstreamchannel_to_upstreamjunction &
+        (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
  endif
  
  call face_hydraulic_jump (elem2R, elemMR, faceR, faceI, e2r_Velocity_new, eMr_Velocity_new)
@@ -135,7 +131,7 @@
 !==========================================================================
 !
  subroutine face_interp_for_elem2 &
-    (elem2R, faceR, faceI, faceYN, bcdataDn, bcdataUp)
+    (elem2R, faceR, faceI, faceYN, bcdataDn, bcdataUp, e2r_Volume_new)
 !
 ! face interpolation between elements that have only 2 faces
 ! 
@@ -146,6 +142,7 @@
  real,      target,     intent(in)      :: elem2R(:,:)
  logical,   target,     intent(in out)  :: faceYN(:,:)
  type(bcType),          intent(in)      :: bcdataDn(:), bcdataUp(:)
+ integer,               intent(in)      :: e2r_Volume_new
      
  logical,   pointer  :: facemask(:)
  real,      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
@@ -193,20 +190,7 @@
         (faceR, facemask, faceI, elem2R, &
          weightUp, weightDn, valueUp, valueDn, e2rset(mm), frset(mm))
  end do
- 
-!print *, trim(subroutine_name)
-!print *, faceR(1:5,fr_flowrate) * setting%Time%DT
-!print *, elem2R(2:4,e2r_Volume)
-!
-!do mm=2,(size(elem2R,1)-2)
-!    print *, mm, faceR(mm,fr_flowrate)* setting%Time%DT,  elem2R(mm+1,e2r_Volume)
-!    if (faceR(mm,fr_flowrate)* setting%Time%DT > elem2R(mm+1,e2r_Volume)) then
-!        print *, mm
-!        print *, 'here'
-!        !stop
-!    endif
-!enddo
-! 
+    
 !%  store the duplicate areas (later adjusted for jumps)
  where (facemask) 
     faceR(:,fr_Area_u) = faceR(:,fr_Area_d)  
@@ -220,19 +204,9 @@
  
 !%  set velocities and upstream values on faces (without hydraulic jump)  
 
- call adjust_face_dynamic_limits (faceR, faceI, elem2R, facemask)
- 
-!print *,'after djust_face_dynamic_limit'
-!do mm=2,(size(elem2R,1)-2)
-!    print *, mm, faceR(mm,fr_flowrate)* setting%Time%DT,  elem2R(mm+1,e2r_Volume)
-!    if (faceR(mm,fr_flowrate)* setting%Time%DT > elem2R(mm+1,e2r_Volume)) then
-!        print *, mm
-!        print *, 'here'
-!        stop
-!    endif
-!enddo
-!
-  
+ call adjust_face_dynamic_limits &
+    (faceR, faceI, elem2R(:,e2r_Volume_new), elem2R(:,e2r_Volume_new), facemask)    
+    
 !%  Store identical values for fr_XXX_u for the moment 
 !%  These are later adjusted for hydraulic jumps
  where (facemask)
@@ -257,18 +231,19 @@
 !========================================================================== 
 !==========================================================================
 !
- subroutine face_interp_for_junctionchannel_down &
-    (elem2R, elemMR, faceR, faceI, faceYN)
+ subroutine face_interp_for_upstreamchannel_to_downstreamjunction &
+    (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
 !
 ! face interpolation with a junction downstream and channel upstream
 ! i.e. this is from an upstream junction branch to the channel
 ! 
- character(64) :: subroutine_name = 'face_interp_for_junctionchannel_down'
+ character(64) :: subroutine_name = 'face_interp_for_upstreamchannel_to_downstreamjunction'
  
  integer,               intent(in)      :: faceI(:,:)
  real,      target,     intent(in out)  :: faceR(:,:)
  real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
  logical,   target,     intent(in out)  :: faceYN(:,:)
+ integer,               intent(in)      :: e2r_Volume_new, eMr_Volume_new
  
  logical,   pointer  :: facemask(:)
  real,      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
@@ -307,17 +282,17 @@
  end do
  
 !%  use timescale for interpolation for Topwidth, Area, Flowrate 
- call interp_junction_down &
+ call interp_with_junction_downstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
      e2r_Topwidth, eMr_TopwidthUp, fr_Topwidth)
  
- call interp_junction_down &
+ call interp_with_junction_downstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
      e2r_Area, eMr_AreaUp, fr_Area_d) 
 
- call interp_junction_down &
+ call interp_with_junction_downstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
      e2r_Flowrate, eMr_FlowrateUp, fr_Flowrate) 
@@ -335,9 +310,8 @@
  endwhere
   
 ! set velocities and upstream values on faces (without hydraulic jump)  
- print *, trim(subroutine_name),'error - this will not work for elemMR'
- stop
- call adjust_face_dynamic_limits (faceR, faceI, elemMR, facemask)    
+ call adjust_face_dynamic_limits  &
+    (faceR, faceI, elem2R(:,e2r_Volume_new), elemMR(:,eMr_Volume_new), facemask)    
     
  facemask = nullvalueL
  nullify(facemask)
@@ -351,23 +325,24 @@
  next_fr_temparray = next_fr_temparray - 4
      
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine face_interp_for_junctionchannel_down
+ end subroutine face_interp_for_upstreamchannel_to_downstreamjunction
 !
 !========================================================================== 
 !==========================================================================
 !
- subroutine face_interp_for_junctionchannel_up &
-    (elem2R, elemMR, faceR, faceI, faceYN)
+ subroutine face_interp_for_downstreamchannel_to_upstreamjunction &
+    (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
 !
 ! face interpolation with a junction upstream and channel downstream
 ! i.e. this is from a downstream junction branch to the downstream channel
 ! 
- character(64) :: subroutine_name = 'face_interp_for_junctionchannel_up'
+ character(64) :: subroutine_name = 'face_interp_for_downstreamchannel_to_upstreamjunction'
  
  integer,               intent(in)      :: faceI(:,:)
  real,      target,     intent(in out)  :: faceR(:,:)
  real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
  logical,   target,     intent(in out)  :: faceYN(:,:)
+ integer,               intent(in)      :: e2r_Volume_new, eMr_Volume_new
  
  logical,   pointer  :: facemask(:)
  real,      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
@@ -406,17 +381,17 @@
  end do
  
 !%  use timescale for interpolation for Topwidth, Area, Flowrate 
- call interp_junction_up &
+ call interp_with_junction_upstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
      e2r_Topwidth, eMr_TopwidthDn, fr_Topwidth)
  
- call interp_junction_up &
+ call interp_with_junction_upstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
      e2r_Area, eMr_AreaDn, fr_Area_d) 
 
- call interp_junction_up &
+ call interp_with_junction_upstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
      e2r_Flowrate, eMr_FlowrateDn, fr_Flowrate) 
@@ -433,11 +408,10 @@
     faceR(:,fr_Eta_u) = elemMR(faceI(:,fi_Melem_u),eMr_Eta) 
  endwhere
    
-!%  set velocities and upstream values on faces (without hydraulic jump)  
- print *, trim(subroutine_name), 'error - this will not work for elemMR'
- stop 
- call adjust_face_dynamic_limits (faceR, faceI, elemMR, facemask)  
-    
+!%  set velocities and upstream values on faces (without hydraulic jump)   
+ call adjust_face_dynamic_limits &
+     (faceR, faceI, elemMR(:,eMr_Volume_new), elem2R(:,e2r_Volume_new), facemask)       
+     
  facemask = nullvalueL
  nullify(facemask)
  next_fYN_temparray = next_fYN_temparray - 1
@@ -450,7 +424,7 @@
  next_fr_temparray = next_fr_temparray - 4
      
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine face_interp_for_junctionchannel_up
+ end subroutine face_interp_for_downstreamchannel_to_upstreamjunction
 !
 !========================================================================== 
 !==========================================================================
@@ -515,11 +489,11 @@
  
 !%  HACK - does not consider individual branches - only entire element values 
  where (typUp == fMultiple) 
-    froudeUp = elemMR(mapUp,eMr_velocity_new) / (sqrt(grav * elemMR(mapUp,eMr_HydDepth)))
+    froudeUp = elemMR(mapUp,eMr_Velocity_new) / (sqrt(grav * elemMR(mapUp,eMr_HydDepth)))
  endwhere
     
  where (typDn == fMultiple) 
-    froudeDn = elemMR(mapDn,eMr_velocity_new) / (sqrt(grav * elemMR(mapDn,eMr_HydDepth)))
+    froudeDn = elemMR(mapDn,eMr_Velocity_new) / (sqrt(grav * elemMR(mapDn,eMr_HydDepth)))
  endwhere
  
 
@@ -620,23 +594,21 @@
      weightUp = onehalfR * elem2R(faceI(:,fi_Melem_u),e2r_Length) 
  endwhere
 
-!%  HACK BELOW 
+!%  interpolate across branches of junction elements 
  if (N_elemM > 0) then
-    print *, 'error: the following will not work in ',subroutine_name
-    stop
- endif
- do mm=1,upstream_face_per_elemM
-    where ( (faceI(:,fi_etype_d) == fMultiple) .and. (faceI(:,fi_branch_d) == mm) )
-        weightDn = elemMR(faceI(:,fi_Melem_d),eMr_LengthUp(mm)) !legnth of upstream branch
-    endwhere
- end do
+    do mm=1,upstream_face_per_elemM
+        where ( (faceI(:,fi_etype_d) == fMultiple) .and. (faceI(:,fi_branch_d) == mm) )
+            weightDn = elemMR(faceI(:,fi_Melem_d),eMr_LengthUp(mm)) !length of upstream branch
+        endwhere
+    end do
 
- do mm=1,dnstream_face_per_elemM
-    where ( (faceI(:,fi_etype_u) == fMultiple) .and. (faceI(:,fi_branch_u) == mm) )
-        weightUp = elemMR(faceI(:,fi_Melem_u),eMr_LengthDn(mm)) !legnth of dnstream branch
-    endwhere
- end do
-!%  END HACK
+    do mm=1,dnstream_face_per_elemM
+        where ( (faceI(:,fi_etype_u) == fMultiple) .and. (faceI(:,fi_branch_u) == mm) )
+            weightUp = elemMR(faceI(:,fi_Melem_u),eMr_LengthDn(mm)) !length of dnstream branch
+        endwhere
+    end do
+ endif 
+
 
 !%  set the mask for channel and mulitple elements without a hyd jump
  facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fMultiple)) &
@@ -700,16 +672,16 @@
 !========================================================================== 
 !==========================================================================
 !
- subroutine interp_junction_down &
+ subroutine interp_with_junction_downstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
-     e2r_ThisType, eMr_ThisTypeUp, fr_ThisType)
+     e2r_ThisValue, eMr_ThisValueUp, fr_ThisValue)
 !
 ! interp one value to a face when there is a junction downstream and channel upstream
 ! Uses branch values in elemMR array.
 ! 
  
- character(64) :: subroutine_name = 'interp_junction_down'
+ character(64) :: subroutine_name = 'interp_with_junction_downstream'
  
  real,      target,     intent(in out)  :: faceR(:,:)
  real,                  intent(in out)  :: valueUp(:),  valueDn(:)
@@ -717,8 +689,8 @@
  real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
  integer,               intent(in)      :: faceI(:,:)
  
- integer,               intent(in)      :: e2r_ThisType, fr_ThisType
- integer,               intent(in)      :: eMr_ThisTypeUp(:)
+ integer,               intent(in)      :: e2r_ThisValue, fr_ThisValue
+ integer,               intent(in)      :: eMr_ThisValueUp(:)
  logical,               intent(in)      :: facemask(:)
    
  real,  pointer :: inoutarray(:)  
@@ -729,34 +701,34 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
  where (facemask)
-    valueUp = elem2R(faceI(:,fi_Melem_u),e2r_ThisType) 
+    valueUp = elem2R(faceI(:,fi_Melem_u),e2r_ThisValue) 
  endwhere
  
  do mm=1,upstream_face_per_elemM
     where ( (facemask) .and. (faceI(:,fi_branch_d) == mm) )
-        valueDn = elemMR(faceI(:,fi_Melem_d),eMr_ThisTypeUp(mm)) 
+        valueDn = elemMR(faceI(:,fi_Melem_d),eMr_ThisValueUp(mm)) 
     endwhere
  end do
  
- inoutarray => faceR(:,fr_ThisType)
+ inoutarray => faceR(:,fr_ThisValue)
  call linear_interpolation &
     (inoutarray, facemask, weightUp, weightDn, valueUp, valueDn)
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine interp_junction_down
+ end subroutine interp_with_junction_downstream
 !
 !========================================================================== 
 !==========================================================================
 !
- subroutine interp_junction_up &
+ subroutine interp_with_junction_upstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
-     e2r_ThisType, eMr_ThisTypeDn, fr_ThisType)
+     e2r_ThisValue, eMr_ThisValueDn, fr_ThisValue)
 !
 ! interp to a face when there is a junction upstream and channel downstream
 ! Uses branch values in elemMR array.
 ! 
- character(64) :: subroutine_name = 'interp_junction_up'
+ character(64) :: subroutine_name = 'interp_with_junction_upstream'
  
  real,      target,     intent(in out)  :: faceR(:,:)
  real,                  intent(in out)  :: valueUp(:),  valueDn(:)
@@ -765,8 +737,8 @@
  
  integer,               intent(in)      :: faceI(:,:)
  
- integer,               intent(in)      :: e2r_ThisType, fr_ThisType
- integer,               intent(in)      :: eMr_ThisTypeDn(:)
+ integer,               intent(in)      :: e2r_ThisValue, fr_ThisValue
+ integer,               intent(in)      :: eMr_ThisValueDn(:)
  
  logical,               intent(in)      :: facemask(:)
    
@@ -778,21 +750,21 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
  where (facemask)
-    valueDn = elem2R(faceI(:,fi_Melem_d),e2r_ThisType) 
+    valueDn = elem2R(faceI(:,fi_Melem_d),e2r_ThisValue) 
  endwhere
  
  do mm=1,dnstream_face_per_elemM
     where ( (facemask) .and. (faceI(:,fi_branch_u) == mm) )
-        valueUp = elemMR(faceI(:,fi_Melem_u),eMr_ThisTypeDn(mm)) 
+        valueUp = elemMR(faceI(:,fi_Melem_u),eMr_ThisValueDn(mm)) 
     endwhere
  end do
  
- inoutarray => faceR(:,fr_ThisType)
+ inoutarray => faceR(:,fr_ThisValue)
  call linear_interpolation &
     (inoutarray, facemask, weightUp, weightDn, valueUp, valueDn)
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine interp_junction_up
+ end subroutine interp_with_junction_upstream
 !
 !========================================================================== 
 !==========================================================================

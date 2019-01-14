@@ -18,6 +18,7 @@
 
     !%  setting%Limiter%flowrate   
     type flowrateType
+        logical :: UseFaceVolumeTransport = .true.
         real    :: FaceVolumeTransport = 0.5 ! Fraction of usptream volume that can be transported in on time step
     endtype flowrateType
 
@@ -29,6 +30,7 @@
     
     !%  setting%Limiter%Velocity    
     type velocityType
+        logical :: UseLimitMax  = .true.
         real    :: Maximum      = 10 ! m/s
     endtype velocityType
 
@@ -74,7 +76,7 @@
 
     !%  setting%Limiter    
     type limiterType
-        type(flowrateType   :: Flowrate
+        type(flowrateType)  :: Flowrate
         type(velocityType)  :: Velocity   
         type(timescaleType) :: Timescale
     endtype limiterType

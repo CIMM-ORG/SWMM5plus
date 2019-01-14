@@ -16,10 +16,13 @@
     private
     
     public  :: utility_advance_temp_array
+    public  :: utility_average
     public  :: utility_check_allocation
     public  :: utility_check_fileopen
     public  :: utility_linear_interpolate_within_indexlist
     public  :: utility_get_datetime_stamp
+    public  :: utility_round_to_significant_digits
+    public  :: utility_scale_of_number
     public  :: utility_sign_with_ones
 
     integer :: debuglevel = 0
@@ -51,6 +54,25 @@
  utility_advance_temp_array = next_temparray+1
  
  end function utility_advance_temp_array
+!
+!========================================================================== 
+!==========================================================================
+!
+ pure real function utility_average &
+    (inarray) result(outscalar)
+!
+! computes a simple average of an array
+!
+ real,  intent(in)  :: inarray(:)    
+  
+!-------------------------------------------------------------------------- 
+
+ if (size(inarray) > 0 ) then  
+    outscalar = sum(inarray) / real(size(inarray))
+ endif
+ 
+ 
+ end function utility_average
 !
 !========================================================================== 
 !==========================================================================
@@ -226,6 +248,45 @@
  end subroutine utility_get_datetime_stamp
 !
 !========================================================================== 
+!==========================================================================
+!
+ pure elemental real function utility_round_to_significant_digits &
+    (inarray,idigits) result (outarray)
+!
+! returns the exponent scale of the largest n where 10^n < number
+!
+ real,      intent(in)    :: inarray
+ integer,   intent(in)    :: idigits
+ 
+ integer :: inscale
+  
+!-------------------------------------------------------------------------- 
+ 
+ inscale = utility_scale_of_number(inarray)
+ 
+ outarray = real(NINT(inarray / (tenR**(inscale - (idigits-1))))) &
+                * tenR**real(inscale - (idigits-1))
+
+
+ end function utility_round_to_significant_digits
+!
+!==========================================================================
+!==========================================================================
+!
+ pure elemental integer function utility_scale_of_number &
+    (inarray) result (outarray)
+!
+! returns the exponent scale of the largest n where 10^n < number
+!
+ real,      intent(in)    :: inarray
+  
+!-------------------------------------------------------------------------- 
+ 
+ outarray = floor(log10(abs(inarray)))
+
+ end function utility_scale_of_number
+!
+!==========================================================================
 !==========================================================================
 !
  pure elemental real function utility_sign_with_ones &

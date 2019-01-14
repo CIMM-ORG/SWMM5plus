@@ -125,7 +125,8 @@
 !
         call face_update &
             (elem2R, elemMR, faceR, faceI, faceYN, &
-             bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, steptime, ii)
+             bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, &
+            e2r_Volume_new, eMr_Volume_new, steptime, ii)
 
 !        print *, elem2R(1:5,e2r_Volume_new),' = after face update'
 !        print *, elem2R(1:5,e2r_Velocity_new)

@@ -19,7 +19,7 @@
     private
     
     public :: adjust_channel_velocity_limiter
-    public :: adjust_channel_junction_velocity_limit
+    public :: adjust_junction_branch_velocity_limit
     public :: adjust_face_dynamic_limits
     public :: adjust_for_zero_geometry
     public :: adjust_negative_volume_reset
@@ -55,7 +55,7 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
- if (setting%Limiter%Velocity%Maximum > 0.0) then
+ if (setting%Limiter%Velocity%UseLimitMax) then
     velocity => elemR(:,er_Velocity_new)
     
     where ( (abs(velocity) > setting%Limiter%Velocity%Maximum) .and. &
@@ -74,7 +74,7 @@
 !========================================================================== 
 !==========================================================================
 !
- subroutine adjust_channel_junction_velocity_limit &
+ subroutine adjust_junction_branch_velocity_limit &
     (elemMR, elemMI)
 ! 
 ! This handles the velocity limiter only in junction branches,   
@@ -85,7 +85,7 @@
 ! HACK - this could be cleaned up into 2 calls to a function, but be careful
 ! that we don't introduce pass-by-value.
 !
- character(64) :: subroutine_name = 'adjust_channel_junction_velocity_limit'
+ character(64) :: subroutine_name = 'adjust_junction_branch_velocity_limit'
  
  real,  target,     intent(in out)  :: elemMR(:,:)
  integer,           intent(in)      :: elemMI(:,:)
@@ -97,7 +97,7 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
- if (setting%Limiter%Velocity%Maximum > zeroR) then
+ if (setting%Limiter%Velocity%UseLimitMax) then
     do mm=1,upstream_face_per_elemM
         velocity => elemMR(:,eMr_VelocityUp(mm)) 
         flowrate => elemMR(:,eMr_FlowrateUp(mm))
@@ -127,20 +127,22 @@
  nullify(area)
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine adjust_channel_junction_velocity_limit
+ end subroutine adjust_junction_branch_velocity_limit
 !
 !========================================================================== 
 !==========================================================================
 !
  subroutine adjust_face_dynamic_limits &
-    (faceR, faceI, elem2R, facemask)
+    (faceR, faceI, volumeUp, volumeDn, facemask)
 !
 ! ensures face velocity and areas are within limits
 ! 
  character(64) :: subroutine_name = 'adjust_face_dynamic_limits'
  
  real,                  intent(in out)  :: faceR(:,:)
- real,                  intent(in)      :: elem2R(:,:)
+ ! note, requires that elemR be provided separately for upstream and downstream
+ ! these can be the samy arrays (e.g. in the case of elem2R for channel-channel)
+ real,                  intent(in)      :: volumeUp(:), volumeDn(:)
  integer,   target,     intent(in)      :: faceI(:,:)
  logical,               intent(in)      :: facemask(:)
  
@@ -150,51 +152,52 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
-! Limit the 
- volFrac => setting%Limiter%flowrate%FaceVolumeTransport
- if (volFrac <= oneR) then
- 
-    !HACK ONLY DESIGNED WITH CHANNEL ELEMENTS, NOT JUNCTIONS
-    
+! Ad hoc limit the volume that can be transported out of the upstream cell. 
+ if (setting%Limiter%Flowrate%UseFaceVolumeTransport) then
+    volFrac => setting%Limiter%flowrate%FaceVolumeTransport
     eUp => faceI(:,fi_Melem_u)
     eDn => faceI(:,fi_Melem_d)
     !%   for a downstream flow, limit flux from the upstream volume
-    where ((facemask) .and. (faceR(:,fr_flowrate) * dt > volFrac * elem2R(eUp,e2r_Volume)))
-        faceR(:,fr_flowrate) =  volFrac * elem2R(eUp,e2r_Volume) / dt
+    where ((facemask) .and. (faceR(:,fr_flowrate) * dt > volFrac * volumeUp(eUp)))
+        faceR(:,fr_flowrate) =  volFrac * volumeUp(eUp) / dt
     endwhere
     
-    where ((facemask) .and. (-faceR(:,fr_flowrate) * dt > volFrac * elem2R(eDn,e2r_Volume)))
-        faceR(:,fr_flowrate) =  volFrac * elem2R(eUp,e2r_Volume) / dt
+    where ((facemask) .and. (-faceR(:,fr_flowrate) * dt > volFrac * volumeDn(eDn)))
+        faceR(:,fr_flowrate) =  volFrac * volumeDn(eDn) / dt
+    endwhere
+
+ endif
+ 
+!%  ensure face area is not smaller than zerovalue     
+ if (setting%ZeroValue%UseZeroValues) then 
+    where ((facemask) .and. (faceR(:,fr_Area_d) < setting%Zerovalue%Area))
+        faceR(:,fr_Area_d) = setting%Zerovalue%Area    
+    endwhere
+    where ((facemask) .and. (faceR(:,fr_Area_u) < setting%Zerovalue%Area))
+        faceR(:,fr_Area_u) = setting%Zerovalue%Area    
+    endwhere 
+
+    where ((facemask) .and. (faceR(:,fr_Area_d) >= setting%Zerovalue%Area))
+        faceR(:,fr_Velocity_d) = faceR(:,fr_Flowrate) / faceR(:,fr_Area_d)
+    endwhere
+    where ((facemask) .and. (faceR(:,fr_Area_u) >= setting%Zerovalue%Area))
+        faceR(:,fr_Velocity_u) = faceR(:,fr_Flowrate) / faceR(:,fr_Area_u)
     endwhere
  endif
-
-!%  ensure face area is not smaller than zerovalue     
- where ((facemask) .and. (faceR(:,fr_Area_d) < setting%Zerovalue%Area))
-    faceR(:,fr_Area_d) = setting%Zerovalue%Area    
- endwhere
- where ((facemask) .and. (faceR(:,fr_Area_u) < setting%Zerovalue%Area))
-    faceR(:,fr_Area_u) = setting%Zerovalue%Area    
- endwhere 
  
-!%  compute velocity
- where ((facemask) .and. (faceR(:,fr_Area_d) >= setting%Zerovalue%Area))
-    faceR(:,fr_Velocity_d) = faceR(:,fr_Flowrate) / faceR(:,fr_Area_d)
- endwhere
- where ((facemask) .and. (faceR(:,fr_Area_u) >= setting%Zerovalue%Area))
-    faceR(:,fr_Velocity_u) = faceR(:,fr_Flowrate) / faceR(:,fr_Area_u)
- endwhere
-
 !%  limit high velocities
- where ( (facemask) .and.  &
-         ( abs(faceR(:,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum) )
-    faceR(:,fr_Velocity_d) = sign( 0.99 * setting%Limiter%Velocity%Maximum, &
-                                   faceR(:,fr_Velocity_d) )        
- endwhere
- where ( (facemask) .and.  &
-         ( abs(faceR(:,fr_Velocity_u))  > setting%Limiter%Velocity%Maximum) )
-    faceR(:,fr_Velocity_u) = sign( 0.99 * setting%Limiter%Velocity%Maximum, &
-                                   faceR(:,fr_Velocity_u) )        
- endwhere
+ if (setting%Limiter%Velocity%UseLimitMax) then
+    where ( (facemask) .and.  &
+             ( abs(faceR(:,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum) )
+        faceR(:,fr_Velocity_d) = sign( 0.99 * setting%Limiter%Velocity%Maximum, &
+                                       faceR(:,fr_Velocity_d) )        
+    endwhere
+    where ( (facemask) .and.  &
+             ( abs(faceR(:,fr_Velocity_u))  > setting%Limiter%Velocity%Maximum) )
+        faceR(:,fr_Velocity_u) = sign( 0.99 * setting%Limiter%Velocity%Maximum, &
+                                       faceR(:,fr_Velocity_u) )        
+    endwhere
+ endif
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine adjust_face_dynamic_limits
