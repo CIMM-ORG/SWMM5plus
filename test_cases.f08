@@ -62,24 +62,24 @@
     case ('simple_channel_001')
     
         ! step controls
-        display_interval = 10000
+        display_interval = 1
         first_step = 1
-        last_step  =  500000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+        last_step  =  10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
     
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5
-        Froude       = 1.5   ! determines flowrate and slope to get Froude
-        CFL          = 0.025  ! determines dt from subdivide_length
+        Froude       = 0.25   ! determines flowrate and slope to get Froude
+        CFL          = 0.25  ! determines dt from subdivide_length
     
         ! keep these physics fixed
         breadth         = 3.0
-        depth_upstream  = 0.25
-        depth_dnstream  = 25.0
-        idepth_type     = 3  !1 = uniform, 2=linear, 3=exponential decay
+        depth_upstream  = 0.5
+        depth_dnstream  = 1.0
+        idepth_type     = 2  !1 = uniform, 2=linear, 3=exponential decay
         ManningsN       = 0.03
         total_length    = 10000.0   
         lowerZ          = 1.0
-        subdivide_length = 250.0            
+        subdivide_length = 500.0            
 
         call froude_driven_setup &
             (area, flowrate, velocity, upperZ, &
