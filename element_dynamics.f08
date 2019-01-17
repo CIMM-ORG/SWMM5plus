@@ -11,6 +11,7 @@
     use bc
     use data_keys
     use globals
+    use junction
     use setting_definition
     use utility
     
@@ -43,9 +44,10 @@
  logical,   target,     intent(in out)  ::  elem2YN(:,:), elemMYN(:,:)
  type(bcType),          intent(in out)  ::  bcdataDn(:),  bcdataUp(:)
  real,                  intent(in)      ::  thisTime
- integer,               intent(in)      ::  e2r_Velocity_new, eMr_Velocity_new
- integer,               intent(in)      ::  e2r_Volume_new,   eMr_Volume_new
- 
+ integer,               intent(in)      ::  e2r_Velocity_new, e2r_Volume_new
+ integer,               intent(in)      ::  eMr_Velocity_new, eMr_Volume_new
+
+  
  logical,   pointer :: isadhocflowrate(:) 
  integer            :: idx
     
@@ -87,13 +89,17 @@
 
 !% compute the timescales up and down
  call element_timescale &
-    (elem2R, elem2I, elemMR, elemMI, bcdataDn, bcdataUp, e2r_Velocity_new)   
- 
+    (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, bcdataDn, bcdataUp, &
+     e2r_Velocity_new)
+     
+     
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine element_dynamics_update
 !
 !========================================================================== 
+!
 ! PRIVATE BELOW HERE
+!
 !========================================================================== 
 !
  subroutine element_flowrate_update &
@@ -139,40 +145,24 @@
 
 !%  get the total outflow branch areas
  totalarea = zeroR ! ensure temporary array is zero
- call sum_junction_areas_by_direction &
+ 
+ call junction_branch_sum_areas_by_direction &
     (eMR_totalarea, &
      dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
      upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
      elemMR, elemMI, faceR)
      
-!%  distribute flow proportionally among outflows     
- call flowrates_in_junction_by_area &
+!%  distribute flow proportionally among outflows   
+ call junction_branch_velocity_and_flowrate_proportional_to_area &
     (eMR_totalarea, eMR_Flowrate, &
      dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
      eMr_FlowrateDn, eMr_VelocityDn, &
      upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
      eMr_FlowrateUp, eMr_VelocityUp, &
-     elemMR, elemMI, faceR)    
-     
-!%  get the total branch inflow areas 
- totalarea = zeroR  
- call sum_junction_areas_by_direction &
-    (eMR_totalarea, &
-     upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
-     dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
-     elemMR, elemMI, faceR)    
-     
-!%  distribute flow proportionally among inflows 
- call flowrates_in_junction_by_area &
-    (eMR_totalarea, eMR_Flowrate, &
-     upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
-     eMr_FlowrateUp, eMr_VelocityUp, &
-     dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
-     eMr_FlowrateDn, eMr_VelocityDn, &
      elemMR, elemMI, faceR)    
 
 !%  enforce maximum velocities in junction branches
- call adjust_channel_junction_velocity_limit (elemMR, elemMI)
+ call adjust_junction_branch_velocity_limit (elemMR, elemMI)
 
 !%  release the temp array
  totalarea = nullvalueR
@@ -214,148 +204,6 @@
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine flowrate_from_velocity
-!
-!========================================================================== 
-!==========================================================================
-!
- subroutine sum_junction_areas_by_direction &
-    (eMR_totalarea, &
-     this_face_per_element, eMr_AreaThis, eMi_MfaceThis, eMi_nfaces_This, &
-     rdir_face_per_element, eMr_AreaRdir, eMi_MfaceRdir, eMi_nfaces_Rdir, &
-     elemMR, elemMI, faceR)
-!
-! Sum of the areas in each branch of a junction for outflows or inflows
-! Called for outflow areas with this = downstream, and rdir = upstream
-! Called for inflow  areas with this = upstream    and rdir = downstream
-!
-! HACK- This could be cleaned up with two calls to a separate function, 
-! but we have to be careful that we don'tend up introducing a pass-by-value
-! into the function.
-! 
- character(64) :: subroutine_name = 'sum_junction_areas_by_direction'
- 
- integer, intent(in) :: eMR_totalarea
- integer, intent(in) :: this_face_per_element, rdir_face_per_element
- 
- integer, intent(in) :: eMr_AreaThis(:), eMi_MfaceThis(:)
- integer, intent(in) :: eMr_AreaRdir(:), eMi_MfaceRdir(:)  
- integer, intent(in) :: eMi_nfaces_This, eMi_nfaces_Rdir
- 
- real,      target, intent(in out)  :: elemMR(:,:)
- real,              intent(in)      :: faceR(:,:)
- integer,   target, intent(in)      :: elemMI(:,:)
- 
- real,      pointer :: area(:), totalarea(:)
- integer,   pointer :: fThis(:), fRdir(:)
- 
- integer :: mm
- 
-!-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
- 
- totalarea => elemMR(:,eMR_totalarea)
- 
-!%  get the outflow area for downstream branches (or inflow area for upstream)
- do mm=1,this_face_per_element
-    area  => elemMR(:,eMr_AreaThis(mm))
-    fThis => elemMI(:,eMi_MfaceThis(mm))
-    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
-            (elemMI(:,eMi_nfaces_This) >= mm) .and. &
-            (faceR(fThis,fr_Flowrate) > 0.0) )
-        totalarea= totalarea + area
-    endwhere
- enddo 
- 
-!%  add the area for any reversing upstream branches (or reversing downstream)
- do mm=1,rdir_face_per_element
-    area  => elemMR(:,eMr_AreaRdir(mm))
-    fRdir => elemMI(:,eMi_MfaceRdir(mm))
-    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
-            (elemMI(:,eMi_nfaces_Rdir) >= mm) .and. &
-            (faceR(fRdir,fr_Flowrate) < 0.0) )
-        totalarea = totalarea + area
-    endwhere
- enddo 
- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine sum_junction_areas_by_direction
-!
-!========================================================================== 
-!==========================================================================
-!
- subroutine flowrates_in_junction_by_area &
-    (eMR_totalarea, eMR_totalflowrate, &
-     this_face_per_elem, eMr_AreaThis, eMi_MfaceThis, eMi_nfaces_This, &
-     eMr_FlowrateThis, eMr_VelocityThis, &
-     rdir_face_per_elem, eMr_AreaRdir, eMi_MfaceRdir, eMi_nfaces_Rdir, &
-     eMr_FlowrateRdir, eMr_VelocityRdir, &
-     elemMR, elemMI, faceR)
-!
-! Flowrates in each branch of a junction
-! Total flowrate is distributed proportionally over the areas
-!
-! HACK - this can be cleaned up with 2 calls to a function, but we have to be
-! careful that we don't introduce pass-by-value in the call
-! 
- character(64) :: subroutine_name = 'flowrates_in_junction_by_area'
- 
- integer, intent(in) :: eMi_nfaces_This,     eMi_nfaces_Rdir 
- integer, intent(in) :: eMR_totalarea,       eMR_totalflowrate
- integer, intent(in) :: this_face_per_elem,  rdir_face_per_elem
-
- integer, intent(in) :: eMr_AreaThis(:),     eMi_MfaceThis(:)
- integer, intent(in) :: eMr_AreaRdir(:),     eMi_MfaceRdir(:)  
- integer, intent(in) :: eMr_FlowrateThis(:), eMr_FlowrateRdir(:)
- integer, intent(in) :: eMr_VelocityThis(:), eMr_VelocityRdir(:)
- 
- real,      target, intent(in out)  :: elemMR(:,:)
- real,              intent(in)      :: faceR(:,:)
- integer,   target, intent(in)      :: elemMI(:,:)
- 
- real,      pointer :: area(:), totalarea(:), totalflowrate(:)
- real,      pointer :: flowrate(:), velocity(:)
- integer,   pointer :: fThis(:), fRdir(:)
- 
- integer :: mm
-   
-!-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
- 
- totalarea     => elemMR(:,eMR_totalarea) 
- totalflowrate => elemMR(:,eMR_totalflowrate)
- 
-!%  distribute flow proportionally over the downstream outflow branches
-!%  or opposite call for the upstream inflow branches
- do mm=1,this_face_per_elem
-    area     => elemMR(:, eMr_AreaThis(mm))
-    flowrate => elemMR(:, eMr_FlowrateThis(mm))
-    velocity => elemMR(:, eMr_VelocityThis(mm))        
-    fThis    => elemMI(:, eMi_MfaceThis(mm))
-    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
-            (elemMI(:,eMi_nfaces_This) >= mm) .and. &
-            (faceR(fThis,fr_Flowrate) > 0.0) )
-        flowrate = totalflowrate * area / totalarea     
-        velocity = flowrate / area
-    endwhere
- enddo
- 
-!%  distribute flow proportionally over the upstream outflow branches
-!%  or opposite call for downstream inflow branches
- do mm=1,rdir_face_per_elem
-    area     => elemMR(:, eMr_AreaRdir(mm))
-    flowrate => elemMR(:, eMr_FlowrateRdir(mm))
-    velocity => elemMR(:, eMr_VelocityRdir(mm))        
-    fRdir    => elemMI(:, eMi_MfaceRdir(mm))
-    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
-            (elemMI(:,eMi_nfaces_Rdir) >= mm) .and. &
-            (faceR(fRdir,fr_Flowrate) < 0.0) )
-        flowrate = -totalflowrate * area / totalarea     
-        velocity =  flowrate / area
-    endwhere
- enddo
-      
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine flowrates_in_junction_by_area
 !
 !========================================================================== 
 !==========================================================================
@@ -574,7 +422,8 @@
 !========================================================================== 
 !
  subroutine element_timescale &
-    (elem2R, elem2I, elemMR, elemMI, bcdataDn, bcdataUp, e2r_Velocity_new)
+    (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, bcdataDn, bcdataUp, &
+     e2r_Velocity_new)
 !
 ! timescale of channel and junction elements  
 ! Computed using new velocity for channel elements
@@ -582,24 +431,22 @@
 !  
  character(64) :: subroutine_name = 'element_timescale'
  
- real,      target, intent(in out)  :: elem2R(:,:), elemMR(:,:)
- integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:)
+ real,              intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+ integer,           intent(in)      :: elem2I(:,:),  elemMI(:,:)
+ logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
  type(bcType),      intent(in)      :: bcdataDn(:), bcdataUp(:)
  integer,           intent(in)      :: e2r_Velocity_new 
- 
- integer,   dimension(2)    :: indx
- 
- integer    :: mm
- 
- real,  pointer ::  wavespeed(:), length(:)
- real,  pointer ::  tscale(:), tscale_up(:), tscale_dn(:)
+
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
- call timescale_value_channel (elem2R, elem2I, e2r_Velocity_new)
+ call timescale_value_channel (elem2R, elem2I, elem2YN, e2r_Velocity_new)
     
- call timescale_value_junction (elemMR, elemMI)
+! note that timescales are stored on branches only for a junction and the data
+! in branch flowrate and velocities have already been updated in place, so
+! no need to use a eMr..new index
+ call timescale_value_junction (elemMR, elemMI, elemMYN)
  
  call bc_timescale_value (elem2R, bcdataDn)
 
@@ -612,22 +459,32 @@
 !==========================================================================
 !
  subroutine timescale_value_channel &
-    (elem2R, elem2I, e2r_Velocity_new)
+    (elem2R, elem2I, elem2YN, e2r_Velocity_new)
  
  character(64) :: subroutine_name = 'timescale_value_channel'
     
  integer,           intent(in)      :: e2r_Velocity_new   
  
- real,  target,     intent(in out)  :: elem2R(:,:)
+ real,      target, intent(in out)  :: elem2R(:,:)
  integer,           intent(in)      :: elem2I(:,:)
+ logical,   target, intent(in out)  :: elem2YN(:,:)
  
- integer    ::  indx(2)
+ integer    ::  indx(2), maskindx1, maskindx2
  
- real,  pointer :: wavespeed(:), tscale_up(:), tscale_dn(:), velocity(:)
- real,  pointer :: length(:)
+ real,      pointer :: wavespeed(:), tscale_up(:), tscale_dn(:), velocity(:)
+ real,      pointer :: length(:)
+ logical,   pointer :: maskarray1(:), maskarray2(:)
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+
+ maskindx1 = e2YN_Temp(next_e2YN_temparray) 
+ maskarray1 => elem2YN(:,maskindx1)
+ next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
+
+ maskindx2 = e2YN_Temp(next_e2YN_temparray) 
+ maskarray2 => elem2YN(:,maskindx2)
+ next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
  
  wavespeed => elem2R(:,e2r_Temp(next_e2r_temparray))
  next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
@@ -638,9 +495,11 @@
  tscale_dn => elem2R(:,e2r_Timescale_d)
  velocity  => elem2R(:,e2r_Velocity_new)
  length    => elem2R(:,e2r_Length)
+
+ maskarray1 = (elem2I(:,e2i_elem_type) == eChannel)
  
 !%  compute timescale 
- where (elem2I(:,e2i_elem_type) == eChannel) 
+ where (maskarray1) 
     wavespeed = sqrt( grav * elem2R(:,e2r_HydDepth ))
     tscale_up = - onehalfR * length / (velocity - wavespeed)
     tscale_dn = + onehalfR * length / (velocity + wavespeed)
@@ -650,11 +509,14 @@
  indx(1) = e2r_Timescale_u
  indx(2) = e2r_Timescale_d
  call timescale_limiter &
-    (elem2R, elem2I, indx, e2i_elem_type, eChannel )
+    (elem2R, elem2I, elem2YN, indx, maskindx1, maskindx2)
  
  wavespeed = nullvalueR
- nullify(wavespeed)
+ maskarray1 = nullvalueL
+ maskarray2 = nullvalueL
+ nullify(wavespeed, maskarray1, maskarray2)
  next_e2r_temparray = next_e2r_temparray-1
+ next_e2YN_temparray=next_e2YN_temparray-2
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine timescale_value_channel
@@ -663,21 +525,23 @@
 !==========================================================================
 !
  subroutine timescale_value_junction &
-    (elemMR, elemMI)
+    (elemMR, elemMI, elemMYN)
  
  character(64) :: subroutine_name = 'timescale_value_junction'
  
  real,  target,     intent(in out)  :: elemMR(:,:)
  integer,           intent(in)      :: elemMI(:,:)
+ logical,           intent(in out)  :: elemMYN(:,:)
  
  real,  pointer ::  wavespeed(:), length(:), velocity(:), tscale(:)
     
- integer :: mm
+ integer :: eMr_waveindx
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
- wavespeed => elemMR(:,eMr_Temp(next_eMr_temparray))
+ eMr_waveindx = eMr_Temp(next_eMr_temparray)
+ wavespeed => elemMR(:,eMr_waveindx)
  next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
  
  wavespeed = zeroR
@@ -686,32 +550,22 @@
  where (elemMI(:,eMi_elem_type) == eJunctionChannel) 
     wavespeed = sqrt( grav * elemMR(:,eMr_HydDepth ))
  endwhere
+
+!% compute timescale for junction in each direction.
+ call timescale_junction_one_direction &
+    (elemMR, elemMI, upstream_face_per_elemM, eMi_nfaces_u, &
+     eMr_LengthUp, eMr_VelocityUp, eMr_TimescaleUp, eMr_waveindx, .true.)
  
-!%  timescale on upstream faces 
- do mm=1,upstream_face_per_elemM
-    length   => elemMR(:,eMr_LengthUp(mm))
-    velocity => elemMR(:,eMr_VelocityUp(mm))
-    tscale   => elemMR(:,eMr_TimescaleUp(mm))
-    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
-            (elemMI(:,eMi_nfaces_u)  >= mm) )
-        tscale = - length / (velocity - wavespeed)    
-    endwhere
- end do
- 
-!%  timescale on downstream faces 
- do mm=1,dnstream_face_per_elemM
-    length   => elemMR(:,eMr_LengthDn(mm))
-    velocity => elemMR(:,eMr_VelocityDn(mm))
-    tscale   => elemMR(:,eMr_TimescaleDn(mm))
-    where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
-            (elemMI(:,eMi_nfaces_d)  >= mm) )
-        tscale = + length / (velocity + wavespeed)    
-    endwhere
- end do
+ call timescale_junction_one_direction &
+    (elemMR, elemMI, dnstream_face_per_elemM, eMi_nfaces_d, &
+     eMr_LengthDn, eMr_VelocityDn, eMr_TimescaleDn, eMr_waveindx, .false.)
 
 !%  apply limiters for negative, large, and small values 
- call timescale_limiter &
-    (elemMR, elemMI, eMr_TimescaleAll, eMi_elem_type, eJunctionChannel )
+ call timescale_limit_junction_one_direction &
+    (elemMR, elemMI, elemMYN, upstream_face_per_elemM, eMI_nfaces_u, eMr_TimescaleUp)
+
+ call timescale_limit_junction_one_direction &
+    (elemMR, elemMI, elemMYN, dnstream_face_per_elemM, eMI_nfaces_d, eMr_TimescaleDn)
  
  wavespeed = nullvalueR
  nullify(wavespeed)
@@ -723,47 +577,138 @@
 !========================================================================== 
 !==========================================================================
 !
+ subroutine timescale_junction_one_direction &
+    (elemMR, elemMI, dir_face_per_elemM, eMi_nfaces_dir, &
+     eMr_LengthDir, eMr_VelocityDir, eMr_TimescaleDir, eMr_waveindx, isUp)
+     
+ character(64) :: subroutine_name = 'timescale_junction_one_direction'
+ 
+ real,      target, intent(in out)  :: elemMR(:,:)
+ integer,           intent(in)      :: elemMI(:,:)
+ integer,           intent(in)      :: eMr_LengthDir(:), eMr_VelocityDir(:), eMr_TimescaleDir(:)
+ integer,           intent(in)      :: dir_face_per_elemM, eMi_nfaces_dir, eMr_waveindx
+ logical,           intent(in)      :: isUp
+  
+ real,  pointer :: length(:), velocity(:), tscale(:), wavespeed(:) 
+ integer :: mm 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ wavespeed => elemMR(:,eMr_waveindx)
+ 
+ do mm=1,dir_face_per_elemM
+    length   => elemMR(:,eMr_LengthDir(mm))
+    velocity => elemMR(:,eMr_VelocityDir(mm))
+    tscale   => elemMR(:,eMr_TimescaleDir(mm))
+    if (isUp) then
+        where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+                (elemMI(:,eMi_nfaces_dir)  >= mm) )
+            tscale = - length / (velocity - wavespeed)    
+        endwhere
+    else
+        where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+                (elemMI(:,eMi_nfaces_dir)  >= mm) )
+            tscale = + length / (velocity + wavespeed)    
+        endwhere
+    endif
+ end do
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine timescale_junction_one_direction
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine timescale_limit_junction_one_direction &
+    (elemMR, elemMI, elemMYN, dir_face_per_elemM, eMi_nfaces_dir, eMr_TimescaleDir)
+ 
+ character(64) :: subroutine_name = 'timescale_limit_junction_one_direction'
+ 
+ real,              intent(in out)  :: elemMR(:,:)
+ integer,           intent(in)      :: elemMI(:,:)
+ logical,   target, intent(in out)  :: elemMYN(:,:)
+ integer,           intent(in)      :: dir_face_per_elemM, eMi_nfaces_dir
+ integer,           intent(in)      :: eMr_TimescaleDir(:)
+ 
+ 
+ logical,   pointer    :: maskarray1(:), maskarray2(:)
+ integer               :: mm, maskindx1, maskindx2
+ integer, dimension(1) :: indx
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ maskindx1  = eMYN_Temp(next_eMYN_temparray)
+ maskarray1 => elemMYN(:,maskindx1)
+ next_eMYN_temparray = utility_advance_temp_array(next_eMYN_temparray,eMYN_n_temp)
+
+ maskindx2  = eMYN_Temp(next_eMYN_temparray)
+ maskarray2 => elemMYN(:,maskindx2)
+ next_eMYN_temparray = utility_advance_temp_array(next_eMYN_temparray,eMYN_n_temp)
+ 
+ maskarray1 = nullvalueL
+ maskarray2 = nullvalueL
+
+ do mm=1,dir_face_per_elemM
+    indx(1) = eMr_TimescaleDir(mm)
+    maskarray1 = ((elemMI(:,eMi_nfaces_dir) >= mm) .and. &
+                  (elemMI(:,eMi_elem_type) == eJunctionChannel) )
+    call timescale_limiter &
+        (elemMR, elemMI, elemMYN, indx, maskindx1, maskindx2)
+ end do
+ 
+ maskarray1 = nullvalueL
+ maskarray2 = nullvalueL
+ nullify(maskarray1, maskarray2)
+ next_eMYN_temparray = next_eMYN_temparray-2
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine timescale_limit_junction_one_direction
+!
+!========================================================================== 
+!==========================================================================
+!
  subroutine timescale_limiter &
-    (elemR, elemI, indx, ei_elem_type, elemType )
+    (elemR, elemI, elemYN, indx, maskindx1, maskindx2 )
 !
 ! limits the timescales to prevent negatives, small values, or large values
 ! 
  character(64) :: subroutine_name = 'timescale_limiter'
  
- real,  target,     intent(in out)  :: elemR(:,:)
+ real,      target, intent(in out)  :: elemR(:,:)
  integer,           intent(in)      :: elemI(:,:)
+ logical,   target, intent(in out)  :: elemYN(:,:)
  integer,           intent(in)      :: indx(:)
- integer,           intent(in)      :: ei_elem_type, elemType
+ integer,           intent(in)      :: maskindx1, maskindx2
  
- real,  pointer :: tscale(:)
- integer        :: mm
+ real,      pointer :: tscale(:)
+ logical,   pointer :: maskarray1(:), maskarray2(:)
+ integer            :: mm
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ maskarray1 => elemYN(:,maskindx1)
+ maskarray2 => elemYN(:,maskindx2)
  
  do mm=1,size(indx)
  
     tscale => elemR(:,indx(mm))    
  
     !%  ensure negative time scales are stored as large values
+    maskarray2 = (maskarray1 .and. ( tscale < 0.0 ))
     call apply_limiter_with_mask &
-        (tscale, &
-        ((elemI(:,ei_elem_type) == elemType).and.( tscale < 0.0 )), &
-        setting%Limiter%Timescale%Maximum)
+        (tscale, maskarray2, setting%Limiter%Timescale%Maximum)
         
     !%  ensure small time scales are not below the minimum
+    maskarray2 = (maskarray1 .and. (tscale < setting%Limiter%Timescale%Minimum))
     call apply_limiter_with_mask &
-        (tscale, &
-        ( (elemI(:,ei_elem_type) == elemType).and. &
-          ( tscale < setting%Limiter%Timescale%Minimum ) ), &
-         setting%Limiter%Timescale%Minimum)
+        ( tscale, maskarray2, setting%Limiter%Timescale%Minimum)
          
     !%  ensure large time scales are not above the maximum
+    maskarray2 = (maskarray1 .and. (tscale > setting%Limiter%Timescale%Maximum))
     call apply_limiter_with_mask &
-        (tscale, &
-        ( (elemI(:,ei_elem_type) == elemType).and.&
-          ( tscale > setting%Limiter%Timescale%Maximum ) ), &
-         setting%Limiter%Timescale%Maximum)
+        (tscale,  maskarray2, setting%Limiter%Timescale%Maximum)
  enddo
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

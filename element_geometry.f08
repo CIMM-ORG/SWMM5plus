@@ -94,8 +94,8 @@
 !==========================================================================
 !
  subroutine rectangular_geometry_update &
-    (elem2R, elem2I, eTr_Volume2, &
-     elemMR, elemMI, eTr_VolumeM )
+    (elem2R, elem2I, e2r_Volume_new, &
+     elemMR, elemMI, eMr_Volume_new )
 !
 ! Note that volume used is in a eTr storage location so that the update
 ! can be used on a temporary volume
@@ -105,7 +105,7 @@
  real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
  integer,   intent(in)      :: elem2I(:,:), elemMI(:,:)
 
- integer,   intent(in)      :: eTr_Volume2, eTr_VolumeM 
+ integer,   intent(in)      :: e2r_Volume_new, eMr_Volume_new 
 
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -117,14 +117,14 @@
     (elem2R, elem2I, &
      e2i_geometry, e2i_elem_type, eChannel,  &
      e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Area, e2r_Eta, &
-     e2r_Perimeter, e2r_HydDepth, e2r_HydRadius, eTr_Volume2)
+     e2r_Perimeter, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new)
 
 !%  rectangular geomety for junctions
  call rectangular_channel_or_junction &
     (elemMR, elemMI, &
      eMi_geometry, eMi_elem_type, eJunctionChannel,  &
      eMr_Length, eMr_Zbottom, eMr_BreadthScale, eMr_Area, eMr_Eta, &
-     eMr_Perimeter, eMr_HydDepth, eMr_HydRadius, eTr_VolumeM)
+     eMr_Perimeter, eMr_HydDepth, eMr_HydRadius, eMr_Volume_new)
      
 !%  geometry for junction branches (area only - updated from eta)  
 !%  upstream branches 

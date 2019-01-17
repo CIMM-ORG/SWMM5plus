@@ -78,10 +78,11 @@
 !%  hard-code setting for test cases
 
  setting%TestCase%UseTestCase = .true.
- setting%TestCase%TestName = 'simple_channel_001'
+ !setting%TestCase%TestName = 'simple_channel_001'
+ setting%TestCase%TestName = 'y_channel_002'
 
 !%  hard-code for debug output 
- !setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
+ setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
  
  setting%Debugout%SuppressTimeStep  = .true. ! use the next 3 to suppress headers
  setting%Debugout%SuppressTimeValue = .true. ! which can make debug files easier
@@ -110,6 +111,8 @@
     stop
  end if
 
+
+
 !% create the network of elements from link and node data   
  call network_initiation &
     (linkI, linkR, linkYN, linkName, &
@@ -118,13 +121,15 @@
      elemMR, elemMI, elemMYN, elemMName, &
      faceR,  faceI,  faceYN,  faceName)
 
+
+
 !% check the boundary condition data arrays are correctly defined 
  call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI ) 
 
 !% set the initial conditions throughout 
  call initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-     linkR, linkI, bcdataDn, bcdataUp, setting%Time%StartTime) 
+     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime) 
          
 
 !print *, 'in main'

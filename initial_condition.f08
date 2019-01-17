@@ -18,6 +18,7 @@
     use globals
     use junction
     use setting_definition
+    use utility
     
     implicit none
     
@@ -34,7 +35,7 @@
 !
  subroutine initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-     linkR, linkI, bcdataDn, bcdataUp, thisTime)
+     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, thisTime)
  
  character(64) :: subroutine_name = 'initial_condition_setup'
  
@@ -42,8 +43,8 @@
  integer,   intent(in out)  :: elem2I(:,:),  elemMI(:,:), faceI(:,:)
  logical,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
- real,                intent(in)      :: linkR(:,:)
- integer,   target,   intent(in)      :: linkI(:,:)
+ real,                intent(in)      :: linkR(:,:), nodeR(:,:)
+ integer,   target,   intent(in)      :: linkI(:,:), nodeI(:,:)
  real,                intent(in)      :: thisTime
  
  type(bcType),        intent(in out)      :: bcdataDn(:), bcdataUp(:)  
@@ -57,6 +58,9 @@
  !% get data that can be extracted from links
  call initial_conditions_from_linkdata &
     (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
+    
+ call initial_junction_conditions &
+    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)    
 
  !% set the bc elements (outside of face) to null values
  call bc_nullify_ghost_elem (elem2R, bcdataDn)
@@ -75,10 +79,8 @@
        
  call face_update &
     (elem2R, elemMR, faceR, faceI, faceYN, &
-     bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, thisTime, 0)
-
- !% geometry based on branches
- call junction_geometry_from_branches (elemMR, elemMI)
+     bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity,  &
+     e2r_Volume, eMr_Volume, thisTime, 0)
  
  !% set the element-specific smallvolume value
  !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
@@ -239,20 +241,86 @@
         
         !print *, elem2R(:,e2r_HydDepth)
         !stop
-        
-
-    
 
  enddo
  
+ !print *, elem2R(:,e2r_Flowrate)
+ !print *, trim(subroutine_name)
+ !stop
 
- if (N_elemM > 0) then
-    print *, 'error: need initial condition setup for junctions  in ',subroutine_name
-    stop
- end if
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine initial_conditions_from_linkdata
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine initial_junction_conditions &
+    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
+ 
+ character(64) :: subroutine_name = 'initial_junction_conditions'
+ 
+ real,              intent(in out)  :: elemMR(:,:)
+ real,      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
+ integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:), nodeI(:,:), faceI(:,:)
+ 
+ integer,   pointer :: tface, telem
+ 
+ real   :: upvalue(upstream_face_per_elemM), dnvalue(dnstream_face_per_elemM)
+  
+ integer :: ii, mm 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ if (N_elemM > 0) then
+    !% initialize the free surface from the average of the adjacent elements
+    call junction_adjacent_element_average &
+        (elem2R, elemMR, elemMI, faceI, e2r_Eta, eMr_Eta)
+        
+    !% initialize the branch areas to the values of the adjacent elements
+    call junction_adjacent_element_values_to_branches &
+        (elem2R, elemMR, elemMI, faceI, e2r_Area, eMr_AreaUp, eMr_AreaDn) 
+        
+    !% initialize the branch flowrates to the values of the adjacent elements
+    call junction_adjacent_element_values_to_branches &
+        (elem2R, elemMR, elemMI, faceI, e2r_Flowrate, eMr_FlowrateUp, eMr_FlowrateDn) 
+        
+    !% initialize element momentum to the average of the net upstream and downstrea
+    !% fluxes
+    call junction_branch_average_of_inflows_and_outflows (elemMR, elemMI)  
+    
+    !% here we assume the branch and junction topwidths are already initialized
+    !% in a prior call to junction_geometry_setup    
+    !print *, elemMR(:,eMr_Topwidth)
+    !print *, elemMR(:,eMr_TopwidthAll)
+    
+    where (elemMI(:,eMi_elem_type) == eJunctionChannel)
+        elemMR(:,eMr_HydDepth) = elemMR(:,eMr_Eta) - elemMR(:,eMr_Zbottom)
+    endwhere
+    
+    ! HACK -- need other geometry types
+    
+    where ((elemMI(:,eMi_geometry) == eRectangular) .and. &
+           (elemMI(:,eMi_elem_type) == eJunctionChannel))
+        elemMR(:,eMr_Area)      = elemMR(:,eMr_HydDepth) * elemMR(:,eMr_Topwidth)
+        elemMR(:,eMr_Volume)    = elemMR(:,eMr_Area)     * elemMR(:,eMr_Length)
+        elemMR(:,eMr_Perimeter) = elemMR(:,eMr_Breadthscale) + twoR * elemMR(:,eMr_HydDepth)
+        elemMR(:,eMr_HydRadius) = elemMR(:,eMr_Area) / elemMR(:,eMr_Perimeter)
+    endwhere
+    
+    !% velocities
+    call junction_branch_velocities (elemMR, elemMI)
+    
+    where ((elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+           (elemMr(:,eMr_Area) > zeroR))
+        elemMR(:,eMr_Velocity) = elemMR(:,eMr_Flowrate) / elemMR(:,eMr_Area)
+    endwhere    
+   
+ end if
+
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine initial_junction_conditions
 !
 !========================================================================== 
 !==========================================================================

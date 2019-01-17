@@ -236,6 +236,7 @@
     eMr_LengthAll(ii)       = eMr_LengthUp(ii)
     eMr_ZbottomAll(ii)      = eMr_ZbottomUp(ii)
     eMr_BreadthScaleAll(ii) = eMr_BreadthScaleUp(ii)
+    eMi_MfaceAll(ii)        = eMi_MfaceUp(ii)
  end do
  
  do ii=1,dnstream_face_per_elemM   
@@ -248,7 +249,8 @@
     eMr_LengthAll(kk)       = eMr_LengthDn(ii)
     eMr_ZbottomAll(kk)      = eMr_ZbottomDn(ii)
     eMr_BreadthScaleAll(kk) = eMr_BreadthScaleDn(ii)
- end do 
+    eMi_MfaceAll(kk)        = eMi_MfaceDn(ii)
+end do 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name 
  end subroutine initialize_arrayindex
