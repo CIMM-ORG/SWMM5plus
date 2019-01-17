@@ -28,15 +28,16 @@ SOURCESF="  setting_definition.f08 \
         allocate_storage.f08\
         bc.f08\
         case_simple_channel.f08\
+        case_y_channel.f08\
         checking.f08\
         debug.f08\
         diagnostic.f08\
+        junction.f08\
         element_dynamics.f08\
         element_geometry.f08\
         face_values.f08\
         explicit_euler.f08\
         friction_model.f08\
-        junction.f08\
         initial_condition.f08\
         initialization.f08\
         link_node.f08\
