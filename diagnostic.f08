@@ -11,11 +11,10 @@
     use data_keys
     use globals
     use setting_definition
+    use type_definitions
     use utility
 
     implicit none
-    
-    public :: diagnosticType
     
     public :: diagnostic_CFL
     public :: diagnostic_initialize
@@ -24,24 +23,6 @@
     public :: diagnostic_froude_number
     public :: diagnostic_volume_conservation
 
-    
-    !%  diagnostic%Volume
-    type diagnosticVolumeType
-        integer  :: Step
-        real     :: Time
-        real     :: Volume
-        real     :: VolumeChange
-        real     :: NetInflowVolume
-        real     :: InflowRate
-        real     :: OutflowRate
-        real     :: ConservationThisStep ! + is artificial source, - is sink
-        real     :: ConservationTotal
-    end type diagnosticVolumeType
-    
-    type diagnosticType
-        type(diagnosticVolumeType)  :: Volume
-    end type diagnosticType
-    
     private
 
     integer :: debuglevel = 0
@@ -80,15 +61,17 @@
 !==========================================================================
 !
  subroutine diagnostic_element_volume_conservation_fluxes &
-    (elem2R, elem2I, faceR)
+    (elem2R, elem2I, elemMR, elemMI, faceR)
  
  character(64) :: subroutine_name = 'diagnostic_element_volume_conservation_fluxes'
  
- real,              intent(in out)  :: elem2R(:,:)
+ real,              intent(in out)  :: elem2R(:,:), elemMR(:,:)
  real,              intent(in)      :: faceR(:,:)
- integer, target,   intent(in)      :: elem2I(:,:)
+ integer, target,   intent(in)      :: elem2I(:,:), elemMI(:,:)
  
  integer,   pointer :: fup(:), fdn(:)
+ 
+ integer :: mm
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
@@ -96,10 +79,28 @@
  fup => elem2I(:,e2i_Mface_u)
  fdn => elem2I(:,e2i_Mface_d)
  where (elem2I(:,e2i_elem_type) == eChannel)
-    elem2R(:,e2r_VolumeConservation) = dt * (faceR(fup,fr_Flowrate) - faceR(fdn,fr_Flowrate) )
+    elem2R(:,e2r_VolumeConservation) = - dt * (faceR(fup,fr_Flowrate) - faceR(fdn,fr_Flowrate) )
  endwhere 
  
-! HACK - NEED TO WRITE CONSERVATION FOR JUNCTIONS WITH MULTIPLE FACES 
+ where ( elemMR(:,eMi_elem_type) == eJunctionChannel )
+    elemMR(:,eMr_VolumeConservation) = zeroR
+ endwhere
+ 
+ do mm=1,upstream_face_per_elemM
+    fup => elemMI(:,eMi_MfaceUp(mm))
+    where ( (elemMR(:,eMi_elem_type) == eJunctionChannel) .and. &
+            (elemMR(:,eMi_nfaces_u) >= mm) )
+        elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) - dt * faceR(fup,fr_flowrate)
+    endwhere
+ enddo
+ 
+ do mm=1,dnstream_face_per_elemM
+    fdn => elemMI(:,eMi_MfaceDn(mm))
+    where ( (elemMR(:,eMi_elem_type) == eJunctionChannel) .and. &
+            (elemMR(:,eMi_nfaces_d) >= mm) )
+        elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) + dt * faceR(fdn,fr_flowrate)
+    endwhere
+ enddo 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine diagnostic_element_volume_conservation_fluxes
@@ -126,14 +127,18 @@
 
  where (elem2I(:,e2i_elem_type) == eChannel)
     elem2R(:,e2r_VolumeConservation) = elem2R(:,e2r_VolumeConservation) &
-         - (elem2R(:,e2r_Volume_new) - elem2R(:,e2r_Volume))
+         + (elem2R(:,e2r_Volume_new) - elem2R(:,e2r_Volume))
  endwhere         
- 
+    
 
  where (elemMI(:,eMi_elem_type) == eJunctionChannel)
     elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) &
-         - (elemMR(:,eMr_Volume_new) - elemMR(:,eMr_Volume))
+         + (elemMR(:,eMr_Volume_new) - elemMR(:,eMr_Volume))
  endwhere   
+
+! print *, trim(subroutine_name)
+! print *, elem2R(:,e2r_VolumeConservation) 
+! print *, elemMR(:,eMr_VolumeConservation)
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine diagnostic_element_volume_conservation
@@ -170,7 +175,7 @@
  
  character(64) :: subroutine_name = 'diagnostic_initialize'
  
- type(diagnosticType), allocatable,    dimension(:)    :: diagnostic
+ type(diagnosticType), allocatable,    dimension(:), intent(out)    :: diagnostic
  
  real,                  intent(in out)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
  integer,   target,     intent(in)      :: elem2I(:,:), elemMI(:,:)
@@ -224,7 +229,7 @@
 !
  character(64) :: subroutine_name = 'diagnostic_volume_conservation'
  
- type(diagnosticType), dimension(:),  intent(in out)  :: diagnostic
+ type(diagnosticType),  intent(in out)  :: diagnostic(:)
  real,                  intent(in out)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
  integer,   target,     intent(in)      :: elem2I(:,:), elemMI(:,:)
  type(bcType),          intent(in)      :: bcdataUp(:), bcdataDn(:)
@@ -239,13 +244,11 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
- 
  etype2 => elem2I(:,e2i_elem_type)
  etypeM => elemMI(:,eMi_elem_type)
  
  channelVolume  = sum(elem2R(:,e2r_Volume),1,etype2 == eChannel)
  junctionVolume = sum(elemMR(:,eMr_Volume),1,etypeM == eJunctionChannel) 
- 
  
  totalVolume = channelVolume + junctionVolume
   

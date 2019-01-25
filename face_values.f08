@@ -31,7 +31,7 @@
 !==========================================================================
 !
  subroutine face_update &
-    (elem2R, elemMR, faceR, faceI, faceYN, &
+    (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
      bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, &
      eMr_Volume_new, thisTime, thisIter)
 !
@@ -41,7 +41,9 @@
  
  integer,       intent(in out)  :: faceI(:,:)
  real,          intent(in out)  :: faceR(:,:)
- real,          intent(in)      :: elem2R(:,:), elemMR(:,:)
+ real,          intent(in out)  :: elem2R(:,:)
+ real,          intent(in)      :: elemMR(:,:)
+ integer,       intent(in)      :: elem2I(:,:)
  type(bcType),  intent(in out)  :: bcdataDn(:), bcdataUp(:)
  real,          intent(in)      :: thisTime
     
@@ -56,12 +58,13 @@
  call face_interp_for_elem2 &
     (elem2R, faceR, faceI, faceYN, bcdataDn, bcdataUp, e2r_Volume_new)
 
- call bc_applied_onface (faceR, faceI, elem2R, bcdataDn, bcdataUp, thisTime)
- 
+ call bc_applied_onface &
+    (faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity_new, thisTime)
+
  if (N_elemM > 0) then
     call face_interp_for_upstreamchannel_to_downstreamjunction &
         (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
- 
+       
     call face_interp_for_downstreamchannel_to_upstreamjunction &
         (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
  endif
@@ -70,10 +73,19 @@
  
  call face_surface_elevation_interp (elem2R, elemMR, faceR, faceI, faceYN)
  
+!% compute depth
+ faceR(:,fr_HydDepth_u) = zeroR
+ faceR(:,fr_HydDepth_d) = zeroR
+ where (faceR(:,fr_Topwidth) > zeroR)
+    faceR(:,fr_HydDepth_u) = faceR(:,fr_Area_u) / faceR(:,fr_Topwidth)
+    faceR(:,fr_HydDepth_d) = faceR(:,fr_Area_d) / faceR(:,fr_Topwidth)
+ endwhere
+ 
  if (thisIter == 1) then
     !% at end of first step of RK2, the face flow rate is the BC outflow for the step
     call face_bc_flowrate_update (bcdataDn, bcdataUp, faceR)
  endif
+ 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine face_update
@@ -86,6 +98,8 @@
     (bcdataDn, bcdataUp, faceR)
 !
 ! stores the last flowrate used on the boundary
+! Required for correct diagnostics
+! Overwritten by correct BC in next step    
 ! 
  character(64) :: subroutine_name = 'face_bc_flowrate_update'
  
@@ -180,6 +194,7 @@
     weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_d) !tscale acting downstream from upstream element
     weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_u) !tscale acting upstream from downstream element
  endwhere
+
  
 !%  set of face interpolations that use timescale weighting
  frset = (/fr_Topwidth,   fr_Area_d, fr_Flowrate /)
@@ -190,12 +205,12 @@
         (faceR, facemask, faceI, elem2R, &
          weightUp, weightDn, valueUp, valueDn, e2rset(mm), frset(mm))
  end do
-    
+  
 !%  store the duplicate areas (later adjusted for jumps)
  where (facemask) 
     faceR(:,fr_Area_u) = faceR(:,fr_Area_d)  
  endwhere
- 
+  
 !%  store simple extrapolation of the face - adjusted during jump procedure
  where (facemask)
     faceR(:,fr_Eta_u) = elem2R(faceI(:,fi_Melem_u),e2r_Eta)
@@ -203,17 +218,17 @@
  endwhere
  
 !%  set velocities and upstream values on faces (without hydraulic jump)  
-
  call adjust_face_dynamic_limits &
-    (faceR, faceI, elem2R(:,e2r_Volume_new), elem2R(:,e2r_Volume_new), facemask)    
-    
+    (faceR, faceI, elem2R(:,e2r_Volume_new), elem2R(:,e2r_Volume_new), facemask, .false.)    
+   
 !%  Store identical values for fr_XXX_u for the moment 
 !%  These are later adjusted for hydraulic jumps
  where (facemask)
     faceR(:,fr_Area_u)     = faceR(:,fr_Area_d)
     faceR(:,fr_Velocity_u) = faceR(:,fr_Velocity_d)
  endwhere
-  
+ 
+ 
  facemask = nullvalueL
  nullify(facemask)
  next_fYN_temparray = next_fYN_temparray - 1
@@ -270,16 +285,28 @@
 
  facemask = ( (faceI(:,fi_etype_u) == eChannel) .and. &
               (faceI(:,fi_etype_d) == eJunctionChannel) )
- 
+
  where (facemask)
     weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_d) !tscale acting downstream
  endwhere
  
  do mm=1,upstream_face_per_elemM
+ 
+!    print *, trim(subroutine_name)
+!    print *, mm
+!    print *, facemask
+!    print *, faceI(:,fi_branch_d)
+!    print *, faceI(:,fi_Melem_d)
+!    print *
+!    
+    
     where ( (facemask) .and. (faceI(:,fi_branch_d) == mm) )
         weightDn = elemMR(faceI(:,fi_Melem_d),eMr_TimescaleUp(mm)) !tscale acting upstream
     endwhere
  end do
+
+!print *, trim(subroutine_name)
+!stop 
  
 !%  use timescale for interpolation for Topwidth, Area, Flowrate 
  call interp_with_junction_downstream &
@@ -296,7 +323,7 @@
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
      e2r_Flowrate, eMr_FlowrateUp, fr_Flowrate) 
- 
+     
 !%  store identical areas (adjusted elsewhere for hyd jump)
  where (facemask)
     faceR(:,fr_Area_u) = faceR(:,fr_Area_d)
@@ -308,11 +335,11 @@
     faceR(:,fr_Eta_d) = elemMR(faceI(:,fi_Melem_d),eMr_Eta)
     faceR(:,fr_Eta_u) = elem2R(faceI(:,fi_Melem_u),e2r_Eta) 
  endwhere
-  
+    
 ! set velocities and upstream values on faces (without hydraulic jump)  
  call adjust_face_dynamic_limits  &
-    (faceR, faceI, elem2R(:,e2r_Volume_new), elemMR(:,eMr_Volume_new), facemask)    
-    
+    (faceR, faceI, elem2R(:,e2r_Volume_new), elemMR(:,eMr_Volume_new), facemask, .true.)    
+   
  facemask = nullvalueL
  nullify(facemask)
  next_fYN_temparray = next_fYN_temparray - 1
@@ -367,9 +394,9 @@
  facemask   => faceYN(:,fYN_Temp(next_fYN_temparray))
  next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp) 
 
- facemask = ( (faceI(:,fi_etype_u) == eChannel) .and. &
-              (faceI(:,fi_etype_d) == eJunctionChannel) )
- 
+ facemask = ( (faceI(:,fi_etype_d) == eChannel) .and. &
+              (faceI(:,fi_etype_u) == eJunctionChannel) )
+
  where (facemask)
     weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_u) !tscale acting upstream
  endwhere
@@ -379,13 +406,13 @@
         weightUp = elemMR(faceI(:,fi_Melem_u),eMr_TimescaleDn(mm)) !tscale acting dnstream
     endwhere
  end do
- 
+  
 !%  use timescale for interpolation for Topwidth, Area, Flowrate 
  call interp_with_junction_upstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
      e2r_Topwidth, eMr_TopwidthDn, fr_Topwidth)
- 
+
  call interp_with_junction_upstream &
     (faceR, facemask, faceI, elem2R, elemMR, &
      weightUp, weightDn, valueUp, valueDn, &
@@ -407,11 +434,11 @@
     faceR(:,fr_Eta_d) = elem2R(faceI(:,fi_Melem_d),e2r_Eta) 
     faceR(:,fr_Eta_u) = elemMR(faceI(:,fi_Melem_u),eMr_Eta) 
  endwhere
-   
+ 
 !%  set velocities and upstream values on faces (without hydraulic jump)   
  call adjust_face_dynamic_limits &
-     (faceR, faceI, elemMR(:,eMr_Volume_new), elem2R(:,e2r_Volume_new), facemask)       
-     
+     (faceR, faceI, elemMR(:,eMr_Volume_new), elem2R(:,e2r_Volume_new), facemask, .false.)       
+ 
  facemask = nullvalueL
  nullify(facemask)
  next_fYN_temparray = next_fYN_temparray - 1

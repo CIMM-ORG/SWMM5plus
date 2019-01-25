@@ -54,34 +54,33 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
-
  !% get data that can be extracted from links
  call initial_conditions_from_linkdata &
     (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
-    
+   
  call initial_junction_conditions &
     (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)    
 
  !% set the bc elements (outside of face) to null values
  call bc_nullify_ghost_elem (elem2R, bcdataDn)
  call bc_nullify_ghost_elem (elem2R, bcdataUp)
- 
+
  !% update the geometry
  call element_geometry_update &
     (elem2R, elem2I, elem2YN, e2r_Volume, &
      elemMR, elemMI, elemMYN, eMr_Volume, &
-     faceI, bcdataDn, bcdataUp, thisTime)
-
+     faceR, faceI, bcdataDn, bcdataUp, thisTime, 0)
+ 
  call element_dynamics_update &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
      e2r_Volume, eMr_Volume, thisTime)          
-       
+      
  call face_update &
-    (elem2R, elemMR, faceR, faceI, faceYN, &
+    (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity,  &
      e2r_Volume, eMr_Volume, thisTime, 0)
- 
+
  !% set the element-specific smallvolume value
  !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
  if (setting%SmallVolume%UseSmallVolumes) then
@@ -91,6 +90,7 @@
     elem2R(:,e2r_SmallVolume) = zeroR
     elemMR(:,eMr_SmallVolume) = zeroR
  endif
+
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine initial_condition_setup

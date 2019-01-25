@@ -93,6 +93,8 @@
     (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, elem2Name, elemMname, faceName)
 !
 ! allocation of the element and face arrays for the high-resolution network
+! All storage includes an extra dummy space (e.g. N_elem+1) to allow for
+! where statements that remain in bounds during mapping.
 !
  character(64) :: subroutine_name = 'allocate_data_storage'
 
@@ -113,50 +115,52 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
- allocate( elem2YN(first_elem2_index:first_elem2_index+N_elem2-1, e2YN_idx_max), stat=allocation_status, errmsg=emsg)
+ allocate( elem2YN(first_elem2_index:first_elem2_index+N_elem2, e2YN_idx_max), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  elem2YN(:,:) = .false.
  
- allocate( elemMYN(first_elemM_index:first_elemM_index+N_elemM-1, eMYN_idx_max), stat=allocation_status, errmsg=emsg)
+ allocate( elemMYN(first_elemM_index:first_elemM_index+N_elemM, eMYN_idx_max), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  elemMYN(:,:) = .false.
  
- 
- allocate( elem2R(first_elem2_index:first_elem2_index+N_elem2-1, e2r_idx_max), stat=allocation_status, errmsg=emsg)
+ allocate( elem2R(first_elem2_index:first_elem2_index+N_elem2, e2r_idx_max), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  elem2R(:,:) = 0.0
  
- allocate( elemMR(first_elemM_index:first_elemM_index+N_elemM-1, eMr_idx_max), stat=allocation_status, errmsg=emsg)
+ allocate( elemMR(first_elemM_index:first_elemM_index+N_elemM, eMr_idx_max), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  elemMR(:,:) = 0.0
 
- allocate( elem2I(first_elem2_index:first_elem2_index+N_elem2-1, e2i_idx_max), stat=allocation_status, errmsg=emsg)
+ allocate( elem2I(first_elem2_index:first_elem2_index+N_elem2, e2i_idx_max), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  elem2I(:,:) = 0
  
- allocate( elemMI(first_elemM_index:first_elemM_index+N_elemM-1, eMi_idx_max), stat=allocation_status, errmsg=emsg)
+ allocate( elemMI(first_elemM_index:first_elemM_index+N_elemM, eMi_idx_max), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  elemMI(:,:) = 0
  
- allocate( faceYN(first_face_index:first_face_index+N_face-1, fYN_idx_max), stat=allocation_status, errmsg=emsg)
+
+ 
+ allocate( faceYN(first_face_index:first_face_index+N_face, fYN_idx_max), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  faceYN(:,:) = .false.
 
- allocate( faceR(first_face_index:first_face_index+N_face-1, fr_idx_max), stat=allocation_status, errmsg=emsg)
+ allocate( faceR(first_face_index:first_face_index+N_face, fr_idx_max), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  faceR(:,:) = 0.0
 
- allocate( faceI(first_face_index:first_face_index+N_face-1, fi_idx_max), stat=allocation_status, errmsg=emsg)
+ allocate( faceI(first_face_index:first_face_index+N_face, fi_idx_max), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  faceI(:,:) = 0
+ 
 
- allocate( elem2Name(first_elem2_index:first_elem2_index+N_elem2-1), stat=allocation_status, errmsg=emsg)
+ allocate( elem2Name(first_elem2_index:first_elem2_index+N_elem2), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
 
- allocate( elemMName(first_elemM_index:first_elemM_index+N_elemM-1), stat=allocation_status, errmsg=emsg)
+ allocate( elemMName(first_elemM_index:first_elemM_index+N_elemM), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
 
- allocate( faceName(first_face_index:first_face_index+N_face-1), stat=allocation_status, errmsg=emsg)
+ allocate( faceName(first_face_index:first_face_index+N_face), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name 

@@ -22,6 +22,7 @@
     public :: initialize_arrayindex ! handles indexes for multiple face per element
     public :: initialize_arrayindex_status ! status check at end of simulation 
     public :: initialize_array_zerovalues ! sets some elemMR values to zero
+    public :: initialize_dummy_values
     
     integer, private :: debuglevel = 0
     
@@ -123,8 +124,7 @@
     print *, 'error need to update initialization of fYN_Temp in ',subroutine_name
     stop
  endif
-
- 
+    
 ! the following are required index values
  ii=1
  ni_MlinkUp(ii) = ni_Mlink_u1
@@ -132,6 +132,9 @@
 
  eMi_MfaceUp(ii) = eMi_Mface_u1
  eMi_MfaceDn(ii) = eMi_Mface_d1
+
+ eMr_EtaUp(ii) = eMr_Eta_u1
+ eMr_EtaDn(ii) = eMr_Eta_d1
 
  eMr_FlowrateUp(ii) = eMr_Flowrate_u1
  eMr_FlowrateDn(ii) = eMr_Flowrate_d1
@@ -147,6 +150,9 @@
 
  eMr_TopwidthUp(ii) = eMr_Topwidth_u1
  eMr_TopwidthDn(ii) = eMr_Topwidth_d1
+ 
+ eMr_HydDepthUp(ii) = eMr_HydDepth_u1
+ eMr_HydDepthDn(ii) = eMr_HydDepth_d1
  
  eMr_LengthUp(ii) = eMr_Length_u1
  eMr_LengthDn(ii) = eMr_Length_d1
@@ -165,11 +171,13 @@
  if (upstream_face_per_elemM > ii-1) then
     ni_MlinkUp(ii)           = ni_Mlink_u2
     eMi_MfaceUp(ii)          = eMi_Mface_u2
+    eMr_EtaUp(ii)            = eMr_Eta_u2
     eMr_FlowrateUp(ii)       = eMr_Flowrate_u2
     eMr_VelocityUp(ii)       = eMr_Velocity_u2    
     eMr_TimescaleUp(ii)      = eMr_Timescale_u2
     eMr_AreaUp(ii)           = eMr_Area_u2
     eMr_TopwidthUp(ii)       = eMr_Topwidth_u2
+    eMr_HydDepthUp(ii)       = eMr_HydDepth_u2
     eMr_LengthUp(ii)         = eMr_Length_u2
     eMr_ZbottomUp(ii)        = eMr_Zbottom_u2   
     eMr_BreadthScaleUp(ii)   = eMr_BreadthScale_u2    
@@ -179,11 +187,13 @@
  if (upstream_face_per_elemM > ii-1) then
     ni_MlinkUp(ii)           = ni_Mlink_u3
     eMi_MfaceUp(ii)          = eMi_Mface_u3
+    eMr_EtaUp(ii)            = eMr_Eta_u3
     eMr_FlowrateUp(ii)       = eMr_Flowrate_u3
     eMr_VelocityUp(ii)       = eMr_Velocity_u3    
     eMr_TimescaleUp(ii)      = eMr_Timescale_u3 
     eMr_AreaUp(ii)           = eMr_Area_u3
     eMr_TopwidthUp(ii)       = eMr_Topwidth_u3
+    eMr_HydDepthUp(ii)       = eMr_HydDepth_u3
     eMr_LengthUp(ii)         = eMr_Length_u3
     eMr_ZbottomUp(ii)        = eMr_Zbottom_u3   
     eMr_BreadthScaleUp(ii)   = eMr_BreadthScale_u3   
@@ -198,11 +208,13 @@
  if (dnstream_face_per_elemM > ii-1) then
     ni_MlinkDn(ii)           = ni_Mlink_d2
     eMi_MfaceDn(ii)          = eMi_Mface_d2
+    eMr_EtaDn(ii)            = eMr_Eta_d2
     eMr_FlowrateDn(ii)       = eMr_Flowrate_d2
     eMr_VelocityDn(ii)       = eMr_Velocity_d2    
     eMr_TimescaleDn(ii)      = eMr_Timescale_d2
     eMr_AreaDn(ii)           = eMr_Area_d2
     eMr_TopwidthDn(ii)       = eMr_Topwidth_d2
+    eMr_HydDepthDn(ii)       = eMr_HydDepth_d2
     eMr_LengthDn(ii)         = eMr_Length_d2
     eMr_ZbottomDn(ii)        = eMr_Zbottom_d2   
     eMr_BreadthScaleDn(ii)    = eMr_BreadthScale_d2
@@ -213,11 +225,13 @@
  if (dnstream_face_per_elemM > ii-1) then
     ni_MlinkDn(ii)           = ni_Mlink_d3
     eMi_MfaceDn(ii)          = eMi_Mface_d3
+    eMr_EtaDn(ii)            = eMr_Eta_d3
     eMr_FlowrateDn(ii)       = eMr_Flowrate_d3
     eMr_VelocityDn(ii)       = eMr_Velocity_d3   
     eMr_TimescaleDn(ii)      = eMr_Timescale_d3
     eMr_AreaDn(ii)           = eMr_Area_d3
     eMr_TopwidthDn(ii)       = eMr_Topwidth_d3
+    eMr_HydDepthDn(ii)       = eMr_HydDepth_d3
     eMr_LengthDn(ii)         = eMr_Length_d3
     eMr_ZbottomDn(ii)        = eMr_Zbottom_d3   
     eMr_BreadthScaleDn(ii)   = eMr_BreadthScale_d3   
@@ -228,11 +242,13 @@
  endif
  
  do ii=1,upstream_face_per_elemM
+    eMr_EtaAll(ii)          = eMr_EtaUp(ii)
     eMr_FlowrateAll(ii)     = eMr_FlowrateUp(ii)
     eMr_VelocityAll(ii)     = eMr_VelocityUp(ii)
     eMr_TimescaleAll(ii)    = eMr_TimescaleUp(ii)
     eMr_AreaAll(ii)         = eMr_AreaUp(ii) 
     eMr_TopwidthAll(ii)     = eMr_TopwidthUp(ii)
+    eMr_HydDepthAll(ii)     = eMr_HydDepthUp(ii)
     eMr_LengthAll(ii)       = eMr_LengthUp(ii)
     eMr_ZbottomAll(ii)      = eMr_ZbottomUp(ii)
     eMr_BreadthScaleAll(ii) = eMr_BreadthScaleUp(ii)
@@ -241,11 +257,13 @@
  
  do ii=1,dnstream_face_per_elemM   
     kk = ii+upstream_face_per_elemM
+    eMr_EtaAll(kk)          = eMr_EtaDn(ii)
     eMr_FlowrateAll(kk)     = eMr_FlowrateDn(ii)
     eMr_VelocityAll(kk)     = eMr_VelocityDn(ii)
     eMr_TimescaleAll(kk)    = eMr_TimescaleDn(ii)
     eMr_AreaAll(kk)         = eMr_AreaDn(ii) 
     eMr_TopwidthAll(kk)     = eMr_TopwidthDn(ii)
+    eMr_HydDepthAll(kk)     = eMr_HydDepthDn(ii)
     eMr_LengthAll(kk)       = eMr_LengthDn(ii)
     eMr_ZbottomAll(kk)      = eMr_ZbottomDn(ii)
     eMr_BreadthScaleAll(kk) = eMr_BreadthScaleDn(ii)
@@ -340,6 +358,15 @@ end do
     stop
  endif
 
+ if (eMr_EtaUp(ii)      /= eMr_Eta_u1) then
+    print *, 'error: eMr_EtaUp(1) unexpectedly changed in code in ',subroutine_name
+    stop
+ endif
+ if (emr_EtaDn(ii)      /= eMr_Eta_d1) then
+    print *, 'error: eMr_EtaDn(1) unexpectedly changed in code in ',subroutine_name
+    stop
+ endif
+
  if (eMr_FlowrateUp(ii)      /= eMr_Flowrate_u1) then
     print *, 'error: eMr_FlowrateUp(1) unexpectedly changed in code in ',subroutine_name
     stop
@@ -348,6 +375,7 @@ end do
     print *, 'error: eMr_FlowrateDn(1) unexpectedly changed in code in ',subroutine_name
     stop
  endif
+
 
  if (eMr_VelocityUp(ii)      /= eMr_Velocity_u1) then
     print *, 'error: eMr_VelocityUp(1) unexpectedly changed in code in ',subroutine_name
@@ -386,6 +414,16 @@ end do
     print *, 'error: eMr_TopwidthDn(1) unexpectedly changed in code in ',subroutine_name
     stop
  endif 
+ if (eMr_HydDepthUp(ii)        /= eMr_HydDepth_u1) then
+    print *, 'error: eMr_HydDepthUp(1) unexpectedly changed in code in ',subroutine_name
+    stop
+ endif
+ 
+ if (eMr_HydDepthDn(ii)        /= eMr_HydDepth_d1) then
+    print *, 'error: eMr_HydDepthDn(1) unexpectedly changed in code in ',subroutine_name
+    stop
+ endif 
+ 
  
  if (eMr_LengthUp(ii)        /= eMr_Length_u1) then
     print *, 'error: eMr_LengthUp(1) unexpectedly changed in code in ',subroutine_name
@@ -438,6 +476,11 @@ end do
         print *, 'error: eMi_MfaceUp(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif
+    if (eMr_EtaUp(ii)       /= eMr_Eta_u2) then
+        print *, 'ii = ',ii
+        print *, 'error: eMr_EtaUp(ii) unexpectedly changed in code in ',subroutine_name
+        stop
+    endif
     if (eMr_FlowrateUp(ii)       /= eMr_Flowrate_u2) then
         print *, 'ii = ',ii
         print *, 'error: eMr_FlowrateUp(ii) unexpectedly changed in code in ',subroutine_name
@@ -461,6 +504,11 @@ end do
     if (eMr_TopwidthUp(ii)         /= eMr_Topwidth_u2) then
         print *, 'ii = ',ii
         print *, 'error: eMr_TopwidthUp(ii) unexpectedly changed in code in ',subroutine_name
+        stop
+    endif
+    if (eMr_HydDepthUp(ii)         /= eMr_HydDepth_u2) then
+        print *, 'ii = ',ii
+        print *, 'error: eMr_HydDepthUp(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif
     if (eMr_LengthUp(ii)         /= eMr_Length_u2) then
@@ -496,6 +544,11 @@ end do
         print *, 'error: eMi_MfaceUp(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif
+    if (eMr_EtaUp(ii)       /= eMr_Eta_u3) then
+        print *, 'ii = ',ii
+        print *, 'error: eMr_EtaUp(ii) unexpectedly changed in code in ',subroutine_name
+        stop
+    endif
     if (eMr_FlowrateUp(ii)       /= eMr_Flowrate_u3) then
         print *, 'ii = ',ii
         print *, 'error: eMr_FlowrateUp(ii) unexpectedly changed in code in ',subroutine_name
@@ -519,6 +572,11 @@ end do
     if (eMr_TopwidthUp(ii)            /= eMr_Topwidth_u3) then
         print *, 'ii = ',ii
         print *, 'error: eMr_TopwidthUp(ii) unexpectedly changed in code in ',subroutine_name
+        stop
+    endif
+    if (eMr_HydDepthUp(ii)            /= eMr_HydDepth_u3) then
+        print *, 'ii = ',ii
+        print *, 'error: eMr_HydDepthUp(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif
     if (eMr_LengthUp(ii)         /= eMr_Length_u3) then
@@ -559,6 +617,11 @@ end do
         print *, 'error: eMi_MfaceDn(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif    
+    if (eMr_EtaDn(ii)       /= eMr_Eta_d2) then
+        print *, 'ii = ',ii
+        print *, 'error: eMr_EtaDn(ii) unexpectedly changed in code in ',subroutine_name
+        stop
+    endif    
     if (eMr_FlowrateDn(ii)       /= eMr_Flowrate_d2) then
         print *, 'ii = ',ii
         print *, 'error: eMr_FlowrateDn(ii) unexpectedly changed in code in ',subroutine_name
@@ -582,6 +645,11 @@ end do
     if (eMr_TopwidthDn(ii)         /= eMr_Topwidth_d2) then
         print *, 'ii = ',ii
         print *, 'error: eMr_TopwidthDn(ii) unexpectedly changed in code in ',subroutine_name
+        stop
+    endif    
+    if (eMr_HydDepthDn(ii)         /= eMr_HydDepth_d2) then
+        print *, 'ii = ',ii
+        print *, 'error: eMr_HydDepthDn(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif    
     if (eMr_LengthDn(ii)         /= eMr_Length_d2) then
@@ -617,6 +685,11 @@ end do
         print *, 'error: eMi_MfaceDn(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif    
+    if (eMr_EtaDn(ii)       /= eMr_Eta_d3) then
+        print *, 'ii = ',ii
+        print *, 'error: eMr_EtaDn(ii) unexpectedly changed in code in ',subroutine_name
+        stop
+    endif    
     if (eMr_FlowrateDn(ii)       /= eMr_Flowrate_d3) then
         print *, 'ii = ',ii
         print *, 'error: eMr_FlowrateDn(ii) unexpectedly changed in code in ',subroutine_name
@@ -640,6 +713,11 @@ end do
     if (eMr_TopwidthDn(ii)         /= eMr_Topwidth_d3) then
         print *, 'ii = ',ii
         print *, 'error: eMr_TopwidthDn(ii) unexpectedly changed in code in ',subroutine_name
+        stop
+    endif    
+    if (eMr_HydDepthDn(ii)         /= eMr_HydDepth_d3) then
+        print *, 'ii = ',ii
+        print *, 'error: eMr_HydDepthDn(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif    
     if (eMr_LengthDn(ii)         /= eMr_Length_d3) then
@@ -691,21 +769,71 @@ end do
  elemMR(:,eMr_Volume) = zeroR
  
  do mm=1,upstream_face_per_elemM
+    !elemMR(:,eMr_EtaUp(mm)          = zeroR
     elemMR(:,eMr_LengthUp(mm))      = zeroR
     elemMR(:,eMr_AreaUp(mm))        = zeroR
     elemMR(:,eMr_TopwidthUp(mm))    = zeroR
+    elemMR(:,eMr_HydDepthUp(mm))    = zeroR
  enddo
 
  do mm=1,dnstream_face_per_elemM
+    !elemMR(:,eMr_EtaDn(mm))         = zeroR
     elemMR(:,eMr_LengthDn(mm))      = zeroR
     elemMR(:,eMr_AreaDn(mm))        = zeroR
     elemMR(:,eMr_TopwidthDn(mm))    = zeroR
+    elemMR(:,eMr_HydDepthDn(mm))    = zeroR
  enddo
 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine initialize_array_zerovalues 
 !
+!==========================================================================
+!
+ subroutine initialize_dummy_values &
+    (elem2R, elem2I, elem2YN, &
+     elemMR, elemMI, elemMYN, &
+     faceR,  faceI,  faceYN)
+ 
+ character(64) :: subroutine_name = 'initialize_dummy_values'
+ 
+ integer,   intent(in out) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
+ real,      intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+ logical,   intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ !% define the dummy location
+ dummy_face_index  = N_face + 1
+ dummy_elem2_index = N_elem2 + 1
+ dummy_elemM_index = N_elemM + 1
+ 
+ faceI(dummy_face_index,:)  = nullvalueI
+ faceR(dummy_face_index,:)  = nullvalueR
+ faceYN(dummy_face_index,:) = nullvalueL
+ 
+ elem2I(dummy_elem2_index,:)  = nullvalueI
+ elem2R(dummy_elem2_index,:)  = nullvalueR
+ elem2YN(dummy_elem2_index,:) = nullvalueL 
+ 
+ elemMI(dummy_elemM_index,:)  = nullvalueI
+ elemMR(dummy_elemM_index,:)  = nullvalueR 
+ elemMYN(dummy_elemM_index,:) = nullvalueL
+ 
+ elemMI(:,eMi_MfaceUp(1:upstream_face_per_elemM)) = dummy_face_index
+ elemMI(:,eMi_MfaceDn(1:dnstream_face_per_elemM)) = dummy_face_index
+ 
+ faceI(:,fi_Melem_u) = min(dummy_elemM_index,dummy_elem2_index)
+ faceI(:,fi_Melem_d) = min(dummy_elemM_index,dummy_elem2_index)
+ 
+ elem2I(:,e2i_Mface_u) = dummy_face_index
+ elem2I(:,e2i_Mface_d) = dummy_face_index
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine initialize_dummy_values
+!
+!========================================================================== 
 !==========================================================================
 ! END OF MODULE initialization
 !========================================================================== 

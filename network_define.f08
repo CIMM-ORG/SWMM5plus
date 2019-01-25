@@ -81,16 +81,16 @@
 
 !%   assign links to nodes
  call network_node_assignment (nodeI, linkI) 
-
+ 
 !%   confirm that the link-node network is valid   
  call network_check_node_link_match (linkI, nodeI)
-  
+
 !%   check that sufficient BC locations have been identified 
  call network_check_BC (nodeI, N_node)
-      
+     
 !%   get the slope of each link given the node Z values
  call network_get_link_slope (linkR, nodeR, linkI, nodeI)
- 
+
 ! HACK - need a check here to look for non-monotonic zbottom in the link/node
 ! system. Where found the system needs to be subdivided into monotonic links.
 ! Typically this should only be an issue where the links are representing a
@@ -106,10 +106,15 @@
  call allocate_data_storage &
     (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
      elem2Name, elemMname, faceName)
-   
+ 
+
 !%   ensure elemMR (junction) array has zero values in the multiple geometry storage
  call initialize_array_zerovalues (elemMR) 
- 
+ call initialize_dummy_values &
+    (elem2R, elem2I, elem2YN, &
+     elemMR, elemMI, elemMYN, &
+     faceR,  faceI,  faceYN)
+
 !%   store the data from the network in the element and face arrays
  call network_data_create &
     (elem2R, elemMR, faceR, linkR, nodeR, elem2I, elemMI, faceI, &
@@ -120,7 +125,8 @@
  
 !%   assign branch mappings for faces 
  call junction_branch_assigned_to_faces (faceI, elemMI)
-    
+  
+
 !% Debug output
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
     print *, subroutine_name,'----------------------------------------'
@@ -562,20 +568,18 @@
  real,    pointer   :: linkLength(:)
  integer, pointer   :: linkNelem(:)
  
- real,    pointer   :: element_nominal_length
+ real,    pointer   :: element_nominal_length(:)
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name  
- 
- linkLength => linkR(:,lr_Length)
- linkNelem  => linkI(:,li_N_element)
- 
+
+ linkLength             => linkR(:,lr_Length)
+ element_nominal_length => linkR(:,lr_ElementLength)
+ linkNelem              => linkI(:,li_N_element)
 
  do ii = 1,N_node 
-    element_nominal_length => linkR(ii,lr_ElementLength)
     !%   only applies to nJm junctions -- not to nJ2 junctions
-    if (nodeI(ii,ni_node_type) == nJm) then 
-    
+    if (nodeI(ii,ni_node_type) == nJm) then    
         !%   shorten the upstream links
         if (nodeI(ii,ni_N_link_u) > 0) then
             call link_shortening &
@@ -591,20 +595,17 @@
         endif
     endif
  enddo
-    
-  
+
+ 
 !%  get the uniform elements that subdivide a link
  do ii = 1,N_link
-    
-    !%  store the target length for elements in this link
-    element_nominal_length => linkR(ii,lr_ElementLength)
         
-    linkNelem(ii) = floor(linkLength(ii)/element_nominal_length)
+    linkNelem(ii) = floor(linkLength(ii)/element_nominal_length(ii))
     
     if (linkNelem(ii) > 0) then
-        delta = ( linkLength(ii) - element_nominal_length * linkNelem(ii)) &
+        delta = ( linkLength(ii) - element_nominal_length(ii) * linkNelem(ii)) &
               / linkNelem(ii)
-        linkR(ii,lr_ElementLength) = element_nominal_length + delta
+        linkR(ii,lr_ElementLength) = element_nominal_length(ii) + delta
     else
         !%  for case when only 1 nominal element will fit in link
         linkNelem(ii) = 1
@@ -612,7 +613,6 @@
     endif
  enddo
  
-
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
     !%  debugging output
     print *
@@ -623,6 +623,7 @@
     enddo
  endif
     
+ 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine network_adjust_link_length
 !
@@ -1415,7 +1416,7 @@
 
  integer,           intent(in)      :: thisNode, niNlinkX, nrElementLengthX(:), niMlinkX(:)
  
- real,              intent(in)      :: element_nominal_length
+ real,              intent(in)      :: element_nominal_length(:)
  
  real                   :: delta ! local variable
  
@@ -1437,24 +1438,19 @@
     tlink      => nodeI(thisNode,niMlinkX(mm)) ! link index up or down
       
     if (tlink > 0) then
-        if ( linkLength(tlink) .LE. 1.5*element_nominal_length ) then
+        if ( linkLength(tlink) .LE. 1.5*element_nominal_length(tlink) ) then
             !%  where there is only one element in a link
             delta = 0.25*linkLength(tlink)
         else
             !%  where there are multiple elements in a link
-            delta = 0.33*element_nominal_length
+            delta = 0.33*element_nominal_length(tlink)
         endif
         !%  decrement link
         linkLength(tlink) = linkLength(tlink) - delta
         !%  store junction length in nodeR (target)
         elemLength = delta
     endif
-
-
  enddo
- 
-
- 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine link_shortening 

@@ -46,7 +46,6 @@
  real,                  intent(in)      ::  thisTime
  integer,               intent(in)      ::  e2r_Velocity_new, e2r_Volume_new
  integer,               intent(in)      ::  eMr_Velocity_new, eMr_Volume_new
-
   
  logical,   pointer :: isadhocflowrate(:) 
  integer            :: idx
@@ -63,7 +62,7 @@
  call adjust_channel_velocity_limiter &
     (elemMR, elemMYN, elemMI, &
      eMi_elem_type, eJunctionChannel, eMYN_IsAdhocFlowrate,  eMr_Velocity_new)    
-
+    
 !%  For small volumes, compute a velocity that is blended from the update value
 !%  and a Chezy-Manning computed using the free surface slope of the element 
  if (setting%SmallVolume%UseSmallVolumes) then 
@@ -71,14 +70,14 @@
         (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  &
         e2r_Velocity_new, eMr_Velocity_new)
  endif
- 
+    
 !% for extremely small volumes - perform a separate reset
  if (setting%ZeroValue%Volume > zeroR) then
     call adjust_zero_velocity_at_zero_volume &
-        (elem2R, elem2YN, eMr_Velocity_new, e2r_Volume_new, &
-         elemMR, elemMYN, eMr_Velocity_new, eMr_Volume_new   )   
+        (elem2R, elem2YN, e2r_Velocity_new, e2r_Volume_new, &
+         elemMR, elemMYN, eMr_Velocity_new, eMr_Volume_new)   
  endif
-
+    
 !%  flowrate updated from velocity 
  call element_flowrate_update  &
      (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Velocity_new, eMr_Velocity_new)
@@ -86,13 +85,12 @@
 !%  apply the boundary conditions on velocity and flowrate     
  call bc_applied_onelement &
     (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_inflowrate, e2r_Velocity_new)    
-
+    
 !% compute the timescales up and down
  call element_timescale &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, bcdataDn, bcdataUp, &
      e2r_Velocity_new)
-     
-     
+
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine element_dynamics_update
 !
@@ -122,7 +120,7 @@
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
- 
+
 !%  assign total area from the temp space
  eMR_totalarea = eMr_Temp(next_eMr_temparray)
  totalarea  => elemMR(:,eMR_totalarea)
@@ -136,7 +134,8 @@
  call flowrate_from_velocity &
     ( elemMR, elemMI, &
       eMr_Flowrate, eMr_Area, eMr_Velocity_new, eMi_elem_type, eJunctionChannel)
- 
+
+
 !%  FLOWS AND VELOCITIES IN JUNCTION BRANCHES -----------------
 !%  The total flowrate is distributed among both outflow and inflow branches
 !%  Note that this does NOT mean that the inflows and outflows are exactly 
@@ -144,15 +143,16 @@
 !%  to get the inflow/outflows at the faces.
 
 !%  get the total outflow branch areas
- totalarea = zeroR ! ensure temporary array is zero
  
+!%  handle the downstream branches 
+ totalarea = zeroR ! ensure temporary array is zero
  call junction_branch_sum_areas_by_direction &
     (eMR_totalarea, &
      dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
      upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
      elemMR, elemMI, faceR)
-     
-!%  distribute flow proportionally among outflows   
+       
+!%  distribute flow proportionally among outflows downstream
  call junction_branch_velocity_and_flowrate_proportional_to_area &
     (eMR_totalarea, eMR_Flowrate, &
      dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
@@ -160,6 +160,31 @@
      upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
      eMr_FlowrateUp, eMr_VelocityUp, &
      elemMR, elemMI, faceR)    
+
+!%  handle upstream branches
+ totalarea = zeroR ! ensure temporary array is zero          
+ call junction_branch_sum_areas_by_direction &
+    (eMR_totalarea, &
+     upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
+     dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
+     elemMR, elemMI, faceR)
+     
+!%  distribute flow proportionally among outflows upstream
+ call junction_branch_velocity_and_flowrate_proportional_to_area &
+    (eMR_totalarea, eMR_Flowrate, &
+     upstream_face_per_elemM, eMr_AreaUp, eMi_MfaceUp, eMi_nfaces_u, &
+     eMr_FlowrateUp, eMr_VelocityUp, &
+     dnstream_face_per_elemM, eMr_AreaDn, eMi_MfaceDn, eMi_nfaces_d, &
+     eMr_FlowrateDn, eMr_VelocityDn, &
+     elemMR, elemMI, faceR)         
+     
+     
+!print *, trim(subroutine_name)
+!print *, elemMR(:,eMr_totalarea)
+!print *, elemMR(:,eMr_Flowrate_u1), elemMR(:,eMr_Velocity_u1 )
+!print *, elemMR(:,eMr_Flowrate_u2), elemMR(:,eMr_Velocity_u2 ) 
+!print *, elemMR(:,eMr_Flowrate),    elemMR(:,eMr_Velocity_new)     
+!print *, elemMR(:,eMr_Flowrate_d1), elemMR(:,eMr_Velocity_d1 )  
 
 !%  enforce maximum velocities in junction branches
  call adjust_junction_branch_velocity_limit (elemMR, elemMI)
@@ -257,6 +282,7 @@
 !%  perform small volume velocity bend for junction branches
  do mm=1,upstream_face_per_elemM
     !%  HACK this arbitrarily uses d1 for the slope
+    !%  Not sure how to revise if d2 and d3 are non-zero
     call velocity_blend_with_mask &
         (elemMR, elemMI, elemMYN, faceR, &
          next_eMr_temparray, eMr_n_temp, eMr_Temp, &
@@ -268,6 +294,7 @@
  
  do mm=1,dnstream_face_per_elemM
     !%  HACK this arbitrarily uses u1 for the slope
+    !%  PERHAPS REVISE TO USED Z at CENTER OF CHANNEL
     call velocity_blend_with_mask &
         (elemMR, elemMI, elemMYN, faceR, &
          next_eMr_temparray, eMr_n_temp, eMr_Temp, &

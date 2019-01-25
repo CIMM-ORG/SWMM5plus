@@ -133,7 +133,7 @@
 !==========================================================================
 !
  subroutine adjust_face_dynamic_limits &
-    (faceR, faceI, volumeUp, volumeDn, facemask)
+    (faceR, faceI, volumeUp, volumeDn, facemask, Ltemp)
 !
 ! ensures face velocity and areas are within limits
 ! 
@@ -144,30 +144,43 @@
  ! these can be the samy arrays (e.g. in the case of elem2R for channel-channel)
  real,                  intent(in)      :: volumeUp(:), volumeDn(:)
  integer,   target,     intent(in)      :: faceI(:,:)
- logical,               intent(in)      :: facemask(:)
+ logical,               intent(in)      :: facemask(:), Ltemp
  
  real,  pointer :: volFrac
  integer,   pointer :: eUp(:), eDn(:)
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
- 
+
+
+
 ! Ad hoc limit the volume that can be transported out of the upstream cell. 
  if (setting%Limiter%Flowrate%UseFaceVolumeTransport) then
     volFrac => setting%Limiter%flowrate%FaceVolumeTransport
     eUp => faceI(:,fi_Melem_u)
     eDn => faceI(:,fi_Melem_d)
+!if (Ltemp) then
+!    print *, trim(subroutine_name)
+!    print *, facemask
+!    print *, faceR(:,fr_flowrate)
+!    print *, eUp
+!    print *, volumeUp
+!    print *, volumeUp(eUp)
+!    print *, eDn
+!    print *, volumeDn
+!    !stop
+!endif    
     !%   for a downstream flow, limit flux from the upstream volume
-    where ((facemask) .and. (faceR(:,fr_flowrate) * dt > volFrac * volumeUp(eUp)))
-        faceR(:,fr_flowrate) =  volFrac * volumeUp(eUp) / dt
+    where ((facemask) .and. (faceR(:,fr_flowrate)  > zeroR))
+        faceR(:,fr_flowrate) =  min(volFrac * volumeUp(eUp) / dt, faceR(:,fr_flowrate))
     endwhere
-    
-    where ((facemask) .and. (-faceR(:,fr_flowrate) * dt > volFrac * volumeDn(eDn)))
-        faceR(:,fr_flowrate) =  volFrac * volumeDn(eDn) / dt
+   
+    where ((facemask) .and. (faceR(:,fr_flowrate) < zeroR ))
+        faceR(:,fr_flowrate) =  -min(volFrac * volumeDn(eDn) / dt, -faceR(:,fr_flowrate))
     endwhere
 
  endif
- 
+
 !%  ensure face area is not smaller than zerovalue     
  if (setting%ZeroValue%UseZeroValues) then 
     where ((facemask) .and. (faceR(:,fr_Area_d) < setting%Zerovalue%Area))
@@ -206,7 +219,7 @@
 !==========================================================================
 !
  subroutine adjust_for_zero_geometry &
-    (elem2R, elemMR, elem2YN, elemMYN)
+    (elem2R, elem2YN, elemMR, elemMI, elemMYN)
 !
 ! resets geometry to user setting%ZeroValues where the geometry is too small
 ! 
@@ -214,6 +227,7 @@
  
  real,          intent(in out)  ::  elem2R(:,:)
  real, target,  intent(in out)  ::  elemMR(:,:)
+ integer,       intent(in)      ::  elemMI(:,:)
  logical,       intent(in)      ::  elem2YN(:,:), elemMYN(:,:)
  
  real, pointer  :: area(:), topwidth(:)
@@ -236,11 +250,11 @@
 !%  Handle branch data for multi-branch junctions
 !%  Upstream branches    
  call reset_juctionbranches_for_zero_values &
-    (elemMR, elemMYN, eMr_AreaUp, eMr_TopwidthUp, upstream_face_per_elemM)
+    (elemMR, elemMI, elemMYN, eMr_AreaUp, eMr_TopwidthUp, eMi_nfaces_u, upstream_face_per_elemM)
     
 !%  Downstream branches
  call reset_juctionbranches_for_zero_values &
-    (elemMR, elemMYN, eMr_AreaDn, eMr_TopwidthDn, dnstream_face_per_elemM)
+    (elemMR, elemMI, elemMYN, eMr_AreaDn, eMr_TopwidthDn, eMi_nfaces_d, dnstream_face_per_elemM)
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine adjust_for_zero_geometry
@@ -419,7 +433,7 @@
 !
  subroutine adjust_zero_velocity_at_zero_volume &
     (elem2R, elem2YN, e2r_VelocityColumn, e2r_VolumeColumn, &
-     elemMR, elemMYN, eMr_VelocityColumn, eMr_VolumeColumn   )
+     elemMR, elemMYN, eMr_VelocityColumn, eMr_VolumeColumn)
 !
 ! ensures that volumes smaller than the user limit have dynamics
 ! that are set to the user limit.
@@ -445,7 +459,7 @@
     call zero_velocity_at_zero_volume &
         (elemMR, elemMYN, eMr_VelocityColumn, eMr_VolumeColumn, eMYN_IsAdhocFlowrate ) 
  endif
- 
+    
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name 
  end subroutine adjust_zero_velocity_at_zero_volume  
 !
@@ -788,7 +802,8 @@
 !==========================================================================
 !
  subroutine reset_juctionbranches_for_zero_values &
-    (elemMR, elemMYN, eMr_AreaDir, eMr_TopwidthDir, Dir_face_per_elemM)
+    (elemMR, elemMI, elemMYN, eMr_AreaDir, eMr_TopwidthDir, &
+     eMr_nfaces_Dir, Dir_face_per_elemM)
 !
 ! resets values below the zero value to the zero value in
 ! junction branches. Applied separately for upstream and downstream branches.
@@ -796,8 +811,9 @@
  character(64) :: subroutine_name = 'reset_juctionbranches_for_zero_values'
  
  real,      target,     intent(in out)  :: elemMR(:,:)
+ integer,               intent(in)      :: elemMI(:,:)
  logical,               intent(in)      :: elemMYN(:,:)
- integer,               intent(in)      :: Dir_face_per_elemM
+ integer,               intent(in)      :: Dir_face_per_elemM, eMr_nfaces_Dir
  integer,               intent(in)      :: eMr_AreaDir(:), eMr_TopwidthDir(:)
  real,  pointer :: area(:), topwidth(:)
  integer        :: mm
@@ -809,7 +825,7 @@
     area     => elemMR(:,eMr_AreaDir(mm))
     topwidth => elemMR(:,eMr_TopwidthDir(mm))
     if (setting%ZeroValue%UseZeroValues) then
-        where (.not. elemMYN(:,eMYN_IsSmallVolume))
+        where ((.not. elemMYN(:,eMYN_IsSmallVolume)) .and. (elemMI(:,eMr_nfaces_Dir) >= mm))
             where (area < setting%Zerovalue%Area)
                 area = setting%Zerovalue%Area
             endwhere    
@@ -818,7 +834,7 @@
             endwhere   
         endwhere
     else
-        where (.not. elemMYN(:,eMYN_IsSmallVolume))
+        where ((.not. elemMYN(:,eMYN_IsSmallVolume)) .and. (elemMI(:,eMr_nfaces_Dir) >= mm))
             where (area < zeroR)
                 area = zeroR
             endwhere    

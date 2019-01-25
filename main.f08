@@ -1,7 +1,7 @@
 !==========================================================================
 !
  program main
-    
+
  use allocate_storage
  use array_index
  use bc
@@ -14,7 +14,9 @@
  use initial_condition
  use junction
  use network_define
+ use output
  use setting_definition
+ use type_definitions
  use test_cases
  use time_loop
  use utility
@@ -41,7 +43,7 @@
  logical,    dimension(:,:), allocatable, target    :: faceYN      ! logical data for face
 
  type(string), dimension(:), allocatable, target    :: faceName    ! array of character strings
- 
+
 !%  links are the building blocks from SWMM link-node formulation
  real,       dimension(:,:), allocatable, target    :: linkR       ! real data for links
  integer,    dimension(:,:), allocatable, target    :: linkI       ! integer data for links
@@ -61,46 +63,60 @@
 
 !%  debug output file information
  type(debugfileType),  dimension(:),   allocatable :: debugfile
- 
+
 !%  diagnostic information
  type(diagnosticType), allocatable, dimension(:)   :: diagnostic
-   
-!-------------------------------------------------------------------------- 
+
+!% threaded output files
+ type(threadedfileType), allocatable, dimension(:) :: threadedfile
+
+!--------------------------------------------------------------------------
  print *
  print *, '====================================================='
  print *, 'starting main program'
- print *, 
- 
+ print *,
+
 !%  simulation controls
- call setting_default  
- 
-!=========================================================== 
+ call setting_default
+
+!===========================================================
 !%  hard-code setting for test cases
 
  setting%TestCase%UseTestCase = .true.
  !setting%TestCase%TestName = 'simple_channel_001'
  setting%TestCase%TestName = 'y_channel_002'
 
-!%  hard-code for debug output 
+!%  hard-code for debug output
  setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
- 
+
  setting%Debugout%SuppressTimeStep  = .true. ! use the next 3 to suppress headers
  setting%Debugout%SuppressTimeValue = .true. ! which can make debug files easier
  setting%Debugout%SuppressNdat      = .true. ! to read (but less useful)
- 
- setting%Debugout%elem2R = .true.   ! select arrays to have debug output
- setting%Debugout%faceR  = .true.   ! note that not all are implemented
-!=========================================================== 
 
-!% bookkeeping routines    
+ setting%Debugout%elem2R = .true.   ! select arrays to have debug output
+ setting%Debugout%elemMR = .true.   ! select arrays to have debug output
+ setting%Debugout%faceR  = .true.   ! note that not all are implemented
+
+ !setting%OutputThreadedLink%SuppressAllFiles = .true.
+
+ setting%OutputThreadedLink%UseThisOutput = .true.
+ setting%OutputThreadedLink%area = .true.
+ setting%OutputThreadedLink%flowrate = .true.
+ setting%OutputThreadedLink%velocity = .true.
+ setting%OutputThreadedLink%eta = .true.
+ setting%OutputThreadedLink%depth = .true.
+
+!!===========================================================
+
+!% bookkeeping routines
  call utility_get_datetime_stamp (setting%Time%DateTimeStamp)
 
  call debug_initialize (debugfile)
- 
+
  call checking_consistency
-  
- call initialize_arrayindex   
- 
+
+ call initialize_arrayindex
+
 !% custom setup for hard-code test cases
  if (setting%TestCase%UseTestCase) then
     call test_case_initiation &
@@ -112,71 +128,77 @@
  end if
 
 
-
-!% create the network of elements from link and node data   
+!% create the network of elements from link and node data
  call network_initiation &
     (linkI, linkR, linkYN, linkName, &
      nodeI, nodeR, nodeYN, nodeName, &
      elem2R, elem2I, elem2YN, elem2Name, &
      elemMR, elemMI, elemMYN, elemMName, &
      faceR,  faceI,  faceYN,  faceName)
-
-
-
-!% check the boundary condition data arrays are correctly defined 
- call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI ) 
-
-!% set the initial conditions throughout 
- call initial_condition_setup &
-    (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime) 
-         
-
 !print *, 'in main'
 !stop
+!% check the boundary condition data arrays are correctly defined
+ call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
+
+
+
+!% set the initial conditions throughout
+ call initial_condition_setup &
+    (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
+     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime)
 
 !% check consistency of the smallvolume setup
  call checking_smallvolume_consistency (elem2R, elemMR)
-
-!% setting a zero starting condition is useful for robustness tests
-!print *, 'in main setting flowrate and velocity to 0'
-!elem2R(:,e2r_Velocity) = 0.0
-!elem2R(:,e2r_Flowrate) = 0.0
-!faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.0
-!faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.0
-!faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0  
-!  
 
 ! initialize the diagnostics
  call diagnostic_initialize &
     (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, &
      bcdataUp, bcdataDn)
-     
-!%  time marching of continuity and momentum     
+
+!% setting a zero starting condition is useful for robustness tests
+print *, 'in main setting flowrate and velocity to 0'
+elem2R(:,e2r_Velocity) = 0.0
+elem2R(:,e2r_Flowrate) = 0.0
+elemMR(:,eMr_Velocity) = 0.0
+elemMR(:,eMr_Flowrate) = 0.0
+elemMR(:,eMr_FlowrateUp(:)) = 0.0
+elemMR(:,eMr_FlowrateDn(:)) = 0.0
+elemMR(:,eMr_VelocityDn(:)) = 0.0
+elemMR(:,eMr_VelocityUp(:)) = 0.0
+faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.0
+faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.0
+faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
+
+
+! initialize output by threaded link
+ call output_threaded_by_link_initialize (threadedfile)
+
+
+!%  time marching of continuity and momentum
  call time_marching &
     (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
-     bcdataDn, bcdataUp, debugfile, diagnostic)
- 
-!% uncomment this if you want a final debug output 
+     bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile)
+
+!% uncomment this if you want a final debug output
 ! call debug_output &
 !    (debugfile, &
 !     elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
 !     bcdataUp, bcdataDn)
-   
-!     
+
+!
 !=========================================================
 ! FINAL CHECKING
-!     
+!
 !%  check that index arrays were not altered during execution
- call initialize_arrayindex_status     
- 
+ call initialize_arrayindex_status
+
 !%  close out the debug files
  call debug_finalize(debugfile)
- 
+
  print *
  print *, 'finished main program'
  print *, '====================='
  print *, char(7)  ! sound the system beep
- 
+
  end program main
 !==========================================================================

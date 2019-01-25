@@ -248,10 +248,11 @@
     fThis    => elemMI(:, eMi_MfaceThis(mm))
     where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
             (elemMI(:,eMi_nfaces_This) >= mm) .and. &
-            (faceR(fThis,fr_Flowrate) > 0.0) )
+            (faceR(fThis,fr_Flowrate) >= 0.0) )
         flowrate = totalflowrate * area / totalarea     
         velocity = flowrate / area
     endwhere
+
  enddo
  
 !%  distribute flow proportionally over the upstream outflow branches
@@ -266,9 +267,9 @@
             (faceR(fRdir,fr_Flowrate) < 0.0) )
         flowrate = -totalflowrate * area / totalarea     
         velocity =  flowrate / area
-    endwhere
+    endwhere    
  enddo
-      
+ 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine junction_branch_velocity_and_flowrate_proportional_to_area
 !
@@ -309,19 +310,27 @@
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+
  
  totalarea => elemMR(:,eMR_totalarea)
  
+ !print *, trim(subroutine_name)
+ !print *, this_face_per_element
+ !stop
+
 !%  get the outflow area for downstream branches (or inflow area for upstream)
  do mm=1,this_face_per_element
     area  => elemMR(:,eMr_AreaThis(mm))
     fThis => elemMI(:,eMi_MfaceThis(mm))
+    
     where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
-            (elemMI(:,eMi_nfaces_This) >= mm) .and. &
-            (faceR(fThis,fr_Flowrate) > 0.0) )
-        totalarea= totalarea + area
+            (elemMI(:,eMi_nfaces_This) >= mm))
+        where (faceR(fThis,fr_Flowrate) >= 0.0)
+            totalarea= totalarea + area
+        endwhere
     endwhere
  enddo 
+
  
 !%  add the area for any reversing upstream branches (or reversing downstream)
  do mm=1,rdir_face_per_element
@@ -333,7 +342,7 @@
         totalarea = totalarea + area
     endwhere
  enddo 
- 
+
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine junction_branch_sum_areas_by_direction
 !
