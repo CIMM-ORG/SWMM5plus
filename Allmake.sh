@@ -19,8 +19,9 @@ echo Choosing $FC as a compiler ...
 echo Find all source files, create a list of corresponding object files ...
 
 # Find all source files, create a list of corresponding object files
-SOURCESF="  setting_definition.f08 \
-        globals.f08 \
+SOURCESF="  type_definitions.f08\
+        setting_definition.f08\
+        globals.f08\
         array_index.f08\
         data_keys.f08\
         utility.f08\
@@ -42,6 +43,7 @@ SOURCESF="  setting_definition.f08 \
         initialization.f08\
         link_node.f08\
         network_define.f08\
+        output.f08\
         test_cases.f08\
         runge_kutta.f08\
         time_loop.f08\
