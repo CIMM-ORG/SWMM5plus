@@ -1,8 +1,10 @@
 #!/bin/bash
 
 echo Making the debug directory ...
-DIR=debugoutputA
-mkdir "$DIR"
+DIRDebug=debugoutputA
+DIRThreaded=OutputThreaded
+mkdir "$DIRDebug"
+mkdir "$DIRThreaded"
 
 echo Compiling the SWMMengine ...
 
