@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="Prototype Fortran 2008 engine for the EPA Storm Water Management Model (SWMM)">
+    
+    <meta name="author" content="Ben R. Hodges and Ehsan Madadi-Kandjani" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>network_initiation &ndash; SWMMengine</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">SWMMengine </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/main.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/main.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>network_initiation
+      <small>Subroutine</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 1.6% of total for procedures.">101 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/network_define.f08"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+     <li><a href='../sourcefile/network_define.f08.html'>network_define.f08</a></li>
+    
+     <li><a href='../module/network_define.html'>network_define</a></li>
+    
+  
+     <li class="active">network_initiation</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<em>None</em>
+
+
+</div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+    <h2>
+public subroutine network_initiation(linkI, linkR, linkYN, linkName, nodeI, nodeR, nodeYN, nodeName, elem2R, elem2I, elem2YN, elem2Name, elemMR, elemMI, elemMYN, elemMName, faceR, faceI, faceYN, faceName)
+    
+    
+   
+</h2>
+    
+  
+
+
+    
+
+    <h3>Arguments</h3>
+    
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-linki%7E7"></span>integer,</td>
+  <td>intent(inout),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>linkI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-linkr%7E4"></span>real,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>linkR</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-linkyn%7E4"></span>logical,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>linkYN</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-linkname%7E3"></span>type(string),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>linkName</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-nodei%7E6"></span>integer,</td>
+  <td>intent(inout),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>nodeI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-noder%7E4"></span>real,</td>
+  <td>intent(inout),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>nodeR</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-nodeyn%7E4"></span>logical,</td>
+  <td>intent(out)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>nodeYN</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-nodename%7E3"></span>type(string),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>nodeName</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elem2r%7E25"></span>real,</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:,:), allocatable, target</td><td>::</td>
+  <td><strong>elem2R</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elem2i%7E16"></span>integer,</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:,:), allocatable, target</td><td>::</td>
+  <td><strong>elem2I</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elem2yn%7E13"></span>logical,</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:,:), allocatable, target</td><td>::</td>
+  <td><strong>elem2YN</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elem2name"></span>type(string),</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:), allocatable, target</td><td>::</td>
+  <td><strong>elem2Name</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elemmr%7E19"></span>real,</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:,:), allocatable, target</td><td>::</td>
+  <td><strong>elemMR</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elemmi%7E15"></span>integer,</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:,:), allocatable, target</td><td>::</td>
+  <td><strong>elemMI</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elemmyn%7E14"></span>logical,</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:,:), allocatable, target</td><td>::</td>
+  <td><strong>elemMYN</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elemmname"></span>type(string),</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:), allocatable, target</td><td>::</td>
+  <td><strong>elemMName</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-facer%7E16"></span>real,</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:,:), allocatable, target</td><td>::</td>
+  <td><strong>faceR</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-facei%7E17"></span>integer,</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:,:), allocatable, target</td><td>::</td>
+  <td><strong>faceI</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-faceyn%7E6"></span>logical,</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:,:), allocatable, target</td><td>::</td>
+  <td><strong>faceYN</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-facename"></span>type(string),</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(:), allocatable, target</td><td>::</td>
+  <td><strong>faceName</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+    
+    
+    
+    <br>
+    
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Calls</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: proc~~network_initiation~~CallsGraph Pages: 1 -->
+<svg id="procnetwork_initiationCallsGraph" width="641pt" height="664pt"
+ viewBox="0.00 0.00 641.00 663.78" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="proc~~network_initiation~~CallsGraph" class="graph" transform="scale(0.650761 0.650761) rotate(0) translate(4 1016)">
+<title>proc~~network_initiation~~CallsGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-1016 981,-1016 981,4 -4,4"/>
+<!-- proc~network_initiation -->
+<g id="proc~~network_initiation~~CallsGraph_node1" class="node"><title>proc~network_initiation</title>
+<polygon fill="none" stroke="black" points="95,-254 0,-254 0,-230 95,-230 95,-254"/>
+<text text-anchor="middle" x="47.5" y="-239.6" font-family="Helvetica,sans-Serif" font-size="10.50">network_initiation</text>
+</g>
+<!-- proc~network_get_link_slope -->
+<g id="proc~~network_initiation~~CallsGraph_node2" class="node"><title>proc~network_get_link_slope</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node2"><a xlink:href=".././proc/network_get_link_slope.html" xlink:title="network_get_link_slope">
+<polygon fill="#d9534f" stroke="#d9534f" points="286.5,-470 162.5,-470 162.5,-446 286.5,-446 286.5,-470"/>
+<text text-anchor="middle" x="224.5" y="-455.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_get_link_slope</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~network_get_link_slope -->
+<g id="proc~~network_initiation~~CallsGraph_edge1" class="edge"><title>proc~network_initiation&#45;&gt;proc~network_get_link_slope</title>
+<path fill="none" stroke="#000000" d="M50.1699,-254.347C55.4043,-288.126 74.6458,-382.814 131,-432 137.413,-437.598 144.946,-441.997 152.896,-445.453"/>
+<polygon fill="#000000" stroke="#000000" points="151.788,-448.777 162.378,-449.092 154.296,-442.241 151.788,-448.777"/>
+</g>
+<!-- proc~initialize_dummy_values -->
+<g id="proc~~network_initiation~~CallsGraph_node3" class="node"><title>proc~initialize_dummy_values</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node3"><a xlink:href=".././proc/initialize_dummy_values.html" xlink:title="initialize_dummy_values">
+<polygon fill="#d9534f" stroke="#d9534f" points="547.5,-991 419.5,-991 419.5,-967 547.5,-967 547.5,-991"/>
+<text text-anchor="middle" x="483.5" y="-976.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">initialize_dummy_values</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~initialize_dummy_values -->
+<g id="proc~~network_initiation~~CallsGraph_edge3" class="edge"><title>proc~network_initiation&#45;&gt;proc~initialize_dummy_values</title>
+<path fill="none" stroke="#000000" d="M51.3665,-254.2C58.9091,-283.471 82.179,-357.994 131,-395 198.884,-446.456 262.513,-372.37 318,-437 393.597,-525.054 275.841,-872.212 354,-958 368.064,-973.437 388.712,-980.467 409.36,-983.148"/>
+<polygon fill="#000000" stroke="#000000" points="409.175,-986.647 419.468,-984.132 409.854,-979.679 409.175,-986.647"/>
+</g>
+<!-- proc~junction_branch_assigned_to_faces -->
+<g id="proc~~network_initiation~~CallsGraph_node4" class="node"><title>proc~junction_branch_assigned_to_faces</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node4"><a xlink:href=".././proc/junction_branch_assigned_to_faces.html" xlink:title="junction_branch_assigned_to_faces">
+<polygon fill="#d9534f" stroke="#d9534f" points="575.5,-949 391.5,-949 391.5,-925 575.5,-925 575.5,-949"/>
+<text text-anchor="middle" x="483.5" y="-934.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction_branch_assigned_to_faces</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~junction_branch_assigned_to_faces -->
+<g id="proc~~network_initiation~~CallsGraph_edge6" class="edge"><title>proc~network_initiation&#45;&gt;proc~junction_branch_assigned_to_faces</title>
+<path fill="none" stroke="#000000" d="M53.5312,-254.006C64.1378,-277.787 91.1429,-330.914 131,-358 201.789,-406.107 261.954,-339.314 318,-404 371.371,-465.599 324.099,-693.178 354,-769 378.238,-830.461 431.879,-888.515 461.621,-917.591"/>
+<polygon fill="#000000" stroke="#000000" points="459.351,-920.264 468.984,-924.674 464.203,-915.219 459.351,-920.264"/>
+</g>
+<!-- proc~network_node_assignment -->
+<g id="proc~~network_initiation~~CallsGraph_node5" class="node"><title>proc~network_node_assignment</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node5"><a xlink:href=".././proc/network_node_assignment.html" xlink:title="network_node_assignment">
+<polygon fill="#d9534f" stroke="#d9534f" points="295,-234 154,-234 154,-210 295,-210 295,-234"/>
+<text text-anchor="middle" x="224.5" y="-219.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_node_assignment</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~network_node_assignment -->
+<g id="proc~~network_initiation~~CallsGraph_edge4" class="edge"><title>proc~network_initiation&#45;&gt;proc~network_node_assignment</title>
+<path fill="none" stroke="#000000" d="M95.3968,-236.64C110.237,-234.944 127.079,-233.019 143.561,-231.136"/>
+<polygon fill="#000000" stroke="#000000" points="144.218,-234.584 153.756,-229.971 143.423,-227.629 144.218,-234.584"/>
+</g>
+<!-- proc~initialize_array_zerovalues -->
+<g id="proc~~network_initiation~~CallsGraph_node6" class="node"><title>proc~initialize_array_zerovalues</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node6"><a xlink:href=".././proc/initialize_array_zerovalues.html" xlink:title="initialize_array_zerovalues">
+<polygon fill="#d9534f" stroke="#d9534f" points="553,-760 414,-760 414,-736 553,-736 553,-760"/>
+<text text-anchor="middle" x="483.5" y="-745.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">initialize_array_zerovalues</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~initialize_array_zerovalues -->
+<g id="proc~~network_initiation~~CallsGraph_edge2" class="edge"><title>proc~network_initiation&#45;&gt;proc~initialize_array_zerovalues</title>
+<path fill="none" stroke="#000000" d="M57.3894,-254.289C71.0886,-272.282 99.1361,-305.546 131,-323 205.794,-363.969 257.501,-305.895 318,-366 367.251,-414.93 328.829,-453.299 354,-518 385.781,-599.69 441.989,-687.963 468.243,-727.186"/>
+<polygon fill="#000000" stroke="#000000" points="465.457,-729.314 473.952,-735.645 471.259,-725.398 465.457,-729.314"/>
+</g>
+<!-- proc~network_data_create -->
+<g id="proc~~network_initiation~~CallsGraph_node7" class="node"><title>proc~network_data_create</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node7"><a xlink:href=".././proc/network_data_create.html" xlink:title="network_data_create">
+<polygon fill="#d9534f" stroke="#d9534f" points="281,-314 168,-314 168,-290 281,-290 281,-314"/>
+<text text-anchor="middle" x="224.5" y="-299.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_data_create</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~network_data_create -->
+<g id="proc~~network_initiation~~CallsGraph_edge5" class="edge"><title>proc~network_initiation&#45;&gt;proc~network_data_create</title>
+<path fill="none" stroke="#000000" d="M75.6925,-254.146C91.6316,-261.028 112.257,-269.528 131,-276 142.456,-279.956 154.861,-283.76 166.752,-287.181"/>
+<polygon fill="#000000" stroke="#000000" points="166.013,-290.609 176.588,-289.959 167.916,-283.873 166.013,-290.609"/>
+</g>
+<!-- proc~allocate_data_storage -->
+<g id="proc~~network_initiation~~CallsGraph_node8" class="node"><title>proc~allocate_data_storage</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node8"><a xlink:href=".././proc/allocate_data_storage.html" xlink:title="allocate_data_storage">
+<polygon fill="#d9534f" stroke="#d9534f" points="283.5,-192 165.5,-192 165.5,-168 283.5,-168 283.5,-192"/>
+<text text-anchor="middle" x="224.5" y="-177.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">allocate_data_storage</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~allocate_data_storage -->
+<g id="proc~~network_initiation~~CallsGraph_edge7" class="edge"><title>proc~network_initiation&#45;&gt;proc~allocate_data_storage</title>
+<path fill="none" stroke="#000000" d="M69.2588,-229.95C85.5876,-220.903 109.153,-208.783 131,-201 138.805,-198.22 147.115,-195.721 155.43,-193.501"/>
+<polygon fill="#000000" stroke="#000000" points="156.336,-196.882 165.163,-191.022 154.608,-190.098 156.336,-196.882"/>
+</g>
+<!-- proc~network_check_bc -->
+<g id="proc~~network_initiation~~CallsGraph_node9" class="node"><title>proc~network_check_bc</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node9"><a xlink:href=".././proc/network_check_bc.html" xlink:title="network_check_BC">
+<polygon fill="#d9534f" stroke="#d9534f" points="276.5,-150 172.5,-150 172.5,-126 276.5,-126 276.5,-150"/>
+<text text-anchor="middle" x="224.5" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_check_BC</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~network_check_bc -->
+<g id="proc~~network_initiation~~CallsGraph_edge8" class="edge"><title>proc~network_initiation&#45;&gt;proc~network_check_bc</title>
+<path fill="none" stroke="#000000" d="M56.8653,-229.997C70.2933,-211.687 98.4757,-177.015 131,-159 140.595,-153.685 151.46,-149.714 162.283,-146.748"/>
+<polygon fill="#000000" stroke="#000000" points="163.31,-150.1 172.174,-144.296 161.626,-143.305 163.31,-150.1"/>
+</g>
+<!-- proc~network_check_node_link_match -->
+<g id="proc~~network_initiation~~CallsGraph_node10" class="node"><title>proc~network_check_node_link_match</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node10"><a xlink:href=".././proc/network_check_node_link_match.html" xlink:title="network_check_node_link_match">
+<polygon fill="#d9534f" stroke="#d9534f" points="569,-222 398,-222 398,-198 569,-198 569,-222"/>
+<text text-anchor="middle" x="483.5" y="-207.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_check_node_link_match</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~network_check_node_link_match -->
+<g id="proc~~network_initiation~~CallsGraph_edge9" class="edge"><title>proc~network_initiation&#45;&gt;proc~network_check_node_link_match</title>
+<path fill="none" stroke="#000000" d="M95.1835,-242.664C106.878,-242.804 119.398,-242.93 131,-243 214.11,-243.504 235.296,-251.214 318,-243 354.094,-239.415 393.995,-231.51 425.461,-224.336"/>
+<polygon fill="#000000" stroke="#000000" points="426.414,-227.707 435.365,-222.038 424.832,-220.888 426.414,-227.707"/>
+</g>
+<!-- proc~junction_geometry_setup -->
+<g id="proc~~network_initiation~~CallsGraph_node11" class="node"><title>proc~junction_geometry_setup</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node11"><a xlink:href=".././proc/junction_geometry_setup.html" xlink:title="junction_geometry_setup">
+<polygon fill="#d9534f" stroke="#d9534f" points="291,-108 158,-108 158,-84 291,-84 291,-108"/>
+<text text-anchor="middle" x="224.5" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction_geometry_setup</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~junction_geometry_setup -->
+<g id="proc~~network_initiation~~CallsGraph_edge10" class="edge"><title>proc~network_initiation&#45;&gt;proc~junction_geometry_setup</title>
+<path fill="none" stroke="#000000" d="M52.9143,-229.787C62.7297,-204.458 88.8782,-146.148 131,-117 136.243,-113.372 142.016,-110.361 148.039,-107.863"/>
+<polygon fill="#000000" stroke="#000000" points="149.476,-111.064 157.669,-104.346 147.075,-104.489 149.476,-111.064"/>
+</g>
+<!-- proc~network_count_elements_and_faces -->
+<g id="proc~~network_initiation~~CallsGraph_node12" class="node"><title>proc~network_count_elements_and_faces</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node12"><a xlink:href=".././proc/network_count_elements_and_faces.html" xlink:title="network_count_elements_and_faces">
+<polygon fill="#d9534f" stroke="#d9534f" points="318,-66 131,-66 131,-42 318,-42 318,-66"/>
+<text text-anchor="middle" x="224.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_count_elements_and_faces</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~network_count_elements_and_faces -->
+<g id="proc~~network_initiation~~CallsGraph_edge11" class="edge"><title>proc~network_initiation&#45;&gt;proc~network_count_elements_and_faces</title>
+<path fill="none" stroke="#000000" d="M50.8197,-229.644C57.354,-198.441 78.9395,-116.042 131,-75 132.786,-73.5918 134.649,-72.2744 136.575,-71.0422"/>
+<polygon fill="#000000" stroke="#000000" points="138.328,-74.0725 145.381,-66.1669 134.937,-67.9483 138.328,-74.0725"/>
+</g>
+<!-- proc~network_adjust_link_length -->
+<g id="proc~~network_initiation~~CallsGraph_node13" class="node"><title>proc~network_adjust_link_length</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node13"><a xlink:href=".././proc/network_adjust_link_length.html" xlink:title="network_adjust_link_length">
+<polygon fill="#d9534f" stroke="#d9534f" points="295.5,-24 153.5,-24 153.5,-0 295.5,-0 295.5,-24"/>
+<text text-anchor="middle" x="224.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_adjust_link_length</text>
+</a>
+</g>
+</g>
+<!-- proc~network_initiation&#45;&gt;proc~network_adjust_link_length -->
+<g id="proc~~network_initiation~~CallsGraph_edge12" class="edge"><title>proc~network_initiation&#45;&gt;proc~network_adjust_link_length</title>
+<path fill="none" stroke="#000000" d="M49.4603,-229.864C52.9919,-193.822 68.528,-86.5922 131,-33 134.961,-29.6024 139.358,-26.7242 144.023,-24.2888"/>
+<polygon fill="#000000" stroke="#000000" points="145.592,-27.4209 153.281,-20.1311 142.724,-21.0353 145.592,-27.4209"/>
+</g>
+<!-- emi_mfaceup -->
+<g id="proc~~network_initiation~~CallsGraph_node26" class="node"><title>emi_mfaceup</title>
+<polygon fill="#777777" stroke="#777777" points="796,-1012 719,-1012 719,-988 796,-988 796,-1012"/>
+<text text-anchor="middle" x="757.5" y="-997.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emi_mfaceup</text>
+</g>
+<!-- proc~initialize_dummy_values&#45;&gt;emi_mfaceup -->
+<g id="proc~~network_initiation~~CallsGraph_edge13" class="edge"><title>proc~initialize_dummy_values&#45;&gt;emi_mfaceup</title>
+<path fill="none" stroke="#000000" d="M547.586,-983.871C596.797,-987.67 664.092,-992.866 708.861,-996.322"/>
+<polygon fill="#000000" stroke="#000000" points="708.654,-999.816 718.894,-997.097 709.193,-992.837 708.654,-999.816"/>
+</g>
+<!-- emi_mfacedn -->
+<g id="proc~~network_initiation~~CallsGraph_node31" class="node"><title>emi_mfacedn</title>
+<polygon fill="#777777" stroke="#777777" points="796,-970 719,-970 719,-946 796,-946 796,-970"/>
+<text text-anchor="middle" x="757.5" y="-955.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emi_mfacedn</text>
+</g>
+<!-- proc~initialize_dummy_values&#45;&gt;emi_mfacedn -->
+<g id="proc~~network_initiation~~CallsGraph_edge14" class="edge"><title>proc~initialize_dummy_values&#45;&gt;emi_mfacedn</title>
+<path fill="none" stroke="#000000" d="M547.586,-974.129C596.797,-970.33 664.092,-965.134 708.861,-961.678"/>
+<polygon fill="#000000" stroke="#000000" points="709.193,-965.163 718.894,-960.903 708.654,-958.184 709.193,-965.163"/>
+</g>
+<!-- proc~junction_branch_assigned_to_faces&#45;&gt;emi_mfaceup -->
+<g id="proc~~network_initiation~~CallsGraph_edge15" class="edge"><title>proc~junction_branch_assigned_to_faces&#45;&gt;emi_mfaceup</title>
+<path fill="none" stroke="#000000" d="M575.774,-947.658C588.467,-950.366 601.194,-953.757 613,-958 630.432,-964.265 631.667,-972.466 649,-979 668.004,-986.164 689.863,-991.006 708.886,-994.216"/>
+<polygon fill="#000000" stroke="#000000" points="708.41,-997.684 718.835,-995.792 709.506,-990.77 708.41,-997.684"/>
+</g>
+<!-- proc~junction_branch_assigned_to_faces&#45;&gt;emi_mfacedn -->
+<g id="proc~~network_initiation~~CallsGraph_edge16" class="edge"><title>proc~junction_branch_assigned_to_faces&#45;&gt;emi_mfacedn</title>
+<path fill="none" stroke="#000000" d="M575.829,-944.051C620.217,-947.478 671.746,-951.457 708.388,-954.285"/>
+<polygon fill="#000000" stroke="#000000" points="708.543,-957.808 718.782,-955.088 709.081,-950.828 708.543,-957.808"/>
+</g>
+<!-- emr_topwidthdn -->
+<g id="proc~~network_initiation~~CallsGraph_node14" class="node"><title>emr_topwidthdn</title>
+<polygon fill="#777777" stroke="#777777" points="802,-760 713,-760 713,-736 802,-736 802,-760"/>
+<text text-anchor="middle" x="757.5" y="-745.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_topwidthdn</text>
+</g>
+<!-- proc~initialize_array_zerovalues&#45;&gt;emr_topwidthdn -->
+<g id="proc~~network_initiation~~CallsGraph_edge17" class="edge"><title>proc~initialize_array_zerovalues&#45;&gt;emr_topwidthdn</title>
+<path fill="none" stroke="#000000" d="M553.137,-748C599.517,-748 659.88,-748 702.763,-748"/>
+<polygon fill="#000000" stroke="#000000" points="702.996,-751.5 712.996,-748 702.996,-744.5 702.996,-751.5"/>
+</g>
+<!-- emr_areaup -->
+<g id="proc~~network_initiation~~CallsGraph_node15" class="node"><title>emr_areaup</title>
+<polygon fill="#777777" stroke="#777777" points="793,-928 722,-928 722,-904 793,-904 793,-928"/>
+<text text-anchor="middle" x="757.5" y="-913.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_areaup</text>
+</g>
+<!-- proc~initialize_array_zerovalues&#45;&gt;emr_areaup -->
+<g id="proc~~network_initiation~~CallsGraph_edge18" class="edge"><title>proc~initialize_array_zerovalues&#45;&gt;emr_areaup</title>
+<path fill="none" stroke="#000000" d="M494.122,-760.268C517.349,-788.953 579.713,-860.577 649,-895 668.288,-904.583 691.55,-909.797 711.495,-912.632"/>
+<polygon fill="#000000" stroke="#000000" points="711.224,-916.125 721.584,-913.908 712.102,-909.181 711.224,-916.125"/>
+</g>
+<!-- emr_lengthup -->
+<g id="proc~~network_initiation~~CallsGraph_node20" class="node"><title>emr_lengthup</title>
+<polygon fill="#777777" stroke="#777777" points="797,-718 718,-718 718,-694 797,-694 797,-718"/>
+<text text-anchor="middle" x="757.5" y="-703.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_lengthup</text>
+</g>
+<!-- proc~initialize_array_zerovalues&#45;&gt;emr_lengthup -->
+<g id="proc~~network_initiation~~CallsGraph_edge19" class="edge"><title>proc~initialize_array_zerovalues&#45;&gt;emr_lengthup</title>
+<path fill="none" stroke="#000000" d="M553.137,-737.402C601.363,-729.955 664.708,-720.174 707.8,-713.52"/>
+<polygon fill="#000000" stroke="#000000" points="708.406,-716.968 717.755,-711.983 707.338,-710.05 708.406,-716.968"/>
+</g>
+<!-- emr_areadn -->
+<g id="proc~~network_initiation~~CallsGraph_node24" class="node"><title>emr_areadn</title>
+<polygon fill="#777777" stroke="#777777" points="793,-886 722,-886 722,-862 793,-862 793,-886"/>
+<text text-anchor="middle" x="757.5" y="-871.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_areadn</text>
+</g>
+<!-- proc~initialize_array_zerovalues&#45;&gt;emr_areadn -->
+<g id="proc~~network_initiation~~CallsGraph_edge20" class="edge"><title>proc~initialize_array_zerovalues&#45;&gt;emr_areadn</title>
+<path fill="none" stroke="#000000" d="M499.309,-760.222C526.919,-782.346 588.916,-828.966 649,-853 668.846,-860.939 691.99,-865.955 711.709,-869.084"/>
+<polygon fill="#000000" stroke="#000000" points="711.269,-872.557 721.673,-870.554 712.291,-865.632 711.269,-872.557"/>
+</g>
+<!-- emr_lengthdn -->
+<g id="proc~~network_initiation~~CallsGraph_node25" class="node"><title>emr_lengthdn</title>
+<polygon fill="#777777" stroke="#777777" points="797,-676 718,-676 718,-652 797,-652 797,-676"/>
+<text text-anchor="middle" x="757.5" y="-661.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_lengthdn</text>
+</g>
+<!-- proc~initialize_array_zerovalues&#45;&gt;emr_lengthdn -->
+<g id="proc~~network_initiation~~CallsGraph_edge21" class="edge"><title>proc~initialize_array_zerovalues&#45;&gt;emr_lengthdn</title>
+<path fill="none" stroke="#000000" d="M511.656,-735.931C543.873,-722.006 599.467,-699.208 649,-685 667.97,-679.559 689.227,-675.078 707.798,-671.673"/>
+<polygon fill="#000000" stroke="#000000" points="708.575,-675.09 717.808,-669.893 707.349,-668.198 708.575,-675.09"/>
+</g>
+<!-- emr_hyddepthdn -->
+<g id="proc~~network_initiation~~CallsGraph_node27" class="node"><title>emr_hyddepthdn</title>
+<polygon fill="#777777" stroke="#777777" points="804.5,-844 710.5,-844 710.5,-820 804.5,-820 804.5,-844"/>
+<text text-anchor="middle" x="757.5" y="-829.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_hyddepthdn</text>
+</g>
+<!-- proc~initialize_array_zerovalues&#45;&gt;emr_hyddepthdn -->
+<g id="proc~~network_initiation~~CallsGraph_edge22" class="edge"><title>proc~initialize_array_zerovalues&#45;&gt;emr_hyddepthdn</title>
+<path fill="none" stroke="#000000" d="M511.656,-760.069C543.873,-773.994 599.467,-796.792 649,-811 665.424,-815.711 683.562,-819.702 700.187,-822.898"/>
+<polygon fill="#000000" stroke="#000000" points="699.842,-826.394 710.314,-824.785 701.124,-819.512 699.842,-826.394"/>
+</g>
+<!-- emr_topwidthup -->
+<g id="proc~~network_initiation~~CallsGraph_node28" class="node"><title>emr_topwidthup</title>
+<polygon fill="#777777" stroke="#777777" points="802,-634 713,-634 713,-610 802,-610 802,-634"/>
+<text text-anchor="middle" x="757.5" y="-619.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_topwidthup</text>
+</g>
+<!-- proc~initialize_array_zerovalues&#45;&gt;emr_topwidthup -->
+<g id="proc~~network_initiation~~CallsGraph_edge23" class="edge"><title>proc~initialize_array_zerovalues&#45;&gt;emr_topwidthup</title>
+<path fill="none" stroke="#000000" d="M499.309,-735.778C526.919,-713.654 588.916,-667.034 649,-643 665.899,-636.24 685.189,-631.6 702.72,-628.438"/>
+<polygon fill="#000000" stroke="#000000" points="703.525,-631.852 712.807,-626.743 702.365,-624.949 703.525,-631.852"/>
+</g>
+<!-- emr_hyddepthup -->
+<g id="proc~~network_initiation~~CallsGraph_node30" class="node"><title>emr_hyddepthup</title>
+<polygon fill="#777777" stroke="#777777" points="804.5,-802 710.5,-802 710.5,-778 804.5,-778 804.5,-802"/>
+<text text-anchor="middle" x="757.5" y="-787.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_hyddepthup</text>
+</g>
+<!-- proc~initialize_array_zerovalues&#45;&gt;emr_hyddepthup -->
+<g id="proc~~network_initiation~~CallsGraph_edge24" class="edge"><title>proc~initialize_array_zerovalues&#45;&gt;emr_hyddepthup</title>
+<path fill="none" stroke="#000000" d="M553.137,-758.598C598.595,-765.618 657.486,-774.711 700.186,-781.304"/>
+<polygon fill="#000000" stroke="#000000" points="699.711,-784.772 710.128,-782.84 700.779,-777.854 699.711,-784.772"/>
+</g>
+<!-- proc~handle_thisnode -->
+<g id="proc~~network_initiation~~CallsGraph_node18" class="node"><title>proc~handle_thisnode</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node18"><a xlink:href=".././proc/handle_thisnode.html" xlink:title="handle_thisnode">
+<polygon fill="#d9534f" stroke="#d9534f" points="529,-491 438,-491 438,-467 529,-467 529,-491"/>
+<text text-anchor="middle" x="483.5" y="-476.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">handle_thisnode</text>
+</a>
+</g>
+</g>
+<!-- proc~network_data_create&#45;&gt;proc~handle_thisnode -->
+<g id="proc~~network_initiation~~CallsGraph_edge25" class="edge"><title>proc~network_data_create&#45;&gt;proc~handle_thisnode</title>
+<path fill="none" stroke="#000000" d="M281.471,-313.189C293.94,-316.905 306.779,-321.748 318,-328 380.796,-362.987 438.928,-426.513 466.206,-458.878"/>
+<polygon fill="#000000" stroke="#000000" points="463.678,-461.312 472.761,-466.766 469.061,-456.838 463.678,-461.312"/>
+</g>
+<!-- proc~subdivide_link_going_upstream -->
+<g id="proc~~network_initiation~~CallsGraph_node21" class="node"><title>proc~subdivide_link_going_upstream</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node21"><a xlink:href=".././proc/subdivide_link_going_upstream.html" xlink:title="subdivide_link_going_upstream">
+<polygon fill="#d9534f" stroke="#d9534f" points="839,-302 676,-302 676,-278 839,-278 839,-302"/>
+<text text-anchor="middle" x="757.5" y="-287.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">subdivide_link_going_upstream</text>
+</a>
+</g>
+</g>
+<!-- proc~network_data_create&#45;&gt;proc~subdivide_link_going_upstream -->
+<g id="proc~~network_initiation~~CallsGraph_edge26" class="edge"><title>proc~network_data_create&#45;&gt;proc~subdivide_link_going_upstream</title>
+<path fill="none" stroke="#000000" d="M281.323,-300.738C372.73,-298.673 555.174,-294.55 665.489,-292.057"/>
+<polygon fill="#000000" stroke="#000000" points="665.686,-295.553 675.604,-291.828 665.528,-288.555 665.686,-295.553"/>
+</g>
+<!-- proc~setassigned -->
+<g id="proc~~network_initiation~~CallsGraph_node22" class="node"><title>proc~setassigned</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node22"><a xlink:href=".././proc/setassigned.html" xlink:title="setAssigned">
+<polygon fill="#d94e8f" stroke="#d94e8f" points="792.5,-260 722.5,-260 722.5,-236 792.5,-236 792.5,-260"/>
+<text text-anchor="middle" x="757.5" y="-245.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">setAssigned</text>
+</a>
+</g>
+</g>
+<!-- proc~network_data_create&#45;&gt;proc~setassigned -->
+<g id="proc~~network_initiation~~CallsGraph_edge27" class="edge"><title>proc~network_data_create&#45;&gt;proc~setassigned</title>
+<path fill="none" stroke="#000000" d="M281.323,-296.323C387.428,-285.533 616.199,-262.268 712.429,-252.482"/>
+<polygon fill="#000000" stroke="#000000" points="712.813,-255.961 722.408,-251.467 712.105,-248.997 712.813,-255.961"/>
+</g>
+<!-- proc~utility_check_allocation -->
+<g id="proc~~network_initiation~~CallsGraph_node32" class="node"><title>proc~utility_check_allocation</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node32"><a xlink:href=".././proc/utility_check_allocation.html" xlink:title="utility_check_allocation">
+<polygon fill="#d9534f" stroke="#d9534f" points="544,-180 423,-180 423,-156 544,-156 544,-180"/>
+<text text-anchor="middle" x="483.5" y="-165.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility_check_allocation</text>
+</a>
+</g>
+</g>
+<!-- proc~allocate_data_storage&#45;&gt;proc~utility_check_allocation -->
+<g id="proc~~network_initiation~~CallsGraph_edge28" class="edge"><title>proc~allocate_data_storage&#45;&gt;proc~utility_check_allocation</title>
+<path fill="none" stroke="#000000" d="M283.817,-177.277C322.045,-175.492 372.226,-173.149 412.592,-171.264"/>
+<polygon fill="#000000" stroke="#000000" points="412.804,-174.758 422.63,-170.795 412.478,-167.766 412.804,-174.758"/>
+</g>
+<!-- ni_mlinkup -->
+<g id="proc~~network_initiation~~CallsGraph_node23" class="node"><title>ni_mlinkup</title>
+<polygon fill="#777777" stroke="#777777" points="789.5,-218 725.5,-218 725.5,-194 789.5,-194 789.5,-218"/>
+<text text-anchor="middle" x="757.5" y="-203.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">ni_mlinkup</text>
+</g>
+<!-- proc~network_check_node_link_match&#45;&gt;ni_mlinkup -->
+<g id="proc~~network_initiation~~CallsGraph_edge29" class="edge"><title>proc~network_check_node_link_match&#45;&gt;ni_mlinkup</title>
+<path fill="none" stroke="#000000" d="M569.072,-208.756C617.538,-208.044 676.223,-207.181 714.865,-206.612"/>
+<polygon fill="#000000" stroke="#000000" points="715.259,-210.107 725.207,-206.46 715.156,-203.108 715.259,-210.107"/>
+</g>
+<!-- ni_mlinkdn -->
+<g id="proc~~network_initiation~~CallsGraph_node29" class="node"><title>ni_mlinkdn</title>
+<polygon fill="#777777" stroke="#777777" points="789.5,-176 725.5,-176 725.5,-152 789.5,-152 789.5,-176"/>
+<text text-anchor="middle" x="757.5" y="-161.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">ni_mlinkdn</text>
+</g>
+<!-- proc~network_check_node_link_match&#45;&gt;ni_mlinkdn -->
+<g id="proc~~network_initiation~~CallsGraph_edge30" class="edge"><title>proc~network_check_node_link_match&#45;&gt;ni_mlinkdn</title>
+<path fill="none" stroke="#000000" d="M558.927,-197.973C576.653,-195.071 595.503,-191.954 613,-189 647.534,-183.17 686.701,-176.331 715.381,-171.282"/>
+<polygon fill="#000000" stroke="#000000" points="716.204,-174.69 725.444,-169.507 714.989,-167.797 716.204,-174.69"/>
+</g>
+<!-- proc~junction_branch_summation_and_updown_average -->
+<g id="proc~~network_initiation~~CallsGraph_node16" class="node"><title>proc~junction_branch_summation_and_updown_average</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node16"><a xlink:href=".././proc/junction_branch_summation_and_updown_average.html" xlink:title="junction_branch_summation_and_updown_average">
+<polygon fill="#d9534f" stroke="#d9534f" points="613,-127 354,-127 354,-103 613,-103 613,-127"/>
+<text text-anchor="middle" x="483.5" y="-112.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction_branch_summation_and_updown_average</text>
+</a>
+</g>
+</g>
+<!-- proc~junction_geometry_setup&#45;&gt;proc~junction_branch_summation_and_updown_average -->
+<g id="proc~~network_initiation~~CallsGraph_edge31" class="edge"><title>proc~junction_geometry_setup&#45;&gt;proc~junction_branch_summation_and_updown_average</title>
+<path fill="none" stroke="#000000" d="M291.017,-100.844C307.266,-102.045 325.301,-103.378 343.619,-104.733"/>
+<polygon fill="#000000" stroke="#000000" points="343.585,-108.239 353.815,-105.486 344.101,-101.259 343.585,-108.239"/>
+</g>
+<!-- proc~junction_branch_average_for_directions_then_sum -->
+<g id="proc~~network_initiation~~CallsGraph_node19" class="node"><title>proc~junction_branch_average_for_directions_then_sum</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node19"><a xlink:href=".././proc/junction_branch_average_for_directions_then_sum.html" xlink:title="junction_branch_average_for_directions_then_sum">
+<polygon fill="#d9534f" stroke="#d9534f" points="612,-85 355,-85 355,-61 612,-61 612,-85"/>
+<text text-anchor="middle" x="483.5" y="-70.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction_branch_average_for_directions_then_sum</text>
+</a>
+</g>
+</g>
+<!-- proc~junction_geometry_setup&#45;&gt;proc~junction_branch_average_for_directions_then_sum -->
+<g id="proc~~network_initiation~~CallsGraph_edge32" class="edge"><title>proc~junction_geometry_setup&#45;&gt;proc~junction_branch_average_for_directions_then_sum</title>
+<path fill="none" stroke="#000000" d="M291.017,-90.1366C307.594,-88.6531 326.029,-87.0033 344.727,-85.3299"/>
+<polygon fill="#000000" stroke="#000000" points="345.176,-88.8038 354.824,-84.4262 344.552,-81.8316 345.176,-88.8038"/>
+</g>
+<!-- proc~link_shortening -->
+<g id="proc~~network_initiation~~CallsGraph_node17" class="node"><title>proc~link_shortening</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node17"><a xlink:href=".././proc/link_shortening.html" xlink:title="link_shortening">
+<polygon fill="#d9534f" stroke="#d9534f" points="526,-24 441,-24 441,-0 526,-0 526,-24"/>
+<text text-anchor="middle" x="483.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">link_shortening</text>
+</a>
+</g>
+</g>
+<!-- proc~network_adjust_link_length&#45;&gt;proc~link_shortening -->
+<g id="proc~~network_initiation~~CallsGraph_edge33" class="edge"><title>proc~network_adjust_link_length&#45;&gt;proc~link_shortening</title>
+<path fill="none" stroke="#000000" d="M295.726,-12C338.428,-12 392.023,-12 430.836,-12"/>
+<polygon fill="#000000" stroke="#000000" points="430.869,-15.5001 440.869,-12 430.869,-8.5001 430.869,-15.5001"/>
+</g>
+<!-- proc~junction_branch_summation_one_direction -->
+<g id="proc~~network_initiation~~CallsGraph_node34" class="node"><title>proc~junction_branch_summation_one_direction</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node34"><a xlink:href=".././proc/junction_branch_summation_one_direction.html" xlink:title="junction_branch_summation_one_direction">
+<polygon fill="#d9534f" stroke="#d9534f" points="866,-129 649,-129 649,-105 866,-105 866,-129"/>
+<text text-anchor="middle" x="757.5" y="-114.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction_branch_summation_one_direction</text>
+</a>
+</g>
+</g>
+<!-- proc~junction_branch_summation_and_updown_average&#45;&gt;proc~junction_branch_summation_one_direction -->
+<g id="proc~~network_initiation~~CallsGraph_edge35" class="edge"><title>proc~junction_branch_summation_and_updown_average&#45;&gt;proc~junction_branch_summation_one_direction</title>
+<path fill="none" stroke="#000000" d="M613.331,-115.947C621.726,-116.009 630.158,-116.071 638.498,-116.132"/>
+<polygon fill="#000000" stroke="#000000" points="638.591,-119.633 648.617,-116.207 638.643,-112.633 638.591,-119.633"/>
+</g>
+<!-- emr_temp -->
+<g id="proc~~network_initiation~~CallsGraph_node38" class="node"><title>emr_temp</title>
+<polygon fill="#777777" stroke="#777777" points="788,-87 727,-87 727,-63 788,-63 788,-87"/>
+<text text-anchor="middle" x="757.5" y="-72.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_temp</text>
+</g>
+<!-- proc~junction_branch_summation_and_updown_average&#45;&gt;emr_temp -->
+<g id="proc~~network_initiation~~CallsGraph_edge36" class="edge"><title>proc~junction_branch_summation_and_updown_average&#45;&gt;emr_temp</title>
+<path fill="none" stroke="#000000" d="M566.109,-102.999C615.954,-95.6685 677.47,-86.622 716.843,-80.832"/>
+<polygon fill="#000000" stroke="#000000" points="717.459,-84.2791 726.843,-79.3613 716.44,-77.3536 717.459,-84.2791"/>
+</g>
+<!-- proc~utility_advance_temp_array -->
+<g id="proc~~network_initiation~~CallsGraph_node39" class="node"><title>proc~utility_advance_temp_array</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node39"><a xlink:href=".././proc/utility_advance_temp_array.html" xlink:title="utility_advance_temp_array">
+<polygon fill="#d94e8f" stroke="#d94e8f" points="829.5,-45 685.5,-45 685.5,-21 829.5,-21 829.5,-45"/>
+<text text-anchor="middle" x="757.5" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility_advance_temp_array</text>
+</a>
+</g>
+</g>
+<!-- proc~junction_branch_summation_and_updown_average&#45;&gt;proc~utility_advance_temp_array -->
+<g id="proc~~network_initiation~~CallsGraph_edge34" class="edge"><title>proc~junction_branch_summation_and_updown_average&#45;&gt;proc~utility_advance_temp_array</title>
+<path fill="none" stroke="#000000" d="M592.57,-102.983C599.671,-100.488 606.553,-97.5221 613,-94 633.99,-82.5336 628.19,-65.7896 649,-54 657.227,-49.3389 666.315,-45.6962 675.617,-42.8522"/>
+<polygon fill="#000000" stroke="#000000" points="676.651,-46.198 685.362,-40.1683 674.792,-39.4492 676.651,-46.198"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emr_topwidthdn -->
+<g id="proc~~network_initiation~~CallsGraph_edge37" class="edge"><title>proc~handle_thisnode&#45;&gt;emr_topwidthdn</title>
+<path fill="none" stroke="#000000" d="M488.598,-491.013C503.139,-531.69 556.422,-665.145 649,-727 664.809,-737.563 684.667,-743.078 703,-745.877"/>
+<polygon fill="#000000" stroke="#000000" points="702.627,-749.358 712.993,-747.168 703.524,-742.416 702.627,-749.358"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;proc~handle_thisnode -->
+<g id="proc~~network_initiation~~CallsGraph_edge39" class="edge"><title>proc~handle_thisnode&#45;&gt;proc~handle_thisnode</title>
+<path fill="none" stroke="#000000" d="M440.841,-491.014C425.944,-499.972 440.164,-509 483.5,-509 512.616,-509 528.589,-504.924 531.418,-499.533"/>
+<polygon fill="#000000" stroke="#000000" points="534.39,-497.684 526.159,-491.014 528.434,-501.362 534.39,-497.684"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emr_lengthup -->
+<g id="proc~~network_initiation~~CallsGraph_edge42" class="edge"><title>proc~handle_thisnode&#45;&gt;emr_lengthup</title>
+<path fill="none" stroke="#000000" d="M490.307,-491.218C508.216,-527.458 566.417,-634.942 649,-685 666.506,-695.611 688.299,-701.012 707.677,-703.707"/>
+<polygon fill="#000000" stroke="#000000" points="707.51,-707.212 717.852,-704.913 708.334,-700.261 707.51,-707.212"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;proc~subdivide_link_going_upstream -->
+<g id="proc~~network_initiation~~CallsGraph_edge40" class="edge"><title>proc~handle_thisnode&#45;&gt;proc~subdivide_link_going_upstream</title>
+<path fill="none" stroke="#000000" d="M492.403,-466.844C513.569,-435.371 574.98,-350.903 649,-311 654.492,-308.039 660.343,-305.492 666.369,-303.302"/>
+<polygon fill="#000000" stroke="#000000" points="667.554,-306.597 675.959,-300.145 665.366,-299.948 667.554,-306.597"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;proc~setassigned -->
+<g id="proc~~network_initiation~~CallsGraph_edge41" class="edge"><title>proc~handle_thisnode&#45;&gt;proc~setassigned</title>
+<path fill="none" stroke="#000000" d="M490.112,-466.808C507.681,-430.125 565.475,-320.165 649,-269 667.866,-257.443 691.787,-252.054 712.272,-249.612"/>
+<polygon fill="#000000" stroke="#000000" points="712.715,-253.086 722.319,-248.612 712.022,-246.12 712.715,-253.086"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;ni_mlinkup -->
+<g id="proc~~network_initiation~~CallsGraph_edge43" class="edge"><title>proc~handle_thisnode&#45;&gt;ni_mlinkup</title>
+<path fill="none" stroke="#000000" d="M488.537,-466.797C502.883,-425.473 555.613,-289.893 649,-227 668.383,-213.946 693.929,-208.586 715.254,-206.541"/>
+<polygon fill="#000000" stroke="#000000" points="715.629,-210.023 725.339,-205.784 715.105,-203.042 715.629,-210.023"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emr_lengthdn -->
+<g id="proc~~network_initiation~~CallsGraph_edge46" class="edge"><title>proc~handle_thisnode&#45;&gt;emr_lengthdn</title>
+<path fill="none" stroke="#000000" d="M492.792,-491.315C514.426,-522.379 575.995,-604.21 649,-643 666.935,-652.53 688.617,-657.763 707.797,-660.626"/>
+<polygon fill="#000000" stroke="#000000" points="707.488,-664.116 717.859,-661.951 708.402,-657.175 707.488,-664.116"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emi_mfaceup -->
+<g id="proc~~network_initiation~~CallsGraph_edge47" class="edge"><title>proc~handle_thisnode&#45;&gt;emi_mfaceup</title>
+<path fill="none" stroke="#000000" d="M492.777,-491.248C516.001,-526.263 582.085,-630.482 613,-727 630.256,-780.873 610.033,-937.993 649,-979 664.141,-994.933 687.524,-1000.76 708.62,-1002.36"/>
+<polygon fill="#000000" stroke="#000000" points="708.595,-1005.86 718.746,-1002.83 708.92,-998.868 708.595,-1005.86"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emr_topwidthup -->
+<g id="proc~~network_initiation~~CallsGraph_edge51" class="edge"><title>proc~handle_thisnode&#45;&gt;emr_topwidthup</title>
+<path fill="none" stroke="#000000" d="M497.887,-491.301C524.566,-515.148 587.137,-567.795 649,-596 665.796,-603.657 685.136,-609.23 702.742,-613.204"/>
+<polygon fill="#000000" stroke="#000000" points="702.365,-616.702 712.875,-615.363 703.824,-609.856 702.365,-616.702"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;ni_mlinkdn -->
+<g id="proc~~network_initiation~~CallsGraph_edge52" class="edge"><title>proc~handle_thisnode&#45;&gt;ni_mlinkdn</title>
+<path fill="none" stroke="#000000" d="M490.501,-466.915C516.896,-413.957 622.532,-204.169 649,-185 667.927,-171.293 693.454,-165.907 714.884,-164.011"/>
+<polygon fill="#000000" stroke="#000000" points="715.281,-167.492 725.028,-163.34 714.819,-160.508 715.281,-167.492"/>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emi_mfacedn -->
+<g id="proc~~network_initiation~~CallsGraph_edge48" class="edge"><title>proc~handle_thisnode&#45;&gt;emi_mfacedn</title>
+<path fill="none" stroke="#000000" d="M492.642,-491.293C515.508,-526.425 580.743,-630.922 613,-727 643.14,-816.77 582.82,-869.27 649,-937 664.361,-952.721 687.766,-958.527 708.819,-960.166"/>
+<polygon fill="#000000" stroke="#000000" points="708.76,-963.667 718.92,-960.661 709.103,-956.675 708.76,-963.667"/>
+</g>
+<!-- emr_zbottomdn -->
+<g id="proc~~network_initiation~~CallsGraph_node33" class="node"><title>emr_zbottomdn</title>
+<polygon fill="#777777" stroke="#777777" points="801.5,-554 713.5,-554 713.5,-530 801.5,-530 801.5,-554"/>
+<text text-anchor="middle" x="757.5" y="-539.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_zbottomdn</text>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emr_zbottomdn -->
+<g id="proc~~network_initiation~~CallsGraph_edge38" class="edge"><title>proc~handle_thisnode&#45;&gt;emr_zbottomdn</title>
+<path fill="none" stroke="#000000" d="M528.67,-491.007C561.695,-499.806 608.024,-511.775 649,-521 666.679,-524.98 686.093,-528.907 703.499,-532.269"/>
+<polygon fill="#000000" stroke="#000000" points="703.008,-535.739 713.488,-534.179 704.323,-528.863 703.008,-535.739"/>
+</g>
+<!-- nr_elementlengthup -->
+<g id="proc~~network_initiation~~CallsGraph_node35" class="node"><title>nr_elementlengthup</title>
+<polygon fill="#777777" stroke="#777777" points="811.5,-512 703.5,-512 703.5,-488 811.5,-488 811.5,-512"/>
+<text text-anchor="middle" x="757.5" y="-497.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">nr_elementlengthup</text>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;nr_elementlengthup -->
+<g id="proc~~network_initiation~~CallsGraph_edge44" class="edge"><title>proc~handle_thisnode&#45;&gt;nr_elementlengthup</title>
+<path fill="none" stroke="#000000" d="M529.111,-482.444C573.808,-485.895 643.017,-491.238 693.345,-495.124"/>
+<polygon fill="#000000" stroke="#000000" points="693.224,-498.625 703.464,-495.905 693.763,-491.646 693.224,-498.625"/>
+</g>
+<!-- emr_zbottomup -->
+<g id="proc~~network_initiation~~CallsGraph_node36" class="node"><title>emr_zbottomup</title>
+<polygon fill="#777777" stroke="#777777" points="801.5,-470 713.5,-470 713.5,-446 801.5,-446 801.5,-470"/>
+<text text-anchor="middle" x="757.5" y="-455.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_zbottomup</text>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emr_zbottomup -->
+<g id="proc~~network_initiation~~CallsGraph_edge45" class="edge"><title>proc~handle_thisnode&#45;&gt;emr_zbottomup</title>
+<path fill="none" stroke="#000000" d="M529.111,-475.556C576.769,-471.876 652.294,-466.045 703.086,-462.124"/>
+<polygon fill="#000000" stroke="#000000" points="703.513,-465.601 713.214,-461.342 702.974,-458.622 703.513,-465.601"/>
+</g>
+<!-- emr_breadthscaledn -->
+<g id="proc~~network_initiation~~CallsGraph_node37" class="node"><title>emr_breadthscaledn</title>
+<polygon fill="#777777" stroke="#777777" points="813,-428 702,-428 702,-404 813,-404 813,-428"/>
+<text text-anchor="middle" x="757.5" y="-413.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_breadthscaledn</text>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emr_breadthscaledn -->
+<g id="proc~~network_initiation~~CallsGraph_edge49" class="edge"><title>proc~handle_thisnode&#45;&gt;emr_breadthscaledn</title>
+<path fill="none" stroke="#000000" d="M528.67,-466.993C561.695,-458.194 608.024,-446.225 649,-437 662.809,-433.891 677.675,-430.815 691.817,-428.015"/>
+<polygon fill="#000000" stroke="#000000" points="692.821,-431.385 701.962,-426.028 691.475,-424.515 692.821,-431.385"/>
+</g>
+<!-- nr_elementlengthdn -->
+<g id="proc~~network_initiation~~CallsGraph_node40" class="node"><title>nr_elementlengthdn</title>
+<polygon fill="#777777" stroke="#777777" points="811.5,-386 703.5,-386 703.5,-362 811.5,-362 811.5,-386"/>
+<text text-anchor="middle" x="757.5" y="-371.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">nr_elementlengthdn</text>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;nr_elementlengthdn -->
+<g id="proc~~network_initiation~~CallsGraph_edge50" class="edge"><title>proc~handle_thisnode&#45;&gt;nr_elementlengthdn</title>
+<path fill="none" stroke="#000000" d="M503.961,-466.777C533.964,-448.47 593.835,-414.051 649,-395 663.02,-390.158 678.476,-386.317 693.192,-383.317"/>
+<polygon fill="#000000" stroke="#000000" points="694.083,-386.71 703.235,-381.372 692.752,-379.837 694.083,-386.71"/>
+</g>
+<!-- emr_breadthscaleup -->
+<g id="proc~~network_initiation~~CallsGraph_node41" class="node"><title>emr_breadthscaleup</title>
+<polygon fill="#777777" stroke="#777777" points="813,-344 702,-344 702,-320 813,-320 813,-344"/>
+<text text-anchor="middle" x="757.5" y="-329.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_breadthscaleup</text>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;emr_breadthscaleup -->
+<g id="proc~~network_initiation~~CallsGraph_edge53" class="edge"><title>proc~handle_thisnode&#45;&gt;emr_breadthscaleup</title>
+<path fill="none" stroke="#000000" d="M496.389,-466.646C521.803,-441.032 584.385,-382.109 649,-353 662.383,-346.971 677.468,-342.669 692.013,-339.6"/>
+<polygon fill="#000000" stroke="#000000" points="692.819,-343.008 701.968,-337.666 691.484,-336.137 692.819,-343.008"/>
+</g>
+<!-- proc~setfacetype -->
+<g id="proc~~network_initiation~~CallsGraph_node42" class="node"><title>proc~setfacetype</title>
+<g id="a_proc~~network_initiation~~CallsGraph_node42"><a xlink:href=".././proc/setfacetype.html" xlink:title="setFaceType">
+<polygon fill="#d94e8f" stroke="#d94e8f" points="977,-448 902,-448 902,-424 977,-424 977,-448"/>
+<text text-anchor="middle" x="939.5" y="-433.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">setFaceType</text>
+</a>
+</g>
+</g>
+<!-- proc~handle_thisnode&#45;&gt;proc~setfacetype -->
+<g id="proc~~network_initiation~~CallsGraph_edge54" class="edge"><title>proc~handle_thisnode&#45;&gt;proc~setfacetype</title>
+<path fill="none" stroke="#000000" d="M502.199,-491.188C559.079,-528.715 740.782,-635.702 866,-563 904.913,-540.407 924.696,-488.225 933.185,-458.253"/>
+<polygon fill="#000000" stroke="#000000" points="936.641,-458.874 935.816,-448.312 929.874,-457.083 936.641,-458.874"/>
+</g>
+<!-- proc~junction_branch_average_for_directions_then_sum&#45;&gt;proc~junction_branch_summation_one_direction -->
+<g id="proc~~network_initiation~~CallsGraph_edge56" class="edge"><title>proc~junction_branch_average_for_directions_then_sum&#45;&gt;proc~junction_branch_summation_one_direction</title>
+<path fill="none" stroke="#000000" d="M558.825,-85.0232C593.907,-90.6981 635.934,-97.4967 672.199,-103.363"/>
+<polygon fill="#000000" stroke="#000000" points="671.834,-106.849 682.265,-104.991 672.952,-99.9393 671.834,-106.849"/>
+</g>
+<!-- proc~junction_branch_average_for_directions_then_sum&#45;&gt;emr_temp -->
+<g id="proc~~network_initiation~~CallsGraph_edge57" class="edge"><title>proc~junction_branch_average_for_directions_then_sum&#45;&gt;emr_temp</title>
+<path fill="none" stroke="#000000" d="M612.138,-73.9385C650.079,-74.2175 688.891,-74.5029 716.703,-74.7074"/>
+<polygon fill="#000000" stroke="#000000" points="716.774,-78.2079 726.799,-74.7816 716.825,-71.2081 716.774,-78.2079"/>
+</g>
+<!-- proc~junction_branch_average_for_directions_then_sum&#45;&gt;proc~utility_advance_temp_array -->
+<g id="proc~~network_initiation~~CallsGraph_edge55" class="edge"><title>proc~junction_branch_average_for_directions_then_sum&#45;&gt;proc~utility_advance_temp_array</title>
+<path fill="none" stroke="#000000" d="M566.109,-60.9987C600.576,-55.9301 640.622,-50.0408 675.07,-44.9751"/>
+<polygon fill="#000000" stroke="#000000" points="675.712,-48.4183 685.096,-43.5005 674.693,-41.4928 675.712,-48.4183"/>
+</g>
+<!-- proc~subdivide_link_going_upstream&#45;&gt;proc~setfacetype -->
+<g id="proc~~network_initiation~~CallsGraph_edge58" class="edge"><title>proc~subdivide_link_going_upstream&#45;&gt;proc~setfacetype</title>
+<path fill="none" stroke="#000000" d="M839.154,-297.822C848.73,-300.989 857.947,-305.262 866,-311 901.691,-336.43 922.431,-385.357 932.005,-413.873"/>
+<polygon fill="#000000" stroke="#000000" points="928.768,-415.244 935.136,-423.712 935.439,-413.121 928.768,-415.244"/>
+</g>
+</g>
+</svg>
+</div><script>var panprocnetwork_initiationCallsGraph = svgPanZoom('#procnetwork_initiationCallsGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="560pt" height="32pt"
+ viewBox="0.00 0.00 559.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 555.5,-28 555.5,4 -4,4"/>
+<!-- Subroutine -->
+<g id="node1" class="node"><title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="64,-24 0,-24 0,-0 64,-0 64,-24"/>
+<text text-anchor="middle" x="32" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node2" class="node"><title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="136,-24 82,-24 82,-0 136,-0 136,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Interface -->
+<g id="node3" class="node"><title>Interface</title>
+<polygon fill="#a7506f" stroke="#a7506f" points="209.5,-24 154.5,-24 154.5,-0 209.5,-0 209.5,-24"/>
+<text text-anchor="middle" x="182" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Interface</text>
+</g>
+<!-- Unknown Procedure Type -->
+<g id="node4" class="node"><title>Unknown Procedure Type</title>
+<polygon fill="#777777" stroke="#777777" points="364,-24 228,-24 228,-0 364,-0 364,-24"/>
+<text text-anchor="middle" x="296" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Unknown Procedure Type</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node"><title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="436,-24 382,-24 382,-0 436,-0 436,-24"/>
+<text text-anchor="middle" x="409" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="551.5,-24 454.5,-24 454.5,-0 551.5,-0 551.5,-24"/>
+<text text-anchor="middle" x="503" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a procedure to one which it calls. Dashed 
+    arrows point from an interface to procedures which implement that interface.
+    This could include the module procedures in a generic interface or the
+    implementation in a submodule of an interface in a parent module.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+     
+     
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Called by</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: proc~~network_initiation~~CalledByGraph Pages: 1 -->
+<svg id="procnetwork_initiationCalledByGraph" width="193pt" height="32pt"
+ viewBox="0.00 0.00 193.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="proc~~network_initiation~~CalledByGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>proc~~network_initiation~~CalledByGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 189,-28 189,4 -4,4"/>
+<!-- proc~network_initiation -->
+<g id="proc~~network_initiation~~CalledByGraph_node1" class="node"><title>proc~network_initiation</title>
+<polygon fill="none" stroke="black" points="185,-24 90,-24 90,-0 185,-0 185,-24"/>
+<text text-anchor="middle" x="137.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">network_initiation</text>
+</g>
+<!-- program~main -->
+<g id="proc~~network_initiation~~CalledByGraph_node2" class="node"><title>program~main</title>
+<g id="a_proc~~network_initiation~~CalledByGraph_node2"><a xlink:href=".././program/main.html" xlink:title="main">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="54,-24 0,-24 0,-0 54,-0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">main</text>
+</a>
+</g>
+</g>
+<!-- program~main&#45;&gt;proc~network_initiation -->
+<g id="proc~~network_initiation~~CalledByGraph_edge1" class="edge"><title>program~main&#45;&gt;proc~network_initiation</title>
+<path fill="none" stroke="#000000" d="M54.2648,-12C62.0113,-12 70.8061,-12 79.6926,-12"/>
+<polygon fill="#000000" stroke="#000000" points="79.7138,-15.5001 89.7138,-12 79.7137,-8.5001 79.7138,-15.5001"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="560pt" height="32pt"
+ viewBox="0.00 0.00 559.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 555.5,-28 555.5,4 -4,4"/>
+<!-- Subroutine -->
+<g id="node1" class="node"><title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="64,-24 0,-24 0,-0 64,-0 64,-24"/>
+<text text-anchor="middle" x="32" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node2" class="node"><title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="136,-24 82,-24 82,-0 136,-0 136,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Interface -->
+<g id="node3" class="node"><title>Interface</title>
+<polygon fill="#a7506f" stroke="#a7506f" points="209.5,-24 154.5,-24 154.5,-0 209.5,-0 209.5,-24"/>
+<text text-anchor="middle" x="182" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Interface</text>
+</g>
+<!-- Unknown Procedure Type -->
+<g id="node4" class="node"><title>Unknown Procedure Type</title>
+<polygon fill="#777777" stroke="#777777" points="364,-24 228,-24 228,-0 364,-0 364,-24"/>
+<text text-anchor="middle" x="296" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Unknown Procedure Type</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node"><title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="436,-24 382,-24 382,-0 436,-0 436,-24"/>
+<text text-anchor="middle" x="409" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="551.5,-24 454.5,-24 454.5,-0 551.5,-0 551.5,-24"/>
+<text text-anchor="middle" x="503" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a procedure to one which it calls. Dashed 
+    arrows point from an interface to procedures which implement that interface.
+    This could include the module procedures in a generic interface or the
+    implementation in a submodule of an interface in a parent module.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+     
+    <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<em>None</em>
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    
+
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+
+
+    
+    
+    
+    
+    </div>
+  </div>
+
+
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2019 
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> SWMMengine was developed by Ben R. Hodges and Ehsan Madadi-Kandjani</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>

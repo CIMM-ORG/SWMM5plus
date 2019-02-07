@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="Prototype Fortran 2008 engine for the EPA Storm Water Management Model (SWMM)">
+    
+    <meta name="author" content="Ben R. Hodges and Ehsan Madadi-Kandjani" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>element_flowrate_update &ndash; SWMMengine</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">SWMMengine </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/main.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/main.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>element_flowrate_update
+      <small>Subroutine</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 0.4% of total for procedures.">26 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/element_dynamics.f08"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+     <li><a href='../sourcefile/element_dynamics.f08.html'>element_dynamics.f08</a></li>
+    
+     <li><a href='../module/element_dynamics.html'>element_dynamics</a></li>
+    
+  
+     <li class="active">element_flowrate_update</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<em>None</em>
+
+
+</div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+    <h2>
+private subroutine element_flowrate_update(elem2R, elemMR, faceR, elem2I, elemMI, e2r_Velocity_new, eMr_Velocity_new)
+    
+    
+   
+</h2>
+    
+  
+
+
+    
+
+    <h3>Arguments</h3>
+    
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elem2r%7E47"></span>real,</td>
+  <td>intent(inout),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>elem2R</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elemmr%7E54"></span>real,</td>
+  <td>intent(inout),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>elemMR</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-facer%7E38"></span>real,</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>faceR</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elem2i%7E34"></span>integer,</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>elem2I</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-elemmi%7E50"></span>integer,</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>elemMI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-e2r_velocity_new%7E6"></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>e2r_Velocity_new</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-emr_velocity_new%7E4"></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>eMr_Velocity_new</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+    
+    
+    
+    <br>
+    
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Calls</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: proc~~element_flowrate_update~~CallsGraph Pages: 1 -->
+<svg id="procelement_flowrate_updateCallsGraph" width="603pt" height="263pt"
+ viewBox="0.00 0.00 603.00 263.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="proc~~element_flowrate_update~~CallsGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 259)">
+<title>proc~~element_flowrate_update~~CallsGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-259 599,-259 599,4 -4,4"/>
+<!-- proc~element_flowrate_update -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node1" class="node"><title>proc~element_flowrate_update</title>
+<polygon fill="none" stroke="black" points="133,-129 0,-129 0,-105 133,-105 133,-129"/>
+<text text-anchor="middle" x="66.5" y="-114.6" font-family="Helvetica,sans-Serif" font-size="10.50">element_flowrate_update</text>
+</g>
+<!-- proc~flowrate_from_velocity -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node2" class="node"><title>proc~flowrate_from_velocity</title>
+<g id="a_proc~~element_flowrate_update~~CallsGraph_node2"><a xlink:href=".././proc/flowrate_from_velocity.html" xlink:title="flowrate_from_velocity">
+<polygon fill="#d9534f" stroke="#d9534f" points="380,-234 261,-234 261,-210 380,-210 380,-234"/>
+<text text-anchor="middle" x="320.5" y="-219.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">flowrate_from_velocity</text>
+</a>
+</g>
+</g>
+<!-- proc~element_flowrate_update&#45;&gt;proc~flowrate_from_velocity -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge1" class="edge"><title>proc~element_flowrate_update&#45;&gt;proc~flowrate_from_velocity</title>
+<path fill="none" stroke="#000000" d="M77.9305,-129.169C94.9004,-148.061 130.485,-184.031 169,-201 194.256,-212.127 224.003,-217.667 250.352,-220.328"/>
+<polygon fill="#000000" stroke="#000000" points="250.377,-223.844 260.648,-221.242 250.996,-216.871 250.377,-223.844"/>
+</g>
+<!-- proc~junction_branch_velocity_and_flowrate_proportional_to_area -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node3" class="node"><title>proc~junction_branch_velocity_and_flowrate_proportional_to_area</title>
+<g id="a_proc~~element_flowrate_update~~CallsGraph_node3"><a xlink:href=".././proc/junction_branch_velocity_and_flowrate_proportional_to_area.html" xlink:title="junction_branch_velocity_and_flowrate_proportional_to_area">
+<polygon fill="#d9534f" stroke="#d9534f" points="472,-192 169,-192 169,-168 472,-168 472,-192"/>
+<text text-anchor="middle" x="320.5" y="-177.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction_branch_velocity_and_flowrate_proportional_to_area</text>
+</a>
+</g>
+</g>
+<!-- proc~element_flowrate_update&#45;&gt;proc~junction_branch_velocity_and_flowrate_proportional_to_area -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge2" class="edge"><title>proc~element_flowrate_update&#45;&gt;proc~junction_branch_velocity_and_flowrate_proportional_to_area</title>
+<path fill="none" stroke="#000000" d="M91.9102,-129.164C112.096,-138.714 141.764,-151.594 169,-159 178.839,-161.675 189.137,-164.021 199.532,-166.077"/>
+<polygon fill="#000000" stroke="#000000" points="199.04,-169.546 209.516,-167.96 200.338,-162.667 199.04,-169.546"/>
+</g>
+<!-- proc~adjust_junction_branch_velocity_limit -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node4" class="node"><title>proc~adjust_junction_branch_velocity_limit</title>
+<g id="a_proc~~element_flowrate_update~~CallsGraph_node4"><a xlink:href=".././proc/adjust_junction_branch_velocity_limit.html" xlink:title="adjust_junction_branch_velocity_limit">
+<polygon fill="#d9534f" stroke="#d9534f" points="415,-150 226,-150 226,-126 415,-126 415,-150"/>
+<text text-anchor="middle" x="320.5" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">adjust_junction_branch_velocity_limit</text>
+</a>
+</g>
+</g>
+<!-- proc~element_flowrate_update&#45;&gt;proc~adjust_junction_branch_velocity_limit -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge6" class="edge"><title>proc~element_flowrate_update&#45;&gt;proc~adjust_junction_branch_velocity_limit</title>
+<path fill="none" stroke="#000000" d="M133.052,-122.463C158.249,-124.562 187.673,-127.014 215.602,-129.342"/>
+<polygon fill="#000000" stroke="#000000" points="215.557,-132.85 225.813,-130.193 216.138,-125.874 215.557,-132.85"/>
+</g>
+<!-- proc~utility_advance_temp_array -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node5" class="node"><title>proc~utility_advance_temp_array</title>
+<g id="a_proc~~element_flowrate_update~~CallsGraph_node5"><a xlink:href=".././proc/utility_advance_temp_array.html" xlink:title="utility_advance_temp_array">
+<polygon fill="#d94e8f" stroke="#d94e8f" points="392.5,-108 248.5,-108 248.5,-84 392.5,-84 392.5,-108"/>
+<text text-anchor="middle" x="320.5" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility_advance_temp_array</text>
+</a>
+</g>
+</g>
+<!-- proc~element_flowrate_update&#45;&gt;proc~utility_advance_temp_array -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge3" class="edge"><title>proc~element_flowrate_update&#45;&gt;proc~utility_advance_temp_array</title>
+<path fill="none" stroke="#000000" d="M133.052,-111.537C165.035,-108.872 203.828,-105.639 237.728,-102.814"/>
+<polygon fill="#000000" stroke="#000000" points="238.405,-106.27 248.079,-101.952 237.823,-99.2944 238.405,-106.27"/>
+</g>
+<!-- proc~junction_branch_sum_areas_by_direction -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node6" class="node"><title>proc~junction_branch_sum_areas_by_direction</title>
+<g id="a_proc~~element_flowrate_update~~CallsGraph_node6"><a xlink:href=".././proc/junction_branch_sum_areas_by_direction.html" xlink:title="junction_branch_sum_areas_by_direction">
+<polygon fill="#d9534f" stroke="#d9534f" points="426,-66 215,-66 215,-42 426,-42 426,-66"/>
+<text text-anchor="middle" x="320.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction_branch_sum_areas_by_direction</text>
+</a>
+</g>
+</g>
+<!-- proc~element_flowrate_update&#45;&gt;proc~junction_branch_sum_areas_by_direction -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge5" class="edge"><title>proc~element_flowrate_update&#45;&gt;proc~junction_branch_sum_areas_by_direction</title>
+<path fill="none" stroke="#000000" d="M91.9102,-104.836C112.096,-95.2861 141.764,-82.4056 169,-75 180.436,-71.8905 192.493,-69.2256 204.6,-66.9451"/>
+<polygon fill="#000000" stroke="#000000" points="205.546,-70.3313 214.769,-65.1186 204.308,-63.4416 205.546,-70.3313"/>
+</g>
+<!-- emr_temp -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node7" class="node"><title>emr_temp</title>
+<polygon fill="#777777" stroke="#777777" points="351,-24 290,-24 290,-0 351,-0 351,-24"/>
+<text text-anchor="middle" x="320.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_temp</text>
+</g>
+<!-- proc~element_flowrate_update&#45;&gt;emr_temp -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge4" class="edge"><title>proc~element_flowrate_update&#45;&gt;emr_temp</title>
+<path fill="none" stroke="#000000" d="M77.9305,-104.831C94.9004,-85.9394 130.485,-49.9686 169,-33 204.355,-17.4233 248.511,-12.7959 279.828,-11.688"/>
+<polygon fill="#000000" stroke="#000000" points="280.016,-15.1845 289.925,-11.4364 279.841,-8.18664 280.016,-15.1845"/>
+</g>
+<!-- emr_areaup -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node8" class="node"><title>emr_areaup</title>
+<polygon fill="#777777" stroke="#777777" points="587,-255 516,-255 516,-231 587,-231 587,-255"/>
+<text text-anchor="middle" x="551.5" y="-240.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_areaup</text>
+</g>
+<!-- proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_areaup -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge7" class="edge"><title>proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_areaup</title>
+<path fill="none" stroke="#000000" d="M415.065,-137.807C435.125,-141.258 455.288,-147.685 472,-159 498.704,-177.08 484.52,-199.893 508,-222 509.124,-223.058 510.31,-224.073 511.545,-225.047"/>
+<polygon fill="#000000" stroke="#000000" points="509.977,-228.21 520.232,-230.873 513.876,-222.396 509.977,-228.21"/>
+</g>
+<!-- emr_flowrateup -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node9" class="node"><title>emr_flowrateup</title>
+<polygon fill="#777777" stroke="#777777" points="595,-213 508,-213 508,-189 595,-189 595,-213"/>
+<text text-anchor="middle" x="551.5" y="-198.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_flowrateup</text>
+</g>
+<!-- proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_flowrateup -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge8" class="edge"><title>proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_flowrateup</title>
+<path fill="none" stroke="#000000" d="M415.165,-145.318C434.293,-148.404 454.051,-152.785 472,-159 489.504,-165.061 491.687,-171.225 508,-180 510.668,-181.435 513.448,-182.892 516.252,-184.334"/>
+<polygon fill="#000000" stroke="#000000" points="514.679,-187.461 525.183,-188.848 517.837,-181.214 514.679,-187.461"/>
+</g>
+<!-- emr_velocityup -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node10" class="node"><title>emr_velocityup</title>
+<polygon fill="#777777" stroke="#777777" points="594,-171 509,-171 509,-147 594,-147 594,-171"/>
+<text text-anchor="middle" x="551.5" y="-156.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_velocityup</text>
+</g>
+<!-- proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_velocityup -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge9" class="edge"><title>proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_velocityup</title>
+<path fill="none" stroke="#000000" d="M415.304,-146.602C443.728,-149.209 473.913,-151.977 498.534,-154.235"/>
+<polygon fill="#000000" stroke="#000000" points="498.446,-157.741 508.724,-155.169 499.085,-150.77 498.446,-157.741"/>
+</g>
+<!-- emr_areadn -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node11" class="node"><title>emr_areadn</title>
+<polygon fill="#777777" stroke="#777777" points="587,-129 516,-129 516,-105 587,-105 587,-129"/>
+<text text-anchor="middle" x="551.5" y="-114.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_areadn</text>
+</g>
+<!-- proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_areadn -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge10" class="edge"><title>proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_areadn</title>
+<path fill="none" stroke="#000000" d="M415.304,-129.398C446.569,-126.531 479.965,-123.468 505.742,-121.104"/>
+<polygon fill="#000000" stroke="#000000" points="506.299,-124.568 515.937,-120.169 505.66,-117.597 506.299,-124.568"/>
+</g>
+<!-- emr_flowratedn -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node12" class="node"><title>emr_flowratedn</title>
+<polygon fill="#777777" stroke="#777777" points="595,-87 508,-87 508,-63 595,-63 595,-87"/>
+<text text-anchor="middle" x="551.5" y="-72.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_flowratedn</text>
+</g>
+<!-- proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_flowratedn -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge11" class="edge"><title>proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_flowratedn</title>
+<path fill="none" stroke="#000000" d="M415.165,-130.682C434.293,-127.596 454.051,-123.215 472,-117 489.504,-110.939 491.687,-104.775 508,-96 510.668,-94.5648 513.448,-93.1081 516.252,-91.6658"/>
+<polygon fill="#000000" stroke="#000000" points="517.837,-94.7863 525.183,-87.1518 514.679,-88.5388 517.837,-94.7863"/>
+</g>
+<!-- emr_velocitydn -->
+<g id="proc~~element_flowrate_update~~CallsGraph_node13" class="node"><title>emr_velocitydn</title>
+<polygon fill="#777777" stroke="#777777" points="594,-45 509,-45 509,-21 594,-21 594,-45"/>
+<text text-anchor="middle" x="551.5" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_velocitydn</text>
+</g>
+<!-- proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_velocitydn -->
+<g id="proc~~element_flowrate_update~~CallsGraph_edge12" class="edge"><title>proc~adjust_junction_branch_velocity_limit&#45;&gt;emr_velocitydn</title>
+<path fill="none" stroke="#000000" d="M415.065,-138.193C435.125,-134.742 455.288,-128.315 472,-117 498.704,-98.9203 484.52,-76.1067 508,-54 509.124,-52.9422 510.31,-51.9267 511.545,-50.9529"/>
+<polygon fill="#000000" stroke="#000000" points="513.876,-53.6041 520.232,-45.1273 509.977,-47.7905 513.876,-53.6041"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="560pt" height="32pt"
+ viewBox="0.00 0.00 559.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 555.5,-28 555.5,4 -4,4"/>
+<!-- Subroutine -->
+<g id="node1" class="node"><title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="64,-24 0,-24 0,-0 64,-0 64,-24"/>
+<text text-anchor="middle" x="32" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node2" class="node"><title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="136,-24 82,-24 82,-0 136,-0 136,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Interface -->
+<g id="node3" class="node"><title>Interface</title>
+<polygon fill="#a7506f" stroke="#a7506f" points="209.5,-24 154.5,-24 154.5,-0 209.5,-0 209.5,-24"/>
+<text text-anchor="middle" x="182" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Interface</text>
+</g>
+<!-- Unknown Procedure Type -->
+<g id="node4" class="node"><title>Unknown Procedure Type</title>
+<polygon fill="#777777" stroke="#777777" points="364,-24 228,-24 228,-0 364,-0 364,-24"/>
+<text text-anchor="middle" x="296" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Unknown Procedure Type</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node"><title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="436,-24 382,-24 382,-0 436,-0 436,-24"/>
+<text text-anchor="middle" x="409" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="551.5,-24 454.5,-24 454.5,-0 551.5,-0 551.5,-24"/>
+<text text-anchor="middle" x="503" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a procedure to one which it calls. Dashed 
+    arrows point from an interface to procedures which implement that interface.
+    This could include the module procedures in a generic interface or the
+    implementation in a submodule of an interface in a parent module.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+     
+     
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Called by</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: proc~~element_flowrate_update~~CalledByGraph Pages: 1 -->
+<svg id="procelement_flowrate_updateCalledByGraph" width="641pt" height="54pt"
+ viewBox="0.00 0.00 641.00 54.09" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="proc~~element_flowrate_update~~CalledByGraph" class="graph" transform="scale(0.730901 0.730901) rotate(0) translate(4 70)">
+<title>proc~~element_flowrate_update~~CalledByGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-70 873,-70 873,4 -4,4"/>
+<!-- proc~element_flowrate_update -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_node1" class="node"><title>proc~element_flowrate_update</title>
+<polygon fill="none" stroke="black" points="869,-44 736,-44 736,-20 869,-20 869,-44"/>
+<text text-anchor="middle" x="802.5" y="-29.6" font-family="Helvetica,sans-Serif" font-size="10.50">element_flowrate_update</text>
+</g>
+<!-- proc~element_dynamics_update -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_node2" class="node"><title>proc~element_dynamics_update</title>
+<g id="a_proc~~element_flowrate_update~~CalledByGraph_node2"><a xlink:href=".././proc/element_dynamics_update.html" xlink:title="element_dynamics_update">
+<polygon fill="#d9534f" stroke="#d9534f" points="700,-44 559,-44 559,-20 700,-20 700,-44"/>
+<text text-anchor="middle" x="629.5" y="-29.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_dynamics_update</text>
+</a>
+</g>
+</g>
+<!-- proc~element_dynamics_update&#45;&gt;proc~element_flowrate_update -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_edge1" class="edge"><title>proc~element_dynamics_update&#45;&gt;proc~element_flowrate_update</title>
+<path fill="none" stroke="#000000" d="M700.052,-32C708.559,-32 717.284,-32 725.875,-32"/>
+<polygon fill="#000000" stroke="#000000" points="725.876,-35.5001 735.876,-32 725.876,-28.5001 725.876,-35.5001"/>
+</g>
+<!-- proc~rk2_update_auxiliary_variables -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_node3" class="node"><title>proc~rk2_update_auxiliary_variables</title>
+<g id="a_proc~~element_flowrate_update~~CalledByGraph_node3"><a xlink:href=".././proc/rk2_update_auxiliary_variables.html" xlink:title="rk2_update_auxiliary_variables">
+<polygon fill="#d9534f" stroke="#d9534f" points="523,-24 363,-24 363,-0 523,-0 523,-24"/>
+<text text-anchor="middle" x="443" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">rk2_update_auxiliary_variables</text>
+</a>
+</g>
+</g>
+<!-- proc~rk2_update_auxiliary_variables&#45;&gt;proc~element_dynamics_update -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_edge2" class="edge"><title>proc~rk2_update_auxiliary_variables&#45;&gt;proc~element_dynamics_update</title>
+<path fill="none" stroke="#000000" d="M523.048,-20.5688C531.624,-21.4985 540.356,-22.4451 548.938,-23.3754"/>
+<polygon fill="#000000" stroke="#000000" points="548.607,-26.8599 558.926,-24.4581 549.362,-19.9007 548.607,-26.8599"/>
+</g>
+<!-- proc~initial_condition_setup -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_node4" class="node"><title>proc~initial_condition_setup</title>
+<g id="a_proc~~element_flowrate_update~~CalledByGraph_node4"><a xlink:href=".././proc/initial_condition_setup.html" xlink:title="initial_condition_setup">
+<polygon fill="#d9534f" stroke="#d9534f" points="327,-66 209,-66 209,-42 327,-42 327,-66"/>
+<text text-anchor="middle" x="268" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">initial_condition_setup</text>
+</a>
+</g>
+</g>
+<!-- proc~initial_condition_setup&#45;&gt;proc~element_dynamics_update -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_edge3" class="edge"><title>proc~initial_condition_setup&#45;&gt;proc~element_dynamics_update</title>
+<path fill="none" stroke="#000000" d="M327.159,-50.4409C387.268,-46.7625 481.526,-40.9943 548.606,-36.8892"/>
+<polygon fill="#000000" stroke="#000000" points="548.946,-40.375 558.714,-36.2707 548.518,-33.3881 548.946,-40.375"/>
+</g>
+<!-- program~main -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_node5" class="node"><title>program~main</title>
+<g id="a_proc~~element_flowrate_update~~CalledByGraph_node5"><a xlink:href=".././program/main.html" xlink:title="main">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="54,-45 0,-45 0,-21 54,-21 54,-45"/>
+<text text-anchor="middle" x="27" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">main</text>
+</a>
+</g>
+</g>
+<!-- program~main&#45;&gt;proc~initial_condition_setup -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_edge5" class="edge"><title>program~main&#45;&gt;proc~initial_condition_setup</title>
+<path fill="none" stroke="#000000" d="M54.0322,-35.2873C88.4817,-38.3143 150.484,-43.7622 198.737,-48.002"/>
+<polygon fill="#000000" stroke="#000000" points="198.542,-51.4982 208.81,-48.8871 199.155,-44.5251 198.542,-51.4982"/>
+</g>
+<!-- proc~time_marching -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_node7" class="node"><title>proc~time_marching</title>
+<g id="a_proc~~element_flowrate_update~~CalledByGraph_node7"><a xlink:href=".././proc/time_marching.html" xlink:title="time_marching">
+<polygon fill="#d9534f" stroke="#d9534f" points="173,-25 90,-25 90,-1 173,-1 173,-25"/>
+<text text-anchor="middle" x="131.5" y="-10.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">time_marching</text>
+</a>
+</g>
+</g>
+<!-- program~main&#45;&gt;proc~time_marching -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_edge7" class="edge"><title>program~main&#45;&gt;proc~time_marching</title>
+<path fill="none" stroke="#000000" d="M54.1303,-27.9014C61.9735,-26.371 70.8595,-24.6372 79.7265,-22.907"/>
+<polygon fill="#000000" stroke="#000000" points="80.5283,-26.3167 89.6729,-20.9663 79.1877,-19.4462 80.5283,-26.3167"/>
+</g>
+<!-- proc~rk2 -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_node6" class="node"><title>proc~rk2</title>
+<g id="a_proc~~element_flowrate_update~~CalledByGraph_node6"><a xlink:href=".././proc/rk2.html" xlink:title="rk2">
+<polygon fill="#d9534f" stroke="#d9534f" points="295,-24 241,-24 241,-0 295,-0 295,-24"/>
+<text text-anchor="middle" x="268" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">rk2</text>
+</a>
+</g>
+</g>
+<!-- proc~rk2&#45;&gt;proc~rk2_update_auxiliary_variables -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_edge4" class="edge"><title>proc~rk2&#45;&gt;proc~rk2_update_auxiliary_variables</title>
+<path fill="none" stroke="#000000" d="M295.275,-12C310.942,-12 331.843,-12 352.946,-12"/>
+<polygon fill="#000000" stroke="#000000" points="352.968,-15.5001 362.968,-12 352.968,-8.5001 352.968,-15.5001"/>
+</g>
+<!-- proc~time_marching&#45;&gt;proc~rk2 -->
+<g id="proc~~element_flowrate_update~~CalledByGraph_edge6" class="edge"><title>proc~time_marching&#45;&gt;proc~rk2</title>
+<path fill="none" stroke="#000000" d="M173.219,-12.6973C191.404,-12.5621 212.67,-12.4039 230.35,-12.2725"/>
+<polygon fill="#000000" stroke="#000000" points="230.862,-15.7689 240.835,-12.1945 230.809,-8.76907 230.862,-15.7689"/>
+</g>
+</g>
+</svg>
+</div><script>var panprocelement_flowrate_updateCalledByGraph = svgPanZoom('#procelement_flowrate_updateCalledByGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="560pt" height="32pt"
+ viewBox="0.00 0.00 559.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 555.5,-28 555.5,4 -4,4"/>
+<!-- Subroutine -->
+<g id="node1" class="node"><title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="64,-24 0,-24 0,-0 64,-0 64,-24"/>
+<text text-anchor="middle" x="32" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node2" class="node"><title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="136,-24 82,-24 82,-0 136,-0 136,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Interface -->
+<g id="node3" class="node"><title>Interface</title>
+<polygon fill="#a7506f" stroke="#a7506f" points="209.5,-24 154.5,-24 154.5,-0 209.5,-0 209.5,-24"/>
+<text text-anchor="middle" x="182" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Interface</text>
+</g>
+<!-- Unknown Procedure Type -->
+<g id="node4" class="node"><title>Unknown Procedure Type</title>
+<polygon fill="#777777" stroke="#777777" points="364,-24 228,-24 228,-0 364,-0 364,-24"/>
+<text text-anchor="middle" x="296" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Unknown Procedure Type</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node"><title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="436,-24 382,-24 382,-0 436,-0 436,-24"/>
+<text text-anchor="middle" x="409" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="551.5,-24 454.5,-24 454.5,-0 551.5,-0 551.5,-24"/>
+<text text-anchor="middle" x="503" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a procedure to one which it calls. Dashed 
+    arrows point from an interface to procedures which implement that interface.
+    This could include the module procedures in a generic interface or the
+    implementation in a submodule of an interface in a parent module.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+     
+    <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<em>None</em>
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    
+
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+
+
+    
+    
+    
+    
+    </div>
+  </div>
+
+
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2019 
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> SWMMengine was developed by Ben R. Hodges and Ehsan Madadi-Kandjani</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>

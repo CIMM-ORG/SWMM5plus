@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="Prototype Fortran 2008 engine for the EPA Storm Water Management Model (SWMM)">
+    
+    <meta name="author" content="Ben R. Hodges and Ehsan Madadi-Kandjani" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>initial_condition.f08 &ndash; SWMMengine</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">SWMMengine </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/main.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/main.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>initial_condition.f08
+    <small>Source File</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 2.1% of total for source files.">158 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/initial_condition.f08"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+  
+     <li class="active">initial_condition.f08</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-0">Modules</a></h3></div>
+  <div id="mods-0" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/initial_condition.html">initial_condition</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/initial_condition.f08.html#src">initial_condition.f08</a>
+  </div>
+</div>
+
+
+
+</div>
+
+    </div>
+    <div class="col-md-9" id='text'>
+      
+      <br>
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">This file depends on</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~initial_condition.f08~~EfferentGraph Pages: 1 -->
+<svg id="sourcefileinitial_conditionf08EfferentGraph" width="641pt" height="554pt"
+ viewBox="0.00 0.00 641.00 553.97" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph" class="graph" transform="scale(0.645519 0.645519) rotate(0) translate(4 854.173)">
+<title>sourcefile~~initial_condition.f08~~EfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-854.173 989,-854.173 989,4 -4,4"/>
+<!-- sourcefile~initial_condition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node1" class="node"><title>sourcefile~initial_condition.f08</title>
+<polygon fill="none" stroke="black" points="985,-398.186 882,-398.186 882,-374.186 985,-374.186 985,-398.186"/>
+<text text-anchor="middle" x="933.5" y="-383.786" font-family="Helvetica,sans-Serif" font-size="10.50">initial_condition.f08</text>
+</g>
+<!-- sourcefile~data_keys.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node2" class="node"><title>sourcefile~data_keys.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node2"><a xlink:href=".././sourcefile/data_keys.f08.html" xlink:title="data_keys.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="471,-356.186 392,-356.186 392,-332.186 471,-332.186 471,-356.186"/>
+<text text-anchor="middle" x="431.5" y="-341.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">data_keys.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge1" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M785,-38.1859C756.901,-22.1902 532.606,-112.131 511,-136.186 461.623,-191.16 442.196,-280.237 435.538,-321.666"/>
+<polygon fill="#000000" stroke="#000000" points="432.041,-321.387 434.016,-331.796 438.963,-322.427 432.041,-321.387"/>
+</g>
+<!-- sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node3" class="node"><title>sourcefile~element_geometry.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node3"><a xlink:href=".././sourcefile/element_geometry.f08.html" xlink:title="element_geometry.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="846,-398.186 726,-398.186 726,-374.186 846,-374.186 846,-398.186"/>
+<text text-anchor="middle" x="786" y="-383.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_geometry.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge2" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M881.611,-386.186C873.365,-386.186 864.706,-386.186 856.114,-386.186"/>
+<polygon fill="#000000" stroke="#000000" points="856.089,-382.686 846.089,-386.186 856.089,-389.686 856.089,-382.686"/>
+</g>
+<!-- sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node4" class="node"><title>sourcefile~setting_definition.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node4"><a xlink:href=".././sourcefile/setting_definition.f08.html" xlink:title="setting_definition.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="252,-642.186 141,-642.186 141,-618.186 252,-618.186 252,-642.186"/>
+<text text-anchor="middle" x="196.5" y="-627.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">setting_definition.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge3" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M645,-840.186C471.374,-810.032 288.367,-693.14 222.738,-648.059"/>
+<polygon fill="#000000" stroke="#000000" points="224.483,-645.009 214.27,-642.191 220.496,-650.763 224.483,-645.009"/>
+</g>
+<!-- sourcefile~array_index.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node5" class="node"><title>sourcefile~array_index.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node5"><a xlink:href=".././sourcefile/array_index.f08.html" xlink:title="array_index.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="475,-491.186 388,-491.186 388,-467.186 475,-467.186 475,-491.186"/>
+<text text-anchor="middle" x="431.5" y="-476.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">array_index.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge4" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M785,-840.186C725.637,-855.606 707.45,-850.556 647,-840.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M645,-840.186C567.649,-826.917 554.352,-790.606 511,-725.186 485.805,-687.166 451.067,-554.167 437.875,-501.197"/>
+<polygon fill="#000000" stroke="#000000" points="441.262,-500.315 435.465,-491.446 434.466,-501.994 441.262,-500.315"/>
+</g>
+<!-- sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node6" class="node"><title>sourcefile~element_dynamics.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node6"><a xlink:href=".././sourcefile/element_dynamics.f08.html" xlink:title="element_dynamics.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="846,-512.186 726,-512.186 726,-488.186 846,-488.186 846,-512.186"/>
+<text text-anchor="middle" x="786" y="-497.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_dynamics.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge5" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M918.317,-398.251C901.347,-412.586 871.968,-437.092 846,-457.186 835.193,-465.548 823.024,-474.494 812.557,-482.048"/>
+<polygon fill="#000000" stroke="#000000" points="810.316,-479.349 804.233,-488.023 814.398,-485.035 810.316,-479.349"/>
+</g>
+<!-- sourcefile~face_values.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node7" class="node"><title>sourcefile~face_values.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node7"><a xlink:href=".././sourcefile/face_values.f08.html" xlink:title="face_values.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="830,-90.1859 742,-90.1859 742,-66.1859 830,-66.1859 830,-90.1859"/>
+<text text-anchor="middle" x="786" y="-75.7859" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_values.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~face_values.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge6" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~face_values.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M926.796,-374.112C904.843,-327.641 825.62,-159.939 797.22,-99.8204"/>
+<polygon fill="#000000" stroke="#000000" points="800.259,-98.0579 792.822,-90.5111 793.929,-101.048 800.259,-98.0579"/>
+</g>
+<!-- sourcefile~utility.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node8" class="node"><title>sourcefile~utility.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node8"><a xlink:href=".././sourcefile/utility.f08.html" xlink:title="utility.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="566,-356.186 511,-356.186 511,-332.186 566,-332.186 566,-356.186"/>
+<text text-anchor="middle" x="538.5" y="-341.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge7" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M906.288,-374.066C854.764,-352.042 737.44,-310.852 647,-346.186"/>
+</g>
+<!-- sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node9" class="node"><title>sourcefile~globals.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node9"><a xlink:href=".././sourcefile/globals.f08.html" xlink:title="globals.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="352,-548.186 288,-548.186 288,-524.186 352,-524.186 352,-548.186"/>
+<text text-anchor="middle" x="320" y="-533.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">globals.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge8" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M930.866,-373.942C923.454,-320.121 891.381,-105.107 846,-57.1859 827.058,-37.1832 810.845,-51.9823 787,-38.1859"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M785,-38.1859C731.912,-7.46968 708.179,-42.5337 647,-38.1859"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M645,-38.1859C601.439,-35.0901 547.006,-17.789 432.5,-114.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-114.186C366.852,-166.269 332.358,-434.018 323.386,-513.754"/>
+<polygon fill="#000000" stroke="#000000" points="319.861,-513.783 322.247,-524.106 326.819,-514.549 319.861,-513.783"/>
+</g>
+<!-- sourcefile~bc.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node10" class="node"><title>sourcefile~bc.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node10"><a xlink:href=".././sourcefile/bc.f08.html" xlink:title="bc.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="673,-512.186 619,-512.186 619,-488.186 673,-488.186 673,-512.186"/>
+<text text-anchor="middle" x="646" y="-497.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge9" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M902.217,-398.278C849.147,-419.469 739.602,-463.21 682.845,-485.873"/>
+<polygon fill="#000000" stroke="#000000" points="681.205,-482.759 673.216,-489.718 683.801,-489.26 681.205,-482.759"/>
+</g>
+<!-- sourcefile~junction.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node11" class="node"><title>sourcefile~junction.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node11"><a xlink:href=".././sourcefile/junction.f08.html" xlink:title="junction.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="679.5,-592.186 612.5,-592.186 612.5,-568.186 679.5,-568.186 679.5,-592.186"/>
+<text text-anchor="middle" x="646" y="-577.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge10" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M931.153,-398.543C923.159,-468.861 879.126,-816.255 787,-840.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M785,-840.186C732.642,-853.787 672.501,-667.067 653.26,-602.058"/>
+<polygon fill="#000000" stroke="#000000" points="656.599,-601.005 650.435,-592.387 649.88,-602.968 656.599,-601.005"/>
+</g>
+<!-- sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge11" class="edge"><title>sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M404.641,-356.391C398.592,-360.161 392.584,-364.773 388,-370.186 351.209,-413.628 332.765,-479.891 325.249,-514.075"/>
+<polygon fill="#000000" stroke="#000000" points="321.799,-513.473 323.183,-523.977 328.652,-514.903 321.799,-513.473"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge12" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M778.111,-373.843C764.65,-351.168 732.425,-303.525 690,-285.186 616.946,-253.608 586.325,-264.493 511,-290.186 489.072,-297.666 467.64,-313.125 452.726,-325.593"/>
+<polygon fill="#000000" stroke="#000000" points="450.425,-322.956 445.149,-332.143 455.003,-328.251 450.425,-322.956"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge13" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M645,-384.186C621.016,-383.903 448.651,-404.453 432.5,-422.186"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge14" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M739.278,-398.249C673.85,-415.511 553.824,-447.177 484.896,-465.362"/>
+<polygon fill="#000000" stroke="#000000" points="483.886,-462.009 475.11,-467.944 485.672,-468.777 483.886,-462.009"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge15" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M725.905,-385.259C701.48,-384.895 672.876,-384.491 647,-384.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M645,-384.186C617.483,-383.861 588.396,-371.847 567.749,-361.071"/>
+<polygon fill="#000000" stroke="#000000" points="569.349,-357.957 558.892,-356.253 566.004,-364.106 569.349,-357.957"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge16" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M778.664,-374.042C743.646,-308.415 570.36,-3.15122 432.5,-114.186"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge17" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M765.666,-398.359C753.634,-406.385 738.185,-417.537 726,-429.186 707.487,-446.885 709.257,-457.298 690,-474.186 686.587,-477.179 682.786,-480.029 678.894,-482.671"/>
+<polygon fill="#000000" stroke="#000000" points="676.913,-479.783 670.347,-488.097 680.665,-485.692 676.913,-479.783"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge18" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M776.423,-398.519C759.847,-422.322 722.206,-476.217 690,-521.186 680.799,-534.033 670.362,-548.36 662.074,-559.678"/>
+<polygon fill="#000000" stroke="#000000" points="659.045,-557.891 655.953,-568.025 664.69,-562.031 659.045,-557.891"/>
+</g>
+<!-- sourcefile~adjustments.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node13" class="node"><title>sourcefile~adjustments.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node13"><a xlink:href=".././sourcefile/adjustments.f08.html" xlink:title="adjustments.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="690,-318.186 602,-318.186 602,-294.186 690,-294.186 690,-318.186"/>
+<text text-anchor="middle" x="646" y="-303.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">adjustments.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge19" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M764.041,-374.036C740.704,-360.507 702.811,-338.54 676.489,-323.281"/>
+<polygon fill="#000000" stroke="#000000" points="678.111,-320.176 667.704,-318.188 674.6,-326.232 678.111,-320.176"/>
+</g>
+<!-- sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_node12" class="node"><title>sourcefile~type_definitions.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~EfferentGraph_node12"><a xlink:href=".././sourcefile/type_definitions.f08.html" xlink:title="type_definitions.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="105,-642.186 0,-642.186 0,-618.186 105,-618.186 105,-642.186"/>
+<text text-anchor="middle" x="52.5" y="-627.786" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">type_definitions.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge20" class="edge"><title>sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M140.599,-630.186C132.387,-630.186 123.872,-630.186 115.525,-630.186"/>
+<polygon fill="#000000" stroke="#000000" points="115.459,-626.686 105.459,-630.186 115.459,-633.686 115.459,-626.686"/>
+</g>
+<!-- sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge21" class="edge"><title>sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M407.278,-491.274C391.599,-499.436 370.687,-510.321 353.378,-519.332"/>
+<polygon fill="#000000" stroke="#000000" points="351.443,-516.393 344.189,-524.115 354.675,-522.602 351.443,-516.393"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge22" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M754.698,-512.229C717.433,-525.139 652.871,-541.249 602,-521.186 562.657,-505.669 482.199,-407.509 448.211,-364.421"/>
+<polygon fill="#000000" stroke="#000000" points="450.802,-362.053 441.876,-356.344 445.294,-366.373 450.802,-362.053"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge23" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-726.186C383.663,-689.914 379.853,-643.423 321,-650.186"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge24" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M782.625,-512.385C773.745,-554.227 738.202,-692.259 647,-745.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M645,-745.186C534.391,-809.375 458.96,-575.065 438.251,-500.962"/>
+<polygon fill="#000000" stroke="#000000" points="441.608,-499.969 435.595,-491.246 434.856,-501.815 441.608,-499.969"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge25" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M759.77,-488.184C723.56,-470.508 655.345,-435.512 602,-398.186 587.108,-387.766 571.641,-374.426 559.819,-363.613"/>
+<polygon fill="#000000" stroke="#000000" points="561.977,-360.84 552.269,-356.597 557.212,-365.968 561.977,-360.84"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge26" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M645,-745.186C565.639,-797.08 502.179,-790.496 432.5,-726.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-726.186C373.148,-681.771 340.511,-598.223 327.569,-558.395"/>
+<polygon fill="#000000" stroke="#000000" points="330.832,-557.102 324.502,-548.606 324.152,-559.195 330.832,-557.102"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge27" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M725.675,-500.186C711.293,-500.186 696.338,-500.186 683.378,-500.186"/>
+<polygon fill="#000000" stroke="#000000" points="683.018,-496.686 673.018,-500.186 683.018,-503.686 683.018,-496.686"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge28" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M764.041,-512.336C740.704,-525.865 702.811,-547.831 676.489,-563.091"/>
+<polygon fill="#000000" stroke="#000000" points="674.6,-560.14 667.704,-568.183 678.111,-566.196 674.6,-560.14"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge29" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M776.704,-488.13C764.832,-470.659 742.602,-437.116 726,-407.186 708.065,-374.852 714.856,-359.559 690,-332.186 687.306,-329.219 684.194,-326.48 680.901,-323.982"/>
+<polygon fill="#000000" stroke="#000000" points="682.721,-320.987 672.478,-318.278 678.796,-326.783 682.721,-320.987"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge30" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M741.715,-83.2244C682.792,-92.1817 577.12,-115.984 511,-176.186 466.775,-216.452 445.397,-286.753 436.996,-322.289"/>
+<polygon fill="#000000" stroke="#000000" points="433.562,-321.607 434.795,-332.13 440.394,-323.135 433.562,-321.607"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge31" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M753.661,-66.0792C744.511,-62.0948 734.651,-57.3486 726,-52.1859 708.594,-41.7982 708.593,-32.258 690,-24.1859 627.869,2.78808 607.234,-0.185872 539.5,-0.185872 539.5,-0.185872 539.5,-0.185872 430.5,-0.185872 298.026,-0.185872 217.171,-496.397 200.654,-608.056"/>
+<polygon fill="#000000" stroke="#000000" points="197.16,-607.763 199.18,-618.163 204.086,-608.773 197.16,-607.763"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge32" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M759.598,-90.3234C704.995,-117.777 576.13,-190.127 511,-290.186 474.541,-346.198 507.664,-377.88 475,-436.186 470.102,-444.928 462.947,-453.13 455.899,-459.979"/>
+<polygon fill="#000000" stroke="#000000" points="453.417,-457.506 448.405,-466.841 458.144,-462.669 453.417,-457.506"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge33" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M783.674,-90.2958C778.758,-129.629 758.185,-255.39 690,-327.186 675.612,-342.336 666.461,-338.583 647,-346.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M645,-346.186C623.25,-354.683 597.004,-354.223 576.132,-351.618"/>
+<polygon fill="#000000" stroke="#000000" points="576.461,-348.13 566.06,-350.148 575.45,-355.056 576.461,-348.13"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge34" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M756.574,-66.112C729.118,-55.3777 686.064,-40.9621 647,-38.1859"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge35" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M781.933,-90.2533C770.995,-132.865 732.287,-280.061 690,-398.186 679.86,-426.511 666.041,-458.337 656.835,-478.79"/>
+<polygon fill="#000000" stroke="#000000" points="653.55,-477.559 652.604,-488.111 659.924,-480.452 653.55,-477.559"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge36" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M777.581,-90.4441C755.111,-127.567 687.63,-239.058 659.512,-285.514"/>
+<polygon fill="#000000" stroke="#000000" points="656.473,-283.776 654.289,-294.144 662.461,-287.401 656.473,-283.776"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge39" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.732,-344.186C501.71,-344.186 491.34,-344.186 481.163,-344.186"/>
+<polygon fill="#000000" stroke="#000000" points="481.108,-340.686 471.108,-344.186 481.108,-347.686 481.108,-340.686"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge38" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M525.911,-356.631C513.967,-368.982 494.404,-387.935 475,-401.186 457.601,-413.068 446.687,-406.609 432.5,-422.186"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge40" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M530.265,-356.297C519.249,-374.378 497.197,-409.19 475,-436.186 468.342,-444.283 460.41,-452.607 453.212,-459.749"/>
+<polygon fill="#000000" stroke="#000000" points="450.517,-457.488 445.784,-466.967 455.395,-462.508 450.517,-457.488"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge37" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.727,-353.196C472.985,-366.3 406.652,-390.93 388,-408.186 356.001,-437.789 336.57,-486.192 327.39,-514.225"/>
+<polygon fill="#000000" stroke="#000000" points="324.012,-513.301 324.369,-523.89 330.693,-515.389 324.012,-513.301"/>
+</g>
+<!-- sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge41" class="edge"><title>sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M303.116,-548.475C282.286,-564.59 245.558,-593.006 221.373,-611.717"/>
+<polygon fill="#000000" stroke="#000000" points="219.155,-609.007 213.388,-617.894 223.439,-614.543 219.155,-609.007"/>
+</g>
+<!-- sourcefile~globals.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge42" class="edge"><title>sourcefile~globals.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M287.763,-547.245C240.533,-563.967 150.779,-595.744 97.1244,-614.741"/>
+<polygon fill="#000000" stroke="#000000" points="95.8028,-611.496 87.5443,-618.133 98.1391,-618.094 95.8028,-611.496"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge43" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M628.325,-487.945C591.085,-460.606 500.99,-394.466 457.207,-362.324"/>
+<polygon fill="#000000" stroke="#000000" points="459.229,-359.466 449.097,-356.37 455.087,-365.109 459.229,-359.466"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge44" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M628.598,-512.386C582.885,-545.322 448.986,-634.612 321,-650.186"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge45" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M622.288,-512.331C601.416,-522.412 569.289,-535.25 539.5,-536.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-536.186C504.52,-537.222 471.982,-514.96 452.072,-497.955"/>
+<polygon fill="#000000" stroke="#000000" points="454.391,-495.333 444.594,-491.3 449.738,-500.562 454.391,-495.333"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge46" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M636.416,-488.134C627.482,-475.429 613.251,-454.724 602,-436.186 584.664,-407.622 586.145,-396.843 566,-370.186 564.402,-368.071 562.633,-365.965 560.79,-363.919"/>
+<polygon fill="#000000" stroke="#000000" points="562.997,-361.168 553.517,-356.437 557.978,-366.047 562.997,-361.168"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge47" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-536.186C476.59,-538.1 405.993,-537.59 362.41,-536.958"/>
+<polygon fill="#000000" stroke="#000000" points="362.254,-533.455 352.201,-536.801 362.146,-540.454 362.254,-533.455"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge48" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M634.254,-512.576C624.744,-524.039 611.014,-541.873 602,-559.186 579.217,-602.943 606.144,-635.511 566,-664.186 489.111,-719.106 234.253,-666.415 141,-651.186 130.258,-649.432 118.882,-647.077 108.013,-644.578"/>
+<polygon fill="#000000" stroke="#000000" points="108.743,-641.155 98.2057,-642.256 107.13,-647.966 108.743,-641.155"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge51" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M612.419,-581.903C582.154,-581.65 537.834,-576.278 511,-550.186 464.321,-504.798 501.384,-467.708 475,-408.186 468.041,-392.487 457.332,-376.391 448.405,-364.268"/>
+<polygon fill="#000000" stroke="#000000" points="451.126,-362.064 442.299,-356.205 445.546,-366.29 451.126,-362.064"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge53" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-650.186C383.186,-638.793 369.31,-644.307 321,-650.186"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge52" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M635.63,-592.474C618.724,-613.086 580.995,-652.2 539.5,-650.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-650.186C468.708,-646.848 443.546,-546.683 435.653,-501.233"/>
+<polygon fill="#000000" stroke="#000000" points="439.082,-500.509 434.038,-491.192 432.171,-501.621 439.082,-500.509"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge49" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M634.292,-567.776C624.807,-556.3 611.093,-538.457 602,-521.186 574.19,-468.365 554.179,-400.513 545.044,-366.184"/>
+<polygon fill="#000000" stroke="#000000" points="548.372,-365.072 542.464,-356.277 541.597,-366.836 548.372,-365.072"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge50" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-650.186C490.888,-647.924 477.87,-661.11 432.5,-650.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-650.186C382.559,-638.642 347.971,-587.139 331.609,-557.46"/>
+<polygon fill="#000000" stroke="#000000" points="334.541,-555.518 326.767,-548.32 328.356,-558.795 334.541,-555.518"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge56" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M601.956,-297.699C582.231,-295.711 558.965,-296.126 539.5,-304.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-304.186C517.241,-312.574 494.529,-321.308 475.424,-328.467"/>
+<polygon fill="#000000" stroke="#000000" points="473.942,-325.284 465.795,-332.057 476.387,-331.843 473.942,-325.284"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge55" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-304.186C524.11,-309.73 521.492,-313.189 511,-323.186 470.345,-361.92 470.311,-380.67 432.5,-422.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-422.186C413.831,-440.488 402.016,-437.781 388,-458.186 336.828,-532.683 410.789,-639.868 321,-650.186"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M319,-650.186C294.966,-652.948 268.437,-649.359 246.316,-644.495"/>
+<polygon fill="#000000" stroke="#000000" points="247.023,-641.066 236.488,-642.189 245.424,-647.881 247.023,-641.066"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge57" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-304.186C477.527,-329.018 508.594,-380.645 475,-436.186 469.734,-444.892 462.362,-453.17 455.234,-460.097"/>
+<polygon fill="#000000" stroke="#000000" points="452.686,-457.686 447.707,-467.038 457.431,-462.832 452.686,-457.686"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge58" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M611.619,-318.209C600.206,-322.32 587.388,-326.937 575.759,-331.126"/>
+<polygon fill="#000000" stroke="#000000" points="574.549,-327.841 566.327,-334.523 576.921,-334.427 574.549,-327.841"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~initial_condition.f08~~EfferentGraph_edge54" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M636.258,-294.038C602.155,-247.331 477.722,-83.4248 432.5,-114.186"/>
+</g>
+</g>
+</svg>
+</div><script>var pansourcefileinitial_conditionf08EfferentGraph = svgPanZoom('#sourcefileinitial_conditionf08EfferentGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+    
+      
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Files dependent on this one</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~initial_condition.f08~~AfferentGraph Pages: 1 -->
+<svg id="sourcefileinitial_conditionf08AfferentGraph" width="201pt" height="32pt"
+ viewBox="0.00 0.00 201.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~initial_condition.f08~~AfferentGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>sourcefile~~initial_condition.f08~~AfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 197,-28 197,4 -4,4"/>
+<!-- sourcefile~initial_condition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~AfferentGraph_node1" class="node"><title>sourcefile~initial_condition.f08</title>
+<polygon fill="none" stroke="black" points="103,-24 0,-24 0,-0 103,-0 103,-24"/>
+<text text-anchor="middle" x="51.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">initial_condition.f08</text>
+</g>
+<!-- sourcefile~main.f08 -->
+<g id="sourcefile~~initial_condition.f08~~AfferentGraph_node2" class="node"><title>sourcefile~main.f08</title>
+<g id="a_sourcefile~~initial_condition.f08~~AfferentGraph_node2"><a xlink:href=".././sourcefile/main.f08.html" xlink:title="main.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="193,-24 139,-24 139,-0 193,-0 193,-24"/>
+<text text-anchor="middle" x="166" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">main.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~initial_condition.f08 -->
+<g id="sourcefile~~initial_condition.f08~~AfferentGraph_edge1" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~initial_condition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M138.907,-12C131.173,-12 122.359,-12 113.386,-12"/>
+<polygon fill="#000000" stroke="#000000" points="113.237,-8.5001 103.237,-12 113.237,-15.5001 113.237,-8.5001"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+      
+      <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-1">Modules</a></h3></div>
+  <div id="mods-1" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/initial_condition.html">initial_condition</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/initial_condition.f08.html#src">initial_condition.f08</a>
+  </div>
+</div>
+
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    <section>
+      <h2><span class="anchor" id="src"></span>Source Code</h2>
+    <div class="hl"><pre><span></span><a name="ln-1"></a><span class="c">!</span>
+<a name="ln-2"></a><span class="c">! module initial_condition</span>
+<a name="ln-3"></a><span class="c">!</span>
+<a name="ln-4"></a><span class="c">! Provides setup of initial conditions for geometry and dynamics</span>
+<a name="ln-5"></a><span class="c">!</span>
+<a name="ln-6"></a><span class="c">!==========================================================================</span>
+<a name="ln-7"></a><span class="c">!</span>
+<a name="ln-8"></a> <span class="k">module </span><span class="n">initial_condition</span>
+<a name="ln-9"></a><span class="c">! </span>
+<a name="ln-10"></a><span class="c">! initial conditions on the elements and faces</span>
+<a name="ln-11"></a><span class="c">!</span>
+<a name="ln-12"></a>    <span class="k">use </span><span class="n">array_index</span>
+<a name="ln-13"></a>    <span class="k">use </span><span class="n">bc</span>
+<a name="ln-14"></a>    <span class="k">use </span><span class="n">data_keys</span>
+<a name="ln-15"></a>    <span class="k">use </span><span class="n">element_geometry</span>
+<a name="ln-16"></a>    <span class="k">use </span><span class="n">element_dynamics</span>
+<a name="ln-17"></a>    <span class="k">use </span><span class="n">face_values</span>
+<a name="ln-18"></a>    <span class="k">use </span><span class="n">globals</span>
+<a name="ln-19"></a>    <span class="k">use </span><span class="n">junction</span>
+<a name="ln-20"></a>    <span class="k">use </span><span class="n">setting_definition</span>
+<a name="ln-21"></a>    <span class="k">use </span><span class="n">utility</span>
+<a name="ln-22"></a>    
+<a name="ln-23"></a>    <span class="k">implicit none</span>
+<a name="ln-24"></a><span class="k">    </span>
+<a name="ln-25"></a><span class="k">    private</span>
+<a name="ln-26"></a><span class="k">    </span>
+<a name="ln-27"></a><span class="k">    public</span>  <span class="kd">::</span> <span class="n">initial_condition_setup</span>
+<a name="ln-28"></a>
+<a name="ln-29"></a>    <span class="kt">integer</span> <span class="kd">::</span> <span class="n">debuglevel</span> <span class="o">=</span> <span class="mi">0</span>
+<a name="ln-30"></a>    
+<a name="ln-31"></a> <span class="k">contains</span>
+<a name="ln-32"></a><span class="c">!</span>
+<a name="ln-33"></a><span class="c">!========================================================================== </span>
+<a name="ln-34"></a><span class="c">!==========================================================================</span>
+<a name="ln-35"></a><span class="c">!</span>
+<a name="ln-36"></a> <span class="k">subroutine </span><span class="n">initial_condition_setup</span> <span class="p">&amp;</span>
+<a name="ln-37"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elem2YN</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">elemMYN</span><span class="p">,</span> <span class="n">faceR</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">faceYN</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-38"></a>     <span class="n">linkR</span><span class="p">,</span> <span class="n">linkI</span><span class="p">,</span> <span class="n">nodeR</span><span class="p">,</span> <span class="n">nodeI</span><span class="p">,</span> <span class="n">bcdataDn</span><span class="p">,</span> <span class="n">bcdataUp</span><span class="p">,</span> <span class="n">thisTime</span><span class="p">)</span>
+<a name="ln-39"></a> 
+<a name="ln-40"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;initial_condition_setup&#39;</span>
+<a name="ln-41"></a> 
+<a name="ln-42"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:),</span>  <span class="n">elemMR</span><span class="p">(:,:),</span> <span class="n">faceR</span><span class="p">(:,:)</span>
+<a name="ln-43"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elem2I</span><span class="p">(:,:),</span>  <span class="n">elemMI</span><span class="p">(:,:),</span> <span class="n">faceI</span><span class="p">(:,:)</span>
+<a name="ln-44"></a> <span class="kt">logical</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elem2YN</span><span class="p">(:,:),</span> <span class="n">elemMYN</span><span class="p">(:,:),</span> <span class="n">faceYN</span><span class="p">(:,:)</span>
+<a name="ln-45"></a>
+<a name="ln-46"></a> <span class="kt">real</span><span class="p">,</span>                <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">linkR</span><span class="p">(:,:),</span> <span class="n">nodeR</span><span class="p">(:,:)</span>
+<a name="ln-47"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">linkI</span><span class="p">(:,:),</span> <span class="n">nodeI</span><span class="p">(:,:)</span>
+<a name="ln-48"></a> <span class="kt">real</span><span class="p">,</span>                <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">thisTime</span>
+<a name="ln-49"></a> 
+<a name="ln-50"></a> <span class="k">type</span><span class="p">(</span><span class="n">bcType</span><span class="p">),</span>        <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">bcdataDn</span><span class="p">(:),</span> <span class="n">bcdataUp</span><span class="p">(:)</span>  
+<a name="ln-51"></a> 
+<a name="ln-52"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">idx</span>
+<a name="ln-53"></a> 
+<a name="ln-54"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-55"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-56"></a> 
+<a name="ln-57"></a> <span class="c">!% get data that can be extracted from links</span>
+<a name="ln-58"></a> <span class="k">call </span><span class="n">initial_conditions_from_linkdata</span> <span class="p">&amp;</span>
+<a name="ln-59"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">linkR</span><span class="p">,</span> <span class="n">linkI</span><span class="p">)</span>
+<a name="ln-60"></a>   
+<a name="ln-61"></a> <span class="k">call </span><span class="n">initial_junction_conditions</span> <span class="p">&amp;</span>
+<a name="ln-62"></a>    <span class="p">(</span><span class="n">faceR</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">nodeR</span><span class="p">,</span> <span class="n">nodeI</span><span class="p">)</span>    
+<a name="ln-63"></a>
+<a name="ln-64"></a> <span class="c">!% set the bc elements (outside of face) to null values</span>
+<a name="ln-65"></a> <span class="k">call </span><span class="n">bc_nullify_ghost_elem</span> <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">bcdataDn</span><span class="p">)</span>
+<a name="ln-66"></a> <span class="k">call </span><span class="n">bc_nullify_ghost_elem</span> <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">bcdataUp</span><span class="p">)</span>
+<a name="ln-67"></a>
+<a name="ln-68"></a> <span class="c">!% update the geometry</span>
+<a name="ln-69"></a> <span class="k">call </span><span class="n">element_geometry_update</span> <span class="p">&amp;</span>
+<a name="ln-70"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elem2YN</span><span class="p">,</span> <span class="n">e2r_Volume</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-71"></a>     <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">elemMYN</span><span class="p">,</span> <span class="n">eMr_Volume</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-72"></a>     <span class="n">faceR</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">bcdataDn</span><span class="p">,</span> <span class="n">bcdataUp</span><span class="p">,</span> <span class="n">thisTime</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a name="ln-73"></a> 
+<a name="ln-74"></a> <span class="k">call </span><span class="n">element_dynamics_update</span> <span class="p">&amp;</span>
+<a name="ln-75"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">faceR</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">elem2YN</span><span class="p">,</span> <span class="n">elemMYN</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-76"></a>     <span class="n">bcdataDn</span><span class="p">,</span> <span class="n">bcdataUp</span><span class="p">,</span> <span class="n">e2r_Velocity</span><span class="p">,</span> <span class="n">eMr_Velocity</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-77"></a>     <span class="n">e2r_Volume</span><span class="p">,</span> <span class="n">eMr_Volume</span><span class="p">,</span> <span class="n">thisTime</span><span class="p">)</span>          
+<a name="ln-78"></a>      
+<a name="ln-79"></a> <span class="k">call </span><span class="n">face_update</span> <span class="p">&amp;</span>
+<a name="ln-80"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">faceR</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">faceYN</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-81"></a>     <span class="n">bcdataDn</span><span class="p">,</span> <span class="n">bcdataUp</span><span class="p">,</span> <span class="n">e2r_Velocity</span><span class="p">,</span> <span class="n">eMr_Velocity</span><span class="p">,</span>  <span class="p">&amp;</span>
+<a name="ln-82"></a>     <span class="n">e2r_Volume</span><span class="p">,</span> <span class="n">eMr_Volume</span><span class="p">,</span> <span class="n">thisTime</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a name="ln-83"></a>
+<a name="ln-84"></a> <span class="c">!% set the element-specific smallvolume value</span>
+<a name="ln-85"></a> <span class="c">!% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS</span>
+<a name="ln-86"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">SmallVolume</span><span class="p">%</span><span class="n">UseSmallVolumes</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-87"></a><span class="k">    </span><span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_SmallVolume</span><span class="p">)</span> <span class="o">=</span> <span class="n">setting</span><span class="p">%</span><span class="n">SmallVolume</span><span class="p">%</span><span class="n">DepthCutoff</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_BreadthScale</span><span class="p">)</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Length</span><span class="p">)</span> 
+<a name="ln-88"></a>    <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_SmallVolume</span><span class="p">)</span> <span class="o">=</span> <span class="n">setting</span><span class="p">%</span><span class="n">SmallVolume</span><span class="p">%</span><span class="n">DepthCutoff</span> <span class="o">*</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_BreadthScale</span><span class="p">)</span> <span class="o">*</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Length</span><span class="p">)</span> 
+<a name="ln-89"></a> <span class="k">else</span>
+<a name="ln-90"></a><span class="k">    </span><span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_SmallVolume</span><span class="p">)</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-91"></a>    <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_SmallVolume</span><span class="p">)</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-92"></a> <span class="n">endif</span>
+<a name="ln-93"></a>
+<a name="ln-94"></a>
+<a name="ln-95"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-96"></a> <span class="k">end subroutine </span><span class="n">initial_condition_setup</span>
+<a name="ln-97"></a><span class="c">!</span>
+<a name="ln-98"></a><span class="c">!========================================================================== </span>
+<a name="ln-99"></a><span class="c">! PRIVATE BELOW HERE</span>
+<a name="ln-100"></a><span class="c">!==========================================================================</span>
+<a name="ln-101"></a><span class="c">!</span>
+<a name="ln-102"></a> <span class="k">subroutine </span><span class="n">initial_conditions_from_linkdata</span> <span class="p">&amp;</span>
+<a name="ln-103"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">linkR</span><span class="p">,</span> <span class="n">linkI</span><span class="p">)</span>
+<a name="ln-104"></a><span class="c">!</span>
+<a name="ln-105"></a><span class="c">! The link data structure can store a variety of geometric data.</span>
+<a name="ln-106"></a><span class="c">! This will be expanded in the future</span>
+<a name="ln-107"></a><span class="c">!</span>
+<a name="ln-108"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;initial_conditions_from_linkdata&#39;</span>
+<a name="ln-109"></a> 
+<a name="ln-110"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:),</span>  <span class="n">elemMR</span><span class="p">(:,:)</span> 
+<a name="ln-111"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elem2I</span><span class="p">(:,:),</span>  <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-112"></a>    
+<a name="ln-113"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">linkR</span><span class="p">(:,:)</span>
+<a name="ln-114"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">linkI</span><span class="p">(:,:)</span>
+<a name="ln-115"></a> 
+<a name="ln-116"></a> <span class="kt">real</span>               <span class="kd">::</span> <span class="n">kappa</span>
+<a name="ln-117"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span> <span class="kd">::</span> <span class="n">dup</span><span class="p">,</span> <span class="n">ddn</span>
+<a name="ln-118"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">pointer</span> <span class="kd">::</span> <span class="n">Lindx</span><span class="p">,</span> <span class="n">LdepthType</span>
+<a name="ln-119"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ei_max</span><span class="p">,</span> <span class="n">mm</span>
+<a name="ln-120"></a>  
+<a name="ln-121"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-122"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-123"></a> 
+<a name="ln-124"></a> <span class="k">do </span><span class="n">ii</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">N_link</span>
+<a name="ln-125"></a>    <span class="n">Lindx</span>      <span class="o">=&gt;</span> <span class="n">linkI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">li_idx</span><span class="p">)</span>
+<a name="ln-126"></a>    <span class="n">LdepthType</span> <span class="o">=&gt;</span> <span class="n">linkI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">li_InitialDepthType</span><span class="p">)</span>
+<a name="ln-127"></a>    
+<a name="ln-128"></a>    <span class="c">!% up and downstream depths on this link</span>
+<a name="ln-129"></a>    <span class="n">dup</span> <span class="o">=&gt;</span> <span class="n">linkR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">lr_InitialUpstreamDepth</span><span class="p">)</span>
+<a name="ln-130"></a>    <span class="n">ddn</span> <span class="o">=&gt;</span> <span class="n">linkR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">lr_InitialDnstreamDepth</span><span class="p">)</span>
+<a name="ln-131"></a>            
+<a name="ln-132"></a>    <span class="k">select case</span> <span class="p">(</span><span class="n">LdepthType</span><span class="p">)</span>
+<a name="ln-133"></a>    
+<a name="ln-134"></a>        <span class="k">case</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a name="ln-135"></a>    
+<a name="ln-136"></a>            <span class="c">!%  Initial depth --------------------------------------------------</span>
+<a name="ln-137"></a>            <span class="k">if</span> <span class="p">(</span><span class="n">linkR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">lr_InitialDepth</span><span class="p">)</span> <span class="o">/=</span> <span class="n">nullvalueR</span><span class="p">)</span> <span class="k">then</span>        
+<a name="ln-138"></a>                <span class="c">!%  if the link has a uniform depth as an initial condition</span>
+<a name="ln-139"></a>                <span class="k">where</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span>
+<a name="ln-140"></a>                    <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span> <span class="o">=</span> <span class="n">linkR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">lr_InitialDepth</span><span class="p">)</span>
+<a name="ln-141"></a>                <span class="n">endwhere</span>
+<a name="ln-142"></a>            <span class="k">else</span>
+<a name="ln-143"></a><span class="k">                where</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span>
+<a name="ln-144"></a>                    <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">dup</span> <span class="o">+</span> <span class="n">ddn</span><span class="p">)</span>
+<a name="ln-145"></a>                <span class="n">endwhere</span>
+<a name="ln-146"></a>            <span class="n">endif</span>
+<a name="ln-147"></a>        
+<a name="ln-148"></a>        <span class="k">case</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span>        
+<a name="ln-149"></a>            <span class="c">!% if the link has linearly-varying depth </span>
+<a name="ln-150"></a>            <span class="c">!% depth at the downstream element (link position =1)</span>
+<a name="ln-151"></a>            <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-152"></a>                <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span> <span class="o">=</span> <span class="n">ddn</span>   
+<a name="ln-153"></a>            <span class="n">endwhere</span>
+<a name="ln-154"></a>            
+<a name="ln-155"></a>            <span class="c">!%  using a linear distribution over the links </span>
+<a name="ln-156"></a>            <span class="n">ei_max</span> <span class="o">=</span> <span class="nb">maxval</span><span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">),</span><span class="mi">1</span><span class="p">,</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span>
+<a name="ln-157"></a>            <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">ei_max</span>
+<a name="ln-158"></a>                <span class="c">!% find the element that is at the mm position in the link</span>
+<a name="ln-159"></a>                <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">==</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-160"></a>                    <span class="c">! use a linear interp</span>
+<a name="ln-161"></a>                    <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span> <span class="o">=</span> <span class="n">ddn</span> <span class="o">+</span> <span class="p">(</span><span class="n">dup</span> <span class="o">-</span> <span class="n">ddn</span><span class="p">)</span> <span class="o">*</span> <span class="kt">real</span><span class="p">(</span><span class="n">mm</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="kt">real</span><span class="p">(</span><span class="n">ei_max</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<a name="ln-162"></a>                <span class="n">endwhere</span>
+<a name="ln-163"></a>            <span class="k">end do</span>
+<a name="ln-164"></a><span class="k">            </span>
+<a name="ln-165"></a><span class="k">        case</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<a name="ln-166"></a>            <span class="c">! HACK - this needs work to make the exponent driven by dup and ddn</span>
+<a name="ln-167"></a>            <span class="c">! to ensure decay to dup over length</span>
+<a name="ln-168"></a>            
+<a name="ln-169"></a>            <span class="c">!% exponential decay</span>
+<a name="ln-170"></a>
+<a name="ln-171"></a>
+<a name="ln-172"></a>            <span class="c">!% if the link has linearly-varying depth </span>
+<a name="ln-173"></a>            <span class="c">!% depth at the downstream element (link position =1)</span>
+<a name="ln-174"></a>            <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-175"></a>                <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span> <span class="o">=</span> <span class="n">ddn</span>   
+<a name="ln-176"></a>            <span class="n">endwhere</span>
+<a name="ln-177"></a>
+<a name="ln-178"></a>            <span class="c">!%  using a linear distribution over the links </span>
+<a name="ln-179"></a>            <span class="n">ei_max</span> <span class="o">=</span> <span class="nb">maxval</span><span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">),</span><span class="mi">1</span><span class="p">,</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span>            
+<a name="ln-180"></a>
+<a name="ln-181"></a>            <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">ei_max</span>
+<a name="ln-182"></a>                        <span class="n">kappa</span> <span class="o">=</span> <span class="kt">real</span><span class="p">(</span><span class="n">ei_max</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<a name="ln-183"></a>                    <span class="c">!% find the element that is at the mm position in the link</span>
+<a name="ln-184"></a>                <span class="k">if</span> <span class="p">(</span><span class="n">ddn</span> <span class="o">-</span> <span class="n">dup</span> <span class="o">&gt;</span> <span class="n">zeroR</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-185"></a>                    <span class="c">!%  depth decreases exponentially going upstream</span>
+<a name="ln-186"></a>                    <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">==</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-187"></a>                        <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span>        <span class="p">)</span>
+<a name="ln-188"></a>                         <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">ddn</span><span class="o">-</span><span class="n">dup</span><span class="p">)</span> <span class="o">*</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="kt">real</span><span class="p">(</span><span class="n">mm</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="n">dup</span>
+<a name="ln-189"></a>                    <span class="n">endwhere</span>
+<a name="ln-190"></a>                <span class="n">elseif</span> <span class="p">(</span><span class="n">ddn</span> <span class="o">-</span> <span class="n">dup</span> <span class="o">&lt;</span> <span class="n">zeroR</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-191"></a>                    <span class="c">!%  depth increases exponentially going upstream</span>
+<a name="ln-192"></a>                    <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">==</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-193"></a>                        <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span>        <span class="p">)</span>
+<a name="ln-194"></a>                        <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span> <span class="o">=</span> <span class="n">dup</span> <span class="o">-</span> <span class="p">(</span><span class="n">dup</span><span class="o">-</span><span class="n">ddn</span><span class="p">)</span> <span class="o">*</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="kt">real</span><span class="p">(</span><span class="n">mm</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+<a name="ln-195"></a>                    <span class="n">endwhere</span>
+<a name="ln-196"></a>                <span class="k">else</span>
+<a name="ln-197"></a>                    <span class="c">!%  uniform depth</span>
+<a name="ln-198"></a>                    <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">==</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-199"></a>                        <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span>        <span class="p">)</span>
+<a name="ln-200"></a>                        <span class="c">! use a linear interp</span>
+<a name="ln-201"></a>                        <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span> <span class="o">=</span> <span class="n">ddn</span>
+<a name="ln-202"></a>                    <span class="n">endwhere</span>
+<a name="ln-203"></a>                     
+<a name="ln-204"></a>                <span class="n">endif</span>
+<a name="ln-205"></a>                            
+<a name="ln-206"></a>            <span class="k">end do</span>
+<a name="ln-207"></a>
+<a name="ln-208"></a><span class="k">        end select</span>
+<a name="ln-209"></a>    
+<a name="ln-210"></a>        <span class="c">!%  handle all the initial conditions that don&#39;t depend on geometry type</span>
+<a name="ln-211"></a>        <span class="c">!%</span>
+<a name="ln-212"></a>        <span class="k">where</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span>
+<a name="ln-213"></a>            <span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_roughness_type</span><span class="p">)</span> <span class="o">=</span> <span class="n">linkI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">li_roughness_type</span><span class="p">)</span>
+<a name="ln-214"></a>            <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Roughness</span><span class="p">)</span>      <span class="o">=</span> <span class="n">linkR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">lr_Roughness</span><span class="p">)</span>
+<a name="ln-215"></a>            <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_BreadthScale</span><span class="p">)</span>   <span class="o">=</span> <span class="n">linkR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">lr_BreadthScale</span><span class="p">)</span>
+<a name="ln-216"></a>            <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Eta</span><span class="p">)</span>            <span class="o">=</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Zbottom</span><span class="p">)</span>  <span class="o">+</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span>
+<a name="ln-217"></a>            <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Flowrate</span><span class="p">)</span>       <span class="o">=</span> <span class="n">linkR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">lr_InitialFlowrate</span><span class="p">)</span>            
+<a name="ln-218"></a>        <span class="n">endwhere</span>
+<a name="ln-219"></a>        
+<a name="ln-220"></a>
+<a name="ln-221"></a>        <span class="k">if</span> <span class="p">(</span><span class="n">linkI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">li_geometry</span><span class="p">)</span> <span class="o">==</span> <span class="n">lRectangular</span> <span class="p">)</span> <span class="k">then</span>
+<a name="ln-222"></a>            <span class="c">!% handle rectangular elements</span>
+<a name="ln-223"></a>            
+<a name="ln-224"></a>            <span class="k">where</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span>
+<a name="ln-225"></a>                <span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_geometry</span><span class="p">)</span>  <span class="o">=</span> <span class="n">eRectangular</span>            
+<a name="ln-226"></a>                <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Topwidth</span><span class="p">)</span>  <span class="o">=</span> <span class="n">linkR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">lr_BreadthScale</span><span class="p">)</span>
+<a name="ln-227"></a>                <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Area</span><span class="p">)</span>      <span class="o">=</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_BreadthScale</span><span class="p">)</span>
+<a name="ln-228"></a>                <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Volume</span><span class="p">)</span>    <span class="o">=</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Area</span><span class="p">)</span>     <span class="o">*</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-229"></a>                <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Perimeter</span><span class="p">)</span> <span class="o">=</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_BreadthScale</span><span class="p">)</span> <span class="o">+</span> <span class="n">twoR</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_HydDepth</span><span class="p">)</span>
+<a name="ln-230"></a>            <span class="n">endwhere</span>
+<a name="ln-231"></a>        <span class="k">else</span>
+<a name="ln-232"></a>            <span class="c">!% handle elements of other geometry types</span>
+<a name="ln-233"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: initialization for non-rectangular elements needed in &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-234"></a>            <span class="k">stop</span>
+<a name="ln-235"></a><span class="k">        end if</span>
+<a name="ln-236"></a>        
+<a name="ln-237"></a>        <span class="c">!%  Update velocity</span>
+<a name="ln-238"></a>        <span class="k">where</span> <span class="p">(</span>  <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lindx</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">(</span><span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Area</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">zeroR</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-239"></a>            <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Velocity</span><span class="p">)</span>  <span class="o">=</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Flowrate</span><span class="p">)</span> <span class="o">/</span> <span class="n">elem2R</span><span class="p">(:,</span><span class="n">e2r_Area</span><span class="p">)</span>
+<a name="ln-240"></a>        <span class="n">endwhere</span>
+<a name="ln-241"></a>        
+<a name="ln-242"></a>        <span class="c">!print *, elem2R(:,e2r_HydDepth)</span>
+<a name="ln-243"></a>        <span class="c">!stop</span>
+<a name="ln-244"></a>
+<a name="ln-245"></a> <span class="n">enddo</span>
+<a name="ln-246"></a> 
+<a name="ln-247"></a> <span class="c">!print *, elem2R(:,e2r_Flowrate)</span>
+<a name="ln-248"></a> <span class="c">!print *, trim(subroutine_name)</span>
+<a name="ln-249"></a> <span class="c">!stop</span>
+<a name="ln-250"></a>
+<a name="ln-251"></a> 
+<a name="ln-252"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-253"></a> <span class="k">end subroutine </span><span class="n">initial_conditions_from_linkdata</span>
+<a name="ln-254"></a><span class="c">!</span>
+<a name="ln-255"></a><span class="c">!========================================================================== </span>
+<a name="ln-256"></a><span class="c">!==========================================================================</span>
+<a name="ln-257"></a><span class="c">!</span>
+<a name="ln-258"></a> <span class="k">subroutine </span><span class="n">initial_junction_conditions</span> <span class="p">&amp;</span>
+<a name="ln-259"></a>    <span class="p">(</span><span class="n">faceR</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">nodeR</span><span class="p">,</span> <span class="n">nodeI</span><span class="p">)</span>
+<a name="ln-260"></a> 
+<a name="ln-261"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;initial_junction_conditions&#39;</span>
+<a name="ln-262"></a> 
+<a name="ln-263"></a> <span class="kt">real</span><span class="p">,</span>              <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-264"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:),</span> <span class="n">nodeR</span><span class="p">(:,:),</span> <span class="n">faceR</span><span class="p">(:,:)</span>
+<a name="ln-265"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elem2I</span><span class="p">(:,:),</span> <span class="n">elemMI</span><span class="p">(:,:),</span> <span class="n">nodeI</span><span class="p">(:,:),</span> <span class="n">faceI</span><span class="p">(:,:)</span>
+<a name="ln-266"></a> 
+<a name="ln-267"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">pointer</span> <span class="kd">::</span> <span class="n">tface</span><span class="p">,</span> <span class="n">telem</span>
+<a name="ln-268"></a> 
+<a name="ln-269"></a> <span class="kt">real</span>   <span class="kd">::</span> <span class="n">upvalue</span><span class="p">(</span><span class="n">upstream_face_per_elemM</span><span class="p">),</span> <span class="n">dnvalue</span><span class="p">(</span><span class="n">dnstream_face_per_elemM</span><span class="p">)</span>
+<a name="ln-270"></a>  
+<a name="ln-271"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">ii</span><span class="p">,</span> <span class="n">mm</span> 
+<a name="ln-272"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-273"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-274"></a> 
+<a name="ln-275"></a> <span class="k">if</span> <span class="p">(</span><span class="n">N_elemM</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-276"></a>    <span class="c">!% initialize the free surface from the average of the adjacent elements</span>
+<a name="ln-277"></a>    <span class="k">call </span><span class="n">junction_adjacent_element_average</span> <span class="p">&amp;</span>
+<a name="ln-278"></a>        <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">e2r_Eta</span><span class="p">,</span> <span class="n">eMr_Eta</span><span class="p">)</span>
+<a name="ln-279"></a>        
+<a name="ln-280"></a>    <span class="c">!% initialize the branch areas to the values of the adjacent elements</span>
+<a name="ln-281"></a>    <span class="k">call </span><span class="n">junction_adjacent_element_values_to_branches</span> <span class="p">&amp;</span>
+<a name="ln-282"></a>        <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">e2r_Area</span><span class="p">,</span> <span class="n">eMr_AreaUp</span><span class="p">,</span> <span class="n">eMr_AreaDn</span><span class="p">)</span> 
+<a name="ln-283"></a>        
+<a name="ln-284"></a>    <span class="c">!% initialize the branch flowrates to the values of the adjacent elements</span>
+<a name="ln-285"></a>    <span class="k">call </span><span class="n">junction_adjacent_element_values_to_branches</span> <span class="p">&amp;</span>
+<a name="ln-286"></a>        <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">e2r_Flowrate</span><span class="p">,</span> <span class="n">eMr_FlowrateUp</span><span class="p">,</span> <span class="n">eMr_FlowrateDn</span><span class="p">)</span> 
+<a name="ln-287"></a>        
+<a name="ln-288"></a>    <span class="c">!% initialize element momentum to the average of the net upstream and downstrea</span>
+<a name="ln-289"></a>    <span class="c">!% fluxes</span>
+<a name="ln-290"></a>    <span class="k">call </span><span class="n">junction_branch_average_of_inflows_and_outflows</span> <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">)</span>  
+<a name="ln-291"></a>    
+<a name="ln-292"></a>    <span class="c">!% here we assume the branch and junction topwidths are already initialized</span>
+<a name="ln-293"></a>    <span class="c">!% in a prior call to junction_geometry_setup    </span>
+<a name="ln-294"></a>    <span class="c">!print *, elemMR(:,eMr_Topwidth)</span>
+<a name="ln-295"></a>    <span class="c">!print *, elemMR(:,eMr_TopwidthAll)</span>
+<a name="ln-296"></a>    
+<a name="ln-297"></a>    <span class="k">where</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span>
+<a name="ln-298"></a>        <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_HydDepth</span><span class="p">)</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Eta</span><span class="p">)</span> <span class="o">-</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Zbottom</span><span class="p">)</span>
+<a name="ln-299"></a>    <span class="n">endwhere</span>
+<a name="ln-300"></a>    
+<a name="ln-301"></a>    <span class="c">! HACK -- need other geometry types</span>
+<a name="ln-302"></a>    
+<a name="ln-303"></a>    <span class="k">where</span> <span class="p">((</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_geometry</span><span class="p">)</span> <span class="o">==</span> <span class="n">eRectangular</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-304"></a>           <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">))</span>
+<a name="ln-305"></a>        <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Area</span><span class="p">)</span>      <span class="o">=</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_HydDepth</span><span class="p">)</span> <span class="o">*</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Topwidth</span><span class="p">)</span>
+<a name="ln-306"></a>        <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Volume</span><span class="p">)</span>    <span class="o">=</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Area</span><span class="p">)</span>     <span class="o">*</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Length</span><span class="p">)</span>
+<a name="ln-307"></a>        <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Perimeter</span><span class="p">)</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Breadthscale</span><span class="p">)</span> <span class="o">+</span> <span class="n">twoR</span> <span class="o">*</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_HydDepth</span><span class="p">)</span>
+<a name="ln-308"></a>        <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_HydRadius</span><span class="p">)</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Area</span><span class="p">)</span> <span class="o">/</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Perimeter</span><span class="p">)</span>
+<a name="ln-309"></a>    <span class="n">endwhere</span>
+<a name="ln-310"></a>    
+<a name="ln-311"></a>    <span class="c">!% velocities</span>
+<a name="ln-312"></a>    <span class="k">call </span><span class="n">junction_branch_velocities</span> <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">)</span>
+<a name="ln-313"></a>    
+<a name="ln-314"></a>    <span class="k">where</span> <span class="p">((</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-315"></a>           <span class="p">(</span><span class="n">elemMr</span><span class="p">(:,</span><span class="n">eMr_Area</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">zeroR</span><span class="p">))</span>
+<a name="ln-316"></a>        <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Velocity</span><span class="p">)</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Flowrate</span><span class="p">)</span> <span class="o">/</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Area</span><span class="p">)</span>
+<a name="ln-317"></a>    <span class="n">endwhere</span>    
+<a name="ln-318"></a>   
+<a name="ln-319"></a> <span class="k">end if</span>
+<a name="ln-320"></a>
+<a name="ln-321"></a><span class="k"> </span>
+<a name="ln-322"></a><span class="k"> if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-323"></a> <span class="k">end subroutine </span><span class="n">initial_junction_conditions</span>
+<a name="ln-324"></a><span class="c">!</span>
+<a name="ln-325"></a><span class="c">!========================================================================== </span>
+<a name="ln-326"></a><span class="c">!==========================================================================</span>
+<a name="ln-327"></a><span class="c">!</span>
+<a name="ln-328"></a><span class="c">! subroutine initial_condition_setupOLD &amp;</span>
+<a name="ln-329"></a><span class="c">!    (elem2R, elemMR, elem2I, elemMI, elem2YN, elemMYN, &amp;</span>
+<a name="ln-330"></a><span class="c">!     faceR, faceI, faceYN, bcdataDn, bcdataUp)</span>
+<a name="ln-331"></a><span class="c">! </span>
+<a name="ln-332"></a><span class="c">! character(64) :: subroutine_name = &#39;initial_condition_setup&#39;</span>
+<a name="ln-333"></a><span class="c">! </span>
+<a name="ln-334"></a><span class="c">! real,      intent(in out)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)</span>
+<a name="ln-335"></a><span class="c">! </span>
+<a name="ln-336"></a><span class="c">! integer,   intent(in out)  :: elem2I(:,:), elemMI(:,:)</span>
+<a name="ln-337"></a><span class="c">! </span>
+<a name="ln-338"></a><span class="c">! logical,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)</span>
+<a name="ln-339"></a><span class="c">! </span>
+<a name="ln-340"></a><span class="c">! integer,   intent(in out)      :: faceI(:,:)</span>
+<a name="ln-341"></a><span class="c">! </span>
+<a name="ln-342"></a><span class="c">! type(bcType),  intent(in)  :: bcdataDn(:), bcdataUp(:)</span>
+<a name="ln-343"></a><span class="c">! </span>
+<a name="ln-344"></a><span class="c">! real  ::  uniform_water_depth, uniform_bottom_roughness, uniform_flowrate</span>
+<a name="ln-345"></a><span class="c">!  </span>
+<a name="ln-346"></a><span class="c">! integer :: mm </span>
+<a name="ln-347"></a><span class="c">!!-------------------------------------------------------------------------- </span>
+<a name="ln-348"></a><span class="c">! if ((debuglevel &gt; 0) .or. (debuglevelall &gt; 0)) print *, &#39;*** enter &#39;,subroutine_name </span>
+<a name="ln-349"></a><span class="c">! </span>
+<a name="ln-350"></a><span class="c">! select case (casename)</span>
+<a name="ln-351"></a><span class="c">!    case (&#39;1link_network&#39;)</span>
+<a name="ln-352"></a><span class="c">!        uniform_water_depth = 0.5</span>
+<a name="ln-353"></a><span class="c">!        uniform_bottom_roughness = 0.03</span>
+<a name="ln-354"></a><span class="c">!        uniform_flowrate = 0.822225</span>
+<a name="ln-355"></a><span class="c">!        </span>
+<a name="ln-356"></a><span class="c">!        print *, &#39;in &#39;,subroutine_name,&#39;---------------------------&#39;  </span>
+<a name="ln-357"></a><span class="c">!        print *, &#39;setting initial uniform water depth of &#39;,uniform_water_depth</span>
+<a name="ln-358"></a><span class="c">!          </span>
+<a name="ln-359"></a><span class="c">!!        call initial_condition_for_uniform_rectangular_channel &amp;</span>
+<a name="ln-360"></a><span class="c">!!            (uniform_water_depth, uniform_bottom_roughness, &amp;</span>
+<a name="ln-361"></a><span class="c">!!             elem2R, elemMR, elem2I, elemMI, elem2YN, elemMYN, &amp;</span>
+<a name="ln-362"></a><span class="c">!!             faceI, bcdataDn, bcdataUp)</span>
+<a name="ln-363"></a><span class="c">!!</span>
+<a name="ln-364"></a><span class="c">!        call bc_nullify_ghost_elem (elem2R, bcdataDn)</span>
+<a name="ln-365"></a><span class="c">!        call bc_nullify_ghost_elem (elem2R, bcdataUp)</span>
+<a name="ln-366"></a><span class="c">!        </span>
+<a name="ln-367"></a><span class="c">!        call element_geometry_update &amp;</span>
+<a name="ln-368"></a><span class="c">!            (elem2R, elem2I, elem2YN, e2r_Volume, &amp;</span>
+<a name="ln-369"></a><span class="c">!             elemMR, elemMI, elemMYN, eMr_Volume, &amp;</span>
+<a name="ln-370"></a><span class="c">!             faceI, bcdataDn, bcdataUp)</span>
+<a name="ln-371"></a><span class="c">!            </span>
+<a name="ln-372"></a><span class="c">!        ! HACK hard code setup of flowrate</span>
+<a name="ln-373"></a><span class="c">!    </span>
+<a name="ln-374"></a><span class="c">!        elem2R(:,e2r_Flowrate) = uniform_flowrate</span>
+<a name="ln-375"></a><span class="c">!        elem2R(:,e2r_Velocity) = elem2R(:,e2r_Flowrate) / elem2R(:,e2r_Area)</span>
+<a name="ln-376"></a><span class="c">!        print *, &#39;setting initial flowrate of &#39;,uniform_flowrate</span>
+<a name="ln-377"></a><span class="c">!    </span>
+<a name="ln-378"></a><span class="c">!        call element_dynamics_update &amp;</span>
+<a name="ln-379"></a><span class="c">!            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &amp;</span>
+<a name="ln-380"></a><span class="c">!             bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity)             </span>
+<a name="ln-381"></a><span class="c">!        </span>
+<a name="ln-382"></a><span class="c">!        call face_update &amp;</span>
+<a name="ln-383"></a><span class="c">!            (elem2R, elemMR, faceR, faceI, faceYN, &amp;</span>
+<a name="ln-384"></a><span class="c">!             bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity)</span>
+<a name="ln-385"></a><span class="c">!        </span>
+<a name="ln-386"></a><span class="c">!    case (&#39;6link_1_line_network&#39;)</span>
+<a name="ln-387"></a><span class="c">!        print *, &#39;error initial condition not defined for &#39;,casename,&#39; in &#39;,subroutine_name</span>
+<a name="ln-388"></a><span class="c">!        stop</span>
+<a name="ln-389"></a><span class="c">!        </span>
+<a name="ln-390"></a><span class="c">!    case (&#39;3link_Y_network&#39;)</span>
+<a name="ln-391"></a><span class="c">!        print *, &#39;error initial condition not defined for &#39;,casename,&#39; in &#39;,subroutine_name</span>
+<a name="ln-392"></a><span class="c">!        stop</span>
+<a name="ln-393"></a><span class="c">!        </span>
+<a name="ln-394"></a><span class="c">!    case (&#39;6link_Y_network&#39;)</span>
+<a name="ln-395"></a><span class="c">!        print *, &#39;error initial condition not defined for &#39;,casename,&#39; in &#39;,subroutine_name</span>
+<a name="ln-396"></a><span class="c">!        stop</span>
+<a name="ln-397"></a><span class="c">!    </span>
+<a name="ln-398"></a><span class="c">!    case default</span>
+<a name="ln-399"></a><span class="c">!        print *</span>
+<a name="ln-400"></a><span class="c">!        print *, &#39;casename = &#39;,casename</span>
+<a name="ln-401"></a><span class="c">!        print *, &#39;error: valid casename not selected in &#39;,subroutine_name</span>
+<a name="ln-402"></a><span class="c">!        stop</span>
+<a name="ln-403"></a><span class="c">! end select    </span>
+<a name="ln-404"></a><span class="c">! </span>
+<a name="ln-405"></a><span class="c">! ! remainder of geometry based on branches</span>
+<a name="ln-406"></a><span class="c">! call junction_geometry_from_branches (elemMR, elemMI)</span>
+<a name="ln-407"></a><span class="c">!</span>
+<a name="ln-408"></a><span class="c">! </span>
+<a name="ln-409"></a><span class="c">! if ((debuglevel &gt; 0) .or. (debuglevelall &gt; 0)) print *, &#39;*** leave &#39;,subroutine_name</span>
+<a name="ln-410"></a><span class="c">! end subroutine initial_condition_setupOLD</span>
+<a name="ln-411"></a><span class="c">!!</span>
+<a name="ln-412"></a><span class="c">!========================================================================== </span>
+<a name="ln-413"></a><span class="c">!==========================================================================</span>
+<a name="ln-414"></a><span class="c">!</span>
+<a name="ln-415"></a><span class="c">! subroutine initial_condition_for_uniform_rectangular_channelOLD &amp;</span>
+<a name="ln-416"></a><span class="c">!    (uniform_water_depth, uniform_bottom_roughness, &amp;</span>
+<a name="ln-417"></a><span class="c">!     elem2R, elemMR, elem2I, elemMI, elem2YN, elemMYN, &amp;</span>
+<a name="ln-418"></a><span class="c">!     faceI, bcdataDn, bcdataUp)</span>
+<a name="ln-419"></a><span class="c">!!     </span>
+<a name="ln-420"></a><span class="c">!! simple rectangular channels with initial uniform depth</span>
+<a name="ln-421"></a><span class="c">!!</span>
+<a name="ln-422"></a><span class="c">! character(64) :: subroutine_name = &#39;initial_condition_for_uniform_rectangular_channel&#39;</span>
+<a name="ln-423"></a><span class="c">! </span>
+<a name="ln-424"></a><span class="c">! real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)</span>
+<a name="ln-425"></a><span class="c">! </span>
+<a name="ln-426"></a><span class="c">! integer,   intent(in out)  :: elem2I(:,:), elemMI(:,:)</span>
+<a name="ln-427"></a><span class="c">! </span>
+<a name="ln-428"></a><span class="c">! logical,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:)</span>
+<a name="ln-429"></a><span class="c">! </span>
+<a name="ln-430"></a><span class="c">! integer,   intent(in)      :: faceI(:,:)</span>
+<a name="ln-431"></a><span class="c">! </span>
+<a name="ln-432"></a><span class="c">! type(bcType),  target,  intent(in)  :: bcdataDn(:), bcdataUp(:)</span>
+<a name="ln-433"></a><span class="c">! </span>
+<a name="ln-434"></a><span class="c">! real,  intent(in)  :: uniform_water_depth, uniform_bottom_roughness</span>
+<a name="ln-435"></a><span class="c">! </span>
+<a name="ln-436"></a><span class="c">! integer,   pointer :: eID</span>
+<a name="ln-437"></a><span class="c">! </span>
+<a name="ln-438"></a><span class="c">! integer :: ii</span>
+<a name="ln-439"></a><span class="c">!  </span>
+<a name="ln-440"></a><span class="c">!!-------------------------------------------------------------------------- </span>
+<a name="ln-441"></a><span class="c">! if ((debuglevel &gt; 0) .or. (debuglevelall &gt; 0)) print *, &#39;*** enter &#39;,subroutine_name </span>
+<a name="ln-442"></a><span class="c">!</span>
+<a name="ln-443"></a><span class="c">! ! 2-face elements - rectangular </span>
+<a name="ln-444"></a><span class="c">! ! note that topwidth, zbottom, length were extracted from link data in network processing</span>
+<a name="ln-445"></a><span class="c">! elem2R(:,e2r_Area)         = uniform_water_depth * elem2R(:,e2r_Topwidth)</span>
+<a name="ln-446"></a><span class="c">! </span>
+<a name="ln-447"></a><span class="c">! elem2R(:,e2r_Volume)       = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)</span>
+<a name="ln-448"></a><span class="c">! </span>
+<a name="ln-449"></a><span class="c">! elem2R(:,e2r_Perimeter)    = elem2R(:,e2r_Topwidth) + twoR * uniform_water_depth</span>
+<a name="ln-450"></a><span class="c">! </span>
+<a name="ln-451"></a><span class="c">! elem2R(:,e2r_Eta)          = uniform_water_depth + elem2R(:,e2r_Zbottom)</span>
+<a name="ln-452"></a><span class="c">! </span>
+<a name="ln-453"></a><span class="c">! elem2R(:,e2r_Roughness)    = uniform_bottom_roughness</span>
+<a name="ln-454"></a><span class="c">! </span>
+<a name="ln-455"></a><span class="c">! elem2R(:,e2r_Flowrate)     = zeroR</span>
+<a name="ln-456"></a><span class="c">! elem2R(:,e2r_Velocity)     = zeroR</span>
+<a name="ln-457"></a><span class="c">!    </span>
+<a name="ln-458"></a><span class="c">! ! multi-face elements - rectangular</span>
+<a name="ln-459"></a><span class="c">! ! note that topwidth, zbottom, length were extracted from link data in network processing</span>
+<a name="ln-460"></a><span class="c">! elemMR(:,eMr_AreaAll)      = uniform_water_depth * elemMR(:,eMr_TopwidthAll) </span>
+<a name="ln-461"></a><span class="c">!    </span>
+<a name="ln-462"></a><span class="c">! elemMR(:,eMr_Eta)          = uniform_water_depth + elemMR(:,eMr_Zbottom)</span>
+<a name="ln-463"></a><span class="c">! </span>
+<a name="ln-464"></a><span class="c">! elemMR(:,eMr_Perimeter)    = elemMR(:,eMr_Topwidth) + twoR * uniform_water_depth</span>
+<a name="ln-465"></a><span class="c">!</span>
+<a name="ln-466"></a><span class="c">! elem2R(:,eMr_Roughness)    = uniform_bottom_roughness</span>
+<a name="ln-467"></a><span class="c">! </span>
+<a name="ln-468"></a><span class="c">! elemMR(:,eMr_Flowrate)     = zeroR</span>
+<a name="ln-469"></a><span class="c">! elemMR(:,eMr_Velocity)     = zeroR</span>
+<a name="ln-470"></a><span class="c">!    </span>
+<a name="ln-471"></a><span class="c">!</span>
+<a name="ln-472"></a><span class="c">! if ((debuglevel &gt; 0) .or. (debuglevelall &gt; 0)) print *, &#39;*** leave &#39;,subroutine_name</span>
+<a name="ln-473"></a><span class="c">! end subroutine initial_condition_for_uniform_rectangular_channelOLD</span>
+<a name="ln-474"></a><span class="c">!!</span>
+<a name="ln-475"></a><span class="c">!========================================================================== </span>
+<a name="ln-476"></a><span class="c">! END OF MODULE initial_condition</span>
+<a name="ln-477"></a><span class="c">!==========================================================================</span>
+<a name="ln-478"></a> <span class="k">end module </span><span class="n">initial_condition</span>
+</pre></div>
+
+    </section>
+    </div>
+  </div>
+
+  
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2019 
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> SWMMengine was developed by Ben R. Hodges and Ehsan Madadi-Kandjani</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>

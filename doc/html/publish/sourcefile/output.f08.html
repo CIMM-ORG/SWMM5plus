@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="Prototype Fortran 2008 engine for the EPA Storm Water Management Model (SWMM)">
+    
+    <meta name="author" content="Ben R. Hodges and Ehsan Madadi-Kandjani" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>output.f08 &ndash; SWMMengine</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">SWMMengine </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/main.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/main.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>output.f08
+    <small>Source File</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 4.4% of total for source files.">333 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/output.f08"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+  
+     <li class="active">output.f08</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-0">Modules</a></h3></div>
+  <div id="mods-0" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/output.html">output</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/output.f08.html#src">output.f08</a>
+  </div>
+</div>
+
+
+
+</div>
+
+    </div>
+    <div class="col-md-9" id='text'>
+      
+      <br>
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">This file depends on</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~output.f08~~EfferentGraph Pages: 1 -->
+<svg id="sourcefileoutputf08EfferentGraph" width="641pt" height="214pt"
+ viewBox="0.00 0.00 641.00 214.21" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~output.f08~~EfferentGraph" class="graph" transform="scale(0.842313 0.842313) rotate(0) translate(4 250.309)">
+<title>sourcefile~~output.f08~~EfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-250.309 757,-250.309 757,4 -4,4"/>
+<!-- sourcefile~output.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_node1" class="node"><title>sourcefile~output.f08</title>
+<polygon fill="none" stroke="black" points="753,-109.557 692,-109.557 692,-85.5572 753,-85.5572 753,-109.557"/>
+<text text-anchor="middle" x="722.5" y="-95.1572" font-family="Helvetica,sans-Serif" font-size="10.50">output.f08</text>
+</g>
+<!-- sourcefile~data_keys.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_node2" class="node"><title>sourcefile~data_keys.f08</title>
+<g id="a_sourcefile~~output.f08~~EfferentGraph_node2"><a xlink:href=".././sourcefile/data_keys.f08.html" xlink:title="data_keys.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="471,-208.557 392,-208.557 392,-184.557 471,-184.557 471,-208.557"/>
+<text text-anchor="middle" x="431.5" y="-194.157" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">data_keys.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge1" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M628,-156.557C578.718,-176.118 590.607,-222.437 539.5,-236.557"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-236.557C523.266,-240.49 489.141,-225.779 463.632,-213.102"/>
+<polygon fill="#000000" stroke="#000000" points="465.178,-209.962 454.677,-208.562 462.013,-216.205 465.178,-209.962"/>
+</g>
+<!-- sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_node3" class="node"><title>sourcefile~setting_definition.f08</title>
+<g id="a_sourcefile~~output.f08~~EfferentGraph_node3"><a xlink:href=".././sourcefile/setting_definition.f08.html" xlink:title="setting_definition.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="252,-71.5572 141,-71.5572 141,-47.5572 252,-47.5572 252,-71.5572"/>
+<text text-anchor="middle" x="196.5" y="-57.1572" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">setting_definition.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge2" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-236.557C472.94,-254.394 448.812,-245.63 388,-217.557 351.437,-200.679 356.242,-176.045 321,-156.557"/>
+</g>
+<!-- sourcefile~array_index.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_node4" class="node"><title>sourcefile~array_index.f08</title>
+<g id="a_sourcefile~~output.f08~~EfferentGraph_node4"><a xlink:href=".././sourcefile/array_index.f08.html" xlink:title="array_index.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="475,-128.557 388,-128.557 388,-104.557 475,-104.557 475,-128.557"/>
+<text text-anchor="middle" x="431.5" y="-114.157" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">array_index.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge3" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M707.054,-109.771C689.879,-123.568 659.779,-145.532 630,-156.557"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M628,-156.557C600.717,-166.659 594.301,-142.302 566,-135.557 539.797,-129.312 510.179,-124.842 485.51,-121.814"/>
+<polygon fill="#000000" stroke="#000000" points="485.606,-118.301 475.265,-120.603 484.785,-125.253 485.606,-118.301"/>
+</g>
+<!-- sourcefile~utility.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_node5" class="node"><title>sourcefile~utility.f08</title>
+<g id="a_sourcefile~~output.f08~~EfferentGraph_node5"><a xlink:href=".././sourcefile/utility.f08.html" xlink:title="utility.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="566,-168.557 511,-168.557 511,-144.557 566,-144.557 566,-168.557"/>
+<text text-anchor="middle" x="538.5" y="-154.157" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge4" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M628,-156.557C611.807,-162.553 592.776,-163.284 576.519,-162.218"/>
+<polygon fill="#000000" stroke="#000000" points="576.569,-158.708 566.295,-161.295 575.939,-165.68 576.569,-158.708"/>
+</g>
+<!-- sourcefile~globals.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_node6" class="node"><title>sourcefile~globals.f08</title>
+<g id="a_sourcefile~~output.f08~~EfferentGraph_node6"><a xlink:href=".././sourcefile/globals.f08.html" xlink:title="globals.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="352,-90.5572 288,-90.5572 288,-66.5572 352,-66.5572 352,-90.5572"/>
+<text text-anchor="middle" x="320" y="-76.1572" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">globals.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge5" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M691.777,-86.9461C680.659,-83.2646 667.853,-79.3612 656,-76.5572 592.995,-61.6528 575.492,-56.8513 511,-62.5572 475.699,-65.6805 467.773,-73.1307 432.5,-76.5572"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-76.5572C408.018,-77.5984 382.917,-78.1044 362.424,-78.3474"/>
+<polygon fill="#000000" stroke="#000000" points="362.13,-74.8501 352.166,-78.452 362.201,-81.8498 362.13,-74.8501"/>
+</g>
+<!-- sourcefile~bc.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_node7" class="node"><title>sourcefile~bc.f08</title>
+<g id="a_sourcefile~~output.f08~~EfferentGraph_node7"><a xlink:href=".././sourcefile/bc.f08.html" xlink:title="bc.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="656,-109.557 602,-109.557 602,-85.5572 656,-85.5572 656,-109.557"/>
+<text text-anchor="middle" x="629" y="-95.1572" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge6" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M691.793,-97.5572C683.631,-97.5572 674.689,-97.5572 666.206,-97.5572"/>
+<polygon fill="#000000" stroke="#000000" points="666.169,-94.0573 656.169,-97.5572 666.169,-101.057 666.169,-94.0573"/>
+</g>
+<!-- sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge7" class="edge"><title>sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M406.841,-184.331C400.365,-180.404 393.594,-175.719 388,-170.557 365.058,-149.39 344.916,-119.312 332.855,-99.3817"/>
+<polygon fill="#000000" stroke="#000000" points="335.856,-97.5795 327.754,-90.752 329.83,-101.142 335.856,-97.5795"/>
+</g>
+<!-- sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_node8" class="node"><title>sourcefile~type_definitions.f08</title>
+<g id="a_sourcefile~~output.f08~~EfferentGraph_node8"><a xlink:href=".././sourcefile/type_definitions.f08.html" xlink:title="type_definitions.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="105,-41.5572 0,-41.5572 0,-17.5572 105,-17.5572 105,-41.5572"/>
+<text text-anchor="middle" x="52.5" y="-27.1572" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">type_definitions.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge8" class="edge"><title>sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M140.599,-47.9584C132.297,-46.2045 123.685,-44.385 115.25,-42.603"/>
+<polygon fill="#000000" stroke="#000000" points="115.967,-39.1772 105.459,-40.5345 114.52,-46.026 115.967,-39.1772"/>
+</g>
+<!-- sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge9" class="edge"><title>sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M395.854,-104.534C384.998,-100.767 372.919,-96.5746 361.686,-92.6766"/>
+<polygon fill="#000000" stroke="#000000" points="362.68,-89.3168 352.085,-89.3448 360.385,-95.93 362.68,-89.3168"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge12" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.732,-166.754C499.403,-171.07 485.949,-176.196 473.421,-180.968"/>
+<polygon fill="#000000" stroke="#000000" points="472.17,-177.699 464.071,-184.53 474.662,-184.241 472.17,-177.699"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge11" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-156.557C382.52,-148.408 363.589,-180.107 321,-156.557"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M319,-156.557C279.488,-134.708 239.736,-99.997 216.928,-78.5612"/>
+<polygon fill="#000000" stroke="#000000" points="219.25,-75.9392 209.595,-71.5756 214.421,-81.0074 219.25,-75.9392"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge13" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.732,-146.36C499.403,-142.044 485.949,-136.919 473.421,-132.146"/>
+<polygon fill="#000000" stroke="#000000" points="474.662,-128.874 464.071,-128.584 472.17,-135.415 474.662,-128.874"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge10" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.972,-158.998C489.618,-160.378 458.919,-161.044 432.5,-156.557"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-156.557C392.14,-150.042 357.307,-118.937 337.673,-98.0296"/>
+<polygon fill="#000000" stroke="#000000" points="340.23,-95.6393 330.917,-90.5885 335.047,-100.345 340.23,-95.6393"/>
+</g>
+<!-- sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge14" class="edge"><title>sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M287.711,-73.6642C279.844,-72.434 271.107,-71.0677 262.256,-69.6836"/>
+<polygon fill="#000000" stroke="#000000" points="262.675,-66.2068 252.255,-68.1197 261.594,-73.1227 262.675,-66.2068"/>
+</g>
+<!-- sourcefile~globals.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge15" class="edge"><title>sourcefile~globals.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M308.725,-66.521C289.411,-45.2782 245.308,-3.12092 197.5,-0.55719"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge16" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M620.223,-109.735C607.024,-130.004 580.281,-169.258 566,-177.557 540.626,-192.303 508.09,-197.163 481.491,-198.283"/>
+<polygon fill="#000000" stroke="#000000" points="481.15,-194.791 471.243,-198.546 481.33,-201.789 481.15,-194.791"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge17" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M601.963,-89.6069C584.487,-84.712 560.844,-78.9338 539.5,-76.5572"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-76.5572C509.209,-73.4071 503.224,-66.2614 475,-62.5572 392.566,-51.7385 371.136,-56.6387 288,-57.5572 279.642,-57.6495 270.85,-57.7898 262.166,-57.9542"/>
+<polygon fill="#000000" stroke="#000000" points="261.981,-54.4571 252.053,-58.1567 262.121,-61.4557 261.981,-54.4571"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge18" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-76.5572C523.231,-74.9684 490.658,-88.4308 465.546,-100.161"/>
+<polygon fill="#000000" stroke="#000000" points="463.87,-97.0829 456.341,-104.537 466.876,-103.405 463.87,-97.0829"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge19" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M609.663,-109.782C597.001,-118.223 579.968,-129.579 565.855,-138.987"/>
+<polygon fill="#000000" stroke="#000000" points="563.89,-136.091 557.511,-144.55 567.773,-141.915 563.89,-136.091"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge20" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-76.5572C491.12,-71.393 478.948,-72.0452 432.5,-76.5572"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~output.f08~~EfferentGraph_edge21" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M610.348,-85.3942C598.354,-77.6953 581.846,-68.1681 566,-62.5572 409.444,-7.12414 363.341,-9.4505 197.5,-0.55719"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M195.5,-0.55719C161.96,1.67157 124.755,-6.32334 96.8441,-14.4784"/>
+<polygon fill="#000000" stroke="#000000" points="95.554,-11.2124 87.0057,-17.4715 97.5915,-17.9094 95.554,-11.2124"/>
+</g>
+</g>
+</svg>
+</div><script>var pansourcefileoutputf08EfferentGraph = svgPanZoom('#sourcefileoutputf08EfferentGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+    
+      
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Files dependent on this one</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~output.f08~~AfferentGraph Pages: 1 -->
+<svg id="sourcefileoutputf08AfferentGraph" width="272pt" height="52pt"
+ viewBox="0.00 0.00 272.00 52.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~output.f08~~AfferentGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 48)">
+<title>sourcefile~~output.f08~~AfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-48 268,-48 268,4 -4,4"/>
+<!-- sourcefile~output.f08 -->
+<g id="sourcefile~~output.f08~~AfferentGraph_node1" class="node"><title>sourcefile~output.f08</title>
+<polygon fill="none" stroke="black" points="61,-44 -3.55271e-15,-44 -3.55271e-15,-20 61,-20 61,-44"/>
+<text text-anchor="middle" x="30.5" y="-29.6" font-family="Helvetica,sans-Serif" font-size="10.50">output.f08</text>
+</g>
+<!-- sourcefile~time_loop.f08 -->
+<g id="sourcefile~~output.f08~~AfferentGraph_node2" class="node"><title>sourcefile~time_loop.f08</title>
+<g id="a_sourcefile~~output.f08~~AfferentGraph_node2"><a xlink:href=".././sourcefile/time_loop.f08.html" xlink:title="time_loop.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="174,-24 97,-24 97,-0 174,-0 174,-24"/>
+<text text-anchor="middle" x="135.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">time_loop.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~output.f08 -->
+<g id="sourcefile~~output.f08~~AfferentGraph_edge1" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~output.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M96.7315,-19.3337C88.4046,-20.9506 79.561,-22.6678 71.1617,-24.2987"/>
+<polygon fill="#000000" stroke="#000000" points="70.3506,-20.8907 61.2012,-26.2328 71.685,-27.7624 70.3506,-20.8907"/>
+</g>
+<!-- sourcefile~main.f08 -->
+<g id="sourcefile~~output.f08~~AfferentGraph_node3" class="node"><title>sourcefile~main.f08</title>
+<g id="a_sourcefile~~output.f08~~AfferentGraph_node3"><a xlink:href=".././sourcefile/main.f08.html" xlink:title="main.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="264,-44 210,-44 210,-20 264,-20 264,-44"/>
+<text text-anchor="middle" x="237" y="-29.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">main.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~output.f08 -->
+<g id="sourcefile~~output.f08~~AfferentGraph_edge2" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~output.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M209.755,-32.5169C198.715,-32.71 185.734,-32.9054 174,-33 139.779,-33.276 131.221,-33.2612 97,-33 88.6723,-32.9364 79.7495,-32.8274 71.2535,-32.7041"/>
+<polygon fill="#000000" stroke="#000000" points="71.2233,-29.2034 61.1706,-32.5488 71.1154,-36.2025 71.2233,-29.2034"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~time_loop.f08 -->
+<g id="sourcefile~~output.f08~~AfferentGraph_edge3" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~time_loop.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M209.858,-26.7452C201.909,-25.1475 192.914,-23.3395 184.014,-21.5506"/>
+<polygon fill="#000000" stroke="#000000" points="184.562,-18.0907 174.068,-19.5513 183.182,-24.9534 184.562,-18.0907"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+      
+      <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-1">Modules</a></h3></div>
+  <div id="mods-1" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/output.html">output</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/output.f08.html#src">output.f08</a>
+  </div>
+</div>
+
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    <section>
+      <h2><span class="anchor" id="src"></span>Source Code</h2>
+    <div class="hl"><pre><span></span><a name="ln-1"></a><span class="c">!==========================================================================</span>
+<a name="ln-2"></a><span class="c">!</span>
+<a name="ln-3"></a> <span class="k">module </span><span class="n">output</span>
+<a name="ln-4"></a><span class="c">!</span>
+<a name="ln-5"></a>    <span class="k">use </span><span class="n">array_index</span>
+<a name="ln-6"></a>    <span class="k">use </span><span class="n">bc</span>
+<a name="ln-7"></a>    <span class="k">use </span><span class="n">data_keys</span>
+<a name="ln-8"></a>    <span class="k">use </span><span class="n">globals</span>
+<a name="ln-9"></a>    <span class="k">use </span><span class="n">setting_definition</span>
+<a name="ln-10"></a>    <span class="k">use </span><span class="n">utility</span>
+<a name="ln-11"></a>
+<a name="ln-12"></a>
+<a name="ln-13"></a>    <span class="k">implicit none</span>
+<a name="ln-14"></a>
+<a name="ln-15"></a><span class="k">    private</span>
+<a name="ln-16"></a>
+<a name="ln-17"></a><span class="k">    public</span>  <span class="kd">::</span> <span class="n">output_threaded_by_link_initialize</span>
+<a name="ln-18"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">output_all_threaded_data_by_link</span>
+<a name="ln-19"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">output_one_threaded_data_by_link</span>
+<a name="ln-20"></a>
+<a name="ln-21"></a>    <span class="kt">integer</span> <span class="kd">::</span> <span class="n">debuglevel</span> <span class="o">=</span> <span class="mi">0</span>
+<a name="ln-22"></a>
+<a name="ln-23"></a> <span class="k">contains</span>
+<a name="ln-24"></a><span class="c">!</span>
+<a name="ln-25"></a><span class="c">!==========================================================================</span>
+<a name="ln-26"></a><span class="c">!==========================================================================</span>
+<a name="ln-27"></a><span class="c">!</span>
+<a name="ln-28"></a> <span class="k">subroutine </span><span class="n">output_threaded_by_link_initialize</span> <span class="p">(</span><span class="n">threadedfile</span><span class="p">)</span>
+<a name="ln-29"></a>
+<a name="ln-30"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;output_threaded_by_link_initialize&#39;</span>
+<a name="ln-31"></a>
+<a name="ln-32"></a> <span class="k">type</span><span class="p">(</span><span class="n">threadedfileType</span><span class="p">),</span> <span class="k">dimension</span><span class="p">(:),</span> <span class="k">allocatable</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="kd">::</span> <span class="n">threadedfile</span>
+<a name="ln-33"></a>
+<a name="ln-34"></a> <span class="kt">logical</span>    <span class="kd">::</span> <span class="n">usethisdata</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<a name="ln-35"></a>
+<a name="ln-36"></a> <span class="kt">integer</span>    <span class="kd">::</span> <span class="n">ii</span><span class="p">,</span> <span class="n">mm</span><span class="p">,</span> <span class="n">nfile</span>
+<a name="ln-37"></a>
+<a name="ln-38"></a> <span class="kt">integer</span>            <span class="kd">::</span> <span class="n">allocation_status</span>
+<a name="ln-39"></a> <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">99</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">emsg</span>
+<a name="ln-40"></a>
+<a name="ln-41"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-42"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-43"></a>
+<a name="ln-44"></a> <span class="k">if</span> <span class="p">(.</span><span class="nb">not</span><span class="p">.</span> <span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">UseThisOutput</span><span class="p">)</span> <span class="k">return</span>
+<a name="ln-45"></a>
+<a name="ln-46"></a><span class="k"> if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">SuppressAllFiles</span><span class="p">)</span> <span class="k">return</span>
+<a name="ln-47"></a>
+<a name="ln-48"></a><span class="k"> </span><span class="n">usethisdata</span> <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-49"></a>
+<a name="ln-50"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">area</span><span class="p">)</span>       <span class="n">usethisdata</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-51"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">flowrate</span><span class="p">)</span>   <span class="n">usethisdata</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-52"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">velocity</span><span class="p">)</span>   <span class="n">usethisdata</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-53"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">eta</span><span class="p">)</span>        <span class="n">usethisdata</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-54"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">depth</span><span class="p">)</span>      <span class="n">usethisdata</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-55"></a>
+<a name="ln-56"></a> <span class="n">nfile</span> <span class="o">=</span> <span class="nb">count</span><span class="p">(</span><span class="n">usethisdata</span><span class="p">)</span>
+<a name="ln-57"></a>
+<a name="ln-58"></a> <span class="k">if</span> <span class="p">(</span><span class="n">nfile</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span>
+<a name="ln-59"></a>
+<a name="ln-60"></a><span class="k"> allocate</span><span class="p">(</span> <span class="n">threadedfile</span><span class="p">(</span><span class="n">nfile</span><span class="p">),</span> <span class="nb">stat</span><span class="o">=</span><span class="n">allocation_status</span><span class="p">,</span> <span class="n">errmsg</span><span class="o">=</span><span class="n">emsg</span><span class="p">)</span>
+<a name="ln-61"></a> <span class="k">call </span><span class="n">utility_check_allocation</span> <span class="p">(</span><span class="n">allocation_status</span><span class="p">,</span> <span class="n">emsg</span><span class="p">)</span>
+<a name="ln-62"></a>
+<a name="ln-63"></a> <span class="n">mm</span> <span class="o">=</span> <span class="mi">1</span>
+<a name="ln-64"></a> <span class="k">do </span><span class="n">ii</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span>
+<a name="ln-65"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">usethisdata</span><span class="p">(</span><span class="n">ii</span><span class="p">))</span> <span class="k">then</span>
+<a name="ln-66"></a><span class="k">        select case</span> <span class="p">(</span><span class="n">ii</span><span class="p">)</span>
+<a name="ln-67"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a name="ln-68"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">DataName</span> <span class="o">=</span> <span class="s1">&#39;area&#39;</span>
+<a name="ln-69"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FileName</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">FileName</span><span class="p">)</span><span class="o">//</span><span class="s1">&#39;_area&#39;</span>
+<a name="ln-70"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-71"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<a name="ln-72"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">DataName</span> <span class="o">=</span> <span class="s1">&#39;flowrate&#39;</span>
+<a name="ln-73"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FileName</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">FileName</span><span class="p">)</span><span class="o">//</span><span class="s1">&#39;_flowrate&#39;</span>
+<a name="ln-74"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-75"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<a name="ln-76"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">DataName</span> <span class="o">=</span> <span class="s1">&#39;velocity&#39;</span>
+<a name="ln-77"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FileName</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">FileName</span><span class="p">)</span><span class="o">//</span><span class="s1">&#39;_velocity&#39;</span>
+<a name="ln-78"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-79"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<a name="ln-80"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">DataName</span> <span class="o">=</span> <span class="s1">&#39;eta&#39;</span>
+<a name="ln-81"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FileName</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">FileName</span><span class="p">)</span><span class="o">//</span><span class="s1">&#39;_eta&#39;</span>
+<a name="ln-82"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-83"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<a name="ln-84"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">DataName</span> <span class="o">=</span> <span class="s1">&#39;depth&#39;</span>
+<a name="ln-85"></a>                <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FileName</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">FileName</span><span class="p">)</span><span class="o">//</span><span class="s1">&#39;_depth_&#39;</span>
+<a name="ln-86"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-87"></a>            <span class="k">case </span><span class="n">default</span>
+<a name="ln-88"></a>                <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: unexpected value&#39;</span>
+<a name="ln-89"></a>                <span class="k">stop</span>
+<a name="ln-90"></a><span class="k">        end select</span>
+<a name="ln-91"></a><span class="k">    </span><span class="n">endif</span>
+<a name="ln-92"></a> <span class="n">enddo</span>
+<a name="ln-93"></a>
+<a name="ln-94"></a> <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">size</span><span class="p">(</span><span class="n">threadedfile</span><span class="p">)</span>
+<a name="ln-95"></a>    <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FolderName</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">FolderName</span><span class="p">)</span>
+<a name="ln-96"></a>    <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FolderPath</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">FolderPath</span><span class="p">)</span>
+<a name="ln-97"></a>    <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FileStatus</span> <span class="o">=</span> <span class="s1">&#39;new&#39;</span>
+<a name="ln-98"></a>    <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">IsOpen</span>    <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-99"></a>
+<a name="ln-100"></a>    <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">WriteName</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FolderPath</span><span class="p">)</span><span class="o">//</span> <span class="p">&amp;</span>
+<a name="ln-101"></a>                                          <span class="nb">trim</span><span class="p">(</span><span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FolderName</span><span class="p">)</span><span class="o">//</span><span class="s1">&#39;/&#39;</span><span class="o">//</span> <span class="p">&amp;</span>
+<a name="ln-102"></a>                                          <span class="nb">trim</span><span class="p">(</span><span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FileName</span><span class="p">)</span><span class="o">//</span> <span class="p">&amp;</span>
+<a name="ln-103"></a>                                          <span class="nb">trim</span><span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="nb">Time</span><span class="p">%</span><span class="n">DateTimeStamp</span><span class="p">)</span> <span class="o">//</span><span class="p">&amp;</span>
+<a name="ln-104"></a>                                          <span class="s1">&#39;.txt&#39;</span>
+<a name="ln-105"></a>
+<a name="ln-106"></a>    <span class="k">call </span><span class="n">output_singlethreadedfile_open</span> <span class="p">(</span><span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-107"></a> <span class="n">enddo</span>
+<a name="ln-108"></a>
+<a name="ln-109"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-110"></a> <span class="k">end subroutine </span><span class="n">output_threaded_by_link_initialize</span>
+<a name="ln-111"></a><span class="c">!</span>
+<a name="ln-112"></a><span class="c">!==========================================================================</span>
+<a name="ln-113"></a><span class="c">!==========================================================================</span>
+<a name="ln-114"></a><span class="c">!</span>
+<a name="ln-115"></a> <span class="k">subroutine </span><span class="n">output_all_threaded_data_by_link</span> <span class="p">&amp;</span>
+<a name="ln-116"></a>    <span class="p">(</span><span class="n">threadedfile</span><span class="p">,</span> <span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceR</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">linkI</span><span class="p">,&amp;</span>
+<a name="ln-117"></a>     <span class="n">bcdataUp</span><span class="p">,</span> <span class="n">bcdataDn</span><span class="p">,</span> <span class="n">thisstep</span><span class="p">)</span>
+<a name="ln-118"></a>
+<a name="ln-119"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;output_all_threaded_data_by_link&#39;</span>
+<a name="ln-120"></a>
+<a name="ln-121"></a> <span class="k">type</span><span class="p">(</span><span class="n">threadedfileType</span><span class="p">),</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">threadedfile</span><span class="p">(:)</span>
+<a name="ln-122"></a>
+<a name="ln-123"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:),</span> <span class="n">elemMR</span><span class="p">(:,:),</span> <span class="n">faceR</span><span class="p">(:,:)</span>
+<a name="ln-124"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elem2I</span><span class="p">(:,:),</span> <span class="n">elemMI</span><span class="p">(:,:),</span> <span class="n">faceI</span><span class="p">(:,:)</span>
+<a name="ln-125"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">linkI</span><span class="p">(:,:)</span>
+<a name="ln-126"></a> <span class="k">type</span><span class="p">(</span><span class="n">bcType</span><span class="p">),</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">bcdataUp</span><span class="p">(:),</span> <span class="n">bcdataDn</span><span class="p">(:)</span>
+<a name="ln-127"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">thisstep</span>
+<a name="ln-128"></a>
+<a name="ln-129"></a> <span class="kt">logical</span>    <span class="kd">::</span> <span class="n">usethisdata</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<a name="ln-130"></a>
+<a name="ln-131"></a> <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">outdataName</span>
+<a name="ln-132"></a> <span class="kt">integer</span>            <span class="kd">::</span> <span class="n">thisUnit</span><span class="p">,</span> <span class="n">ii</span><span class="p">,</span> <span class="n">mm</span><span class="p">,</span> <span class="n">nfile</span>
+<a name="ln-133"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-134"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-135"></a>
+<a name="ln-136"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">SuppressAllFiles</span><span class="p">)</span> <span class="k">return</span>
+<a name="ln-137"></a>
+<a name="ln-138"></a><span class="k"> if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">DisplayInterval</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span>
+<a name="ln-139"></a>
+<a name="ln-140"></a><span class="k"> if</span> <span class="p">(</span><span class="nb">mod</span><span class="p">(</span><span class="n">thisstep</span><span class="p">,</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">DisplayInterval</span><span class="p">)</span> <span class="o">/=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span>
+<a name="ln-141"></a>
+<a name="ln-142"></a><span class="k"> </span><span class="n">usethisdata</span> <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-143"></a>
+<a name="ln-144"></a>
+<a name="ln-145"></a>
+<a name="ln-146"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">area</span><span class="p">)</span>       <span class="n">usethisdata</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-147"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">flowrate</span><span class="p">)</span>   <span class="n">usethisdata</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-148"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">velocity</span><span class="p">)</span>   <span class="n">usethisdata</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-149"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">eta</span><span class="p">)</span>        <span class="n">usethisdata</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-150"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">depth</span><span class="p">)</span>      <span class="n">usethisdata</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-151"></a>
+<a name="ln-152"></a> <span class="n">nfile</span> <span class="o">=</span> <span class="nb">count</span><span class="p">(</span><span class="n">usethisdata</span><span class="p">)</span>
+<a name="ln-153"></a>
+<a name="ln-154"></a> <span class="k">if</span> <span class="p">(</span><span class="n">nfile</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span>
+<a name="ln-155"></a>
+<a name="ln-156"></a><span class="k"> </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span>
+<a name="ln-157"></a> <span class="k">do </span><span class="n">ii</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span>
+<a name="ln-158"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">usethisdata</span><span class="p">(</span><span class="n">ii</span><span class="p">))</span> <span class="k">then</span>
+<a name="ln-159"></a><span class="k">        select case</span> <span class="p">(</span><span class="n">ii</span><span class="p">)</span>
+<a name="ln-160"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a name="ln-161"></a>                <span class="n">outdataName</span> <span class="o">=</span> <span class="s1">&#39;area&#39;</span>
+<a name="ln-162"></a>                <span class="n">thisUnit</span> <span class="o">=</span> <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">Unitnumber</span>
+<a name="ln-163"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-164"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<a name="ln-165"></a>                <span class="n">outdataName</span> <span class="o">=</span> <span class="s1">&#39;flowrate&#39;</span>
+<a name="ln-166"></a>                <span class="n">thisUnit</span> <span class="o">=</span> <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">Unitnumber</span>
+<a name="ln-167"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-168"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<a name="ln-169"></a>                <span class="n">outdataName</span> <span class="o">=</span> <span class="s1">&#39;velocity&#39;</span>
+<a name="ln-170"></a>                <span class="n">thisUnit</span> <span class="o">=</span> <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">Unitnumber</span>
+<a name="ln-171"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-172"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<a name="ln-173"></a>                <span class="n">outdataName</span> <span class="o">=</span> <span class="s1">&#39;eta&#39;</span>
+<a name="ln-174"></a>                <span class="n">thisUnit</span> <span class="o">=</span> <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">Unitnumber</span>
+<a name="ln-175"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-176"></a>            <span class="k">case</span> <span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<a name="ln-177"></a>                <span class="n">outdataName</span> <span class="o">=</span> <span class="s1">&#39;depth&#39;</span>
+<a name="ln-178"></a>                <span class="n">thisUnit</span> <span class="o">=</span> <span class="n">threadedfile</span><span class="p">(</span><span class="n">mm</span><span class="p">)%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">Unitnumber</span>
+<a name="ln-179"></a>                <span class="n">mm</span><span class="o">=</span><span class="n">mm</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-180"></a>            <span class="k">case </span><span class="n">default</span>
+<a name="ln-181"></a>                <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: unexpected case value in &#39;</span><span class="p">,</span><span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span>
+<a name="ln-182"></a>                <span class="k">stop</span>
+<a name="ln-183"></a><span class="k">        end select</span>
+<a name="ln-184"></a>
+<a name="ln-185"></a><span class="k">        call </span><span class="n">output_one_threaded_data_by_link</span> <span class="p">&amp;</span>
+<a name="ln-186"></a>            <span class="p">(</span><span class="n">outdataName</span><span class="p">,</span> <span class="n">thisUnit</span><span class="p">,</span> <span class="n">thisstep</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-187"></a>             <span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceR</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">linkI</span><span class="p">,</span> <span class="n">bcdataUp</span><span class="p">,</span> <span class="n">bcdataDn</span><span class="p">,</span> <span class="n">ii</span><span class="p">)</span>
+<a name="ln-188"></a>
+<a name="ln-189"></a><span class="c">! if (ii==2) then</span>
+<a name="ln-190"></a><span class="c">!    print *, trim(subroutine_name)</span>
+<a name="ln-191"></a><span class="c">!    stop</span>
+<a name="ln-192"></a><span class="c">! endif</span>
+<a name="ln-193"></a>
+<a name="ln-194"></a>    <span class="k">end if</span>
+<a name="ln-195"></a><span class="k"> end do</span>
+<a name="ln-196"></a>
+<a name="ln-197"></a><span class="k"> if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-198"></a> <span class="k">end subroutine </span><span class="n">output_all_threaded_data_by_link</span>
+<a name="ln-199"></a><span class="c">!</span>
+<a name="ln-200"></a><span class="c">!==========================================================================</span>
+<a name="ln-201"></a><span class="c">!==========================================================================</span>
+<a name="ln-202"></a><span class="c">!</span>
+<a name="ln-203"></a> <span class="k">subroutine </span><span class="n">output_one_threaded_data_by_link</span> <span class="p">&amp;</span>
+<a name="ln-204"></a>    <span class="p">(</span><span class="n">outdataName</span><span class="p">,</span> <span class="n">thisUnit</span><span class="p">,</span> <span class="n">thisstep</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-205"></a>     <span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceR</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">linkI</span><span class="p">,</span> <span class="n">bcdataUp</span><span class="p">,</span> <span class="n">bcdataDn</span><span class="p">,</span> <span class="n">itemp</span><span class="p">)</span>
+<a name="ln-206"></a><span class="c">!</span>
+<a name="ln-207"></a><span class="c">! provides an output that threads the downstream BC, element or junction</span>
+<a name="ln-208"></a><span class="c">! along with faces and links into a single array for visualization</span>
+<a name="ln-209"></a><span class="c">!</span>
+<a name="ln-210"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;output_one_threaded_data_by_link&#39;</span>
+<a name="ln-211"></a>
+<a name="ln-212"></a> <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">outdataName</span>
+<a name="ln-213"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">thisUnit</span>
+<a name="ln-214"></a>
+<a name="ln-215"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:),</span> <span class="n">elemMR</span><span class="p">(:,:),</span> <span class="n">faceR</span><span class="p">(:,:)</span>
+<a name="ln-216"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elem2I</span><span class="p">(:,:),</span> <span class="n">elemMI</span><span class="p">(:,:),</span> <span class="n">faceI</span><span class="p">(:,:)</span>
+<a name="ln-217"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">linkI</span><span class="p">(:,:)</span>
+<a name="ln-218"></a> <span class="k">type</span><span class="p">(</span><span class="n">bcType</span><span class="p">),</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">bcdataUp</span><span class="p">(:),</span> <span class="n">bcdataDn</span><span class="p">(:)</span>
+<a name="ln-219"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">thisstep</span><span class="p">,</span> <span class="n">itemp</span>
+<a name="ln-220"></a>
+<a name="ln-221"></a> <span class="kt">real</span><span class="p">,</span> <span class="k">dimension</span><span class="p">(:),</span> <span class="k">allocatable</span><span class="p">,</span> <span class="k">save</span>  <span class="kd">::</span> <span class="n">thisdata</span><span class="p">,</span> <span class="n">thisx</span>
+<a name="ln-222"></a>
+<a name="ln-223"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">ElemCol</span><span class="p">,</span> <span class="n">FaceCol_u</span><span class="p">,</span> <span class="n">FaceCol_d</span><span class="p">,</span> <span class="n">JunctionCol</span>
+<a name="ln-224"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">BranchColUp</span><span class="p">(</span><span class="n">upstream_face_per_elemM</span><span class="p">),</span> <span class="n">BranchColDn</span><span class="p">(</span><span class="n">dnstream_face_per_elemM</span><span class="p">)</span>
+<a name="ln-225"></a>
+<a name="ln-226"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">pointer</span> <span class="kd">::</span> <span class="n">fdn</span><span class="p">,</span> <span class="n">ftypDn</span><span class="p">,</span> <span class="n">edn</span><span class="p">,</span> <span class="n">bcidxDn</span><span class="p">,</span> <span class="n">bdn</span><span class="p">,</span> <span class="n">Lidx</span>
+<a name="ln-227"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">pointer</span> <span class="kd">::</span> <span class="n">fup</span><span class="p">,</span> <span class="n">ftypUp</span><span class="p">,</span> <span class="n">eup</span><span class="p">,</span> <span class="n">bcidxUp</span><span class="p">,</span> <span class="n">bup</span>
+<a name="ln-228"></a>
+<a name="ln-229"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">maxelements_in_link</span><span class="p">,</span> <span class="n">nelem</span><span class="p">,</span> <span class="n">eStart</span><span class="p">,</span> <span class="n">eEnd</span><span class="p">,</span> <span class="n">eLast</span>
+<a name="ln-230"></a>
+<a name="ln-231"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">en</span><span class="p">,</span> <span class="n">ii</span><span class="p">,</span> <span class="n">mm</span><span class="p">,</span> <span class="n">ndata</span>
+<a name="ln-232"></a>
+<a name="ln-233"></a> <span class="kt">integer</span>            <span class="kd">::</span> <span class="n">allocation_status</span>
+<a name="ln-234"></a> <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">99</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">emsg</span>
+<a name="ln-235"></a>
+<a name="ln-236"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-237"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-238"></a>
+<a name="ln-239"></a> <span class="k">if</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">OutputThreadedLink</span><span class="p">%</span><span class="n">SuppressAllFiles</span><span class="p">)</span> <span class="k">return</span>
+<a name="ln-240"></a>
+<a name="ln-241"></a><span class="c">!% allocate space for combining data on elements, face up, face dn, and the upstream</span>
+<a name="ln-242"></a><span class="c">!% and downstream adjacent element or BC</span>
+<a name="ln-243"></a> <span class="k">if</span> <span class="p">(.</span><span class="nb">not</span><span class="p">.</span> <span class="nb">allocated</span><span class="p">(</span><span class="n">thisdata</span><span class="p">))</span> <span class="k">then</span>
+<a name="ln-244"></a><span class="k">    </span><span class="n">maxelements_in_link</span> <span class="o">=</span> <span class="nb">maxval</span><span class="p">(</span><span class="n">linkI</span><span class="p">(:,</span><span class="n">li_N_element</span><span class="p">),</span><span class="mi">1</span><span class="p">,(</span><span class="n">linkI</span><span class="p">(:,</span><span class="n">li_N_element</span><span class="p">)</span> <span class="o">/=</span> <span class="n">nullvalueI</span><span class="p">))</span>
+<a name="ln-245"></a>
+<a name="ln-246"></a>    <span class="k">allocate</span><span class="p">(</span> <span class="n">thisdata</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">maxelements_in_link</span> <span class="o">+</span> <span class="mi">7</span><span class="p">),</span> <span class="nb">stat</span><span class="o">=</span><span class="n">allocation_status</span><span class="p">,</span> <span class="n">errmsg</span><span class="o">=</span><span class="n">emsg</span><span class="p">)</span>
+<a name="ln-247"></a>    <span class="k">call </span><span class="n">utility_check_allocation</span> <span class="p">(</span><span class="n">allocation_status</span><span class="p">,</span> <span class="n">emsg</span><span class="p">)</span>
+<a name="ln-248"></a>
+<a name="ln-249"></a>    <span class="k">allocate</span><span class="p">(</span> <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">maxelements_in_link</span> <span class="o">+</span> <span class="mi">7</span><span class="p">),</span> <span class="nb">stat</span><span class="o">=</span><span class="n">allocation_status</span><span class="p">,</span> <span class="n">errmsg</span><span class="o">=</span><span class="n">emsg</span><span class="p">)</span>
+<a name="ln-250"></a>    <span class="k">call </span><span class="n">utility_check_allocation</span> <span class="p">(</span><span class="n">allocation_status</span><span class="p">,</span> <span class="n">emsg</span><span class="p">)</span>
+<a name="ln-251"></a> <span class="n">endif</span>
+<a name="ln-252"></a> <span class="n">thisdata</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-253"></a> <span class="n">thisX</span>    <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-254"></a>
+<a name="ln-255"></a> <span class="k">select case</span> <span class="p">(</span><span class="nb">trim</span><span class="p">(</span><span class="n">outdataName</span><span class="p">))</span>
+<a name="ln-256"></a>    <span class="k">case</span> <span class="p">(</span><span class="s1">&#39;area&#39;</span><span class="p">)</span>
+<a name="ln-257"></a>        <span class="n">ElemCol</span>     <span class="o">=</span> <span class="n">e2r_Area</span>
+<a name="ln-258"></a>        <span class="n">FaceCol_u</span>   <span class="o">=</span> <span class="n">fr_Area_u</span>
+<a name="ln-259"></a>        <span class="n">FaceCol_d</span>   <span class="o">=</span> <span class="n">fr_Area_d</span>
+<a name="ln-260"></a>        <span class="n">JunctionCol</span> <span class="o">=</span> <span class="n">eMr_Area</span>
+<a name="ln-261"></a>        <span class="n">BranchColUp</span> <span class="o">=</span> <span class="n">eMr_AreaUp</span>
+<a name="ln-262"></a>        <span class="n">BranchColDn</span> <span class="o">=</span> <span class="n">eMr_AreaDn</span>
+<a name="ln-263"></a>    <span class="k">case</span> <span class="p">(</span><span class="s1">&#39;flowrate&#39;</span><span class="p">)</span>
+<a name="ln-264"></a>        <span class="n">ElemCol</span>     <span class="o">=</span> <span class="n">e2r_Flowrate</span>
+<a name="ln-265"></a>        <span class="n">FaceCol_u</span>   <span class="o">=</span> <span class="n">fr_Flowrate</span>
+<a name="ln-266"></a>        <span class="n">FaceCol_d</span>   <span class="o">=</span> <span class="n">fr_Flowrate</span>
+<a name="ln-267"></a>        <span class="n">JunctionCol</span> <span class="o">=</span> <span class="n">eMr_Flowrate</span>
+<a name="ln-268"></a>        <span class="n">BranchColUp</span> <span class="o">=</span> <span class="n">eMr_FlowrateUp</span>
+<a name="ln-269"></a>        <span class="n">BranchColDn</span> <span class="o">=</span> <span class="n">eMr_FlowrateDn</span>
+<a name="ln-270"></a>    <span class="k">case</span> <span class="p">(</span><span class="s1">&#39;velocity&#39;</span><span class="p">)</span>
+<a name="ln-271"></a>        <span class="n">ElemCol</span>     <span class="o">=</span> <span class="n">e2r_Velocity</span>
+<a name="ln-272"></a>        <span class="n">FaceCol_u</span>   <span class="o">=</span> <span class="n">fr_Velocity_u</span>
+<a name="ln-273"></a>        <span class="n">FaceCol_d</span>   <span class="o">=</span> <span class="n">fr_Velocity_d</span>
+<a name="ln-274"></a>        <span class="n">JunctionCol</span> <span class="o">=</span> <span class="n">eMr_Velocity</span>
+<a name="ln-275"></a>        <span class="n">BranchColUp</span> <span class="o">=</span> <span class="n">eMr_VelocityUp</span>
+<a name="ln-276"></a>        <span class="n">BranchColDn</span> <span class="o">=</span> <span class="n">eMr_VelocityDn</span>
+<a name="ln-277"></a>    <span class="k">case</span> <span class="p">(</span><span class="s1">&#39;eta&#39;</span><span class="p">)</span>
+<a name="ln-278"></a>        <span class="n">ElemCol</span>     <span class="o">=</span> <span class="n">e2r_Eta</span>
+<a name="ln-279"></a>        <span class="n">FaceCol_u</span>   <span class="o">=</span> <span class="n">fr_Eta_u</span>
+<a name="ln-280"></a>        <span class="n">FaceCol_d</span>   <span class="o">=</span> <span class="n">fr_Eta_d</span>
+<a name="ln-281"></a>        <span class="n">JunctionCol</span> <span class="o">=</span> <span class="n">eMr_Eta</span>
+<a name="ln-282"></a>        <span class="n">BranchColUp</span> <span class="o">=</span> <span class="n">eMr_EtaUp</span>
+<a name="ln-283"></a>        <span class="n">BranchColDn</span> <span class="o">=</span> <span class="n">eMr_EtaDn</span>
+<a name="ln-284"></a>    <span class="k">case</span> <span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">)</span>
+<a name="ln-285"></a>        <span class="n">ElemCol</span>     <span class="o">=</span> <span class="n">e2r_HydDepth</span>
+<a name="ln-286"></a>        <span class="n">FaceCol_u</span>   <span class="o">=</span> <span class="n">fr_HydDepth_u</span>
+<a name="ln-287"></a>        <span class="n">FaceCol_d</span>   <span class="o">=</span> <span class="n">fr_HydDepth_d</span>
+<a name="ln-288"></a>        <span class="n">JunctionCol</span> <span class="o">=</span> <span class="n">eMr_HydDepth</span>
+<a name="ln-289"></a>        <span class="n">BranchColUp</span> <span class="o">=</span> <span class="n">eMr_HydDepthUp</span>
+<a name="ln-290"></a>        <span class="n">BranchColDn</span> <span class="o">=</span> <span class="n">eMr_HydDepthDn</span>
+<a name="ln-291"></a>    <span class="k">case </span><span class="n">default</span>
+<a name="ln-292"></a>        <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span>
+<a name="ln-293"></a>        <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="n">outdataName</span>
+<a name="ln-294"></a>        <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: unexpected outdataName of &#39;</span><span class="p">,</span><span class="n">outdataName</span><span class="p">,</span><span class="s1">&#39; in &#39;</span><span class="p">,</span><span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span>
+<a name="ln-295"></a>        <span class="k">stop</span>
+<a name="ln-296"></a><span class="k"> end select</span>
+<a name="ln-297"></a>
+<a name="ln-298"></a><span class="k"> do </span><span class="n">ii</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">N_link</span>
+<a name="ln-299"></a>
+<a name="ln-300"></a>    <span class="c">!%  this link</span>
+<a name="ln-301"></a>    <span class="n">Lidx</span> <span class="o">=&gt;</span> <span class="n">linkI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">li_idx</span><span class="p">)</span>
+<a name="ln-302"></a>    <span class="c">!%  start and end elements on this link</span>
+<a name="ln-303"></a>    <span class="n">eStart</span> <span class="o">=</span> <span class="nb">minloc</span><span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">),</span><span class="mi">1</span><span class="p">,(</span>  <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lidx</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">/=</span> <span class="n">nullvalueI</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
+<a name="ln-304"></a>    <span class="n">eEnd</span>   <span class="o">=</span> <span class="nb">maxloc</span><span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">),</span><span class="mi">1</span><span class="p">,(</span>  <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">Lidx</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">/=</span> <span class="n">nullvalueI</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
+<a name="ln-305"></a>    <span class="n">nelem</span> <span class="o">=</span> <span class="n">eEnd</span> <span class="o">-</span> <span class="n">eStart</span> <span class="o">+</span> <span class="mi">1</span>
+<a name="ln-306"></a>
+<a name="ln-307"></a>    <span class="c">!%  the downstream element beyond this link</span>
+<a name="ln-308"></a>    <span class="n">fdn</span>     <span class="o">=&gt;</span> <span class="n">elem2I</span><span class="p">(</span><span class="n">eStart</span><span class="p">,</span><span class="n">e2i_Mface_d</span><span class="p">)</span>
+<a name="ln-309"></a>    <span class="n">ftypDn</span>  <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">fi_type</span><span class="p">)</span>
+<a name="ln-310"></a>    <span class="n">edn</span>     <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">fi_Melem_d</span><span class="p">)</span>
+<a name="ln-311"></a>    <span class="n">bcidxDn</span> <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">fi_BC_ID</span><span class="p">)</span>
+<a name="ln-312"></a>
+<a name="ln-313"></a>    <span class="n">thisdata</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-314"></a>    <span class="n">thisX</span>    <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-315"></a>
+<a name="ln-316"></a>    <span class="c">! get the data of the element (or BC) downstream of link</span>
+<a name="ln-317"></a>    <span class="k">select case</span> <span class="p">(</span><span class="n">ftypDn</span><span class="p">)</span>
+<a name="ln-318"></a>        <span class="k">case</span> <span class="p">(</span><span class="n">fChannel</span><span class="p">)</span>
+<a name="ln-319"></a>            <span class="c">! downstream last element from previous link - upstream face</span>
+<a name="ln-320"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">elem2I</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">e2i_Mface_d</span><span class="p">),</span><span class="n">FaceCol_u</span><span class="p">)</span>
+<a name="ln-321"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>    <span class="o">=</span> <span class="o">-</span><span class="n">elem2R</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-322"></a>            <span class="c">! downstream last element from previous linke - center</span>
+<a name="ln-323"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span>  <span class="n">elem2R</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">elemCol</span><span class="p">)</span>
+<a name="ln-324"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>    <span class="o">=</span> <span class="o">-</span><span class="n">onehalfR</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-325"></a>            <span class="c">! face downstream at link connection (node)</span>
+<a name="ln-326"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">FaceCol_d</span><span class="p">)</span>
+<a name="ln-327"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>    <span class="o">=</span> <span class="o">-</span><span class="n">oneeighthR</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-328"></a>            <span class="c">! face upstream at link connection (node)</span>
+<a name="ln-329"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">FaceCol_u</span><span class="p">)</span>
+<a name="ln-330"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>    <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-331"></a>        <span class="k">case</span> <span class="p">(</span><span class="n">fPipe</span><span class="p">)</span>
+<a name="ln-332"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: pipe output not handled&#39;</span>
+<a name="ln-333"></a>            <span class="k">stop</span>
+<a name="ln-334"></a><span class="k">        case</span> <span class="p">(</span><span class="n">fMultiple</span><span class="p">)</span>
+<a name="ln-335"></a>            <span class="n">bdn</span> <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">fi_branch_d</span><span class="p">)</span>
+<a name="ln-336"></a>            <span class="c">! downstram junction center</span>
+<a name="ln-337"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">JunctionCol</span><span class="p">)</span>
+<a name="ln-338"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>    <span class="o">=</span> <span class="o">-</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">eMr_Length</span><span class="p">)</span>
+<a name="ln-339"></a>            <span class="c">! downstrream branch</span>
+<a name="ln-340"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">BranchColUp</span><span class="p">(</span><span class="n">bdn</span><span class="p">))</span>
+<a name="ln-341"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>    <span class="o">=</span> <span class="o">-</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">eMr_LengthUp</span><span class="p">(</span><span class="n">bdn</span><span class="p">))</span>
+<a name="ln-342"></a>            <span class="c">! face downstream</span>
+<a name="ln-343"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">FaceCol_d</span><span class="p">)</span>
+<a name="ln-344"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>    <span class="o">=</span> <span class="o">-</span><span class="n">oneeighthR</span> <span class="o">*</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">eMr_LengthUp</span><span class="p">(</span><span class="n">bdn</span><span class="p">))</span>
+<a name="ln-345"></a>            <span class="c">! face upstream</span>
+<a name="ln-346"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">FaceCol_u</span><span class="p">)</span>
+<a name="ln-347"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>    <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-348"></a>        <span class="k">case</span> <span class="p">(</span><span class="n">fBCup</span><span class="p">)</span>
+<a name="ln-349"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: fBCup not expected on a downstream face&#39;</span>
+<a name="ln-350"></a>            <span class="k">stop</span>
+<a name="ln-351"></a><span class="k">        case</span> <span class="p">(</span><span class="n">fBCdn</span><span class="p">)</span>
+<a name="ln-352"></a>
+<a name="ln-353"></a>            <span class="c">! ghost element</span>
+<a name="ln-354"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">edn</span><span class="p">,</span><span class="n">ElemCol</span><span class="p">)</span>
+<a name="ln-355"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>     <span class="o">=</span> <span class="o">-</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">eStart</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-356"></a>            <span class="c">! bc data</span>
+<a name="ln-357"></a>            <span class="k">if</span> <span class="p">(</span><span class="nb">trim</span><span class="p">(</span><span class="n">outdataName</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;eta&#39;</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-358"></a><span class="k">                </span><span class="n">thisdata</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">bcdataDn</span><span class="p">(</span><span class="n">bcidxDn</span><span class="p">)%</span><span class="n">ThisValue</span>
+<a name="ln-359"></a>            <span class="k">else</span>
+<a name="ln-360"></a><span class="k">                </span><span class="n">thisdata</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">thisdata</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<a name="ln-361"></a>            <span class="n">endif</span>
+<a name="ln-362"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>    <span class="o">=</span> <span class="o">-</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">eStart</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-363"></a>
+<a name="ln-364"></a>            <span class="c">! Face downstream</span>
+<a name="ln-365"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">FaceCol_d</span><span class="p">)</span>
+<a name="ln-366"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>    <span class="o">=</span> <span class="o">-</span><span class="n">elem2R</span><span class="p">(</span><span class="n">eStart</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.01</span>
+<a name="ln-367"></a>            <span class="c">! face upstream</span>
+<a name="ln-368"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fdn</span><span class="p">,</span><span class="n">FaceCol_u</span><span class="p">)</span>
+<a name="ln-369"></a>            <span class="n">thisX</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>    <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-370"></a>        <span class="k">case </span><span class="n">default</span>
+<a name="ln-371"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span>
+<a name="ln-372"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="n">ftypDn</span>
+<a name="ln-373"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: unexpected face type Dn of &#39;</span><span class="p">,</span><span class="n">ftypDn</span><span class="p">,</span><span class="s1">&#39; in &#39;</span><span class="p">,</span><span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span>
+<a name="ln-374"></a>            <span class="k">stop</span>
+<a name="ln-375"></a><span class="k">    end select</span>
+<a name="ln-376"></a>
+<a name="ln-377"></a>    <span class="c">!%  thread the data as element, upstream face, downstream face, element...</span>
+<a name="ln-378"></a>    <span class="n">thisdata</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">=</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">eStart</span><span class="p">,</span><span class="n">ElemCol</span><span class="p">)</span>
+<a name="ln-379"></a>    <span class="n">thisX</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>    <span class="o">=</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">eStart</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-380"></a>    <span class="n">en</span> <span class="o">=</span> <span class="n">eStart</span>
+<a name="ln-381"></a>    <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">nelem</span><span class="o">-</span><span class="mi">1</span>
+<a name="ln-382"></a>        <span class="n">fup</span> <span class="o">=&gt;</span> <span class="n">elem2I</span><span class="p">(</span><span class="n">en</span><span class="p">,</span><span class="n">e2i_Mface_u</span><span class="p">)</span>
+<a name="ln-383"></a>        <span class="c">! data on center</span>
+<a name="ln-384"></a>        <span class="n">thisdata</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">mm</span><span class="o">+</span><span class="mi">5</span><span class="p">)</span> <span class="o">=</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">en</span><span class="p">,</span><span class="n">ElemCol</span><span class="p">)</span>
+<a name="ln-385"></a>        <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">mm</span><span class="o">+</span><span class="mi">5</span><span class="p">)</span>    <span class="o">=</span> <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">mm</span><span class="o">+</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">en</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-386"></a>        <span class="c">! downstream data on upstream face</span>
+<a name="ln-387"></a>        <span class="n">thisdata</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">mm</span><span class="o">+</span><span class="mi">6</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fup</span><span class="p">,</span><span class="n">FaceCol_d</span><span class="p">)</span>
+<a name="ln-388"></a>        <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">mm</span><span class="o">+</span><span class="mi">6</span><span class="p">)</span>    <span class="o">=</span> <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">mm</span><span class="o">+</span><span class="mi">5</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.49</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">en</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-389"></a>        <span class="c">! upstream data on upstream face</span>
+<a name="ln-390"></a>        <span class="n">thisdata</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">mm</span><span class="o">+</span><span class="mi">7</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fup</span><span class="p">,</span><span class="n">FaceCol_u</span><span class="p">)</span>
+<a name="ln-391"></a>        <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">mm</span><span class="o">+</span><span class="mi">7</span><span class="p">)</span>    <span class="o">=</span> <span class="n">thisX</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">mm</span><span class="o">+</span><span class="mi">5</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">en</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-392"></a>        <span class="n">en</span> <span class="o">=</span> <span class="n">en</span> <span class="o">+</span> <span class="mi">1</span>
+<a name="ln-393"></a>    <span class="n">enddo</span>
+<a name="ln-394"></a>    <span class="n">eLast</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">nelem</span> <span class="o">+</span> <span class="mi">4</span>
+<a name="ln-395"></a>
+<a name="ln-396"></a>    <span class="c">!% maps to the upstream face and element beyond this link</span>
+<a name="ln-397"></a>    <span class="n">fup</span>     <span class="o">=&gt;</span> <span class="n">elem2I</span><span class="p">(</span><span class="n">eEnd</span><span class="p">,</span><span class="n">e2i_Mface_u</span><span class="p">)</span>
+<a name="ln-398"></a>    <span class="n">ftypUp</span>  <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fup</span><span class="p">,</span><span class="n">fi_type</span><span class="p">)</span>
+<a name="ln-399"></a>    <span class="n">eup</span>     <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fup</span><span class="p">,</span><span class="n">fi_Melem_u</span><span class="p">)</span>
+<a name="ln-400"></a>    <span class="n">bcidxUp</span> <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fup</span><span class="p">,</span><span class="n">fi_BC_ID</span><span class="p">)</span>
+<a name="ln-401"></a>
+<a name="ln-402"></a>
+<a name="ln-403"></a><span class="c">!    if (itemp == 2) then</span>
+<a name="ln-404"></a><span class="c">!    if (ii == 2) then</span>
+<a name="ln-405"></a><span class="c">!    print *, trim(subroutine_name)</span>
+<a name="ln-406"></a><span class="c">!    print *, ftypUp</span>
+<a name="ln-407"></a><span class="c">!    print *, fChannel, fPipe, fMultiple, fBCup, fBCdn</span>
+<a name="ln-408"></a><span class="c">!    print *, eLast,&#39;= eLast&#39;</span>
+<a name="ln-409"></a><span class="c">!    print *, eEnd,&#39;=eEnd&#39;</span>
+<a name="ln-410"></a><span class="c">!    print *, eup,&#39;=eup&#39;</span>
+<a name="ln-411"></a><span class="c">!    print *, bcidxUp,&#39;=bcidxUp&#39;</span>
+<a name="ln-412"></a><span class="c">!    print *, size(thisdata,1),&#39;=size thisdata&#39;</span>
+<a name="ln-413"></a><span class="c">!    print *, size(thisX,1),&#39;=size thisx&#39;</span>
+<a name="ln-414"></a><span class="c">!    print *, size(elem2R,1),&#39;=size elem2R&#39;</span>
+<a name="ln-415"></a><span class="c">!</span>
+<a name="ln-416"></a><span class="c">!</span>
+<a name="ln-417"></a><span class="c">!print *, thisdata(eLast+1)</span>
+<a name="ln-418"></a><span class="c">!print *, elem2R(eup,ElemCol)</span>
+<a name="ln-419"></a><span class="c">!print *, thisX(eLast+1)</span>
+<a name="ln-420"></a><span class="c">!print *, thisX(eLast) + onehalfR * elem2R(eEnd,e2r_Length)</span>
+<a name="ln-421"></a><span class="c">!!            ! BC</span>
+<a name="ln-422"></a><span class="c">!            if (trim(outdataName) == &#39;flowrate&#39;) then</span>
+<a name="ln-423"></a><span class="c">!print *, thisdata(eLast+2)</span>
+<a name="ln-424"></a><span class="c">!print *, bcidxUp</span>
+<a name="ln-425"></a><span class="c">!print *, size(bcdataUp)</span>
+<a name="ln-426"></a><span class="c">!print *, bcdataUp(bcidxUp)%ThisValue</span>
+<a name="ln-427"></a><span class="c">!            else</span>
+<a name="ln-428"></a><span class="c">!!print *, thisdata(eLast+2)</span>
+<a name="ln-429"></a><span class="c">!            endif</span>
+<a name="ln-430"></a><span class="c">!!print *, thisX(eLast+2)</span>
+<a name="ln-431"></a><span class="c">!!print *, thisX(eLast) +  elem2R(eEnd,e2r_Length)</span>
+<a name="ln-432"></a><span class="c">!    stop</span>
+<a name="ln-433"></a><span class="c">!    endif</span>
+<a name="ln-434"></a><span class="c">!    endif</span>
+<a name="ln-435"></a><span class="c">!</span>
+<a name="ln-436"></a>    <span class="k">select case</span> <span class="p">(</span><span class="n">ftypUp</span><span class="p">)</span>
+<a name="ln-437"></a>        <span class="k">case</span> <span class="p">(</span><span class="n">fChannel</span><span class="p">)</span>
+<a name="ln-438"></a>            <span class="c">!%  First element of the next upstream link</span>
+<a name="ln-439"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">eup</span><span class="p">,</span><span class="n">ElemCol</span><span class="p">)</span>
+<a name="ln-440"></a>            <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>    <span class="o">=</span> <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="p">)</span> <span class="o">+</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">eup</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-441"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="n">faceR</span><span class="p">(</span><span class="n">elem2I</span><span class="p">(</span><span class="n">eup</span><span class="p">,</span><span class="n">e2i_Mface_u</span><span class="p">),</span><span class="n">FaceCol_d</span><span class="p">)</span>
+<a name="ln-442"></a>            <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>    <span class="o">=</span> <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="p">)</span> <span class="o">+</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">eup</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-443"></a>        <span class="k">case</span> <span class="p">(</span><span class="n">fPipe</span><span class="p">)</span>
+<a name="ln-444"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: pipe not handled yet in &#39;</span><span class="p">,</span><span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span>
+<a name="ln-445"></a>            <span class="k">stop</span>
+<a name="ln-446"></a><span class="k">        case</span> <span class="p">(</span><span class="n">fMultiple</span><span class="p">)</span>
+<a name="ln-447"></a>            <span class="c">!% an upstream junction</span>
+<a name="ln-448"></a>            <span class="n">bup</span> <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fup</span><span class="p">,</span><span class="n">fi_branch_u</span><span class="p">)</span>
+<a name="ln-449"></a>            <span class="c">! branch values</span>
+<a name="ln-450"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">eup</span><span class="p">,</span><span class="n">BranchColDn</span><span class="p">(</span><span class="n">bup</span><span class="p">))</span>
+<a name="ln-451"></a>            <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>    <span class="o">=</span> <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="p">)</span> <span class="o">+</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">eup</span><span class="p">,</span><span class="n">eMr_LengthDn</span><span class="p">(</span><span class="n">bup</span><span class="p">))</span>
+<a name="ln-452"></a>            <span class="c">! junction center values</span>
+<a name="ln-453"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">eup</span><span class="p">,</span><span class="n">JunctionCol</span><span class="p">)</span>
+<a name="ln-454"></a>            <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>    <span class="o">=</span> <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="p">)</span> <span class="o">+</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">eup</span><span class="p">,</span><span class="n">eMr_Length</span><span class="p">)</span>
+<a name="ln-455"></a>
+<a name="ln-456"></a>        <span class="k">case</span> <span class="p">(</span><span class="n">fBCup</span><span class="p">)</span>
+<a name="ln-457"></a>            <span class="c">! an upstream BC with ghost element</span>
+<a name="ln-458"></a>            <span class="n">thisdata</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">eup</span><span class="p">,</span><span class="n">ElemCol</span><span class="p">)</span>
+<a name="ln-459"></a>            <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>    <span class="o">=</span> <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="p">)</span> <span class="o">+</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">eEnd</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-460"></a>            <span class="c">! BC</span>
+<a name="ln-461"></a>            <span class="k">if</span> <span class="p">(</span><span class="nb">trim</span><span class="p">(</span><span class="n">outdataName</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;flowrate&#39;</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-462"></a><span class="k">                </span><span class="n">thisdata</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="n">bcdataUp</span><span class="p">(</span><span class="n">bcidxUp</span><span class="p">)%</span><span class="n">ThisValue</span>
+<a name="ln-463"></a>            <span class="k">else</span>
+<a name="ln-464"></a><span class="k">                </span><span class="n">thisdata</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="n">thisdata</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+<a name="ln-465"></a>            <span class="n">endif</span>
+<a name="ln-466"></a>            <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>    <span class="o">=</span> <span class="n">thisX</span><span class="p">(</span><span class="n">eLast</span><span class="p">)</span> <span class="o">+</span>  <span class="n">elem2R</span><span class="p">(</span><span class="n">eEnd</span><span class="p">,</span><span class="n">e2r_Length</span><span class="p">)</span>
+<a name="ln-467"></a>        <span class="k">case</span> <span class="p">(</span><span class="n">fBCdn</span><span class="p">)</span>
+<a name="ln-468"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: fBCdn not expected on an upstream face in &#39;</span><span class="p">,</span><span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span>
+<a name="ln-469"></a>            <span class="k">stop</span>
+<a name="ln-470"></a><span class="k">        case </span><span class="n">default</span>
+<a name="ln-471"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span>
+<a name="ln-472"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="n">ftypUp</span>
+<a name="ln-473"></a>            <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: unexpected face type Up of &#39;</span><span class="p">,</span><span class="n">ftypUp</span><span class="p">,</span><span class="s1">&#39; in &#39;</span><span class="p">,</span><span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span>
+<a name="ln-474"></a>            <span class="k">stop</span>
+<a name="ln-475"></a><span class="k">    end select</span>
+<a name="ln-476"></a><span class="k">    </span><span class="n">ndata</span> <span class="o">=</span> <span class="n">eLast</span> <span class="o">+</span> <span class="mi">2</span>
+<a name="ln-477"></a>
+<a name="ln-478"></a>
+<a name="ln-479"></a>
+<a name="ln-480"></a><span class="c">!    do mm=1,ndata</span>
+<a name="ln-481"></a><span class="c">!        print *, mm, thisX(mm), thisdata(mm)</span>
+<a name="ln-482"></a><span class="c">!    end do</span>
+<a name="ln-483"></a>
+<a name="ln-484"></a>    <span class="k">write</span><span class="p">(</span><span class="n">thisUnit</span><span class="p">,</span><span class="o">*</span><span class="p">)</span>  <span class="n">thisstep</span><span class="p">,</span><span class="s1">&#39;=this step&#39;</span>
+<a name="ln-485"></a>    <span class="k">write</span><span class="p">(</span><span class="n">thisUnit</span><span class="p">,</span><span class="o">*</span><span class="p">)</span>  <span class="n">Lidx</span><span class="p">,</span><span class="s1">&#39;=this_link_index&#39;</span>
+<a name="ln-486"></a>    <span class="k">write</span><span class="p">(</span><span class="n">thisUnit</span><span class="p">,</span><span class="o">*</span><span class="p">)</span>  <span class="n">ndata</span><span class="p">,</span><span class="s1">&#39;=items_this_link&#39;</span>
+<a name="ln-487"></a>    <span class="k">write</span><span class="p">(</span><span class="n">thisUnit</span><span class="p">,</span><span class="o">*</span><span class="p">)</span>  <span class="mi">2</span><span class="p">,</span><span class="s1">&#39;=rows_this_link_X_data&#39;</span>
+<a name="ln-488"></a>    <span class="k">write</span><span class="p">(</span><span class="n">thisUnit</span><span class="p">,</span><span class="o">*</span><span class="p">)</span>  <span class="n">thisX</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="n">ndata</span><span class="p">)</span>
+<a name="ln-489"></a>    <span class="k">write</span><span class="p">(</span><span class="n">thisUnit</span><span class="p">,</span><span class="o">*</span><span class="p">)</span>  <span class="n">thisdata</span><span class="p">(</span><span class="mi">1</span><span class="p">:</span><span class="n">ndata</span><span class="p">)</span>
+<a name="ln-490"></a>
+<a name="ln-491"></a>
+<a name="ln-492"></a> <span class="k">end do</span>
+<a name="ln-493"></a>
+<a name="ln-494"></a>
+<a name="ln-495"></a>
+<a name="ln-496"></a><span class="k"> if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-497"></a> <span class="k">end subroutine </span><span class="n">output_one_threaded_data_by_link</span>
+<a name="ln-498"></a><span class="c">!==========================================================================</span>
+<a name="ln-499"></a><span class="c">!</span>
+<a name="ln-500"></a><span class="c">! PRIVATE BELOW HERE</span>
+<a name="ln-501"></a><span class="c">!</span>
+<a name="ln-502"></a><span class="c">!==========================================================================</span>
+<a name="ln-503"></a><span class="c">!</span>
+<a name="ln-504"></a> <span class="k">subroutine </span><span class="n">output_singlethreadedfile_open</span> <span class="p">(</span><span class="n">threadedfile</span><span class="p">)</span>
+<a name="ln-505"></a><span class="c">!</span>
+<a name="ln-506"></a><span class="c">! Opens a single file for output writing</span>
+<a name="ln-507"></a><span class="c">!</span>
+<a name="ln-508"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;output_singlethreadedfile_open&#39;</span>
+<a name="ln-509"></a>
+<a name="ln-510"></a> <span class="k">type</span><span class="p">(</span><span class="n">threadedfileType</span><span class="p">),</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span> <span class="kd">::</span> <span class="n">threadedfile</span>
+<a name="ln-511"></a>
+<a name="ln-512"></a> <span class="kt">integer</span>                <span class="kd">::</span> <span class="n">open_status</span>
+<a name="ln-513"></a> <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>     <span class="kd">::</span> <span class="n">emsg</span>
+<a name="ln-514"></a>
+<a name="ln-515"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-516"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-517"></a>
+<a name="ln-518"></a> <span class="n">open_status</span> <span class="o">=</span> <span class="mi">0</span>
+<a name="ln-519"></a>
+<a name="ln-520"></a> <span class="n">threadedfile</span><span class="p">%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">UnitNumber</span> <span class="o">=</span> <span class="n">outputfile_next_unitnumber</span>
+<a name="ln-521"></a> <span class="n">outputfile_next_unitnumber</span>       <span class="o">=</span> <span class="n">outputfile_next_unitnumber</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-522"></a>
+<a name="ln-523"></a> <span class="k">open</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">threadedfile</span><span class="p">%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">Unitnumber</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-524"></a>      <span class="k">file</span><span class="o">=</span><span class="nb">trim</span><span class="p">(</span><span class="n">threadedfile</span><span class="p">%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">WriteName</span><span class="p">),</span> <span class="p">&amp;</span>
+<a name="ln-525"></a>      <span class="n">status</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span><span class="n">threadedfile</span><span class="p">%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">FileStatus</span><span class="p">),</span> <span class="p">&amp;</span>
+<a name="ln-526"></a>      <span class="nb">access</span> <span class="o">=</span> <span class="s1">&#39;sequential&#39;</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-527"></a>      <span class="n">form</span>   <span class="o">=</span> <span class="s1">&#39;formatted&#39;</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-528"></a>      <span class="n">action</span> <span class="o">=</span> <span class="s1">&#39;write&#39;</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-529"></a>      <span class="n">iostat</span> <span class="o">=</span> <span class="n">open_status</span><span class="p">)</span>
+<a name="ln-530"></a>
+<a name="ln-531"></a> <span class="n">emsg</span> <span class="o">=</span> <span class="s1">&#39;file exists or path/folder does not exist: file open failed in &#39;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">subroutine_name</span><span class="p">)</span> <span class="p">&amp;</span>
+<a name="ln-532"></a>       <span class="o">//</span> <span class="s1">&#39;; filename = &#39;</span><span class="o">//</span><span class="nb">trim</span><span class="p">(</span><span class="n">threadedfile</span><span class="p">%</span><span class="n">FileInfo</span><span class="p">%</span><span class="n">WriteName</span><span class="p">)</span>
+<a name="ln-533"></a> <span class="k">call </span><span class="n">utility_check_fileopen</span> <span class="p">(</span><span class="n">open_status</span><span class="p">,</span> <span class="n">emsg</span><span class="p">)</span>
+<a name="ln-534"></a>
+<a name="ln-535"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-536"></a> <span class="k">end subroutine </span><span class="n">output_singlethreadedfile_open</span>
+<a name="ln-537"></a><span class="c">!</span>
+<a name="ln-538"></a><span class="c">!==========================================================================</span>
+<a name="ln-539"></a><span class="c">! END OF MODULE output</span>
+<a name="ln-540"></a><span class="c">!==========================================================================</span>
+<a name="ln-541"></a> <span class="k">end module </span><span class="n">output</span>
+</pre></div>
+
+    </section>
+    </div>
+  </div>
+
+  
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2019 
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> SWMMengine was developed by Ben R. Hodges and Ehsan Madadi-Kandjani</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>

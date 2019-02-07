@@ -1,0 +1,2561 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="Prototype Fortran 2008 engine for the EPA Storm Water Management Model (SWMM)">
+    
+    <meta name="author" content="Ben R. Hodges and Ehsan Madadi-Kandjani" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>bc &ndash; SWMMengine</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">SWMMengine </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/main.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/main.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>bc 
+    <small>Module</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 5.6% of total for modules and submodules.">415 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/bc.f08"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+     <li><a href='../sourcefile/bc.f08.html'>bc.f08</a></li>
+    
+  
+     <li class="active">bc</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#vars-0">Variables</a></h3></div>
+  <div id="vars-0" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/bc.html#variable-debuglevel%7E2">debuglevel</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-0">Subroutines</a></h3></div>
+  <div class="list-group">
+    <div id="subs-0" class="panel-collapse collapse">
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_allocate">bc_allocate</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_applied_onface">bc_applied_onface</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_applied_onelement">bc_applied_onelement</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_checks">bc_checks</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_timescale_value">bc_timescale_value</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_nullify_ghost_elem">bc_nullify_ghost_elem</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_adequate_coverage">bc_adequate_coverage</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_onface">bc_onface</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_face_othervalues">bc_face_othervalues</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_onelement">bc_onelement</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_updatevalue">bc_updatevalue</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_node_assignment_error_check">bc_node_assignment_error_check</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_assign_faceid">bc_assign_faceID</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_adequate_coverage_onedir">bc_adequate_coverage_onedir</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_ghost_othervalues">bc_ghost_othervalues</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+</div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+    
+      <br>
+    
+  
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Uses</h3>
+      </div>
+      <ul class="list-group">
+      
+      <li class="list-group-item">
+  <ul class="list-inline">
+    
+    <li><a href='../module/array_index.html'>array_index</a></li>
+    
+    <li><a href='../module/data_keys.html'>data_keys</a></li>
+    
+    <li><a href='../module/globals.html'>globals</a></li>
+    
+    <li><a href='../module/setting_definition.html'>setting_definition</a></li>
+    
+    <li><a href='../module/type_definitions.html'>type_definitions</a></li>
+    
+    <li><a href='../module/utility.html'>utility</a></li>
+    
+  </ul>
+      </li>
+      
+      
+      
+      <li class="list-group-item">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: module~~bc~~UsesGraph Pages: 1 -->
+<svg id="modulebcUsesGraph" width="599pt" height="155pt"
+ viewBox="0.00 0.00 599.00 154.79" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~bc~~UsesGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 150.79)">
+<title>module~~bc~~UsesGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-150.79 595,-150.79 595,4 -4,4"/>
+<!-- module~bc -->
+<g id="module~~bc~~UsesGraph_node1" class="node"><title>module~bc</title>
+<polygon fill="none" stroke="black" points="591,-71.5583 537,-71.5583 537,-47.5583 591,-47.5583 591,-71.5583"/>
+<text text-anchor="middle" x="564" y="-57.1583" font-family="Helvetica,sans-Serif" font-size="10.50">bc</text>
+</g>
+<!-- module~array_index -->
+<g id="module~~bc~~UsesGraph_node2" class="node"><title>module~array_index</title>
+<g id="a_module~~bc~~UsesGraph_node2"><a xlink:href=".././module/array_index.html" xlink:title="array_index">
+<polygon fill="#337ab7" stroke="#337ab7" points="411,-113.558 342,-113.558 342,-89.5583 411,-89.5583 411,-113.558"/>
+<text text-anchor="middle" x="376.5" y="-99.1583" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">array_index</text>
+</a>
+</g>
+</g>
+<!-- module~bc&#45;&gt;module~array_index -->
+<g id="module~~bc~~UsesGraph_edge1" class="edge"><title>module~bc&#45;&gt;module~array_index</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M473,-141.558C446.855,-146.097 419.108,-132.1 400.299,-119.436"/>
+<polygon fill="#000000" stroke="#000000" points="402.257,-116.534 392.077,-113.598 398.205,-122.241 402.257,-116.534"/>
+</g>
+<!-- module~type_definitions -->
+<g id="module~~bc~~UsesGraph_node3" class="node"><title>module~type_definitions</title>
+<g id="a_module~~bc~~UsesGraph_node3"><a xlink:href=".././module/type_definitions.html" xlink:title="type_definitions">
+<polygon fill="#337ab7" stroke="#337ab7" points="87,-112.558 0,-112.558 0,-88.5583 87,-88.5583 87,-112.558"/>
+<text text-anchor="middle" x="43.5" y="-98.1583" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">type_definitions</text>
+</a>
+</g>
+</g>
+<!-- module~bc&#45;&gt;module~type_definitions -->
+<g id="module~~bc~~UsesGraph_edge2" class="edge"><title>module~bc&#45;&gt;module~type_definitions</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M375.5,-141.558C285.434,-127.8 261.59,-143.514 170.5,-141.558"/>
+</g>
+<!-- module~globals -->
+<g id="module~~bc~~UsesGraph_node4" class="node"><title>module~globals</title>
+<g id="a_module~~bc~~UsesGraph_node4"><a xlink:href=".././module/globals.html" xlink:title="globals">
+<polygon fill="#337ab7" stroke="#337ab7" points="306,-92.5583 252,-92.5583 252,-68.5583 306,-68.5583 306,-92.5583"/>
+<text text-anchor="middle" x="279" y="-78.1583" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">globals</text>
+</a>
+</g>
+</g>
+<!-- module~bc&#45;&gt;module~globals -->
+<g id="module~~bc~~UsesGraph_edge3" class="edge"><title>module~bc&#45;&gt;module~globals</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M473,-141.558C431.181,-148.818 419.458,-147.968 377.5,-141.558"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M375.5,-141.558C345.48,-136.972 316.942,-115.739 299.012,-99.6014"/>
+<polygon fill="#000000" stroke="#000000" points="301.247,-96.8995 291.554,-92.6234 296.465,-102.011 301.247,-96.8995"/>
+</g>
+<!-- module~data_keys -->
+<g id="module~~bc~~UsesGraph_node5" class="node"><title>module~data_keys</title>
+<g id="a_module~~bc~~UsesGraph_node5"><a xlink:href=".././module/data_keys.html" xlink:title="data_keys">
+<polygon fill="#337ab7" stroke="#337ab7" points="407,-71.5583 346,-71.5583 346,-47.5583 407,-47.5583 407,-71.5583"/>
+<text text-anchor="middle" x="376.5" y="-57.1583" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">data_keys</text>
+</a>
+</g>
+</g>
+<!-- module~bc&#45;&gt;module~data_keys -->
+<g id="module~~bc~~UsesGraph_edge4" class="edge"><title>module~bc&#45;&gt;module~data_keys</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M556.264,-71.7457C543.631,-92.8901 514.092,-134.772 475,-141.558"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M473,-141.558C434.913,-148.17 441.333,-104.521 411,-80.5583 409.667,-79.5052 408.278,-78.4594 406.858,-77.4294"/>
+<polygon fill="#000000" stroke="#000000" points="408.767,-74.4948 398.531,-71.7612 404.828,-80.2815 408.767,-74.4948"/>
+</g>
+<!-- module~setting_definition -->
+<g id="module~~bc~~UsesGraph_node6" class="node"><title>module~setting_definition</title>
+<g id="a_module~~bc~~UsesGraph_node6"><a xlink:href=".././module/setting_definition.html" xlink:title="setting_definition">
+<polygon fill="#337ab7" stroke="#337ab7" points="216,-92.5583 123,-92.5583 123,-68.5583 216,-68.5583 216,-92.5583"/>
+<text text-anchor="middle" x="169.5" y="-78.1583" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">setting_definition</text>
+</a>
+</g>
+</g>
+<!-- module~bc&#45;&gt;module~setting_definition -->
+<g id="module~~bc~~UsesGraph_edge5" class="edge"><title>module~bc&#45;&gt;module~setting_definition</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.637,-47.5161C508.033,-34.1846 457.226,-13.5256 411,-5.55829 353.297,4.3871 334.997,0.539487 280,-19.5583"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M278,-19.5583C247.28,-28.8951 215.747,-48.1558 194.846,-62.5504"/>
+<polygon fill="#000000" stroke="#000000" points="192.732,-59.7582 186.572,-68.3784 196.763,-65.4809 192.732,-59.7582"/>
+</g>
+<!-- module~utility -->
+<g id="module~~bc~~UsesGraph_node7" class="node"><title>module~utility</title>
+<g id="a_module~~bc~~UsesGraph_node7"><a xlink:href=".././module/utility.html" xlink:title="utility">
+<polygon fill="#337ab7" stroke="#337ab7" points="501,-71.5583 447,-71.5583 447,-47.5583 501,-47.5583 501,-71.5583"/>
+<text text-anchor="middle" x="474" y="-57.1583" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility</text>
+</a>
+</g>
+</g>
+<!-- module~bc&#45;&gt;module~utility -->
+<g id="module~~bc~~UsesGraph_edge6" class="edge"><title>module~bc&#45;&gt;module~utility</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M536.597,-59.5583C528.607,-59.5583 519.689,-59.5583 511.176,-59.5583"/>
+<polygon fill="#000000" stroke="#000000" points="511.081,-56.0584 501.081,-59.5583 511.081,-63.0584 511.081,-56.0584"/>
+</g>
+<!-- module~array_index&#45;&gt;module~globals -->
+<g id="module~~bc~~UsesGraph_edge7" class="edge"><title>module~array_index&#45;&gt;module~globals</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M341.83,-94.1545C333.507,-92.3243 324.558,-90.3563 316.123,-88.5017"/>
+<polygon fill="#000000" stroke="#000000" points="316.686,-85.0419 306.168,-86.3125 315.183,-91.8785 316.686,-85.0419"/>
+</g>
+<!-- module~globals&#45;&gt;module~type_definitions -->
+<g id="module~~bc~~UsesGraph_edge8" class="edge"><title>module~globals&#45;&gt;module~type_definitions</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M266.339,-92.8156C247.823,-110.868 209.76,-142.401 170.5,-141.558"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M168.5,-141.558C136.08,-140.862 101.183,-128.148 76.6954,-117.061"/>
+<polygon fill="#000000" stroke="#000000" points="78.0643,-113.837 67.524,-112.763 75.0942,-120.176 78.0643,-113.837"/>
+</g>
+<!-- module~globals&#45;&gt;module~setting_definition -->
+<g id="module~~bc~~UsesGraph_edge9" class="edge"><title>module~globals&#45;&gt;module~setting_definition</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M251.977,-80.5583C244.122,-80.5583 235.178,-80.5583 226.162,-80.5583"/>
+<polygon fill="#000000" stroke="#000000" points="226.007,-77.0584 216.007,-80.5583 226.007,-84.0584 226.007,-77.0584"/>
+</g>
+<!-- module~data_keys&#45;&gt;module~globals -->
+<g id="module~~bc~~UsesGraph_edge10" class="edge"><title>module~data_keys&#45;&gt;module~globals</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M345.807,-66.0877C336.379,-68.1609 325.849,-70.4763 316.026,-72.6364"/>
+<polygon fill="#000000" stroke="#000000" points="315.134,-69.2487 306.119,-74.8147 316.638,-76.0854 315.134,-69.2487"/>
+</g>
+<!-- module~setting_definition&#45;&gt;module~type_definitions -->
+<g id="module~~bc~~UsesGraph_edge11" class="edge"><title>module~setting_definition&#45;&gt;module~type_definitions</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M122.679,-87.9487C114.439,-89.2778 105.789,-90.6729 97.3691,-92.031"/>
+<polygon fill="#000000" stroke="#000000" points="96.5702,-88.6145 87.2551,-93.6623 97.6849,-95.5252 96.5702,-88.6145"/>
+</g>
+<!-- module~utility&#45;&gt;module~array_index -->
+<g id="module~~bc~~UsesGraph_edge12" class="edge"><title>module~utility&#45;&gt;module~array_index</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M446.904,-71.035C436.824,-75.4683 425.11,-80.62 414.208,-85.4144"/>
+<polygon fill="#000000" stroke="#000000" points="412.643,-82.279 404.898,-89.5087 415.461,-88.6867 412.643,-82.279"/>
+</g>
+<!-- module~utility&#45;&gt;module~globals -->
+<g id="module~~bc~~UsesGraph_edge14" class="edge"><title>module~utility&#45;&gt;module~globals</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M375.5,-19.5583C343.855,-18.1945 314.241,-42.673 296.62,-61.0285"/>
+<polygon fill="#000000" stroke="#000000" points="294.013,-58.6924 289.831,-68.427 299.171,-63.4251 294.013,-58.6924"/>
+</g>
+<!-- module~utility&#45;&gt;module~data_keys -->
+<g id="module~~bc~~UsesGraph_edge13" class="edge"><title>module~utility&#45;&gt;module~data_keys</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M446.904,-59.5583C437.805,-59.5583 427.374,-59.5583 417.412,-59.5583"/>
+<polygon fill="#000000" stroke="#000000" points="417.275,-56.0584 407.275,-59.5583 417.275,-63.0584 417.275,-56.0584"/>
+</g>
+<!-- module~utility&#45;&gt;module~setting_definition -->
+<g id="module~~bc~~UsesGraph_edge15" class="edge"><title>module~utility&#45;&gt;module~setting_definition</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M454.905,-47.4245C436.355,-36.112 406.234,-20.7966 377.5,-19.5583"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M375.5,-19.5583C333.095,-17.7308 319.866,-4.98982 280,-19.5583"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="490pt" height="32pt"
+ viewBox="0.00 0.00 489.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 485.5,-28 485.5,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node"><title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,-0 54,-0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node"><title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="139.5,-24 72.5,-24 72.5,-0 139.5,-0 139.5,-24"/>
+<text text-anchor="middle" x="106" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node"><title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="222,-24 158,-24 158,-0 222,-0 222,-24"/>
+<text text-anchor="middle" x="190" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node"><title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="294,-24 240,-24 240,-0 294,-0 294,-24"/>
+<text text-anchor="middle" x="267" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node"><title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="366,-24 312,-24 312,-0 366,-0 366,-24"/>
+<text text-anchor="middle" x="339" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="481.5,-24 384.5,-24 384.5,-0 481.5,-0 481.5,-24"/>
+<text text-anchor="middle" x="433" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a submodule to the (sub)module which it is
+    descended from. Dashed arrows point from a module or program unit to 
+    modules which it uses.
+    </p>
+    </div></div></div></div>
+      </li>
+      
+      </ul>
+    </div>
+    
+
+    
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Used by</h3>
+      </div>
+      <ul class="list-group">
+  
+  
+  <li class="list-group-item">
+    <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: module~~bc~~UsedByGraph Pages: 1 -->
+<svg id="modulebcUsedByGraph" width="519pt" height="441pt"
+ viewBox="0.00 0.00 519.00 441.20" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~bc~~UsedByGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 437.203)">
+<title>module~~bc~~UsedByGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-437.203 515,-437.203 515,4 -4,4"/>
+<!-- module~bc -->
+<g id="module~~bc~~UsedByGraph_node1" class="node"><title>module~bc</title>
+<polygon fill="none" stroke="black" points="54,-188 0,-188 0,-164 54,-164 54,-188"/>
+<text text-anchor="middle" x="27" y="-173.6" font-family="Helvetica,sans-Serif" font-size="10.50">bc</text>
+</g>
+<!-- module~runge_kutta -->
+<g id="module~~bc~~UsedByGraph_node2" class="node"><title>module~runge_kutta</title>
+<g id="a_module~~bc~~UsedByGraph_node2"><a xlink:href=".././module/runge_kutta.html" xlink:title="runge_kutta">
+<polygon fill="#337ab7" stroke="#337ab7" points="318.5,-230 248.5,-230 248.5,-206 318.5,-206 318.5,-230"/>
+<text text-anchor="middle" x="283.5" y="-215.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">runge_kutta</text>
+</a>
+</g>
+</g>
+<!-- module~runge_kutta&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge1" class="edge"><title>module~runge_kutta&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M263.622,-230.079C237.864,-245.072 190.146,-267.565 148.5,-258"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M146.5,-258C120.679,-252.07 112.462,-253.048 90,-239 71.8989,-227.679 55.1607,-210.056 43.6502,-196.325"/>
+<polygon fill="#000000" stroke="#000000" points="46.2126,-193.928 37.1933,-188.369 40.7774,-198.339 46.2126,-193.928"/>
+</g>
+<!-- module~element_dynamics -->
+<g id="module~~bc~~UsedByGraph_node7" class="node"><title>module~element_dynamics</title>
+<g id="a_module~~bc~~UsedByGraph_node7"><a xlink:href=".././module/element_dynamics.html" xlink:title="element_dynamics">
+<polygon fill="#337ab7" stroke="#337ab7" points="198.5,-146 96.5,-146 96.5,-122 198.5,-122 198.5,-146"/>
+<text text-anchor="middle" x="147.5" y="-131.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_dynamics</text>
+</a>
+</g>
+</g>
+<!-- module~runge_kutta&#45;&gt;module~element_dynamics -->
+<g id="module~~bc~~UsedByGraph_edge24" class="edge"><title>module~runge_kutta&#45;&gt;module~element_dynamics</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M270.288,-205.909C255.764,-192.069 230.291,-169.454 205,-155 202.002,-153.286 198.838,-151.666 195.6,-150.142"/>
+<polygon fill="#000000" stroke="#000000" points="196.925,-146.902 186.359,-146.111 194.126,-153.318 196.925,-146.902"/>
+</g>
+<!-- module~diagnostic -->
+<g id="module~~bc~~UsedByGraph_node8" class="node"><title>module~diagnostic</title>
+<g id="a_module~~bc~~UsedByGraph_node8"><a xlink:href=".././module/diagnostic.html" xlink:title="diagnostic">
+<polygon fill="#337ab7" stroke="#337ab7" points="178,-310 117,-310 117,-286 178,-286 178,-310"/>
+<text text-anchor="middle" x="147.5" y="-295.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">diagnostic</text>
+</a>
+</g>
+</g>
+<!-- module~runge_kutta&#45;&gt;module~diagnostic -->
+<g id="module~~bc~~UsedByGraph_edge26" class="edge"><title>module~runge_kutta&#45;&gt;module~diagnostic</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M262.391,-230.029C255.509,-234.295 247.828,-239.224 241,-244 224.39,-255.618 222.321,-261.472 205,-272 199.49,-275.349 193.476,-278.551 187.493,-281.491"/>
+<polygon fill="#000000" stroke="#000000" points="185.743,-278.447 178.194,-285.881 188.731,-284.777 185.743,-278.447"/>
+</g>
+<!-- module~element_geometry -->
+<g id="module~~bc~~UsedByGraph_node9" class="node"><title>module~element_geometry</title>
+<g id="a_module~~bc~~UsedByGraph_node9"><a xlink:href=".././module/element_geometry.html" xlink:title="element_geometry">
+<polygon fill="#337ab7" stroke="#337ab7" points="198.5,-188 96.5,-188 96.5,-164 198.5,-164 198.5,-188"/>
+<text text-anchor="middle" x="147.5" y="-173.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_geometry</text>
+</a>
+</g>
+</g>
+<!-- module~runge_kutta&#45;&gt;module~element_geometry -->
+<g id="module~~bc~~UsedByGraph_edge30" class="edge"><title>module~runge_kutta&#45;&gt;module~element_geometry</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M248.339,-207.293C232.653,-202.376 213.776,-196.46 196.679,-191.101"/>
+<polygon fill="#000000" stroke="#000000" points="197.445,-187.673 186.856,-188.022 195.351,-194.353 197.445,-187.673"/>
+</g>
+<!-- module~face_values -->
+<g id="module~~bc~~UsedByGraph_node11" class="node"><title>module~face_values</title>
+<g id="a_module~~bc~~UsedByGraph_node11"><a xlink:href=".././module/face_values.html" xlink:title="face_values">
+<polygon fill="#337ab7" stroke="#337ab7" points="182.5,-230 112.5,-230 112.5,-206 182.5,-206 182.5,-230"/>
+<text text-anchor="middle" x="147.5" y="-215.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_values</text>
+</a>
+</g>
+</g>
+<!-- module~runge_kutta&#45;&gt;module~face_values -->
+<g id="module~~bc~~UsedByGraph_edge34" class="edge"><title>module~runge_kutta&#45;&gt;module~face_values</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M248.339,-218C231.408,-218 210.759,-218 192.643,-218"/>
+<polygon fill="#000000" stroke="#000000" points="192.598,-214.5 182.598,-218 192.598,-221.5 192.598,-214.5"/>
+</g>
+<!-- module~output -->
+<g id="module~~bc~~UsedByGraph_node3" class="node"><title>module~output</title>
+<g id="a_module~~bc~~UsedByGraph_node3"><a xlink:href=".././module/output.html" xlink:title="output">
+<polygon fill="#337ab7" stroke="#337ab7" points="310.5,-390 256.5,-390 256.5,-366 310.5,-366 310.5,-390"/>
+<text text-anchor="middle" x="283.5" y="-375.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">output</text>
+</a>
+</g>
+</g>
+<!-- module~output&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge2" class="edge"><title>module~output&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M256.598,-390.018C223.452,-404.656 167.99,-426.451 148.5,-418"/>
+</g>
+<!-- module~case_y_channel -->
+<g id="module~~bc~~UsedByGraph_node4" class="node"><title>module~case_y_channel</title>
+<g id="a_module~~bc~~UsedByGraph_node4"><a xlink:href=".././module/case_y_channel.html" xlink:title="case_y_channel">
+<polygon fill="#337ab7" stroke="#337ab7" points="192.5,-66 102.5,-66 102.5,-42 192.5,-42 192.5,-66"/>
+<text text-anchor="middle" x="147.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">case_y_channel</text>
+</a>
+</g>
+</g>
+<!-- module~case_y_channel&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge3" class="edge"><title>module~case_y_channel&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M112.064,-66.086C104.293,-69.7966 96.4449,-74.4118 90,-80 65.9303,-100.87 47.6632,-133.327 37.3891,-154.626"/>
+<polygon fill="#000000" stroke="#000000" points="34.1591,-153.271 33.1178,-163.815 40.5068,-156.222 34.1591,-153.271"/>
+</g>
+<!-- module~debug -->
+<g id="module~~bc~~UsedByGraph_node5" class="node"><title>module~debug</title>
+<g id="a_module~~bc~~UsedByGraph_node5"><a xlink:href=".././module/debug.html" xlink:title="debug">
+<polygon fill="#337ab7" stroke="#337ab7" points="310.5,-348 256.5,-348 256.5,-324 310.5,-324 310.5,-348"/>
+<text text-anchor="middle" x="283.5" y="-333.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">debug</text>
+</a>
+</g>
+</g>
+<!-- module~debug&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge4" class="edge"><title>module~debug&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M257.235,-348.203C251.816,-350.982 246.168,-354.001 241,-357 198.404,-381.713 193.681,-437.59 148.5,-418"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M146.5,-418C59.5311,-380.291 35.9966,-250.66 29.9638,-198.25"/>
+<polygon fill="#000000" stroke="#000000" points="33.4163,-197.612 28.9003,-188.028 26.4539,-198.336 33.4163,-197.612"/>
+</g>
+<!-- module~explicit_euler -->
+<g id="module~~bc~~UsedByGraph_node6" class="node"><title>module~explicit_euler</title>
+<g id="a_module~~bc~~UsedByGraph_node6"><a xlink:href=".././module/explicit_euler.html" xlink:title="explicit_euler">
+<polygon fill="#337ab7" stroke="#337ab7" points="321,-150 246,-150 246,-126 321,-126 321,-150"/>
+<text text-anchor="middle" x="283.5" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">explicit_euler</text>
+</a>
+</g>
+</g>
+<!-- module~explicit_euler&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge5" class="edge"><title>module~explicit_euler&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M257.468,-125.981C224.735,-110.928 169.139,-87.8094 148.5,-94"/>
+</g>
+<!-- module~explicit_euler&#45;&gt;module~element_dynamics -->
+<g id="module~~bc~~UsedByGraph_edge23" class="edge"><title>module~explicit_euler&#45;&gt;module~element_dynamics</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M245.884,-136.907C234.389,-136.564 221.38,-136.176 208.699,-135.797"/>
+<polygon fill="#000000" stroke="#000000" points="208.735,-132.297 198.635,-135.497 208.526,-139.293 208.735,-132.297"/>
+</g>
+<!-- module~explicit_euler&#45;&gt;module~element_geometry -->
+<g id="module~~bc~~UsedByGraph_edge29" class="edge"><title>module~explicit_euler&#45;&gt;module~element_geometry</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M245.884,-148.384C232.027,-152.313 215.969,-156.867 200.939,-161.129"/>
+<polygon fill="#000000" stroke="#000000" points="199.91,-157.783 191.244,-163.879 201.819,-164.518 199.91,-157.783"/>
+</g>
+<!-- module~explicit_euler&#45;&gt;module~face_values -->
+<g id="module~~bc~~UsedByGraph_edge33" class="edge"><title>module~explicit_euler&#45;&gt;module~face_values</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M261.315,-150.241C254.643,-154.367 247.358,-159.158 241,-164 223.732,-177.15 223.517,-185.675 205,-197 200.919,-199.496 196.493,-201.771 191.976,-203.823"/>
+<polygon fill="#000000" stroke="#000000" points="190.531,-200.633 182.658,-207.723 193.234,-207.091 190.531,-200.633"/>
+</g>
+<!-- module~element_dynamics&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge6" class="edge"><title>module~element_dynamics&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M112.543,-146.036C97.2828,-151.444 79.2673,-157.829 63.796,-163.313"/>
+<polygon fill="#000000" stroke="#000000" points="62.3074,-160.127 54.0511,-166.767 64.6459,-166.725 62.3074,-160.127"/>
+</g>
+<!-- module~diagnostic&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge7" class="edge"><title>module~diagnostic&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M116.763,-288.058C107.529,-284.033 97.7502,-278.72 90,-272 65.9303,-251.13 47.6632,-218.673 37.3891,-197.374"/>
+<polygon fill="#000000" stroke="#000000" points="40.5068,-195.778 33.1178,-188.185 34.1591,-198.729 40.5068,-195.778"/>
+</g>
+<!-- module~element_geometry&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge8" class="edge"><title>module~element_geometry&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M96.2453,-176C85.4773,-176 74.3034,-176 64.1913,-176"/>
+<polygon fill="#000000" stroke="#000000" points="64.0993,-172.5 54.0993,-176 64.0992,-179.5 64.0993,-172.5"/>
+</g>
+<!-- module~case_simple_channel -->
+<g id="module~~bc~~UsedByGraph_node10" class="node"><title>module~case_simple_channel</title>
+<g id="a_module~~bc~~UsedByGraph_node10"><a xlink:href=".././module/case_simple_channel.html" xlink:title="case_simple_channel">
+<polygon fill="#337ab7" stroke="#337ab7" points="205,-24 90,-24 90,-0 205,-0 205,-24"/>
+<text text-anchor="middle" x="147.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">case_simple_channel</text>
+</a>
+</g>
+</g>
+<!-- module~case_simple_channel&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge9" class="edge"><title>module~case_simple_channel&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M102.716,-24.0663C98.0876,-26.5252 93.7211,-29.472 90,-33 54.8692,-66.3083 38.5604,-122.902 31.9237,-153.967"/>
+<polygon fill="#000000" stroke="#000000" points="28.484,-153.32 29.9646,-163.811 35.3493,-154.686 28.484,-153.32"/>
+</g>
+<!-- module~face_values&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge10" class="edge"><title>module~face_values&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M112.543,-205.964C97.2828,-200.556 79.2673,-194.171 63.796,-188.687"/>
+<polygon fill="#000000" stroke="#000000" points="64.6459,-185.275 54.0511,-185.233 62.3074,-191.873 64.6459,-185.275"/>
+</g>
+<!-- module~time_loop -->
+<g id="module~~bc~~UsedByGraph_node12" class="node"><title>module~time_loop</title>
+<g id="a_module~~bc~~UsedByGraph_node12"><a xlink:href=".././module/time_loop.html" xlink:title="time_loop">
+<polygon fill="#337ab7" stroke="#337ab7" points="421,-250 362,-250 362,-226 421,-226 421,-250"/>
+<text text-anchor="middle" x="391.5" y="-235.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">time_loop</text>
+</a>
+</g>
+</g>
+<!-- module~time_loop&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge11" class="edge"><title>module~time_loop&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M361.767,-243.774C340.478,-247.966 310.734,-253.644 284.5,-258"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M282.5,-258C223.749,-267.756 206.544,-271.331 148.5,-258"/>
+</g>
+<!-- module~time_loop&#45;&gt;module~runge_kutta -->
+<g id="module~~bc~~UsedByGraph_edge15" class="edge"><title>module~time_loop&#45;&gt;module~runge_kutta</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M361.815,-232.588C351.675,-230.675 340.02,-228.475 328.885,-226.375"/>
+<polygon fill="#000000" stroke="#000000" points="329.34,-222.899 318.865,-224.484 328.042,-229.777 329.34,-222.899"/>
+</g>
+<!-- module~time_loop&#45;&gt;module~output -->
+<g id="module~~bc~~UsedByGraph_edge17" class="edge"><title>module~time_loop&#45;&gt;module~output</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M386.612,-250.33C378.666,-273.803 358.519,-325.386 326,-357 323.937,-359.005 321.645,-360.859 319.227,-362.565"/>
+<polygon fill="#000000" stroke="#000000" points="317.376,-359.594 310.673,-367.798 321.03,-365.565 317.376,-359.594"/>
+</g>
+<!-- module~time_loop&#45;&gt;module~debug -->
+<g id="module~~bc~~UsedByGraph_edge20" class="edge"><title>module~time_loop&#45;&gt;module~debug</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M377.502,-250.017C359.463,-266.695 326.641,-297.039 305.207,-316.856"/>
+<polygon fill="#000000" stroke="#000000" points="302.571,-314.526 297.604,-323.885 307.323,-319.666 302.571,-314.526"/>
+</g>
+<!-- module~time_loop&#45;&gt;module~explicit_euler -->
+<g id="module~~bc~~UsedByGraph_edge21" class="edge"><title>module~time_loop&#45;&gt;module~explicit_euler</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M381.627,-225.746C369.994,-210.209 348.421,-183.146 326,-164 322.561,-161.063 318.76,-158.225 314.895,-155.57"/>
+<polygon fill="#000000" stroke="#000000" points="316.743,-152.597 306.45,-150.086 312.93,-158.467 316.743,-152.597"/>
+</g>
+<!-- module~time_loop&#45;&gt;module~diagnostic -->
+<g id="module~~bc~~UsedByGraph_edge27" class="edge"><title>module~time_loop&#45;&gt;module~diagnostic</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M282.5,-258C249.901,-263.414 214.086,-274.378 187.691,-283.46"/>
+<polygon fill="#000000" stroke="#000000" points="186.343,-280.224 178.062,-286.834 188.657,-286.83 186.343,-280.224"/>
+</g>
+<!-- module~time_loop&#45;&gt;module~face_values -->
+<g id="module~~bc~~UsedByGraph_edge35" class="edge"><title>module~time_loop&#45;&gt;module~face_values</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M376.802,-225.988C364.473,-216.032 345.366,-202.634 326,-197 281.607,-184.085 228.764,-193.316 192.344,-203.29"/>
+<polygon fill="#000000" stroke="#000000" points="191.175,-199.984 182.527,-206.105 193.105,-206.713 191.175,-199.984"/>
+</g>
+<!-- module~initial_condition -->
+<g id="module~~bc~~UsedByGraph_node13" class="node"><title>module~initial_condition</title>
+<g id="a_module~~bc~~UsedByGraph_node13"><a xlink:href=".././module/initial_condition.html" xlink:title="initial_condition">
+<polygon fill="#337ab7" stroke="#337ab7" points="326,-108 241,-108 241,-84 326,-84 326,-108"/>
+<text text-anchor="middle" x="283.5" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">initial_condition</text>
+</a>
+</g>
+</g>
+<!-- module~initial_condition&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge12" class="edge"><title>module~initial_condition&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M240.854,-89.0006C213.941,-86.018 178.474,-85.0094 148.5,-94"/>
+</g>
+<!-- module~initial_condition&#45;&gt;module~element_dynamics -->
+<g id="module~~bc~~UsedByGraph_edge22" class="edge"><title>module~initial_condition&#45;&gt;module~element_dynamics</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M240.836,-107.815C228.224,-111.392 214.208,-115.366 200.984,-119.116"/>
+<polygon fill="#000000" stroke="#000000" points="199.728,-115.835 191.062,-121.93 201.638,-122.569 199.728,-115.835"/>
+</g>
+<!-- module~initial_condition&#45;&gt;module~element_geometry -->
+<g id="module~~bc~~UsedByGraph_edge28" class="edge"><title>module~initial_condition&#45;&gt;module~element_geometry</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M255.352,-108.034C250.395,-110.699 245.403,-113.719 241,-117 222.346,-130.902 224.407,-142.17 205,-155 202.586,-156.596 200.034,-158.092 197.402,-159.492"/>
+<polygon fill="#000000" stroke="#000000" points="195.74,-156.407 188.23,-163.881 198.761,-162.721 195.74,-156.407"/>
+</g>
+<!-- module~initial_condition&#45;&gt;module~face_values -->
+<g id="module~~bc~~UsedByGraph_edge32" class="edge"><title>module~initial_condition&#45;&gt;module~face_values</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M252.231,-108.178C248.135,-110.684 244.235,-113.614 241,-117 214.066,-145.191 233.478,-170.369 205,-197 201.181,-200.572 196.7,-203.549 191.961,-206.028"/>
+<polygon fill="#000000" stroke="#000000" points="190.331,-202.923 182.637,-210.207 193.194,-209.311 190.331,-202.923"/>
+</g>
+<!-- program~main -->
+<g id="module~~bc~~UsedByGraph_node14" class="node"><title>program~main</title>
+<g id="a_module~~bc~~UsedByGraph_node14"><a xlink:href=".././program/main.html" xlink:title="main">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="511,-250 457,-250 457,-226 511,-226 511,-250"/>
+<text text-anchor="middle" x="484" y="-235.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">main</text>
+</a>
+</g>
+</g>
+<!-- program~main&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge13" class="edge"><title>program~main&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M390.5,-357C359.948,-372.389 358.228,-387.53 326,-399 251.253,-425.602 221.292,-449.562 148.5,-418"/>
+</g>
+<!-- program~main&#45;&gt;module~output -->
+<g id="module~~bc~~UsedByGraph_edge16" class="edge"><title>program~main&#45;&gt;module~output</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M390.5,-357C368.732,-367.65 341.943,-372.899 320.742,-375.486"/>
+<polygon fill="#000000" stroke="#000000" points="320.096,-372.036 310.526,-376.583 320.843,-378.996 320.096,-372.036"/>
+</g>
+<!-- program~main&#45;&gt;module~debug -->
+<g id="module~~bc~~UsedByGraph_edge19" class="edge"><title>program~main&#45;&gt;module~debug</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M390.5,-357C366.866,-368.563 337.314,-361.154 315.421,-352.09"/>
+<polygon fill="#000000" stroke="#000000" points="316.809,-348.877 306.249,-348.013 313.966,-355.273 316.809,-348.877"/>
+</g>
+<!-- program~main&#45;&gt;module~diagnostic -->
+<g id="module~~bc~~UsedByGraph_edge25" class="edge"><title>program~main&#45;&gt;module~diagnostic</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M478.277,-250.079C467.555,-275.579 438.663,-334.414 392.5,-357"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M390.5,-357C359.772,-372.034 358.292,-326.29 326,-315 280.785,-299.192 225.385,-296.283 188.629,-296.455"/>
+<polygon fill="#000000" stroke="#000000" points="188.271,-292.959 178.317,-296.586 188.361,-299.958 188.271,-292.959"/>
+</g>
+<!-- program~main&#45;&gt;module~time_loop -->
+<g id="module~~bc~~UsedByGraph_edge36" class="edge"><title>program~main&#45;&gt;module~time_loop</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M456.824,-238C448.881,-238 439.98,-238 431.39,-238"/>
+<polygon fill="#000000" stroke="#000000" points="431.152,-234.5 421.152,-238 431.152,-241.5 431.152,-234.5"/>
+</g>
+<!-- program~main&#45;&gt;module~initial_condition -->
+<g id="module~~bc~~UsedByGraph_edge37" class="edge"><title>program~main&#45;&gt;module~initial_condition</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M390.5,-96C374.853,-85.4609 354.739,-83.3626 336.245,-84.6349"/>
+<polygon fill="#000000" stroke="#000000" points="335.772,-81.1649 326.176,-85.6563 336.478,-88.1292 335.772,-81.1649"/>
+</g>
+<!-- module~test_cases -->
+<g id="module~~bc~~UsedByGraph_node15" class="node"><title>module~test_cases</title>
+<g id="a_module~~bc~~UsedByGraph_node15"><a xlink:href=".././module/test_cases.html" xlink:title="test_cases">
+<polygon fill="#337ab7" stroke="#337ab7" points="315.5,-66 251.5,-66 251.5,-42 315.5,-42 315.5,-66"/>
+<text text-anchor="middle" x="283.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">test_cases</text>
+</a>
+</g>
+</g>
+<!-- program~main&#45;&gt;module~test_cases -->
+<g id="module~~bc~~UsedByGraph_edge38" class="edge"><title>program~main&#45;&gt;module~test_cases</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M479.012,-225.699C469.232,-197.643 441.236,-128.825 392.5,-96"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M390.5,-96C370.747,-82.6958 346.148,-72.6201 325.621,-65.6769"/>
+<polygon fill="#000000" stroke="#000000" points="326.503,-62.2832 315.911,-62.5196 324.338,-68.9402 326.503,-62.2832"/>
+</g>
+<!-- module~test_cases&#45;&gt;module~bc -->
+<g id="module~~bc~~UsedByGraph_edge14" class="edge"><title>module~test_cases&#45;&gt;module~bc</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M251.355,-63.2716C224.193,-71.3638 183.731,-83.4327 148.5,-94"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M146.5,-94C121.124,-101.611 112.462,-98.952 90,-113 71.8989,-124.321 55.1607,-141.944 43.6502,-155.675"/>
+<polygon fill="#000000" stroke="#000000" points="40.7774,-153.661 37.1933,-163.631 46.2126,-158.072 40.7774,-153.661"/>
+</g>
+<!-- module~test_cases&#45;&gt;module~case_y_channel -->
+<g id="module~~bc~~UsedByGraph_edge18" class="edge"><title>module~test_cases&#45;&gt;module~case_y_channel</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M251.421,-54C236.951,-54 219.308,-54 202.744,-54"/>
+<polygon fill="#000000" stroke="#000000" points="202.609,-50.5001 192.609,-54 202.609,-57.5001 202.609,-50.5001"/>
+</g>
+<!-- module~test_cases&#45;&gt;module~case_simple_channel -->
+<g id="module~~bc~~UsedByGraph_edge31" class="edge"><title>module~test_cases&#45;&gt;module~case_simple_channel</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M251.421,-44.2588C235.168,-39.1646 214.911,-32.8154 196.678,-27.1006"/>
+<polygon fill="#000000" stroke="#000000" points="197.668,-23.7429 187.079,-24.0918 195.574,-30.4225 197.668,-23.7429"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="490pt" height="32pt"
+ viewBox="0.00 0.00 489.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 485.5,-28 485.5,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node"><title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,-0 54,-0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node"><title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="139.5,-24 72.5,-24 72.5,-0 139.5,-0 139.5,-24"/>
+<text text-anchor="middle" x="106" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node"><title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="222,-24 158,-24 158,-0 222,-0 222,-24"/>
+<text text-anchor="middle" x="190" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node"><title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="294,-24 240,-24 240,-0 294,-0 294,-24"/>
+<text text-anchor="middle" x="267" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node"><title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="366,-24 312,-24 312,-0 366,-0 366,-24"/>
+<text text-anchor="middle" x="339" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="481.5,-24 384.5,-24 384.5,-0 481.5,-0 481.5,-24"/>
+<text text-anchor="middle" x="433" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a submodule to the (sub)module which it is
+    descended from. Dashed arrows point from a module or program unit to 
+    modules which it uses.
+    </p>
+    </div></div></div></div>
+  </li>
+  
+      </ul>
+    </div>
+    
+
+    <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#vars-1">Variables</a></h3></div>
+  <div id="vars-1" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/bc.html#variable-debuglevel%7E2">debuglevel</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-1">Subroutines</a></h3></div>
+  <div class="list-group">
+    <div id="subs-1" class="panel-collapse collapse">
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_allocate">bc_allocate</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_applied_onface">bc_applied_onface</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_applied_onelement">bc_applied_onelement</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_checks">bc_checks</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_timescale_value">bc_timescale_value</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_nullify_ghost_elem">bc_nullify_ghost_elem</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_adequate_coverage">bc_adequate_coverage</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_onface">bc_onface</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_face_othervalues">bc_face_othervalues</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_onelement">bc_onelement</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_updatevalue">bc_updatevalue</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_node_assignment_error_check">bc_node_assignment_error_check</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_assign_faceid">bc_assign_faceID</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_adequate_coverage_onedir">bc_adequate_coverage_onedir</a>
+      
+      <a class="list-group-item" href="../module/bc.html#proc-bc_ghost_othervalues">bc_ghost_othervalues</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    
+
+    
+    <section>
+    <h2>Variables</h2>
+    
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th><th>Visibility</th>
+
+<th>Attributes</th><th></th><th>Name</th><th></th><th>Initial</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-debuglevel%7E2"></span>integer,</td>
+  
+  <td>private</td>
+  <td></td><td>::</td>
+  <td><strong>debuglevel</strong></td><td> =</td><td>0</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+    </section>
+    <br>
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+
+    
+    <section>
+    <h2>Subroutines</h2>
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_allocate"></span><h3>
+public subroutine <a href='../proc/bc_allocate.html'>bc_allocate</a>(bcdataDn, bcdataUp, ndnstreamBC, nupstreamBC, ntimepoint)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(out),</td>
+  <td></td>
+  
+  <td>dimension(:), allocatable</td><td>::</td>
+  <td><strong>bcdataDn</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(out),</td>
+  <td></td>
+  
+  <td>dimension(:), allocatable</td><td>::</td>
+  <td><strong>bcdataUp</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>ndnstreamBC</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>nupstreamBC</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>ntimepoint</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_applied_onface"></span><h3>
+public subroutine <a href='../proc/bc_applied_onface.html'>bc_applied_onface</a>(faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity_new, thisTime)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>faceR</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>faceI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2R</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2I</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdataDn</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdataUp</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>e2r_Velocity_new</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>thisTime</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_applied_onelement"></span><h3>
+public subroutine <a href='../proc/bc_applied_onelement.html'>bc_applied_onelement</a>(elem2R, bcdataDn, bcdataUp, thisTime, thiscategory, e2r_VelocityColumn)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2R</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdataDn</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdataUp</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>thisTime</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>thiscategory</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>e2r_VelocityColumn</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_checks"></span><h3>
+public subroutine <a href='../proc/bc_checks.html'>bc_checks</a>(bcdataUp, bcdataDn, elem2I, faceI, nodeI)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdataUp</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdataDn</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2I</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>faceI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>nodeI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_timescale_value"></span><h3>
+public subroutine <a href='../proc/bc_timescale_value.html'>bc_timescale_value</a>(elem2R, bcdata)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2R</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>bcdata</strong>(:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_nullify_ghost_elem"></span><h3>
+public subroutine <a href='../proc/bc_nullify_ghost_elem.html'>bc_nullify_ghost_elem</a>(elem2R, bcdata)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2R</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>bcdata</strong>(:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_adequate_coverage"></span><h3>
+private subroutine <a href='../proc/bc_adequate_coverage.html'>bc_adequate_coverage</a>(bcdataUp, bcdataDn)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdataUp</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdataDn</strong>(:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_onface"></span><h3>
+private subroutine <a href='../proc/bc_onface.html'>bc_onface</a>(faceR, faceI, elem2R, bcdata, thisTime)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>faceR</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>faceI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2R</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>bcdata</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>thisTime</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_face_othervalues"></span><h3>
+private subroutine <a href='../proc/bc_face_othervalues.html'>bc_face_othervalues</a>(faceR, faceI, elem2R, bcdata)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(inout),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>faceR</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>faceI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>elem2R</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>bcdata</strong>(:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_onelement"></span><h3>
+private subroutine <a href='../proc/bc_onelement.html'>bc_onelement</a>(elem2R, bcdata, thisTime, thiscategory, e2r_VelocityColumn)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2R</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>bcdata</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>thisTime</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>thiscategory</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>e2r_VelocityColumn</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_updatevalue"></span><h3>
+private subroutine <a href='../proc/bc_updatevalue.html'>bc_updatevalue</a>(bcdata, thisTime)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdata</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>thisTime</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_node_assignment_error_check"></span><h3>
+private subroutine <a href='../proc/bc_node_assignment_error_check.html'>bc_node_assignment_error_check</a>(nodeI, faceI, nBCdir)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>nodeI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>faceI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>nBCdir</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_assign_faceid"></span><h3>
+private subroutine <a href='../proc/bc_assign_faceid.html'>bc_assign_faceID</a>(bcdata, faceI)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(inout),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>bcdata</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>faceI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_adequate_coverage_onedir"></span><h3>
+private subroutine <a href='../proc/bc_adequate_coverage_onedir.html'>bc_adequate_coverage_onedir</a>(bcdata, nBCdir)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>bcdata</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>nBCdir</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-bc_ghost_othervalues"></span><h3>
+private subroutine <a href='../proc/bc_ghost_othervalues.html'>bc_ghost_othervalues</a>(elem2R, elem2I, faceR, faceI, bcdata, e2i_Mface_dir, e2r_Velocity_new, fr_Area_dir, fr_Velocity_dir, fr_HydDepth_dir, fr_Eta_dir)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2R</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>elem2I</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>faceR</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>faceI</strong>(:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>type(bcType),</td>
+  <td>intent(in),</td>
+  <td></td>
+  
+  <td>target</td><td>::</td>
+  <td><strong>bcdata</strong>(:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>e2i_Mface_dir</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>e2r_Velocity_new</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>fr_Area_dir</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>fr_Velocity_dir</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>fr_HydDepth_dir</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>fr_Eta_dir</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    </section>    
+    <br>
+    
+    
+    
+    </div>
+  </div>
+
+  
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2019 
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> SWMMengine was developed by Ben R. Hodges and Ehsan Madadi-Kandjani</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>

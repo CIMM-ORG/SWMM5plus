@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="Prototype Fortran 2008 engine for the EPA Storm Water Management Model (SWMM)">
+    
+    <meta name="author" content="Ben R. Hodges and Ehsan Madadi-Kandjani" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>utility.f08 &ndash; SWMMengine</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">SWMMengine </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/main.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/main.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>utility.f08
+    <small>Source File</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 2.5% of total for source files.">187 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/utility.f08"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+  
+     <li class="active">utility.f08</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-0">Modules</a></h3></div>
+  <div id="mods-0" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/utility.html">utility</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/utility.f08.html#src">utility.f08</a>
+  </div>
+</div>
+
+
+
+</div>
+
+    </div>
+    <div class="col-md-9" id='text'>
+      
+      <br>
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">This file depends on</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~utility.f08~~EfferentGraph Pages: 1 -->
+<svg id="sourcefileutilityf08EfferentGraph" width="574pt" height="114pt"
+ viewBox="0.00 0.00 574.00 114.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~utility.f08~~EfferentGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 110)">
+<title>sourcefile~~utility.f08~~EfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-110 570,-110 570,4 -4,4"/>
+<!-- sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_node1" class="node"><title>sourcefile~utility.f08</title>
+<polygon fill="none" stroke="black" points="566,-66 511,-66 511,-42 566,-42 566,-66"/>
+<text text-anchor="middle" x="538.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50">utility.f08</text>
+</g>
+<!-- sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_node2" class="node"><title>sourcefile~setting_definition.f08</title>
+<g id="a_sourcefile~~utility.f08~~EfferentGraph_node2"><a xlink:href=".././sourcefile/setting_definition.f08.html" xlink:title="setting_definition.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="252,-106 141,-106 141,-82 252,-82 252,-106"/>
+<text text-anchor="middle" x="196.5" y="-91.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">setting_definition.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_edge2" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-94C373.825,-99.122 309.078,-98.6147 262.245,-97.1182"/>
+<polygon fill="#000000" stroke="#000000" points="262.35,-93.6199 252.236,-96.7747 262.11,-100.616 262.35,-93.6199"/>
+</g>
+<!-- sourcefile~globals.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_node3" class="node"><title>sourcefile~globals.f08</title>
+<g id="a_sourcefile~~utility.f08~~EfferentGraph_node3"><a xlink:href=".././sourcefile/globals.f08.html" xlink:title="globals.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="352,-66 288,-66 288,-42 352,-42 352,-66"/>
+<text text-anchor="middle" x="320" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">globals.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_edge1" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M516.221,-66.0827C495.583,-76.8234 463.002,-91.2434 432.5,-94"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-94C401.002,-96.6659 369.446,-83.2123 347.824,-71.1975"/>
+<polygon fill="#000000" stroke="#000000" points="349.321,-68.0189 338.917,-66.0151 345.8,-74.0693 349.321,-68.0189"/>
+</g>
+<!-- sourcefile~data_keys.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_node4" class="node"><title>sourcefile~data_keys.f08</title>
+<g id="a_sourcefile~~utility.f08~~EfferentGraph_node4"><a xlink:href=".././sourcefile/data_keys.f08.html" xlink:title="data_keys.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="471,-66 392,-66 392,-42 471,-42 471,-66"/>
+<text text-anchor="middle" x="431.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">data_keys.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_edge3" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.732,-54C501.71,-54 491.34,-54 481.163,-54"/>
+<polygon fill="#000000" stroke="#000000" points="481.108,-50.5001 471.108,-54 481.108,-57.5001 481.108,-50.5001"/>
+</g>
+<!-- sourcefile~array_index.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_node5" class="node"><title>sourcefile~array_index.f08</title>
+<g id="a_sourcefile~~utility.f08~~EfferentGraph_node5"><a xlink:href=".././sourcefile/array_index.f08.html" xlink:title="array_index.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="475,-24 388,-24 388,-0 475,-0 475,-24"/>
+<text text-anchor="middle" x="431.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">array_index.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_edge4" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.732,-43.293C499.015,-38.6061 485.026,-33.0105 472.139,-27.8556"/>
+<polygon fill="#000000" stroke="#000000" points="473.139,-24.4862 462.555,-24.0219 470.54,-30.9855 473.139,-24.4862"/>
+</g>
+<!-- sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_node6" class="node"><title>sourcefile~type_definitions.f08</title>
+<g id="a_sourcefile~~utility.f08~~EfferentGraph_node6"><a xlink:href=".././sourcefile/type_definitions.f08.html" xlink:title="type_definitions.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="105,-86 0,-86 0,-62 105,-62 105,-86"/>
+<text text-anchor="middle" x="52.5" y="-71.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">type_definitions.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_edge5" class="edge"><title>sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M140.599,-86.2675C132.387,-85.1109 123.872,-83.9116 115.525,-82.736"/>
+<polygon fill="#000000" stroke="#000000" points="115.85,-79.2472 105.459,-81.3182 114.873,-86.1788 115.85,-79.2472"/>
+</g>
+<!-- sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_edge6" class="edge"><title>sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M287.711,-64.301C274.457,-68.6644 258.735,-73.8404 244.158,-78.6393"/>
+<polygon fill="#000000" stroke="#000000" points="242.698,-75.4351 234.294,-81.8867 244.887,-82.0841 242.698,-75.4351"/>
+</g>
+<!-- sourcefile~globals.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_edge7" class="edge"><title>sourcefile~globals.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M287.763,-56.3531C245.524,-59.5349 169.275,-65.2787 115.253,-69.3482"/>
+<polygon fill="#000000" stroke="#000000" points="114.808,-65.8717 105.099,-70.113 115.334,-72.8519 114.808,-65.8717"/>
+</g>
+<!-- sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_edge8" class="edge"><title>sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M391.894,-54C382.308,-54 371.997,-54 362.287,-54"/>
+<polygon fill="#000000" stroke="#000000" points="362.051,-50.5001 352.051,-54 362.051,-57.5001 362.051,-50.5001"/>
+</g>
+<!-- sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~utility.f08~~EfferentGraph_edge9" class="edge"><title>sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M399.122,-24.0355C387.453,-28.5112 374.04,-33.6557 361.659,-38.4046"/>
+<polygon fill="#000000" stroke="#000000" points="360.088,-35.2588 352.004,-42.1079 362.595,-41.7945 360.088,-35.2588"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+    
+      
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Files dependent on this one</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~utility.f08~~AfferentGraph Pages: 1 -->
+<svg id="sourcefileutilityf08AfferentGraph" width="641pt" height="641pt"
+ viewBox="0.00 0.00 641.00 640.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~utility.f08~~AfferentGraph" class="graph" transform="scale(0.891516 0.891516) rotate(0) translate(4 714.902)">
+<title>sourcefile~~utility.f08~~AfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-714.902 715,-714.902 715,4 -4,4"/>
+<!-- sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node1" class="node"><title>sourcefile~utility.f08</title>
+<polygon fill="none" stroke="black" points="55,-388.441 0,-388.441 0,-364.441 55,-364.441 55,-388.441"/>
+<text text-anchor="middle" x="27.5" y="-374.041" font-family="Helvetica,sans-Serif" font-size="10.50">utility.f08</text>
+</g>
+<!-- sourcefile~debug.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node2" class="node"><title>sourcefile~debug.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node2"><a xlink:href=".././sourcefile/debug.f08.html" xlink:title="debug.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="487,-570.441 426,-570.441 426,-546.441 487,-546.441 487,-570.441"/>
+<text text-anchor="middle" x="456.5" y="-556.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">debug.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~debug.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge1" class="edge"><title>sourcefile~debug.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M445.91,-570.481C431.204,-588.156 401.363,-621.02 369,-639.441 342.657,-654.435 332.417,-649.353 303.5,-658.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M301.5,-658.441C284.583,-663.757 161.631,-705.687 146.5,-696.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M144.5,-696.441C39.3566,-632.188 28.537,-460.297 28.1403,-398.749"/>
+<polygon fill="#000000" stroke="#000000" points="31.6406,-398.6 28.1671,-388.591 24.6406,-398.582 31.6406,-398.6"/>
+</g>
+<!-- sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node13" class="node"><title>sourcefile~bc.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node13"><a xlink:href=".././sourcefile/bc.f08.html" xlink:title="bc.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="172.5,-428.441 118.5,-428.441 118.5,-404.441 172.5,-404.441 172.5,-428.441"/>
+<text text-anchor="middle" x="145.5" y="-414.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~debug.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge41" class="edge"><title>sourcefile~debug.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M425.725,-547.658C394.823,-536.242 345.258,-517.298 303.5,-498.441"/>
+</g>
+<!-- sourcefile~main.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node3" class="node"><title>sourcefile~main.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node3"><a xlink:href=".././sourcefile/main.f08.html" xlink:title="main.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="711,-450.441 657,-450.441 657,-426.441 711,-426.441 711,-450.441"/>
+<text text-anchor="middle" x="684" y="-436.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">main.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge2" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M301.5,-696.441C233.143,-687.897 205.282,-732.363 146.5,-696.441"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~debug.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge17" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~debug.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.5,-598.441C565.054,-605.34 521.821,-588.563 491.04,-574.66"/>
+<polygon fill="#000000" stroke="#000000" points="492.478,-571.469 481.931,-570.467 489.551,-577.828 492.478,-571.469"/>
+</g>
+<!-- sourcefile~output.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node4" class="node"><title>sourcefile~output.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node4"><a xlink:href=".././sourcefile/output.f08.html" xlink:title="output.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="487,-528.441 426,-528.441 426,-504.441 487,-504.441 487,-528.441"/>
+<text text-anchor="middle" x="456.5" y="-514.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">output.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~output.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge19" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~output.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.5,-598.441C542.353,-614.863 544.336,-559.391 508,-537.441 504.343,-535.232 500.411,-533.15 496.414,-531.22"/>
+<polygon fill="#000000" stroke="#000000" points="497.622,-527.925 487.068,-527.001 494.742,-534.305 497.622,-527.925"/>
+</g>
+<!-- sourcefile~junction.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node5" class="node"><title>sourcefile~junction.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node5"><a xlink:href=".././sourcefile/junction.f08.html" xlink:title="junction.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="179,-151.441 112,-151.441 112,-127.441 179,-127.441 179,-151.441"/>
+<text text-anchor="middle" x="145.5" y="-137.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge22" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M679.286,-426.275C669.058,-394.637 637.593,-308.822 583.5,-259.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.5,-259.441C540.233,-221.768 552.302,-191.494 508,-157.441 455.58,-117.148 434.023,-116.417 369,-104.441 310.867,-93.7339 294.087,-93.487 236,-104.441 216.539,-108.111 195.882,-115.903 179.323,-123.205"/>
+<polygon fill="#000000" stroke="#000000" points="177.736,-120.081 170.087,-127.412 180.639,-126.451 177.736,-120.081"/>
+</g>
+<!-- sourcefile~initial_condition.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node6" class="node"><title>sourcefile~initial_condition.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node6"><a xlink:href=".././sourcefile/initial_condition.f08.html" xlink:title="initial_condition.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="508,-190.441 405,-190.441 405,-166.441 508,-166.441 508,-190.441"/>
+<text text-anchor="middle" x="456.5" y="-176.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">initial_condition.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~initial_condition.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge25" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~initial_condition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.5,-259.441C550.606,-230.74 544.183,-221.098 508,-199.441 505.356,-197.858 502.571,-196.339 499.723,-194.894"/>
+<polygon fill="#000000" stroke="#000000" points="501.044,-191.647 490.507,-190.536 498.051,-197.975 501.044,-191.647"/>
+</g>
+<!-- sourcefile~diagnostic.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node10" class="node"><title>sourcefile~diagnostic.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node10"><a xlink:href=".././sourcefile/diagnostic.f08.html" xlink:title="diagnostic.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="342,-470.441 263,-470.441 263,-446.441 342,-446.441 342,-470.441"/>
+<text text-anchor="middle" x="302.5" y="-456.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">diagnostic.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~diagnostic.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge38" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~diagnostic.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M680.322,-450.904C672.458,-483.802 645.94,-572.248 583.5,-598.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.5,-598.441C498.537,-633.243 545.332,-457.923 457.5,-438.441"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge42" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.5,-598.441C508.745,-628.961 477.962,-609.465 405,-579.441 378.314,-568.459 329.787,-510.347 303.5,-498.441"/>
+</g>
+<!-- sourcefile~test_cases.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node14" class="node"><title>sourcefile~test_cases.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node14"><a xlink:href=".././sourcefile/test_cases.f08.html" xlink:title="test_cases.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="497.5,-650.441 415.5,-650.441 415.5,-626.441 497.5,-626.441 497.5,-650.441"/>
+<text text-anchor="middle" x="456.5" y="-636.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">test_cases.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~test_cases.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge55" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~test_cases.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.5,-598.441C557.697,-608.426 530.476,-617.457 507.614,-624.401"/>
+<polygon fill="#000000" stroke="#000000" points="506.354,-621.124 497.776,-627.343 508.36,-627.831 506.354,-621.124"/>
+</g>
+<!-- sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node15" class="node"><title>sourcefile~allocate_storage.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node15"><a xlink:href=".././sourcefile/allocate_storage.f08.html" xlink:title="allocate_storage.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="200,-588.441 91,-588.441 91,-564.441 200,-564.441 200,-588.441"/>
+<text text-anchor="middle" x="145.5" y="-574.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">allocate_storage.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge57" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~allocate_storage.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.5,-598.441C542.322,-614.788 546.483,-641.518 508,-659.441 424.271,-698.436 395.151,-707.896 303.5,-696.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M301.5,-696.441C238.84,-688.609 185.583,-629.087 161.017,-596.921"/>
+<polygon fill="#000000" stroke="#000000" points="163.638,-594.58 154.865,-588.64 158.019,-598.754 163.638,-594.58"/>
+</g>
+<!-- sourcefile~time_loop.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node17" class="node"><title>sourcefile~time_loop.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node17"><a xlink:href=".././sourcefile/time_loop.f08.html" xlink:title="time_loop.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="621,-450.441 544,-450.441 544,-426.441 621,-426.441 621,-450.441"/>
+<text text-anchor="middle" x="582.5" y="-436.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">time_loop.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~time_loop.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge65" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~time_loop.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M656.858,-438.441C648.994,-438.441 640.107,-438.441 631.301,-438.441"/>
+<polygon fill="#000000" stroke="#000000" points="631.068,-434.941 621.068,-438.441 631.068,-441.941 631.068,-434.941"/>
+</g>
+<!-- sourcefile~network_define.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node20" class="node"><title>sourcefile~network_define.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node20"><a xlink:href=".././sourcefile/network_define.f08.html" xlink:title="network_define.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="354,-428.441 251,-428.441 251,-404.441 354,-404.441 354,-428.441"/>
+<text text-anchor="middle" x="302.5" y="-414.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_define.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~network_define.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge68" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~network_define.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.5,-259.441C550.19,-230.353 543.73,-297.993 508,-321.441 455.774,-355.714 389.201,-384.171 346.458,-400.746"/>
+<polygon fill="#000000" stroke="#000000" points="345.007,-397.554 336.921,-404.401 347.511,-404.091 345.007,-397.554"/>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge3" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M425.823,-520.114C383.103,-524.462 302.14,-529.173 236,-512.441 165.661,-494.646 149.827,-479.91 91,-437.441 74.3041,-425.388 57.7326,-408.955 45.8525,-396.182"/>
+<polygon fill="#000000" stroke="#000000" points="48.4248,-393.808 39.1026,-388.774 43.2505,-398.523 48.4248,-393.808"/>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge43" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M425.816,-518.093C394.116,-518.705 343.097,-516.322 303.5,-498.441"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge14" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M111.813,-150.69C104.11,-154.649 96.5388,-159.816 91,-166.441 44.1776,-222.445 32.4326,-312.493 29.4864,-354.073"/>
+<polygon fill="#000000" stroke="#000000" points="25.9827,-354.032 28.8777,-364.224 32.9701,-354.451 25.9827,-354.032"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge5" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M452.788,-166.264C445.411,-136.426 421.88,-59.8872 369,-29.4409 282.473,20.3779 222.695,4.08221 146.5,-60.4409"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M144.5,-60.4409C116.674,-81.7853 107.547,-87.5204 91,-118.441 48.2105,-198.4 34.2748,-307.871 30.117,-354.243"/>
+<polygon fill="#000000" stroke="#000000" points="26.6154,-354.12 29.2773,-364.375 33.5914,-354.698 26.6154,-354.12"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge20" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.674,-166.393C428.152,-151.53 399.303,-127.051 369,-117.441 308.458,-98.2406 234.411,-112.572 188.856,-125.415"/>
+<polygon fill="#000000" stroke="#000000" points="187.643,-122.123 179.027,-128.288 189.607,-128.841 187.643,-122.123"/>
+</g>
+<!-- sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node7" class="node"><title>sourcefile~element_geometry.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node7"><a xlink:href=".././sourcefile/element_geometry.f08.html" xlink:title="element_geometry.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="362.5,-150.441 242.5,-150.441 242.5,-126.441 362.5,-126.441 362.5,-150.441"/>
+<text text-anchor="middle" x="302.5" y="-136.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_geometry.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge27" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M409.895,-166.44C394.036,-162.266 376.062,-157.536 359.462,-153.168"/>
+<polygon fill="#000000" stroke="#000000" points="359.897,-149.663 349.335,-150.503 358.115,-156.433 359.897,-149.663"/>
+</g>
+<!-- sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node8" class="node"><title>sourcefile~element_dynamics.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node8"><a xlink:href=".././sourcefile/element_dynamics.f08.html" xlink:title="element_dynamics.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="362.5,-192.441 242.5,-192.441 242.5,-168.441 362.5,-168.441 362.5,-192.441"/>
+<text text-anchor="middle" x="302.5" y="-178.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_dynamics.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge30" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M404.886,-179.107C394.611,-179.242 383.637,-179.386 372.843,-179.529"/>
+<polygon fill="#000000" stroke="#000000" points="372.531,-176.032 362.578,-179.664 372.623,-183.032 372.531,-176.032"/>
+</g>
+<!-- sourcefile~face_values.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node9" class="node"><title>sourcefile~face_values.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node9"><a xlink:href=".././sourcefile/face_values.f08.html" xlink:title="face_values.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="346.5,-310.441 258.5,-310.441 258.5,-286.441 346.5,-286.441 346.5,-310.441"/>
+<text text-anchor="middle" x="302.5" y="-296.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_values.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~face_values.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge33" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~face_values.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M417.779,-190.48C413.149,-192.971 408.74,-195.933 405,-199.441 378.614,-224.188 395.586,-247.908 369,-272.441 365.11,-276.031 360.664,-279.15 355.961,-281.855"/>
+<polygon fill="#000000" stroke="#000000" points="354.015,-278.917 346.678,-286.561 357.18,-285.16 354.015,-278.917"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge44" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M419.671,-190.53C364.271,-209.872 261.527,-248.535 236,-277.441 201.11,-316.95 234.494,-350.586 200,-390.441 195.075,-396.131 188.618,-400.689 181.902,-404.298"/>
+<polygon fill="#000000" stroke="#000000" points="180.245,-401.209 172.7,-408.647 183.237,-407.538 180.245,-401.209"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge6" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M242.107,-150.526C205.418,-158.751 162.407,-169.998 146.5,-180.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M144.5,-180.441C80.4925,-222.461 46.9463,-313.057 34.4015,-354.699"/>
+<polygon fill="#000000" stroke="#000000" points="31.013,-353.817 31.5967,-364.396 37.7374,-355.762 31.013,-353.817"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge21" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M242.459,-138.822C224.914,-138.935 206.029,-139.057 189.692,-139.162"/>
+<polygon fill="#000000" stroke="#000000" points="189.341,-135.664 179.364,-139.229 189.387,-142.664 189.341,-135.664"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge45" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M246.623,-150.498C242.652,-152.953 239.027,-155.902 236,-159.441 168.462,-238.404 261.761,-306.883 200,-390.441 195.4,-396.664 188.909,-401.472 182.028,-405.16"/>
+<polygon fill="#000000" stroke="#000000" points="180.166,-402.163 172.544,-409.522 183.092,-408.523 180.166,-402.163"/>
+</g>
+<!-- sourcefile~adjustments.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node16" class="node"><title>sourcefile~adjustments.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node16"><a xlink:href=".././sourcefile/adjustments.f08.html" xlink:title="adjustments.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="189.5,-271.441 101.5,-271.441 101.5,-247.441 189.5,-247.441 189.5,-271.441"/>
+<text text-anchor="middle" x="145.5" y="-257.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">adjustments.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge61" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M253.618,-150.476C247.452,-152.968 241.41,-155.931 236,-159.441 218.878,-170.549 183.274,-213.288 162.504,-239.161"/>
+<polygon fill="#000000" stroke="#000000" points="159.576,-237.219 156.077,-247.219 165.049,-241.584 159.576,-237.219"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge7" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M258.089,-168.431C224.826,-161.891 179.231,-158.954 146.5,-180.441"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge23" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M255.833,-168.361C234.653,-162.759 209.632,-156.14 188.876,-150.65"/>
+<polygon fill="#000000" stroke="#000000" points="189.626,-147.228 179.064,-148.055 187.836,-153.996 189.626,-147.228"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge47" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M284.67,-192.476C269.663,-204.098 248.231,-223.048 236,-244.441 202.829,-302.46 242.028,-338.478 200,-390.441 195.223,-396.348 188.773,-401.006 182.007,-404.647"/>
+<polygon fill="#000000" stroke="#000000" points="180.283,-401.59 172.712,-409.002 183.252,-407.929 180.283,-401.59"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge63" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M268.075,-192.543C257.652,-196.626 246.214,-201.428 236,-206.441 214.327,-217.078 190.881,-231.06 173.425,-241.992"/>
+<polygon fill="#000000" stroke="#000000" points="171.462,-239.092 164.883,-247.397 175.205,-245.007 171.462,-239.092"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge8" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M268.436,-310.463C257.924,-314.577 246.345,-319.417 236,-324.441 194.618,-344.538 192.504,-376.636 146.5,-376.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M144.5,-376.441C118.074,-376.329 88.2619,-376.332 65.4776,-376.361"/>
+<polygon fill="#000000" stroke="#000000" points="65.2173,-372.861 55.2227,-376.377 65.2281,-379.861 65.2173,-372.861"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge48" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M258.51,-310.529C250.438,-314.119 242.504,-318.683 236,-324.441 210.983,-346.59 224.175,-367.376 200,-390.441 194.829,-395.374 188.545,-399.54 182.126,-402.993"/>
+<polygon fill="#000000" stroke="#000000" points="180.209,-400.034 172.741,-407.549 183.265,-406.331 180.209,-400.034"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge64" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M258.324,-287.577C240.093,-282.99 218.686,-277.604 199.51,-272.779"/>
+<polygon fill="#000000" stroke="#000000" points="200.265,-269.36 189.713,-270.314 198.557,-276.148 200.265,-269.36"/>
+</g>
+<!-- sourcefile~diagnostic.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge9" class="edge"><title>sourcefile~diagnostic.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M262.819,-449.919C253.574,-446.859 244.058,-442.792 236,-437.441 215.519,-423.84 220.268,-409.358 200,-395.441 179.199,-381.158 171.733,-376.548 146.5,-376.441"/>
+</g>
+<!-- sourcefile~diagnostic.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge53" class="edge"><title>sourcefile~diagnostic.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M262.787,-447.951C238.151,-441.275 206.469,-432.691 182.397,-426.168"/>
+<polygon fill="#000000" stroke="#000000" points="183.157,-422.748 172.59,-423.51 181.326,-429.504 183.157,-422.748"/>
+</g>
+<!-- sourcefile~runge_kutta.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node11" class="node"><title>sourcefile~runge_kutta.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node11"><a xlink:href=".././sourcefile/runge_kutta.f08.html" xlink:title="runge_kutta.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="500.5,-312.441 412.5,-312.441 412.5,-288.441 500.5,-288.441 500.5,-312.441"/>
+<text text-anchor="middle" x="456.5" y="-298.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">runge_kutta.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge10" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M301.5,-376.441C233.366,-386.613 215.388,-376.733 146.5,-376.441"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge26" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M443.097,-288.18C432.075,-276.803 416.044,-259.024 405,-241.441 383.83,-207.736 398.561,-186.093 369,-159.441 367.659,-158.231 366.247,-157.092 364.778,-156.017"/>
+<polygon fill="#000000" stroke="#000000" points="366.19,-152.779 355.831,-150.555 362.542,-158.753 366.19,-152.779"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge29" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M440.089,-288.274C413.46,-267.251 358.668,-223.995 327.174,-199.131"/>
+<polygon fill="#000000" stroke="#000000" points="328.969,-196.089 318.952,-192.64 324.632,-201.583 328.969,-196.089"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~face_values.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge32" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~face_values.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M412.349,-299.873C395.101,-299.646 375.057,-299.382 356.904,-299.144"/>
+<polygon fill="#000000" stroke="#000000" points="356.804,-295.642 346.758,-299.01 356.711,-302.641 356.804,-295.642"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~diagnostic.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge36" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~diagnostic.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M451.127,-312.695C440.977,-339.395 413.257,-403.168 369,-437.441 363.857,-441.423 357.938,-444.662 351.805,-447.293"/>
+<polygon fill="#000000" stroke="#000000" points="350.205,-444.155 342.073,-450.946 352.665,-450.708 350.205,-444.155"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge50" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M301.5,-376.441C260.136,-382.616 213.841,-395.354 182.706,-404.804"/>
+<polygon fill="#000000" stroke="#000000" points="181.284,-401.58 172.758,-407.869 183.345,-408.27 181.284,-401.58"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge60" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.176,-312.542C421.997,-316.697 412.984,-321.541 405,-326.441 388.179,-336.765 386.429,-343.181 369,-352.441 341.62,-366.987 334.164,-371.863 303.5,-376.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M301.5,-376.441C238.136,-385.9 183.44,-316.855 159.454,-280.636"/>
+<polygon fill="#000000" stroke="#000000" points="162.124,-278.316 153.775,-271.792 156.233,-282.098 162.124,-278.316"/>
+</g>
+<!-- sourcefile~explicit_euler.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node12" class="node"><title>sourcefile~explicit_euler.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node12"><a xlink:href=".././sourcefile/explicit_euler.f08.html" xlink:title="explicit_euler.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="503,-232.441 410,-232.441 410,-208.441 503,-208.441 503,-232.441"/>
+<text text-anchor="middle" x="456.5" y="-218.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">explicit_euler.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge11" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M417.376,-208.415C412.863,-205.929 408.593,-202.964 405,-199.441 376.581,-171.574 399.341,-143.202 369,-117.441 291.183,-51.3701 222.879,7.28726 146.5,-60.4409"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge28" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M420.729,-208.4C415.244,-205.828 409.805,-202.842 405,-199.441 385.479,-185.621 389.083,-172.43 369,-159.441 366.377,-157.745 363.607,-156.176 360.746,-154.726"/>
+<polygon fill="#000000" stroke="#000000" points="361.927,-151.419 351.373,-150.49 359.044,-157.798 361.927,-151.419"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge31" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M409.895,-208.44C394.036,-204.266 376.062,-199.536 359.462,-195.168"/>
+<polygon fill="#000000" stroke="#000000" points="359.897,-191.663 349.335,-192.503 358.115,-198.433 359.897,-191.663"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~face_values.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge35" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~face_values.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.176,-232.542C421.997,-236.697 412.984,-241.541 405,-246.441 388.179,-256.765 386.305,-262.95 369,-272.441 362.436,-276.041 355.268,-279.405 348.16,-282.441"/>
+<polygon fill="#000000" stroke="#000000" points="346.495,-279.341 338.566,-286.368 349.147,-285.819 346.495,-279.341"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge49" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M444.897,-232.747C422.324,-258.923 371.37,-317.879 369,-319.441 317.128,-353.626 290.905,-333.375 236,-362.441 218.086,-371.924 217.209,-379.731 200,-390.441 194.227,-394.034 187.885,-397.498 181.647,-400.663"/>
+<polygon fill="#000000" stroke="#000000" points="180.103,-397.522 172.663,-405.065 183.183,-403.808 180.103,-397.522"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge62" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M409.906,-226.195C354.002,-233.251 259.391,-245.193 200.072,-252.679"/>
+<polygon fill="#000000" stroke="#000000" points="199.268,-249.253 189.785,-253.978 200.145,-256.198 199.268,-249.253"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge12" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M118.467,-407.464C102.721,-402.034 82.4024,-395.028 65.0603,-389.048"/>
+<polygon fill="#000000" stroke="#000000" points="65.8451,-385.616 55.2504,-385.665 63.5632,-392.234 65.8451,-385.616"/>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge13" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M415.318,-639.934C384.192,-641.991 340.318,-646.87 303.5,-658.441"/>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge51" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M425.489,-626.304C418.288,-622.532 410.963,-617.902 405,-612.441 382.903,-592.205 388.508,-578.183 369,-555.441 343.875,-526.15 338.671,-514.323 303.5,-498.441"/>
+</g>
+<!-- sourcefile~case_y_channel.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node18" class="node"><title>sourcefile~case_y_channel.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node18"><a xlink:href=".././sourcefile/case_y_channel.f08.html" xlink:title="case_y_channel.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="356.5,-588.441 248.5,-588.441 248.5,-564.441 356.5,-564.441 356.5,-588.441"/>
+<text text-anchor="middle" x="302.5" y="-574.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">case_y_channel.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~case_y_channel.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge66" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~case_y_channel.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M432.009,-626.268C414.819,-617.618 390.792,-606.055 369,-597.441 364.003,-595.465 358.738,-593.536 353.455,-591.696"/>
+<polygon fill="#000000" stroke="#000000" points="354.573,-588.38 343.979,-588.493 352.331,-595.011 354.573,-588.38"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_node19" class="node"><title>sourcefile~case_simple_channel.f08</title>
+<g id="a_sourcefile~~utility.f08~~AfferentGraph_node19"><a xlink:href=".././sourcefile/case_simple_channel.f08.html" xlink:title="case_simple_channel.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="369,-630.441 236,-630.441 236,-606.441 369,-606.441 369,-630.441"/>
+<text text-anchor="middle" x="302.5" y="-616.041" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">case_simple_channel.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~case_simple_channel.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge67" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~case_simple_channel.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M415.166,-633.134C403.993,-631.664 391.489,-630.018 379.004,-628.376"/>
+<polygon fill="#000000" stroke="#000000" points="379.392,-624.897 369.021,-627.062 378.478,-631.837 379.392,-624.897"/>
+</g>
+<!-- sourcefile~allocate_storage.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge4" class="edge"><title>sourcefile~allocate_storage.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M109.568,-564.324C102.73,-560.699 96.1055,-556.127 91,-550.441 51.1606,-506.07 36.229,-434.462 31.0351,-398.518"/>
+<polygon fill="#000000" stroke="#000000" points="34.5013,-398.031 29.719,-388.577 27.5619,-398.95 34.5013,-398.031"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge15" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M132.523,-271.521C112.465,-291.752 71.9133,-332.653 47.7929,-356.982"/>
+<polygon fill="#000000" stroke="#000000" points="45.141,-354.685 40.5858,-364.251 50.1119,-359.614 45.141,-354.685"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~debug.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge16" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~debug.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M575.41,-450.442C564.488,-470.889 539.715,-512.667 508,-537.441 504.409,-540.246 500.391,-542.737 496.23,-544.933"/>
+<polygon fill="#000000" stroke="#000000" points="494.562,-541.85 487.008,-549.279 497.546,-548.182 494.562,-541.85"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~output.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge18" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~output.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M565.877,-450.465C551.287,-461.458 528.711,-477.868 508,-490.441 502.816,-493.588 497.208,-496.724 491.679,-499.671"/>
+<polygon fill="#000000" stroke="#000000" points="489.796,-496.706 482.538,-504.424 493.025,-502.916 489.796,-496.706"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~face_values.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge34" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~face_values.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M580.165,-426.023C576.059,-394.781 560.523,-313.025 508,-279.441 456.612,-246.583 382.589,-266.121 339.127,-282.703"/>
+<polygon fill="#000000" stroke="#000000" points="337.822,-279.455 329.813,-286.39 340.399,-285.963 337.822,-279.455"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~diagnostic.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge37" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~diagnostic.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M543.872,-442.64C519.049,-444.388 485.978,-444.758 457.5,-438.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M455.5,-438.441C420.715,-430.725 380.746,-436.548 350.526,-443.86"/>
+<polygon fill="#000000" stroke="#000000" points="349.494,-440.511 340.673,-446.379 351.229,-447.293 349.494,-440.511"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~runge_kutta.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge39" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~runge_kutta.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M570.496,-426.194C548.933,-402.197 500.965,-348.813 475.002,-319.918"/>
+<polygon fill="#000000" stroke="#000000" points="477.59,-317.562 468.302,-312.463 472.383,-322.241 477.59,-317.562"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~explicit_euler.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge40" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~explicit_euler.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M579.871,-426.08C574.927,-393.042 557.296,-301.473 508,-246.441 505.15,-243.26 501.819,-240.41 498.251,-237.872"/>
+<polygon fill="#000000" stroke="#000000" points="499.953,-234.809 489.611,-232.504 496.258,-240.754 499.953,-234.809"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge52" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M548.653,-450.587C485,-473.301 347.262,-518.203 303.5,-498.441"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M301.5,-498.441C273.889,-485.935 263.322,-492.566 236,-479.441 211.124,-467.491 185.668,-448.823 168.296,-434.906"/>
+<polygon fill="#000000" stroke="#000000" points="170.415,-432.118 160.455,-428.506 165.989,-437.541 170.415,-432.118"/>
+</g>
+<!-- sourcefile~case_y_channel.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge46" class="edge"><title>sourcefile~case_y_channel.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M288.772,-564.343C275.446,-551.6 253.997,-530.865 236,-512.441 210.67,-486.51 182.26,-455.736 164.379,-436.151"/>
+<polygon fill="#000000" stroke="#000000" points="166.945,-433.771 157.624,-428.735 161.771,-438.485 166.945,-433.771"/>
+</g>
+<!-- sourcefile~case_y_channel.f08&#45;&gt;sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge56" class="edge"><title>sourcefile~case_y_channel.f08&#45;&gt;sourcefile~allocate_storage.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M248.158,-576.441C236.048,-576.441 223.065,-576.441 210.563,-576.441"/>
+<polygon fill="#000000" stroke="#000000" points="210.204,-572.941 200.203,-576.441 210.203,-579.941 210.204,-572.941"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge54" class="edge"><title>sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M249.659,-606.306C244.736,-603.87 240.072,-600.947 236,-597.441 185.953,-554.345 161.095,-476.649 151.457,-438.622"/>
+<polygon fill="#000000" stroke="#000000" points="154.785,-437.492 149.038,-428.592 147.98,-439.134 154.785,-437.492"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge58" class="edge"><title>sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~allocate_storage.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M257.083,-606.405C239.491,-601.638 219.099,-596.113 200.653,-591.115"/>
+<polygon fill="#000000" stroke="#000000" points="201.491,-587.715 190.923,-588.478 199.66,-594.472 201.491,-587.715"/>
+</g>
+<!-- sourcefile~network_define.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge24" class="edge"><title>sourcefile~network_define.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M253.514,-404.299C246.834,-400.785 240.67,-396.262 236,-390.441 172.9,-311.792 259.518,-247.834 200,-166.441 196.738,-161.979 192.525,-158.207 187.898,-155.029"/>
+<polygon fill="#000000" stroke="#000000" points="189.629,-151.987 179.235,-149.933 186.079,-158.02 189.629,-151.987"/>
+</g>
+<!-- sourcefile~network_define.f08&#45;&gt;sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~utility.f08~~AfferentGraph_edge59" class="edge"><title>sourcefile~network_define.f08&#45;&gt;sourcefile~allocate_storage.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M251.051,-428.592C245.692,-431.032 240.548,-433.952 236,-437.441 195.084,-468.837 167.512,-524.64 154.71,-555.119"/>
+<polygon fill="#000000" stroke="#000000" points="151.456,-553.831 150.937,-564.413 157.942,-556.464 151.456,-553.831"/>
+</g>
+</g>
+</svg>
+</div><script>var pansourcefileutilityf08AfferentGraph = svgPanZoom('#sourcefileutilityf08AfferentGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+      
+      <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-1">Modules</a></h3></div>
+  <div id="mods-1" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/utility.html">utility</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/utility.f08.html#src">utility.f08</a>
+  </div>
+</div>
+
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    <section>
+      <h2><span class="anchor" id="src"></span>Source Code</h2>
+    <div class="hl"><pre><span></span><a name="ln-1"></a><span class="c">! module utility</span>
+<a name="ln-2"></a><span class="c">!</span>
+<a name="ln-3"></a><span class="c">! utility routines that may be called in a number of places</span>
+<a name="ln-4"></a><span class="c">!</span>
+<a name="ln-5"></a><span class="c">!==========================================================================</span>
+<a name="ln-6"></a><span class="c">!</span>
+<a name="ln-7"></a> <span class="k">module </span><span class="n">utility</span>
+<a name="ln-8"></a>
+<a name="ln-9"></a>    <span class="k">use </span><span class="n">array_index</span>
+<a name="ln-10"></a>    <span class="k">use </span><span class="n">data_keys</span>
+<a name="ln-11"></a>    <span class="k">use </span><span class="n">setting_definition</span>
+<a name="ln-12"></a>    <span class="k">use </span><span class="n">globals</span>
+<a name="ln-13"></a>
+<a name="ln-14"></a>    <span class="k">implicit none</span>
+<a name="ln-15"></a>
+<a name="ln-16"></a><span class="k">    private</span>
+<a name="ln-17"></a>
+<a name="ln-18"></a><span class="k">    public</span>  <span class="kd">::</span> <span class="n">utility_advance_temp_array</span>
+<a name="ln-19"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">utility_average</span>
+<a name="ln-20"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">utility_check_allocation</span>
+<a name="ln-21"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">utility_check_fileopen</span>
+<a name="ln-22"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">utility_linear_interpolate_within_indexlist</span>
+<a name="ln-23"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">utility_get_datetime_stamp</span>
+<a name="ln-24"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">utility_print_values_by_link</span>
+<a name="ln-25"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">utility_round_to_significant_digits</span>
+<a name="ln-26"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">utility_scale_of_number</span>
+<a name="ln-27"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">utility_sign_with_ones</span>
+<a name="ln-28"></a>
+<a name="ln-29"></a>    <span class="kt">integer</span> <span class="kd">::</span> <span class="n">debuglevel</span> <span class="o">=</span> <span class="mi">0</span>
+<a name="ln-30"></a>
+<a name="ln-31"></a> <span class="k">contains</span>
+<a name="ln-32"></a><span class="c">!</span>
+<a name="ln-33"></a><span class="c">!==========================================================================</span>
+<a name="ln-34"></a><span class="c">!==========================================================================</span>
+<a name="ln-35"></a><span class="c">!</span>
+<a name="ln-36"></a> <span class="k">subroutine </span><span class="n">utility_print_values_by_link</span> <span class="p">&amp;</span>
+<a name="ln-37"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elem2I</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceR</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">ilink</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-38"></a>     <span class="n">fcolDn</span><span class="p">,</span> <span class="n">fcolUp</span><span class="p">,</span> <span class="n">e2col</span><span class="p">,</span> <span class="n">eMcolC</span><span class="p">,</span> <span class="n">eMcolDn</span><span class="p">,</span> <span class="n">eMcolUp</span><span class="p">)</span>
+<a name="ln-39"></a><span class="c">!</span>
+<a name="ln-40"></a><span class="c">! provides a printout of data along a link. </span>
+<a name="ln-41"></a><span class="c">! fcolDn, fcolUp are (for example) fr_Area_d and fr_Area_u. If only</span>
+<a name="ln-42"></a><span class="c">! one value (e.g. fr_Flowrate) then use for fcolDn and use 0 for fcolUp</span>
+<a name="ln-43"></a><span class="c">! e2col is (for example) e2r_Area.</span>
+<a name="ln-44"></a><span class="c">! eMcolC is (for example) eMr_Area. </span>
+<a name="ln-45"></a><span class="c">! eMcolDn and eMcolUp are (for example) eMr_AreaUp and eMr_AreaDn.</span>
+<a name="ln-46"></a><span class="c">! if eM up/dn do not exist (e.g. for eMr_Eta) then store a dummyarray of 0.</span>
+<a name="ln-47"></a><span class="c">! note that the input dummy array must be an array rather than a scalar.</span>
+<a name="ln-48"></a><span class="c">!</span>
+<a name="ln-49"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;utility_print_values_by_link&#39;</span>
+<a name="ln-50"></a>
+<a name="ln-51"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:),</span> <span class="n">elemMR</span><span class="p">(:,:),</span> <span class="n">faceR</span><span class="p">(:,:)</span>
+<a name="ln-52"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elem2I</span><span class="p">(:,:),</span> <span class="n">elemMI</span><span class="p">(:,:),</span> <span class="n">faceI</span><span class="p">(:,:)</span>
+<a name="ln-53"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">ilink</span><span class="p">,</span> <span class="n">fcolDn</span><span class="p">,</span> <span class="n">fcolUp</span><span class="p">,</span> <span class="n">e2col</span><span class="p">,</span> <span class="n">eMcolC</span><span class="p">,</span> <span class="n">eMcolDn</span><span class="p">(:),</span> <span class="n">eMcolUp</span><span class="p">(:)</span>
+<a name="ln-54"></a>
+<a name="ln-55"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">eStart</span><span class="p">,</span> <span class="n">eEnd</span><span class="p">,</span> <span class="n">ii</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">fu</span><span class="p">,</span> <span class="n">eb</span><span class="p">,</span> <span class="n">eu</span><span class="p">,</span> <span class="n">ed</span><span class="p">,</span> <span class="n">edtype</span><span class="p">,</span> <span class="n">eutype</span>
+<a name="ln-56"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-57"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-58"></a>
+<a name="ln-59"></a> <span class="n">eStart</span> <span class="o">=</span> <span class="nb">minloc</span><span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">),</span><span class="mi">1</span><span class="p">,(</span>  <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">ilink</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">/=</span> <span class="n">nullvalueI</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
+<a name="ln-60"></a> <span class="n">eEnd</span>   <span class="o">=</span> <span class="nb">maxloc</span><span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">),</span><span class="mi">1</span><span class="p">,(</span>  <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_ID</span><span class="p">)</span> <span class="o">==</span> <span class="n">ilink</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">(</span><span class="n">elem2I</span><span class="p">(:,</span><span class="n">e2i_link_Pos</span><span class="p">)</span> <span class="o">/=</span> <span class="n">nullvalueI</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
+<a name="ln-61"></a>
+<a name="ln-62"></a> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="n">ilink</span><span class="p">,</span><span class="s1">&#39;=link&#39;</span>
+<a name="ln-63"></a>
+<a name="ln-64"></a><span class="c">!% info about the element downstream of the link</span>
+<a name="ln-65"></a> <span class="n">fd</span> <span class="o">=</span> <span class="n">elem2I</span><span class="p">(</span><span class="n">eStart</span><span class="p">,</span><span class="n">e2i_Mface_d</span><span class="p">)</span>
+<a name="ln-66"></a> <span class="n">edtype</span> <span class="o">=</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">fi_etype_d</span><span class="p">)</span>
+<a name="ln-67"></a> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="n">edtype</span><span class="p">,</span><span class="s1">&#39;=type of downstream element&#39;</span>
+<a name="ln-68"></a> <span class="k">if</span> <span class="p">(</span><span class="n">edtype</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-69"></a><span class="k">    </span><span class="n">ed</span> <span class="o">=</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">fi_Melem_d</span><span class="p">)</span>
+<a name="ln-70"></a>    <span class="n">eb</span> <span class="o">=</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">fi_branch_d</span><span class="p">)</span>
+<a name="ln-71"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">eMcolC</span> <span class="o">/=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-72"></a><span class="k">        print</span> <span class="o">*</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">ed</span><span class="p">,</span><span class="n">eMcolC</span><span class="p">),</span><span class="s1">&#39;= elemM C &#39;</span><span class="p">,</span><span class="n">ed</span>
+<a name="ln-73"></a>    <span class="n">endif</span>    
+<a name="ln-74"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">eMcolUp</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">/=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-75"></a><span class="k">        print</span> <span class="o">*</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">ed</span><span class="p">,</span><span class="n">eMcolUp</span><span class="p">(</span><span class="n">eb</span><span class="p">)),</span><span class="s1">&#39;= branch up,&#39;</span><span class="p">,</span><span class="n">eb</span>
+<a name="ln-76"></a>    <span class="n">endif</span>
+<a name="ln-77"></a> <span class="n">endif</span>
+<a name="ln-78"></a>
+<a name="ln-79"></a><span class="c">!% print information about faces and elements of the link</span>
+<a name="ln-80"></a> <span class="k">do </span><span class="n">ii</span> <span class="o">=</span> <span class="n">eStart</span><span class="p">,</span><span class="n">eEnd</span>
+<a name="ln-81"></a>    <span class="n">fd</span> <span class="o">=</span> <span class="n">elem2I</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">e2i_Mface_d</span><span class="p">)</span>
+<a name="ln-82"></a>    <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">fcolDn</span><span class="p">),</span><span class="s1">&#39;= faceDn &#39;</span><span class="p">,</span><span class="n">fd</span>
+<a name="ln-83"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">fcolUp</span> <span class="o">/=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-84"></a><span class="k">        print</span> <span class="o">*</span><span class="p">,</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="n">fcolUp</span><span class="p">),</span><span class="s1">&#39;= faceUp &#39;</span><span class="p">,</span><span class="n">fd</span>
+<a name="ln-85"></a>    <span class="n">endif</span>
+<a name="ln-86"></a>    <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">e2col</span><span class="p">),</span><span class="s1">&#39;= elem   &#39;</span><span class="p">,</span><span class="n">ii</span>
+<a name="ln-87"></a> <span class="k">end do</span>
+<a name="ln-88"></a><span class="c">!% print info on the last upstream face</span>
+<a name="ln-89"></a> <span class="n">fu</span> <span class="o">=</span> <span class="n">elem2I</span><span class="p">(</span><span class="n">eEnd</span><span class="p">,</span><span class="n">e2i_Mface_u</span><span class="p">)</span>
+<a name="ln-90"></a> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fu</span><span class="p">,</span><span class="n">fcolDn</span><span class="p">),</span><span class="s1">&#39;= faceDn &#39;</span><span class="p">,</span><span class="n">fu</span>
+<a name="ln-91"></a> <span class="k">if</span> <span class="p">(</span><span class="n">fcolUp</span> <span class="o">/=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-92"></a><span class="k">    print</span> <span class="o">*</span><span class="p">,</span> <span class="n">faceR</span><span class="p">(</span><span class="n">fu</span><span class="p">,</span><span class="n">fcolUp</span><span class="p">),</span><span class="s1">&#39;= faceUp &#39;</span><span class="p">,</span><span class="n">fu</span>
+<a name="ln-93"></a> <span class="n">endif</span>
+<a name="ln-94"></a>
+<a name="ln-95"></a><span class="c">!% print info of the next element upstream</span>
+<a name="ln-96"></a> <span class="n">eutype</span> <span class="o">=</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fu</span><span class="p">,</span><span class="n">fi_etype_u</span><span class="p">)</span>
+<a name="ln-97"></a> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="n">eutype</span><span class="p">,</span><span class="s1">&#39;=type of upstream element&#39;</span>
+<a name="ln-98"></a> <span class="k">if</span> <span class="p">(</span><span class="n">eutype</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-99"></a><span class="k">    </span><span class="n">eu</span> <span class="o">=</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fu</span><span class="p">,</span><span class="n">fi_Melem_u</span><span class="p">)</span>
+<a name="ln-100"></a>    <span class="n">eb</span> <span class="o">=</span> <span class="n">faceI</span><span class="p">(</span><span class="n">fu</span><span class="p">,</span><span class="n">fi_branch_u</span><span class="p">)</span>
+<a name="ln-101"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">eMcolDn</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">/=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-102"></a><span class="k">        print</span> <span class="o">*</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">eu</span><span class="p">,</span><span class="n">eMcolDn</span><span class="p">(</span><span class="n">eb</span><span class="p">)),</span><span class="s1">&#39;= branch dn,&#39;</span><span class="p">,</span><span class="n">eb</span>
+<a name="ln-103"></a>    <span class="n">endif</span>
+<a name="ln-104"></a>    <span class="k">if</span> <span class="p">(</span><span class="n">eMcolC</span> <span class="o">/=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-105"></a><span class="k">        print</span> <span class="o">*</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">(</span><span class="n">eu</span><span class="p">,</span><span class="n">eMcolC</span><span class="p">),</span><span class="s1">&#39;= elemM C &#39;</span><span class="p">,</span><span class="n">eu</span>
+<a name="ln-106"></a>    <span class="n">endif</span>
+<a name="ln-107"></a> <span class="n">endif</span>
+<a name="ln-108"></a>
+<a name="ln-109"></a>
+<a name="ln-110"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-111"></a> <span class="k">end subroutine </span><span class="n">utility_print_values_by_link</span>
+<a name="ln-112"></a><span class="c">!</span>
+<a name="ln-113"></a><span class="c">!==========================================================================</span>
+<a name="ln-114"></a><span class="c">!==========================================================================</span>
+<a name="ln-115"></a><span class="c">!</span>
+<a name="ln-116"></a> <span class="kt">integer </span><span class="k">function </span><span class="n">utility_advance_temp_array</span> <span class="p">(</span><span class="n">next_temparray</span><span class="p">,</span> <span class="n">temparraysize</span><span class="p">)</span>
+<a name="ln-117"></a><span class="c">!</span>
+<a name="ln-118"></a><span class="c">! Advances a temp_array counter and checks to see if the array size is</span>
+<a name="ln-119"></a><span class="c">! adequate. These arrays are columns of the 2D data structure that can be</span>
+<a name="ln-120"></a><span class="c">! overwritten in any subroutine.</span>
+<a name="ln-121"></a><span class="c">!</span>
+<a name="ln-122"></a><span class="c">! The temp_array (e.g. e2i_Temp) have sizes that are hard-coded in the</span>
+<a name="ln-123"></a><span class="c">! array_index module and then are initialized in the initialization module.</span>
+<a name="ln-124"></a><span class="c">! Care must be taken when increasing the temp_array index sizes for consistency.</span>
+<a name="ln-125"></a><span class="c">!</span>
+<a name="ln-126"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">next_temparray</span><span class="p">,</span> <span class="n">temparraysize</span>
+<a name="ln-127"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;utility_advance_temp_array&#39;</span>
+<a name="ln-128"></a>
+<a name="ln-129"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-130"></a> <span class="k">if</span> <span class="p">(</span><span class="n">next_temparray</span> <span class="o">&gt;</span> <span class="n">temparraysize</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-131"></a><span class="k">    print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;code error: temparray is too small in &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-132"></a>    <span class="k">stop</span>
+<a name="ln-133"></a><span class="k"> </span><span class="n">endif</span>
+<a name="ln-134"></a>
+<a name="ln-135"></a> <span class="n">utility_advance_temp_array</span> <span class="o">=</span> <span class="n">next_temparray</span><span class="o">+</span><span class="mi">1</span>
+<a name="ln-136"></a>
+<a name="ln-137"></a> <span class="k">end function </span><span class="n">utility_advance_temp_array</span>
+<a name="ln-138"></a><span class="c">!</span>
+<a name="ln-139"></a><span class="c">!==========================================================================</span>
+<a name="ln-140"></a><span class="c">!==========================================================================</span>
+<a name="ln-141"></a><span class="c">!</span>
+<a name="ln-142"></a> <span class="k">pure </span><span class="kt">real </span><span class="k">function </span><span class="n">utility_average</span> <span class="p">&amp;</span>
+<a name="ln-143"></a>    <span class="p">(</span><span class="n">inarray</span><span class="p">)</span> <span class="k">result</span><span class="p">(</span><span class="n">outscalar</span><span class="p">)</span>
+<a name="ln-144"></a><span class="c">!</span>
+<a name="ln-145"></a><span class="c">! computes a simple average of an array</span>
+<a name="ln-146"></a><span class="c">!</span>
+<a name="ln-147"></a> <span class="kt">real</span><span class="p">,</span>  <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">inarray</span><span class="p">(:)</span>
+<a name="ln-148"></a>
+<a name="ln-149"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-150"></a>
+<a name="ln-151"></a> <span class="k">if</span> <span class="p">(</span><span class="n">size</span><span class="p">(</span><span class="n">inarray</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="k">then</span>
+<a name="ln-152"></a><span class="k">    </span><span class="n">outscalar</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">inarray</span><span class="p">)</span> <span class="o">/</span> <span class="kt">real</span><span class="p">(</span><span class="n">size</span><span class="p">(</span><span class="n">inarray</span><span class="p">))</span>
+<a name="ln-153"></a> <span class="n">endif</span>
+<a name="ln-154"></a>
+<a name="ln-155"></a>
+<a name="ln-156"></a> <span class="k">end function </span><span class="n">utility_average</span>
+<a name="ln-157"></a><span class="c">!</span>
+<a name="ln-158"></a><span class="c">!==========================================================================</span>
+<a name="ln-159"></a><span class="c">!==========================================================================</span>
+<a name="ln-160"></a><span class="c">!</span>
+<a name="ln-161"></a> <span class="k">subroutine </span><span class="n">utility_check_fileopen</span> <span class="p">&amp;</span>
+<a name="ln-162"></a>    <span class="p">(</span><span class="n">open_status</span><span class="p">,</span> <span class="n">emsg</span><span class="p">)</span>
+<a name="ln-163"></a><span class="c">!</span>
+<a name="ln-164"></a><span class="c">! Checks to see if a file is already open. Stops as an error if file is open.</span>
+<a name="ln-165"></a><span class="c">!</span>
+<a name="ln-166"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;utility_check_fileopen&#39;</span>
+<a name="ln-167"></a>
+<a name="ln-168"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>   <span class="kd">::</span> <span class="n">open_status</span>
+<a name="ln-169"></a> <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span>  <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>   <span class="kd">::</span> <span class="n">emsg</span>
+<a name="ln-170"></a>
+<a name="ln-171"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-172"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-173"></a>
+<a name="ln-174"></a> <span class="k">if</span> <span class="p">(</span><span class="n">open_status</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-175"></a><span class="k">    print</span> <span class="o">*</span><span class="p">,</span> <span class="nb">trim</span><span class="p">(</span><span class="n">emsg</span><span class="p">)</span>
+<a name="ln-176"></a>    <span class="k">STOP</span>
+<a name="ln-177"></a><span class="k"> </span><span class="n">endif</span>
+<a name="ln-178"></a>
+<a name="ln-179"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-180"></a> <span class="k">end subroutine </span><span class="n">utility_check_fileopen</span>
+<a name="ln-181"></a><span class="c">!</span>
+<a name="ln-182"></a><span class="c">!==========================================================================</span>
+<a name="ln-183"></a><span class="c">!==========================================================================</span>
+<a name="ln-184"></a><span class="c">!</span>
+<a name="ln-185"></a> <span class="k">subroutine </span><span class="n">utility_check_allocation</span> <span class="p">&amp;</span>
+<a name="ln-186"></a>    <span class="p">(</span><span class="n">allocation_status</span><span class="p">,</span> <span class="n">emsg</span><span class="p">)</span>
+<a name="ln-187"></a><span class="c">!</span>
+<a name="ln-188"></a><span class="c">! checks allocation status and stops if there is an error</span>
+<a name="ln-189"></a><span class="c">!</span>
+<a name="ln-190"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;utility_check_allocation&#39;</span>
+<a name="ln-191"></a>
+<a name="ln-192"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>   <span class="kd">::</span> <span class="n">allocation_status</span>
+<a name="ln-193"></a> <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=*</span><span class="p">),</span>  <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>   <span class="kd">::</span> <span class="n">emsg</span>
+<a name="ln-194"></a>
+<a name="ln-195"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-196"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-197"></a>
+<a name="ln-198"></a> <span class="k">if</span> <span class="p">(</span><span class="n">allocation_status</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-199"></a><span class="k">    print</span> <span class="o">*</span><span class="p">,</span> <span class="nb">trim</span><span class="p">(</span><span class="n">emsg</span><span class="p">)</span>
+<a name="ln-200"></a>    <span class="k">STOP</span>
+<a name="ln-201"></a><span class="k"> </span><span class="n">endif</span>
+<a name="ln-202"></a>
+<a name="ln-203"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-204"></a> <span class="k">end subroutine </span><span class="n">utility_check_allocation</span>
+<a name="ln-205"></a><span class="c">!</span>
+<a name="ln-206"></a><span class="c">!==========================================================================</span>
+<a name="ln-207"></a><span class="c">!==========================================================================</span>
+<a name="ln-208"></a><span class="c">!</span>
+<a name="ln-209"></a> <span class="k">function </span><span class="n">utility_linear_interpolate_within_indexlist</span> <span class="p">&amp;</span>
+<a name="ln-210"></a>    <span class="p">(</span><span class="n">thisIndex</span><span class="p">,</span> <span class="n">IndexArray</span><span class="p">,</span>  <span class="n">ValueArray</span><span class="p">)</span> <span class="k">result</span><span class="p">(</span><span class="n">thisValue</span><span class="p">)</span>
+<a name="ln-211"></a><span class="c">!</span>
+<a name="ln-212"></a><span class="c">! IndexArray are ordered, non-repeating real numbers</span>
+<a name="ln-213"></a><span class="c">! ValueArray are non-ordered values corresponding to IndexArray</span>
+<a name="ln-214"></a><span class="c">! thisIndex is an index value within limits of IndexArray</span>
+<a name="ln-215"></a><span class="c">! thisValue is a linearly-interpolated value</span>
+<a name="ln-216"></a><span class="c">!</span>
+<a name="ln-217"></a><span class="c">! This function is used in boundary condition interpolation, but is more</span>
+<a name="ln-218"></a><span class="c">! general and can be used elsewhere</span>
+<a name="ln-219"></a><span class="c">!</span>
+<a name="ln-220"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;utility_linear_interpolate_within_indexlist&#39;</span>
+<a name="ln-221"></a>
+<a name="ln-222"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">IndexArray</span><span class="p">(:),</span> <span class="n">ValueArray</span><span class="p">(:)</span>
+<a name="ln-223"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">thisIndex</span>
+<a name="ln-224"></a>
+<a name="ln-225"></a> <span class="kt">real</span> <span class="kd">::</span>  <span class="n">thisValue</span>
+<a name="ln-226"></a>
+<a name="ln-227"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">closeloc</span>
+<a name="ln-228"></a>
+<a name="ln-229"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-230"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-231"></a>
+<a name="ln-232"></a> <span class="n">closeloc</span> <span class="o">=</span> <span class="nb">minloc</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">thisIndex</span> <span class="o">-</span> <span class="n">IndexArray</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
+<a name="ln-233"></a>
+<a name="ln-234"></a> <span class="c">!% get the value if the location is exactly on an index</span>
+<a name="ln-235"></a> <span class="k">if</span> <span class="p">(</span><span class="n">thisIndex</span> <span class="o">-</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-236"></a><span class="k">    </span><span class="n">thisValue</span> <span class="o">=</span> <span class="n">ValueArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span>
+<a name="ln-237"></a>
+<a name="ln-238"></a> <span class="c">!% if the close location index is below the target</span>
+<a name="ln-239"></a> <span class="n">elseif</span> <span class="p">((</span><span class="n">thisIndex</span> <span class="o">-</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-240"></a>         <span class="p">(</span><span class="n">closeloc</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">(</span><span class="n">IndexArray</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="p">)</span> <span class="k">then</span>
+<a name="ln-241"></a><span class="k">    </span><span class="n">thisValue</span> <span class="o">=</span> <span class="p">(</span> <span class="n">ValueArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span>   <span class="o">*</span> <span class="p">(</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">thisIndex</span><span class="p">)</span>    <span class="p">&amp;</span>
+<a name="ln-242"></a>                 <span class="o">+</span><span class="n">ValueArray</span><span class="p">(</span><span class="n">closeloc</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span> <span class="n">thisIndex</span> <span class="o">-</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span>    <span class="p">)</span> <span class="p">)</span>  <span class="p">&amp;</span>
+<a name="ln-243"></a>                <span class="o">/</span> <span class="p">(</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-244"></a>
+<a name="ln-245"></a> <span class="c">!% if the close location is above the target</span>
+<a name="ln-246"></a> <span class="n">elseif</span> <span class="p">((</span><span class="n">thisIndex</span> <span class="o">-</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-247"></a>         <span class="p">(</span><span class="n">closeloc</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">)</span> <span class="k">then</span>
+<a name="ln-248"></a><span class="k">    </span><span class="n">thisValue</span> <span class="o">=</span> <span class="p">(</span> <span class="n">ValueArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span>   <span class="o">*</span> <span class="p">(</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span> <span class="o">-</span> <span class="n">thisIndex</span>   <span class="p">)</span>    <span class="p">&amp;</span>
+<a name="ln-249"></a>                 <span class="o">+</span><span class="n">ValueArray</span><span class="p">(</span><span class="n">closeloc</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span> <span class="n">thisIndex</span> <span class="o">-</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">)</span>  <span class="p">)</span> <span class="p">&amp;</span>
+<a name="ln-250"></a>                <span class="o">/</span> <span class="p">(</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span><span class="p">)</span> <span class="o">-</span> <span class="n">IndexArray</span><span class="p">(</span><span class="n">closeloc</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-251"></a>
+<a name="ln-252"></a> <span class="k">else</span>
+<a name="ln-253"></a>    <span class="c">!% error condition - the index appears to be outside of the index array</span>
+<a name="ln-254"></a>    <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;error: interpolation index (thisIndex) is outside the array bounds (IndexArray) in &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-255"></a>    <span class="k">stop</span>
+<a name="ln-256"></a><span class="k"> </span><span class="n">endif</span>
+<a name="ln-257"></a>
+<a name="ln-258"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-259"></a> <span class="k">end function </span><span class="n">utility_linear_interpolate_within_indexlist</span>
+<a name="ln-260"></a><span class="c">!</span>
+<a name="ln-261"></a><span class="c">!==========================================================================</span>
+<a name="ln-262"></a><span class="c">!==========================================================================</span>
+<a name="ln-263"></a><span class="c">!</span>
+<a name="ln-264"></a> <span class="k">subroutine </span><span class="n">utility_get_datetime_stamp</span> <span class="p">&amp;</span>
+<a name="ln-265"></a>    <span class="p">(</span><span class="n">datetimestamp</span><span class="p">)</span>
+<a name="ln-266"></a><span class="c">!</span>
+<a name="ln-267"></a><span class="c">!   Gets a character(14) datetimestamp in the form _yyyymmdd_hhmm .</span>
+<a name="ln-268"></a><span class="c">!   Note the leading _ is used so this is convenient for adding to filenames.</span>
+<a name="ln-269"></a><span class="c">!</span>
+<a name="ln-270"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;utility_get_datetime_stamp&#39;</span>
+<a name="ln-271"></a>
+<a name="ln-272"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">14</span><span class="p">),</span> <span class="k">intent</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="kd">::</span> <span class="n">datetimestamp</span> <span class="c">! in form _yyyymmdd_hhmm</span>
+<a name="ln-273"></a>
+<a name="ln-274"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span> <span class="kd">::</span> <span class="n">thisdate</span>
+<a name="ln-275"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="kd">::</span> <span class="n">thistime</span>
+<a name="ln-276"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="kd">::</span> <span class="n">thiszone</span>
+<a name="ln-277"></a>
+<a name="ln-278"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="kd">::</span> <span class="n">cyear</span>
+<a name="ln-279"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="kd">::</span> <span class="n">cmonth</span>
+<a name="ln-280"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="kd">::</span> <span class="n">cday</span>
+<a name="ln-281"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="kd">::</span> <span class="n">chour</span>
+<a name="ln-282"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="kd">::</span> <span class="n">cmin</span>
+<a name="ln-283"></a>
+<a name="ln-284"></a> <span class="kt">integer</span>      <span class="kd">::</span> <span class="n">thisvalues</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+<a name="ln-285"></a> <span class="kt">integer</span>      <span class="kd">::</span> <span class="n">tyear</span><span class="p">,</span> <span class="n">tmonth</span><span class="p">,</span> <span class="n">tday</span><span class="p">,</span> <span class="n">thour</span><span class="p">,</span> <span class="n">tmin</span>
+<a name="ln-286"></a>
+<a name="ln-287"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-288"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-289"></a>
+<a name="ln-290"></a> <span class="k">call </span><span class="nb">date_and_time</span><span class="p">(</span><span class="n">thisdate</span><span class="p">,</span> <span class="n">thistime</span><span class="p">,</span> <span class="n">thiszone</span><span class="p">,</span> <span class="n">thisvalues</span><span class="p">)</span>
+<a name="ln-291"></a>
+<a name="ln-292"></a> <span class="n">tyear</span>  <span class="o">=</span> <span class="n">thisvalues</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a name="ln-293"></a> <span class="n">tmonth</span> <span class="o">=</span> <span class="n">thisvalues</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<a name="ln-294"></a> <span class="n">tday</span>   <span class="o">=</span> <span class="n">thisvalues</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<a name="ln-295"></a> <span class="n">thour</span>  <span class="o">=</span> <span class="n">thisvalues</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<a name="ln-296"></a> <span class="n">tmin</span>   <span class="o">=</span> <span class="n">thisvalues</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<a name="ln-297"></a>
+<a name="ln-298"></a> <span class="k">write</span><span class="p">(</span><span class="n">cyear</span><span class="p">,</span><span class="s2">&quot;(i4)&quot;</span><span class="p">)</span> <span class="n">tyear</span>
+<a name="ln-299"></a>
+<a name="ln-300"></a> <span class="k">if</span> <span class="p">(</span><span class="n">tmonth</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-301"></a><span class="k">    write</span><span class="p">(</span><span class="n">cmonth</span><span class="p">,</span><span class="s2">&quot;(i2)&quot;</span><span class="p">)</span> <span class="n">tmonth</span>
+<a name="ln-302"></a> <span class="k">else</span>
+<a name="ln-303"></a><span class="k">    write</span><span class="p">(</span><span class="n">cmonth</span><span class="p">,</span><span class="s2">&quot;(i1,i1)&quot;</span><span class="p">)</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tmonth</span>
+<a name="ln-304"></a> <span class="k">end if</span>
+<a name="ln-305"></a>
+<a name="ln-306"></a><span class="k"> if</span> <span class="p">(</span><span class="n">tday</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-307"></a><span class="k">    write</span><span class="p">(</span><span class="n">cday</span><span class="p">,</span><span class="s2">&quot;(i2)&quot;</span><span class="p">)</span> <span class="n">tday</span>
+<a name="ln-308"></a> <span class="k">else</span>
+<a name="ln-309"></a><span class="k">    write</span><span class="p">(</span><span class="n">cday</span><span class="p">,</span><span class="s2">&quot;(i1,i1)&quot;</span><span class="p">)</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tday</span>
+<a name="ln-310"></a> <span class="k">end if</span>
+<a name="ln-311"></a>
+<a name="ln-312"></a><span class="k"> if</span> <span class="p">(</span><span class="n">thour</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-313"></a><span class="k">    write</span><span class="p">(</span><span class="n">chour</span><span class="p">,</span><span class="s2">&quot;(i2)&quot;</span><span class="p">)</span> <span class="n">thour</span>
+<a name="ln-314"></a> <span class="k">else</span>
+<a name="ln-315"></a><span class="k">    write</span><span class="p">(</span><span class="n">chour</span><span class="p">,</span><span class="s2">&quot;(i1,i1)&quot;</span><span class="p">)</span> <span class="mi">0</span><span class="p">,</span> <span class="n">thour</span>
+<a name="ln-316"></a> <span class="k">end if</span>
+<a name="ln-317"></a>
+<a name="ln-318"></a><span class="k"> if</span> <span class="p">(</span><span class="n">tmin</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">)</span> <span class="k">then</span>
+<a name="ln-319"></a><span class="k">    write</span><span class="p">(</span><span class="n">cmin</span><span class="p">,</span><span class="s2">&quot;(i2)&quot;</span><span class="p">)</span> <span class="n">tmin</span>
+<a name="ln-320"></a> <span class="k">else</span>
+<a name="ln-321"></a><span class="k">    write</span><span class="p">(</span><span class="n">cmin</span><span class="p">,</span><span class="s2">&quot;(i1,i1)&quot;</span><span class="p">)</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tmin</span>
+<a name="ln-322"></a> <span class="k">end if</span>
+<a name="ln-323"></a>
+<a name="ln-324"></a><span class="k"> write</span><span class="p">(</span><span class="n">datetimestamp</span><span class="p">,</span><span class="s2">&quot;(&#39;_&#39;,a4,a2,a2,&#39;_&#39;,a2,a2)&quot;</span><span class="p">)</span> <span class="p">&amp;</span>
+<a name="ln-325"></a>    <span class="n">cyear</span><span class="p">,</span> <span class="n">cmonth</span><span class="p">,</span> <span class="n">cday</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-326"></a>    <span class="n">chour</span><span class="p">,</span> <span class="n">cmin</span>
+<a name="ln-327"></a>
+<a name="ln-328"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-329"></a> <span class="k">end subroutine </span><span class="n">utility_get_datetime_stamp</span>
+<a name="ln-330"></a><span class="c">!</span>
+<a name="ln-331"></a><span class="c">!==========================================================================</span>
+<a name="ln-332"></a><span class="c">!==========================================================================</span>
+<a name="ln-333"></a><span class="c">!</span>
+<a name="ln-334"></a> <span class="k">pure elemental </span><span class="kt">real </span><span class="k">function </span><span class="n">utility_round_to_significant_digits</span> <span class="p">&amp;</span>
+<a name="ln-335"></a>    <span class="p">(</span><span class="n">inarray</span><span class="p">,</span><span class="n">idigits</span><span class="p">)</span> <span class="k">result</span> <span class="p">(</span><span class="n">outarray</span><span class="p">)</span>
+<a name="ln-336"></a><span class="c">!</span>
+<a name="ln-337"></a><span class="c">! returns the exponent scale of the largest n where 10^n &lt; number</span>
+<a name="ln-338"></a><span class="c">!</span>
+<a name="ln-339"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>    <span class="kd">::</span> <span class="n">inarray</span>
+<a name="ln-340"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>    <span class="kd">::</span> <span class="n">idigits</span>
+<a name="ln-341"></a>
+<a name="ln-342"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">inscale</span>
+<a name="ln-343"></a>
+<a name="ln-344"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-345"></a>
+<a name="ln-346"></a> <span class="n">inscale</span> <span class="o">=</span> <span class="n">utility_scale_of_number</span><span class="p">(</span><span class="n">inarray</span><span class="p">)</span>
+<a name="ln-347"></a>
+<a name="ln-348"></a> <span class="n">outarray</span> <span class="o">=</span> <span class="kt">real</span><span class="p">(</span><span class="nb">NINT</span><span class="p">(</span><span class="n">inarray</span> <span class="o">/</span> <span class="p">(</span><span class="n">tenR</span><span class="o">**</span><span class="p">(</span><span class="n">inscale</span> <span class="o">-</span> <span class="p">(</span><span class="n">idigits</span><span class="o">-</span><span class="mi">1</span><span class="p">)))))</span> <span class="p">&amp;</span>
+<a name="ln-349"></a>                <span class="o">*</span> <span class="n">tenR</span><span class="o">**</span><span class="kt">real</span><span class="p">(</span><span class="n">inscale</span> <span class="o">-</span> <span class="p">(</span><span class="n">idigits</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+<a name="ln-350"></a>
+<a name="ln-351"></a>
+<a name="ln-352"></a> <span class="k">end function </span><span class="n">utility_round_to_significant_digits</span>
+<a name="ln-353"></a><span class="c">!</span>
+<a name="ln-354"></a><span class="c">!==========================================================================</span>
+<a name="ln-355"></a><span class="c">!==========================================================================</span>
+<a name="ln-356"></a><span class="c">!</span>
+<a name="ln-357"></a> <span class="k">pure elemental </span><span class="kt">integer </span><span class="k">function </span><span class="n">utility_scale_of_number</span> <span class="p">&amp;</span>
+<a name="ln-358"></a>    <span class="p">(</span><span class="n">inarray</span><span class="p">)</span> <span class="k">result</span> <span class="p">(</span><span class="n">outarray</span><span class="p">)</span>
+<a name="ln-359"></a><span class="c">!</span>
+<a name="ln-360"></a><span class="c">! returns the exponent scale of the largest n where 10^n &lt; number</span>
+<a name="ln-361"></a><span class="c">!</span>
+<a name="ln-362"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>    <span class="kd">::</span> <span class="n">inarray</span>
+<a name="ln-363"></a>
+<a name="ln-364"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-365"></a>
+<a name="ln-366"></a> <span class="n">outarray</span> <span class="o">=</span> <span class="nb">floor</span><span class="p">(</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">inarray</span><span class="p">)))</span>
+<a name="ln-367"></a>
+<a name="ln-368"></a> <span class="k">end function </span><span class="n">utility_scale_of_number</span>
+<a name="ln-369"></a><span class="c">!</span>
+<a name="ln-370"></a><span class="c">!==========================================================================</span>
+<a name="ln-371"></a><span class="c">!==========================================================================</span>
+<a name="ln-372"></a><span class="c">!</span>
+<a name="ln-373"></a> <span class="k">pure elemental </span><span class="kt">real </span><span class="k">function </span><span class="n">utility_sign_with_ones</span> <span class="p">&amp;</span>
+<a name="ln-374"></a>    <span class="p">(</span><span class="n">inarray</span><span class="p">)</span> <span class="k">result</span> <span class="p">(</span><span class="n">outarray</span><span class="p">)</span>
+<a name="ln-375"></a><span class="c">!</span>
+<a name="ln-376"></a><span class="c">! returns is an array of real ones with the sign of the inarray argument</span>
+<a name="ln-377"></a><span class="c">!</span>
+<a name="ln-378"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>    <span class="kd">::</span> <span class="n">inarray</span>
+<a name="ln-379"></a>
+<a name="ln-380"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-381"></a>
+<a name="ln-382"></a> <span class="n">outarray</span> <span class="o">=</span> <span class="n">oneR</span>
+<a name="ln-383"></a> <span class="n">outarray</span> <span class="o">=</span> <span class="nb">sign</span><span class="p">(</span><span class="n">outarray</span><span class="p">,</span><span class="n">inarray</span><span class="p">)</span>
+<a name="ln-384"></a>
+<a name="ln-385"></a> <span class="k">end function </span><span class="n">utility_sign_with_ones</span>
+<a name="ln-386"></a><span class="c">!</span>
+<a name="ln-387"></a><span class="c">!==========================================================================</span>
+<a name="ln-388"></a><span class="c">! END OF MODULE utility</span>
+<a name="ln-389"></a><span class="c">!==========================================================================</span>
+<a name="ln-390"></a> <span class="k">end module </span><span class="n">utility</span>
+</pre></div>
+
+    </section>
+    </div>
+  </div>
+
+  
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2019 
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> SWMMengine was developed by Ben R. Hodges and Ehsan Madadi-Kandjani</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>

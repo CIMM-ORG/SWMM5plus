@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="Prototype Fortran 2008 engine for the EPA Storm Water Management Model (SWMM)">
+    
+    <meta name="author" content="Ben R. Hodges and Ehsan Madadi-Kandjani" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>setting_definition.f08 &ndash; SWMMengine</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">SWMMengine </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/main.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/main.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>setting_definition.f08
+    <small>Source File</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 1.9% of total for source files.">142 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/setting_definition.f08"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+  
+     <li class="active">setting_definition.f08</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-0">Modules</a></h3></div>
+  <div id="mods-0" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/setting_definition.html">setting_definition</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/setting_definition.f08.html#src">setting_definition.f08</a>
+  </div>
+</div>
+
+
+
+</div>
+
+    </div>
+    <div class="col-md-9" id='text'>
+      
+      <br>
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">This file depends on</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~setting_definition.f08~~EfferentGraph Pages: 1 -->
+<svg id="sourcefilesetting_definitionf08EfferentGraph" width="260pt" height="32pt"
+ viewBox="0.00 0.00 260.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~setting_definition.f08~~EfferentGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>sourcefile~~setting_definition.f08~~EfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 256,-28 256,4 -4,4"/>
+<!-- sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~EfferentGraph_node1" class="node"><title>sourcefile~setting_definition.f08</title>
+<polygon fill="none" stroke="black" points="252,-24 141,-24 141,-0 252,-0 252,-24"/>
+<text text-anchor="middle" x="196.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">setting_definition.f08</text>
+</g>
+<!-- sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~setting_definition.f08~~EfferentGraph_node2" class="node"><title>sourcefile~type_definitions.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~EfferentGraph_node2"><a xlink:href=".././sourcefile/type_definitions.f08.html" xlink:title="type_definitions.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="105,-24 0,-24 0,-0 105,-0 105,-24"/>
+<text text-anchor="middle" x="52.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">type_definitions.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~setting_definition.f08~~EfferentGraph_edge1" class="edge"><title>sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M140.599,-12C132.387,-12 123.872,-12 115.525,-12"/>
+<polygon fill="#000000" stroke="#000000" points="115.459,-8.5001 105.459,-12 115.459,-15.5001 115.459,-8.5001"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+    
+      
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Files dependent on this one</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~setting_definition.f08~~AfferentGraph Pages: 1 -->
+<svg id="sourcefilesetting_definitionf08AfferentGraph" width="641pt" height="1213pt"
+ viewBox="0.00 0.00 641.00 1213.46" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph" class="graph" transform="scale(0.550687 0.550687) rotate(0) translate(4 2199.54)">
+<title>sourcefile~~setting_definition.f08~~AfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-2199.54 1160,-2199.54 1160,4 -4,4"/>
+<!-- sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node1" class="node"><title>sourcefile~setting_definition.f08</title>
+<polygon fill="none" stroke="black" points="111,-1321.16 0,-1321.16 0,-1297.16 111,-1297.16 111,-1321.16"/>
+<text text-anchor="middle" x="55.5" y="-1306.76" font-family="Helvetica,sans-Serif" font-size="10.50">setting_definition.f08</text>
+</g>
+<!-- sourcefile~debug.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node2" class="node"><title>sourcefile~debug.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node2"><a xlink:href=".././sourcefile/debug.f08.html" xlink:title="debug.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="778,-893.164 717,-893.164 717,-869.164 778,-869.164 778,-893.164"/>
+<text text-anchor="middle" x="747.5" y="-878.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">debug.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~debug.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge1" class="edge"><title>sourcefile~debug.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M742.179,-869.03C731.172,-837.898 701.506,-752.554 681,-680.164 662.432,-614.616 687.223,-584.63 645,-531.164 617.683,-496.573 334.801,-342.932 291.5,-351.164"/>
+</g>
+<!-- sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node14" class="node"><title>sourcefile~utility.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node14"><a xlink:href=".././sourcefile/utility.f08.html" xlink:title="utility.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="462.5,-1298.16 407.5,-1298.16 407.5,-1274.16 462.5,-1274.16 462.5,-1298.16"/>
+<text text-anchor="middle" x="435" y="-1283.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~debug.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge40" class="edge"><title>sourcefile~debug.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-963.164C570.189,-980.663 552.763,-967.21 536,-987.164 494.121,-1037.02 520.338,-1067.31 500,-1129.16 483.797,-1178.44 459.575,-1234.27 446.052,-1264.28"/>
+<polygon fill="#000000" stroke="#000000" points="442.692,-1263.22 441.745,-1273.77 449.066,-1266.11 442.692,-1263.22"/>
+</g>
+<!-- sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node16" class="node"><title>sourcefile~globals.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node16"><a xlink:href=".././sourcefile/globals.f08.html" xlink:title="globals.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="211,-1321.16 147,-1321.16 147,-1297.16 211,-1297.16 211,-1321.16"/>
+<text text-anchor="middle" x="179" y="-1306.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">globals.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~debug.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge67" class="edge"><title>sourcefile~debug.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M739.337,-868.864C709.635,-819.569 590.455,-638.13 436,-621.164"/>
+</g>
+<!-- sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node18" class="node"><title>sourcefile~bc.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node18"><a xlink:href=".././sourcefile/bc.f08.html" xlink:title="bc.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="617.5,-1433.16 563.5,-1433.16 563.5,-1409.16 617.5,-1409.16 617.5,-1433.16"/>
+<text text-anchor="middle" x="590.5" y="-1418.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~debug.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge86" class="edge"><title>sourcefile~debug.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M735.413,-893.227C720.215,-910.56 693.387,-944.182 681,-978.164 628.807,-1121.35 689.18,-1173.31 645,-1319.16 635.942,-1349.07 618.01,-1380.47 605.412,-1400.4"/>
+<polygon fill="#000000" stroke="#000000" points="602.372,-1398.65 599.884,-1408.95 608.251,-1402.45 602.372,-1398.65"/>
+</g>
+<!-- sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node24" class="node"><title>sourcefile~data_keys.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node24"><a xlink:href=".././sourcefile/data_keys.f08.html" xlink:title="data_keys.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="330,-1553.16 251,-1553.16 251,-1529.16 330,-1529.16 330,-1553.16"/>
+<text text-anchor="middle" x="290.5" y="-1538.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">data_keys.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~debug.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge122" class="edge"><title>sourcefile~debug.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M716.761,-890.475C705.168,-894.733 692.041,-900.36 681,-907.164 662.775,-918.394 662.975,-927.537 645,-939.164 623.118,-953.318 610.811,-945.665 591.5,-963.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-963.164C570.189,-980.663 555.129,-969.466 536,-987.164 511.474,-1009.86 520.229,-1026.57 500,-1053.16 476.023,-1084.68 455.498,-1080.69 436,-1115.16"/>
+</g>
+<!-- sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node26" class="node"><title>sourcefile~array_index.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node26"><a xlink:href=".././sourcefile/array_index.f08.html" xlink:title="array_index.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="334,-971.164 247,-971.164 247,-947.164 334,-947.164 334,-971.164"/>
+<text text-anchor="middle" x="290.5" y="-956.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">array_index.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~debug.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge149" class="edge"><title>sourcefile~debug.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M716.845,-890.599C644.47,-913.344 462.752,-968.642 436,-959.164"/>
+</g>
+<!-- sourcefile~friction_model.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node3" class="node"><title>sourcefile~friction_model.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node3"><a xlink:href=".././sourcefile/friction_model.f08.html" xlink:title="friction_model.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="483.5,-1673.16 386.5,-1673.16 386.5,-1649.16 483.5,-1649.16 483.5,-1673.16"/>
+<text text-anchor="middle" x="435" y="-1658.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">friction_model.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~friction_model.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge2" class="edge"><title>sourcefile~friction_model.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-1701.16C244.52,-1682.58 213.038,-1736.9 180,-1701.16"/>
+</g>
+<!-- sourcefile~friction_model.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge62" class="edge"><title>sourcefile~friction_model.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M399.634,-1673.2C360.771,-1686.44 301.564,-1705.32 291.5,-1701.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-1701.16C218.695,-1671.91 189.277,-1410.98 181.933,-1331.83"/>
+<polygon fill="#000000" stroke="#000000" points="185.387,-1331.16 181.007,-1321.52 178.415,-1331.79 185.387,-1331.16"/>
+</g>
+<!-- sourcefile~friction_model.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge118" class="edge"><title>sourcefile~friction_model.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M395.498,-1649.07C386.678,-1645.36 377.653,-1640.75 370,-1635.16 342.173,-1614.86 318.125,-1582.6 304.219,-1561.66"/>
+<polygon fill="#000000" stroke="#000000" points="307.104,-1559.67 298.733,-1553.18 301.226,-1563.47 307.104,-1559.67"/>
+</g>
+<!-- sourcefile~friction_model.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge145" class="edge"><title>sourcefile~friction_model.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M414.288,-1649.08C399.269,-1638.68 379.59,-1622.2 370,-1602.16 318.179,-1493.88 361.054,-1180.12 334,-1063.16 327.087,-1033.28 312.629,-1000.86 302.504,-980.305"/>
+<polygon fill="#000000" stroke="#000000" points="305.557,-978.586 297.934,-971.228 299.305,-981.734 305.557,-978.586"/>
+</g>
+<!-- sourcefile~main.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node4" class="node"><title>sourcefile~main.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node4"><a xlink:href=".././sourcefile/main.f08.html" xlink:title="main.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="1156,-1009.16 1102,-1009.16 1102,-985.164 1156,-985.164 1156,-1009.16"/>
+<text text-anchor="middle" x="1129" y="-994.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">main.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge5" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-2191.16C521.135,-2183.97 500.743,-2195.27 436,-2172.16"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~debug.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge23" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~debug.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-659.164C820.465,-661.047 862.382,-753.38 814,-817.164 801.428,-833.738 784.597,-850.088 771.144,-862.114"/>
+<polygon fill="#000000" stroke="#000000" points="768.491,-859.786 763.273,-869.007 773.102,-865.052 768.491,-859.786"/>
+</g>
+<!-- sourcefile~output.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node5" class="node"><title>sourcefile~output.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node5"><a xlink:href=".././sourcefile/output.f08.html" xlink:title="output.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="778,-1937.16 717,-1937.16 717,-1913.16 778,-1913.16 778,-1937.16"/>
+<text text-anchor="middle" x="747.5" y="-1922.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">output.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~output.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge25" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~output.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1026.5,-1617.16C934.723,-1808.93 1085.96,-1971.73 902.5,-2079.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-2079.16C852.626,-2107.2 853.068,-2028.56 814,-1989.16 798.98,-1974.02 781.715,-1957.17 768.682,-1944.57"/>
+<polygon fill="#000000" stroke="#000000" points="770.798,-1941.74 761.172,-1937.32 765.937,-1946.78 770.798,-1941.74"/>
+</g>
+<!-- sourcefile~time_loop.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node6" class="node"><title>sourcefile~time_loop.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node6"><a xlink:href=".././sourcefile/time_loop.f08.html" xlink:title="time_loop.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="1066,-1009.16 989,-1009.16 989,-985.164 1066,-985.164 1066,-1009.16"/>
+<text text-anchor="middle" x="1027.5" y="-994.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">time_loop.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~time_loop.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge26" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~time_loop.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1101.86,-997.164C1093.99,-997.164 1085.11,-997.164 1076.3,-997.164"/>
+<polygon fill="#000000" stroke="#000000" points="1076.07,-993.664 1066.07,-997.164 1076.07,-1000.66 1076.07,-993.664"/>
+</g>
+<!-- sourcefile~initial_condition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node7" class="node"><title>sourcefile~initial_condition.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node7"><a xlink:href=".././sourcefile/initial_condition.f08.html" xlink:title="initial_condition.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="953,-1629.16 850,-1629.16 850,-1605.16 953,-1605.16 953,-1629.16"/>
+<text text-anchor="middle" x="901.5" y="-1614.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">initial_condition.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~initial_condition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge27" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~initial_condition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1026.5,-1617.16C1012.62,-1646.16 972.738,-1641.33 941.913,-1632.27"/>
+<polygon fill="#000000" stroke="#000000" points="942.857,-1628.89 932.267,-1629.21 940.744,-1635.57 942.857,-1628.89"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge41" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1026.5,-659.164C970.093,-596.303 958.116,-739.602 902.5,-803.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-803.164C884.136,-821.866 866.393,-808.488 850,-827.164 815.787,-866.142 851.064,-901.887 814,-938.164 769.887,-981.34 727.903,-938.036 681,-978.164 652.905,-1002.2 671.569,-1027.45 645,-1053.16 606.963,-1089.98 574.91,-1065.28 536,-1101.16 485.221,-1148 454.876,-1226.66 442.499,-1264.52"/>
+<polygon fill="#000000" stroke="#000000" points="439.162,-1263.47 439.483,-1274.06 445.836,-1265.58 439.162,-1263.47"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge68" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-2079.16C778.483,-2159.48 736.273,-2210.64 591.5,-2191.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-2191.16C447.234,-2167.57 453.9,-2071.29 334,-1991.16 315.964,-1979.11 305.597,-1983.65 291.5,-1967.16"/>
+</g>
+<!-- sourcefile~diagnostic.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node17" class="node"><title>sourcefile~diagnostic.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node17"><a xlink:href=".././sourcefile/diagnostic.f08.html" xlink:title="diagnostic.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="787,-1011.16 708,-1011.16 708,-987.164 787,-987.164 787,-1011.16"/>
+<text text-anchor="middle" x="747.5" y="-996.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">diagnostic.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~diagnostic.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge85" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~diagnostic.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-803.164C884.136,-821.866 865.711,-807.911 850,-827.164 807.745,-878.944 857.934,-922.802 814,-973.164 809.189,-978.678 803.051,-983.035 796.468,-986.475"/>
+<polygon fill="#000000" stroke="#000000" points="794.97,-983.311 787.299,-990.618 797.853,-989.69 794.97,-983.311"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge87" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1126.98,-1009.48C1120.45,-1086.58 1083.09,-1503.1 1028.5,-1617.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1026.5,-1617.16C1023.38,-1623.69 909.455,-1579.17 902.5,-1577.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-1577.16C855.3,-1564.13 856.395,-1536.55 814,-1516.16 786.684,-1503.03 778.783,-1495.85 748.5,-1497.16"/>
+</g>
+<!-- sourcefile~test_cases.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node19" class="node"><title>sourcefile~test_cases.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node19"><a xlink:href=".././sourcefile/test_cases.f08.html" xlink:title="test_cases.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="942.5,-631.164 860.5,-631.164 860.5,-607.164 942.5,-607.164 942.5,-631.164"/>
+<text text-anchor="middle" x="901.5" y="-616.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">test_cases.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~test_cases.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge100" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~test_cases.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1026.5,-659.164C1007.83,-638.356 978.283,-628.316 952.716,-623.497"/>
+<polygon fill="#000000" stroke="#000000" points="953.218,-620.033 942.779,-621.841 952.068,-626.938 953.218,-620.033"/>
+</g>
+<!-- sourcefile~junction.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node20" class="node"><title>sourcefile~junction.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node20"><a xlink:href=".././sourcefile/junction.f08.html" xlink:title="junction.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="624,-1589.16 557,-1589.16 557,-1565.16 624,-1565.16 624,-1589.16"/>
+<text text-anchor="middle" x="590.5" y="-1574.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">junction.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge103" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-1577.16C835.59,-1558.45 815.915,-1581.52 748.5,-1577.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1577.16C708.622,-1574.71 665.428,-1574.96 634.275,-1575.68"/>
+<polygon fill="#000000" stroke="#000000" points="634.104,-1572.19 624.197,-1575.94 634.284,-1579.18 634.104,-1572.19"/>
+</g>
+<!-- sourcefile~checking.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node23" class="node"><title>sourcefile~checking.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node23"><a xlink:href=".././sourcefile/checking.f08.html" xlink:title="checking.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="471.5,-1593.16 398.5,-1593.16 398.5,-1569.16 471.5,-1569.16 471.5,-1593.16"/>
+<text text-anchor="middle" x="435" y="-1578.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">checking.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~checking.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge112" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~checking.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-2079.16C891.141,-2084.65 542.616,-1947.76 536,-1939.16 445.465,-1821.55 589.404,-1725.64 500,-1607.16 495.124,-1600.7 488.369,-1595.84 481.066,-1592.18"/>
+<polygon fill="#000000" stroke="#000000" points="482.195,-1588.86 471.623,-1588.17 479.455,-1595.3 482.195,-1588.86"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge123" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-2079.16C760.064,-2164.78 647.674,-2135.92 536,-2015.16 479.16,-1953.7 553.357,-1704.67 500,-1640.16 461.634,-1593.78 423.6,-1629.56 370,-1602.16 348.345,-1591.1 326.746,-1573.73 311.703,-1560.36"/>
+<polygon fill="#000000" stroke="#000000" points="313.812,-1557.54 304.061,-1553.4 309.1,-1562.72 313.812,-1557.54"/>
+</g>
+<!-- sourcefile~initialization.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node25" class="node"><title>sourcefile~initialization.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node25"><a xlink:href=".././sourcefile/initialization.f08.html" xlink:title="initialization.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="477.5,-593.164 392.5,-593.164 392.5,-569.164 477.5,-569.164 477.5,-593.164"/>
+<text text-anchor="middle" x="435" y="-578.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">initialization.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~initialization.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge137" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~initialization.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-659.164C876.555,-660.462 872.033,-649.63 850,-640.164 773.294,-607.208 752.277,-601.632 681,-558.164 663.925,-547.751 663.974,-537.489 645,-531.164 599.042,-515.845 583.149,-520.034 536,-531.164 509.417,-537.439 481.845,-551.923 462.402,-563.695"/>
+<polygon fill="#000000" stroke="#000000" points="460.453,-560.785 453.812,-569.04 464.151,-566.728 460.453,-560.785"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge150" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1127.98,-984.934C1127.26,-936.956 1118.38,-759.326 1028.5,-659.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1026.5,-659.164C861.954,-475.79 1018.9,-283.971 814,-147.164 711.243,-78.5564 651.163,-102.404 536,-147.164 442.76,-183.403 415.43,-210.041 370,-299.164 305.805,-425.099 350.666,-474.797 334,-615.164 319.563,-736.757 301.226,-882.388 294.309,-937.023"/>
+<polygon fill="#000000" stroke="#000000" points="290.832,-936.621 293.048,-946.982 297.777,-937.501 290.832,-936.621"/>
+</g>
+<!-- sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node27" class="node"><title>sourcefile~allocate_storage.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node27"><a xlink:href=".././sourcefile/allocate_storage.f08.html" xlink:title="allocate_storage.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="645,-441.164 536,-441.164 536,-417.164 645,-417.164 645,-441.164"/>
+<text text-anchor="middle" x="590.5" y="-426.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">allocate_storage.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge165" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~allocate_storage.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1026.5,-659.164C989.693,-618.146 957.596,-657.868 902.5,-659.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-659.164C876.526,-659.728 870.246,-653.015 850,-640.164 831.16,-628.205 830.349,-620.352 814,-605.164 740.422,-536.809 728.499,-510.967 645,-455.164 640.05,-451.856 634.615,-448.719 629.166,-445.844"/>
+<polygon fill="#000000" stroke="#000000" points="630.571,-442.633 620.065,-441.269 627.428,-448.887 630.571,-442.633"/>
+</g>
+<!-- sourcefile~network_define.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node29" class="node"><title>sourcefile~network_define.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node29"><a xlink:href=".././sourcefile/network_define.f08.html" xlink:title="network_define.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="799,-671.164 696,-671.164 696,-647.164 799,-647.164 799,-671.164"/>
+<text text-anchor="middle" x="747.5" y="-656.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_define.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~network_define.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge168" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~network_define.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-659.164C870.557,-659.868 837.287,-659.948 809.525,-659.819"/>
+<polygon fill="#000000" stroke="#000000" points="809.193,-656.317 799.174,-659.76 809.154,-663.317 809.193,-656.317"/>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge4" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-2001.16C521.45,-2006.33 503.526,-1995.28 436,-2005.16"/>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge42" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M729.72,-1913.1C714.747,-1901.46 693.337,-1882.5 681,-1861.16 648.836,-1805.55 686.408,-1770.29 645,-1721.16 628.203,-1701.24 604.617,-1719.68 591.5,-1697.16"/>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge56" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M716.801,-1936C705.457,-1940.39 692.492,-1945.7 681,-1951.16 639.847,-1970.72 636.749,-1995.81 591.5,-2001.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-2001.16C563.62,-2004.23 558.438,-1990.42 536,-1977.16 516.12,-1965.42 384.063,-1870.48 370,-1852.16 344.012,-1818.32 362.153,-1795.23 334,-1763.16 319.687,-1746.86 305.819,-1755.46 291.5,-1739.16"/>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge88" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M728.274,-1913.1C712.766,-1901.72 691.402,-1883.15 681,-1861.16 641.51,-1777.69 697.34,-1523.25 645,-1447.16 640.574,-1440.73 634.094,-1435.83 627.16,-1432.11"/>
+<polygon fill="#000000" stroke="#000000" points="628.125,-1428.71 617.573,-1427.76 625.228,-1435.08 628.125,-1428.71"/>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge113" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M716.968,-1932.73C684.351,-1939.43 631.201,-1945.34 591.5,-1925.16"/>
+</g>
+<!-- sourcefile~output.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge139" class="edge"><title>sourcefile~output.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M716.781,-1915.73C683.514,-1904.07 629.325,-1881.71 591.5,-1849.16"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge18" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1024.79,-984.976C1017.79,-936.011 990.004,-749.004 953,-598.164 903.027,-394.456 890.055,-342.638 814,-147.164 789.382,-83.8931 816.391,-9.16398 748.5,-9.16398 748.5,-9.16398 748.5,-9.16398 589.5,-9.16398 455.983,-9.16398 402.013,27.7608 291.5,-47.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-47.164C259.493,-67.7615 261.583,-83.817 247,-117.164 203.655,-216.28 242.257,-262.695 180,-351.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M178,-351.164C66.8997,-509.041 57.3636,-1158.17 56.5686,-1286.91"/>
+<polygon fill="#000000" stroke="#000000" points="53.0677,-1287.1 56.5179,-1297.12 60.0676,-1287.13 53.0677,-1287.1"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~debug.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge22" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~debug.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-841.164C879.349,-835.915 825.419,-852.788 787.848,-866.221"/>
+<polygon fill="#000000" stroke="#000000" points="786.409,-863.02 778.203,-869.721 788.797,-869.6 786.409,-863.02"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~output.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge24" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~output.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-1885.16C870.862,-1914.45 822.499,-1923.03 788.296,-1925.19"/>
+<polygon fill="#000000" stroke="#000000" points="787.995,-1921.7 778.172,-1925.67 788.326,-1928.69 787.995,-1921.7"/>
+</g>
+<!-- sourcefile~face_values.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node12" class="node"><title>sourcefile~face_values.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node12"><a xlink:href=".././sourcefile/face_values.f08.html" xlink:title="face_values.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="791.5,-1319.16 703.5,-1319.16 703.5,-1295.16 791.5,-1295.16 791.5,-1319.16"/>
+<text text-anchor="middle" x="747.5" y="-1304.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_values.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~face_values.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge37" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~face_values.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1020.6,-1009.28C999.021,-1052.36 920.124,-1199.96 814,-1281.16 809.269,-1284.78 803.969,-1287.97 798.486,-1290.75"/>
+<polygon fill="#000000" stroke="#000000" points="796.768,-1287.69 789.157,-1295.06 799.703,-1294.04 796.768,-1287.69"/>
+</g>
+<!-- sourcefile~explicit_euler.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node13" class="node"><title>sourcefile~explicit_euler.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node13"><a xlink:href=".././sourcefile/explicit_euler.f08.html" xlink:title="explicit_euler.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="948,-893.164 855,-893.164 855,-869.164 948,-869.164 948,-893.164"/>
+<text text-anchor="middle" x="901.5" y="-878.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">explicit_euler.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~explicit_euler.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge39" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~explicit_euler.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1013.23,-984.75C991.601,-964.516 948.598,-924.288 923.013,-900.353"/>
+<polygon fill="#000000" stroke="#000000" points="925.369,-897.764 915.675,-893.489 920.586,-902.876 925.369,-897.764"/>
+</g>
+<!-- sourcefile~runge_kutta.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node15" class="node"><title>sourcefile~runge_kutta.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node15"><a xlink:href=".././sourcefile/runge_kutta.f08.html" xlink:title="runge_kutta.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="945.5,-1469.16 857.5,-1469.16 857.5,-1445.16 945.5,-1445.16 945.5,-1469.16"/>
+<text text-anchor="middle" x="901.5" y="-1454.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">runge_kutta.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~runge_kutta.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge55" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~runge_kutta.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1023.18,-1009.47C1006.34,-1071.96 930.209,-1354.37 908.372,-1435.38"/>
+<polygon fill="#000000" stroke="#000000" points="904.993,-1434.47 905.769,-1445.04 911.752,-1436.29 904.993,-1434.47"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge76" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1026.35,-985.077C1025.17,-948.712 1016.29,-839.718 953,-789.164 881.497,-732.051 826.459,-813.091 748.5,-765.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-765.164C689.695,-728.688 704.465,-684.12 645,-652.164 562.282,-607.713 529.662,-627.918 436,-621.164"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~diagnostic.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge84" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~diagnostic.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-841.164C877.226,-835.388 866.515,-842.777 850,-860.164 813.7,-898.381 849.955,-934.621 814,-973.164 809.178,-978.333 803.196,-982.494 796.823,-985.837"/>
+<polygon fill="#000000" stroke="#000000" points="794.947,-982.845 787.296,-990.174 797.847,-989.216 794.947,-982.845"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge97" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1026.57,-1009.42C1026.67,-1077.83 1023.54,-1411.67 953,-1478.16 886.58,-1540.78 839.7,-1493.34 748.5,-1497.16"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge131" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1025.68,-1009.39C1018.73,-1111.48 968.239,-1820.2 902.5,-1885.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-1885.16C883.088,-1902.37 705.174,-1900.3 681,-1904.16 640.653,-1910.61 627.923,-1943.68 591.5,-1925.16"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge158" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M1023.2,-985.075C1015.41,-958.704 993.413,-895.546 953,-860.164 934.957,-844.368 925.774,-846.94 902.5,-841.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.5,-841.164C740.396,-801.433 688.393,-848.011 536,-911.164 490.457,-930.038 482.208,-976.346 436,-959.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-959.164C405.962,-947.461 372.03,-946.986 344.312,-949.66"/>
+<polygon fill="#000000" stroke="#000000" points="343.563,-946.223 334.019,-950.823 344.348,-953.178 343.563,-946.223"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge6" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M897.963,-1629.49C884.952,-1692.51 825.854,-1976.38 814,-1991.16 755.746,-2063.83 523.281,-2204.66 436,-2172.16"/>
+</g>
+<!-- sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node8" class="node"><title>sourcefile~element_geometry.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node8"><a xlink:href=".././sourcefile/element_geometry.f08.html" xlink:title="element_geometry.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="807.5,-1667.16 687.5,-1667.16 687.5,-1643.16 807.5,-1643.16 807.5,-1667.16"/>
+<text text-anchor="middle" x="747.5" y="-1652.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_geometry.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge29" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M852.406,-1629.19C837.78,-1632.84 821.553,-1636.9 806.354,-1640.7"/>
+<polygon fill="#000000" stroke="#000000" points="805.394,-1637.33 796.542,-1643.15 807.092,-1644.12 805.394,-1637.33"/>
+</g>
+<!-- sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node11" class="node"><title>sourcefile~element_dynamics.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node11"><a xlink:href=".././sourcefile/element_dynamics.f08.html" xlink:title="element_dynamics.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="807.5,-1549.16 687.5,-1549.16 687.5,-1525.16 807.5,-1525.16 807.5,-1549.16"/>
+<text text-anchor="middle" x="747.5" y="-1534.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_dynamics.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge33" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M874.812,-1605.1C866.697,-1600.98 857.813,-1596.15 850,-1591.16 832.916,-1580.26 831.596,-1573.23 814,-1563.16 807.647,-1559.53 800.688,-1556.18 793.751,-1553.17"/>
+<polygon fill="#000000" stroke="#000000" points="794.945,-1549.88 784.367,-1549.29 792.27,-1556.34 794.945,-1549.88"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~face_values.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge36" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~face_values.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M867.943,-1605.12C861.309,-1601.46 854.877,-1596.85 850,-1591.16 817.075,-1552.75 830.826,-1530.88 814,-1483.16 794.335,-1427.4 769.657,-1362.31 756.94,-1329.1"/>
+<polygon fill="#000000" stroke="#000000" points="760.103,-1327.57 753.253,-1319.49 753.567,-1330.08 760.103,-1327.57"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge44" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M897.451,-1629.19C886.255,-1670.35 843.04,-1805.33 748.5,-1847.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1847.16C680.741,-1876.26 701.932,-1765.09 645,-1721.16 624.367,-1705.24 604.617,-1719.68 591.5,-1697.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1697.16C576.8,-1675.36 552.102,-1697.59 536,-1678.16 469.694,-1598.16 527.362,-1547.4 500,-1447.16 485.909,-1395.55 460.498,-1337.92 446.303,-1307.57"/>
+<polygon fill="#000000" stroke="#000000" points="449.391,-1305.91 441.952,-1298.36 443.063,-1308.9 449.391,-1305.91"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge57" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M898.776,-1629.33C890.983,-1682.8 857.525,-1896.55 814,-1946.16 760.496,-2007.15 724.611,-1999.54 645,-2015.16 597.463,-2024.49 582.366,-2029.2 536,-2015.16 517.595,-2009.59 518.055,-1997.78 500,-1991.16 456.209,-1975.11 322.974,-2001.58 291.5,-1967.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-1967.16C246.887,-1917.33 193.968,-1440.65 182.332,-1331.4"/>
+<polygon fill="#000000" stroke="#000000" points="185.787,-1330.79 181.254,-1321.22 178.826,-1331.53 185.787,-1330.79"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge89" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M869.248,-1605.07C862.319,-1601.36 855.431,-1596.75 850,-1591.16 824.223,-1564.66 842.213,-1540.06 814,-1516.16 790.872,-1496.57 778.785,-1495.89 748.5,-1497.16"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge101" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M869.067,-1605.08C838.735,-1594.35 791.252,-1579.93 748.5,-1577.16"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge114" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1847.16C718.148,-1859.71 707.86,-1855.68 681,-1871.16 662.957,-1881.57 662.666,-1890.13 645,-1901.16 622.895,-1914.97 614.732,-1936.97 591.5,-1925.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1925.16C557.055,-1908.67 550.678,-1896.47 536,-1863.16 508.655,-1801.12 543.695,-1612.02 500,-1560.16 480.88,-1537.47 464.75,-1548.5 436,-1541.16"/>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge140" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1847.16C714.999,-1861.1 617.612,-1871.63 591.5,-1849.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1849.16C551.292,-1816.29 551.48,-1797.13 536,-1749.16 517.478,-1691.77 539.204,-1525.99 500,-1480.16 480.713,-1457.62 449.622,-1487.52 436,-1461.16"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge7" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M743.054,-1667.2C732.845,-1701.22 699.994,-1799.7 645,-1863.16 571.459,-1948.03 546.344,-1984.3 436,-2005.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-2005.16C371.334,-2014.33 346.363,-2036.8 291.5,-2005.16"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge45" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M735.109,-1643.05C716.822,-1623.84 679.466,-1585.55 645,-1556.16 599.071,-1517 575.305,-1520.97 536,-1475.16 490.674,-1422.34 458.101,-1345.51 443.914,-1308.18"/>
+<polygon fill="#000000" stroke="#000000" points="447.02,-1306.49 440.255,-1298.34 440.459,-1308.93 447.02,-1306.49"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge70" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1735.16C532.028,-1730.2 553.02,-1806.44 500,-1829.16 446.895,-1851.93 419.683,-1858.66 370,-1829.16 341.268,-1812.11 357.452,-1786.96 334,-1763.16 318.774,-1747.71 305.698,-1755.57 291.5,-1739.16"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge90" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M736.615,-1642.99C722.615,-1625.25 696.944,-1590.86 681,-1558.16 658.265,-1511.55 679.042,-1486.29 645,-1447.16 640.06,-1441.49 633.597,-1436.93 626.879,-1433.33"/>
+<polygon fill="#000000" stroke="#000000" points="628.215,-1430.09 617.678,-1428.98 625.222,-1436.42 628.215,-1430.09"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge102" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M722.621,-1643.15C696.338,-1629.92 653.917,-1608.57 624.473,-1593.76"/>
+<polygon fill="#000000" stroke="#000000" points="625.912,-1590.56 615.406,-1589.19 622.766,-1596.82 625.912,-1590.56"/>
+</g>
+<!-- sourcefile~adjustments.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node21" class="node"><title>sourcefile~adjustments.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node21"><a xlink:href=".././sourcefile/adjustments.f08.html" xlink:title="adjustments.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="634.5,-1669.16 546.5,-1669.16 546.5,-1645.16 634.5,-1645.16 634.5,-1669.16"/>
+<text text-anchor="middle" x="590.5" y="-1654.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">adjustments.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge107" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M687.459,-1655.93C673.551,-1656.11 658.802,-1656.3 645.147,-1656.47"/>
+<polygon fill="#000000" stroke="#000000" points="644.904,-1652.97 634.95,-1656.6 644.994,-1659.97 644.904,-1652.97"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge125" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1735.16C563.536,-1732.92 552.62,-1731.24 536,-1711.16 492,-1658.02 547.436,-1610.26 500,-1560.16 479.599,-1538.62 464.716,-1548.63 436,-1541.16"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge152" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M734.313,-1667.49C709.47,-1691.17 650.332,-1740.25 591.5,-1735.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1735.16C563.536,-1732.92 551.81,-1731.88 536,-1711.16 472.964,-1628.56 568.389,-1558.39 500,-1480.16 480.471,-1457.83 449.622,-1487.52 436,-1461.16"/>
+</g>
+<!-- sourcefile~case_y_channel.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node9" class="node"><title>sourcefile~case_y_channel.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node9"><a xlink:href=".././sourcefile/case_y_channel.f08.html" xlink:title="case_y_channel.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="801.5,-441.164 693.5,-441.164 693.5,-417.164 801.5,-417.164 801.5,-441.164"/>
+<text text-anchor="middle" x="747.5" y="-426.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">case_y_channel.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~case_y_channel.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge8" class="edge"><title>sourcefile~case_y_channel.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M727.256,-416.975C712.411,-406.573 692.524,-390.288 681,-371.164 646.06,-313.182 698.225,-264.994 645,-223.164 571.803,-165.638 526.971,-217.38 436,-237.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-237.164C405.45,-242.88 394.665,-235.69 370,-251.164 322.137,-281.192 347.726,-345.578 291.5,-351.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-351.164C241.072,-355.976 208.008,-311.364 180,-351.164"/>
+</g>
+<!-- sourcefile~case_y_channel.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge58" class="edge"><title>sourcefile~case_y_channel.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M718.683,-417.126C698.627,-409.126 670.678,-399.35 645,-395.164 522.694,-375.224 465.375,-362.045 370,-441.164 309.037,-491.736 352.134,-550.197 291.5,-601.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-601.164C182.692,-692.981 179.165,-1176.49 179.772,-1286.76"/>
+<polygon fill="#000000" stroke="#000000" points="176.274,-1287.06 179.847,-1297.03 183.274,-1287.01 176.274,-1287.06"/>
+</g>
+<!-- sourcefile~case_y_channel.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge91" class="edge"><title>sourcefile~case_y_channel.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M741.383,-441.609C728.509,-473.576 694.822,-561.448 681,-638.164 627.258,-936.451 725.241,-1026.89 645,-1319.16 636.728,-1349.29 618.623,-1380.64 605.77,-1400.5"/>
+<polygon fill="#000000" stroke="#000000" points="602.73,-1398.75 600.118,-1409.02 608.563,-1402.62 602.73,-1398.75"/>
+</g>
+<!-- sourcefile~case_y_channel.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge115" class="edge"><title>sourcefile~case_y_channel.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M737.693,-441.205C701.056,-491.53 561.437,-685.669 536,-756.164 490.87,-881.237 559.143,-934.075 500,-1053.16 482.385,-1088.63 455.693,-1080.8 436,-1115.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-1115.16C396.679,-1177.3 389.553,-1195.37 370,-1265.16 339.717,-1373.26 395.744,-1421.41 334,-1515.16 332.145,-1517.98 329.868,-1520.54 327.342,-1522.86"/>
+<polygon fill="#000000" stroke="#000000" points="324.999,-1520.25 319.186,-1529.11 329.254,-1525.81 324.999,-1520.25"/>
+</g>
+<!-- sourcefile~case_y_channel.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge141" class="edge"><title>sourcefile~case_y_channel.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M698.539,-417.148C681.723,-413.494 662.633,-409.969 645,-408.164 596.807,-403.231 581.149,-390.602 536,-408.164 515.771,-416.033 518.529,-429.859 500,-441.164 447.423,-473.242 409.266,-441.713 370,-489.164 340.917,-524.309 303.676,-847.789 293.924,-936.664"/>
+<polygon fill="#000000" stroke="#000000" points="290.43,-936.418 292.826,-946.739 297.389,-937.177 290.43,-936.418"/>
+</g>
+<!-- sourcefile~case_y_channel.f08&#45;&gt;sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge164" class="edge"><title>sourcefile~case_y_channel.f08&#45;&gt;sourcefile~allocate_storage.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M693.158,-429.164C681.048,-429.164 668.065,-429.164 655.563,-429.164"/>
+<polygon fill="#000000" stroke="#000000" points="655.204,-425.664 645.203,-429.164 655.203,-432.664 655.204,-425.664"/>
+</g>
+<!-- sourcefile~stub.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node10" class="node"><title>sourcefile~stub.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node10"><a xlink:href=".././sourcefile/stub.f08.html" xlink:title="stub.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="462,-1513.16 408,-1513.16 408,-1489.16 462,-1489.16 462,-1513.16"/>
+<text text-anchor="middle" x="435" y="-1498.76" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">stub.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~stub.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge9" class="edge"><title>sourcefile~stub.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M407.958,-1491.11C375.193,-1480.36 319.799,-1468.89 291.5,-1501.16"/>
+</g>
+<!-- sourcefile~stub.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge71" class="edge"><title>sourcefile~stub.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M407.728,-1496.62C394.529,-1492.99 379.388,-1486.54 370,-1475.16 255.259,-1336.09 468.921,-1045.09 291.5,-1077.16"/>
+</g>
+<!-- sourcefile~stub.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge126" class="edge"><title>sourcefile~stub.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M407.863,-1508.5C388.896,-1513.82 362.682,-1521.18 339.936,-1527.57"/>
+<polygon fill="#000000" stroke="#000000" points="338.783,-1524.26 330.101,-1530.33 340.675,-1531 338.783,-1524.26"/>
+</g>
+<!-- sourcefile~stub.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge153" class="edge"><title>sourcefile~stub.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M407.871,-1497.18C394.372,-1493.71 378.905,-1487.22 370,-1475.16 315.408,-1401.23 355.627,-1152.49 334,-1063.16 326.782,-1033.35 312.393,-1000.92 302.368,-980.337"/>
+<polygon fill="#000000" stroke="#000000" points="305.435,-978.643 297.848,-971.248 299.167,-981.761 305.435,-978.643"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge10" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M736.569,-1549.32C722.514,-1567.02 696.777,-1601.39 681,-1634.16 657.77,-1682.42 675.971,-1705.47 645,-1749.16 616.956,-1788.73 334.215,-2028.13 291.5,-2005.16"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge46" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M711.434,-1525.09C701.373,-1521.14 690.547,-1516.4 681,-1511.16 663.695,-1501.67 662.092,-1495.03 645,-1485.16 622.431,-1472.13 614.595,-1473.24 591.5,-1461.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1461.16C567.138,-1449.47 555.762,-1457.85 536,-1442.16 489.648,-1405.37 458.273,-1340.89 444.287,-1307.53"/>
+<polygon fill="#000000" stroke="#000000" points="447.517,-1306.18 440.507,-1298.23 441.033,-1308.82 447.517,-1306.18"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge79" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M728.786,-1549.35C709.002,-1562.59 675.716,-1583.77 645,-1598.16 598.545,-1619.94 571.601,-1599.22 536,-1636.16 498.246,-1675.34 543.764,-1720.84 500,-1753.16 462.646,-1780.75 321.619,-1774.51 291.5,-1739.16"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge92" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M703.91,-1525.16C695.717,-1521.55 687.633,-1516.96 681,-1511.16 656.424,-1489.69 668.759,-1469.54 645,-1447.16 639.797,-1442.26 633.498,-1438.11 627.075,-1434.67"/>
+<polygon fill="#000000" stroke="#000000" points="628.214,-1431.33 617.689,-1430.11 625.157,-1437.63 628.214,-1431.33"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge104" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M699.995,-1549.17C678.998,-1554.58 654.366,-1560.94 633.884,-1566.23"/>
+<polygon fill="#000000" stroke="#000000" points="633.005,-1562.84 624.197,-1568.73 634.754,-1569.62 633.005,-1562.84"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge109" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M734.209,-1549.41C711.61,-1571.78 664.033,-1618.15 645,-1631.16 640.085,-1634.52 634.67,-1637.69 629.23,-1640.58"/>
+<polygon fill="#000000" stroke="#000000" points="627.489,-1637.54 620.134,-1645.16 630.639,-1643.79 627.489,-1637.54"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge133" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M687.345,-1546.92C624.064,-1555.28 521.284,-1562.9 436,-1541.16"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge160" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1461.16C559.27,-1445.36 451.66,-1491.47 436,-1461.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-1461.16C399.972,-1395.32 389.783,-1378.59 370,-1307.16 340.743,-1201.52 362.944,-1168.89 334,-1063.16 325.9,-1033.58 311.713,-1001.09 301.975,-980.438"/>
+<polygon fill="#000000" stroke="#000000" points="305.078,-978.815 297.598,-971.313 298.767,-981.843 305.078,-978.815"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge11" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M722.07,-1295.12C676.071,-1270.95 577.505,-1211.68 536,-1129.16 479.07,-1015.98 577.407,-660.466 500,-560.164 462.819,-511.986 426.983,-538.528 370,-517.164 334.562,-503.878 326.769,-497.892 291.5,-484.164"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge47" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1305.16C553.724,-1284.51 505.509,-1281.81 472.728,-1282.96"/>
+<polygon fill="#000000" stroke="#000000" points="472.481,-1279.47 462.662,-1283.44 472.82,-1286.46 472.481,-1279.47"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge64" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M703.469,-1311.21C664.293,-1314.08 609.853,-1315.76 591.5,-1305.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1305.16C446.724,-1222.72 577.476,-1090.7 500,-945.164 481.678,-910.747 457.227,-917.869 436,-885.164"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge93" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M734.541,-1319.41C716.383,-1337.55 680.233,-1371.91 645,-1395.16 639.267,-1398.95 632.901,-1402.52 626.619,-1405.74"/>
+<polygon fill="#000000" stroke="#000000" points="624.997,-1402.63 617.557,-1410.18 628.077,-1408.92 624.997,-1402.63"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge110" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M742.924,-1319.47C728.658,-1368.21 675.13,-1547.45 645,-1598.16 636.362,-1612.7 623.765,-1626.82 612.964,-1637.59"/>
+<polygon fill="#000000" stroke="#000000" points="610.257,-1635.34 605.5,-1644.81 615.122,-1640.38 610.257,-1635.34"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge119" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M703.403,-1314.99C655.743,-1325.88 579.906,-1350.19 536,-1400.16 498.686,-1442.63 539.942,-1482.16 500,-1522.16 479.036,-1543.16 464.716,-1548.63 436,-1541.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-1541.16C403.604,-1533.41 368.358,-1533.34 340.525,-1535.24"/>
+<polygon fill="#000000" stroke="#000000" points="339.939,-1531.77 330.246,-1536.05 340.491,-1538.75 339.939,-1531.77"/>
+</g>
+<!-- sourcefile~face_values.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge146" class="edge"><title>sourcefile~face_values.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1305.16C532.534,-1272.27 554.118,-1230.4 536,-1167.16 512.448,-1084.96 557.356,-1041.59 500,-978.164 480.098,-956.157 463.811,-969.505 436,-959.164"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge12" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M866.218,-869.069C860.007,-865.468 854.182,-860.902 850,-855.164 792.414,-776.162 851.985,-728.246 814,-638.164 801.678,-608.943 666.833,-431.164 645,-408.164 562.371,-321.119 553.683,-213.603 436,-237.164"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge30" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M899.454,-893.286C891.292,-987.399 837.487,-1598.53 814,-1629.16 811.558,-1632.35 808.665,-1635.15 805.478,-1637.6"/>
+<polygon fill="#000000" stroke="#000000" points="803.559,-1634.67 797.039,-1643.02 807.344,-1640.56 803.559,-1634.67"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge34" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.45,-893.307C899.896,-972.032 893.248,-1410.04 814,-1511.16 811.483,-1514.38 808.509,-1517.19 805.241,-1519.66"/>
+<polygon fill="#000000" stroke="#000000" points="803.192,-1516.82 796.603,-1525.11 806.927,-1522.74 803.192,-1516.82"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~face_values.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge38" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~face_values.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M897.521,-893.483C889.508,-926.746 866.954,-1021.19 850,-1100.16 832.783,-1180.36 866.501,-1218.15 814,-1281.16 810.237,-1285.68 805.58,-1289.42 800.496,-1292.51"/>
+<polygon fill="#000000" stroke="#000000" points="798.877,-1289.4 791.62,-1297.12 802.107,-1295.62 798.877,-1289.4"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge50" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M899.603,-893.191C896.08,-932.259 879.935,-1057.23 814,-1129.16 719.648,-1232.1 547.421,-1269.52 472.468,-1281.35"/>
+<polygon fill="#000000" stroke="#000000" points="471.918,-1277.89 462.556,-1282.85 472.968,-1284.81 471.918,-1277.89"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge80" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M874.095,-869.135C866.113,-865.089 857.485,-860.29 850,-855.164 800.255,-821.099 799.861,-796.74 748.5,-765.164"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge94" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M900.194,-893.354C897.716,-979.379 877.54,-1491.75 748.5,-1497.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1497.16C696.257,-1499.27 690.17,-1469.27 645,-1447.16 638.705,-1444.08 631.989,-1440.81 625.516,-1437.66"/>
+<polygon fill="#000000" stroke="#000000" points="626.809,-1434.4 616.285,-1433.17 623.749,-1440.69 626.809,-1434.4"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge108" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M899.389,-893.25C890.953,-984.51 836.735,-1562.49 814,-1591.16 794.737,-1615.46 771.188,-1594.03 748.5,-1615.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1615.16C744.532,-1617 688.607,-1631.88 644.495,-1643.42"/>
+<polygon fill="#000000" stroke="#000000" points="643.509,-1640.06 634.717,-1645.97 645.277,-1646.83 643.509,-1640.06"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge134" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1039.16C722.35,-1056.57 704.343,-1034.69 681,-1053.16 651.692,-1076.36 676.583,-1109.18 645,-1129.16 604.064,-1155.07 584.327,-1132.53 536,-1129.16 491.231,-1126.05 459.108,-1076.69 436,-1115.16"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge161" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M896.399,-893.281C886.621,-920.309 859.315,-985.841 814,-1020.16 789.837,-1038.47 773.09,-1021.44 748.5,-1039.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1039.16C718.557,-1059.3 624.643,-1048.54 591.5,-1039.16"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge13" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M427.326,-1298.62C408.601,-1332.97 352.909,-1431.13 291.5,-1501.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-1501.16C275.859,-1516.72 261.141,-1505.06 247,-1520.16 188.376,-1582.78 238.232,-1764.15 180,-1701.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M178,-1701.16C76.2481,-1591.11 59.6798,-1397.22 57.0061,-1331.6"/>
+<polygon fill="#000000" stroke="#000000" points="60.4912,-1331.09 56.6594,-1321.21 53.4951,-1331.32 60.4912,-1331.09"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge72" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M431.979,-1273.91C423.48,-1226.68 386.575,-1059.98 291.5,-1077.16"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge127" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M431.45,-1298.25C423.211,-1334.81 394.276,-1445.99 334,-1515.16 331.39,-1518.16 328.348,-1520.92 325.113,-1523.43"/>
+<polygon fill="#000000" stroke="#000000" points="323.062,-1520.59 316.811,-1529.14 327.033,-1526.35 323.062,-1520.59"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge154" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M428.759,-1274.14C407.593,-1225.57 328.24,-1043.47 300.859,-980.641"/>
+<polygon fill="#000000" stroke="#000000" points="303.992,-979.068 296.788,-971.299 297.575,-981.865 303.992,-979.068"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge14" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M892.943,-1469.33C881.463,-1488.49 859.92,-1527.2 850,-1563.16 827.267,-1645.57 859.614,-1873.86 814,-1946.16 787.89,-1987.55 482.893,-2186.15 436,-2172.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-2172.16C342.56,-2138.12 376.022,-2053.91 291.5,-2005.16"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge28" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M894.683,-1469.31C876.348,-1507.53 820.579,-1623.14 814,-1629.16 810.151,-1632.69 805.766,-1635.76 801.13,-1638.43"/>
+<polygon fill="#000000" stroke="#000000" points="799.305,-1635.43 791.983,-1643.09 802.482,-1641.67 799.305,-1635.43"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge32" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M883.152,-1469.3C866.063,-1480.93 838.964,-1498.55 814,-1511.16 806.937,-1514.73 799.261,-1518.16 791.733,-1521.29"/>
+<polygon fill="#000000" stroke="#000000" points="790.3,-1518.09 782.334,-1525.08 792.917,-1524.58 790.3,-1518.09"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~face_values.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge35" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~face_values.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M894.941,-1444.81C883.311,-1420.25 854.126,-1364.94 814,-1333.16 809.392,-1329.51 804.206,-1326.32 798.822,-1323.54"/>
+<polygon fill="#000000" stroke="#000000" points="800.181,-1320.31 789.64,-1319.23 797.21,-1326.65 800.181,-1320.31"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge49" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M867.837,-1445.14C783.728,-1414.18 560.154,-1331.87 472.236,-1299.5"/>
+<polygon fill="#000000" stroke="#000000" points="473.284,-1296.16 462.691,-1295.99 470.866,-1302.73 473.284,-1296.16"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge73" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1115.16C706.838,-1092.79 690.431,-1126.05 645,-1129.16 596.669,-1132.48 581.822,-1144.89 536,-1129.16 516.827,-1122.59 518.764,-1108.83 500,-1101.16 413.649,-1065.89 383.291,-1060.57 291.5,-1077.16"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~diagnostic.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge83" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~diagnostic.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M899.595,-1444.78C894.722,-1381.21 869.735,-1091.97 814,-1025.16 809.258,-1019.48 803.1,-1015.03 796.458,-1011.55"/>
+<polygon fill="#000000" stroke="#000000" points="797.746,-1008.29 787.191,-1007.38 794.873,-1014.67 797.746,-1008.29"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge95" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M870.24,-1469.26C839.985,-1480.36 791.849,-1495.35 748.5,-1497.16"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~adjustments.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge106" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~adjustments.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M895.786,-1469.41C885.149,-1495.49 856.824,-1556.93 814,-1591.16 789.783,-1610.52 771.188,-1594.03 748.5,-1615.16"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge128" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M894.036,-1469.32C883.846,-1488.78 863.791,-1528.28 850,-1563.16 830.62,-1612.18 849.375,-1637.09 814,-1676.16 759.089,-1736.82 725.124,-1732.6 645,-1749.16 597.559,-1758.97 573.323,-1780.05 536,-1749.16 470.121,-1694.65 557.356,-1623.59 500,-1560.16 480.098,-1538.16 464.75,-1548.5 436,-1541.16"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge155" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M899.865,-1445.13C896.374,-1393.03 874.698,-1186.36 748.5,-1115.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-1115.16C679.676,-1077.47 665.326,-1060.05 591.5,-1039.16"/>
+</g>
+<!-- sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge15" class="edge"><title>sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M146.711,-1309.16C138.844,-1309.16 130.107,-1309.16 121.256,-1309.16"/>
+<polygon fill="#000000" stroke="#000000" points="121.255,-1305.66 111.255,-1309.16 121.255,-1312.66 121.255,-1305.66"/>
+</g>
+<!-- sourcefile~diagnostic.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge19" class="edge"><title>sourcefile~diagnostic.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M737.275,-987.064C723.86,-969.141 698.647,-934.201 681,-902.164 674.957,-891.193 510.402,-496.142 500,-489.164 423.022,-437.527 377.994,-517.492 291.5,-484.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-484.164C223.266,-445.75 224.064,-288.547 180,-351.164"/>
+</g>
+<!-- sourcefile~diagnostic.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge48" class="edge"><title>sourcefile~diagnostic.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1115.16C526.276,-1155.65 473.058,-1229.01 449.298,-1265.04"/>
+<polygon fill="#000000" stroke="#000000" points="446.152,-1263.46 443.649,-1273.76 452.025,-1267.27 446.152,-1263.46"/>
+</g>
+<!-- sourcefile~diagnostic.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge65" class="edge"><title>sourcefile~diagnostic.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M724.393,-986.986C704.14,-976.142 673.122,-960.313 645,-949.164 554.691,-913.362 488.889,-966.651 436,-885.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-885.164C398.657,-824.036 345.551,-555.73 291.5,-601.164"/>
+</g>
+<!-- sourcefile~diagnostic.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge98" class="edge"><title>sourcefile~diagnostic.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M707.74,-1006.92C697.598,-1010.78 687.654,-1016.54 681,-1025.16 640.78,-1077.27 664.606,-1256.33 645,-1319.16 635.693,-1348.99 617.816,-1380.41 605.298,-1400.36"/>
+<polygon fill="#000000" stroke="#000000" points="602.258,-1398.62 599.809,-1408.93 608.152,-1402.39 602.258,-1398.62"/>
+</g>
+<!-- sourcefile~diagnostic.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge120" class="edge"><title>sourcefile~diagnostic.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M707.949,-1009.38C698.392,-1013.21 688.695,-1018.35 681,-1025.16 655.983,-1047.31 669.526,-1068.47 645,-1091.16 625.871,-1108.86 613.447,-1101.11 591.5,-1115.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1115.16C532.046,-1151.95 469.589,-1055.78 436,-1115.16"/>
+</g>
+<!-- sourcefile~diagnostic.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge147" class="edge"><title>sourcefile~diagnostic.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M715.148,-1011.24C676.923,-1025.26 614.565,-1045.69 591.5,-1039.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-1039.16C543.18,-1026.06 543.483,-998.817 500,-978.164 473.198,-965.434 463.968,-969.073 436,-959.164"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge17" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-1701.16C411.157,-1721.19 396.514,-1710.34 370,-1725.16 333.474,-1745.59 333.09,-1781.81 291.5,-1777.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-1777.16C230.626,-1770.59 220.215,-1744.66 180,-1701.16"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge51" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M575.607,-1408.95C548.78,-1385.35 489.673,-1333.37 457.646,-1305.2"/>
+<polygon fill="#000000" stroke="#000000" points="459.571,-1302.23 449.751,-1298.26 454.949,-1307.49 459.571,-1302.23"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge74" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M563.444,-1428.07C553.369,-1432.04 542.679,-1438.1 536,-1447.16 473.305,-1532.22 569.443,-1602.52 500,-1682.16 480.5,-1704.53 458.311,-1681.6 436,-1701.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-1701.16C427.839,-1706.57 296.814,-1745.4 291.5,-1739.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-1739.16C275.431,-1722.65 259.429,-1732.94 247,-1715.16 202.906,-1652.09 185.576,-1407.64 181.192,-1331.76"/>
+<polygon fill="#000000" stroke="#000000" points="184.669,-1331.24 180.617,-1321.45 177.68,-1331.63 184.669,-1331.24"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge129" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M563.327,-1429.73C553.826,-1433.83 543.576,-1439.55 536,-1447.16 509.919,-1473.37 528.138,-1498.18 500,-1522.16 477.42,-1541.41 464.753,-1548.49 436,-1541.16"/>
+</g>
+<!-- sourcefile~bc.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge156" class="edge"><title>sourcefile~bc.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M581.116,-1408.95C568.892,-1390.45 546.492,-1353.8 536,-1319.16 513.91,-1246.24 548.72,-1036.75 500,-978.164 481.029,-955.35 463.968,-969.073 436,-959.164"/>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge16" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M898.105,-607.16C884.797,-541.587 818.042,-227.238 748.5,-161.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-161.164C639.927,-59.905 576.273,-3.17997 436,-47.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-47.164C373.214,-64.9443 343.921,-11.6237 291.5,-47.164"/>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~case_y_channel.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge31" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~case_y_channel.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M893.399,-607.022C879.517,-583.707 847.223,-531.497 814,-492.164 800.594,-476.293 783.651,-460.082 770.355,-448.079"/>
+<polygon fill="#000000" stroke="#000000" points="772.41,-445.222 762.613,-441.19 767.757,-450.452 772.41,-445.222"/>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge52" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M866.106,-631.178C859.902,-634.784 854.109,-639.374 850,-645.164 783.243,-739.218 888.182,-813.848 814,-902.164 774.044,-949.733 734.922,-914.314 681,-945.164 662.419,-955.795 661.41,-963.417 645,-977.164 597.697,-1016.79 573.94,-1014.5 536,-1063.16 509.758,-1096.83 463,-1215.31 444.18,-1264.5"/>
+<polygon fill="#000000" stroke="#000000" points="440.892,-1263.3 440.606,-1273.89 447.435,-1265.79 440.892,-1263.3"/>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge75" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-47.164C322.208,-54.4821 287.036,-219.903 247,-375.164 200.452,-555.678 183.533,-1162.36 180.514,-1286.76"/>
+<polygon fill="#000000" stroke="#000000" points="177.01,-1286.89 180.271,-1296.97 184.008,-1287.06 177.01,-1286.89"/>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge96" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M865.617,-631.169C859.528,-634.765 853.905,-639.353 850,-645.164 799.234,-720.71 869.533,-981.05 814,-1053.16 775.658,-1102.95 721.198,-1052.86 681,-1101.16 618.185,-1176.65 676.204,-1226.05 645,-1319.16 635.072,-1348.79 617.332,-1380.25 605.015,-1400.27"/>
+<polygon fill="#000000" stroke="#000000" points="601.971,-1398.53 599.624,-1408.87 607.902,-1402.25 601.971,-1398.53"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node22" class="node"><title>sourcefile~case_simple_channel.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node22"><a xlink:href=".././sourcefile/case_simple_channel.f08.html" xlink:title="case_simple_channel.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="814,-362.164 681,-362.164 681,-338.164 814,-338.164 814,-362.164"/>
+<text text-anchor="middle" x="747.5" y="-347.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">case_simple_channel.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~case_simple_channel.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge111" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~case_simple_channel.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M897.546,-606.773C888.985,-572.634 861.683,-475.303 814,-408.164 803.178,-392.926 787.627,-378.937 774.393,-368.517"/>
+<polygon fill="#000000" stroke="#000000" points="776.181,-365.479 766.104,-362.207 771.941,-371.049 776.181,-365.479"/>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge130" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M867.167,-631.291C860.735,-634.916 854.582,-639.485 850,-645.164 811.277,-693.158 850.981,-729.816 814,-779.164 772.495,-834.549 740.049,-824.061 681,-860.164 616.487,-899.608 581.719,-888.935 536,-949.164 500.786,-995.553 535.026,-1028.63 500,-1075.16 479.827,-1101.96 452.883,-1086.18 436,-1115.16"/>
+</g>
+<!-- sourcefile~test_cases.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge157" class="edge"><title>sourcefile~test_cases.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M746.5,-161.164C678.365,-91.3815 621.136,-175.584 536,-223.164 522.951,-230.457 444.181,-300.653 436,-313.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-313.164C398.603,-364.089 389.089,-378.156 370,-437.164 338.992,-533.019 303.344,-849.255 293.897,-936.626"/>
+<polygon fill="#000000" stroke="#000000" points="290.397,-936.441 292.809,-946.758 297.357,-937.189 290.397,-936.441"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge3" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-1739.16C375.511,-1768.75 356.641,-1784.44 291.5,-1777.16"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge53" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M577.288,-1564.75C565.62,-1552.43 548.069,-1532.6 536,-1513.16 492.223,-1442.65 457.684,-1349.66 443.285,-1307.99"/>
+<polygon fill="#000000" stroke="#000000" points="446.529,-1306.66 439.989,-1298.32 439.904,-1308.92 446.529,-1306.66"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge81" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M556.921,-1587.87C549.216,-1591.68 541.618,-1596.69 536,-1603.16 501.732,-1642.65 536.078,-1677.32 500,-1715.16 479.038,-1737.15 463.108,-1725.45 436,-1739.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-1739.16C405.743,-1753.46 312.038,-1763.27 291.5,-1739.16"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge135" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M556.773,-1569.87C525.635,-1562.84 477.511,-1551.74 436,-1541.16"/>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge162" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M574.203,-1564.89C563.062,-1555.62 547.903,-1542.29 536,-1529.16 517.847,-1509.15 522.105,-1495.71 500,-1480.16 475.729,-1463.1 449.622,-1487.52 436,-1461.16"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge20" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-1815.16C400.973,-1837.02 391.279,-1843.76 370,-1877.16 343.718,-1918.42 365.323,-1943.6 334,-1981.16 320.109,-1997.83 310.607,-2015.44 291.5,-2005.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-2005.16C270.393,-1994.89 260.055,-1998.49 247,-1981.16 169.99,-1878.97 266.865,-1795.12 180,-1701.16"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge54" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M575.039,-1645.07C562.827,-1634.07 545.804,-1616.75 536,-1598.16 503.817,-1537.14 520.797,-1512.95 500,-1447.16 483.871,-1396.15 459.254,-1338.29 445.734,-1307.73"/>
+<polygon fill="#000000" stroke="#000000" points="448.871,-1306.18 441.602,-1298.47 442.478,-1309.03 448.871,-1306.18"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge60" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M577.975,-1669.27C566.504,-1681.68 548.807,-1701.85 536,-1721.16 516.663,-1750.32 526.133,-1767.91 500,-1791.16 477.308,-1811.36 461.335,-1798.4 436,-1815.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-1815.16C392.223,-1842.81 375.693,-1790.93 334,-1763.16 315.945,-1751.14 305.569,-1755.68 291.5,-1739.16"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge116" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M578.525,-1645.1C555.159,-1619.45 502.419,-1561.67 500,-1560.16 474.815,-1544.48 464.753,-1548.49 436,-1541.16"/>
+</g>
+<!-- sourcefile~adjustments.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge143" class="edge"><title>sourcefile~adjustments.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M575.323,-1644.91C563.291,-1633.81 546.376,-1616.44 536,-1598.16 508.93,-1550.48 538.917,-1518.79 500,-1480.16 478.94,-1459.26 449.622,-1487.52 436,-1461.16"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge21" class="edge"><title>sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M741.582,-337.754C729.453,-308.613 695.386,-235.113 645,-193.164 628.671,-179.569 308.92,-34.9982 291.5,-47.164"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge61" class="edge"><title>sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M737.294,-338.017C715.548,-310.732 657.816,-246.256 591.5,-237.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-237.164C564.392,-233.722 389.033,-282.43 370,-299.164 356.934,-310.652 251.272,-570.299 247,-587.164 178.821,-856.325 178.39,-1197.64 179.577,-1286.97"/>
+<polygon fill="#000000" stroke="#000000" points="176.078,-1287.08 179.733,-1297.02 183.077,-1286.97 176.078,-1287.08"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~bc.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge99" class="edge"><title>sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~bc.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M725.558,-362.197C710.196,-372.299 690.436,-388.264 681,-408.164 637.598,-499.696 671.168,-1221.3 645,-1319.16 636.929,-1349.35 618.779,-1380.69 605.861,-1400.52"/>
+<polygon fill="#000000" stroke="#000000" points="602.821,-1398.77 600.178,-1409.03 608.642,-1402.66 602.821,-1398.77"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge117" class="edge"><title>sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M680.599,-349.389C632.649,-352.684 570.338,-365.731 536,-408.164 450.3,-514.067 569.595,-903.046 500,-1020.16 465.224,-1078.69 405.591,-1043.13 370,-1101.16 273.437,-1258.61 431.206,-1358.12 334,-1515.16 332.378,-1517.78 330.385,-1520.18 328.154,-1522.36"/>
+<polygon fill="#000000" stroke="#000000" points="325.498,-1520 319.855,-1528.97 329.858,-1525.48 325.498,-1520"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge144" class="edge"><title>sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-237.164C543.922,-230.915 541.572,-269.463 500,-289.164 472.548,-302.174 452.626,-287.739 436,-313.164"/>
+</g>
+<!-- sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge166" class="edge"><title>sourcefile~case_simple_channel.f08&#45;&gt;sourcefile~allocate_storage.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M722.621,-362.335C696.261,-375.769 653.669,-397.478 624.216,-412.489"/>
+<polygon fill="#000000" stroke="#000000" points="622.472,-409.45 615.152,-417.109 625.651,-415.686 622.472,-409.45"/>
+</g>
+<!-- sourcefile~checking.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge69" class="edge"><title>sourcefile~checking.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M398.421,-1588.48C357.005,-1594.78 288.945,-1597.97 247,-1562.16 211.523,-1531.88 189.856,-1387.44 182.667,-1331.43"/>
+<polygon fill="#000000" stroke="#000000" points="186.135,-1330.96 181.423,-1321.47 179.189,-1331.82 186.135,-1330.96"/>
+</g>
+<!-- sourcefile~checking.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge124" class="edge"><title>sourcefile~checking.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M398.409,-1571.17C380.718,-1566.21 359.077,-1560.13 339.903,-1554.75"/>
+<polygon fill="#000000" stroke="#000000" points="340.71,-1551.34 330.136,-1552.01 338.818,-1558.08 340.71,-1551.34"/>
+</g>
+<!-- sourcefile~checking.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge151" class="edge"><title>sourcefile~checking.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M414.351,-1569.05C399.368,-1558.63 379.706,-1542.15 370,-1522.16 325.299,-1430.13 357.635,-1162.71 334,-1063.16 326.914,-1033.32 312.495,-1000.89 302.427,-980.323"/>
+<polygon fill="#000000" stroke="#000000" points="305.488,-978.618 297.885,-971.239 299.227,-981.749 305.488,-978.618"/>
+</g>
+<!-- sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge63" class="edge"><title>sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M283.767,-1529.02C266.101,-1491.59 212.345,-1377.69 189.954,-1330.25"/>
+<polygon fill="#000000" stroke="#000000" points="193.11,-1328.74 185.676,-1321.19 186.779,-1331.73 193.11,-1328.74"/>
+</g>
+<!-- sourcefile~initialization.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge77" class="edge"><title>sourcefile~initialization.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M392.177,-576.022C360.973,-574.558 319.134,-577.936 291.5,-601.164"/>
+</g>
+<!-- sourcefile~initialization.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge132" class="edge"><title>sourcefile~initialization.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M431.59,-593.455C422.153,-642.05 387.378,-825.561 370,-978.164 363.234,-1037.58 364.969,-1464.01 334,-1515.16 332.404,-1517.8 330.43,-1520.21 328.212,-1522.39"/>
+<polygon fill="#000000" stroke="#000000" points="325.557,-1520.04 319.938,-1529.02 329.932,-1525.5 325.557,-1520.04"/>
+</g>
+<!-- sourcefile~initialization.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge159" class="edge"><title>sourcefile~initialization.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M417.578,-593.292C402.931,-604.978 382,-623.969 370,-645.164 313.912,-744.226 297.435,-883.145 293.001,-936.8"/>
+<polygon fill="#000000" stroke="#000000" points="289.5,-936.672 292.228,-946.91 296.48,-937.206 289.5,-936.672"/>
+</g>
+<!-- sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge78" class="edge"><title>sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M283.9,-971.465C275.255,-990.741 258.463,-1029.36 247,-1063.16 219.416,-1144.51 195.152,-1243.88 185.025,-1287.21"/>
+<polygon fill="#000000" stroke="#000000" points="181.611,-1286.44 182.761,-1296.98 188.43,-1288.02 181.611,-1286.44"/>
+</g>
+<!-- sourcefile~allocate_storage.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge43" class="edge"><title>sourcefile~allocate_storage.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M580.915,-441.321C568.433,-459.745 545.71,-496.297 536,-531.164 464.571,-787.663 559.041,-869.534 500,-1129.16 488.448,-1179.96 462.277,-1235.57 447.224,-1265.05"/>
+<polygon fill="#000000" stroke="#000000" points="444.078,-1263.51 442.582,-1274 450.293,-1266.73 444.078,-1263.51"/>
+</g>
+<!-- sourcefile~allocate_storage.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge59" class="edge"><title>sourcefile~allocate_storage.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M562.736,-441.294C554.075,-445.45 544.513,-450.288 536,-455.164 519.314,-464.722 517.115,-470.397 500,-479.164 472.962,-493.014 457.871,-482.08 436,-503.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-503.164C378.661,-556.51 350.339,-551.706 291.5,-601.164"/>
+</g>
+<!-- sourcefile~allocate_storage.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge142" class="edge"><title>sourcefile~allocate_storage.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-503.164C406.577,-529.6 388.884,-527.084 370,-560.164 296.699,-688.566 290.794,-873.91 291.071,-937.1"/>
+<polygon fill="#000000" stroke="#000000" points="287.571,-937.159 291.174,-947.122 294.571,-937.086 287.571,-937.159"/>
+</g>
+<!-- sourcefile~custom_networkold.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_node28" class="node"><title>sourcefile~custom_networkold.f08</title>
+<g id="a_sourcefile~~setting_definition.f08~~AfferentGraph_node28"><a xlink:href=".././sourcefile/custom_networkold.f08.html" xlink:title="custom_networkOLD.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="500,-1011.16 370,-1011.16 370,-987.164 500,-987.164 500,-1011.16"/>
+<text text-anchor="middle" x="435" y="-996.764" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">custom_networkOLD.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~custom_networkold.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge66" class="edge"><title>sourcefile~custom_networkold.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M400.871,-1011.16C390.769,-1015.21 379.759,-1020.02 370,-1025.16 332.986,-1044.69 332.682,-1069.72 291.5,-1077.16"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M289.5,-1077.16C199.702,-1093.4 183.502,-1232.25 180.613,-1287.05"/>
+<polygon fill="#000000" stroke="#000000" points="177.113,-1286.97 180.186,-1297.11 184.107,-1287.27 177.113,-1286.97"/>
+</g>
+<!-- sourcefile~custom_networkold.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge121" class="edge"><title>sourcefile~custom_networkold.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M386.345,-1011.32C379.999,-1014.83 374.234,-1019.35 370,-1025.16 305.753,-1113.44 390.84,-1421.94 334,-1515.16 332.396,-1517.79 330.415,-1520.2 328.194,-1522.38"/>
+<polygon fill="#000000" stroke="#000000" points="325.538,-1520.03 319.911,-1529 329.908,-1525.49 325.538,-1520.03"/>
+</g>
+<!-- sourcefile~custom_networkold.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge148" class="edge"><title>sourcefile~custom_networkold.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M391.245,-987.163C376.45,-983.01 359.693,-978.306 344.194,-973.955"/>
+<polygon fill="#000000" stroke="#000000" points="344.798,-970.49 334.225,-971.157 342.906,-977.229 344.798,-970.49"/>
+</g>
+<!-- sourcefile~network_define.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge82" class="edge"><title>sourcefile~network_define.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-545.164C542.809,-538.528 542.32,-581.353 500,-602.164 473.374,-615.258 465.595,-623.298 436,-621.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M434,-621.164C402.106,-618.864 315.978,-580.588 291.5,-601.164"/>
+</g>
+<!-- sourcefile~network_define.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge105" class="edge"><title>sourcefile~network_define.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M741.211,-671.568C728.24,-702.639 694.901,-786.594 681,-860.164 630.166,-1129.2 718.234,-1211.34 645,-1475.16 636.643,-1505.27 618.556,-1536.63 605.731,-1556.49"/>
+<polygon fill="#000000" stroke="#000000" points="602.691,-1554.74 600.093,-1565.01 608.529,-1558.6 602.691,-1554.74"/>
+</g>
+<!-- sourcefile~network_define.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge136" class="edge"><title>sourcefile~network_define.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M732.761,-671.282C695.183,-705.204 589.921,-805.563 536,-911.164 506.392,-969.15 532.62,-996.818 500,-1053.16 480.158,-1087.44 455.498,-1080.69 436,-1115.16"/>
+</g>
+<!-- sourcefile~network_define.f08&#45;&gt;sourcefile~initialization.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge138" class="edge"><title>sourcefile~network_define.f08&#45;&gt;sourcefile~initialization.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M708.506,-647.048C699.147,-643.276 689.406,-638.64 681,-633.164 634.259,-602.714 646.73,-553.014 591.5,-545.164"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M589.5,-545.164C548.296,-539.308 501.889,-553.107 470.995,-565.279"/>
+<polygon fill="#000000" stroke="#000000" points="469.467,-562.123 461.535,-569.147 472.116,-568.602 469.467,-562.123"/>
+</g>
+<!-- sourcefile~network_define.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge163" class="edge"><title>sourcefile~network_define.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M715.303,-671.195C673.093,-688.086 596.159,-721.065 536,-759.164 445.844,-816.261 351.477,-902.116 311.393,-940.018"/>
+<polygon fill="#000000" stroke="#000000" points="308.734,-937.716 303.9,-947.144 313.558,-942.788 308.734,-937.716"/>
+</g>
+<!-- sourcefile~network_define.f08&#45;&gt;sourcefile~allocate_storage.f08 -->
+<g id="sourcefile~~setting_definition.f08~~AfferentGraph_edge167" class="edge"><title>sourcefile~network_define.f08&#45;&gt;sourcefile~allocate_storage.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M738.152,-646.9C725.422,-628.067 700.574,-590.777 681,-558.164 664.005,-529.849 663.675,-520.4 645,-493.164 634.354,-477.637 620.724,-461.375 609.886,-449.13"/>
+<polygon fill="#000000" stroke="#000000" points="612.186,-446.453 602.9,-441.352 606.978,-451.13 612.186,-446.453"/>
+</g>
+</g>
+</svg>
+</div><script>var pansourcefilesetting_definitionf08AfferentGraph = svgPanZoom('#sourcefilesetting_definitionf08AfferentGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+      
+      <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-1">Modules</a></h3></div>
+  <div id="mods-1" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/setting_definition.html">setting_definition</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/setting_definition.f08.html#src">setting_definition.f08</a>
+  </div>
+</div>
+
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    <section>
+      <h2><span class="anchor" id="src"></span>Source Code</h2>
+    <div class="hl"><pre><span></span><a name="ln-1"></a><span class="c">!==========================================================================</span>
+<a name="ln-2"></a> <span class="k">module </span><span class="n">setting_definition</span>
+<a name="ln-3"></a><span class="c">!</span>
+<a name="ln-4"></a><span class="c">! defines the setting%.... structure that contains the controls for the</span>
+<a name="ln-5"></a><span class="c">! simulation</span>
+<a name="ln-6"></a><span class="c">!</span>
+<a name="ln-7"></a>
+<a name="ln-8"></a>    <span class="k">use </span><span class="n">type_definitions</span>
+<a name="ln-9"></a>
+<a name="ln-10"></a>    <span class="k">implicit none</span>
+<a name="ln-11"></a>
+<a name="ln-12"></a><span class="k">    public</span>
+<a name="ln-13"></a>
+<a name="ln-14"></a><span class="c">!% THIRD LEVEL TYPES ----------------------------------------------</span>
+<a name="ln-15"></a>
+<a name="ln-16"></a>    <span class="c">!% setting%Method%AdjustVshapedFlowrate</span>
+<a name="ln-17"></a>    <span class="k">type </span><span class="n">adjustVshapedFlowrateType</span>
+<a name="ln-18"></a>        <span class="kt">logical</span> <span class="kd">::</span>  <span class="n">Apply</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-19"></a>        <span class="kt">real</span>    <span class="kd">::</span>  <span class="n">Coef</span>  <span class="o">=</span> <span class="mf">0.1</span>
+<a name="ln-20"></a>    <span class="k">end type </span><span class="n">adjustVshapedFlowrateType</span>
+<a name="ln-21"></a>
+<a name="ln-22"></a>    <span class="c">!% setting%Limiter%BC</span>
+<a name="ln-23"></a>    <span class="k">type </span><span class="n">BClimiterType</span>
+<a name="ln-24"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">UseInflowFroudeNumberLimiter</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-25"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">FroudeInflowMaximum</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="c">! max value of Fr at inflow</span>
+<a name="ln-26"></a>    <span class="n">endtype</span> <span class="n">BClimiterType</span>
+<a name="ln-27"></a>
+<a name="ln-28"></a>    <span class="c">!%  setting%Limiter%flowrate</span>
+<a name="ln-29"></a>    <span class="k">type </span><span class="n">flowrateType</span>
+<a name="ln-30"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">UseFaceVolumeTransport</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-31"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">FaceVolumeTransport</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="c">! Fraction of usptream volume that can be transported in on time step</span>
+<a name="ln-32"></a>    <span class="n">endtype</span> <span class="n">flowrateType</span>
+<a name="ln-33"></a>
+<a name="ln-34"></a>    <span class="c">!%  setting%Limiter%Timescale</span>
+<a name="ln-35"></a>    <span class="k">type </span><span class="n">timescaleType</span>
+<a name="ln-36"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">Maximum</span>      <span class="o">=</span> <span class="mf">1e6</span>
+<a name="ln-37"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">Minimum</span>      <span class="o">=</span> <span class="mf">1e-6</span>
+<a name="ln-38"></a>    <span class="n">endtype</span> <span class="n">timescaleType</span>
+<a name="ln-39"></a>
+<a name="ln-40"></a>    <span class="c">!%  setting%Limiter%Velocity</span>
+<a name="ln-41"></a>    <span class="k">type </span><span class="n">velocityType</span>
+<a name="ln-42"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">UseLimitMax</span>  <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-43"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">Maximum</span>      <span class="o">=</span> <span class="mi">20</span> <span class="c">! m/s</span>
+<a name="ln-44"></a>    <span class="n">endtype</span> <span class="n">velocityType</span>
+<a name="ln-45"></a>
+<a name="ln-46"></a><span class="c">!% SECOND LEVEL TYPES ----------------------------------------------</span>
+<a name="ln-47"></a>
+<a name="ln-48"></a>    <span class="c">!%  setting%Constant</span>
+<a name="ln-49"></a>    <span class="k">type </span><span class="n">constantType</span>
+<a name="ln-50"></a>        <span class="kt">real</span>  <span class="kd">::</span> <span class="n">gravity</span> <span class="o">=</span> <span class="mf">9.81</span>  <span class="c">! m^2/s</span>
+<a name="ln-51"></a>    <span class="k">end type </span><span class="n">constantType</span>
+<a name="ln-52"></a>
+<a name="ln-53"></a>    <span class="c">!%  setting%DebugOut</span>
+<a name="ln-54"></a>    <span class="k">type </span><span class="n">debugoutType</span>
+<a name="ln-55"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">elem2R</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-56"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">elem2I</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-57"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">elem2YN</span> <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-58"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">elemMR</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-59"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">elemMI</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-60"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">elemMYN</span> <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-61"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">faceR</span>   <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-62"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">faceI</span>   <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-63"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">faceYN</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-64"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">nodeR</span>   <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-65"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">nodeI</span>   <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-66"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">nodeYN</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-67"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">linkR</span>   <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-68"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">linkI</span>   <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-69"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">linkYN</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-70"></a>        <span class="kt">integer</span> <span class="kd">::</span> <span class="n">DisplayInterval</span> <span class="o">=</span> <span class="mi">1</span>
+<a name="ln-71"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">SuppressAllFiles</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-72"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">SuppressTimeStep</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-73"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">SuppressTimeValue</span> <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-74"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">SuppressNdat</span>      <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-75"></a>        <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">FolderName</span>  <span class="o">=</span> <span class="s1">&#39;debugoutputA&#39;</span>
+<a name="ln-76"></a>        <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">FileName</span>    <span class="o">=</span> <span class="s1">&#39;debug&#39;</span>
+<a name="ln-77"></a>        <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span> <span class="kd">::</span> <span class="n">FolderPath</span>    <span class="o">=</span> <span class="s1">&#39;./&#39;</span>
+<a name="ln-78"></a>    <span class="k">end type</span>
+<a name="ln-79"></a>
+<a name="ln-80"></a>    <span class="c">!%  setting%Eps</span>
+<a name="ln-81"></a>    <span class="k">type </span><span class="n">epsilonType</span>
+<a name="ln-82"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">FroudeJump</span>                     <span class="o">=</span> <span class="mf">0.1</span> <span class="c">! +- small non-dimensional range for hyd jump discrimination</span>
+<a name="ln-83"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">InflowDepthIncreaseFroudeLimit</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="c">! Fractional increase in depth under froude limitation</span>
+<a name="ln-84"></a>    <span class="k">end type </span><span class="n">epsilonType</span>
+<a name="ln-85"></a>
+<a name="ln-86"></a>    <span class="c">!%  setting%Limiter</span>
+<a name="ln-87"></a>    <span class="k">type </span><span class="n">limiterType</span>
+<a name="ln-88"></a>        <span class="k">type</span><span class="p">(</span><span class="n">BClimiterType</span><span class="p">)</span> <span class="kd">::</span> <span class="n">BC</span>
+<a name="ln-89"></a>        <span class="k">type</span><span class="p">(</span><span class="n">flowrateType</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">Flowrate</span>
+<a name="ln-90"></a>        <span class="k">type</span><span class="p">(</span><span class="n">velocityType</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">Velocity</span>
+<a name="ln-91"></a>        <span class="k">type</span><span class="p">(</span><span class="n">timescaleType</span><span class="p">)</span> <span class="kd">::</span> <span class="n">Timescale</span>
+<a name="ln-92"></a>    <span class="n">endtype</span> <span class="n">limiterType</span>
+<a name="ln-93"></a>
+<a name="ln-94"></a>    <span class="c">!%  setting%Method</span>
+<a name="ln-95"></a>    <span class="k">type </span><span class="n">methodType</span>
+<a name="ln-96"></a>        <span class="k">type</span><span class="p">(</span><span class="n">adjustVshapedFlowrateType</span><span class="p">)</span> <span class="kd">::</span> <span class="n">AdjustVshapedFlowrate</span>
+<a name="ln-97"></a>    <span class="k">end type </span><span class="n">methodType</span>
+<a name="ln-98"></a>
+<a name="ln-99"></a>    <span class="c">!%  setting%OutputThreadedLink</span>
+<a name="ln-100"></a>    <span class="k">type </span><span class="n">outputThreadedLinkType</span>
+<a name="ln-101"></a>        <span class="kt">integer</span>               <span class="kd">::</span> <span class="n">DisplayInterval</span> <span class="o">=</span> <span class="mi">1</span>
+<a name="ln-102"></a>        <span class="kt">logical</span>               <span class="kd">::</span> <span class="n">SuppressAllFiles</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-103"></a>        <span class="kt">logical</span>               <span class="kd">::</span> <span class="n">UseThisOutput</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-104"></a>        <span class="kt">logical</span>               <span class="kd">::</span> <span class="n">area</span>           <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-105"></a>        <span class="kt">logical</span>               <span class="kd">::</span> <span class="n">flowrate</span>       <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-106"></a>        <span class="kt">logical</span>               <span class="kd">::</span> <span class="n">velocity</span>       <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-107"></a>        <span class="kt">logical</span>               <span class="kd">::</span> <span class="n">eta</span>            <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-108"></a>        <span class="kt">logical</span>               <span class="kd">::</span> <span class="n">depth</span>          <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-109"></a>        <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>     <span class="kd">::</span> <span class="n">FolderName</span>  <span class="o">=</span> <span class="s1">&#39;OutputThreaded&#39;</span>
+<a name="ln-110"></a>        <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>     <span class="kd">::</span> <span class="n">FileName</span>    <span class="o">=</span> <span class="s1">&#39;out&#39;</span>
+<a name="ln-111"></a>        <span class="kt">character</span><span class="p">(</span><span class="nb">len</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>    <span class="kd">::</span> <span class="n">FolderPath</span>    <span class="o">=</span> <span class="s1">&#39;./&#39;</span>
+<a name="ln-112"></a>    <span class="k">end type </span><span class="n">outputThreadedLinkType</span>
+<a name="ln-113"></a>
+<a name="ln-114"></a>    <span class="c">!%  setting%SmallVolume</span>
+<a name="ln-115"></a>    <span class="k">type </span><span class="n">smallvolumeType</span>
+<a name="ln-116"></a>        <span class="kt">logical</span> <span class="kd">::</span>  <span class="n">UseSmallVolumes</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span> <span class="c">! YN to determine if smallvolume adjustments used</span>
+<a name="ln-117"></a>        <span class="kt">real</span>    <span class="kd">::</span>  <span class="n">DepthCutoff</span>      <span class="o">=</span> <span class="mf">0.01</span>  <span class="c">! m Determines where small volumes begin</span>
+<a name="ln-118"></a>        <span class="kt">real</span>    <span class="kd">::</span>  <span class="n">ManningsN</span>        <span class="o">=</span> <span class="mf">0.01</span>
+<a name="ln-119"></a>        <span class="kt">real</span>    <span class="kd">::</span>  <span class="n">MinimumTopwidth</span>  <span class="o">=</span> <span class="mf">0.5</span>   <span class="c">! m   Minimum value used for smallvolume reset</span>
+<a name="ln-120"></a>        <span class="kt">real</span>    <span class="kd">::</span>  <span class="n">MinimumArea</span>      <span class="o">=</span> <span class="mf">0.005</span>  <span class="c">! m^2</span>
+<a name="ln-121"></a>        <span class="kt">real</span>    <span class="kd">::</span>  <span class="n">MinimumPerimeter</span> <span class="o">=</span> <span class="mf">0.52</span>  <span class="c">! m</span>
+<a name="ln-122"></a>        <span class="kt">real</span>    <span class="kd">::</span>  <span class="n">MinimumHydRadius</span> <span class="o">=</span> <span class="mf">0.009</span>  <span class="c">! m</span>
+<a name="ln-123"></a>    <span class="k">end type </span><span class="n">smallvolumeType</span>
+<a name="ln-124"></a>
+<a name="ln-125"></a>    <span class="c">!%  setting%Step</span>
+<a name="ln-126"></a>    <span class="k">type </span><span class="n">stepType</span>
+<a name="ln-127"></a>        <span class="kt">integer</span> <span class="kd">::</span> <span class="n">First</span>
+<a name="ln-128"></a>        <span class="kt">integer</span> <span class="kd">::</span> <span class="k">Final</span>
+<a name="ln-129"></a><span class="k">        </span><span class="kt">integer</span> <span class="kd">::</span> <span class="n">Current</span>
+<a name="ln-130"></a>        <span class="kt">integer</span> <span class="kd">::</span> <span class="n">FromRestart</span>
+<a name="ln-131"></a>    <span class="k">end type </span><span class="n">stepType</span>
+<a name="ln-132"></a>
+<a name="ln-133"></a>    <span class="c">!%  setting%TestCase</span>
+<a name="ln-134"></a>    <span class="k">type </span><span class="n">testcaseType</span>
+<a name="ln-135"></a>        <span class="kt">logical</span>       <span class="kd">::</span> <span class="n">UseTestCase</span>
+<a name="ln-136"></a>        <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">TestName</span>
+<a name="ln-137"></a>    <span class="k">end type </span><span class="n">testcaseType</span>
+<a name="ln-138"></a>
+<a name="ln-139"></a>    <span class="c">!%  setting%Time</span>
+<a name="ln-140"></a>    <span class="k">type </span><span class="n">timeType</span>
+<a name="ln-141"></a>        <span class="kt">character</span><span class="p">(</span><span class="mi">14</span><span class="p">)</span>   <span class="kd">::</span>  <span class="n">DateTimeStamp</span>
+<a name="ln-142"></a>        <span class="kt">real</span> <span class="kd">::</span> <span class="n">Dt</span>  <span class="c">! s</span>
+<a name="ln-143"></a>        <span class="kt">real</span> <span class="kd">::</span> <span class="n">StartTime</span> <span class="o">=</span> <span class="mf">0.0</span>
+<a name="ln-144"></a>        <span class="kt">real</span> <span class="kd">::</span> <span class="n">EndTime</span>   <span class="o">=</span> <span class="mf">0.0</span>
+<a name="ln-145"></a>        <span class="kt">real</span> <span class="kd">::</span> <span class="n">ThisTime</span>
+<a name="ln-146"></a>        <span class="kt">real</span> <span class="kd">::</span> <span class="n">NextTime</span>
+<a name="ln-147"></a>    <span class="k">end type </span><span class="n">timeType</span>
+<a name="ln-148"></a>
+<a name="ln-149"></a>    <span class="c">!%  setting%ZeroValue</span>
+<a name="ln-150"></a>    <span class="k">type </span><span class="n">zerovalueType</span>
+<a name="ln-151"></a>        <span class="kt">logical</span> <span class="kd">::</span> <span class="n">UseZeroValues</span> <span class="o">=</span> <span class="p">.</span><span class="n">true</span><span class="p">.</span>
+<a name="ln-152"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">Area</span>         <span class="o">=</span> <span class="mf">1.0e-7</span>  <span class="c">! m^2</span>
+<a name="ln-153"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">Depth</span>        <span class="o">=</span> <span class="mf">1.0e-4</span>  <span class="c">! m</span>
+<a name="ln-154"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">Flowrate</span>     <span class="o">=</span> <span class="mf">0.0</span>     <span class="c">! m^3/s</span>
+<a name="ln-155"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">Topwidth</span>     <span class="o">=</span> <span class="mf">1.0e-4</span>  <span class="c">! m</span>
+<a name="ln-156"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">Velocity</span>     <span class="o">=</span> <span class="mf">0.0</span>     <span class="c">! m/s</span>
+<a name="ln-157"></a>        <span class="kt">real</span>    <span class="kd">::</span> <span class="n">Volume</span>       <span class="o">=</span> <span class="mf">1.0e-6</span>  <span class="c">! m^3</span>
+<a name="ln-158"></a>    <span class="k">end type </span><span class="n">zerovalueType</span>
+<a name="ln-159"></a>
+<a name="ln-160"></a><span class="c">!% FIRST LEVEL TYPE  ----------------------------------------------</span>
+<a name="ln-161"></a>    <span class="k">type </span><span class="n">settingType</span>
+<a name="ln-162"></a>        <span class="kt">integer</span> <span class="kd">::</span> <span class="n">dummy</span>
+<a name="ln-163"></a>        <span class="k">type</span><span class="p">(</span><span class="n">constantType</span><span class="p">)</span>          <span class="kd">::</span> <span class="n">Constant</span>     <span class="c">! constants</span>
+<a name="ln-164"></a>        <span class="k">type</span><span class="p">(</span><span class="n">debugoutType</span><span class="p">)</span>          <span class="kd">::</span> <span class="n">DebugOut</span>     <span class="c">! control of debougout files</span>
+<a name="ln-165"></a>        <span class="k">type</span><span class="p">(</span><span class="n">epsilonType</span><span class="p">)</span>           <span class="kd">::</span> <span class="n">Eps</span>          <span class="c">! epsilons used to provide bandwidth for comparisons</span>
+<a name="ln-166"></a>        <span class="k">type</span><span class="p">(</span><span class="n">limiterType</span><span class="p">)</span>           <span class="kd">::</span> <span class="n">Limiter</span>      <span class="c">! maximum and minimum limiters</span>
+<a name="ln-167"></a>        <span class="k">type</span><span class="p">(</span><span class="n">methodType</span><span class="p">)</span>            <span class="kd">::</span> <span class="n">Method</span>       <span class="c">! controls over simulation methods</span>
+<a name="ln-168"></a>        <span class="k">type</span><span class="p">(</span><span class="n">outputThreadedLinkType</span><span class="p">)</span><span class="kd">::</span> <span class="n">OutputThreadedLink</span> <span class="c">! controls output for threaded link</span>
+<a name="ln-169"></a>        <span class="k">type</span><span class="p">(</span><span class="n">smallvolumeType</span><span class="p">)</span>       <span class="kd">::</span> <span class="n">SmallVolume</span>   <span class="c">! controls for small volumes</span>
+<a name="ln-170"></a>        <span class="k">type</span><span class="p">(</span><span class="n">stepType</span><span class="p">)</span>              <span class="kd">::</span> <span class="n">Step</span>         <span class="c">! controls over simulation time stepping</span>
+<a name="ln-171"></a>        <span class="k">type</span><span class="p">(</span><span class="n">testcaseType</span><span class="p">)</span>          <span class="kd">::</span> <span class="n">TestCase</span>     <span class="c">! custom setup for test cases</span>
+<a name="ln-172"></a>        <span class="k">type</span><span class="p">(</span><span class="n">timeType</span><span class="p">)</span>              <span class="kd">::</span> <span class="nb">Time</span>         <span class="c">! controls of time step</span>
+<a name="ln-173"></a>        <span class="k">type</span><span class="p">(</span><span class="n">zerovalueType</span><span class="p">)</span>         <span class="kd">::</span> <span class="n">ZeroValue</span>    <span class="c">! finite values to represent small or negative values</span>
+<a name="ln-174"></a>    <span class="k">end type </span><span class="n">settingType</span>
+<a name="ln-175"></a>
+<a name="ln-176"></a>
+<a name="ln-177"></a>
+<a name="ln-178"></a>    <span class="k">type</span><span class="p">(</span><span class="n">settingType</span><span class="p">),</span> <span class="k">target</span> <span class="kd">::</span> <span class="n">setting</span>
+<a name="ln-179"></a>
+<a name="ln-180"></a>
+<a name="ln-181"></a>    <span class="kt">integer</span><span class="p">,</span> <span class="k">private</span> <span class="kd">::</span> <span class="n">debuglevel</span> <span class="o">=</span> <span class="mi">0</span>
+<a name="ln-182"></a>
+<a name="ln-183"></a> <span class="k">contains</span>
+<a name="ln-184"></a><span class="c">!==========================================================================</span>
+<a name="ln-185"></a><span class="c">!==========================================================================</span>
+<a name="ln-186"></a> <span class="k">subroutine </span><span class="n">setting_default</span>
+<a name="ln-187"></a><span class="c">!</span>
+<a name="ln-188"></a><span class="c">!   This subroutine can be used in conjunction with the test_case to setup</span>
+<a name="ln-189"></a><span class="c">!   a simulation or set of simulations</span>
+<a name="ln-190"></a><span class="c">!</span>
+<a name="ln-191"></a><span class="c">!--------------------------------------------------------------------------</span>
+<a name="ln-192"></a>
+<a name="ln-193"></a> <span class="n">setting</span><span class="p">%</span><span class="n">Debugout</span><span class="p">%</span><span class="n">DisplayInterval</span> <span class="o">=</span> <span class="mi">1000</span>
+<a name="ln-194"></a>
+<a name="ln-195"></a> <span class="n">setting</span><span class="p">%</span><span class="nb">Time</span><span class="p">%</span><span class="n">dt</span> <span class="o">=</span> <span class="mi">5</span><span class="mf">0.0</span>
+<a name="ln-196"></a> <span class="n">setting</span><span class="p">%</span><span class="n">Step</span><span class="p">%</span><span class="n">First</span> <span class="o">=</span> <span class="mi">1</span>
+<a name="ln-197"></a> <span class="n">setting</span><span class="p">%</span><span class="n">Step</span><span class="p">%</span><span class="k">Final</span> <span class="o">=</span> <span class="mi">40000</span>
+<a name="ln-198"></a> <span class="n">setting</span><span class="p">%</span><span class="n">Step</span><span class="p">%</span><span class="n">Current</span> <span class="o">=</span> <span class="mi">1</span>
+<a name="ln-199"></a> <span class="n">setting</span><span class="p">%</span><span class="n">Step</span><span class="p">%</span><span class="n">FromRestart</span> <span class="o">=</span> <span class="mi">1</span>
+<a name="ln-200"></a>
+<a name="ln-201"></a> <span class="n">setting</span><span class="p">%</span><span class="nb">Time</span><span class="p">%</span><span class="n">StartTime</span> <span class="o">=</span> <span class="mf">0.0</span>
+<a name="ln-202"></a> <span class="n">setting</span><span class="p">%</span><span class="nb">Time</span><span class="p">%</span><span class="n">EndTime</span> <span class="o">=</span> <span class="n">setting</span><span class="p">%</span><span class="nb">Time</span><span class="p">%</span><span class="n">StartTime</span>  <span class="p">&amp;</span>
+<a name="ln-203"></a>    <span class="o">+</span> <span class="n">setting</span><span class="p">%</span><span class="nb">Time</span><span class="p">%</span><span class="n">dt</span> <span class="o">*</span> <span class="p">(</span><span class="n">setting</span><span class="p">%</span><span class="n">Step</span><span class="p">%</span><span class="k">Final</span> <span class="o">-</span> <span class="n">setting</span><span class="p">%</span><span class="n">Step</span><span class="p">%</span><span class="n">First</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<a name="ln-204"></a>
+<a name="ln-205"></a> <span class="k">end subroutine </span><span class="n">setting_default</span>
+<a name="ln-206"></a><span class="c">!</span>
+<a name="ln-207"></a><span class="c">!==========================================================================</span>
+<a name="ln-208"></a><span class="c">! END OF MODULE</span>
+<a name="ln-209"></a><span class="c">!==========================================================================</span>
+<a name="ln-210"></a> <span class="k">end module </span><span class="n">setting_definition</span>
+</pre></div>
+
+    </section>
+    </div>
+  </div>
+
+  
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2019 
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> SWMMengine was developed by Ben R. Hodges and Ehsan Madadi-Kandjani</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>
