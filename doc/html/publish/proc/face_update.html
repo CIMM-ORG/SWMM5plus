@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
    
-   <meta name="description" content="Prototype Fortran 2008 engine for the EPA Storm Water Management Model (SWMM)">
+   <meta name="description" content="">
     
     <meta name="author" content="Ben R. Hodges and Ehsan Madadi-Kandjani" >
     <link rel="icon" href="../favicon.png">
@@ -457,349 +457,349 @@ public subroutine face_update(elem2R, elem2I, elemMR, faceR, faceI, faceYN, bcda
 <polygon fill="white" stroke="none" points="-4,4 -4,-532 996,-532 996,4 -4,4"/>
 <!-- proc~face_update -->
 <g id="proc~~face_update~~CallsGraph_node1" class="node"><title>proc~face_update</title>
-<polygon fill="none" stroke="black" points="72,-276 0,-276 0,-252 72,-252 72,-276"/>
-<text text-anchor="middle" x="36" y="-261.6" font-family="Helvetica,sans-Serif" font-size="10.50">face_update</text>
+<polygon fill="none" stroke="black" points="72,-339 0,-339 0,-315 72,-315 72,-339"/>
+<text text-anchor="middle" x="36" y="-324.6" font-family="Helvetica,sans-Serif" font-size="10.50">face_update</text>
 </g>
-<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction -->
-<g id="proc~~face_update~~CallsGraph_node2" class="node"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction</title>
-<g id="a_proc~~face_update~~CallsGraph_node2"><a xlink:href=".././proc/face_interp_for_downstreamchannel_to_upstreamjunction.html" xlink:title="face_interp_for_downstreamchannel_to_upstreamjunction">
-<polygon fill="#d9534f" stroke="#d9534f" points="397,-360 108,-360 108,-336 397,-336 397,-360"/>
-<text text-anchor="middle" x="252.5" y="-345.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_interp_for_downstreamchannel_to_upstreamjunction</text>
+<!-- proc~face_surface_elevation_interp -->
+<g id="proc~~face_update~~CallsGraph_node2" class="node"><title>proc~face_surface_elevation_interp</title>
+<g id="a_proc~~face_update~~CallsGraph_node2"><a xlink:href=".././proc/face_surface_elevation_interp.html" xlink:title="face_surface_elevation_interp">
+<polygon fill="#d9534f" stroke="#d9534f" points="330.5,-465 174.5,-465 174.5,-441 330.5,-441 330.5,-465"/>
+<text text-anchor="middle" x="252.5" y="-450.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_surface_elevation_interp</text>
 </a>
 </g>
 </g>
-<!-- proc~face_update&#45;&gt;proc~face_interp_for_downstreamchannel_to_upstreamjunction -->
-<g id="proc~~face_update~~CallsGraph_edge1" class="edge"><title>proc~face_update&#45;&gt;proc~face_interp_for_downstreamchannel_to_upstreamjunction</title>
-<path fill="none" stroke="#000000" d="M46.6158,-276.035C59.0849,-290.713 82.3017,-315.041 108,-327 112.473,-329.081 117.102,-330.967 121.836,-332.675"/>
-<polygon fill="#000000" stroke="#000000" points="121.094,-336.116 131.688,-335.937 123.294,-329.471 121.094,-336.116"/>
+<!-- proc~face_update&#45;&gt;proc~face_surface_elevation_interp -->
+<g id="proc~~face_update~~CallsGraph_edge1" class="edge"><title>proc~face_update&#45;&gt;proc~face_surface_elevation_interp</title>
+<path fill="none" stroke="#000000" d="M41.3851,-339.193C50.1726,-361.702 72.2203,-409.53 108,-432 124.781,-442.539 144.807,-448.583 164.497,-451.899"/>
+<polygon fill="#000000" stroke="#000000" points="164.029,-455.368 174.431,-453.355 165.044,-448.442 164.029,-455.368"/>
 </g>
-<!-- proc~face_interp_for_elem2 -->
-<g id="proc~~face_update~~CallsGraph_node3" class="node"><title>proc~face_interp_for_elem2</title>
-<g id="a_proc~~face_update~~CallsGraph_node3"><a xlink:href=".././proc/face_interp_for_elem2.html" xlink:title="face_interp_for_elem2">
-<polygon fill="#d9534f" stroke="#d9534f" points="312.5,-318 192.5,-318 192.5,-294 312.5,-294 312.5,-318"/>
-<text text-anchor="middle" x="252.5" y="-303.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_interp_for_elem2</text>
+<!-- proc~bc_applied_onface -->
+<g id="proc~~face_update~~CallsGraph_node3" class="node"><title>proc~bc_applied_onface</title>
+<g id="a_proc~~face_update~~CallsGraph_node3"><a xlink:href=".././proc/bc_applied_onface.html" xlink:title="bc_applied_onface">
+<polygon fill="#d9534f" stroke="#d9534f" points="304,-129 201,-129 201,-105 304,-105 304,-129"/>
+<text text-anchor="middle" x="252.5" y="-114.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc_applied_onface</text>
 </a>
 </g>
 </g>
-<!-- proc~face_update&#45;&gt;proc~face_interp_for_elem2 -->
-<g id="proc~~face_update~~CallsGraph_edge2" class="edge"><title>proc~face_update&#45;&gt;proc~face_interp_for_elem2</title>
-<path fill="none" stroke="#000000" d="M72.1346,-275.468C83.4916,-278.884 96.1989,-282.405 108,-285 131.992,-290.275 158.539,-294.58 182.209,-297.887"/>
-<polygon fill="#000000" stroke="#000000" points="181.78,-301.361 192.161,-299.244 182.725,-294.425 181.78,-301.361"/>
+<!-- proc~face_update&#45;&gt;proc~bc_applied_onface -->
+<g id="proc~~face_update~~CallsGraph_edge2" class="edge"><title>proc~face_update&#45;&gt;proc~bc_applied_onface</title>
+<path fill="none" stroke="#000000" d="M49.4596,-314.802C85.2235,-279.788 188.415,-178.762 231.855,-136.233"/>
+<polygon fill="#000000" stroke="#000000" points="234.309,-138.729 239.006,-129.232 229.412,-133.727 234.309,-138.729"/>
 </g>
 <!-- proc~face_hydraulic_jump -->
 <g id="proc~~face_update~~CallsGraph_node4" class="node"><title>proc~face_hydraulic_jump</title>
 <g id="a_proc~~face_update~~CallsGraph_node4"><a xlink:href=".././proc/face_hydraulic_jump.html" xlink:title="face_hydraulic_jump">
-<polygon fill="#d9534f" stroke="#d9534f" points="308,-276 197,-276 197,-252 308,-252 308,-276"/>
-<text text-anchor="middle" x="252.5" y="-261.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_hydraulic_jump</text>
+<polygon fill="#d9534f" stroke="#d9534f" points="308,-423 197,-423 197,-399 308,-399 308,-423"/>
+<text text-anchor="middle" x="252.5" y="-408.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_hydraulic_jump</text>
 </a>
 </g>
 </g>
 <!-- proc~face_update&#45;&gt;proc~face_hydraulic_jump -->
 <g id="proc~~face_update~~CallsGraph_edge3" class="edge"><title>proc~face_update&#45;&gt;proc~face_hydraulic_jump</title>
-<path fill="none" stroke="#000000" d="M72.4203,-264C103.31,-264 148.912,-264 186.367,-264"/>
-<polygon fill="#000000" stroke="#000000" points="186.696,-267.5 196.696,-264 186.696,-260.5 186.696,-267.5"/>
+<path fill="none" stroke="#000000" d="M46.6158,-339.035C59.0849,-353.713 82.3017,-378.041 108,-390 132.385,-401.347 161.405,-406.881 186.946,-409.478"/>
+<polygon fill="#000000" stroke="#000000" points="186.644,-412.964 196.914,-410.363 187.263,-405.992 186.644,-412.964"/>
 </g>
 <!-- proc~face_bc_flowrate_update -->
 <g id="proc~~face_update~~CallsGraph_node5" class="node"><title>proc~face_bc_flowrate_update</title>
 <g id="a_proc~~face_update~~CallsGraph_node5"><a xlink:href=".././proc/face_bc_flowrate_update.html" xlink:title="face_bc_flowrate_update">
-<polygon fill="#d9534f" stroke="#d9534f" points="319,-161 186,-161 186,-137 319,-137 319,-161"/>
-<text text-anchor="middle" x="252.5" y="-146.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_bc_flowrate_update</text>
+<polygon fill="#d9534f" stroke="#d9534f" points="319,-45 186,-45 186,-21 319,-21 319,-45"/>
+<text text-anchor="middle" x="252.5" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_bc_flowrate_update</text>
 </a>
 </g>
 </g>
 <!-- proc~face_update&#45;&gt;proc~face_bc_flowrate_update -->
 <g id="proc~~face_update~~CallsGraph_edge4" class="edge"><title>proc~face_update&#45;&gt;proc~face_bc_flowrate_update</title>
-<path fill="none" stroke="#000000" d="M47.9668,-251.803C61.0654,-237.864 84.2074,-215.156 108,-201 134.874,-185.011 167.464,-172.713 194.79,-164.101"/>
-<polygon fill="#000000" stroke="#000000" points="196.064,-167.372 204.599,-161.095 194.013,-160.679 196.064,-167.372"/>
+<path fill="none" stroke="#000000" d="M37.3283,-314.76C38.9727,-277.249 48.8404,-162.42 108,-96 128.64,-72.8273 159.372,-57.7976 187.106,-48.2548"/>
+<polygon fill="#000000" stroke="#000000" points="188.348,-51.5315 196.77,-45.1038 186.178,-44.8763 188.348,-51.5315"/>
+</g>
+<!-- proc~face_interp_for_elem2 -->
+<g id="proc~~face_update~~CallsGraph_node6" class="node"><title>proc~face_interp_for_elem2</title>
+<g id="a_proc~~face_update~~CallsGraph_node6"><a xlink:href=".././proc/face_interp_for_elem2.html" xlink:title="face_interp_for_elem2">
+<polygon fill="#d9534f" stroke="#d9534f" points="312.5,-381 192.5,-381 192.5,-357 312.5,-357 312.5,-381"/>
+<text text-anchor="middle" x="252.5" y="-366.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_interp_for_elem2</text>
+</a>
+</g>
+</g>
+<!-- proc~face_update&#45;&gt;proc~face_interp_for_elem2 -->
+<g id="proc~~face_update~~CallsGraph_edge5" class="edge"><title>proc~face_update&#45;&gt;proc~face_interp_for_elem2</title>
+<path fill="none" stroke="#000000" d="M72.1346,-338.468C83.4916,-341.884 96.1989,-345.405 108,-348 131.992,-353.275 158.539,-357.58 182.209,-360.887"/>
+<polygon fill="#000000" stroke="#000000" points="181.78,-364.361 192.161,-362.244 182.725,-357.425 181.78,-364.361"/>
 </g>
 <!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction -->
-<g id="proc~~face_update~~CallsGraph_node6" class="node"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction</title>
-<g id="a_proc~~face_update~~CallsGraph_node6"><a xlink:href=".././proc/face_interp_for_upstreamchannel_to_downstreamjunction.html" xlink:title="face_interp_for_upstreamchannel_to_downstreamjunction">
-<polygon fill="#d9534f" stroke="#d9534f" points="397,-402 108,-402 108,-378 397,-378 397,-402"/>
-<text text-anchor="middle" x="252.5" y="-387.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_interp_for_upstreamchannel_to_downstreamjunction</text>
+<g id="proc~~face_update~~CallsGraph_node7" class="node"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction</title>
+<g id="a_proc~~face_update~~CallsGraph_node7"><a xlink:href=".././proc/face_interp_for_upstreamchannel_to_downstreamjunction.html" xlink:title="face_interp_for_upstreamchannel_to_downstreamjunction">
+<polygon fill="#d9534f" stroke="#d9534f" points="397,-297 108,-297 108,-273 397,-273 397,-297"/>
+<text text-anchor="middle" x="252.5" y="-282.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_interp_for_upstreamchannel_to_downstreamjunction</text>
 </a>
 </g>
 </g>
 <!-- proc~face_update&#45;&gt;proc~face_interp_for_upstreamchannel_to_downstreamjunction -->
-<g id="proc~~face_update~~CallsGraph_edge5" class="edge"><title>proc~face_update&#45;&gt;proc~face_interp_for_upstreamchannel_to_downstreamjunction</title>
-<path fill="none" stroke="#000000" d="M41.3851,-276.193C50.1726,-298.702 72.2203,-346.53 108,-369 110.634,-370.654 113.347,-372.197 116.127,-373.637"/>
-<polygon fill="#000000" stroke="#000000" points="114.671,-376.82 125.212,-377.888 117.638,-370.48 114.671,-376.82"/>
+<g id="proc~~face_update~~CallsGraph_edge6" class="edge"><title>proc~face_update&#45;&gt;proc~face_interp_for_upstreamchannel_to_downstreamjunction</title>
+<path fill="none" stroke="#000000" d="M72.1346,-315.532C83.4916,-312.116 96.1989,-308.595 108,-306 120.345,-303.285 133.368,-300.828 146.326,-298.631"/>
+<polygon fill="#000000" stroke="#000000" points="146.913,-302.082 156.211,-297.002 145.775,-295.175 146.913,-302.082"/>
 </g>
-<!-- proc~bc_applied_onface -->
-<g id="proc~~face_update~~CallsGraph_node7" class="node"><title>proc~bc_applied_onface</title>
-<g id="a_proc~~face_update~~CallsGraph_node7"><a xlink:href=".././proc/bc_applied_onface.html" xlink:title="bc_applied_onface">
-<polygon fill="#d9534f" stroke="#d9534f" points="304,-98 201,-98 201,-74 304,-74 304,-98"/>
-<text text-anchor="middle" x="252.5" y="-83.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc_applied_onface</text>
+<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction -->
+<g id="proc~~face_update~~CallsGraph_node8" class="node"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction</title>
+<g id="a_proc~~face_update~~CallsGraph_node8"><a xlink:href=".././proc/face_interp_for_downstreamchannel_to_upstreamjunction.html" xlink:title="face_interp_for_downstreamchannel_to_upstreamjunction">
+<polygon fill="#d9534f" stroke="#d9534f" points="397,-339 108,-339 108,-315 397,-315 397,-339"/>
+<text text-anchor="middle" x="252.5" y="-324.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_interp_for_downstreamchannel_to_upstreamjunction</text>
 </a>
 </g>
 </g>
-<!-- proc~face_update&#45;&gt;proc~bc_applied_onface -->
-<g id="proc~~face_update~~CallsGraph_edge6" class="edge"><title>proc~face_update&#45;&gt;proc~bc_applied_onface</title>
-<path fill="none" stroke="#000000" d="M39.8983,-251.776C46.8513,-225.153 67.0266,-161.624 108,-128 131.323,-108.861 163.047,-98.443 190.736,-92.7727"/>
-<polygon fill="#000000" stroke="#000000" points="191.552,-96.1806 200.732,-90.891 190.257,-89.3014 191.552,-96.1806"/>
+<!-- proc~face_update&#45;&gt;proc~face_interp_for_downstreamchannel_to_upstreamjunction -->
+<g id="proc~~face_update~~CallsGraph_edge7" class="edge"><title>proc~face_update&#45;&gt;proc~face_interp_for_downstreamchannel_to_upstreamjunction</title>
+<path fill="none" stroke="#000000" d="M72.4203,-327C80.0228,-327 88.5165,-327 97.5605,-327"/>
+<polygon fill="#000000" stroke="#000000" points="97.5743,-330.5 107.574,-327 97.5742,-323.5 97.5743,-330.5"/>
 </g>
-<!-- proc~face_surface_elevation_interp -->
-<g id="proc~~face_update~~CallsGraph_node8" class="node"><title>proc~face_surface_elevation_interp</title>
-<g id="a_proc~~face_update~~CallsGraph_node8"><a xlink:href=".././proc/face_surface_elevation_interp.html" xlink:title="face_surface_elevation_interp">
-<polygon fill="#d9534f" stroke="#d9534f" points="330.5,-234 174.5,-234 174.5,-210 330.5,-210 330.5,-234"/>
-<text text-anchor="middle" x="252.5" y="-219.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_surface_elevation_interp</text>
+<!-- proc~utility_advance_temp_array -->
+<g id="proc~~face_update~~CallsGraph_node9" class="node"><title>proc~utility_advance_temp_array</title>
+<g id="a_proc~~face_update~~CallsGraph_node9"><a xlink:href=".././proc/utility_advance_temp_array.html" xlink:title="utility_advance_temp_array">
+<polygon fill="#d94e8f" stroke="#d94e8f" points="596,-402 452,-402 452,-378 596,-378 596,-402"/>
+<text text-anchor="middle" x="524" y="-387.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility_advance_temp_array</text>
 </a>
 </g>
 </g>
-<!-- proc~face_update&#45;&gt;proc~face_surface_elevation_interp -->
-<g id="proc~~face_update~~CallsGraph_edge7" class="edge"><title>proc~face_update&#45;&gt;proc~face_surface_elevation_interp</title>
-<path fill="none" stroke="#000000" d="M72.1346,-252.532C83.4916,-249.116 96.1989,-245.595 108,-243 126.135,-239.012 145.73,-235.579 164.439,-232.713"/>
-<polygon fill="#000000" stroke="#000000" points="165.053,-236.16 174.427,-231.222 164.019,-229.237 165.053,-236.16"/>
+<!-- proc~face_surface_elevation_interp&#45;&gt;proc~utility_advance_temp_array -->
+<g id="proc~~face_update~~CallsGraph_edge9" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;proc~utility_advance_temp_array</title>
+<path fill="none" stroke="#000000" d="M330.768,-447.196C352.595,-444.089 376.087,-439.32 397,-432 414.483,-425.881 415.789,-417.847 433,-411 438.539,-408.796 444.367,-406.79 450.282,-404.97"/>
+<polygon fill="#000000" stroke="#000000" points="451.647,-408.218 460.283,-402.081 449.705,-401.493 451.647,-408.218"/>
+</g>
+<!-- emr_lengthdn -->
+<g id="proc~~face_update~~CallsGraph_node15" class="node"><title>emr_lengthdn</title>
+<polygon fill="#777777" stroke="#777777" points="563.5,-486 484.5,-486 484.5,-462 563.5,-462 563.5,-486"/>
+<text text-anchor="middle" x="524" y="-471.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_lengthdn</text>
+</g>
+<!-- proc~face_surface_elevation_interp&#45;&gt;emr_lengthdn -->
+<g id="proc~~face_update~~CallsGraph_edge8" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;emr_lengthdn</title>
+<path fill="none" stroke="#000000" d="M330.728,-459.018C376.944,-462.619 434.275,-467.086 474.254,-470.202"/>
+<polygon fill="#000000" stroke="#000000" points="474.039,-473.695 484.281,-470.983 474.583,-466.717 474.039,-473.695"/>
+</g>
+<!-- emr_lengthup -->
+<g id="proc~~face_update~~CallsGraph_node17" class="node"><title>emr_lengthup</title>
+<polygon fill="#777777" stroke="#777777" points="563.5,-528 484.5,-528 484.5,-504 563.5,-504 563.5,-528"/>
+<text text-anchor="middle" x="524" y="-513.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_lengthup</text>
+</g>
+<!-- proc~face_surface_elevation_interp&#45;&gt;emr_lengthup -->
+<g id="proc~~face_update~~CallsGraph_edge11" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;emr_lengthup</title>
+<path fill="none" stroke="#000000" d="M304.952,-465.048C340.837,-473.448 389.836,-484.914 433,-495 446.446,-498.142 461.023,-501.545 474.451,-504.678"/>
+<polygon fill="#000000" stroke="#000000" points="473.924,-508.149 484.458,-507.012 475.515,-501.332 473.924,-508.149"/>
 </g>
 <!-- fyn_temp -->
-<g id="proc~~face_update~~CallsGraph_node11" class="node"><title>fyn_temp</title>
+<g id="proc~~face_update~~CallsGraph_node18" class="node"><title>fyn_temp</title>
 <polygon fill="#777777" stroke="#777777" points="552.5,-360 495.5,-360 495.5,-336 552.5,-336 552.5,-360"/>
 <text text-anchor="middle" x="524" y="-345.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">fyn_temp</text>
 </g>
-<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;fyn_temp -->
-<g id="proc~~face_update~~CallsGraph_edge9" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;fyn_temp</title>
-<path fill="none" stroke="#000000" d="M397.324,-348C429.737,-348 461.446,-348 484.906,-348"/>
-<polygon fill="#000000" stroke="#000000" points="485.076,-351.5 495.076,-348 485.076,-344.5 485.076,-351.5"/>
+<!-- proc~face_surface_elevation_interp&#45;&gt;fyn_temp -->
+<g id="proc~~face_update~~CallsGraph_edge10" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;fyn_temp</title>
+<path fill="none" stroke="#000000" d="M330.787,-454.301C353.686,-451.502 377.758,-445.121 397,-432 423.644,-413.831 407.142,-388.27 433,-369 447.916,-357.884 467.78,-352.53 485.052,-349.998"/>
+<polygon fill="#000000" stroke="#000000" points="485.89,-353.423 495.404,-348.76 485.059,-346.472 485.89,-353.423"/>
 </g>
 <!-- fr_temp -->
-<g id="proc~~face_update~~CallsGraph_node12" class="node"><title>fr_temp</title>
-<polygon fill="#777777" stroke="#777777" points="551,-276 497,-276 497,-252 551,-252 551,-276"/>
-<text text-anchor="middle" x="524" y="-261.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">fr_temp</text>
+<g id="proc~~face_update~~CallsGraph_node21" class="node"><title>fr_temp</title>
+<polygon fill="#777777" stroke="#777777" points="551,-444 497,-444 497,-420 551,-420 551,-444"/>
+<text text-anchor="middle" x="524" y="-429.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">fr_temp</text>
 </g>
-<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;fr_temp -->
-<g id="proc~~face_update~~CallsGraph_edge10" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;fr_temp</title>
-<path fill="none" stroke="#000000" d="M377.171,-335.929C384.052,-333.417 390.715,-330.464 397,-327 418.532,-315.132 411.985,-297.76 433,-285 449.127,-275.207 469.429,-269.98 486.667,-267.19"/>
-<polygon fill="#000000" stroke="#000000" points="487.522,-270.605 496.939,-265.749 486.55,-263.673 487.522,-270.605"/>
+<!-- proc~face_surface_elevation_interp&#45;&gt;fr_temp -->
+<g id="proc~~face_update~~CallsGraph_edge12" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;fr_temp</title>
+<path fill="none" stroke="#000000" d="M330.728,-446.982C381.986,-442.988 446.916,-437.929 486.682,-434.83"/>
+<polygon fill="#000000" stroke="#000000" points="487.014,-438.315 496.712,-434.048 486.47,-431.336 487.014,-438.315"/>
 </g>
-<!-- proc~utility_advance_temp_array -->
-<g id="proc~~face_update~~CallsGraph_node19" class="node"><title>proc~utility_advance_temp_array</title>
-<g id="a_proc~~face_update~~CallsGraph_node19"><a xlink:href=".././proc/utility_advance_temp_array.html" xlink:title="utility_advance_temp_array">
-<polygon fill="#d94e8f" stroke="#d94e8f" points="596,-318 452,-318 452,-294 596,-294 596,-318"/>
-<text text-anchor="middle" x="524" y="-303.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility_advance_temp_array</text>
+<!-- proc~bc_onface -->
+<g id="proc~~face_update~~CallsGraph_node13" class="node"><title>proc~bc_onface</title>
+<g id="a_proc~~face_update~~CallsGraph_node13"><a xlink:href=".././proc/bc_onface.html" xlink:title="bc_onface">
+<polygon fill="#d9534f" stroke="#d9534f" points="555,-150 493,-150 493,-126 555,-126 555,-150"/>
+<text text-anchor="middle" x="524" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc_onface</text>
 </a>
 </g>
 </g>
-<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;proc~utility_advance_temp_array -->
-<g id="proc~~face_update~~CallsGraph_edge11" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;proc~utility_advance_temp_array</title>
-<path fill="none" stroke="#000000" d="M337.769,-335.953C357.231,-333.092 377.846,-329.997 397,-327 411.598,-324.716 427.131,-322.198 442.125,-319.723"/>
-<polygon fill="#000000" stroke="#000000" points="443.108,-323.108 452.401,-318.02 441.963,-316.202 443.108,-323.108"/>
-</g>
-<!-- emr_timescaledn -->
-<g id="proc~~face_update~~CallsGraph_node20" class="node"><title>emr_timescaledn</title>
-<polygon fill="#777777" stroke="#777777" points="571,-402 477,-402 477,-378 571,-378 571,-402"/>
-<text text-anchor="middle" x="524" y="-387.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_timescaledn</text>
-</g>
-<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;emr_timescaledn -->
-<g id="proc~~face_update~~CallsGraph_edge8" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;emr_timescaledn</title>
-<path fill="none" stroke="#000000" d="M337.769,-360.047C357.231,-362.908 377.846,-366.003 397,-369 419.887,-372.581 445.074,-376.737 466.875,-380.401"/>
-<polygon fill="#000000" stroke="#000000" points="466.512,-383.889 476.955,-382.101 467.676,-376.987 466.512,-383.889"/>
-</g>
-<!-- proc~interp_with_junction_upstream -->
-<g id="proc~~face_update~~CallsGraph_node21" class="node"><title>proc~interp_with_junction_upstream</title>
-<g id="a_proc~~face_update~~CallsGraph_node21"><a xlink:href=".././proc/interp_with_junction_upstream.html" xlink:title="interp_with_junction_upstream">
-<polygon fill="#d9534f" stroke="#d9534f" points="603,-444 445,-444 445,-420 603,-420 603,-444"/>
-<text text-anchor="middle" x="524" y="-429.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">interp_with_junction_upstream</text>
-</a>
-</g>
-</g>
-<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;proc~interp_with_junction_upstream -->
-<g id="proc~~face_update~~CallsGraph_edge12" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;proc~interp_with_junction_upstream</title>
-<path fill="none" stroke="#000000" d="M377.171,-360.071C384.052,-362.583 390.715,-365.536 397,-369 418.532,-380.868 411.985,-398.24 433,-411 435.97,-412.803 439.082,-414.452 442.29,-415.959"/>
-<polygon fill="#000000" stroke="#000000" points="440.972,-419.202 451.548,-419.842 443.68,-412.747 440.972,-419.202"/>
-</g>
-<!-- proc~face_interp_for_elem2&#45;&gt;fyn_temp -->
-<g id="proc~~face_update~~CallsGraph_edge13" class="edge"><title>proc~face_interp_for_elem2&#45;&gt;fyn_temp</title>
-<path fill="none" stroke="#000000" d="M312.536,-314.37C338.466,-318.116 369.263,-322.66 397,-327 426.716,-331.65 460.31,-337.267 485.333,-341.522"/>
-<polygon fill="#000000" stroke="#000000" points="485.05,-345.024 495.496,-343.255 486.227,-338.123 485.05,-345.024"/>
-</g>
-<!-- proc~face_interp_for_elem2&#45;&gt;fr_temp -->
-<g id="proc~~face_update~~CallsGraph_edge14" class="edge"><title>proc~face_interp_for_elem2&#45;&gt;fr_temp</title>
-<path fill="none" stroke="#000000" d="M312.536,-297.63C338.466,-293.884 369.263,-289.34 397,-285 427.291,-280.26 461.612,-274.515 486.776,-270.233"/>
-<polygon fill="#000000" stroke="#000000" points="487.694,-273.627 496.962,-268.495 486.516,-266.727 487.694,-273.627"/>
-</g>
-<!-- proc~face_interp_for_elem2&#45;&gt;proc~utility_advance_temp_array -->
-<g id="proc~~face_update~~CallsGraph_edge15" class="edge"><title>proc~face_interp_for_elem2&#45;&gt;proc~utility_advance_temp_array</title>
-<path fill="none" stroke="#000000" d="M312.643,-306C350.433,-306 399.952,-306 441.451,-306"/>
-<polygon fill="#000000" stroke="#000000" points="441.542,-309.5 451.542,-306 441.542,-302.5 441.542,-309.5"/>
-</g>
-<!-- proc~face_hydraulic_jump&#45;&gt;fr_temp -->
-<g id="proc~~face_update~~CallsGraph_edge16" class="edge"><title>proc~face_hydraulic_jump&#45;&gt;fr_temp</title>
-<path fill="none" stroke="#000000" d="M308.037,-264C361.261,-264 440.735,-264 486.663,-264"/>
-<polygon fill="#000000" stroke="#000000" points="486.757,-267.5 496.757,-264 486.757,-260.5 486.757,-267.5"/>
-</g>
-<!-- proc~face_hydraulic_jump&#45;&gt;proc~utility_advance_temp_array -->
-<g id="proc~~face_update~~CallsGraph_edge17" class="edge"><title>proc~face_hydraulic_jump&#45;&gt;proc~utility_advance_temp_array</title>
-<path fill="none" stroke="#000000" d="M308.052,-271.724C334.865,-275.586 367.647,-280.407 397,-285 411.598,-287.284 427.131,-289.802 442.125,-292.277"/>
-<polygon fill="#000000" stroke="#000000" points="441.963,-295.798 452.401,-293.98 443.108,-288.892 441.963,-295.798"/>
-</g>
-<!-- proc~face_bc_flowrate_update_onevalue -->
-<g id="proc~~face_update~~CallsGraph_node10" class="node"><title>proc~face_bc_flowrate_update_onevalue</title>
-<g id="a_proc~~face_update~~CallsGraph_node10"><a xlink:href=".././proc/face_bc_flowrate_update_onevalue.html" xlink:title="face_bc_flowrate_update_onevalue">
-<polygon fill="#d9534f" stroke="#d9534f" points="615,-150 433,-150 433,-126 615,-126 615,-150"/>
-<text text-anchor="middle" x="524" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_bc_flowrate_update_onevalue</text>
-</a>
-</g>
-</g>
-<!-- proc~face_bc_flowrate_update&#45;&gt;proc~face_bc_flowrate_update_onevalue -->
-<g id="proc~~face_update~~CallsGraph_edge18" class="edge"><title>proc~face_bc_flowrate_update&#45;&gt;proc~face_bc_flowrate_update_onevalue</title>
-<path fill="none" stroke="#000000" d="M319.082,-146.323C350.209,-145.053 388.092,-143.506 422.719,-142.093"/>
-<polygon fill="#000000" stroke="#000000" points="423.02,-145.584 432.869,-141.679 422.734,-138.59 423.02,-145.584"/>
-</g>
-<!-- emr_timescaleup -->
-<g id="proc~~face_update~~CallsGraph_node9" class="node"><title>emr_timescaleup</title>
-<polygon fill="#777777" stroke="#777777" points="571,-528 477,-528 477,-504 571,-504 571,-528"/>
-<text text-anchor="middle" x="524" y="-513.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_timescaleup</text>
-</g>
-<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;emr_timescaleup -->
-<g id="proc~~face_update~~CallsGraph_edge19" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;emr_timescaleup</title>
-<path fill="none" stroke="#000000" d="M270.435,-402.274C301.267,-424.066 369.278,-469.603 433,-495 443.721,-499.273 455.522,-502.802 466.951,-505.669"/>
-<polygon fill="#000000" stroke="#000000" points="466.324,-509.117 476.861,-508.02 467.939,-502.306 466.324,-509.117"/>
-</g>
-<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;fyn_temp -->
-<g id="proc~~face_update~~CallsGraph_edge20" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;fyn_temp</title>
-<path fill="none" stroke="#000000" d="M337.769,-377.953C357.231,-375.092 377.846,-371.997 397,-369 426.716,-364.35 460.31,-358.733 485.333,-354.478"/>
-<polygon fill="#000000" stroke="#000000" points="486.227,-357.877 495.496,-352.745 485.05,-350.976 486.227,-357.877"/>
-</g>
-<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;fr_temp -->
-<g id="proc~~face_update~~CallsGraph_edge21" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;fr_temp</title>
-<path fill="none" stroke="#000000" d="M382.997,-377.903C387.913,-375.329 392.609,-372.377 397,-369 429.197,-344.238 401.871,-311.091 433,-285 447.905,-272.507 468.872,-267.137 486.819,-264.945"/>
-<polygon fill="#000000" stroke="#000000" points="487.34,-268.412 496.969,-263.992 486.685,-261.442 487.34,-268.412"/>
-</g>
-<!-- proc~interp_with_junction_downstream -->
-<g id="proc~~face_update~~CallsGraph_node17" class="node"><title>proc~interp_with_junction_downstream</title>
-<g id="a_proc~~face_update~~CallsGraph_node17"><a xlink:href=".././proc/interp_with_junction_downstream.html" xlink:title="interp_with_junction_downstream">
-<polygon fill="#d9534f" stroke="#d9534f" points="610,-486 438,-486 438,-462 610,-462 610,-486"/>
-<text text-anchor="middle" x="524" y="-471.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">interp_with_junction_downstream</text>
-</a>
-</g>
-</g>
-<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;proc~interp_with_junction_downstream -->
-<g id="proc~~face_update~~CallsGraph_edge23" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;proc~interp_with_junction_downstream</title>
-<path fill="none" stroke="#000000" d="M284.619,-402.079C320.154,-415.6 380.204,-437.624 433,-453 440.776,-455.265 448.984,-457.452 457.152,-459.506"/>
-<polygon fill="#000000" stroke="#000000" points="456.518,-462.954 467.064,-461.94 458.187,-456.156 456.518,-462.954"/>
-</g>
-<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;proc~utility_advance_temp_array -->
-<g id="proc~~face_update~~CallsGraph_edge22" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;proc~utility_advance_temp_array</title>
-<path fill="none" stroke="#000000" d="M377.171,-377.929C384.052,-375.417 390.715,-372.464 397,-369 418.532,-357.132 411.985,-339.76 433,-327 435.97,-325.197 439.082,-323.548 442.29,-322.041"/>
-<polygon fill="#000000" stroke="#000000" points="443.68,-325.253 451.548,-318.158 440.972,-318.798 443.68,-325.253"/>
+<!-- proc~bc_applied_onface&#45;&gt;proc~bc_onface -->
+<g id="proc~~face_update~~CallsGraph_edge13" class="edge"><title>proc~bc_applied_onface&#45;&gt;proc~bc_onface</title>
+<path fill="none" stroke="#000000" d="M304.191,-120.95C355.79,-124.971 434.768,-131.125 482.391,-134.836"/>
+<polygon fill="#000000" stroke="#000000" points="482.392,-138.346 492.633,-135.634 482.935,-131.367 482.392,-138.346"/>
 </g>
 <!-- proc~bc_face_othervalues -->
-<g id="proc~~face_update~~CallsGraph_node13" class="node"><title>proc~bc_face_othervalues</title>
-<g id="a_proc~~face_update~~CallsGraph_node13"><a xlink:href=".././proc/bc_face_othervalues.html" xlink:title="bc_face_othervalues">
+<g id="proc~~face_update~~CallsGraph_node14" class="node"><title>proc~bc_face_othervalues</title>
+<g id="a_proc~~face_update~~CallsGraph_node14"><a xlink:href=".././proc/bc_face_othervalues.html" xlink:title="bc_face_othervalues">
 <polygon fill="#d9534f" stroke="#d9534f" points="580,-108 468,-108 468,-84 580,-84 580,-108"/>
 <text text-anchor="middle" x="524" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc_face_othervalues</text>
 </a>
 </g>
 </g>
 <!-- proc~bc_applied_onface&#45;&gt;proc~bc_face_othervalues -->
-<g id="proc~~face_update~~CallsGraph_edge24" class="edge"><title>proc~bc_applied_onface&#45;&gt;proc~bc_face_othervalues</title>
-<path fill="none" stroke="#000000" d="M304.191,-87.8809C347.659,-89.4938 410.558,-91.8277 457.773,-93.5797"/>
-<polygon fill="#000000" stroke="#000000" points="457.776,-97.0821 467.899,-93.9554 458.036,-90.0869 457.776,-97.0821"/>
+<g id="proc~~face_update~~CallsGraph_edge15" class="edge"><title>proc~bc_applied_onface&#45;&gt;proc~bc_face_othervalues</title>
+<path fill="none" stroke="#000000" d="M304.191,-113.05C347.659,-109.663 410.558,-104.762 457.773,-101.083"/>
+<polygon fill="#000000" stroke="#000000" points="458.201,-104.56 467.899,-100.294 457.657,-97.5811 458.201,-104.56"/>
 </g>
 <!-- proc~bc_ghost_othervalues -->
-<g id="proc~~face_update~~CallsGraph_node14" class="node"><title>proc~bc_ghost_othervalues</title>
-<g id="a_proc~~face_update~~CallsGraph_node14"><a xlink:href=".././proc/bc_ghost_othervalues.html" xlink:title="bc_ghost_othervalues">
+<g id="proc~~face_update~~CallsGraph_node16" class="node"><title>proc~bc_ghost_othervalues</title>
+<g id="a_proc~~face_update~~CallsGraph_node16"><a xlink:href=".././proc/bc_ghost_othervalues.html" xlink:title="bc_ghost_othervalues">
 <polygon fill="#d9534f" stroke="#d9534f" points="583,-66 465,-66 465,-42 583,-42 583,-66"/>
 <text text-anchor="middle" x="524" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc_ghost_othervalues</text>
 </a>
 </g>
 </g>
 <!-- proc~bc_applied_onface&#45;&gt;proc~bc_ghost_othervalues -->
-<g id="proc~~face_update~~CallsGraph_edge25" class="edge"><title>proc~bc_applied_onface&#45;&gt;proc~bc_ghost_othervalues</title>
-<path fill="none" stroke="#000000" d="M304.191,-79.981C346.665,-74.9378 407.69,-67.6917 454.508,-62.1326"/>
-<polygon fill="#000000" stroke="#000000" points="455.054,-65.5924 464.572,-60.9377 454.229,-58.6413 455.054,-65.5924"/>
+<g id="proc~~face_update~~CallsGraph_edge14" class="edge"><title>proc~bc_applied_onface&#45;&gt;proc~bc_ghost_othervalues</title>
+<path fill="none" stroke="#000000" d="M304.176,-105.134C340.13,-96.7173 389.524,-85.1585 433,-75 442.161,-72.8595 451.846,-70.5979 461.336,-68.383"/>
+<polygon fill="#000000" stroke="#000000" points="462.181,-71.7799 471.124,-66.0987 460.59,-64.9631 462.181,-71.7799"/>
 </g>
-<!-- proc~bc_onface -->
-<g id="proc~~face_update~~CallsGraph_node15" class="node"><title>proc~bc_onface</title>
-<g id="a_proc~~face_update~~CallsGraph_node15"><a xlink:href=".././proc/bc_onface.html" xlink:title="bc_onface">
-<polygon fill="#d9534f" stroke="#d9534f" points="555,-24 493,-24 493,-0 555,-0 555,-24"/>
-<text text-anchor="middle" x="524" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc_onface</text>
+<!-- proc~face_hydraulic_jump&#45;&gt;proc~utility_advance_temp_array -->
+<g id="proc~~face_update~~CallsGraph_edge16" class="edge"><title>proc~face_hydraulic_jump&#45;&gt;proc~utility_advance_temp_array</title>
+<path fill="none" stroke="#000000" d="M308.037,-406.75C346.412,-403.76 398.432,-399.707 441.686,-396.336"/>
+<polygon fill="#000000" stroke="#000000" points="442.211,-399.806 451.908,-395.54 441.667,-392.827 442.211,-399.806"/>
+</g>
+<!-- proc~face_hydraulic_jump&#45;&gt;fr_temp -->
+<g id="proc~~face_update~~CallsGraph_edge17" class="edge"><title>proc~face_hydraulic_jump&#45;&gt;fr_temp</title>
+<path fill="none" stroke="#000000" d="M308.037,-415.25C361.261,-419.397 440.735,-425.59 486.663,-429.169"/>
+<polygon fill="#000000" stroke="#000000" points="486.515,-432.668 496.757,-429.955 487.059,-425.689 486.515,-432.668"/>
+</g>
+<!-- proc~face_bc_flowrate_update_onevalue -->
+<g id="proc~~face_update~~CallsGraph_node20" class="node"><title>proc~face_bc_flowrate_update_onevalue</title>
+<g id="a_proc~~face_update~~CallsGraph_node20"><a xlink:href=".././proc/face_bc_flowrate_update_onevalue.html" xlink:title="face_bc_flowrate_update_onevalue">
+<polygon fill="#d9534f" stroke="#d9534f" points="615,-24 433,-24 433,-0 615,-0 615,-24"/>
+<text text-anchor="middle" x="524" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">face_bc_flowrate_update_onevalue</text>
 </a>
 </g>
 </g>
-<!-- proc~bc_applied_onface&#45;&gt;proc~bc_onface -->
-<g id="proc~~face_update~~CallsGraph_edge26" class="edge"><title>proc~bc_applied_onface&#45;&gt;proc~bc_onface</title>
-<path fill="none" stroke="#000000" d="M291.836,-73.9808C328.056,-62.7915 383.99,-45.9416 433,-33 449.289,-28.6988 467.356,-24.3931 483.003,-20.8102"/>
-<polygon fill="#000000" stroke="#000000" points="483.914,-24.1925 492.892,-18.5675 482.366,-17.3659 483.914,-24.1925"/>
+<!-- proc~face_bc_flowrate_update&#45;&gt;proc~face_bc_flowrate_update_onevalue -->
+<g id="proc~~face_update~~CallsGraph_edge18" class="edge"><title>proc~face_bc_flowrate_update&#45;&gt;proc~face_bc_flowrate_update_onevalue</title>
+<path fill="none" stroke="#000000" d="M319.082,-27.8897C350.209,-25.4642 388.092,-22.5123 422.719,-19.8141"/>
+<polygon fill="#000000" stroke="#000000" points="423.171,-23.2896 432.869,-19.0232 422.627,-16.3108 423.171,-23.2896"/>
 </g>
-<!-- proc~face_surface_elevation_interp&#45;&gt;fyn_temp -->
-<g id="proc~~face_update~~CallsGraph_edge28" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;fyn_temp</title>
-<path fill="none" stroke="#000000" d="M330.627,-219.251C353.908,-221.907 378.239,-228.571 397,-243 429.197,-267.762 401.871,-300.909 433,-327 447.494,-339.148 467.72,-344.561 485.327,-346.866"/>
-<polygon fill="#000000" stroke="#000000" points="485.024,-350.353 495.328,-347.892 485.738,-343.39 485.024,-350.353"/>
+<!-- proc~face_interp_for_elem2&#45;&gt;proc~utility_advance_temp_array -->
+<g id="proc~~face_update~~CallsGraph_edge19" class="edge"><title>proc~face_interp_for_elem2&#45;&gt;proc~utility_advance_temp_array</title>
+<path fill="none" stroke="#000000" d="M312.643,-373.609C350.433,-376.553 399.952,-380.412 441.451,-383.646"/>
+<polygon fill="#000000" stroke="#000000" points="441.3,-387.144 451.542,-384.432 441.844,-380.165 441.3,-387.144"/>
 </g>
-<!-- proc~face_surface_elevation_interp&#45;&gt;fr_temp -->
-<g id="proc~~face_update~~CallsGraph_edge29" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;fr_temp</title>
-<path fill="none" stroke="#000000" d="M330.622,-232.999C352.123,-236.143 375.482,-239.633 397,-243 427.291,-247.74 461.612,-253.485 486.776,-257.767"/>
-<polygon fill="#000000" stroke="#000000" points="486.516,-261.273 496.962,-259.505 487.694,-254.373 486.516,-261.273"/>
+<!-- proc~face_interp_for_elem2&#45;&gt;fyn_temp -->
+<g id="proc~~face_update~~CallsGraph_edge20" class="edge"><title>proc~face_interp_for_elem2&#45;&gt;fyn_temp</title>
+<path fill="none" stroke="#000000" d="M312.643,-364.391C365.144,-360.3 440.285,-354.445 485.106,-350.953"/>
+<polygon fill="#000000" stroke="#000000" points="485.576,-354.427 495.274,-350.16 485.032,-347.448 485.576,-354.427"/>
 </g>
-<!-- emr_lengthup -->
-<g id="proc~~face_update~~CallsGraph_node16" class="node"><title>emr_lengthup</title>
-<polygon fill="#777777" stroke="#777777" points="563.5,-192 484.5,-192 484.5,-168 563.5,-168 563.5,-192"/>
-<text text-anchor="middle" x="524" y="-177.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_lengthup</text>
+<!-- proc~face_interp_for_elem2&#45;&gt;fr_temp -->
+<g id="proc~~face_update~~CallsGraph_edge21" class="edge"><title>proc~face_interp_for_elem2&#45;&gt;fr_temp</title>
+<path fill="none" stroke="#000000" d="M312.667,-372.539C339.039,-375.407 370.146,-380.6 397,-390 414.483,-396.119 415.789,-404.153 433,-411 450.161,-417.827 470.085,-422.761 486.819,-426.123"/>
+<polygon fill="#000000" stroke="#000000" points="486.294,-429.586 496.772,-428.016 487.602,-422.709 486.294,-429.586"/>
 </g>
-<!-- proc~face_surface_elevation_interp&#45;&gt;emr_lengthup -->
-<g id="proc~~face_update~~CallsGraph_edge31" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;emr_lengthup</title>
-<path fill="none" stroke="#000000" d="M330.728,-209.964C376.944,-202.762 434.275,-193.827 474.254,-187.597"/>
-<polygon fill="#000000" stroke="#000000" points="474.939,-191.032 484.281,-186.034 473.861,-184.116 474.939,-191.032"/>
+<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;proc~utility_advance_temp_array -->
+<g id="proc~~face_update~~CallsGraph_edge22" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;proc~utility_advance_temp_array</title>
+<path fill="none" stroke="#000000" d="M381.152,-297.093C386.69,-299.645 392.007,-302.596 397,-306 423.644,-324.169 407.142,-349.73 433,-369 436.007,-371.241 439.216,-373.248 442.563,-375.045"/>
+<polygon fill="#000000" stroke="#000000" points="441.168,-378.256 451.708,-379.327 444.136,-371.916 441.168,-378.256"/>
 </g>
-<!-- emr_lengthdn -->
-<g id="proc~~face_update~~CallsGraph_node18" class="node"><title>emr_lengthdn</title>
-<polygon fill="#777777" stroke="#777777" points="563.5,-234 484.5,-234 484.5,-210 563.5,-210 563.5,-234"/>
-<text text-anchor="middle" x="524" y="-219.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_lengthdn</text>
+<!-- proc~interp_with_junction_downstream -->
+<g id="proc~~face_update~~CallsGraph_node12" class="node"><title>proc~interp_with_junction_downstream</title>
+<g id="a_proc~~face_update~~CallsGraph_node12"><a xlink:href=".././proc/interp_with_junction_downstream.html" xlink:title="interp_with_junction_downstream">
+<polygon fill="#d9534f" stroke="#d9534f" points="610,-192 438,-192 438,-168 610,-168 610,-192"/>
+<text text-anchor="middle" x="524" y="-177.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">interp_with_junction_downstream</text>
+</a>
 </g>
-<!-- proc~face_surface_elevation_interp&#45;&gt;emr_lengthdn -->
-<g id="proc~~face_update~~CallsGraph_edge27" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;emr_lengthdn</title>
-<path fill="none" stroke="#000000" d="M330.728,-222C376.944,-222 434.275,-222 474.254,-222"/>
-<polygon fill="#000000" stroke="#000000" points="474.281,-225.5 484.281,-222 474.281,-218.5 474.281,-225.5"/>
 </g>
-<!-- proc~face_surface_elevation_interp&#45;&gt;proc~utility_advance_temp_array -->
-<g id="proc~~face_update~~CallsGraph_edge30" class="edge"><title>proc~face_surface_elevation_interp&#45;&gt;proc~utility_advance_temp_array</title>
-<path fill="none" stroke="#000000" d="M330.857,-223.191C353.264,-226.154 377.044,-232.001 397,-243 418.532,-254.868 411.985,-272.24 433,-285 435.97,-286.803 439.082,-288.452 442.29,-289.959"/>
-<polygon fill="#000000" stroke="#000000" points="440.972,-293.202 451.548,-293.842 443.68,-286.747 440.972,-293.202"/>
+<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;proc~interp_with_junction_downstream -->
+<g id="proc~~face_update~~CallsGraph_edge25" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;proc~interp_with_junction_downstream</title>
+<path fill="none" stroke="#000000" d="M275.265,-272.992C308.428,-255.12 373.992,-221.44 433,-201 439.519,-198.742 446.388,-196.65 453.304,-194.732"/>
+<polygon fill="#000000" stroke="#000000" points="454.666,-197.991 463.436,-192.047 452.873,-191.225 454.666,-197.991"/>
+</g>
+<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;fyn_temp -->
+<g id="proc~~face_update~~CallsGraph_edge23" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;fyn_temp</title>
+<path fill="none" stroke="#000000" d="M365.373,-297.079C376.198,-299.525 386.9,-302.465 397,-306 414.483,-312.119 415.789,-320.153 433,-327 449.51,-333.568 468.577,-338.384 484.901,-341.734"/>
+<polygon fill="#000000" stroke="#000000" points="484.693,-345.258 495.176,-343.727 486.026,-338.387 484.693,-345.258"/>
+</g>
+<!-- emr_timescaleup -->
+<g id="proc~~face_update~~CallsGraph_node19" class="node"><title>emr_timescaleup</title>
+<polygon fill="#777777" stroke="#777777" points="571,-234 477,-234 477,-210 571,-210 571,-234"/>
+<text text-anchor="middle" x="524" y="-219.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_timescaleup</text>
+</g>
+<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;emr_timescaleup -->
+<g id="proc~~face_update~~CallsGraph_edge24" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;emr_timescaleup</title>
+<path fill="none" stroke="#000000" d="M304.952,-272.952C340.837,-264.552 389.836,-253.086 433,-243 443.997,-240.431 455.749,-237.687 467.011,-235.058"/>
+<polygon fill="#000000" stroke="#000000" points="467.808,-238.467 476.751,-232.786 466.217,-231.65 467.808,-238.467"/>
+</g>
+<!-- proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;fr_temp -->
+<g id="proc~~face_update~~CallsGraph_edge26" class="edge"><title>proc~face_interp_for_upstreamchannel_to_downstreamjunction&#45;&gt;fr_temp</title>
+<path fill="none" stroke="#000000" d="M383.977,-297.061C388.565,-299.658 392.932,-302.622 397,-306 434.957,-337.513 396.399,-377.923 433,-411 447.496,-424.101 468.567,-429.489 486.676,-431.539"/>
+<polygon fill="#000000" stroke="#000000" points="486.389,-435.027 496.647,-432.377 486.976,-428.052 486.389,-435.027"/>
+</g>
+<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;proc~utility_advance_temp_array -->
+<g id="proc~~face_update~~CallsGraph_edge27" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;proc~utility_advance_temp_array</title>
+<path fill="none" stroke="#000000" d="M365.373,-339.079C376.198,-341.525 386.9,-344.465 397,-348 414.483,-354.119 415.789,-362.153 433,-369 438.539,-371.204 444.367,-373.21 450.282,-375.03"/>
+<polygon fill="#000000" stroke="#000000" points="449.705,-378.507 460.283,-377.919 451.647,-371.782 449.705,-378.507"/>
+</g>
+<!-- proc~interp_with_junction_upstream -->
+<g id="proc~~face_update~~CallsGraph_node10" class="node"><title>proc~interp_with_junction_upstream</title>
+<g id="a_proc~~face_update~~CallsGraph_node10"><a xlink:href=".././proc/interp_with_junction_upstream.html" xlink:title="interp_with_junction_upstream">
+<polygon fill="#d9534f" stroke="#d9534f" points="603,-318 445,-318 445,-294 603,-294 603,-318"/>
+<text text-anchor="middle" x="524" y="-303.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">interp_with_junction_upstream</text>
+</a>
+</g>
+</g>
+<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;proc~interp_with_junction_upstream -->
+<g id="proc~~face_update~~CallsGraph_edge30" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;proc~interp_with_junction_upstream</title>
+<path fill="none" stroke="#000000" d="M397.324,-315.793C410.062,-314.8 422.692,-313.816 434.756,-312.876"/>
+<polygon fill="#000000" stroke="#000000" points="435.048,-316.364 444.745,-312.098 434.504,-309.385 435.048,-316.364"/>
+</g>
+<!-- emr_timescaledn -->
+<g id="proc~~face_update~~CallsGraph_node11" class="node"><title>emr_timescaledn</title>
+<polygon fill="#777777" stroke="#777777" points="571,-276 477,-276 477,-252 571,-252 571,-276"/>
+<text text-anchor="middle" x="524" y="-261.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">emr_timescaledn</text>
+</g>
+<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;emr_timescaledn -->
+<g id="proc~~face_update~~CallsGraph_edge29" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;emr_timescaledn</title>
+<path fill="none" stroke="#000000" d="M365.373,-314.921C376.198,-312.475 386.9,-309.535 397,-306 414.483,-299.881 415.789,-291.847 433,-285 443.723,-280.734 455.526,-277.207 466.955,-274.341"/>
+<polygon fill="#000000" stroke="#000000" points="467.943,-277.704 476.866,-271.991 466.328,-270.893 467.943,-277.704"/>
+</g>
+<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;fyn_temp -->
+<g id="proc~~face_update~~CallsGraph_edge28" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;fyn_temp</title>
+<path fill="none" stroke="#000000" d="M397.324,-338.207C429.737,-340.733 461.446,-343.204 484.906,-345.032"/>
+<polygon fill="#000000" stroke="#000000" points="484.835,-348.537 495.076,-345.824 485.378,-341.558 484.835,-348.537"/>
+</g>
+<!-- proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;fr_temp -->
+<g id="proc~~face_update~~CallsGraph_edge31" class="edge"><title>proc~face_interp_for_downstreamchannel_to_upstreamjunction&#45;&gt;fr_temp</title>
+<path fill="none" stroke="#000000" d="M381.152,-339.093C386.69,-341.645 392.007,-344.596 397,-348 423.644,-366.169 407.142,-391.73 433,-411 448.379,-422.461 469.019,-427.797 486.654,-430.23"/>
+<polygon fill="#000000" stroke="#000000" points="486.299,-433.712 496.627,-431.351 487.081,-426.756 486.299,-433.712"/>
+</g>
+<!-- proc~linear_interpolation -->
+<g id="proc~~face_update~~CallsGraph_node22" class="node"><title>proc~linear_interpolation</title>
+<g id="a_proc~~face_update~~CallsGraph_node22"><a xlink:href=".././proc/linear_interpolation.html" xlink:title="linear_interpolation">
+<polygon fill="#d9534f" stroke="#d9534f" points="754,-255 651,-255 651,-231 754,-231 754,-255"/>
+<text text-anchor="middle" x="702.5" y="-240.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">linear_interpolation</text>
+</a>
+</g>
+</g>
+<!-- proc~interp_with_junction_upstream&#45;&gt;proc~linear_interpolation -->
+<g id="proc~~face_update~~CallsGraph_edge32" class="edge"><title>proc~interp_with_junction_upstream&#45;&gt;proc~linear_interpolation</title>
+<path fill="none" stroke="#000000" d="M585.086,-293.947C595.184,-291.364 605.473,-288.377 615,-285 634.204,-278.193 654.757,-268.331 671.009,-259.873"/>
+<polygon fill="#000000" stroke="#000000" points="672.84,-262.864 680.037,-255.089 669.562,-256.678 672.84,-262.864"/>
+</g>
+<!-- proc~interp_with_junction_downstream&#45;&gt;proc~linear_interpolation -->
+<g id="proc~~face_update~~CallsGraph_edge33" class="edge"><title>proc~interp_with_junction_downstream&#45;&gt;proc~linear_interpolation</title>
+<path fill="none" stroke="#000000" d="M585.086,-192.053C595.184,-194.636 605.473,-197.623 615,-201 634.204,-207.807 654.757,-217.669 671.009,-226.127"/>
+<polygon fill="#000000" stroke="#000000" points="669.562,-229.322 680.037,-230.911 672.84,-223.136 669.562,-229.322"/>
 </g>
 <!-- proc~bc_updatevalue -->
-<g id="proc~~face_update~~CallsGraph_node22" class="node"><title>proc~bc_updatevalue</title>
-<g id="a_proc~~face_update~~CallsGraph_node22"><a xlink:href=".././proc/bc_updatevalue.html" xlink:title="bc_updatevalue">
-<polygon fill="#d9534f" stroke="#d9534f" points="746.5,-24 658.5,-24 658.5,-0 746.5,-0 746.5,-24"/>
-<text text-anchor="middle" x="702.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc_updatevalue</text>
+<g id="proc~~face_update~~CallsGraph_node23" class="node"><title>proc~bc_updatevalue</title>
+<g id="a_proc~~face_update~~CallsGraph_node23"><a xlink:href=".././proc/bc_updatevalue.html" xlink:title="bc_updatevalue">
+<polygon fill="#d9534f" stroke="#d9534f" points="746.5,-150 658.5,-150 658.5,-126 746.5,-126 746.5,-150"/>
+<text text-anchor="middle" x="702.5" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">bc_updatevalue</text>
 </a>
 </g>
 </g>
 <!-- proc~bc_onface&#45;&gt;proc~bc_updatevalue -->
-<g id="proc~~face_update~~CallsGraph_edge32" class="edge"><title>proc~bc_onface&#45;&gt;proc~bc_updatevalue</title>
-<path fill="none" stroke="#000000" d="M555.341,-12C580.844,-12 617.899,-12 648.317,-12"/>
-<polygon fill="#000000" stroke="#000000" points="648.352,-15.5001 658.351,-12 648.351,-8.5001 648.352,-15.5001"/>
-</g>
-<!-- proc~linear_interpolation -->
-<g id="proc~~face_update~~CallsGraph_node23" class="node"><title>proc~linear_interpolation</title>
-<g id="a_proc~~face_update~~CallsGraph_node23"><a xlink:href=".././proc/linear_interpolation.html" xlink:title="linear_interpolation">
-<polygon fill="#d9534f" stroke="#d9534f" points="754,-465 651,-465 651,-441 754,-441 754,-465"/>
-<text text-anchor="middle" x="702.5" y="-450.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">linear_interpolation</text>
-</a>
-</g>
-</g>
-<!-- proc~interp_with_junction_downstream&#45;&gt;proc~linear_interpolation -->
-<g id="proc~~face_update~~CallsGraph_edge33" class="edge"><title>proc~interp_with_junction_downstream&#45;&gt;proc~linear_interpolation</title>
-<path fill="none" stroke="#000000" d="M610.148,-463.869C620.485,-462.639 630.88,-461.402 640.762,-460.227"/>
-<polygon fill="#000000" stroke="#000000" points="641.336,-463.683 650.852,-459.026 640.508,-456.732 641.336,-463.683"/>
-</g>
-<!-- proc~interp_with_junction_upstream&#45;&gt;proc~linear_interpolation -->
-<g id="proc~~face_update~~CallsGraph_edge34" class="edge"><title>proc~interp_with_junction_upstream&#45;&gt;proc~linear_interpolation</title>
-<path fill="none" stroke="#000000" d="M603.186,-441.303C615.793,-442.803 628.677,-444.336 640.792,-445.777"/>
-<polygon fill="#000000" stroke="#000000" points="640.42,-449.257 650.764,-446.963 641.247,-442.306 640.42,-449.257"/>
+<g id="proc~~face_update~~CallsGraph_edge34" class="edge"><title>proc~bc_onface&#45;&gt;proc~bc_updatevalue</title>
+<path fill="none" stroke="#000000" d="M555.341,-138C580.844,-138 617.899,-138 648.317,-138"/>
+<polygon fill="#000000" stroke="#000000" points="648.352,-141.5 658.351,-138 648.351,-134.5 648.352,-141.5"/>
 </g>
 <!-- proc~utility_linear_interpolate_within_indexlist -->
 <g id="proc~~face_update~~CallsGraph_node24" class="node"><title>proc~utility_linear_interpolate_within_indexlist</title>
 <g id="a_proc~~face_update~~CallsGraph_node24"><a xlink:href=".././proc/utility_linear_interpolate_within_indexlist.html" xlink:title="utility_linear_interpolate_within_indexlist">
-<polygon fill="#d94e8f" stroke="#d94e8f" points="992,-24 790,-24 790,-0 992,-0 992,-24"/>
-<text text-anchor="middle" x="891" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility_linear_interpolate_within_indexlist</text>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="992,-150 790,-150 790,-126 992,-126 992,-150"/>
+<text text-anchor="middle" x="891" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility_linear_interpolate_within_indexlist</text>
 </a>
 </g>
 </g>
 <!-- proc~bc_updatevalue&#45;&gt;proc~utility_linear_interpolate_within_indexlist -->
 <g id="proc~~face_update~~CallsGraph_edge35" class="edge"><title>proc~bc_updatevalue&#45;&gt;proc~utility_linear_interpolate_within_indexlist</title>
-<path fill="none" stroke="#000000" d="M746.756,-12C756.826,-12 768.001,-12 779.54,-12"/>
-<polygon fill="#000000" stroke="#000000" points="779.755,-15.5001 789.755,-12 779.755,-8.5001 779.755,-15.5001"/>
+<path fill="none" stroke="#000000" d="M746.756,-138C756.826,-138 768.001,-138 779.54,-138"/>
+<polygon fill="#000000" stroke="#000000" points="779.755,-141.5 789.755,-138 779.755,-134.5 779.755,-141.5"/>
 </g>
 </g>
 </svg>

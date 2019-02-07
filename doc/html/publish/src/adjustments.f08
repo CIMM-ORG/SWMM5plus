@@ -38,9 +38,9 @@
     (elemR, elemYN, elemI, &
      ei_elem_type, elemType, eYN_IsAdhocFlowrate, er_Velocity_new )
 !
-!! Limits the velocity in channel elements to setting%Limiter%Velocity%Maximum
-!! In general, this should only be needed where the volumes start getting small,
-!! but also could accidentally mask (or delay) an instability.
+! Limits the velocity in channel elements to setting%Limiter%Velocity%Maximum
+! In general, this should only be needed where the volumes start getting small,
+! but also could accidentally mask (or delay) an instability.
 !
  character(64) :: subroutine_name = 'adjust_channel_velocity_limiter'
  

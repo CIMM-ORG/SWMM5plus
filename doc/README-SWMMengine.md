@@ -25,7 +25,7 @@ This project is building a new parallel time-marching solver for unsteady flow s
 
 ---
 
-[Main features](#main-features) | [Copyrights](#copyrights) |
+[Main features](#main-features) | [Copyrights](#copyrights) | [Documentation](#documentation) | [Acknowledment](#acknowledment) |
 
 ---
 
@@ -48,5 +48,9 @@ Go to [Top](#top)
 ## Documentation
 
 Detailed documentation of SWMMengine is contained into this README file. Detailed documentation of SWMM can be found at [U.S. EPA](https://www.epa.gov/water-research/storm-water-management-model-swmm) website.
+
+## Acknowledment
+
+This project is being  developed by the National Center for Infrastructure Modeling and Management (NCIMM), under funding from the U.S. Environmental Protection Agency with Cooperative Agreement No. 83595001 awarded  to the University of Texas at Austin.
 
 Go to [Top](#top)
