@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="">
+    
+    <meta name="author" content="Ben R. Hodges and Ehsan Madadi-Kandjani" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>junction.f08 &ndash; SWMMengine</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">SWMMengine </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/main.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/main.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>junction.f08
+    <small>Source File</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 5.2% of total for source files.">391 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/junction.f08"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+  
+     <li class="active">junction.f08</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-0">Modules</a></h3></div>
+  <div id="mods-0" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/junction.html">junction</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/junction.f08.html#src">junction.f08</a>
+  </div>
+</div>
+
+
+
+</div>
+
+    </div>
+    <div class="col-md-9" id='text'>
+      
+      <br>
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">This file depends on</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~junction.f08~~EfferentGraph Pages: 1 -->
+<svg id="sourcefilejunctionf08EfferentGraph" width="641pt" height="174pt"
+ viewBox="0.00 0.00 641.00 174.12" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~junction.f08~~EfferentGraph" class="graph" transform="scale(0.946824 0.946824) rotate(0) translate(4 179.894)">
+<title>sourcefile~~junction.f08~~EfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-179.894 673,-179.894 673,4 -4,4"/>
+<!-- sourcefile~junction.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_node1" class="node"><title>sourcefile~junction.f08</title>
+<polygon fill="none" stroke="black" points="669,-99.947 602,-99.947 602,-75.947 669,-75.947 669,-99.947"/>
+<text text-anchor="middle" x="635.5" y="-85.547" font-family="Helvetica,sans-Serif" font-size="10.50">junction.f08</text>
+</g>
+<!-- sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_node2" class="node"><title>sourcefile~setting_definition.f08</title>
+<g id="a_sourcefile~~junction.f08~~EfferentGraph_node2"><a xlink:href=".././sourcefile/setting_definition.f08.html" xlink:title="setting_definition.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="252,-119.947 141,-119.947 141,-95.947 252,-95.947 252,-119.947"/>
+<text text-anchor="middle" x="196.5" y="-105.547" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">setting_definition.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge1" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-167.947C472.644,-184.676 451.194,-171.144 388,-148.947 355.062,-137.378 355.773,-111.041 321,-107.947"/>
+</g>
+<!-- sourcefile~data_keys.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_node3" class="node"><title>sourcefile~data_keys.f08</title>
+<g id="a_sourcefile~~junction.f08~~EfferentGraph_node3"><a xlink:href=".././sourcefile/data_keys.f08.html" xlink:title="data_keys.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="471,-139.947 392,-139.947 392,-115.947 471,-115.947 471,-139.947"/>
+<text text-anchor="middle" x="431.5" y="-125.547" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">data_keys.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge5" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M626.025,-100.055C611.237,-119.832 578.543,-157.876 539.5,-167.947"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-167.947C523.285,-171.614 489.488,-157.141 464.05,-144.592"/>
+<polygon fill="#000000" stroke="#000000" points="465.614,-141.461 455.108,-140.093 462.468,-147.714 465.614,-141.461"/>
+</g>
+<!-- sourcefile~array_index.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_node4" class="node"><title>sourcefile~array_index.f08</title>
+<g id="a_sourcefile~~junction.f08~~EfferentGraph_node4"><a xlink:href=".././sourcefile/array_index.f08.html" xlink:title="array_index.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="475,-59.947 388,-59.947 388,-35.947 475,-35.947 475,-59.947"/>
+<text text-anchor="middle" x="431.5" y="-45.547" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">array_index.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge2" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-7.94702C523.285,-4.2804 489.488,-18.7529 464.05,-31.3021"/>
+<polygon fill="#000000" stroke="#000000" points="462.468,-28.1801 455.108,-35.8013 465.614,-34.4331 462.468,-28.1801"/>
+</g>
+<!-- sourcefile~utility.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_node5" class="node"><title>sourcefile~utility.f08</title>
+<g id="a_sourcefile~~junction.f08~~EfferentGraph_node5"><a xlink:href=".././sourcefile/utility.f08.html" xlink:title="utility.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="566,-99.947 511,-99.947 511,-75.947 566,-75.947 566,-99.947"/>
+<text text-anchor="middle" x="538.5" y="-85.547" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utility.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~utility.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge3" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~utility.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M601.806,-87.947C593.655,-87.947 584.857,-87.947 576.514,-87.947"/>
+<polygon fill="#000000" stroke="#000000" points="576.271,-84.4471 566.271,-87.947 576.271,-91.4471 576.271,-84.4471"/>
+</g>
+<!-- sourcefile~globals.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_node6" class="node"><title>sourcefile~globals.f08</title>
+<g id="a_sourcefile~~junction.f08~~EfferentGraph_node6"><a xlink:href=".././sourcefile/globals.f08.html" xlink:title="globals.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="352,-79.947 288,-79.947 288,-55.947 352,-55.947 352,-79.947"/>
+<text text-anchor="middle" x="320" y="-65.547" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">globals.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~junction.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge4" class="edge"><title>sourcefile~junction.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M626.025,-75.8394C611.237,-56.0624 578.543,-18.0176 539.5,-7.94702"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M537.5,-7.94702C472.644,8.78157 451.194,-4.75048 388,-26.947 372.677,-32.3292 357.111,-41.5769 344.844,-49.9288"/>
+<polygon fill="#000000" stroke="#000000" points="342.698,-47.1589 336.545,-55.7838 346.734,-52.8786 342.698,-47.1589"/>
+</g>
+<!-- sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_node7" class="node"><title>sourcefile~type_definitions.f08</title>
+<g id="a_sourcefile~~junction.f08~~EfferentGraph_node7"><a xlink:href=".././sourcefile/type_definitions.f08.html" xlink:title="type_definitions.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="105,-99.947 0,-99.947 0,-75.947 105,-75.947 105,-99.947"/>
+<text text-anchor="middle" x="52.5" y="-85.547" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">type_definitions.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge6" class="edge"><title>sourcefile~setting_definition.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M140.599,-100.214C132.387,-99.0579 123.872,-97.8586 115.525,-96.683"/>
+<polygon fill="#000000" stroke="#000000" points="115.85,-93.1942 105.459,-95.2652 114.873,-100.126 115.85,-93.1942"/>
+</g>
+<!-- sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge7" class="edge"><title>sourcefile~data_keys.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M408.341,-115.805C392.163,-106.941 370.016,-94.8054 352.073,-84.9731"/>
+<polygon fill="#000000" stroke="#000000" points="353.578,-81.8068 343.126,-80.0709 350.214,-87.9457 353.578,-81.8068"/>
+</g>
+<!-- sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge8" class="edge"><title>sourcefile~array_index.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M387.851,-55.7368C379.398,-57.2807 370.54,-58.8987 362.138,-60.4332"/>
+<polygon fill="#000000" stroke="#000000" points="361.383,-57.0132 352.175,-62.253 362.641,-63.8992 361.383,-57.0132"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge9" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-87.947C381.028,-87.947 370.277,-112.332 321,-107.947"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M319,-107.947C300.563,-106.307 280.49,-105.791 262.069,-105.821"/>
+<polygon fill="#000000" stroke="#000000" points="262.001,-102.322 252.026,-105.891 262.05,-109.321 262.001,-102.322"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge12" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~data_keys.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.732,-98.1442C499.403,-102.46 485.949,-107.586 473.421,-112.358"/>
+<polygon fill="#000000" stroke="#000000" points="472.17,-109.089 464.071,-115.92 474.662,-115.631 472.17,-109.089"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge10" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~array_index.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.732,-77.7498C499.403,-73.4337 485.949,-68.3084 473.421,-63.5358"/>
+<polygon fill="#000000" stroke="#000000" points="474.662,-60.2635 464.071,-59.9742 472.17,-66.8049 474.662,-60.2635"/>
+</g>
+<!-- sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge11" class="edge"><title>sourcefile~utility.f08&#45;&gt;sourcefile~globals.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M510.743,-87.947C489.524,-87.947 459.115,-87.947 432.5,-87.947"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.5,-87.947C407.686,-87.947 382.627,-83.6938 362.245,-79.1101"/>
+<polygon fill="#000000" stroke="#000000" points="362.885,-75.6651 352.349,-76.7775 361.279,-82.4784 362.885,-75.6651"/>
+</g>
+<!-- sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge13" class="edge"><title>sourcefile~globals.f08&#45;&gt;sourcefile~setting_definition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M287.711,-78.248C274.457,-82.6114 258.735,-87.7874 244.158,-92.5863"/>
+<polygon fill="#000000" stroke="#000000" points="242.698,-89.3821 234.294,-95.8338 244.887,-96.0311 242.698,-89.3821"/>
+</g>
+<!-- sourcefile~globals.f08&#45;&gt;sourcefile~type_definitions.f08 -->
+<g id="sourcefile~~junction.f08~~EfferentGraph_edge14" class="edge"><title>sourcefile~globals.f08&#45;&gt;sourcefile~type_definitions.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M287.763,-70.3001C245.524,-73.4819 169.275,-79.2257 115.253,-83.2952"/>
+<polygon fill="#000000" stroke="#000000" points="114.808,-79.8187 105.099,-84.0601 115.334,-86.7989 114.808,-79.8187"/>
+</g>
+</g>
+</svg>
+</div><script>var pansourcefilejunctionf08EfferentGraph = svgPanZoom('#sourcefilejunctionf08EfferentGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+    
+      
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Files dependent on this one</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: sourcefile~~junction.f08~~AfferentGraph Pages: 1 -->
+<svg id="sourcefilejunctionf08AfferentGraph" width="599pt" height="173pt"
+ viewBox="0.00 0.00 599.00 172.57" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~junction.f08~~AfferentGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 168.574)">
+<title>sourcefile~~junction.f08~~AfferentGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-168.574 595,-168.574 595,4 -4,4"/>
+<!-- sourcefile~junction.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_node1" class="node"><title>sourcefile~junction.f08</title>
+<polygon fill="none" stroke="black" points="67,-101.574 0,-101.574 0,-77.5742 67,-77.5742 67,-101.574"/>
+<text text-anchor="middle" x="33.5" y="-87.1742" font-family="Helvetica,sans-Serif" font-size="10.50">junction.f08</text>
+</g>
+<!-- sourcefile~initial_condition.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_node2" class="node"><title>sourcefile~initial_condition.f08</title>
+<g id="a_sourcefile~~junction.f08~~AfferentGraph_node2"><a xlink:href=".././sourcefile/initial_condition.f08.html" xlink:title="initial_condition.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="362,-164.574 259,-164.574 259,-140.574 362,-140.574 362,-164.574"/>
+<text text-anchor="middle" x="310.5" y="-150.174" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">initial_condition.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge1" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M258.948,-153.65C216.306,-153.106 154.212,-148.869 103,-131.574 86.8924,-126.135 70.5964,-116.355 57.942,-107.601"/>
+<polygon fill="#000000" stroke="#000000" points="59.9764,-104.753 49.8102,-101.77 55.8974,-110.442 59.9764,-104.753"/>
+</g>
+<!-- sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_node3" class="node"><title>sourcefile~element_geometry.f08</title>
+<g id="a_sourcefile~~junction.f08~~AfferentGraph_node3"><a xlink:href=".././sourcefile/element_geometry.f08.html" xlink:title="element_geometry.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="223,-80.5742 103,-80.5742 103,-56.5742 223,-56.5742 223,-80.5742"/>
+<text text-anchor="middle" x="163" y="-66.1742" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_geometry.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge7" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M274.393,-140.507C269.007,-137.952 263.687,-134.978 259,-131.574 239.107,-117.127 243.263,-103.498 223,-89.5742 220.648,-87.9579 218.158,-86.4522 215.583,-85.0515"/>
+<polygon fill="#000000" stroke="#000000" points="217.102,-81.8986 206.577,-80.6853 214.048,-88.1974 217.102,-81.8986"/>
+</g>
+<!-- sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_node5" class="node"><title>sourcefile~element_dynamics.f08</title>
+<g id="a_sourcefile~~junction.f08~~AfferentGraph_node5"><a xlink:href=".././sourcefile/element_dynamics.f08.html" xlink:title="element_dynamics.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="223,-122.574 103,-122.574 103,-98.5742 223,-98.5742 223,-122.574"/>
+<text text-anchor="middle" x="163" y="-108.174" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">element_dynamics.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge11" class="edge"><title>sourcefile~initial_condition.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M267.806,-140.539C251.52,-135.838 232.678,-130.399 215.553,-125.455"/>
+<polygon fill="#000000" stroke="#000000" points="216.279,-122.022 205.701,-122.611 214.338,-128.748 216.279,-122.022"/>
+</g>
+<!-- sourcefile~element_geometry.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge2" class="edge"><title>sourcefile~element_geometry.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M102.729,-78.3365C94.1329,-79.7523 85.4274,-81.1862 77.2422,-82.5343"/>
+<polygon fill="#000000" stroke="#000000" points="76.4981,-79.1096 67.1999,-84.1884 77.6358,-86.0166 76.4981,-79.1096"/>
+</g>
+<!-- sourcefile~network_define.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_node4" class="node"><title>sourcefile~network_define.f08</title>
+<g id="a_sourcefile~~junction.f08~~AfferentGraph_node4"><a xlink:href=".././sourcefile/network_define.f08.html" xlink:title="network_define.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="501,-40.5742 398,-40.5742 398,-16.5742 501,-16.5742 501,-40.5742"/>
+<text text-anchor="middle" x="449.5" y="-26.1742" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">network_define.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~network_define.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge3" class="edge"><title>sourcefile~network_define.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M397.69,-26.849C371.851,-26.4092 339.969,-26.5366 311.5,-28.5742"/>
+</g>
+<!-- sourcefile~element_dynamics.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge4" class="edge"><title>sourcefile~element_dynamics.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M102.729,-100.812C94.1329,-99.3961 85.4274,-97.9623 77.2422,-96.6141"/>
+<polygon fill="#000000" stroke="#000000" points="77.6358,-93.1319 67.1999,-94.9601 76.4981,-100.039 77.6358,-93.1319"/>
+</g>
+<!-- sourcefile~main.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_node6" class="node"><title>sourcefile~main.f08</title>
+<g id="a_sourcefile~~junction.f08~~AfferentGraph_node6"><a xlink:href=".././sourcefile/main.f08.html" xlink:title="main.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="591,-61.5742 537,-61.5742 537,-37.5742 591,-37.5742 591,-61.5742"/>
+<text text-anchor="middle" x="564" y="-47.1742" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">main.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~junction.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge5" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~junction.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M549.971,-37.2813C538.208,-27.0906 519.892,-13.3709 501,-7.57422 457.236,5.85364 443.454,-2.13572 398,-7.57422 358.719,-12.2742 350.96,-25.7499 311.5,-28.5742"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M309.5,-28.5742C217.42,-32.5415 190.461,-18.5044 103,-47.5742 86.759,-52.9723 70.3519,-62.8429 57.6682,-71.6592"/>
+<polygon fill="#000000" stroke="#000000" points="55.5947,-68.8393 49.5298,-77.5265 59.6884,-74.5175 55.5947,-68.8393"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~initial_condition.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge6" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~initial_condition.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M547.446,-61.9482C535.343,-71.1094 517.83,-83.3734 501,-91.5742 459.645,-111.726 410.065,-127.413 371.993,-137.83"/>
+<polygon fill="#000000" stroke="#000000" points="370.824,-134.52 362.076,-140.496 372.642,-141.28 370.824,-134.52"/>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~network_define.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge10" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~network_define.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M536.907,-44.7036C529.09,-43.2443 520.169,-41.5791 511.096,-39.8856"/>
+<polygon fill="#000000" stroke="#000000" points="511.71,-36.4397 501.237,-38.0452 510.425,-43.3208 511.71,-36.4397"/>
+</g>
+<!-- sourcefile~time_loop.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_node9" class="node"><title>sourcefile~time_loop.f08</title>
+<g id="a_sourcefile~~junction.f08~~AfferentGraph_node9"><a xlink:href=".././sourcefile/time_loop.f08.html" xlink:title="time_loop.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="488,-82.5742 411,-82.5742 411,-58.5742 488,-58.5742 488,-82.5742"/>
+<text text-anchor="middle" x="449.5" y="-68.1742" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">time_loop.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~main.f08&#45;&gt;sourcefile~time_loop.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge16" class="edge"><title>sourcefile~main.f08&#45;&gt;sourcefile~time_loop.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M536.907,-54.4448C525.425,-56.5883 511.561,-59.1761 498.333,-61.6454"/>
+<polygon fill="#000000" stroke="#000000" points="497.579,-58.2255 488.391,-63.5012 498.864,-65.1067 497.579,-58.2255"/>
+</g>
+<!-- sourcefile~runge_kutta.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_node7" class="node"><title>sourcefile~runge_kutta.f08</title>
+<g id="a_sourcefile~~junction.f08~~AfferentGraph_node7"><a xlink:href=".././sourcefile/runge_kutta.f08.html" xlink:title="runge_kutta.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="354.5,-122.574 266.5,-122.574 266.5,-98.5742 354.5,-98.5742 354.5,-122.574"/>
+<text text-anchor="middle" x="310.5" y="-108.174" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">runge_kutta.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge8" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M267.806,-98.5387C251.52,-93.8376 232.678,-88.3987 215.553,-83.4554"/>
+<polygon fill="#000000" stroke="#000000" points="216.279,-80.0222 205.701,-80.6115 214.338,-86.7476 216.279,-80.0222"/>
+</g>
+<!-- sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge12" class="edge"><title>sourcefile~runge_kutta.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M266.239,-110.574C255.913,-110.574 244.634,-110.574 233.458,-110.574"/>
+<polygon fill="#000000" stroke="#000000" points="233.253,-107.074 223.253,-110.574 233.253,-114.074 233.253,-107.074"/>
+</g>
+<!-- sourcefile~explicit_euler.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_node8" class="node"><title>sourcefile~explicit_euler.f08</title>
+<g id="a_sourcefile~~junction.f08~~AfferentGraph_node8"><a xlink:href=".././sourcefile/explicit_euler.f08.html" xlink:title="explicit_euler.f08">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="357,-80.5742 264,-80.5742 264,-56.5742 357,-56.5742 357,-80.5742"/>
+<text text-anchor="middle" x="310.5" y="-66.1742" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">explicit_euler.f08</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_geometry.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge9" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_geometry.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M263.862,-68.5742C254.174,-68.5742 243.737,-68.5742 233.391,-68.5742"/>
+<polygon fill="#000000" stroke="#000000" points="233.106,-65.0743 223.106,-68.5742 233.106,-72.0743 233.106,-65.0743"/>
+</g>
+<!-- sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_dynamics.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge13" class="edge"><title>sourcefile~explicit_euler.f08&#45;&gt;sourcefile~element_dynamics.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M267.806,-80.6097C251.52,-85.3108 232.678,-90.7497 215.553,-95.693"/>
+<polygon fill="#000000" stroke="#000000" points="214.338,-92.4008 205.701,-98.5369 216.279,-99.1262 214.338,-92.4008"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~runge_kutta.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge14" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~runge_kutta.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M410.701,-81.6103C395.878,-85.9382 378.637,-90.9722 362.726,-95.6178"/>
+<polygon fill="#000000" stroke="#000000" points="361.643,-92.2878 353.024,-98.4503 363.604,-99.0073 361.643,-92.2878"/>
+</g>
+<!-- sourcefile~time_loop.f08&#45;&gt;sourcefile~explicit_euler.f08 -->
+<g id="sourcefile~~junction.f08~~AfferentGraph_edge15" class="edge"><title>sourcefile~time_loop.f08&#45;&gt;sourcefile~explicit_euler.f08</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M410.701,-70.0224C397.445,-69.8289 382.255,-69.6071 367.811,-69.3963"/>
+<polygon fill="#000000" stroke="#000000" points="367.514,-65.8917 357.464,-69.2452 367.412,-72.8909 367.514,-65.8917"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.38.0 (20140413.2041)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="190pt" height="32pt"
+ viewBox="0.00 0.00 190.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 186,-28 186,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node"><title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="67,-24 0,-24 0,-0 67,-0 67,-24"/>
+<text text-anchor="middle" x="33.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="182,-24 85,-24 85,-0 182,-0 182,-24"/>
+<text text-anchor="middle" x="133.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+      
+      <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-1">Modules</a></h3></div>
+  <div id="mods-1" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/junction.html">junction</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/junction.f08.html#src">junction.f08</a>
+  </div>
+</div>
+
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    <section>
+      <h2><span class="anchor" id="src"></span>Source Code</h2>
+    <div class="hl"><pre><span></span><a name="ln-1"></a><span class="c">! module junction</span>
+<a name="ln-2"></a><span class="c">!</span>
+<a name="ln-3"></a><span class="c">! Procedures associated with junctions that have more than 2 faces</span>
+<a name="ln-4"></a><span class="c">!</span>
+<a name="ln-5"></a><span class="c">!==========================================================================</span>
+<a name="ln-6"></a><span class="c">!</span>
+<a name="ln-7"></a> <span class="k">module </span><span class="n">junction</span>
+<a name="ln-8"></a><span class="c">! </span>
+<a name="ln-9"></a>    <span class="k">use </span><span class="n">array_index</span>
+<a name="ln-10"></a>    <span class="k">use </span><span class="n">data_keys</span>
+<a name="ln-11"></a>    <span class="k">use </span><span class="n">globals</span>
+<a name="ln-12"></a>    <span class="k">use </span><span class="n">setting_definition</span>
+<a name="ln-13"></a>    <span class="k">use </span><span class="n">utility</span>
+<a name="ln-14"></a>
+<a name="ln-15"></a>    
+<a name="ln-16"></a>    <span class="k">implicit none</span>
+<a name="ln-17"></a><span class="k">    </span>
+<a name="ln-18"></a><span class="k">    private</span>
+<a name="ln-19"></a>
+<a name="ln-20"></a><span class="k">    public</span>  <span class="kd">::</span> <span class="n">junction_adjacent_element_average</span>
+<a name="ln-21"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">junction_adjacent_element_values_to_branches</span>
+<a name="ln-22"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">junction_branch_assigned_to_faces</span>  
+<a name="ln-23"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">junction_branch_average_of_inflows_and_outflows</span>
+<a name="ln-24"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">junction_branch_velocity_and_flowrate_proportional_to_area</span>
+<a name="ln-25"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">junction_branch_sum_areas_by_direction</span>
+<a name="ln-26"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">junction_branch_velocities</span>
+<a name="ln-27"></a>    <span class="k">public</span>  <span class="kd">::</span> <span class="n">junction_geometry_setup</span>
+<a name="ln-28"></a><span class="c">!    </span>
+<a name="ln-29"></a>    <span class="kt">integer</span> <span class="kd">::</span> <span class="n">debuglevel</span> <span class="o">=</span> <span class="mi">0</span>
+<a name="ln-30"></a>    
+<a name="ln-31"></a> <span class="k">contains</span>
+<a name="ln-32"></a><span class="c">!</span>
+<a name="ln-33"></a><span class="c">!========================================================================== </span>
+<a name="ln-34"></a><span class="c">!==========================================================================</span>
+<a name="ln-35"></a><span class="c">!</span>
+<a name="ln-36"></a> <span class="k">subroutine </span><span class="n">junction_adjacent_element_average</span> <span class="p">&amp;</span>
+<a name="ln-37"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">e2r_data</span><span class="p">,</span> <span class="n">eMr_out</span><span class="p">)</span>
+<a name="ln-38"></a><span class="c">!</span>
+<a name="ln-39"></a><span class="c">! this computes the average of values for all the elements upstream and</span>
+<a name="ln-40"></a><span class="c">! downstream. Note that this should ONLY be use</span>
+<a name="ln-41"></a><span class="c">! in setup routines (i.e. when initializing junctions). This violates</span>
+<a name="ln-42"></a><span class="c">! the &quot;no-neighbor&quot; rule and is time-consuming because it requires double</span>
+<a name="ln-43"></a><span class="c">! mapping</span>
+<a name="ln-44"></a><span class="c">! </span>
+<a name="ln-45"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_adjacent_element_average&#39;</span>
+<a name="ln-46"></a>
+<a name="ln-47"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span>     <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-48"></a> <span class="kt">real</span><span class="p">,</span>                  <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:)</span>
+<a name="ln-49"></a> <span class="kt">integer</span><span class="p">,</span>               <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:),</span> <span class="n">faceI</span><span class="p">(:,:)</span>
+<a name="ln-50"></a> <span class="kt">integer</span><span class="p">,</span>               <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">e2r_data</span><span class="p">,</span> <span class="n">eMr_out</span>
+<a name="ln-51"></a> 
+<a name="ln-52"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span> <span class="kd">::</span> <span class="n">Uvalue</span><span class="p">(:),</span> <span class="n">Dvalue</span><span class="p">(:)</span>
+<a name="ln-53"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">eMr_tUp</span><span class="p">,</span> <span class="n">eMr_tDn</span>
+<a name="ln-54"></a>  
+<a name="ln-55"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-56"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-57"></a> 
+<a name="ln-58"></a> <span class="n">eMr_tUp</span> <span class="o">=</span> <span class="n">eMr_Temp</span><span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">)</span>
+<a name="ln-59"></a> <span class="n">Uvalue</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_tUp</span><span class="p">)</span>
+<a name="ln-60"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">utility_advance_temp_array</span> <span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">,</span><span class="n">eMr_n_temp</span><span class="p">)</span>
+<a name="ln-61"></a> 
+<a name="ln-62"></a> <span class="n">eMr_tDn</span> <span class="o">=</span> <span class="n">eMr_Temp</span><span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">)</span>
+<a name="ln-63"></a> <span class="n">Dvalue</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_tDn</span><span class="p">)</span>
+<a name="ln-64"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">utility_advance_temp_array</span> <span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">,</span><span class="n">eMr_n_temp</span><span class="p">)</span> 
+<a name="ln-65"></a> 
+<a name="ln-66"></a> <span class="n">Uvalue</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-67"></a> <span class="k">call </span><span class="n">junction_summation_from_adjacent_elements_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-68"></a>    <span class="p">(</span><span class="n">eMr_tUp</span><span class="p">,</span> <span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-69"></a>     <span class="n">upstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_u</span><span class="p">,</span> <span class="n">eMi_MfaceUp</span><span class="p">,</span> <span class="n">fi_Melem_u</span><span class="p">,</span> <span class="n">e2r_data</span><span class="p">)</span>
+<a name="ln-70"></a>
+<a name="ln-71"></a> <span class="n">Dvalue</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-72"></a> <span class="k">call </span><span class="n">junction_summation_from_adjacent_elements_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-73"></a>    <span class="p">(</span><span class="n">eMr_tDn</span><span class="p">,</span> <span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-74"></a>     <span class="n">dnstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_d</span><span class="p">,</span> <span class="n">eMi_MfaceDn</span><span class="p">,</span> <span class="n">fi_Melem_d</span><span class="p">,</span> <span class="n">e2r_data</span><span class="p">)</span>
+<a name="ln-75"></a> 
+<a name="ln-76"></a> <span class="k">where</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span>
+<a name="ln-77"></a>    <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_out</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">Uvalue</span> <span class="o">+</span> <span class="n">Dvalue</span><span class="p">)</span> <span class="o">/</span> <span class="kt">real</span><span class="p">(</span> <span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_u</span><span class="p">)</span> <span class="o">+</span> <span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_d</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-78"></a> <span class="n">endwhere</span>
+<a name="ln-79"></a> 
+<a name="ln-80"></a> <span class="n">Dvalue</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-81"></a> <span class="n">Uvalue</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-82"></a> <span class="k">nullify</span><span class="p">(</span><span class="n">Dvalue</span><span class="p">,</span><span class="n">Uvalue</span><span class="p">)</span>
+<a name="ln-83"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">next_eMr_temparray</span><span class="o">-</span><span class="mi">2</span>
+<a name="ln-84"></a> 
+<a name="ln-85"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-86"></a> <span class="k">end subroutine </span><span class="n">junction_adjacent_element_average</span>
+<a name="ln-87"></a><span class="c">!</span>
+<a name="ln-88"></a><span class="c">!========================================================================== </span>
+<a name="ln-89"></a><span class="c">!==========================================================================</span>
+<a name="ln-90"></a><span class="c">!</span>
+<a name="ln-91"></a> <span class="k">subroutine </span><span class="n">junction_adjacent_element_values_to_branches</span> <span class="p">&amp;</span>
+<a name="ln-92"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="n">e2r_data</span><span class="p">,</span> <span class="n">eMr_outUp</span><span class="p">,</span> <span class="n">eMr_outDn</span><span class="p">)</span>
+<a name="ln-93"></a><span class="c">!</span>
+<a name="ln-94"></a><span class="c">! gets the values from the adjacent elements and stores in the branches</span>
+<a name="ln-95"></a><span class="c">!</span>
+<a name="ln-96"></a><span class="c">! THIS SHOULD ONLY BE CALLED DURING INITIAL CONDITIONS OR SETUP ROUTINES</span>
+<a name="ln-97"></a><span class="c">! </span>
+<a name="ln-98"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_adjacent_element_values_to_branches&#39;</span>
+<a name="ln-99"></a> 
+<a name="ln-100"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-101"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:)</span>
+<a name="ln-102"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:),</span> <span class="n">faceI</span><span class="p">(:,:),</span> <span class="n">eMr_outUp</span><span class="p">(:),</span> <span class="n">eMr_outDn</span><span class="p">(:),</span> <span class="n">e2r_data</span>
+<a name="ln-103"></a>    
+<a name="ln-104"></a>  
+<a name="ln-105"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-106"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-107"></a> 
+<a name="ln-108"></a> <span class="k">call </span><span class="n">junction_adjacent_element_values_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-109"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-110"></a>     <span class="n">upstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_u</span><span class="p">,</span> <span class="n">eMi_MfaceUp</span><span class="p">,</span> <span class="n">fi_Melem_u</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-111"></a>     <span class="n">e2r_data</span><span class="p">,</span> <span class="n">eMr_outUp</span><span class="p">)</span>
+<a name="ln-112"></a>     
+<a name="ln-113"></a> <span class="k">call </span><span class="n">junction_adjacent_element_values_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-114"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-115"></a>     <span class="n">dnstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_d</span><span class="p">,</span> <span class="n">eMi_MfaceDn</span><span class="p">,</span> <span class="n">fi_Melem_d</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-116"></a>     <span class="n">e2r_data</span><span class="p">,</span> <span class="n">eMr_outDn</span><span class="p">)</span>     
+<a name="ln-117"></a>     
+<a name="ln-118"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-119"></a> <span class="k">end subroutine </span><span class="n">junction_adjacent_element_values_to_branches</span>
+<a name="ln-120"></a><span class="c">!</span>
+<a name="ln-121"></a><span class="c">!========================================================================== </span>
+<a name="ln-122"></a><span class="c">!==========================================================================</span>
+<a name="ln-123"></a><span class="c">!</span>
+<a name="ln-124"></a> <span class="k">subroutine </span><span class="n">junction_branch_assigned_to_faces</span> <span class="p">&amp;</span>
+<a name="ln-125"></a>    <span class="p">(</span><span class="n">faceI</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">)</span>
+<a name="ln-126"></a> 
+<a name="ln-127"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_assigned_to_faces&#39;</span>
+<a name="ln-128"></a> 
+<a name="ln-129"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">faceI</span><span class="p">(:,:)</span>
+<a name="ln-130"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-131"></a> 
+<a name="ln-132"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">mm</span>
+<a name="ln-133"></a>  
+<a name="ln-134"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-135"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-136"></a> 
+<a name="ln-137"></a> <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">upstream_face_per_elemM</span>
+<a name="ln-138"></a>    <span class="k">where</span> <span class="p">((</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_u</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-139"></a>           <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">))</span>
+<a name="ln-140"></a>        <span class="n">faceI</span><span class="p">(</span> <span class="n">elemMI</span><span class="p">(:</span> <span class="p">,</span> <span class="n">eMi_MfaceUp</span><span class="p">(</span><span class="n">mm</span><span class="p">)),</span><span class="n">fi_branch_d</span><span class="p">)</span> <span class="o">=</span> <span class="n">mm</span>
+<a name="ln-141"></a>    <span class="n">endwhere</span>
+<a name="ln-142"></a> <span class="k">end do</span>
+<a name="ln-143"></a><span class="k"> </span>
+<a name="ln-144"></a><span class="k"> do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">dnstream_face_per_elemM</span>
+<a name="ln-145"></a>    <span class="k">where</span> <span class="p">((</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_d</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-146"></a>           <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">))</span>
+<a name="ln-147"></a>        <span class="n">faceI</span><span class="p">(</span> <span class="n">elemMI</span><span class="p">(:</span> <span class="p">,</span> <span class="n">eMi_MfaceDn</span><span class="p">(</span><span class="n">mm</span><span class="p">)),</span><span class="n">fi_branch_u</span><span class="p">)</span> <span class="o">=</span> <span class="n">mm</span>
+<a name="ln-148"></a>    <span class="n">endwhere</span>
+<a name="ln-149"></a> <span class="k">end do</span>
+<a name="ln-150"></a><span class="k"> </span>
+<a name="ln-151"></a><span class="k"> if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-152"></a> <span class="k">end subroutine </span><span class="n">junction_branch_assigned_to_faces</span>
+<a name="ln-153"></a><span class="c">!</span>
+<a name="ln-154"></a><span class="c">!==========================================================================</span>
+<a name="ln-155"></a><span class="c">!==========================================================================</span>
+<a name="ln-156"></a><span class="c">!</span>
+<a name="ln-157"></a> <span class="k">subroutine </span><span class="n">junction_branch_average_of_inflows_and_outflows</span> <span class="p">&amp;</span>
+<a name="ln-158"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">)</span>
+<a name="ln-159"></a><span class="c">!</span>
+<a name="ln-160"></a><span class="c">! Computes an average flowrate based on the branch inflows and branch outflows</span>
+<a name="ln-161"></a><span class="c">! Includes effects of flow reverals</span>
+<a name="ln-162"></a><span class="c">!</span>
+<a name="ln-163"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_average_of_inflows_and_outflows&#39;</span>
+<a name="ln-164"></a> 
+<a name="ln-165"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-166"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>          <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-167"></a> 
+<a name="ln-168"></a> <span class="kt">integer</span>        <span class="kd">::</span> <span class="n">eMr_inflow</span><span class="p">,</span> <span class="n">eMr_outflow</span>
+<a name="ln-169"></a> <span class="kt">real</span><span class="p">,</span>  <span class="k">pointer</span> <span class="kd">::</span> <span class="n">inflow</span><span class="p">(:),</span> <span class="n">outflow</span><span class="p">(:)</span>
+<a name="ln-170"></a> 
+<a name="ln-171"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-172"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-173"></a> 
+<a name="ln-174"></a> <span class="n">eMr_inflow</span> <span class="o">=</span> <span class="n">eMr_Temp</span><span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">)</span>
+<a name="ln-175"></a> <span class="n">inflow</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_inflow</span><span class="p">)</span>
+<a name="ln-176"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">utility_advance_temp_array</span> <span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">,</span><span class="n">eMr_n_temp</span><span class="p">)</span> 
+<a name="ln-177"></a> 
+<a name="ln-178"></a> <span class="n">eMr_outflow</span> <span class="o">=</span> <span class="n">eMr_Temp</span><span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">)</span>
+<a name="ln-179"></a> <span class="n">outflow</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_outflow</span><span class="p">)</span> 
+<a name="ln-180"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">utility_advance_temp_array</span> <span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">,</span><span class="n">eMr_n_temp</span><span class="p">)</span>  
+<a name="ln-181"></a> 
+<a name="ln-182"></a> <span class="k">call </span><span class="n">junction_net_inflow_and_outflow</span> <span class="p">&amp;</span>
+<a name="ln-183"></a>    <span class="p">(</span><span class="n">eMr_inflow</span><span class="p">,</span> <span class="n">eMr_outflow</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">)</span>
+<a name="ln-184"></a>
+<a name="ln-185"></a><span class="c">!% simple average of inflow and outflow </span>
+<a name="ln-186"></a> <span class="k">where</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span>
+<a name="ln-187"></a>    <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_Flowrate</span><span class="p">)</span> <span class="o">=</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="p">(</span><span class="n">inflow</span> <span class="o">+</span> <span class="n">outflow</span><span class="p">)</span>
+<a name="ln-188"></a> <span class="n">endwhere</span>
+<a name="ln-189"></a> 
+<a name="ln-190"></a> <span class="n">inflow</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-191"></a> <span class="n">outflow</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-192"></a> <span class="k">nullify</span><span class="p">(</span><span class="n">inflow</span><span class="p">,</span><span class="n">outflow</span><span class="p">)</span>
+<a name="ln-193"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">next_eMr_temparray</span><span class="o">-</span><span class="mi">2</span> 
+<a name="ln-194"></a> 
+<a name="ln-195"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-196"></a> <span class="k">end subroutine </span><span class="n">junction_branch_average_of_inflows_and_outflows</span>
+<a name="ln-197"></a><span class="c">!</span>
+<a name="ln-198"></a><span class="c">!========================================================================== </span>
+<a name="ln-199"></a><span class="c">!==========================================================================</span>
+<a name="ln-200"></a><span class="c">!</span>
+<a name="ln-201"></a> <span class="k">subroutine </span><span class="n">junction_branch_velocity_and_flowrate_proportional_to_area</span> <span class="p">&amp;</span>
+<a name="ln-202"></a>    <span class="p">(</span><span class="n">eMR_totalarea</span><span class="p">,</span> <span class="n">eMR_totalflowrate</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-203"></a>     <span class="n">this_face_per_elem</span><span class="p">,</span> <span class="n">eMr_AreaThis</span><span class="p">,</span> <span class="n">eMi_MfaceThis</span><span class="p">,</span> <span class="n">eMi_nfaces_This</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-204"></a>     <span class="n">eMr_FlowrateThis</span><span class="p">,</span> <span class="n">eMr_VelocityThis</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-205"></a>     <span class="n">rdir_face_per_elem</span><span class="p">,</span> <span class="n">eMr_AreaRdir</span><span class="p">,</span> <span class="n">eMi_MfaceRdir</span><span class="p">,</span> <span class="n">eMi_nfaces_Rdir</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-206"></a>     <span class="n">eMr_FlowrateRdir</span><span class="p">,</span> <span class="n">eMr_VelocityRdir</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-207"></a>     <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceR</span><span class="p">)</span>
+<a name="ln-208"></a><span class="c">!</span>
+<a name="ln-209"></a><span class="c">! Flowrates in each branch of a junction</span>
+<a name="ln-210"></a><span class="c">! Total flowrate is distributed proportionally over the areas</span>
+<a name="ln-211"></a><span class="c">!</span>
+<a name="ln-212"></a><span class="c">! HACK - this can be cleaned up with 2 calls to a function, but we have to be</span>
+<a name="ln-213"></a><span class="c">! careful that we don&#39;t introduce pass-by-value in the call</span>
+<a name="ln-214"></a><span class="c">! </span>
+<a name="ln-215"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_velocity_and_flowrate_proportional_to_area&#39;</span>
+<a name="ln-216"></a> 
+<a name="ln-217"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMi_nfaces_This</span><span class="p">,</span>     <span class="n">eMi_nfaces_Rdir</span> 
+<a name="ln-218"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMR_totalarea</span><span class="p">,</span>       <span class="n">eMR_totalflowrate</span>
+<a name="ln-219"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">this_face_per_elem</span><span class="p">,</span>  <span class="n">rdir_face_per_elem</span>
+<a name="ln-220"></a>
+<a name="ln-221"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMr_AreaThis</span><span class="p">(:),</span>     <span class="n">eMi_MfaceThis</span><span class="p">(:)</span>
+<a name="ln-222"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMr_AreaRdir</span><span class="p">(:),</span>     <span class="n">eMi_MfaceRdir</span><span class="p">(:)</span>  
+<a name="ln-223"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMr_FlowrateThis</span><span class="p">(:),</span> <span class="n">eMr_FlowrateRdir</span><span class="p">(:)</span>
+<a name="ln-224"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMr_VelocityThis</span><span class="p">(:),</span> <span class="n">eMr_VelocityRdir</span><span class="p">(:)</span>
+<a name="ln-225"></a> 
+<a name="ln-226"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-227"></a> <span class="kt">real</span><span class="p">,</span>              <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">faceR</span><span class="p">(:,:)</span>
+<a name="ln-228"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-229"></a> 
+<a name="ln-230"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span> <span class="kd">::</span> <span class="n">area</span><span class="p">(:),</span> <span class="n">totalarea</span><span class="p">(:),</span> <span class="n">totalflowrate</span><span class="p">(:)</span>
+<a name="ln-231"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span> <span class="kd">::</span> <span class="n">flowrate</span><span class="p">(:),</span> <span class="n">velocity</span><span class="p">(:)</span>
+<a name="ln-232"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">pointer</span> <span class="kd">::</span> <span class="n">fThis</span><span class="p">(:),</span> <span class="n">fRdir</span><span class="p">(:)</span>
+<a name="ln-233"></a> 
+<a name="ln-234"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">mm</span>
+<a name="ln-235"></a>   
+<a name="ln-236"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-237"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-238"></a> 
+<a name="ln-239"></a> <span class="n">totalarea</span>     <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMR_totalarea</span><span class="p">)</span> 
+<a name="ln-240"></a> <span class="n">totalflowrate</span> <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMR_totalflowrate</span><span class="p">)</span>
+<a name="ln-241"></a> 
+<a name="ln-242"></a><span class="c">!%  distribute flow proportionally over the downstream outflow branches</span>
+<a name="ln-243"></a><span class="c">!%  or opposite call for the upstream inflow branches</span>
+<a name="ln-244"></a> <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">this_face_per_elem</span>
+<a name="ln-245"></a>    <span class="n">area</span>     <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span> <span class="n">eMr_AreaThis</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-246"></a>    <span class="n">flowrate</span> <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span> <span class="n">eMr_FlowrateThis</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-247"></a>    <span class="n">velocity</span> <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span> <span class="n">eMr_VelocityThis</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>        
+<a name="ln-248"></a>    <span class="n">fThis</span>    <span class="o">=&gt;</span> <span class="n">elemMI</span><span class="p">(:,</span> <span class="n">eMi_MfaceThis</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-249"></a>    <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-250"></a>            <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_This</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-251"></a>            <span class="p">(</span><span class="n">faceR</span><span class="p">(</span><span class="n">fThis</span><span class="p">,</span><span class="n">fr_Flowrate</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-252"></a>        <span class="n">flowrate</span> <span class="o">=</span> <span class="n">totalflowrate</span> <span class="o">*</span> <span class="n">area</span> <span class="o">/</span> <span class="n">totalarea</span>     
+<a name="ln-253"></a>        <span class="n">velocity</span> <span class="o">=</span> <span class="n">flowrate</span> <span class="o">/</span> <span class="n">area</span>
+<a name="ln-254"></a>    <span class="n">endwhere</span>
+<a name="ln-255"></a>
+<a name="ln-256"></a> <span class="n">enddo</span>
+<a name="ln-257"></a> 
+<a name="ln-258"></a><span class="c">!%  distribute flow proportionally over the upstream outflow branches</span>
+<a name="ln-259"></a><span class="c">!%  or opposite call for downstream inflow branches</span>
+<a name="ln-260"></a> <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">rdir_face_per_elem</span>
+<a name="ln-261"></a>    <span class="n">area</span>     <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span> <span class="n">eMr_AreaRdir</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-262"></a>    <span class="n">flowrate</span> <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span> <span class="n">eMr_FlowrateRdir</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-263"></a>    <span class="n">velocity</span> <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span> <span class="n">eMr_VelocityRdir</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>        
+<a name="ln-264"></a>    <span class="n">fRdir</span>    <span class="o">=&gt;</span> <span class="n">elemMI</span><span class="p">(:,</span> <span class="n">eMi_MfaceRdir</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-265"></a>    <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-266"></a>            <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_Rdir</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-267"></a>            <span class="p">(</span><span class="n">faceR</span><span class="p">(</span><span class="n">fRdir</span><span class="p">,</span><span class="n">fr_Flowrate</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-268"></a>        <span class="n">flowrate</span> <span class="o">=</span> <span class="o">-</span><span class="n">totalflowrate</span> <span class="o">*</span> <span class="n">area</span> <span class="o">/</span> <span class="n">totalarea</span>     
+<a name="ln-269"></a>        <span class="n">velocity</span> <span class="o">=</span>  <span class="n">flowrate</span> <span class="o">/</span> <span class="n">area</span>
+<a name="ln-270"></a>    <span class="n">endwhere</span>    
+<a name="ln-271"></a> <span class="n">enddo</span>
+<a name="ln-272"></a> 
+<a name="ln-273"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-274"></a> <span class="k">end subroutine </span><span class="n">junction_branch_velocity_and_flowrate_proportional_to_area</span>
+<a name="ln-275"></a><span class="c">!</span>
+<a name="ln-276"></a><span class="c">!========================================================================== </span>
+<a name="ln-277"></a><span class="c">!==========================================================================</span>
+<a name="ln-278"></a><span class="c">!</span>
+<a name="ln-279"></a> <span class="k">subroutine </span><span class="n">junction_branch_sum_areas_by_direction</span> <span class="p">&amp;</span>
+<a name="ln-280"></a>    <span class="p">(</span><span class="n">eMR_totalarea</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-281"></a>     <span class="n">this_face_per_element</span><span class="p">,</span> <span class="n">eMr_AreaThis</span><span class="p">,</span> <span class="n">eMi_MfaceThis</span><span class="p">,</span> <span class="n">eMi_nfaces_This</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-282"></a>     <span class="n">rdir_face_per_element</span><span class="p">,</span> <span class="n">eMr_AreaRdir</span><span class="p">,</span> <span class="n">eMi_MfaceRdir</span><span class="p">,</span> <span class="n">eMi_nfaces_Rdir</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-283"></a>     <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceR</span><span class="p">)</span>
+<a name="ln-284"></a><span class="c">!</span>
+<a name="ln-285"></a><span class="c">! Sum of the areas in each branch of a junction for outflows or inflows</span>
+<a name="ln-286"></a><span class="c">! Called for outflow areas with this = downstream, and rdir = upstream</span>
+<a name="ln-287"></a><span class="c">! Called for inflow  areas with this = upstream    and rdir = downstream</span>
+<a name="ln-288"></a><span class="c">!</span>
+<a name="ln-289"></a><span class="c">! HACK- This could be cleaned up with two calls to a separate function, </span>
+<a name="ln-290"></a><span class="c">! but we have to be careful that we don&#39;tend up introducing a pass-by-value</span>
+<a name="ln-291"></a><span class="c">! into the function.</span>
+<a name="ln-292"></a><span class="c">! </span>
+<a name="ln-293"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_sum_areas_by_direction&#39;</span>
+<a name="ln-294"></a> 
+<a name="ln-295"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMR_totalarea</span>
+<a name="ln-296"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">this_face_per_element</span><span class="p">,</span> <span class="n">rdir_face_per_element</span>
+<a name="ln-297"></a> 
+<a name="ln-298"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMr_AreaThis</span><span class="p">(:),</span> <span class="n">eMi_MfaceThis</span><span class="p">(:)</span>
+<a name="ln-299"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMr_AreaRdir</span><span class="p">(:),</span> <span class="n">eMi_MfaceRdir</span><span class="p">(:)</span>  
+<a name="ln-300"></a> <span class="kt">integer</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span> <span class="kd">::</span> <span class="n">eMi_nfaces_This</span><span class="p">,</span> <span class="n">eMi_nfaces_Rdir</span>
+<a name="ln-301"></a> 
+<a name="ln-302"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-303"></a> <span class="kt">real</span><span class="p">,</span>              <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">faceR</span><span class="p">(:,:)</span>
+<a name="ln-304"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-305"></a> 
+<a name="ln-306"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span> <span class="kd">::</span> <span class="n">area</span><span class="p">(:),</span> <span class="n">totalarea</span><span class="p">(:)</span>
+<a name="ln-307"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">pointer</span> <span class="kd">::</span> <span class="n">fThis</span><span class="p">(:),</span> <span class="n">fRdir</span><span class="p">(:)</span>
+<a name="ln-308"></a> 
+<a name="ln-309"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">mm</span>
+<a name="ln-310"></a> 
+<a name="ln-311"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-312"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-313"></a>
+<a name="ln-314"></a> 
+<a name="ln-315"></a> <span class="n">totalarea</span> <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMR_totalarea</span><span class="p">)</span>
+<a name="ln-316"></a> 
+<a name="ln-317"></a> <span class="c">!print *, trim(subroutine_name)</span>
+<a name="ln-318"></a> <span class="c">!print *, this_face_per_element</span>
+<a name="ln-319"></a> <span class="c">!stop</span>
+<a name="ln-320"></a>
+<a name="ln-321"></a><span class="c">!%  get the outflow area for downstream branches (or inflow area for upstream)</span>
+<a name="ln-322"></a> <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">this_face_per_element</span>
+<a name="ln-323"></a>    <span class="n">area</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_AreaThis</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-324"></a>    <span class="n">fThis</span> <span class="o">=&gt;</span> <span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_MfaceThis</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-325"></a>    
+<a name="ln-326"></a>    <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-327"></a>            <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_This</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">mm</span><span class="p">))</span>
+<a name="ln-328"></a>        <span class="k">where</span> <span class="p">(</span><span class="n">faceR</span><span class="p">(</span><span class="n">fThis</span><span class="p">,</span><span class="n">fr_Flowrate</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span>
+<a name="ln-329"></a>            <span class="n">totalarea</span><span class="o">=</span> <span class="n">totalarea</span> <span class="o">+</span> <span class="n">area</span>
+<a name="ln-330"></a>        <span class="n">endwhere</span>
+<a name="ln-331"></a>    <span class="n">endwhere</span>
+<a name="ln-332"></a> <span class="n">enddo</span> 
+<a name="ln-333"></a>
+<a name="ln-334"></a> 
+<a name="ln-335"></a><span class="c">!%  add the area for any reversing upstream branches (or reversing downstream)</span>
+<a name="ln-336"></a> <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">rdir_face_per_element</span>
+<a name="ln-337"></a>    <span class="n">area</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_AreaRdir</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-338"></a>    <span class="n">fRdir</span> <span class="o">=&gt;</span> <span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_MfaceRdir</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-339"></a>    <span class="k">where</span> <span class="p">(</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-340"></a>            <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_Rdir</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-341"></a>            <span class="p">(</span><span class="n">faceR</span><span class="p">(</span><span class="n">fRdir</span><span class="p">,</span><span class="n">fr_Flowrate</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">)</span> <span class="p">)</span>
+<a name="ln-342"></a>        <span class="n">totalarea</span> <span class="o">=</span> <span class="n">totalarea</span> <span class="o">+</span> <span class="n">area</span>
+<a name="ln-343"></a>    <span class="n">endwhere</span>
+<a name="ln-344"></a> <span class="n">enddo</span> 
+<a name="ln-345"></a>
+<a name="ln-346"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-347"></a> <span class="k">end subroutine </span><span class="n">junction_branch_sum_areas_by_direction</span>
+<a name="ln-348"></a><span class="c">!</span>
+<a name="ln-349"></a><span class="c">!========================================================================== !==========================================================================</span>
+<a name="ln-350"></a><span class="c">!</span>
+<a name="ln-351"></a> <span class="k">subroutine </span><span class="n">junction_branch_velocities</span> <span class="p">&amp;</span>
+<a name="ln-352"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">)</span>
+<a name="ln-353"></a><span class="c">!</span>
+<a name="ln-354"></a><span class="c">! computes velocities from flowrates and areas in both upstream and downstream</span>
+<a name="ln-355"></a><span class="c">! branches</span>
+<a name="ln-356"></a><span class="c">! </span>
+<a name="ln-357"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_velocities&#39;</span>
+<a name="ln-358"></a> 
+<a name="ln-359"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-360"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span> 
+<a name="ln-361"></a>  
+<a name="ln-362"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-363"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-364"></a>
+<a name="ln-365"></a> <span class="k">call </span><span class="n">junction_branch_velocities_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-366"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">upstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_u</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-367"></a>     <span class="n">eMr_FlowrateUp</span><span class="p">,</span> <span class="n">eMr_AreaUp</span><span class="p">,</span> <span class="n">eMr_VelocityUp</span><span class="p">)</span>
+<a name="ln-368"></a>
+<a name="ln-369"></a> <span class="k">call </span><span class="n">junction_branch_velocities_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-370"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">dnstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_d</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-371"></a>     <span class="n">eMr_FlowrateDn</span><span class="p">,</span> <span class="n">eMr_AreaDn</span><span class="p">,</span> <span class="n">eMr_VelocityDn</span><span class="p">)</span>
+<a name="ln-372"></a> 
+<a name="ln-373"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-374"></a> <span class="k">end subroutine </span><span class="n">junction_branch_velocities</span>
+<a name="ln-375"></a><span class="c">!</span>
+<a name="ln-376"></a><span class="c">!========================================================================== </span>
+<a name="ln-377"></a><span class="c">!==========================================================================</span>
+<a name="ln-378"></a><span class="c">!</span>
+<a name="ln-379"></a> <span class="k">subroutine </span><span class="n">junction_geometry_setup</span>  <span class="p">&amp;</span>
+<a name="ln-380"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">)</span>
+<a name="ln-381"></a><span class="c">!</span>
+<a name="ln-382"></a><span class="c">! Get the setup for junction geometry </span>
+<a name="ln-383"></a><span class="c">! This gets the breadthscale, topwidth, and length of the junction</span>
+<a name="ln-384"></a><span class="c">! based on the branch values.</span>
+<a name="ln-385"></a><span class="c">!</span>
+<a name="ln-386"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_geometry_setup&#39;</span>
+<a name="ln-387"></a> 
+<a name="ln-388"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-389"></a> <span class="kt">integer</span><span class="p">,</span>                <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>  
+<a name="ln-390"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span>                      <span class="kd">::</span> <span class="n">Uvalue</span><span class="p">(:),</span> <span class="n">Dvalue</span><span class="p">(:)</span>
+<a name="ln-391"></a>
+<a name="ln-392"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">ii</span><span class="p">,</span> <span class="n">eMr_tUp</span><span class="p">,</span> <span class="n">eMr_tDn</span>
+<a name="ln-393"></a>  
+<a name="ln-394"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-395"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-396"></a>
+<a name="ln-397"></a> 
+<a name="ln-398"></a><span class="c">!% For the breadthscale and topwidth</span>
+<a name="ln-399"></a><span class="c">!% take the sum of the upstream breadths and the sum of the downstream breadths</span>
+<a name="ln-400"></a><span class="c">!% then compute their average</span>
+<a name="ln-401"></a>
+<a name="ln-402"></a> <span class="k">call </span><span class="n">junction_branch_summation_and_updown_average</span> <span class="p">&amp;</span>
+<a name="ln-403"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">eMr_BreadthScaleUp</span><span class="p">,</span> <span class="n">eMr_BreadthScaleDn</span><span class="p">,</span> <span class="n">eMr_BreadthScale</span><span class="p">)</span>
+<a name="ln-404"></a>
+<a name="ln-405"></a> <span class="k">call </span><span class="n">junction_branch_summation_and_updown_average</span> <span class="p">&amp;</span>
+<a name="ln-406"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">eMr_TopwidthUp</span><span class="p">,</span> <span class="n">eMr_TopwidthDn</span><span class="p">,</span> <span class="n">eMr_Topwidth</span><span class="p">)</span>
+<a name="ln-407"></a>    
+<a name="ln-408"></a><span class="c">!% For length</span>
+<a name="ln-409"></a><span class="c">!% take the average lengths of the upstream and of the downstream branches</span>
+<a name="ln-410"></a><span class="c">!% and then sum these.</span>
+<a name="ln-411"></a>
+<a name="ln-412"></a> <span class="k">call </span><span class="n">junction_branch_average_for_directions_then_sum</span> <span class="p">&amp;</span>
+<a name="ln-413"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">eMr_LengthUp</span><span class="p">,</span> <span class="n">eMr_LengthDn</span><span class="p">,</span> <span class="n">eMr_Length</span><span class="p">)</span>
+<a name="ln-414"></a>
+<a name="ln-415"></a> 
+<a name="ln-416"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-417"></a> <span class="k">end subroutine </span><span class="n">junction_geometry_setup</span>
+<a name="ln-418"></a><span class="c">!</span>
+<a name="ln-419"></a><span class="c">!========================================================================== </span>
+<a name="ln-420"></a><span class="c">!</span>
+<a name="ln-421"></a><span class="c">! PRIVATE BELOW HERE</span>
+<a name="ln-422"></a><span class="c">!</span>
+<a name="ln-423"></a><span class="c">!==========================================================================</span>
+<a name="ln-424"></a><span class="c">!</span>
+<a name="ln-425"></a> <span class="k">subroutine </span><span class="n">junction_adjacent_element_values_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-426"></a>    <span class="p">(</span><span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-427"></a>     <span class="n">dir_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span><span class="p">,</span> <span class="n">eMi_MfaceDir</span><span class="p">,</span> <span class="n">fi_Melem_dir</span><span class="p">,</span> <span class="n">e2r_data</span><span class="p">,</span> <span class="n">eMr_outDir</span><span class="p">)</span>
+<a name="ln-428"></a> 
+<a name="ln-429"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_adjacent_element_values_one_direction&#39;</span>
+<a name="ln-430"></a> 
+<a name="ln-431"></a> <span class="kt">real</span><span class="p">,</span>              <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-432"></a> <span class="kt">real</span><span class="p">,</span>              <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:)</span>
+<a name="ln-433"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:),</span> <span class="n">faceI</span><span class="p">(:,:)</span>
+<a name="ln-434"></a> 
+<a name="ln-435"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">dir_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span> 
+<a name="ln-436"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">eMi_MfaceDir</span><span class="p">(:),</span> <span class="n">eMr_outDir</span><span class="p">(:)</span>
+<a name="ln-437"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">fi_Melem_dir</span><span class="p">,</span> <span class="n">e2r_data</span>
+<a name="ln-438"></a> 
+<a name="ln-439"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">pointer</span> <span class="kd">::</span> <span class="n">tface</span><span class="p">,</span> <span class="n">telem</span>
+<a name="ln-440"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">mm</span><span class="p">,</span> <span class="n">ii</span>
+<a name="ln-441"></a>  
+<a name="ln-442"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-443"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-444"></a>    
+<a name="ln-445"></a> <span class="k">do </span><span class="n">ii</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">N_elemM</span>  
+<a name="ln-446"></a>    <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">dir_face_per_elemM</span>
+<a name="ln-447"></a>        <span class="k">if</span> <span class="p">((</span><span class="n">elemMI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">eMi_nfaces_dir</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-448"></a>            <span class="p">(</span><span class="n">elemMI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">))</span> <span class="k">then</span>
+<a name="ln-449"></a>            <span class="c">!% the face on a branch in the direction specified by dir</span>
+<a name="ln-450"></a>            <span class="n">tface</span> <span class="o">=&gt;</span> <span class="n">elemMI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">eMi_MfaceDir</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-451"></a>            <span class="c">!% the element upstream of the face</span>
+<a name="ln-452"></a>            <span class="n">telem</span> <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">tface</span><span class="p">,</span><span class="n">fi_Melem_dir</span><span class="p">)</span>
+<a name="ln-453"></a>            <span class="c">!% the value at the element</span>
+<a name="ln-454"></a>            <span class="c">!print *, ii, mm</span>
+<a name="ln-455"></a>            <span class="c">!print *, tface</span>
+<a name="ln-456"></a>            <span class="c">!print *, telem</span>
+<a name="ln-457"></a>            <span class="c">!print *, elem2R(telem,e2r_data)</span>
+<a name="ln-458"></a>            <span class="n">elemMR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">eMr_outDir</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span> <span class="o">=</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">telem</span><span class="p">,</span><span class="n">e2r_data</span><span class="p">)</span>
+<a name="ln-459"></a>        <span class="n">endif</span>
+<a name="ln-460"></a>    <span class="n">enddo</span>
+<a name="ln-461"></a> <span class="n">enddo</span>
+<a name="ln-462"></a>
+<a name="ln-463"></a><span class="c">! print *, eMr_outDir(1), eMr_Area_u1</span>
+<a name="ln-464"></a><span class="c">! print *, elemMR(:,eMr_outDir(1)), elemMR(:,eMr_outDir(2))</span>
+<a name="ln-465"></a><span class="c">! print *, trim(subroutine_name)</span>
+<a name="ln-466"></a><span class="c">! stop</span>
+<a name="ln-467"></a><span class="c">! </span>
+<a name="ln-468"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-469"></a> <span class="k">end subroutine </span><span class="n">junction_adjacent_element_values_one_direction</span>
+<a name="ln-470"></a><span class="c">!</span>
+<a name="ln-471"></a><span class="c">!========================================================================== </span>
+<a name="ln-472"></a><span class="c">!==========================================================================</span>
+<a name="ln-473"></a><span class="c">!</span>
+<a name="ln-474"></a> <span class="k">subroutine </span><span class="n">junction_branch_average</span> <span class="p">&amp;</span>
+<a name="ln-475"></a>    <span class="p">(</span><span class="n">eMr_avgvalue</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">eMr_column_up</span><span class="p">,</span> <span class="n">eMr_column_dn</span><span class="p">)</span>
+<a name="ln-476"></a><span class="c">!</span>
+<a name="ln-477"></a><span class="c">! compute the average of data type in column_up and column_dn over</span>
+<a name="ln-478"></a><span class="c">! all the branches of the junciton</span>
+<a name="ln-479"></a><span class="c">! </span>
+<a name="ln-480"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_average&#39;</span>
+<a name="ln-481"></a> 
+<a name="ln-482"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_avgvalue</span>
+<a name="ln-483"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-484"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-485"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_column_up</span><span class="p">(:),</span> <span class="n">eMr_column_dn</span><span class="p">(:)</span>   
+<a name="ln-486"></a> <span class="kt">real</span><span class="p">,</span>              <span class="k">pointer</span>         <span class="kd">::</span> <span class="n">avgvalue</span><span class="p">(:)</span>
+<a name="ln-487"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-488"></a>
+<a name="ln-489"></a> <span class="n">avgvalue</span> <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_avgvalue</span><span class="p">)</span>
+<a name="ln-490"></a> <span class="n">avgvalue</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-491"></a> 
+<a name="ln-492"></a> <span class="k">call </span><span class="n">junction_branch_summation</span> <span class="p">&amp;</span>
+<a name="ln-493"></a>    <span class="p">(</span><span class="n">eMr_avgvalue</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">eMr_column_up</span><span class="p">,</span> <span class="n">eMr_column_dn</span><span class="p">)</span>
+<a name="ln-494"></a>    
+<a name="ln-495"></a> <span class="k">where</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span>
+<a name="ln-496"></a>    <span class="n">avgvalue</span> <span class="o">=</span> <span class="n">avgvalue</span> <span class="o">/</span> <span class="kt">real</span><span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces</span><span class="p">))</span>  
+<a name="ln-497"></a> <span class="n">endwhere</span>   
+<a name="ln-498"></a> 
+<a name="ln-499"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-500"></a> <span class="k">end subroutine </span><span class="n">junction_branch_average</span>
+<a name="ln-501"></a><span class="c">!</span>
+<a name="ln-502"></a><span class="c">!========================================================================== </span>
+<a name="ln-503"></a><span class="c">!==========================================================================</span>
+<a name="ln-504"></a><span class="c">!</span>
+<a name="ln-505"></a> <span class="k">subroutine </span><span class="n">junction_branch_average_for_directions_then_sum</span> <span class="p">&amp;</span>
+<a name="ln-506"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">eMr_columnUp</span><span class="p">,</span> <span class="n">eMr_columnDn</span><span class="p">,</span> <span class="n">eMr_out</span><span class="p">)</span>
+<a name="ln-507"></a><span class="c">! </span>
+<a name="ln-508"></a><span class="c">! separately compute the average of the branches in up and down directions</span>
+<a name="ln-509"></a><span class="c">! and then sum the result. Applies to data in eMr_columnUp and eMr_columnDn</span>
+<a name="ln-510"></a><span class="c">! with result in eMr_out. e.g. eMr_LengthUp, eMr_LengthDn -&gt; eMr_Length</span>
+<a name="ln-511"></a><span class="c">! to get a length scale for a junction.</span>
+<a name="ln-512"></a><span class="c">!</span>
+<a name="ln-513"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_average_for_directions_then_sum&#39;</span>
+<a name="ln-514"></a>
+<a name="ln-515"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-516"></a> <span class="kt">integer</span><span class="p">,</span>                <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span> 
+<a name="ln-517"></a> <span class="kt">integer</span><span class="p">,</span>                <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_columnUp</span><span class="p">(:),</span> <span class="n">eMr_columnDn</span><span class="p">(:)</span>
+<a name="ln-518"></a> <span class="kt">integer</span><span class="p">,</span>                <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_out</span>
+<a name="ln-519"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span>                      <span class="kd">::</span> <span class="n">Uvalue</span><span class="p">(:),</span> <span class="n">Dvalue</span><span class="p">(:)</span>
+<a name="ln-520"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">ii</span><span class="p">,</span> <span class="n">eMr_tUp</span><span class="p">,</span> <span class="n">eMr_tDn</span>  
+<a name="ln-521"></a> 
+<a name="ln-522"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-523"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-524"></a> 
+<a name="ln-525"></a> <span class="n">eMr_tUp</span> <span class="o">=</span> <span class="n">eMr_Temp</span><span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">)</span>
+<a name="ln-526"></a> <span class="n">Uvalue</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_tUp</span><span class="p">)</span>
+<a name="ln-527"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">utility_advance_temp_array</span> <span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">,</span><span class="n">eMr_n_temp</span><span class="p">)</span>
+<a name="ln-528"></a>   
+<a name="ln-529"></a> <span class="n">eMr_tDn</span> <span class="o">=</span> <span class="n">eMr_Temp</span><span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">)</span>
+<a name="ln-530"></a> <span class="n">Dvalue</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_tDn</span><span class="p">)</span>
+<a name="ln-531"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">utility_advance_temp_array</span> <span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">,</span><span class="n">eMr_n_temp</span><span class="p">)</span>
+<a name="ln-532"></a> 
+<a name="ln-533"></a> <span class="n">Uvalue</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-534"></a> <span class="k">call </span><span class="n">junction_branch_summation_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-535"></a>    <span class="p">(</span><span class="n">eMr_tUp</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">upstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_u</span><span class="p">,</span> <span class="n">eMr_columnUp</span><span class="p">)</span>
+<a name="ln-536"></a>
+<a name="ln-537"></a> <span class="n">Dvalue</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-538"></a> <span class="k">call </span><span class="n">junction_branch_summation_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-539"></a>    <span class="p">(</span><span class="n">eMr_tDn</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">dnstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_d</span><span class="p">,</span> <span class="n">eMr_columnDn</span><span class="p">)</span>    
+<a name="ln-540"></a>    
+<a name="ln-541"></a> <span class="k">where</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span>
+<a name="ln-542"></a>    <span class="n">Uvalue</span> <span class="o">=</span> <span class="n">Uvalue</span> <span class="o">/</span> <span class="kt">real</span><span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_u</span><span class="p">))</span>
+<a name="ln-543"></a>    <span class="n">Dvalue</span> <span class="o">=</span> <span class="n">Dvalue</span> <span class="o">/</span> <span class="kt">real</span><span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_D</span><span class="p">))</span>
+<a name="ln-544"></a>    <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_out</span><span class="p">)</span> <span class="o">=</span> <span class="n">Uvalue</span> <span class="o">+</span> <span class="n">Dvalue</span>
+<a name="ln-545"></a> <span class="n">endwhere</span>
+<a name="ln-546"></a> 
+<a name="ln-547"></a> <span class="n">Dvalue</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-548"></a> <span class="n">Uvalue</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-549"></a> <span class="k">nullify</span><span class="p">(</span><span class="n">Dvalue</span><span class="p">,</span><span class="n">Uvalue</span><span class="p">)</span>
+<a name="ln-550"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">next_eMr_temparray</span><span class="o">-</span><span class="mi">2</span>
+<a name="ln-551"></a> 
+<a name="ln-552"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-553"></a> <span class="k">end subroutine </span><span class="n">junction_branch_average_for_directions_then_sum</span>
+<a name="ln-554"></a><span class="c">!</span>
+<a name="ln-555"></a><span class="c">!========================================================================== </span>
+<a name="ln-556"></a><span class="c">!==========================================================================</span>
+<a name="ln-557"></a><span class="c">!</span>
+<a name="ln-558"></a> <span class="k">subroutine </span><span class="n">junction_branch_summation</span> <span class="p">&amp;</span>
+<a name="ln-559"></a>    <span class="p">(</span><span class="n">eMr_sumvalue</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">eMr_column_up</span><span class="p">,</span> <span class="n">eMr_column_dn</span><span class="p">)</span>
+<a name="ln-560"></a><span class="c">!</span>
+<a name="ln-561"></a><span class="c">! sum all the values in all the branches - both up and down</span>
+<a name="ln-562"></a><span class="c">! </span>
+<a name="ln-563"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_summation&#39;</span>
+<a name="ln-564"></a> 
+<a name="ln-565"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_sumvalue</span>
+<a name="ln-566"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-567"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-568"></a> 
+<a name="ln-569"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">eMr_column_up</span><span class="p">(:),</span> <span class="n">eMr_column_dn</span><span class="p">(:)</span> 
+<a name="ln-570"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span>     <span class="kd">::</span> <span class="n">sumvalue</span><span class="p">(:)</span>
+<a name="ln-571"></a>  
+<a name="ln-572"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-573"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-574"></a> 
+<a name="ln-575"></a> <span class="n">sumvalue</span> <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_sumvalue</span><span class="p">)</span>
+<a name="ln-576"></a> <span class="n">sumvalue</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-577"></a> 
+<a name="ln-578"></a> <span class="k">call </span><span class="n">junction_branch_summation_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-579"></a>    <span class="p">(</span><span class="n">eMr_sumvalue</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">upstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_u</span><span class="p">,</span> <span class="n">eMr_column_up</span><span class="p">)</span>
+<a name="ln-580"></a>    
+<a name="ln-581"></a> <span class="k">call </span><span class="n">junction_branch_summation_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-582"></a>    <span class="p">(</span><span class="n">eMr_sumvalue</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">dnstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_d</span><span class="p">,</span> <span class="n">eMr_column_dn</span><span class="p">)</span>    
+<a name="ln-583"></a> 
+<a name="ln-584"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-585"></a> <span class="k">end subroutine </span><span class="n">junction_branch_summation</span>
+<a name="ln-586"></a><span class="c">!</span>
+<a name="ln-587"></a><span class="c">!========================================================================== </span>
+<a name="ln-588"></a><span class="c">!==========================================================================</span>
+<a name="ln-589"></a><span class="c">!</span>
+<a name="ln-590"></a> <span class="k">subroutine </span><span class="n">junction_branch_summation_and_updown_average</span> <span class="p">&amp;</span>
+<a name="ln-591"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">eMr_columnUp</span><span class="p">,</span> <span class="n">eMr_columnDn</span><span class="p">,</span> <span class="n">eMr_out</span><span class="p">)</span>
+<a name="ln-592"></a><span class="c">!</span>
+<a name="ln-593"></a><span class="c">! separately compute the sum of the upstream and the downstream branches</span>
+<a name="ln-594"></a><span class="c">! for data in eMr_columnUp and eMr_columnDn (e.g. eMr_TopwidthUp)</span>
+<a name="ln-595"></a><span class="c">! and then computes the average between the two sums. Output is stored in</span>
+<a name="ln-596"></a><span class="c">! elemMR(:,eMr_out)</span>
+<a name="ln-597"></a><span class="c">! NOTE THIS DOES NOT ACCOUNT FOR FLOW REVERSALS</span>
+<a name="ln-598"></a><span class="c">! </span>
+<a name="ln-599"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_summation_and_updown_average&#39;</span>
+<a name="ln-600"></a> 
+<a name="ln-601"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-602"></a> <span class="kt">integer</span><span class="p">,</span>                <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span> 
+<a name="ln-603"></a> <span class="kt">integer</span><span class="p">,</span>                <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_columnUp</span><span class="p">(:),</span> <span class="n">eMr_columnDn</span><span class="p">(:)</span>
+<a name="ln-604"></a> <span class="kt">integer</span><span class="p">,</span>                <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_out</span>
+<a name="ln-605"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span>                      <span class="kd">::</span> <span class="n">Uvalue</span><span class="p">(:),</span> <span class="n">Dvalue</span><span class="p">(:)</span>
+<a name="ln-606"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">ii</span><span class="p">,</span> <span class="n">eMr_tUp</span><span class="p">,</span> <span class="n">eMr_tDn</span>  
+<a name="ln-607"></a> 
+<a name="ln-608"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-609"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-610"></a> 
+<a name="ln-611"></a> <span class="n">eMr_tUp</span> <span class="o">=</span> <span class="n">eMr_Temp</span><span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">)</span>
+<a name="ln-612"></a> <span class="n">Uvalue</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_tUp</span><span class="p">)</span>
+<a name="ln-613"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">utility_advance_temp_array</span> <span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">,</span><span class="n">eMr_n_temp</span><span class="p">)</span>
+<a name="ln-614"></a>   
+<a name="ln-615"></a> <span class="n">eMr_tDn</span> <span class="o">=</span> <span class="n">eMr_Temp</span><span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">)</span>
+<a name="ln-616"></a> <span class="n">Dvalue</span>  <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_tDn</span><span class="p">)</span>
+<a name="ln-617"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">utility_advance_temp_array</span> <span class="p">(</span><span class="n">next_eMr_temparray</span><span class="p">,</span><span class="n">eMr_n_temp</span><span class="p">)</span>
+<a name="ln-618"></a>
+<a name="ln-619"></a> <span class="n">Uvalue</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-620"></a> <span class="k">call </span><span class="n">junction_branch_summation_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-621"></a>    <span class="p">(</span><span class="n">eMr_tUp</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">upstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_u</span><span class="p">,</span> <span class="n">eMr_BreadthScaleUp</span><span class="p">)</span>
+<a name="ln-622"></a>
+<a name="ln-623"></a> <span class="n">Dvalue</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-624"></a> <span class="k">call </span><span class="n">junction_branch_summation_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-625"></a>    <span class="p">(</span><span class="n">eMr_tDn</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">dnstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_d</span><span class="p">,</span> <span class="n">eMr_BreadthScaleDn</span><span class="p">)</span>
+<a name="ln-626"></a>    
+<a name="ln-627"></a> <span class="k">where</span> <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">)</span>
+<a name="ln-628"></a>    <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_out</span><span class="p">)</span> <span class="o">=</span> <span class="n">onehalfR</span> <span class="o">*</span> <span class="p">(</span> <span class="n">Uvalue</span> <span class="o">+</span> <span class="n">Dvalue</span><span class="p">)</span> 
+<a name="ln-629"></a> <span class="n">endwhere</span>
+<a name="ln-630"></a> 
+<a name="ln-631"></a> <span class="n">Dvalue</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-632"></a> <span class="n">Uvalue</span> <span class="o">=</span> <span class="n">nullvalueR</span>
+<a name="ln-633"></a> <span class="k">nullify</span><span class="p">(</span><span class="n">Dvalue</span><span class="p">,</span><span class="n">Uvalue</span><span class="p">)</span>
+<a name="ln-634"></a> <span class="n">next_eMr_temparray</span> <span class="o">=</span> <span class="n">next_eMr_temparray</span><span class="o">-</span><span class="mi">2</span>
+<a name="ln-635"></a> 
+<a name="ln-636"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-637"></a> <span class="k">end subroutine </span><span class="n">junction_branch_summation_and_updown_average</span>
+<a name="ln-638"></a><span class="c">!</span>
+<a name="ln-639"></a><span class="c">!========================================================================== </span>
+<a name="ln-640"></a><span class="c">!==========================================================================</span>
+<a name="ln-641"></a><span class="c">!</span>
+<a name="ln-642"></a> <span class="k">subroutine </span><span class="n">junction_branch_summation_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-643"></a>    <span class="p">(</span><span class="n">eMr_sumvalue</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span><span class="p">,</span> <span class="n">eMr_columnDir</span><span class="p">)</span>
+<a name="ln-644"></a><span class="c">!</span>
+<a name="ln-645"></a><span class="c">! cycle through the branches in one direction (up or dn) to sum all their values</span>
+<a name="ln-646"></a><span class="c">! NOTE THAT THIS DOES NOT RESET THE SUM TO ZERO BEFORE EXECUTION</span>
+<a name="ln-647"></a><span class="c">! This behavior is required for accumulators.</span>
+<a name="ln-648"></a><span class="c">! </span>
+<a name="ln-649"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_summation_one_direction&#39;</span>
+<a name="ln-650"></a> 
+<a name="ln-651"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_sumvalue</span>
+<a name="ln-652"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-653"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-654"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span><span class="p">,</span> <span class="n">eMr_columnDir</span><span class="p">(:)</span>
+<a name="ln-655"></a> 
+<a name="ln-656"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">ii</span>
+<a name="ln-657"></a>  
+<a name="ln-658"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-659"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-660"></a> 
+<a name="ln-661"></a> <span class="k">do </span><span class="n">ii</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">face_per_elemM</span>
+<a name="ln-662"></a>    <span class="k">where</span> <span class="p">(</span> <span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_dir</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ii</span><span class="p">)</span>
+<a name="ln-663"></a>        <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_sumvalue</span><span class="p">)</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_sumvalue</span><span class="p">)</span> <span class="o">+</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_columnDir</span><span class="p">(</span><span class="n">ii</span><span class="p">))</span>
+<a name="ln-664"></a>    <span class="n">endwhere</span>
+<a name="ln-665"></a> <span class="n">enddo</span>
+<a name="ln-666"></a> 
+<a name="ln-667"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-668"></a> <span class="k">end subroutine </span><span class="n">junction_branch_summation_one_direction</span>
+<a name="ln-669"></a><span class="c">!</span>
+<a name="ln-670"></a><span class="c">!========================================================================== </span>
+<a name="ln-671"></a><span class="c">!==========================================================================</span>
+<a name="ln-672"></a><span class="c">!</span>
+<a name="ln-673"></a> <span class="k">subroutine </span><span class="n">junction_branch_velocities_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-674"></a>    <span class="p">(</span><span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">dir_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-675"></a>     <span class="n">eMr_FlowrateDir</span><span class="p">,</span> <span class="n">eMr_AreaDir</span><span class="p">,</span> <span class="n">eMr_VelocityDir</span><span class="p">)</span>
+<a name="ln-676"></a><span class="c">!</span>
+<a name="ln-677"></a><span class="c">! computes the velocities in each branch (with dir = upstream or downstream)</span>
+<a name="ln-678"></a><span class="c">! from flowrate and area  </span>
+<a name="ln-679"></a><span class="c">!</span>
+<a name="ln-680"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_branch_velocities_one_direction&#39;</span>
+<a name="ln-681"></a>
+<a name="ln-682"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-683"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span> 
+<a name="ln-684"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_FlowrateDir</span><span class="p">(:),</span> <span class="n">eMr_AreaDir</span><span class="p">(:),</span> <span class="n">eMr_VelocityDir</span><span class="p">(:)</span>
+<a name="ln-685"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">dir_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span>
+<a name="ln-686"></a> 
+<a name="ln-687"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">ii</span> 
+<a name="ln-688"></a> 
+<a name="ln-689"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-690"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-691"></a> 
+<a name="ln-692"></a> <span class="k">do </span><span class="n">ii</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">dir_face_per_elemM</span>
+<a name="ln-693"></a>    <span class="k">where</span> <span class="p">((</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_dir</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">ii</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-694"></a>           <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">))</span>
+<a name="ln-695"></a>        <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_VelocityDir</span><span class="p">(</span><span class="n">ii</span><span class="p">))</span> <span class="o">=</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_FlowrateDir</span><span class="p">(</span><span class="n">ii</span><span class="p">))</span> <span class="o">/</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_AreaDir</span><span class="p">(</span><span class="n">ii</span><span class="p">))</span>
+<a name="ln-696"></a>    <span class="n">endwhere</span>
+<a name="ln-697"></a> <span class="n">enddo</span> 
+<a name="ln-698"></a>           
+<a name="ln-699"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-700"></a> <span class="k">end subroutine </span><span class="n">junction_branch_velocities_one_direction</span>
+<a name="ln-701"></a><span class="c">!</span>
+<a name="ln-702"></a><span class="c">!==========================================================================  </span>
+<a name="ln-703"></a><span class="c">!========================================================================== </span>
+<a name="ln-704"></a><span class="c">!</span>
+<a name="ln-705"></a> <span class="k">subroutine </span><span class="n">junction_net_flow_in_or_out</span> <span class="p">&amp;</span>
+<a name="ln-706"></a>    <span class="p">(</span><span class="n">eMr_flow</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">dir_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-707"></a>     <span class="n">eMr_FlowrateDir1</span><span class="p">,</span> <span class="n">eMr_FlowrateDir2</span><span class="p">)</span>
+<a name="ln-708"></a> 
+<a name="ln-709"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_net_flow_in_or_out&#39;</span>
+<a name="ln-710"></a> 
+<a name="ln-711"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_flow</span>
+<a name="ln-712"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-713"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-714"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">dir_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span>
+<a name="ln-715"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_FlowrateDir1</span><span class="p">(:),</span> <span class="n">eMr_flowrateDir2</span><span class="p">(:)</span>
+<a name="ln-716"></a> 
+<a name="ln-717"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">pointer</span>         <span class="kd">::</span> <span class="n">flow</span><span class="p">(:)</span>
+<a name="ln-718"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">mm</span>
+<a name="ln-719"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-720"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-721"></a> 
+<a name="ln-722"></a> <span class="n">flow</span> <span class="o">=&gt;</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_flow</span><span class="p">)</span>
+<a name="ln-723"></a> 
+<a name="ln-724"></a> <span class="n">flow</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-725"></a> <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">dir_face_per_elemM</span>
+<a name="ln-726"></a>    <span class="k">where</span> <span class="p">((</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_nfaces_dir</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-727"></a>           <span class="p">(</span><span class="n">elemMI</span><span class="p">(:,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">))</span>
+<a name="ln-728"></a>        <span class="k">where</span> <span class="p">(</span><span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_FlowrateDir1</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">zeroR</span><span class="p">)</span>
+<a name="ln-729"></a>            <span class="n">flow</span> <span class="o">=</span> <span class="n">flow</span> <span class="o">+</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_FlowrateDir1</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span> 
+<a name="ln-730"></a>        <span class="n">endwhere</span>
+<a name="ln-731"></a>        <span class="k">where</span> <span class="p">(</span><span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_FlowrateDir2</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">zeroR</span><span class="p">)</span>
+<a name="ln-732"></a>            <span class="n">flow</span> <span class="o">=</span> <span class="n">flow</span>  <span class="o">-</span> <span class="n">elemMR</span><span class="p">(:,</span><span class="n">eMr_FlowrateDir2</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-733"></a>        <span class="n">endwhere</span>    
+<a name="ln-734"></a>    <span class="n">endwhere</span>
+<a name="ln-735"></a> <span class="n">enddo</span>    
+<a name="ln-736"></a> 
+<a name="ln-737"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-738"></a> <span class="k">end subroutine </span><span class="n">junction_net_flow_in_or_out</span>
+<a name="ln-739"></a><span class="c">!</span>
+<a name="ln-740"></a><span class="c">!========================================================================== </span>
+<a name="ln-741"></a><span class="c">!==========================================================================</span>
+<a name="ln-742"></a><span class="c">!</span>
+<a name="ln-743"></a> <span class="k">subroutine </span><span class="n">junction_net_inflow_and_outflow</span> <span class="p">&amp;</span>
+<a name="ln-744"></a>    <span class="p">(</span><span class="n">eMr_inflow</span><span class="p">,</span> <span class="n">eMr_outflow</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">)</span>
+<a name="ln-745"></a><span class="c">!</span>
+<a name="ln-746"></a><span class="c">! Computes the net inflow and net outflow including effects of flow reversals</span>
+<a name="ln-747"></a><span class="c">! Stores results in the columns eMr_inflow and eMr_outflow. </span>
+<a name="ln-748"></a><span class="c">!</span>
+<a name="ln-749"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_net_inflow_and_outflow&#39;</span>
+<a name="ln-750"></a>   
+<a name="ln-751"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_inflow</span><span class="p">,</span> <span class="n">eMr_outflow</span>  
+<a name="ln-752"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-753"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:)</span>
+<a name="ln-754"></a> 
+<a name="ln-755"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-756"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-757"></a> 
+<a name="ln-758"></a> <span class="k">call </span><span class="n">junction_net_flow_in_or_out</span> <span class="p">&amp;</span>
+<a name="ln-759"></a>    <span class="p">(</span><span class="n">eMr_inflow</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">upstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_u</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-760"></a>     <span class="n">eMr_FlowrateUp</span><span class="p">,</span> <span class="n">eMr_flowrateDn</span><span class="p">)</span>      
+<a name="ln-761"></a>
+<a name="ln-762"></a> <span class="k">call </span><span class="n">junction_net_flow_in_or_out</span> <span class="p">&amp;</span>
+<a name="ln-763"></a>    <span class="p">(</span><span class="n">eMr_outflow</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">dnstream_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_d</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-764"></a>     <span class="n">eMr_FlowrateDn</span><span class="p">,</span> <span class="n">eMr_FlowrateUp</span><span class="p">)</span>   
+<a name="ln-765"></a> 
+<a name="ln-766"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-767"></a> <span class="k">end subroutine </span><span class="n">junction_net_inflow_and_outflow</span>
+<a name="ln-768"></a><span class="c">!</span>
+<a name="ln-769"></a><span class="c">!==========================================================================</span>
+<a name="ln-770"></a><span class="c">!==========================================================================</span>
+<a name="ln-771"></a><span class="c">!</span>
+<a name="ln-772"></a> <span class="k">subroutine </span><span class="n">junction_summation_from_adjacent_elements_one_direction</span> <span class="p">&amp;</span>
+<a name="ln-773"></a>    <span class="p">(</span><span class="n">eMr_sumvalue</span><span class="p">,</span> <span class="n">elem2R</span><span class="p">,</span> <span class="n">elemMR</span><span class="p">,</span> <span class="n">elemMI</span><span class="p">,</span> <span class="n">faceI</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-774"></a>     <span class="n">dir_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span><span class="p">,</span> <span class="n">eMi_MfaceDir</span><span class="p">,</span> <span class="n">fi_Melem_dir</span><span class="p">,</span> <span class="n">e2r_data</span><span class="p">)</span>
+<a name="ln-775"></a>      
+<a name="ln-776"></a> <span class="kt">character</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span> <span class="kd">::</span> <span class="n">subroutine_name</span> <span class="o">=</span> <span class="s1">&#39;junction_summation_from_adjacent_elements_one_direction&#39;</span>
+<a name="ln-777"></a><span class="c">!</span>
+<a name="ln-778"></a><span class="c">! computes the sum of all the elements adjacent to a junction in either</span>
+<a name="ln-779"></a><span class="c">! the upstream or downstream direction</span>
+<a name="ln-780"></a><span class="c">!</span>
+<a name="ln-781"></a><span class="c">! THIS SHOULD ONLY BE USED IN SETUP AND INITIAL CONDITION ROUTINES</span>
+<a name="ln-782"></a><span class="c">! </span>
+<a name="ln-783"></a> <span class="kt">integer</span><span class="p">,</span>           <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">eMr_sumvalue</span>
+<a name="ln-784"></a> <span class="kt">real</span><span class="p">,</span>      <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span> <span class="n">out</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">elemMR</span><span class="p">(:,:)</span>
+<a name="ln-785"></a> <span class="kt">real</span><span class="p">,</span>              <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elem2R</span><span class="p">(:,:)</span>
+<a name="ln-786"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">target</span><span class="p">,</span> <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>      <span class="kd">::</span> <span class="n">elemMI</span><span class="p">(:,:),</span> <span class="n">faceI</span><span class="p">(:,:)</span>
+<a name="ln-787"></a> 
+<a name="ln-788"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">dir_face_per_elemM</span><span class="p">,</span> <span class="n">eMi_nfaces_dir</span><span class="p">,</span> <span class="n">eMi_MfaceDir</span><span class="p">(:)</span>
+<a name="ln-789"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span>  <span class="kd">::</span> <span class="n">fi_Melem_dir</span><span class="p">,</span> <span class="n">e2r_data</span>
+<a name="ln-790"></a> 
+<a name="ln-791"></a> <span class="kt">integer</span><span class="p">,</span>   <span class="k">pointer</span> <span class="kd">::</span> <span class="n">tface</span><span class="p">,</span> <span class="n">telem</span>
+<a name="ln-792"></a> <span class="kt">real</span>   <span class="kd">::</span> <span class="n">thisvalue</span><span class="p">(</span><span class="n">dir_face_per_elemM</span><span class="p">)</span>
+<a name="ln-793"></a> <span class="kt">integer</span> <span class="kd">::</span> <span class="n">mm</span><span class="p">,</span> <span class="n">ii</span>
+<a name="ln-794"></a> 
+<a name="ln-795"></a><span class="c">!-------------------------------------------------------------------------- </span>
+<a name="ln-796"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span> <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** enter &#39;</span><span class="p">,</span><span class="n">subroutine_name</span> 
+<a name="ln-797"></a> 
+<a name="ln-798"></a> 
+<a name="ln-799"></a> <span class="k">do </span><span class="n">ii</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">N_elemM</span>  
+<a name="ln-800"></a>    <span class="n">thisvalue</span> <span class="o">=</span> <span class="n">zeroR</span>
+<a name="ln-801"></a>    <span class="k">do </span><span class="n">mm</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">dir_face_per_elemM</span>
+<a name="ln-802"></a>        <span class="k">if</span> <span class="p">((</span><span class="n">elemMI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">eMi_nfaces_dir</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">mm</span><span class="p">)</span> <span class="p">.</span><span class="nb">and</span><span class="p">.</span> <span class="p">&amp;</span>
+<a name="ln-803"></a>            <span class="p">(</span><span class="n">elemMI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">eMi_elem_type</span><span class="p">)</span> <span class="o">==</span> <span class="n">eJunctionChannel</span><span class="p">))</span> <span class="k">then</span>
+<a name="ln-804"></a>            <span class="c">!% the face on a branch in the direction specified by dir</span>
+<a name="ln-805"></a>            <span class="n">tface</span> <span class="o">=&gt;</span> <span class="n">elemMI</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">eMi_MfaceDir</span><span class="p">(</span><span class="n">mm</span><span class="p">))</span>
+<a name="ln-806"></a>            <span class="c">!% the element upstream of the face</span>
+<a name="ln-807"></a>            <span class="n">telem</span> <span class="o">=&gt;</span> <span class="n">faceI</span><span class="p">(</span><span class="n">tface</span><span class="p">,</span><span class="n">fi_Melem_dir</span><span class="p">)</span>
+<a name="ln-808"></a>            <span class="c">!% the value at the element</span>
+<a name="ln-809"></a>            <span class="n">thisvalue</span><span class="p">(</span><span class="n">mm</span><span class="p">)</span> <span class="o">=</span> <span class="n">elem2R</span><span class="p">(</span><span class="n">telem</span><span class="p">,</span><span class="n">e2r_data</span><span class="p">)</span>
+<a name="ln-810"></a>        <span class="n">endif</span>
+<a name="ln-811"></a>    <span class="n">enddo</span>
+<a name="ln-812"></a>    <span class="n">elemMR</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="n">eMr_sumvalue</span><span class="p">)</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">thisvalue</span><span class="p">)</span>
+<a name="ln-813"></a> <span class="n">enddo</span>
+<a name="ln-814"></a>
+<a name="ln-815"></a> <span class="k">if</span> <span class="p">((</span><span class="n">debuglevel</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">.</span><span class="nb">or</span><span class="p">.</span> <span class="p">(</span><span class="n">debuglevelall</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>  <span class="k">print</span> <span class="o">*</span><span class="p">,</span> <span class="s1">&#39;*** leave &#39;</span><span class="p">,</span><span class="n">subroutine_name</span>
+<a name="ln-816"></a> <span class="k">end subroutine </span><span class="n">junction_summation_from_adjacent_elements_one_direction</span>
+<a name="ln-817"></a><span class="c">!</span>
+<a name="ln-818"></a><span class="c">!==========================================================================</span>
+<a name="ln-819"></a>
+<a name="ln-820"></a><span class="c">! END OF MODULE junction</span>
+<a name="ln-821"></a><span class="c">!==========================================================================</span>
+<a name="ln-822"></a> <span class="k">end module </span><span class="n">junction</span>
+</pre></div>
+
+    </section>
+    </div>
+  </div>
+
+  
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2019 
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> SWMMengine was developed by Ben R. Hodges and Ehsan Madadi-Kandjani</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>
