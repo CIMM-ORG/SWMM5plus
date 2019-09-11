@@ -39,23 +39,29 @@
  integer :: runit = 11
  integer :: lunit = 12
  integer :: header_row = 1
- integer :: n_rows_excluding_header
+ integer :: n_rows_excluding_header_node, n_rows_excluding_header_link
+ integer :: n_rows_plus_processors_node, n_rows_plus_processors_link
  integer :: istat
  integer,parameter          :: line_length=256
  character(line_length)     :: line
  character(len=line_length) :: word
  real    :: a(line_length/2+1)
  integer :: i,io,icount,rcount
- integer :: multiprocessors = 100
+ integer :: multiprocessors = 3
  real :: phantom_index
  integer :: weight_index = -998877
  real :: partition_threshold
  real :: max_weight = 0.0
- integer :: ideal_root = -998877
+ integer :: effective_root = -998877
  logical :: ideal_exists = .false.
  integer :: spanning_link = -998877
  real :: start_point = 0.0
  integer :: root
+ real :: upstream_link_length = 0.0
+ integer :: upstream_node = -998877
+ real :: upstream_weight = 0.0
+ real :: total_clipped_weight = 0.0
+ integer :: phantom_array_location
  
  real, dimension(:,:), allocatable :: nodeMatrix
  real, dimension(:,:), allocatable :: linkMatrix
@@ -67,9 +73,8 @@
  logical, allocatable, dimension(:) :: visited_flag_weight
  logical, allocatable, dimension(:) :: visit_network_mask
  logical, allocatable, dimension(:) :: partition_boolean
- logical, allocatable, dimension(:) :: visited_flag
  
- integer:: ii
+ integer:: ii, jj, kk, mp
  
  
  integer :: debuglevel = 0
@@ -83,9 +88,10 @@
  n_rows_in_file_node = number_of_lines_in_file(runit)
  
 ! excluude the header from the rows
- n_rows_excluding_header = n_rows_in_file_node - header_row
+ n_rows_excluding_header_node = n_rows_in_file_node - header_row
+ n_rows_plus_processors_node = n_rows_excluding_header_node + multiprocessors -1
  
- allocate(nodeMatrix(n_rows_excluding_header, nr_totalweight_u))
+ allocate(nodeMatrix(n_rows_plus_processors_node, nr_totalweight_u))
  
  read(runit,*)
  rcount = 1
@@ -119,9 +125,10 @@
  n_rows_in_file_link = number_of_lines_in_file(lunit)
  
 ! excluude the header from the rows
- n_rows_excluding_header = n_rows_in_file_link - header_row
+ n_rows_excluding_header_link = n_rows_in_file_link - header_row
+ n_rows_plus_processors_link = n_rows_excluding_header_link + multiprocessors -1
  
- allocate(linkMatrix(n_rows_excluding_header, lr_InitialDnstreamDepth))
+ allocate(linkMatrix(n_rows_plus_processors_link, lr_InitialDnstreamDepth))
  
  read(lunit,*)
  rcount = 1
@@ -160,18 +167,9 @@
  allocate(partition_boolean(size(linkMatrix,1)))
  partition_boolean(:) = .false.
  
- allocate(visited_flag(size(nodeMatrix,1)))
- 
  allocate (weight_range(size(linkMatrix,1),2))
  
- 
- 
  call local_node_weighting(lr_target, nodeMatrix, linkMatrix)
- 
- call nr_totalweight_assigner(nodeMatrix, weight_index, max_weight,&
-                visited_flag_weight, visit_network_mask)
- 
- partition_threshold = max_weight/real(multiprocessors)
  
  allocate (subnetwork_container_nodes &
     (multiprocessors,size(nodeMatrix,1),size(nodeMatrix,2)))
@@ -179,40 +177,92 @@
  allocate (subnetwork_container_links &
     (multiprocessors,size(linkMatrix,1),size(linkMatrix,2)))
     
- do ii = 1, multiprocessors
-    visited_flag(:) = .false.
+ do mp = 1, multiprocessors
     nodeMatrix(:, nr_totalweight_u) = 0.0
     call nr_totalweight_assigner(nodeMatrix, weight_index, max_weight,&
                 visited_flag_weight, visit_network_mask)
                 
+    partition_threshold = max_weight/real(multiprocessors - mp + 1)
+                
     call ideal_partition_check &
-    (ideal_root, ideal_exists, max_weight, partition_threshold, nodeMatrix)
+    (effective_root, ideal_exists, max_weight, partition_threshold, nodeMatrix)
     
     if(ideal_exists .eqv. .true.) then
         call subnetwork_carving &
-            (ideal_root, ii, subnetwork_container_nodes, visit_network_mask, & 
-             visited_flag, nodeMatrix, linkMatrix)
-        print*, 'ideal = ', ideal_root
+            (effective_root, mp, subnetwork_container_nodes, visit_network_mask, & 
+             nodeMatrix, linkMatrix)
+        print*, 'effective root = ', effective_root
     else
         weight_range(:,:) = -998877
         call spanning_check &
             (spanning_link, weight_range, linkMatrix, nodeMatrix, lr_target, &
              partition_threshold, partition_boolean)
-        if (spanning_link /= -998877) then
-            start_point = linear_interpolator(partition_threshold, &
-            spanning_link, linkMatrix, weight_range, lr_target)
-            call phantom_node_generator(spanning_link, start_point)
+        do while (spanning_link == -998877)
+            do ii= 1,size(nodeMatrix,1)
+                if (nodeMatrix(ii, ni_idx) == effective_root) then
+                    subnetwork_container_nodes(mp, ii, :) = nodeMatrix(ii, :)
+                endif
+                
+                do jj=1,size(linkMatrix,1)
+                    if (linkMatrix(jj, li_Mnode_d) == effective_root) then
+                        upstream_link_length = linkMatrix(jj,lr_Length)
+                        upstream_node = linkMatrix(jj,li_Mnode_u)
+                        do kk=1, size(nodeMatrix,1)
+                            if (nodeMatrix(kk, ni_idx) == upstream_node) then
+                                upstream_weight &
+                                    = nodeMatrix(kk,nr_totalweight_u)
+                                total_clipped_weight = upstream_weight + &
+                                    weighting_function(lr_target, upstream_link_length)
+                                exit
+                            endif
+                        enddo
+                        exit
+                    endif
+                enddo
+                
+                nodeMatrix(ii, nr_directweight_u) = &
+                    nodeMatrix(ii, nr_directweight_u) - total_clipped_weight
+                exit
+            enddo
+            
+            partition_threshold = partition_threshold - total_clipped_weight
+            
             call subnetwork_carving &
-                (root, ii, subnetwork_container_nodes, visit_network_mask, & 
-                visited_flag, nodeMatrix, linkMatrix)
-        else
-            print*, 'Not Ideal and Not Spanned after ', ii, ' partitions.'
-            exit
-        endif
+                (upstream_node, mp, subnetwork_container_nodes, &
+                visit_network_mask, nodeMatrix, linkMatrix)
+                
+            call spanning_check &
+                (spanning_link, weight_range, linkMatrix, nodeMatrix, &
+                lr_target, partition_threshold, partition_boolean)
+        end do
+        
+        start_point = linear_interpolator(partition_threshold, &
+        spanning_link, linkMatrix, weight_range, lr_target)
+        call phantom_node_generator(spanning_link, start_point, mp, &
+            partition_threshold, linkMatrix, nodeMatrix, &
+            subnetwork_container_nodes, subnetwork_container_links, & 
+            n_rows_excluding_header_node, n_rows_excluding_header_link, &
+            phantom_array_location, phantom_index, lr_target)
+        
+        call subnetwork_carving &
+            (int(nodeMatrix(phantom_array_location, ni_idx)), mp, &
+            subnetwork_container_nodes, visit_network_mask, nodeMatrix, &
+            linkMatrix)
     endif
-    print*, nodeMatrix
-    print*, linkMatrix
+    
+    do ii=1, size(visit_network_mask,1)
+        if (visit_network_mask(ii) .eqv. .true.) then
+            nodeMatrix(ii, nr_directweight_u) = 0.0
+        endif
+    enddo
  enddo
+ 
+ print*, nodeMatrix
+ print*, linkMatrix
+ 
+!  do mp = 1, size(subnetwork_container_nodes,1)
+!     call subnetworks_links
+!  enddo
  
  contains
 !
@@ -254,11 +304,9 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
- do ii=1,size (array)
-     if (array(ii) == nullValue) then
-         array(ii) = 0.0
-     endif
- enddo
+ where (array(:) == nullValue)
+     array(:) = 0.0
+ endwhere
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine null_value_convert
@@ -283,6 +331,7 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
  call null_value_convert(nodeMatrix(:,nr_directweight_u))
+ call null_value_convert(nodeMatrix(:,nr_totalweight_u))
  do ii= 1,size(nodeMatrix,1) ! This weighting function occurs for each node
     rootnode_index = nodeMatrix(ii, ni_idx) ! Assign to variable the node index
     links_row = 0 ! Initialize the links_row which points to the index of the link
@@ -319,7 +368,7 @@
  do ii= 1,size(nodeMatrix,1)
     root_identity = nodeMatrix(ii, ni_idx)
     if (root_idx == root_identity) then
-        weight_index = int(nodeMatrix(ii,ni_idx))
+        weight_index = int(ii)
     endif
  enddo
  
@@ -346,7 +395,6 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
- call null_value_convert(nodeMatrix(:, nr_totalweight_u))
  do ii= 1,size(nodeMatrix,1)
     node_row_contents = nodeMatrix(ii, ni_idx)
     if ( &
@@ -392,16 +440,19 @@
  logical, intent(in out) :: visit_network_mask(:)
  real, intent(in out) :: max_weight
  integer :: ii
+ real :: nullValue = -998877
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
  do ii=1, size(nodeMatrix,1)
-    visited_flag_weight(:) = .false.
-    weight_index = find_weight_index(ii, nodeMatrix)
-    call upstream_weight_calculation(weight_index, & 
-            int(nodeMatrix(ii, ni_idx)), nodeMatrix, linkMatrix, & 
-            visited_flag_weight, visit_network_mask)
+    if (nodeMatrix(ii,ni_idx) /= nullValue ) then
+        visited_flag_weight(:) = .false.
+        weight_index = find_weight_index(ii, nodeMatrix)
+        call upstream_weight_calculation(weight_index, & 
+                int(nodeMatrix(ii, ni_idx)), nodeMatrix, linkMatrix, & 
+                visited_flag_weight, visit_network_mask)
+    endif
  enddo
  
  max_weight = maxval(nodeMatrix(:, nr_totalweight_u))
@@ -413,13 +464,12 @@
 !============================================================================ 
 ! 
  recursive subroutine subnetwork_carving &
-    (root, proc, subnetwork_container_nodes, visit_network_mask, visited_flag, &
+    (root, proc, subnetwork_container_nodes, visit_network_mask, &
      nodeMatrix, linkMatrix)
 
  character(64) :: subroutine_name = 'subnetwork_carving'
  
  logical, intent(in out) :: visit_network_mask(:)
- logical, intent(in out) :: visited_flag(:)
  real, intent (in out) :: subnetwork_container_nodes (:,:,:)
  real, intent(in) :: nodeMatrix(:,:), linkMatrix(:,:)
  integer :: node_row_contents, link_row_contents, new_root, node_upstream
@@ -431,11 +481,7 @@
  
  do ii=1, size(nodeMatrix,1)
     node_row_contents = nodeMatrix(ii, ni_idx)
-    if  ( &
-            root == node_row_contents .and. visited_flag(ii) .eqv. .false. &
-            .and. visit_network_mask(ii) .eqv. .false. &
-        ) then
-        visited_flag(ii) = .true.
+    if  ( root == node_row_contents .and. visit_network_mask(ii) .eqv. .false.) then
         visit_network_mask = .true.
         subnetwork_container_nodes(proc, ii, :) = nodeMatrix(ii, :)
         do jj= 1, size(linkMatrix,1)
@@ -445,16 +491,15 @@
                 do kk = 1, size(nodeMatrix,1)
                     if(node_upstream == nodeMatrix(kk, ni_idx)) then
                         new_root = nodeMatrix(kk, ni_idx)
-                        call subnetwork_carving(root, proc, &
+                        call subnetwork_carving(new_root, proc, &
                             subnetwork_container_nodes, visit_network_mask, &
-                            visited_flag, nodeMatrix, linkMatrix)
+                            nodeMatrix, linkMatrix)
                     endif
                 enddo
             endif
         enddo
     elseif( &
-                root == ii .and. visited_flag(ii) .eqv. .false. &
-                .and. visit_network_mask(ii) .eqv. .true. &
+                root == ii .and. visit_network_mask(ii) .eqv. .true. &
           ) then
           subnetwork_container_nodes(proc, ii, :) = nodeMatrix(ii, :)
     endif
@@ -497,12 +542,12 @@
 !============================================================================ 
 ! 
  subroutine ideal_partition_check &
-    (ideal_root, ideal_exists, max_weight, partition_threshold, nodeMatrix)
+    (effective_root, ideal_exists, max_weight, partition_threshold, nodeMatrix)
 
  character(64) :: subroutine_name = 'ideal_partition_check'
  real, intent(in) :: max_weight, partition_threshold
  logical, intent(in out) :: ideal_exists
- integer, intent(in out) :: ideal_root
+ integer, intent(in out) :: effective_root
  real :: nearest_overestimate
  real, intent(in) :: nodeMatrix(:,:)
  integer :: ii
@@ -512,7 +557,7 @@
  nearest_overestimate = max_weight
  do ii=1, size(nodeMatrix,1)
     if (nodeMatrix(ii, nr_totalweight_u) == partition_threshold) then
-        ideal_root = nodeMatrix(ii, ni_idx)
+        effective_root = nodeMatrix(ii, ni_idx)
         ideal_exists = .true.
     endif
     if (&
@@ -520,7 +565,7 @@
         nodeMatrix(ii, nr_totalweight_u) <= nearest_overestimate &
        ) then
        nearest_overestimate = nodeMatrix(ii, nr_totalweight_u)
-       ideal_root = nodeMatrix(ii, ni_idx)
+       effective_root = nodeMatrix(ii, ni_idx)
     endif
  enddo
  
@@ -549,24 +594,24 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
- do ii=1, size(linkMatrix,1)
-    upstream_node = linkMatrix(ii, li_Mnode_u)
-    do jj=1, size(nodeMatrix,1)
+ do jj=1, size(linkMatrix,1)
+    upstream_node = linkMatrix(jj, li_Mnode_u)
+    do ii=1, size(nodeMatrix,1)
         if(nodeMatrix(ii, ni_idx) == upstream_node) then
-            weight_range(ii,1) = nodeMatrix(ii, nr_totalweight_u)
+            weight_range(jj,1) = nodeMatrix(ii, nr_totalweight_u)
         endif
     enddo
-    weight_range (ii, 2) = weight_range (ii, 1) + &
-        weighting_function(lr_target, linkMatrix(ii, lr_Length))
+    weight_range (jj, 2) = weight_range (jj, 1) + &
+        weighting_function(lr_target, linkMatrix(jj, lr_Length))
  enddo
- do ii=1, size(weight_range,1)
+ do jj=1, size(weight_range,1)
     if(&
-        weight_range(ii,1) < partition_threshold .and. &
-        partition_threshold < weight_range(ii,2) .and. &
-        partition_boolean(ii) .eqv. .false. &
+        weight_range(jj,1) < partition_threshold .and. &
+        partition_threshold < weight_range(jj,2) .and. &
+        partition_boolean(jj) .eqv. .false. &
       ) then
-        spanning_link = linkMatrix(ii,li_idx)
-        partition_boolean(ii) = .true.
+        spanning_link = linkMatrix(jj,li_idx)
+        partition_boolean(jj) = .true.
     endif
  enddo
  
@@ -633,17 +678,86 @@
 !========================================================================== 
 !==========================================================================
 ! 
- subroutine phantom_node_generator(spanning_link, length_from_start)
+ subroutine phantom_node_generator(spanning_link, start_point, mp, &
+    partition_threshold, linkMatrix, nodeMatrix, subnetwork_container_nodes, &
+    subnetwork_container_links, n_rows_excluding_header_node, &
+    n_rows_excluding_header_link, phantom_array_location, phantom_index, lr_target)
 !
 !
  character(64) :: subroutine_name = 'phantom_node_generator'
  
- real, intent(in) :: length_from_start
+ real, intent(in) :: start_point
  integer, intent(in) :: spanning_link
- 
+ integer, intent(in) :: mp 
+ real, intent(in) :: partition_threshold
+ real, intent (in) :: phantom_index
+ real, intent(in)  :: lr_target
+ real, intent(in out) :: linkMatrix(:,:), nodeMatrix(:,:)
+ real, intent (in out) :: subnetwork_container_nodes (:,:,:)
+ real, intent (in out) :: subnetwork_container_links (:,:,:)
+ integer, intent(in) :: n_rows_excluding_header_node
+ integer, intent(in) :: n_rows_excluding_header_link
+ integer, intent(in out) :: phantom_array_location
+ integer :: phantom_counter = 1
+ integer :: phantom_name, phantom_array_location_link, downstream_node
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
- print*, 'will be implemented later'
+ 
+ phantom_name = int(phantom_index) + phantom_counter
+ 
+ phantom_array_location = n_rows_excluding_header_node + mp
+ 
+ phantom_array_location_link = n_rows_excluding_header_link + mp
+ 
+ nodeMatrix(phantom_array_location, node_id) = phantom_name
+ 
+ nodeMatrix(phantom_array_location, ni_idx) = phantom_name
+ 
+ nodeMatrix(phantom_array_location, ni_node_type) = int(0)
+ 
+ nodeMatrix(phantom_array_location, ni_N_link_u) = int(1)
+ 
+ nodeMatrix(phantom_array_location, ni_Mlink_u2:ni_Mlink_d3) = -998877
+ 
+ nodeMatrix(phantom_array_location, ni_Mlink_u1) = spanning_link
+ 
+ nodeMatrix(phantom_array_location, ni_Mlink_d1) = phantom_name
+ 
+ nodeMatrix(phantom_array_location, nr_directweight_u) = 0.0
+ 
+ nodeMatrix(phantom_array_location, nr_totalweight_u) = partition_threshold
+ 
+ do jj=1, size(linkMatrix,1)
+    if(linkMatrix(jj,li_idx) == spanning_link) then
+        linkMatrix(phantom_array_location_link,:) = linkMatrix(jj,:)
+        
+        linkMatrix(phantom_array_location_link,lr_Length) &
+            = linkMatrix(jj,lr_Length) - start_point
+            
+        downstream_node = linkMatrix(jj,li_Mnode_d)
+        do ii=1, size(nodeMatrix,1)
+            if (nodeMatrix(ii,ni_idx) == downstream_node) then
+                nodeMatrix(ii,nr_directweight_u) = &
+                    nodeMatrix(ii,nr_directweight_u) - &
+                    weighting_function(lr_target, start_point)
+            endif
+        enddo
+        
+        linkMatrix(jj, li_Mnode_d) = phantom_name
+        
+        linkMatrix(jj,lr_Length) = start_point
+        exit
+    endif
+ enddo
+ 
+ linkMatrix(phantom_array_location_link, link_id) = phantom_name
+ 
+ linkMatrix(phantom_array_location_link, li_idx) = phantom_name
+ 
+ linkMatrix(phantom_array_location_link, li_Mnode_u) = phantom_name
+ 
+ phantom_counter = phantom_counter + 1 
+ 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name  
  end subroutine phantom_node_generator
 !
