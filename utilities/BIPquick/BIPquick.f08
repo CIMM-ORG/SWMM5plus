@@ -66,6 +66,7 @@
  real, dimension(:,:), allocatable :: nodeMatrix
  real, dimension(:,:), allocatable :: linkMatrix
  real, dimension(:,:), allocatable :: weight_range
+ real, dimension(:,:), allocatable :: nodes_container
  
  real, dimension(:,:,:), allocatable :: subnetwork_container_nodes
  real, dimension(:,:,:), allocatable :: subnetwork_container_links
@@ -73,6 +74,8 @@
  logical, allocatable, dimension(:) :: visited_flag_weight
  logical, allocatable, dimension(:) :: visit_network_mask
  logical, allocatable, dimension(:) :: partition_boolean
+ 
+ integer, allocatable, dimension(:) :: accounted_for_links
  
  integer:: ii, jj, kk, mp
  
@@ -176,6 +179,7 @@
     
  allocate (subnetwork_container_links &
     (multiprocessors,size(linkMatrix,1),size(linkMatrix,2)))
+ subnetwork_container_links(:,:,:)= -998877
     
  do mp = 1, multiprocessors
     nodeMatrix(:, nr_totalweight_u) = 0.0
@@ -188,11 +192,15 @@
     (effective_root, ideal_exists, max_weight, partition_threshold, nodeMatrix)
     
     if(ideal_exists .eqv. .true.) then
+    print*, "Here1"
+ stop
         call subnetwork_carving &
             (effective_root, mp, subnetwork_container_nodes, visit_network_mask, & 
              nodeMatrix, linkMatrix)
         print*, 'effective root = ', effective_root
     else
+        print*, "Here2"
+ stop
         weight_range(:,:) = -998877
         call spanning_check &
             (spanning_link, weight_range, linkMatrix, nodeMatrix, lr_target, &
@@ -260,9 +268,19 @@
  print*, nodeMatrix
  print*, linkMatrix
  
-!  do mp = 1, size(subnetwork_container_nodes,1)
-!     call subnetworks_links
-!  enddo
+ allocate(accounted_for_links(size(linkMatrix,1)))
+ accounted_for_links(:) = 0
+ 
+ allocate(nodes_container(size(nodeMatrix,1),size(nodeMatrix,2)))
+ 
+ do mp = 1, size(subnetwork_container_nodes,1)
+    nodes_container(:,:) = subnetwork_container_nodes(mp,:,:)
+    call subnetworks_links (multiprocessors,nodes_container, subnetwork_container_links, &
+        linkMatrix, accounted_for_links)
+ enddo
+ 
+ call reorganize_arrays(nodeMatrix, linkMatrix, multiprocessors, &
+            subnetwork_container_nodes, subnetwork_container_links)
  
  contains
 !
@@ -512,7 +530,8 @@
 !============================================================================ 
 ! 
  subroutine subnetworks_links &
-    (proc,nodes_container, subnetwork_container_links, linkMatrix)
+    (proc,nodes_container, subnetwork_container_links, linkMatrix, &
+     accounted_for_links)
 
  character(64) :: subroutine_name = 'subnetworks_links'
  real :: endpoint1, endpoint2
@@ -520,8 +539,11 @@
  real, intent(in out) :: subnetwork_container_links(:, :, :)
  real, intent(in) :: linkMatrix(:,:)
  integer, allocatable :: potential_endpoints(:)
+ integer, intent(in out) :: accounted_for_links(:)
  integer :: proc
- integer :: ii
+ integer :: ii, jj, linkCounter
+ real :: accountingLink
+ logical :: accountedLink = .false.
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  allocate (potential_endpoints(size(linkMatrix,1)))
@@ -529,8 +551,27 @@
     endpoint1 = linkMatrix(ii, li_Mnode_u)
     endpoint2 = linkMatrix(ii, li_Mnode_d)
     potential_endpoints(:) = nodes_container(:,ni_idx)
+    
+    do mp=1,proc
+        linkCounter=0
+        do jj=1,size(subnetwork_container_links(mp, :, li_idx))
+            accountingLink = subnetwork_container_links(mp,jj,li_idx)
+            if (accountingLink == -998877) then
+                accounted_for_links(linkCounter) = accountingLink
+            endif
+            linkCounter = linkCounter + 1
+        enddo
+    enddo
+    
+    do jj=1, size(accounted_for_links,1)
+        if (accounted_for_links(jj) == linkMatrix(ii, li_idx)) then
+            accountedLink = .true.
+        endif
+    enddo
+    
     if (any(potential_endpoints(:) == endpoint1) .and. &
-        any(potential_endpoints(:) == endpoint2)) then
+        any(potential_endpoints(:) == endpoint2) .and. &
+        accountedLink .eqv. .false.) then
         subnetwork_container_links(proc, ii,:) = linkMatrix(ii,:)
     endif
  enddo
@@ -784,6 +825,95 @@
  rewind(iunit)
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',function_name
  end function number_of_lines_in_file
+!
+!============================================================================ 
+!============================================================================ 
+! 
+ subroutine reorganize_arrays(nodeMatrix, linkMatrix, multiprocessors, &
+            subnetwork_container_nodes, subnetwork_container_links)
+!
+! this function is used to convert the null values that are defaulted in the 
+! nr_directweight_u and nr_totalweight_u columns of the nodes array into float 
+! zeros.
+ character(64) :: subroutine_name = 'reorganize_arrays'
+ real, intent (in) :: subnetwork_container_nodes (:,:,:)
+ real, intent (in) :: subnetwork_container_links (:,:,:)
+ real, intent(in out) :: nodeMatrix(:,:), linkMatrix(:,:)
+ integer, intent(in) :: multiprocessors
+ 
+ real :: reorganizedNodes(size(nodeMatrix,1),size(nodeMatrix,2))
+ real :: reorganizedLinks(size(linkMatrix,1),size(linkMatrix,2))
+ real, allocatable :: clippedNodes(:,:)
+ real, allocatable :: clippedLinks(:,:)
+ 
+ integer :: nodesRowCounter = 1, linksRowCounter = 1
+ integer :: ii, jj, mp
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+ 
+ do mp=1, multiprocessors
+    do ii=1, size(subnetwork_container_nodes,2)
+        do jj=1, size(subnetwork_container_nodes,3)
+            if (subnetwork_container_nodes(mp,ii,jj) == -998877) then
+                GOTO 5566
+            endif
+        enddo
+        do jj=1, size(reorganizedNodes,1)
+            if (subnetwork_container_nodes(mp,ii,ni_idx) == reorganizedNodes(jj,ni_idx)) then
+                GOTO 5566
+            endif
+        enddo
+        if (subnetwork_container_nodes(mp,ii,ni_idx) == -998877) then
+            GOTO 5566
+        endif
+        
+        reorganizedNodes(nodesRowCounter,:) = subnetwork_container_nodes(mp,ii,:)
+        nodesRowCounter = nodesRowCounter + 1
+ 5566   continue
+    enddo
+ enddo
+ 
+ allocate(clippedNodes(nodesRowCounter, size(nodeMatrix,2)))
+ 
+ do ii=1, size(clippedNodes,1)
+    clippedNodes(ii,:) = reorganizedNodes(ii,:)
+ enddo
+ 
+ nodeMatrix(:,:) = clippedNodes(:,:)
+ 
+ do mp=1, multiprocessors
+    do ii=1, size(subnetwork_container_links,2)
+        do jj=1, size(subnetwork_container_links,3)
+            if (subnetwork_container_links(mp,ii,jj) == -998877) then
+                GOTO 5567
+            endif
+        enddo
+        do jj=1, size(reorganizedLinks,1)
+            if (subnetwork_container_links(mp,ii,ni_idx) == reorganizedLinks(jj,ni_idx)) then
+                GOTO 5567
+            endif
+        enddo
+        if (subnetwork_container_links(mp,ii,ni_idx) == -998877) then
+            GOTO 5567
+        endif
+        
+        reorganizedLinks(linksRowCounter,:) = subnetwork_container_links(mp,ii,:)
+        linksRowCounter = linksRowCounter + 1
+ 5567   continue
+    enddo
+ enddo
+ 
+ allocate(clippedLinks(linksRowCounter, size(linkMatrix,2)))
+ 
+ do ii=1, size(clippedLinks,1)
+    clippedLinks(ii,:) = reorganizedLinks(ii,:)
+ enddo
+ 
+ linkMatrix(:,:) = clippedLinks(:,:)
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine reorganize_arrays
 !
 !========================================================================== 
 !==========================================================================
