@@ -33,7 +33,7 @@
  integer, parameter :: lr_InitialDnstreamDepth =12 ! initial downstream depth
  
 ! for the time being, the target length of an element is a hardcoded parameter
- real    :: lr_target = 10.0
+ real    :: lr_target = 1.0
  integer :: n_rows_in_file_node, n_rows_in_file_link
  integer :: iunit = 10
  integer :: runit = 11
@@ -95,6 +95,7 @@
  n_rows_plus_processors_node = n_rows_excluding_header_node + multiprocessors -1
  
  allocate(nodeMatrix(n_rows_plus_processors_node, nr_totalweight_u))
+ nodeMatrix(:,:)=-998877
  
  read(runit,*)
  rcount = 1
@@ -132,6 +133,7 @@
  n_rows_plus_processors_link = n_rows_excluding_header_link + multiprocessors -1
  
  allocate(linkMatrix(n_rows_plus_processors_link, lr_InitialDnstreamDepth))
+ linkMatrix(:,:)=-998877
  
  read(lunit,*)
  rcount = 1
@@ -188,19 +190,15 @@
                 
     partition_threshold = max_weight/real(multiprocessors - mp + 1)
                 
-    call ideal_partition_check &
-    (effective_root, ideal_exists, max_weight, partition_threshold, nodeMatrix)
+    effective_root = ideal_partition_check &
+    (ideal_exists, max_weight, partition_threshold, nodeMatrix)
     
     if(ideal_exists .eqv. .true.) then
-    print*, "Here1"
- stop
         call subnetwork_carving &
             (effective_root, mp, subnetwork_container_nodes, visit_network_mask, & 
              nodeMatrix, linkMatrix)
-        print*, 'effective root = ', effective_root
     else
-        print*, "Here2"
- stop
+    
         weight_range(:,:) = -998877
         call spanning_check &
             (spanning_link, weight_range, linkMatrix, nodeMatrix, lr_target, &
@@ -350,9 +348,10 @@
  
  call null_value_convert(nodeMatrix(:,nr_directweight_u))
  call null_value_convert(nodeMatrix(:,nr_totalweight_u))
+ 
  do ii= 1,size(nodeMatrix,1) ! This weighting function occurs for each node
     rootnode_index = nodeMatrix(ii, ni_idx) ! Assign to variable the node index
-    links_row = 0 ! Initialize the links_row which points to the index of the link
+    links_row = 1 ! Initialize the links_row which points to the index of the link
     do jj=1,size(linkMatrix(:, li_Mnode_d))
         if (linkMatrix(jj, li_Mnode_d) == rootnode_index) then
             nodeMatrix(ii, nr_directweight_u) &
@@ -385,6 +384,8 @@
  
  do ii= 1,size(nodeMatrix,1)
     root_identity = nodeMatrix(ii, ni_idx)
+    print*, "ii=",ii, "weight=", weight_index
+    print*, "root_identity= ", root_identity
     if (root_idx == root_identity) then
         weight_index = int(ii)
     endif
@@ -414,10 +415,11 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
  do ii= 1,size(nodeMatrix,1)
-    node_row_contents = nodeMatrix(ii, ni_idx)
+    node_row_contents = int(nodeMatrix(ii, ni_idx))
+    
     if ( &
-            root == node_row_contents .and. visited_flag_weight(ii) .eqv. .false. &
-            .and. visit_network_mask(ii) .eqv. .false. &
+            root == node_row_contents .and. (visited_flag_weight(ii) .eqv. .false.) &
+            .and. (visit_network_mask(ii) .eqv. .false.) &
         ) then
         visited_flag_weight(ii) = .true.
         nodeMatrix(weight_index, nr_totalweight_u) &
@@ -466,7 +468,7 @@
  do ii=1, size(nodeMatrix,1)
     if (nodeMatrix(ii,ni_idx) /= nullValue ) then
         visited_flag_weight(:) = .false.
-        weight_index = find_weight_index(ii, nodeMatrix)
+        weight_index = ii
         call upstream_weight_calculation(weight_index, & 
                 int(nodeMatrix(ii, ni_idx)), nodeMatrix, linkMatrix, & 
                 visited_flag_weight, visit_network_mask)
@@ -499,7 +501,7 @@
  
  do ii=1, size(nodeMatrix,1)
     node_row_contents = nodeMatrix(ii, ni_idx)
-    if  ( root == node_row_contents .and. visit_network_mask(ii) .eqv. .false.) then
+    if  ( root == node_row_contents .and. (visit_network_mask(ii) .eqv. .false.)) then
         visit_network_mask = .true.
         subnetwork_container_nodes(proc, ii, :) = nodeMatrix(ii, :)
         do jj= 1, size(linkMatrix,1)
@@ -509,6 +511,7 @@
                 do kk = 1, size(nodeMatrix,1)
                     if(node_upstream == nodeMatrix(kk, ni_idx)) then
                         new_root = nodeMatrix(kk, ni_idx)
+                        !print*, "Here", "ii=", ii, "jj=", jj, "kk=", kk
                         call subnetwork_carving(new_root, proc, &
                             subnetwork_container_nodes, visit_network_mask, &
                             nodeMatrix, linkMatrix)
@@ -517,11 +520,17 @@
             endif
         enddo
     elseif( &
-                root == ii .and. visit_network_mask(ii) .eqv. .true. &
+                root == ii .and. (visit_network_mask(ii) .eqv. .true.) &
           ) then
           subnetwork_container_nodes(proc, ii, :) = nodeMatrix(ii, :)
+          !print*, "Here", "ii=", ii, "jj=", jj, "kk=", kk
     endif
  enddo
+ print*, "proc=", proc
+ print*, subnetwork_container_nodes(proc, :, ni_idx)
+ stop
+ 
+ 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine subnetwork_carving
@@ -571,7 +580,7 @@
     
     if (any(potential_endpoints(:) == endpoint1) .and. &
         any(potential_endpoints(:) == endpoint2) .and. &
-        accountedLink .eqv. .false.) then
+        (accountedLink .eqv. .false.)) then
         subnetwork_container_links(proc, ii,:) = linkMatrix(ii,:)
     endif
  enddo
@@ -582,13 +591,13 @@
 !============================================================================ 
 !============================================================================ 
 ! 
- subroutine ideal_partition_check &
-    (effective_root, ideal_exists, max_weight, partition_threshold, nodeMatrix)
+ function ideal_partition_check &
+    (ideal_exists, max_weight, partition_threshold, nodeMatrix) result (effective_root)
 
  character(64) :: subroutine_name = 'ideal_partition_check'
  real, intent(in) :: max_weight, partition_threshold
  logical, intent(in out) :: ideal_exists
- integer, intent(in out) :: effective_root
+ integer :: effective_root
  real :: nearest_overestimate
  real, intent(in) :: nodeMatrix(:,:)
  integer :: ii
@@ -596,14 +605,16 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
  nearest_overestimate = max_weight
+
  do ii=1, size(nodeMatrix,1)
     if (nodeMatrix(ii, nr_totalweight_u) == partition_threshold) then
         effective_root = nodeMatrix(ii, ni_idx)
         ideal_exists = .true.
+        exit
     endif
     if (&
-        nodeMatrix(ii, nr_totalweight_u) > partition_threshold .and. &
-        nodeMatrix(ii, nr_totalweight_u) <= nearest_overestimate &
+        (nodeMatrix(ii, nr_totalweight_u) > partition_threshold) .and. &
+        (nodeMatrix(ii, nr_totalweight_u) <= nearest_overestimate) &
        ) then
        nearest_overestimate = nodeMatrix(ii, nr_totalweight_u)
        effective_root = nodeMatrix(ii, ni_idx)
@@ -611,7 +622,7 @@
  enddo
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine ideal_partition_check
+ end function ideal_partition_check
 !
 !============================================================================ 
 !============================================================================ 
@@ -647,9 +658,9 @@
  enddo
  do jj=1, size(weight_range,1)
     if(&
-        weight_range(jj,1) < partition_threshold .and. &
-        partition_threshold < weight_range(jj,2) .and. &
-        partition_boolean(jj) .eqv. .false. &
+        (weight_range(jj,1) < partition_threshold) .and. &
+        (partition_threshold < weight_range(jj,2)) .and. &
+        (partition_boolean(jj) .eqv. .false.) &
       ) then
         spanning_link = linkMatrix(jj,li_idx)
         partition_boolean(jj) = .true.
