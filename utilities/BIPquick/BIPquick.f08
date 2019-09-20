@@ -178,6 +178,7 @@
  
  allocate (subnetwork_container_nodes &
     (multiprocessors,size(nodeMatrix,1),size(nodeMatrix,2)))
+ subnetwork_container_nodes(:,:,:)= -998877
     
  allocate (subnetwork_container_links &
     (multiprocessors,size(linkMatrix,1),size(linkMatrix,2)))
@@ -198,7 +199,6 @@
             (effective_root, mp, subnetwork_container_nodes, visit_network_mask, & 
              nodeMatrix, linkMatrix)
     else
-    
         weight_range(:,:) = -998877
         call spanning_check &
             (spanning_link, weight_range, linkMatrix, nodeMatrix, lr_target, &
@@ -263,22 +263,30 @@
     enddo
  enddo
  
- print*, nodeMatrix
- print*, linkMatrix
- 
  allocate(accounted_for_links(size(linkMatrix,1)))
- accounted_for_links(:) = 0
+ accounted_for_links(:) = -998877
  
  allocate(nodes_container(size(nodeMatrix,1),size(nodeMatrix,2)))
+ nodes_container(:,:) = -998877
  
  do mp = 1, size(subnetwork_container_nodes,1)
     nodes_container(:,:) = subnetwork_container_nodes(mp,:,:)
-    call subnetworks_links (multiprocessors,nodes_container, subnetwork_container_links, &
+    call subnetworks_links (mp,nodes_container, subnetwork_container_links, &
         linkMatrix, accounted_for_links)
  enddo
  
  call reorganize_arrays(nodeMatrix, linkMatrix, multiprocessors, &
             subnetwork_container_nodes, subnetwork_container_links)
+            
+ print*, "Ideal Network Node"
+ do ii=1, size(nodeMatrix,1)
+    print*, nodeMatrix(ii,:)
+ enddo
+ 
+ print*, "Ideal Network Link"
+ do ii=1, size(linkMatrix,1)
+    print*, linkMatrix(ii,:)
+ enddo
  
  contains
 !
@@ -493,7 +501,7 @@
  real, intent (in out) :: subnetwork_container_nodes (:,:,:)
  real, intent(in) :: nodeMatrix(:,:), linkMatrix(:,:)
  integer :: node_row_contents, link_row_contents, new_root, node_upstream
- integer :: root, proc
+ integer, intent(in) :: root, proc
  integer :: ii, jj, kk
  
 !-------------------------------------------------------------------------- 
@@ -502,7 +510,7 @@
  do ii=1, size(nodeMatrix,1)
     node_row_contents = nodeMatrix(ii, ni_idx)
     if  ( root == node_row_contents .and. (visit_network_mask(ii) .eqv. .false.)) then
-        visit_network_mask = .true.
+        visit_network_mask(ii) = .true.
         subnetwork_container_nodes(proc, ii, :) = nodeMatrix(ii, :)
         do jj= 1, size(linkMatrix,1)
             link_row_contents = linkMatrix(jj, li_Mnode_d)
@@ -511,7 +519,6 @@
                 do kk = 1, size(nodeMatrix,1)
                     if(node_upstream == nodeMatrix(kk, ni_idx)) then
                         new_root = nodeMatrix(kk, ni_idx)
-                        !print*, "Here", "ii=", ii, "jj=", jj, "kk=", kk
                         call subnetwork_carving(new_root, proc, &
                             subnetwork_container_nodes, visit_network_mask, &
                             nodeMatrix, linkMatrix)
@@ -520,17 +527,11 @@
             endif
         enddo
     elseif( &
-                root == ii .and. (visit_network_mask(ii) .eqv. .true.) &
+                root == node_row_contents .and. (visit_network_mask(ii) .eqv. .true.) &
           ) then
           subnetwork_container_nodes(proc, ii, :) = nodeMatrix(ii, :)
-          !print*, "Here", "ii=", ii, "jj=", jj, "kk=", kk
     endif
  enddo
- print*, "proc=", proc
- print*, subnetwork_container_nodes(proc, :, ni_idx)
- stop
- 
- 
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine subnetwork_carving
@@ -549,31 +550,32 @@
  real, intent(in) :: linkMatrix(:,:)
  integer, allocatable :: potential_endpoints(:)
  integer, intent(in out) :: accounted_for_links(:)
- integer :: proc
- integer :: ii, jj, linkCounter
+ integer, intent(in) :: proc
+ integer :: ii, jj, linkCounter,mp
  real :: accountingLink
  logical :: accountedLink = .false.
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
- allocate (potential_endpoints(size(linkMatrix,1)))
+ 
+ allocate (potential_endpoints(size(nodeMatrix,1)))
+ potential_endpoints(:) = nodes_container(:,ni_idx)
+ 
  do ii=1, size(linkMatrix,1)
+    accountedLink = .false.
     endpoint1 = linkMatrix(ii, li_Mnode_u)
     endpoint2 = linkMatrix(ii, li_Mnode_d)
-    potential_endpoints(:) = nodes_container(:,ni_idx)
-    
     do mp=1,proc
-        linkCounter=0
+        linkCounter=1
         do jj=1,size(subnetwork_container_links(mp, :, li_idx))
             accountingLink = subnetwork_container_links(mp,jj,li_idx)
-            if (accountingLink == -998877) then
+            if (accountingLink /= -998877) then
                 accounted_for_links(linkCounter) = accountingLink
             endif
             linkCounter = linkCounter + 1
         enddo
     enddo
-    
     do jj=1, size(accounted_for_links,1)
-        if (accounted_for_links(jj) == linkMatrix(ii, li_idx)) then
+        if (accounted_for_links(jj) == int(linkMatrix(ii, li_idx))) then
             accountedLink = .true.
         endif
     enddo
@@ -852,10 +854,8 @@
  real, intent(in out) :: nodeMatrix(:,:), linkMatrix(:,:)
  integer, intent(in) :: multiprocessors
  
- real :: reorganizedNodes(size(nodeMatrix,1),size(nodeMatrix,2))
- real :: reorganizedLinks(size(linkMatrix,1),size(linkMatrix,2))
- real, allocatable :: clippedNodes(:,:)
- real, allocatable :: clippedLinks(:,:)
+ real , allocatable :: reorganizedNodes(:,:)
+ real , allocatable :: reorganizedLinks(:,:)
  
  integer :: nodesRowCounter = 1, linksRowCounter = 1
  integer :: ii, jj, mp
@@ -863,13 +863,11 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
+ allocate(reorganizedNodes(size(nodeMatrix,1),size(nodeMatrix,2)))
+ reorganizedNodes = -998877
+ 
  do mp=1, multiprocessors
     do ii=1, size(subnetwork_container_nodes,2)
-        do jj=1, size(subnetwork_container_nodes,3)
-            if (subnetwork_container_nodes(mp,ii,jj) == -998877) then
-                GOTO 5566
-            endif
-        enddo
         do jj=1, size(reorganizedNodes,1)
             if (subnetwork_container_nodes(mp,ii,ni_idx) == reorganizedNodes(jj,ni_idx)) then
                 GOTO 5566
@@ -885,21 +883,13 @@
     enddo
  enddo
  
- allocate(clippedNodes(nodesRowCounter, size(nodeMatrix,2)))
+ nodeMatrix(:,:) = reorganizedNodes(:,:)
  
- do ii=1, size(clippedNodes,1)
-    clippedNodes(ii,:) = reorganizedNodes(ii,:)
- enddo
- 
- nodeMatrix(:,:) = clippedNodes(:,:)
+ allocate(reorganizedLinks(size(linkMatrix,1),size(linkMatrix,2)))
+ reorganizedLinks = -998877
  
  do mp=1, multiprocessors
     do ii=1, size(subnetwork_container_links,2)
-        do jj=1, size(subnetwork_container_links,3)
-            if (subnetwork_container_links(mp,ii,jj) == -998877) then
-                GOTO 5567
-            endif
-        enddo
         do jj=1, size(reorganizedLinks,1)
             if (subnetwork_container_links(mp,ii,ni_idx) == reorganizedLinks(jj,ni_idx)) then
                 GOTO 5567
@@ -915,13 +905,7 @@
     enddo
  enddo
  
- allocate(clippedLinks(linksRowCounter, size(linkMatrix,2)))
- 
- do ii=1, size(clippedLinks,1)
-    clippedLinks(ii,:) = reorganizedLinks(ii,:)
- enddo
- 
- linkMatrix(:,:) = clippedLinks(:,:)
+ linkMatrix(:,:) = reorganizedLinks(:,:)
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine reorganize_arrays
