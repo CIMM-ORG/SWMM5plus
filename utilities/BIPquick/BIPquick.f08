@@ -277,7 +277,18 @@
  
  call reorganize_arrays(nodeMatrix, linkMatrix, multiprocessors, &
             subnetwork_container_nodes, subnetwork_container_links)
-            
+ 
+ open(unit=21, file='IdealNetworkNode.csv', status='unknown')
+ open(unit=22, file='IdealNetworkLink.csv', status='unknown')
+
+ do ii=1, n_rows_excluding_header_node
+    write(21, '(*(I0 : ", "))') int(nodeMatrix(ii,:))
+ enddo
+ 
+ do ii=1, n_rows_excluding_header_link
+    write(22, '(*(f10.5 : ", "))') linkMatrix(ii,:)
+ enddo
+ 
  print*, "Ideal Network Node"
  do ii=1, size(nodeMatrix,1)
     print*, nodeMatrix(ii,:)
