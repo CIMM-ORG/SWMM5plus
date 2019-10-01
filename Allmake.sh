@@ -59,6 +59,6 @@ $FC -o $PROGRAM $SOURCESF
 
 $clean:
     echo Clean Object files...
-    rm -rf *.o *.mod
+    #rm -rf *.o *.mod
     
 echo Complete!
