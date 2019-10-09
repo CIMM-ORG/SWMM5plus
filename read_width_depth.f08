@@ -37,6 +37,7 @@
     public  :: read_number_of_cells
     public  :: read_max_number_of_pairs
     public  :: read_widthdepth_pairs
+    public  :: split_read_int
 
     integer :: debuglevel = 0
     
@@ -55,6 +56,11 @@
  integer, intent(in)  :: NX
  integer, intent(out) :: number_of_cells
  
+ logical :: next_data_is_pair  = .false.
+ logical :: dont_quit          = .true.
+ logical :: expecting_new_cell = .true.
+ integer :: icell = -1
+ 
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -62,10 +68,41 @@
  ! error checking
  number_of_cells = read_number_of_cells(iunit)
  
+ do while (dont_quit .eqv. .true.)
+ 
+ enddo
+ 
  
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine read_widthdepth_pairs
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine split_read_int (str, sep, pairValues)
+ 
+ character(64) :: subroutine_name = 'split_read_int'
+ 
+ character(len=*), intent(in)     :: str
+ character(len=*), intent(in)     :: sep
+ real, dimension(:), allocatable  :: pairValues
+ integer :: i,n
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ n = 1
+ do i=1, len(str)
+     if (str(i:i) == sep) then
+         n = n + 1
+     endif
+ end do
+ allocate (pairValues(n))
+ read (unit=str,fmt=*) pairValues
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine split_read_int
 !
 !========================================================================== 
 !==========================================================================
