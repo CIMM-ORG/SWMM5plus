@@ -37,7 +37,7 @@
     public  :: read_number_of_cells
     public  :: read_max_number_of_pairs
     public  :: read_widthdepth_pairs
-    public  :: split_read_int
+    public  :: split_read
 
     integer :: debuglevel = 0
     
@@ -46,21 +46,45 @@
 !========================================================================== 
 !==========================================================================
 !
- subroutine read_widthdepth_pairs &
-    (NX, iunit, number_of_cells)
+ subroutine read_widthdepth_pairs (iunit, ID)
  
  character(64) :: subroutine_name = 'read_widthdepth_pairs'
  
  integer, intent(in)  :: iunit   ! the file unit number
  
- integer, intent(in)  :: NX
- integer, intent(out) :: number_of_cells
+ integer :: number_of_cells
+ integer :: max_number_of_pairs
  
  logical :: next_data_is_pair  = .false.
  logical :: dont_quit          = .true.
  logical :: expecting_new_cell = .true.
- integer :: icell = -1
+ integer :: icell = 0
+ integer :: ipair = 0
+ character(len=256)  :: tmp
+ integer             :: istat
  
+ 
+! These should be organized later
+ integer, dimension(:), allocatable :: ID
+ integer, dimension(:), allocatable :: numberPairs
+ 
+ real, dimension(:), allocatable :: ManningsN
+ real, dimension(:), allocatable :: Length
+ real, dimension(:), allocatable :: zBottom
+ real, dimension(:), allocatable :: xDistance
+ real, dimension(:), allocatable :: Breadth
+ 
+ real, dimension(:,:,:), allocatable :: widthDepthData
+ 
+ character(len=:), allocatable :: cellType(:)
+ 
+ character(len=256) :: value1
+ character(len=256) :: value2
+ 
+ 
+ integer :: allocation_status
+ character(len=99) :: emsg
+ real :: tmpID
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -68,11 +92,113 @@
  ! error checking
  number_of_cells = read_number_of_cells(iunit)
  
+ max_number_of_pairs = read_max_number_of_pairs (iunit)
+ 
+ allocate(ID(number_of_cells), stat=allocation_status, errmsg=emsg)
+ ID(:) = nullvalueI
+ 
+ allocate(numberPairs(number_of_cells), stat=allocation_status, errmsg=emsg)
+ numberPairs(:) = nullvalueI
+ 
+ allocate(ManningsN(number_of_cells), stat=allocation_status, errmsg=emsg)
+ ManningsN(:) = nullvalueR
+ 
+ allocate(Length(number_of_cells), stat=allocation_status, errmsg=emsg)
+ Length(:) = nullvalueR
+ 
+ allocate(zBottom(number_of_cells), stat=allocation_status, errmsg=emsg)
+ zBottom(:) = nullvalueR
+ 
+ allocate(xDistance(number_of_cells), stat=allocation_status, errmsg=emsg)
+ xDistance(:) = nullvalueR
+ 
+ allocate(Breadth(number_of_cells), stat=allocation_status, errmsg=emsg)
+ Breadth(:) = nullvalueR
+ 
+ allocate(widthDepthData(number_of_cells, max_number_of_pairs, max_number_of_pairs), stat=allocation_status, errmsg=emsg)
+ widthDepthData(:,:,:) = nullvalueR
+ 
+ allocate(character(100):: cellType(number_of_cells), stat=allocation_status, errmsg=emsg)
+ 
+ rewind(iunit)
  do while (dont_quit .eqv. .true.)
- 
+    read(iunit,fmt='(A)',iostat=istat) tmp
+    if (is_iostat_end(istat)) exit
+    
+    tmp = adjustl(tmp)
+    if (tmp(1:1) == '#') then
+        cycle
+    endif
+    
+    tmp = trim(tmp)
+    call split_read_two_strings (tmp, ' ', value1, value2)
+    
+    if (value1 == 'begin') then
+        if(value2 == 'cell') then
+            if (expecting_new_cell .neqv. .true.) then
+                print*, tmp
+                print*, 'error, likely misalignment in file'
+                stop
+            else
+                !reset for new cell
+                expecting_new_cell = .false.
+                next_data_is_pair  = .false.
+                icell = icell + 1
+            endif
+        else
+            
+            print*, tmp
+            print*, 'error, not yet designed for features other than cells'
+            stop
+        endif
+    endif
+    
+    call split_read_two_strings (tmp, ' ', value1, value2)
+    
+    if (value1 == 'ID') then
+        read(value2 , *, iostat=istat) tmpID
+        ID(icell) = int(tmpID)
+    elseif (value1 == 'ManningsN') then
+        read(value2 , *, iostat=istat) ManningsN(icell)
+    elseif (value1 == 'Length') then
+        read(value2 , *, iostat=istat) Length(icell)
+    elseif (value1 == 'zBottom') then
+        read(value2 , *, iostat=istat) zBottom(icell)
+    elseif (value1 == 'xDistance') then
+        read(value2 , *, iostat=istat) xDistance(icell)
+    elseif (value1 == 'Breadth') then
+        read(value2 , *, iostat=istat) Breadth(icell)
+    elseif (value1 == 'cellType') then
+        if (value2 == 'channel_WidthDepthPairs') then
+            cellType(icell) = 'widthdepth_pair'
+        else
+            print*,'error: unknown value for cellType'
+        endif
+    elseif (value1 == 'numberPairs') then
+        read(value2 , *, iostat=istat) numberPairs(icell)
+    elseif (value1 == 'WidthDepthPairs') then
+        if (value2 == 'follow') then
+            next_data_is_pair = .true.
+            ipair = 0
+        else
+            print*, 'error, not designed for 2nd argument other than follow'
+        endif
+    elseif (value1 == 'end') then
+        if(value2 == 'WidthDepthPairs') then
+            continue
+        elseif(value2 == 'cell') then
+            expecting_new_cell = .true.
+        else
+            print*, tmp
+            print*, value2
+            print*, 'error, unknown option'
+            stop
+        endif
+    else
+        print*,'hereOct212019'
+    endif
  enddo
- 
- 
+ rewind(iunit)
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine read_widthdepth_pairs
@@ -80,13 +206,37 @@
 !========================================================================== 
 !==========================================================================
 !
- subroutine split_read_int (str, sep, pairValues)
+ subroutine split_read_two_strings (str, sep, value1, value2)
  
- character(64) :: subroutine_name = 'split_read_int'
+ character(64) :: subroutine_name = 'split_read_two_strings'
  
  character(len=*), intent(in)     :: str
  character(len=*), intent(in)     :: sep
- real, dimension(:), allocatable  :: pairValues
+ character(len=256), intent(inout) :: value1
+ character(len=256), intent(inout) :: value2
+ integer :: i,n
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ read (unit=str,fmt=*) value1, value2
+ 
+ value1 = trim(value1)
+ value2 = trim(value2)
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine split_read_two_strings
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine split_read (str, sep, pairValues)
+ 
+ character(64) :: subroutine_name = 'split_read'
+ 
+ character(len=*), intent(in)     :: str
+ character(len=*), intent(in)     :: sep
+ character(len=:), allocatable :: pairValues(:)
  integer :: i,n
   
 !-------------------------------------------------------------------------- 
@@ -98,11 +248,11 @@
          n = n + 1
      endif
  end do
- allocate (pairValues(n))
+ allocate (character(256):: pairValues(n))
  read (unit=str,fmt=*) pairValues
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
- end subroutine split_read_int
+ end subroutine split_read
 !
 !========================================================================== 
 !==========================================================================
@@ -113,7 +263,7 @@
  
  integer,intent(in)  :: iunit   ! the file unit number
  integer             :: n_lines ! the number of lines in the file
- character(len=110)  :: tmp
+ character(len=256)  :: tmp
  integer             :: istat
   
 !-------------------------------------------------------------------------- 
@@ -143,7 +293,7 @@
  
  integer,intent(in)  :: iunit   ! the file unit number
  integer             :: n_pairs ! the number of lines in the file
- character(len=110)  :: tmp
+ character(len=256)  :: tmp
  integer             :: istat
  integer             :: tmpPair
   
