@@ -46,7 +46,7 @@
 !========================================================================== 
 !==========================================================================
 !
- subroutine read_widthdepth_pairs (iunit, ID)
+ subroutine read_widthdepth_pairs (iunit, widthDepthData)
  
  character(64) :: subroutine_name = 'read_widthdepth_pairs'
  
@@ -115,7 +115,7 @@
  allocate(Breadth(number_of_cells), stat=allocation_status, errmsg=emsg)
  Breadth(:) = nullvalueR
  
- allocate(widthDepthData(number_of_cells, max_number_of_pairs, max_number_of_pairs), stat=allocation_status, errmsg=emsg)
+ allocate(widthDepthData(number_of_cells, max_number_of_pairs, 2), stat=allocation_status, errmsg=emsg)
  widthDepthData(:,:,:) = nullvalueR
  
  allocate(character(100):: cellType(number_of_cells), stat=allocation_status, errmsg=emsg)
@@ -195,7 +195,17 @@
             stop
         endif
     else
-        print*,'hereOct212019'
+        if(ipair == 0) then 
+            ipair = 1
+        endif
+        
+        if(value1 == 'end') then
+            next_data_is_pair = .false.
+        else
+            read(value1 , *, iostat=istat) widthDepthData(icell, ipair, 1)
+            read(value2 , *, iostat=istat) widthDepthData(icell, ipair, 2)
+            ipair = ipair+1
+        endif
     endif
  enddo
  rewind(iunit)

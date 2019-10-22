@@ -5,7 +5,7 @@ use read_width_depth
 integer :: unit = 11
 integer :: n_rows_in_file_node = 0
 integer :: max_number_of_pairs = 0
-integer, dimension(:), allocatable :: ID
+real, dimension(:,:,:), allocatable :: ID
 
 open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
 n_rows_in_file_node = read_number_of_cells(unit)
@@ -15,7 +15,7 @@ print*, max_number_of_pairs
 
 call read_widthdepth_pairs (unit, ID)
 
-print*, ID
+print*, ID(317,:,2)
 
 
 end program a1
