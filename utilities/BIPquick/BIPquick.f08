@@ -4,6 +4,8 @@
  
  implicit none
  
+ integer, parameter :: dp = selected_real_kind(15)
+ 
  integer, parameter :: node_id           = 1 ! node ID
  integer, parameter :: ni_idx            = 2 ! the node index (i.e. its position in the array)
  integer, parameter :: ni_node_type      = 3 ! int representation of the type of node
@@ -33,7 +35,7 @@
  integer, parameter :: lr_InitialDnstreamDepth =12 ! initial downstream depth
  
 ! for the time being, the target length of an element is a hardcoded parameter
- real    :: lr_target = 1.0
+ real(dp)    :: lr_target = 1.0
  integer :: n_rows_in_file_node, n_rows_in_file_link
  integer :: iunit = 10
  integer :: runit = 11
@@ -45,31 +47,31 @@
  integer,parameter          :: line_length=256
  character(line_length)     :: line
  character(len=line_length) :: word
- real    :: a(line_length/2+1)
+ real(dp)    :: a(line_length/2+1)
  integer :: i,io,icount,rcount
  integer :: multiprocessors = 3
- real :: phantom_index
+ real(dp) :: phantom_index
  integer :: weight_index = -998877
- real :: partition_threshold
- real :: max_weight = 0.0
+ real(dp) :: partition_threshold
+ real(dp) :: max_weight = 0.0
  integer :: effective_root = -998877
  logical :: ideal_exists = .false.
  integer :: spanning_link = -998877
- real :: start_point = 0.0
+ real(dp) :: start_point = 0.0
  integer :: root
- real :: upstream_link_length = 0.0
+ real(dp) :: upstream_link_length = 0.0
  integer :: upstream_node = -998877
- real :: upstream_weight = 0.0
- real :: total_clipped_weight = 0.0
+ real(dp) :: upstream_weight = 0.0
+ real(dp) :: total_clipped_weight = 0.0
  integer :: phantom_array_location
  
- real, dimension(:,:), allocatable :: nodeMatrix
- real, dimension(:,:), allocatable :: linkMatrix
- real, dimension(:,:), allocatable :: weight_range
- real, dimension(:,:), allocatable :: nodes_container
+ real(dp), dimension(:,:), allocatable :: nodeMatrix
+ real(dp), dimension(:,:), allocatable :: linkMatrix
+ real(dp), dimension(:,:), allocatable :: weight_range
+ real(dp), dimension(:,:), allocatable :: nodes_container
  
- real, dimension(:,:,:), allocatable :: subnetwork_container_nodes
- real, dimension(:,:,:), allocatable :: subnetwork_container_links
+ real(dp), dimension(:,:,:), allocatable :: subnetwork_container_nodes
+ real(dp), dimension(:,:,:), allocatable :: subnetwork_container_links
  
  logical, allocatable, dimension(:) :: visited_flag_weight
  logical, allocatable, dimension(:) :: visit_network_mask
@@ -85,7 +87,7 @@
  
 !-------------------------------------------------------------------------- 
  
- open(newunit=runit, file='nodes_info.csv', status='OLD')
+ open(newunit=runit, file='nodes_info_EDGE2.csv', status='OLD')
  
 ! get number of lines in the file
  n_rows_in_file_node = number_of_lines_in_file(runit)
@@ -123,7 +125,7 @@
    ! write(*,*)'   read ',icount,' values=', a(:icount)
  enddo
  
- open(newunit=lunit, file='links_info.csv', status='OLD')
+ open(newunit=lunit, file='links_info_EDGE2.csv', status='OLD')
  
 ! get number of lines in the file
  n_rows_in_file_link = number_of_lines_in_file(lunit)
@@ -240,7 +242,7 @@
             call spanning_check &
                 (spanning_link, weight_range, linkMatrix, nodeMatrix, &
                 lr_target, partition_threshold, partition_boolean)
-        end do
+        enddo
         
         start_point = linear_interpolator(partition_threshold, &
         spanning_link, linkMatrix, weight_range, lr_target)
@@ -254,6 +256,8 @@
             (int(nodeMatrix(phantom_array_location, ni_idx)), mp, &
             subnetwork_container_nodes, visit_network_mask, nodeMatrix, &
             linkMatrix)
+!     else
+!         print*, "Edge case is not implemented yet"
     endif
     
     do ii=1, size(visit_network_mask,1)
@@ -312,9 +316,9 @@
 ! link.
  character(64)   :: function_name = 'weighting_function'
  
- real,intent(in)  :: lr_target
- real,intent(in)  :: link_length
- real :: weight
+ real(dp),intent(in)  :: lr_target
+ real(dp),intent(in)  :: link_length
+ real(dp) :: weight
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
  
@@ -333,9 +337,9 @@
 ! zeros.
  character(64) :: subroutine_name = 'null_value_convert'
  
- real, intent(in out) :: array(:)
+ real(dp), intent(in out) :: array(:)
  integer :: ii
- real :: nullValue = -998877
+ real(dp) :: nullValue = -998877
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
@@ -357,8 +361,8 @@
 ! weight (nr_directweight_u).
  character(64) :: subroutine_name = 'local_node_weighting'
  
- real,intent(in)  :: lr_target
- real, intent(in out) :: nodeMatrix(:,:), linkMatrix(:,:)
+ real(dp),intent(in)  :: lr_target
+ real(dp), intent(in out) :: nodeMatrix(:,:), linkMatrix(:,:)
  integer :: rootnode_index, links_row
  integer ii, jj
  
@@ -394,7 +398,7 @@
 
  character(64)   :: function_name = 'find_weight_index'
  
- real, intent(in out) :: nodeMatrix(:,:)
+ real(dp), intent(in out) :: nodeMatrix(:,:)
  integer,intent(in)  :: root_idx
  integer :: weight_index, root_identity
  integer :: ii
@@ -422,7 +426,7 @@
 
  character(64) :: subroutine_name = 'upstream_weight_calculation'
  
- real, intent(in out) :: nodeMatrix(:,:), linkMatrix(:,:)
+ real(dp), intent(in out) :: nodeMatrix(:,:), linkMatrix(:,:)
  integer, intent(in) :: weight_index
  integer :: root, node_row_contents, link_idx, new_root
  integer :: link_row_contents, node_upstream
@@ -473,13 +477,13 @@
 
  character(64) :: subroutine_name = 'nr_totalweight_assigner'
  
- real, intent(in out) :: nodeMatrix(:,:)
+ real(dp), intent(in out) :: nodeMatrix(:,:)
  integer, intent(in out) :: weight_index 
  logical, intent(in out) :: visited_flag_weight(:)
  logical, intent(in out) :: visit_network_mask(:)
- real, intent(in out) :: max_weight
+ real(dp), intent(in out) :: max_weight
  integer :: ii
- real :: nullValue = -998877
+ real(dp) :: nullValue = -998877
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -509,8 +513,8 @@
  character(64) :: subroutine_name = 'subnetwork_carving'
  
  logical, intent(in out) :: visit_network_mask(:)
- real, intent (in out) :: subnetwork_container_nodes (:,:,:)
- real, intent(in) :: nodeMatrix(:,:), linkMatrix(:,:)
+ real(dp), intent (in out) :: subnetwork_container_nodes (:,:,:)
+ real(dp), intent(in) :: nodeMatrix(:,:), linkMatrix(:,:)
  integer :: node_row_contents, link_row_contents, new_root, node_upstream
  integer, intent(in) :: root, proc
  integer :: ii, jj, kk
@@ -555,15 +559,15 @@
      accounted_for_links)
 
  character(64) :: subroutine_name = 'subnetworks_links'
- real :: endpoint1, endpoint2
- real, intent(in) :: nodes_container(:,:)
- real, intent(in out) :: subnetwork_container_links(:, :, :)
- real, intent(in) :: linkMatrix(:,:)
+ real(dp) :: endpoint1, endpoint2
+ real(dp), intent(in) :: nodes_container(:,:)
+ real(dp), intent(in out) :: subnetwork_container_links(:, :, :)
+ real(dp), intent(in) :: linkMatrix(:,:)
  integer, allocatable :: potential_endpoints(:)
  integer, intent(in out) :: accounted_for_links(:)
  integer, intent(in) :: proc
  integer :: ii, jj, linkCounter,mp
- real :: accountingLink
+ real(dp) :: accountingLink
  logical :: accountedLink = .false.
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -608,11 +612,11 @@
     (ideal_exists, max_weight, partition_threshold, nodeMatrix) result (effective_root)
 
  character(64) :: subroutine_name = 'ideal_partition_check'
- real, intent(in) :: max_weight, partition_threshold
+ real(dp), intent(in) :: max_weight, partition_threshold
  logical, intent(in out) :: ideal_exists
  integer :: effective_root
- real :: nearest_overestimate
- real, intent(in) :: nodeMatrix(:,:)
+ real(dp) :: nearest_overestimate
+ real(dp), intent(in) :: nodeMatrix(:,:)
  integer :: ii
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -649,9 +653,9 @@
  character(64) :: subroutine_name = 'spanning_check'
  
  integer, intent(in out) :: spanning_link
- real, allocatable, intent(in out) :: weight_range(:,:)
- real, intent(in) :: linkMatrix(:,:), nodeMatrix(:,:)
- real, intent(in) :: lr_target, partition_threshold
+ real(dp), allocatable, intent(in out) :: weight_range(:,:)
+ real(dp), intent(in) :: linkMatrix(:,:), nodeMatrix(:,:)
+ real(dp), intent(in) :: lr_target, partition_threshold
  logical, intent(in out) :: partition_boolean(:)
  integer :: upstream_node
  integer :: ii, jj
@@ -677,10 +681,11 @@
       ) then
         spanning_link = linkMatrix(jj,li_idx)
         partition_boolean(jj) = .true.
+        GOTO 5568
     endif
  enddo
  
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name  
+ 5568 if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name  
  end subroutine spanning_check
 !
 !========================================================================== 
@@ -691,10 +696,10 @@
 
  character(64)   :: function_name = 'linear_interpolator'
  
- real, intent(in) :: linkMatrix(:,:), weight_range(:,:)
- real , intent(in) :: partition_threshold, lr_target
+ real(dp), intent(in) :: linkMatrix(:,:), weight_range(:,:)
+ real(dp) , intent(in) :: partition_threshold, lr_target
  integer, intent(in) :: spanning_link
- real :: length_from_start, total_length, start, weight_ratio
+ real(dp) :: length_from_start, total_length, start, weight_ratio
  integer :: ii
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
@@ -717,10 +722,10 @@
 
  character(64)   :: function_name = 'phantom_naming_convention'
  
- real, intent(in) :: linkMatrix(:,:), nodeMatrix(:,:)
+ real(dp), intent(in) :: linkMatrix(:,:), nodeMatrix(:,:)
  integer :: max_node_idx, max_link_idx
  integer, allocatable :: node_indices(:), link_indices(:)
- real :: dig, phantom_idx
+ real(dp) :: dig, phantom_idx
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
  
@@ -751,15 +756,15 @@
 !
  character(64) :: subroutine_name = 'phantom_node_generator'
  
- real, intent(in) :: start_point
+ real(dp), intent(in) :: start_point
  integer, intent(in) :: spanning_link
  integer, intent(in) :: mp 
- real, intent(in) :: partition_threshold
- real, intent (in) :: phantom_index
- real, intent(in)  :: lr_target
- real, intent(in out) :: linkMatrix(:,:), nodeMatrix(:,:)
- real, intent (in out) :: subnetwork_container_nodes (:,:,:)
- real, intent (in out) :: subnetwork_container_links (:,:,:)
+ real(dp), intent(in) :: partition_threshold
+ real(dp), intent (in) :: phantom_index
+ real(dp), intent(in)  :: lr_target
+ real(dp), intent(in out) :: linkMatrix(:,:), nodeMatrix(:,:)
+ real(dp), intent (in out) :: subnetwork_container_nodes (:,:,:)
+ real(dp), intent (in out) :: subnetwork_container_links (:,:,:)
  integer, intent(in) :: n_rows_excluding_header_node
  integer, intent(in) :: n_rows_excluding_header_link
  integer, intent(in out) :: phantom_array_location
@@ -860,13 +865,13 @@
 ! nr_directweight_u and nr_totalweight_u columns of the nodes array into float 
 ! zeros.
  character(64) :: subroutine_name = 'reorganize_arrays'
- real, intent (in) :: subnetwork_container_nodes (:,:,:)
- real, intent (in) :: subnetwork_container_links (:,:,:)
- real, intent(in out) :: nodeMatrix(:,:), linkMatrix(:,:)
+ real(dp), intent (in) :: subnetwork_container_nodes (:,:,:)
+ real(dp), intent (in) :: subnetwork_container_links (:,:,:)
+ real(dp), intent(in out) :: nodeMatrix(:,:), linkMatrix(:,:)
  integer, intent(in) :: multiprocessors
  
- real , allocatable :: reorganizedNodes(:,:)
- real , allocatable :: reorganizedLinks(:,:)
+ real(dp) , allocatable :: reorganizedNodes(:,:)
+ real(dp) , allocatable :: reorganizedLinks(:,:)
  
  integer :: nodesRowCounter = 1, linksRowCounter = 1
  integer :: ii, jj, mp
