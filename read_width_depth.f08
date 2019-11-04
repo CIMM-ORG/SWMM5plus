@@ -46,7 +46,9 @@
 !========================================================================== 
 !==========================================================================
 !
- subroutine read_widthdepth_pairs (iunit, widthDepthData)
+ subroutine read_widthdepth_pairs &
+    (iunit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
  
  character(64) :: subroutine_name = 'read_widthdepth_pairs'
  

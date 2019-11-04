@@ -15,6 +15,7 @@
     use globals
     use setting_definition
     use utility
+    use read_width_depth
 
     implicit none
 
@@ -57,6 +58,26 @@
  integer :: first_step, last_step, display_interval, mm
 
  real :: climit, cvel, uz, lz
+ 
+ !Waller Creek 
+ real, dimension(:), allocatable :: ID
+ real, dimension(:), allocatable :: ManningsN
+ real, dimension(:), allocatable :: Length
+ real, dimension(:), allocatable :: zBottom
+ real, dimension(:), allocatable :: xDistance
+ real, dimension(:), allocatable :: Breadth
+ integer, dimension(:),     allocatable :: numberPairs
+ real,    dimension(:,:,:), allocatable :: widthDepthData
+ character(len=:), allocatable :: cellType(:)
+ real :: inflowBC, heightBC, Waller_Creek_initial_depth
+ real :: geometry_downstream_minimum_length
+ real :: Waller_Creek_cellsize_target
+ 
+ logical :: geometry_add_downstream_buffer
+ 
+ integer :: unit = 11
+ integer :: n_rows_in_file_node = 0
+ integer :: max_number_of_pairs = 0
 
 
 !--------------------------------------------------------------------------
@@ -121,6 +142,69 @@
                  channel_length, subdivide_length, &
                  lowerZ, upperZ, ManningsN)
         endif
+
+        !print *, flowrate, depth_dnstream
+        !stop
+        
+    !% Write a new case statement for each unique test case
+    case ('Waller_Creek')
+    
+        !open the Waller Creek depth list
+        open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
+        
+        n_rows_in_file_node = read_number_of_cells(unit)
+        max_number_of_pairs = read_max_number_of_pairs(unit)
+
+        call read_widthdepth_pairs &
+            (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+            Breadth, widthDepthData, cellType)
+            
+        !Boundary conditions
+        inflowBC = 1.0
+        heightBC = 132.0
+        
+        !Inital depth
+        Waller_Creek_initial_depth = 0.5
+        geometry_downstream_minimum_length = 0.0
+        Waller_Creek_cellsize_target = 10
+        
+        !TODO addition of buffer cell is not implemented yet
+        geometry_add_downstream_buffer = .false.
+
+        N_link = read_number_of_cells(unit)
+        N_node = N_link + 1
+        N_BCupstream = 1
+        N_BCdnstream = 1
+        
+        
+        N_link = newNumLink
+        N_node = N_link + 1
+
+        !% create the local variables that must be populated to set up the test case
+        call control_variable_allocation &
+            (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, subdivide_length, flowrate, area, &
+             velocity, Froude, ManningsN, idepth_type)
+
+        ! step controls
+        display_interval = 1000
+        first_step = 1
+        last_step  =  40000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+
+        ! set up flow and time step for differen subcases
+        ! tests that ran:  Fr = 0.25, 0.5
+        Froude       = 0.25   ! determines flowrate and slope to get Froude
+        CFL          = 0.6  ! determines dt from subdivide_length
+
+        ! keep these physics fixed
+        channel_breadth = 3.0
+        depth_upstream  = 0.5
+        depth_dnstream  = 0.5
+        idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
+        ManningsN       = 0.015
+        channel_length    = 10000.0
+        lowerZ          = 0.3
+        subdivide_length = 5000.0
 
         !print *, flowrate, depth_dnstream
         !stop
