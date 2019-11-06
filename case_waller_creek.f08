@@ -105,7 +105,7 @@
 !==========================================================================
 !
 subroutine define_geometry (geometry_downstream_minimum_length, &
-    Waller_Creek_cellsize_target)
+    Waller_Creek_cellsize_target, n_rows_in_file_node)
  
  character(64) :: subroutine_name = 'define_geometry'
  
@@ -158,6 +158,47 @@ subroutine define_geometry (geometry_downstream_minimum_length, &
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine define_geometry
+!
+!========================================================================== 
+!==========================================================================
+!
+subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
+ 
+ character(64) :: subroutine_name = 'widthdepth_pair_consistency'
+ 
+ integer, dimension(:), allocatable :: ID
+ integer, dimension(:), allocatable :: numberPairs
+ 
+ real, dimension(:), allocatable :: ManningsN
+ real, dimension(:), allocatable :: Length
+ real, dimension(:), allocatable :: zBottom
+ real, dimension(:), allocatable :: xDistance
+ real, dimension(:), allocatable :: Breadth
+ 
+ real, dimension(:,:,:), allocatable :: widthDepthData
+ 
+ real, dimension(:,:,:), allocatable :: dWidth
+ real, dimension(:,:,:), allocatable :: dDepth
+ 
+ character(len=:), allocatable :: cellType(:)
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+
+ allocate(dWidth(size(widthDepthData,1),size(widthDepthData,2)))
+ dWidth(:,:) = 0.0
+ allocate(dDepth(size(widthDepthData,1),size(widthDepthData,2)))
+ dDepth(:,:) = 0.0
+ 
+ do i=1, size(numberPairs)
+    do j=1, numberPairs(i)
+        dWidth(i,1:j-1) = widthDepthData(i,2:j,1) - widthDepthData(i,1:j-1,1)
+        dDepth(i,1:j-1) = widthDepthData(i,2:j,2) - widthDepthData(i,1:j-1,2)
+    enddo
+ enddo
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine widthdepth_pair_consistency
 !
 !========================================================================== 
 !==========================================================================

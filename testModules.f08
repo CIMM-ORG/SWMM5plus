@@ -17,6 +17,9 @@ integer, dimension(:), allocatable :: ID
  real, dimension(:,:,:), allocatable :: widthDepthData
  
  character(len=:), allocatable :: cellType(:)
+ 
+ real, dimension(:), allocatable :: aaaa
+allocate(aaaa(5))
 
 open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
 n_rows_in_file_node = read_number_of_cells(unit)
@@ -28,7 +31,26 @@ call read_widthdepth_pairs &
     (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
      Breadth, widthDepthData, cellType)
 
-print*, cellType
+!print*, cellType
+
+aaaa(:) = 0.0
+
+print*, size(widthDepthData,1)
+print*, size(widthDepthData,2)
+print*, size(widthDepthData,3)
+
+aaaa(2:4) = widthDepthData(1,1:3,2) - widthDepthData(1,1:3,1)
+print*, "======"
+
+print*, aaaa
+
+print*, "======"
+
+
+print*, widthDepthData(1,1:5,1)
+
+print*, "======"
+print*, widthDepthData(1,1:5,2)
 
 
 end program a1
