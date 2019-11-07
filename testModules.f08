@@ -2,10 +2,10 @@ program a1
 
 use read_width_depth
 
-integer :: unit = 11
-integer :: n_rows_in_file_node = 0
-integer :: max_number_of_pairs = 0
-integer, dimension(:), allocatable :: ID
+ integer :: unit = 11
+ integer :: n_rows_in_file_node = 0
+ integer :: max_number_of_pairs = 0
+ integer, dimension(:), allocatable :: ID
  integer, dimension(:), allocatable :: numberPairs
  
  real, dimension(:), allocatable :: ManningsN
@@ -18,42 +18,100 @@ integer, dimension(:), allocatable :: ID
  
  character(len=:), allocatable :: cellType(:)
  
- real, dimension(:), allocatable :: aaaa
-allocate(aaaa(5))
+ real, dimension(:,:), allocatable :: dWidth
+ real, dimension(:,:), allocatable :: dDepth
+ 
+ integer :: nfix
 
-open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
-n_rows_in_file_node = read_number_of_cells(unit)
-max_number_of_pairs = read_max_number_of_pairs(unit)
-print*, n_rows_in_file_node
-print*, max_number_of_pairs
+ open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
+ n_rows_in_file_node = read_number_of_cells(unit)
+ max_number_of_pairs = read_max_number_of_pairs(unit)
+ print*, n_rows_in_file_node
+ print*, max_number_of_pairs
 
-call read_widthdepth_pairs &
-    (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-     Breadth, widthDepthData, cellType)
+ call read_widthdepth_pairs &
+     (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+      Breadth, widthDepthData, cellType)
+      
+ allocate(dWidth(size(widthDepthData,1),size(widthDepthData,2)))
+ dWidth(:,:) = 0.0
+ allocate(dDepth(size(widthDepthData,1),size(widthDepthData,2)))
+ dDepth(:,:) = 0.0
 
-!print*, cellType
+ nfix = 0
+ do i=1, size(numberPairs)
+    do j=1, numberPairs(i)
+        !compute the difference in width across each level
+        dWidth(i,1:j-1) = widthDepthData(i,2:j,1) - widthDepthData(i,1:j-1,1)
+        !compute difference in depth across eacg level
+        dDepth(i,1:j-1) = widthDepthData(i,2:j,2) - widthDepthData(i,1:j-1,2)
+    enddo
+ enddo
+ 
+ nfix = nfix + count(dWidth < 0.0 .or. dDepth < 0.0)
+ 
+ print*, nfix
 
-aaaa(:) = 0.0
-
-print*, size(widthDepthData,1)
-print*, size(widthDepthData,2)
-print*, size(widthDepthData,3)
-
-aaaa(2:4) = widthDepthData(1,1:3,2) - widthDepthData(1,1:3,1)
-print*, "======"
-
-print*, aaaa
-
-print*, "======"
-
-
-print*, widthDepthData(1,1:5,1)
-
-print*, "======"
-print*, widthDepthData(1,1:5,2)
 
 
 end program a1
+
+! program a1
+! 
+! use read_width_depth
+! 
+! integer :: unit = 11
+! integer :: n_rows_in_file_node = 0
+! integer :: max_number_of_pairs = 0
+! integer, dimension(:), allocatable :: ID
+!  integer, dimension(:), allocatable :: numberPairs
+!  
+!  real, dimension(:), allocatable :: ManningsN
+!  real, dimension(:), allocatable :: Length
+!  real, dimension(:), allocatable :: zBottom
+!  real, dimension(:), allocatable :: xDistance
+!  real, dimension(:), allocatable :: Breadth
+!  
+!  real, dimension(:,:,:), allocatable :: widthDepthData
+!  
+!  character(len=:), allocatable :: cellType(:)
+!  
+!  real, dimension(:), allocatable :: aaaa
+! allocate(aaaa(5))
+! 
+! open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
+! n_rows_in_file_node = read_number_of_cells(unit)
+! max_number_of_pairs = read_max_number_of_pairs(unit)
+! print*, n_rows_in_file_node
+! print*, max_number_of_pairs
+! 
+! call read_widthdepth_pairs &
+!     (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+!      Breadth, widthDepthData, cellType)
+! 
+! !print*, cellType
+! 
+! aaaa(:) = 0.0
+! 
+! print*, size(widthDepthData,1)
+! print*, size(widthDepthData,2)
+! print*, size(widthDepthData,3)
+! 
+! aaaa(2:4) = widthDepthData(1,1:3,2) - widthDepthData(1,1:3,1)
+! print*, "======"
+! 
+! print*, aaaa
+! 
+! print*, "======"
+! 
+! 
+! print*, widthDepthData(1,1:5,1)
+! 
+! print*, "======"
+! print*, widthDepthData(1,1:5,2)
+! 
+! 
+! end program a1
 
 ! program a1
 ! 

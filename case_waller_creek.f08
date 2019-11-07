@@ -177,10 +177,12 @@ subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
  
  real, dimension(:,:,:), allocatable :: widthDepthData
  
- real, dimension(:,:,:), allocatable :: dWidth
- real, dimension(:,:,:), allocatable :: dDepth
+ real, dimension(:,:), allocatable :: dWidth
+ real, dimension(:,:), allocatable :: dDepth
  
  character(len=:), allocatable :: cellType(:)
+ 
+ integer :: ii,jj, nfix
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -190,15 +192,55 @@ subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
  allocate(dDepth(size(widthDepthData,1),size(widthDepthData,2)))
  dDepth(:,:) = 0.0
  
- do i=1, size(numberPairs)
-    do j=1, numberPairs(i)
-        dWidth(i,1:j-1) = widthDepthData(i,2:j,1) - widthDepthData(i,1:j-1,1)
-        dDepth(i,1:j-1) = widthDepthData(i,2:j,2) - widthDepthData(i,1:j-1,2)
+ nfix = 0
+ do ii=1, size(numberPairs)
+    do jj=1, numberPairs(i)
+        !compute the difference in width across each level
+        dWidth(ii,1:jj-1) = widthDepthData(ii,2:jj,1) - widthDepthData(ii,1:jj-1,1)
+        !compute difference in depth across eacg level
+        dDepth(ii,1:jj-1) = widthDepthData(ii,2:jj,2) - widthDepthData(ii,1:jj-1,2)
     enddo
+ enddo
+ 
+ !negative values indicate non-monotonic behavior that can be fixed.
+ nfix = nfix + count(dWidth < 0.0 .or. dDepth < 0.0)
+ 
+ if (setting%Method%AdjustWidthDepth == .true.) then
+    call widthdepth_pair_fix()
+ endif
+ 
+ !check that the width-depth pairs cover enough depth and fix with vertical walls
+ do ii=1, size(numberPairs)
+    if (maxval(widthDepthData(ii,:,2) &
+        < setting%Method%AdjustWidthDepth%DepthMaxExpected) then
+        
+        widthDepthData(ii,numberPairs(ii),2) 
+                        = 2.0*setting%Method%AdjustWidthDepth%DepthMaxExpected
+                        
+        widthDepthData(ii,numberPairs(ii),1) 
+                        = widthDepthData(ii,numberPairs(ii-1),1) 
+                        
+        !an additional pair has been added at this element
+        numberPairs(ii) = numberPairs(ii) + 1
+    endif
  enddo
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine widthdepth_pair_consistency
+!
+!========================================================================== 
+!==========================================================================
+!
+subroutine widthdepth_pair_fix (NX, widthDepthData, cellType)
+ 
+ character(64) :: subroutine_name = 'widthdepth_pair_fix'
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine widthdepth_pair_fix
 !
 !========================================================================== 
 !==========================================================================
