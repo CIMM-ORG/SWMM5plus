@@ -183,6 +183,7 @@ subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
  character(len=:), allocatable :: cellType(:)
  
  integer :: ii,jj, nfix
+ integer :: width=1, depth=2
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -196,9 +197,11 @@ subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
  do ii=1, size(numberPairs)
     do jj=1, numberPairs(i)
         !compute the difference in width across each level
-        dWidth(ii,1:jj-1) = widthDepthData(ii,2:jj,1) - widthDepthData(ii,1:jj-1,1)
+        dWidth(ii,1:jj-1) = widthDepthData(ii,2:jj,width) &
+                            - widthDepthData(ii,1:jj-1,width)
         !compute difference in depth across eacg level
-        dDepth(ii,1:jj-1) = widthDepthData(ii,2:jj,2) - widthDepthData(ii,1:jj-1,2)
+        dDepth(ii,1:jj-1) = widthDepthData(ii,2:jj,depth) &
+                            - widthDepthData(ii,1:jj-1,depth)
     enddo
  enddo
  
@@ -206,19 +209,20 @@ subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
  nfix = nfix + count(dWidth < 0.0 .or. dDepth < 0.0)
  
  if (setting%Method%AdjustWidthDepth == .true.) then
-    call widthdepth_pair_fix()
+    call widthdepth_pair_fix(widthDepthData)
  endif
  
  !check that the width-depth pairs cover enough depth and fix with vertical walls
+ !width-Depth matrix has an extra cell when allocated
  do ii=1, size(numberPairs)
-    if (maxval(widthDepthData(ii,:,2) &
+    if (maxval(widthDepthData(ii,:,depth) &
         < setting%Method%AdjustWidthDepth%DepthMaxExpected) then
         
-        widthDepthData(ii,numberPairs(ii),2) 
+        widthDepthData(ii,numberPairs(ii)+1,depth) 
                         = 2.0*setting%Method%AdjustWidthDepth%DepthMaxExpected
                         
-        widthDepthData(ii,numberPairs(ii),1) 
-                        = widthDepthData(ii,numberPairs(ii-1),1) 
+        widthDepthData(ii,numberPairs(ii)+1,width) 
+                        = widthDepthData(ii,numberPairs(ii),1) 
                         
         !an additional pair has been added at this element
         numberPairs(ii) = numberPairs(ii) + 1
@@ -231,13 +235,64 @@ subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
 !========================================================================== 
 !==========================================================================
 !
-subroutine widthdepth_pair_fix (NX, widthDepthData, cellType)
+subroutine widthdepth_pair_fix (widthDepthData)
  
  character(64) :: subroutine_name = 'widthdepth_pair_fix'
-  
+ 
+ real, pointer :: up2W(:,:), up1W(:,:), lowW(:,:)
+ real, pointer :: up2D(:,:), up1D(:,:), lowD(:,:)
+ 
+ integer :: width=1, depth=2
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
+ !width 2 layers above
+ up2W => widthDepthData(:, 3:size(widthDepthData,2)-1, width)
+ !width 1 layer above
+ up1W => widthDepthData(:, 2:size(widthDepthData,2)-2, width)
+ !width this layer (below)
+ lowW => widthDepthData(:, 1:size(widthDepthData,2)-3, width)
+
+ !depth 2 layers above
+ up2D => widthDepthData(:, 3:size(widthDepthData,2)-1, depth)
+ !depth 1 layer above
+ up1D => widthDepthData(:, 2:size(widthDepthData,2)-2, depth)
+ !depth this layer (below)
+ lowD => widthDepthData(:, 1:size(widthDepthData,2)-3, depth)
+ 
+ !fix inconsistent depth
+ where (up1D <= lowD)
+    where (up2D <= lowD)
+        ! multi-level inconsistency - simple expansion
+        up1D = lowD*(1.0 + setting%Method%AdjustWidthDepth%AdjustFraction)
+    elsewhere
+        !single-level inconsistency
+        where ((up1W > lowW) .and. (up2W > up1W))
+            !width is consistent - use linear interpolation
+            up1D = lowD + (up2D - lowD)*(up1W - lowW)/(up2W - lowW)
+        elsewhere
+            !both depth and width are inconsistent - simple expansion
+            up1D = lowD*(1.0 + setting%Method%AdjustWidthDepth%AdjustFraction)
+        endwhere
+    endwhere
+ endwhere
+ 
+ !fix inconsistent widht
+ where (up1W < lowW)
+    where (up2W < lowW)
+        ! multi-level inconsistency - simple expansion
+        up1W = lowW*(1.0 + setting%Method%AdjustWidthDepth%AdjustFraction)
+    elsewhere
+        !single-level inconsistency
+        where ((up1D > lowD) .and. (up2D > up1D))
+            !width is consistent - use linear interpolation
+            up1W = lowW + (up2W - lowW)*(up1D - lowD)/(up2D - lowD)
+        elsewhere
+            !both widht and width are inconsistent - simple expansion
+            up1W = lowW*(1.0 + setting%Method%AdjustWidthDepth%AdjustFraction)
+        endwhere
+    endwhere
+ endwhere
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine widthdepth_pair_fix

@@ -97,28 +97,29 @@
  max_number_of_pairs = read_max_number_of_pairs (iunit)
  
  allocate(ID(number_of_cells), stat=allocation_status, errmsg=emsg)
- ID(:) = nullvalueI
+ ID(:) = 0
  
  allocate(numberPairs(number_of_cells), stat=allocation_status, errmsg=emsg)
- numberPairs(:) = nullvalueI
+ numberPairs(:) = 0
  
  allocate(ManningsN(number_of_cells), stat=allocation_status, errmsg=emsg)
- ManningsN(:) = nullvalueR
+ ManningsN(:) = 0.0
  
  allocate(Length(number_of_cells), stat=allocation_status, errmsg=emsg)
- Length(:) = nullvalueR
+ Length(:) = 0.0
  
  allocate(zBottom(number_of_cells), stat=allocation_status, errmsg=emsg)
- zBottom(:) = nullvalueR
+ zBottom(:) = 0.0
  
  allocate(xDistance(number_of_cells), stat=allocation_status, errmsg=emsg)
- xDistance(:) = nullvalueR
+ xDistance(:) = 0.0
  
  allocate(Breadth(number_of_cells), stat=allocation_status, errmsg=emsg)
- Breadth(:) = nullvalueR
- 
- allocate(widthDepthData(number_of_cells, max_number_of_pairs, 2), stat=allocation_status, errmsg=emsg)
- widthDepthData(:,:,:) = nullvalueR
+ Breadth(:) = 0.0
+ !+1 is a ghost cell for the chack that the width-depth pairs cover enough
+ !depth and fixing of vertical walls
+ allocate(widthDepthData(number_of_cells, max_number_of_pairs+1, 2), stat=allocation_status, errmsg=emsg)
+ widthDepthData(:,:,:) = 0.0
  
  allocate(character(100):: cellType(number_of_cells), stat=allocation_status, errmsg=emsg)
  
