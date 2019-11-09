@@ -146,9 +146,9 @@ def print_info(inp, units):
 	
 
 	if platform.system() == 'Windows':
-		libpath =  'src' + sep + 'VS2017-DLL' + sep + 'x64' + sep + 'Release' + sep + 'libswmm5.dll'
+		libpath =  'libswmm5.dll'
 	else:
-		libpath =  'src' + sep + 'libswmm5.so'
+		libpath =  'libswmm5.so'
 
 	# C library is loaded
 	_SWMM5 = CDLL(libpath)
