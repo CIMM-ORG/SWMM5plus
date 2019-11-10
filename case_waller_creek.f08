@@ -183,7 +183,8 @@ subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
  character(len=:), allocatable :: cellType(:)
  
  integer :: ii,jj, nfix
- integer :: width=1, depth=2
+ integer :: width = wd_widthAtLayerTop
+ integer :: depth = wd_depthAtLayerTop
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -208,7 +209,7 @@ subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
  !negative values indicate non-monotonic behavior that can be fixed.
  nfix = nfix + count(dWidth < 0.0 .or. dDepth < 0.0)
  
- if (setting%Method%AdjustWidthDepth == .true.) then
+ if ((setting%Method%AdjustWidthDepth == .true.) .and. (nfix > 0)) then
     call widthdepth_pair_fix(widthDepthData)
  endif
  
@@ -242,7 +243,8 @@ subroutine widthdepth_pair_fix (widthDepthData)
  real, pointer :: up2W(:,:), up1W(:,:), lowW(:,:)
  real, pointer :: up2D(:,:), up1D(:,:), lowD(:,:)
  
- integer :: width=1, depth=2
+ integer :: width = wd_widthAtLayerTop
+ integer :: depth = wd_depthAtLayerTop
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  

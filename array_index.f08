@@ -480,6 +480,17 @@
     ! column index for logical data in linkYN array
     integer, parameter :: lYN_temp1     = 1
     integer, parameter :: lYN_idx_max   = 1
+    
+ !% widthDepth COLUMN INDEXES
+    integer, parameter :: wd_widthAtLayerTop         = 1
+    integer, parameter :: wd_depthAtLayerTop         = 2
+    integer, parameter :: wd_areaThisLayer           = 3
+    integer, parameter :: wd_areaTotalBelowThisLayer = 4
+    integer, parameter :: wd_Dwidth                  = 5
+    integer, parameter :: wd_Ddepth                  = 6
+    integer, parameter :: wd_angle                   = 7
+    integer, parameter :: wd_perimeterBelowThisLayer = 8
+    integer, parameter :: wd_idx_max                 = 8
 
 !==========================================================================
 ! END OF MODULE array_index

@@ -118,7 +118,7 @@
  Breadth(:) = 0.0
  !+1 is a ghost cell for the chack that the width-depth pairs cover enough
  !depth and fixing of vertical walls
- allocate(widthDepthData(number_of_cells, max_number_of_pairs+1, 2), stat=allocation_status, errmsg=emsg)
+ allocate(widthDepthData(number_of_cells, max_number_of_pairs+1, wd_idx_max), stat=allocation_status, errmsg=emsg)
  widthDepthData(:,:,:) = 0.0
  
  allocate(character(100):: cellType(number_of_cells), stat=allocation_status, errmsg=emsg)
@@ -205,8 +205,8 @@
         if(value1 == 'end') then
             next_data_is_pair = .false.
         else
-            read(value1 , *, iostat=istat) widthDepthData(icell, ipair, 1)
-            read(value2 , *, iostat=istat) widthDepthData(icell, ipair, 2)
+            read(value1 , *, iostat=istat) widthDepthData(icell, ipair, wd_widthAtLayerTop)
+            read(value2 , *, iostat=istat) widthDepthData(icell, ipair, wd_depthAtLayerTop)
             ipair = ipair+1
         endif
     endif
