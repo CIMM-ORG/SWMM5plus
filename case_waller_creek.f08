@@ -105,19 +105,27 @@
 !==========================================================================
 !
 subroutine define_geometry (geometry_downstream_minimum_length, &
-    Waller_Creek_cellsize_target, n_rows_in_file_node)
+    n_rows_in_file_node)
  
  character(64) :: subroutine_name = 'define_geometry'
  
  real, dimension(:), allocatable, target, intent(inout) :: Length
  real, dimension(:), allocatable, target, intent(inout) :: xDistance
+ integer, dimension(:), allocatable, target, intent(inout) :: nadd
+ real, dimension(:), allocatable, target, intent(inout) :: xface
+ real, dimension(:), allocatable, target, intent(inout) :: dx
+ 
+ real, dimension(:,:,:), allocatable :: outputWidthDepthData
  
  real, intent(in) :: geometry_downstream_minimum_length
  real, intent(in) :: n_rows_in_file_node
  
+ real, pointer :: nWidth(:,:), nDepth(:,:), nArea(:,:), nAreaTBL(:,:)
+ real, pointer :: ndWidth(:,:), ndDepth(:,:), nAngle(:,:), nPerimeterBL(:,:)
+ 
  !private
  real :: oldX, oldL
- integer :: NXold, ncell
+ integer :: NXold, ncell, NX
  
   
 !-------------------------------------------------------------------------- 
@@ -136,10 +144,47 @@ subroutine define_geometry (geometry_downstream_minimum_length, &
  
  !splitting domain into smaller cells
  ncell = 0
- NXold = n_rows_in_file_node
- if (Waller_Creek_cellsize_target > 0.0) then
-    !temporary creation of zbottom and xvalue on face for establishing 
-    !interpolated zbottom throughout the smaller cells
+ NX = n_rows_in_file_node
+ NXold = NX
+ if (setting%Method%AdjustWidthDepth%cellSizeTarget > 0.0) then
+    ! check widthdepth pair geometry for consistency
+    call widthdepth_pair_consistency (NX, widthDepthData, cellType)
+    ! compute additional geometry data for widthdepth pairs
+    call widthdepth_pair_auxiliary (NX, widthDepthData, cellType)
+    
+    ! cycle through to find the number of cells to add at each cross-section
+    allocate(nadd(size(Length,1))
+    nadd(:) = 0
+    where(Length > (1.5*setting%Method%AdjustWidthDepth%cellSizeTarget))
+        nadd = int(Length/setting%Method%AdjustWidthDepth%cellSizeTarget)
+    elsewhere
+        nadd = 1
+    endwhere
+    
+    ncell = ncell + sum(nadd)
+    
+    NX = ncell
+    allocate(outputWidthDepthData(NX, size(widthDepthData,2), wd_idx_max), stat=allocation_status, errmsg=emsg)
+    outputWidthDepthData(:,:,:) = 0.0
+    
+    allocate(xface(size(Length,1))
+    allocate(dx(size(Length,1))
+    
+    xface = xDistance - 0.5 * Length
+    xface(NXold) = xDistance(NXold-1) + Length(NXold-1)
+    
+    dx = Length/nadd
+    
+    nWidth       => outputWidthDepthData (:,:, wd_widthThisLayer)
+    nDepth       => outputWidthDepthData (:,:, wd_depthAtLayerTop)
+    nArea        => outputWidthDepthData (:,:, wd_areaThisLayer)
+    nAreaTBL     => outputWidthDepthData (:,:, wd_areaTotalBelowThisLayer)
+    ndWidth      => outputWidthDepthData (:,:, wd_Dwidth)
+    ndDepth      => outputWidthDepthData (:,:, wd_Ddepth)
+    nAngle       => outputWidthDepthData (:,:, angle)
+    nPerimeterBL => outputWidthDepthData (:,:, perimeterBelowThisLayer)
+    
+    
     
  endif
  

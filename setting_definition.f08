@@ -30,6 +30,7 @@
         real    :: depthMaxExpected    = 5.0
         real    :: angleMinimum        = 0.1
         real    :: areaMaximum         = 2.0
+        real    :: cellSizeTarget      = 10.0
     endtype adjustWidthDepthType
 
     !% setting%Limiter%BC
