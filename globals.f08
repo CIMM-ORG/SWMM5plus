@@ -29,6 +29,8 @@
     real,    parameter :: fourR      = 4.0
     real,    parameter :: eightR     = 8.0
     real,    parameter :: tenR       = 10.0
+    real,    parameter :: pi         = 4.d0*datan(1.d0)
+
 
     real,    parameter :: oneeighthR    = oneR   / eightR
     real,    parameter :: onefourthR   = oneR   / fourR

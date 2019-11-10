@@ -162,6 +162,98 @@ subroutine define_geometry (geometry_downstream_minimum_length, &
 !========================================================================== 
 !==========================================================================
 !
+subroutine widthdepth_pair_auxiliary (NX, widthDepthData, cellType)
+ 
+ character(64) :: subroutine_name = 'widthdepth_pair_auxiliary'
+ 
+ integer, dimension(:), allocatable :: ID
+ integer, dimension(:), allocatable :: numberPairs
+ 
+ real, dimension(:), allocatable :: ManningsN
+ real, dimension(:), allocatable :: Length
+ real, dimension(:), allocatable :: zBottom
+ real, dimension(:), allocatable :: xDistance
+ real, dimension(:), allocatable :: Breadth
+ 
+ real, dimension(:,:,:), allocatable :: widthDepthData
+ 
+ real, dimension(:,:), allocatable :: dWidth
+ real, dimension(:,:), allocatable :: dDepth
+ 
+ character(len=:), allocatable :: cellType(:)
+ 
+ real, pointer :: width(:,:), depth(:,:), area(:,:), areaTBL(:,:)
+ real, pointer :: dWidth(:,:), dDepth(:,:), angle(:,:), perimeterBL(:,:)
+ 
+ integer :: ii,jj
+ integer :: eIn1
+  
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ eIn1 = size(widthDepthData,2)
+ 
+ width       => widthDepthData (:,:, wd_widthThisLayer)
+ depth       => widthDepthData (:,:, wd_depthAtLayerTop)
+ area        => widthDepthData (:,:, wd_areaThisLayer)
+ areaTBL     => widthDepthData (:,:, wd_areaTotalBelowThisLayer)
+ dWidth      => widthDepthData (:,:, wd_Dwidth)
+ dDepth      => widthDepthData (:,:, wd_Ddepth)
+ angle       => widthDepthData (:,:, angle)
+ perimeterBL => widthDepthData (:,:, perimeterBelowThisLayer)
+ 
+ ! lowest layer is triangular
+ area(:,1) = onehalfR * width(:,1) * depth(:,1)
+        
+ ! the area in this layer
+ area(:,2:eIn1) = onehalfR * (width(:,2:eIn1) + width(:,1:eIn1-1) &
+                           * (depth(:,2:eIn1) + depth(:,1:eIn1-1))
+
+        
+ ! set areas to zero above the uppermost pair
+ where (cellType(:) == 'widthdepth_pair')
+        area(:, numberPairs(:):eIn1) = 0.0
+ endwhere
+ 
+ ! store width and depth differences 
+ dWidth(:,1) = width(:,1)
+ dDepth(:,1) = depth(:,1)
+ 
+ ! delta width between top and bottom of this layer
+ dWidth(:,2:eIn1-1) = width(:,2:eIn1-1) - width:,1:eIn1-2
+ ! delta depth between top and bottom of this layer
+ dDepth(:,2:eIn1-1) = depth(:,2:eIn1-1) - depth:,1:eIn1-2
+ 
+ where(dWidth > setting%Method%AdjustWidthDepth%SmallWidth)
+    ! pairs that are not 90 degree angles
+    angle = atan(2.0 * dDepth / dWidth)
+ elsewhere
+    ! a near-90 degree angle will have an infinite tangent.
+    ! we handle this case by setting all these angles to pi/2 - small value 
+    angle = pi/onehalfR - setting%Method%AdjustWidthDepth%angleMinimum
+ endwhere
+ 
+ ! accumulated area of the trapezoids to the ii width-depth level
+ areaTBL(:,1) = 0.0
+ areaTBL(:,2:eIn1) = areaTBL(:,1:eIn1-1) + area(:,1:eIn1-1)
+ 
+ ! check that the setting maximum area value is greater than any accumulated 
+ ! area at the uppermost level.
+ if (setting%Method%AdjustWidthDepth%areaMaximum < maxval(areaTBL(:, eIn1))) then
+    setting%Method%AdjustWidthDepth%areaMaximum = 2.0 * maxval(areaTBL(:, eIn1))
+ endif
+ 
+ ! perimeter below this layer
+ perimeterBL(:,1) = 0.0
+ perimeterBL(:,2:eIn1) = perimeterBL(:,1:eIn1-1) &
+        + 2.0 * sqrt(dDepth(:,1:eIn1-1)**2.0 + 0.5 * dWidth(:,1:eIn1-1)**2.0)
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine widthdepth_pair_auxiliary
+!
+!========================================================================== 
+!==========================================================================
+!
 subroutine widthdepth_pair_consistency (NX, widthDepthData, cellType)
  
  character(64) :: subroutine_name = 'widthdepth_pair_consistency'

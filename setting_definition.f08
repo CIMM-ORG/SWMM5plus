@@ -28,6 +28,8 @@
         real    :: SmallWidth          = 1e-8
         real    :: DownstreamMinLength = 0.0
         real    :: depthMaxExpected    = 5.0
+        real    :: angleMinimum        = 0.1
+        real    :: areaMaximum         = 2.0
     endtype adjustWidthDepthType
 
     !% setting%Limiter%BC
