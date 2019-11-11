@@ -22,7 +22,7 @@ use postProcessing
     real, dimension(:)  , allocatable       :: xx,yy
 
 
-open(newunit=iunit, file='./OutputThreaded/out_depth__20191111_1149.txt', status='OLD')
+open(newunit=iunit, file='/home/saz/git_repo/SWMMengine/OutputThreaded/out_depth__20191111_1407.txt', status='OLD')
 
 specific_link = 3
 call get_specific_link_data &
@@ -33,13 +33,13 @@ call get_specific_link_data &
 specific_linkElement = 10
 xx = time_steps
 yy = specific_linkData(:,specific_linkElement)
-print*, yy
+
 open (unit = 7, action = 'write', file = 'data.txt', status = 'replace')
 do i = 1,n_timeSteps
     write(7,*)xx(i), yy(i)
 end do
 
-close(7)
 call system('gnuplot -p plot.plt')
+close(7, status = 'delete')
 
 end program Plot

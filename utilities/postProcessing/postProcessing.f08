@@ -8,13 +8,6 @@ module postProcessing
     implicit none
     private
 
-    ! public  :: get_link_lengths
-    ! public  :: get_data_index
-    ! public  :: get_link_items
-    ! public  :: get_time_steps
-    ! public  :: read_number_of_cells
-    ! public  :: read_number_of_links
-    ! public  :: get_all_link_data
     public  :: get_specific_link_data
 
     integer :: debuglevel = 0
