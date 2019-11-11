@@ -34,52 +34,52 @@
  integer, parameter :: lr_InitialUpstreamDepth =11 ! initial upstream depth
  integer, parameter :: lr_InitialDnstreamDepth =12 ! initial downstream depth
  
-! for the time being, the target length of an element is a hardcoded parameter
- real(dp)    :: lr_target = 1.0
- integer :: n_rows_in_file_node, n_rows_in_file_link
+
+ real(dp)    :: lr_target = 1.0							! for the time being, the target length of an element is a hardcoded parameter
+ integer :: n_rows_in_file_node, n_rows_in_file_link	! counter for the number of rows in the node/link .csv files
  integer :: iunit = 10
  integer :: runit = 11
  integer :: lunit = 12
  integer :: header_row = 1
- integer :: n_rows_excluding_header_node, n_rows_excluding_header_link
- integer :: n_rows_plus_processors_node, n_rows_plus_processors_link
+ integer :: n_rows_excluding_header_node, n_rows_excluding_header_link	! number of rows in the node/link .csv files excluding the header, used to determine the size of the arrays
+ integer :: n_rows_plus_processors_node, n_rows_plus_processors_link	! the NodeMatrix and LinkMatrix arrays are of the size of the .csv file plus the number of processors, for phantom nodes/links
  integer :: istat
  integer,parameter          :: line_length=256
  character(line_length)     :: line
  character(len=line_length) :: word
  real(dp)    :: a(line_length/2+1)
  integer :: i,io,icount,rcount
- integer :: multiprocessors = 3
- real(dp) :: phantom_index
- integer :: weight_index = -998877
- real(dp) :: partition_threshold
- real(dp) :: max_weight = 0.0
- integer :: effective_root = -998877
- logical :: ideal_exists = .false.
- integer :: spanning_link = -998877
- real(dp) :: start_point = 0.0
- integer :: root
- real(dp) :: upstream_link_length = 0.0
- integer :: upstream_node = -998877
- real(dp) :: upstream_weight = 0.0
- real(dp) :: total_clipped_weight = 0.0
- integer :: phantom_array_location
+ integer :: multiprocessors = 3							! for the OPTIMAL example, the number of processors is 3.  This is a project dependent parameter
+ real(dp) :: phantom_index								! the node_idx for the phantom node that will be placed in the middle of a link
+ integer :: weight_index = -998877						! the node_idx that is called in the nr_totalweight_assigner() that keeps track of which node's totalweight is being updated
+ real(dp) :: partition_threshold						! the collective weight (i.e. length) being searched for
+ real(dp) :: max_weight = 0.0							! the cumulative weight of the graph
+ integer :: effective_root = -998877					! a dummy node that either has the partition_threshold as it's weight or is a near overestimate of the partition_threshold
+ logical :: ideal_exists = .false.						! boolean to check whether the partition_threshold is found exactly at a node
+ integer :: spanning_link = -998877						! link_idk for the link that "spans" (or abstractly contains the partition_threshold along its length)
+ real(dp) :: start_point = 0.0							! distance from the upstream node that the phantom_node should be placed
+ integer :: root										! node_idx for whichever node is currently being updated
+ real(dp) :: upstream_link_length = 0.0					! used to determine the weight being added to the node in nr_totalweight_assigner()
+ integer :: upstream_node = -998877						! dummy node_idx used to track which node is being jumped to next in nr_totalweight_assigner()
+ real(dp) :: upstream_weight = 0.0						! sum of the upstream_link_lengths that are feeding into the current root node
+ real(dp) :: total_clipped_weight = 0.0					! amount of weight that has been removed due to a pseudo-partition.  this only occurs in case 3 
+ integer :: phantom_array_location						! the row number in the nodeMatrix that will be updated with the phantom_node information
  
- real(dp), dimension(:,:), allocatable :: nodeMatrix
- real(dp), dimension(:,:), allocatable :: linkMatrix
- real(dp), dimension(:,:), allocatable :: weight_range
- real(dp), dimension(:,:), allocatable :: nodes_container
+ real(dp), dimension(:,:), allocatable :: nodeMatrix		! the nodeMatrix is the array from the nodes.csv file that is being reorganized by BIPquick
+ real(dp), dimension(:,:), allocatable :: linkMatrix		! the linkMatrix is the array from the links.csv file that is being reorganized by BIPquick
+ real(dp), dimension(:,:), allocatable :: weight_range		! this is an array of tuples that contains the max and min totalweights on each link, used to locate a spanning_link
+ real(dp), dimension(:,:), allocatable :: nodes_container	! dummy array used in the BIPquick post-processing step 
  
- real(dp), dimension(:,:,:), allocatable :: subnetwork_container_nodes
- real(dp), dimension(:,:,:), allocatable :: subnetwork_container_links
+ real(dp), dimension(:,:,:), allocatable :: subnetwork_container_nodes		! 3D array that stores the node info for each identified 'part', or partition component
+ real(dp), dimension(:,:,:), allocatable :: subnetwork_container_links		! 3D array that stores the link info for each identified 'part'
  
- logical, allocatable, dimension(:) :: visited_flag_weight
- logical, allocatable, dimension(:) :: visit_network_mask
- logical, allocatable, dimension(:) :: partition_boolean
+ logical, allocatable, dimension(:) :: visited_flag_weight					! list of booleans that determines whether that node's directweight has already contributed to the weight_index node's totalweight
+ logical, allocatable, dimension(:) :: visit_network_mask					! boolean list that tracks whether a node already belongs to a part
+ logical, allocatable, dimension(:) :: partition_boolean					! boolean list that tracks whether a link already belongs to a part
  
- integer, allocatable, dimension(:) :: accounted_for_links
+ integer, allocatable, dimension(:) :: accounted_for_links					! post-processing list of links for reordering the linkMatrix
  
- integer:: ii, jj, kk, mp
+ integer:: ii, jj, kk, mp									! counters: ii - row in nodeMatrix, jj - row in linkMatrix, kk - secondary row counter for node/linkMatrix, mp - for each multiprocessor
  
  
  integer :: debuglevel = 0
@@ -92,7 +92,7 @@
 ! get number of lines in the file
  n_rows_in_file_node = number_of_lines_in_file(runit)
  
-! excluude the header from the rows
+! exclude the header from the rows
  n_rows_excluding_header_node = n_rows_in_file_node - header_row
  n_rows_plus_processors_node = n_rows_excluding_header_node + multiprocessors -1
  
@@ -163,8 +163,10 @@
    ! write(*,*)'   read ',icount,' values=', a(:icount)
  enddo
  
+ ! the idx of the phantom nodes are based on how many nodes exist, so this function determines the number of digits in the last node/link.  Then the phantom_index starts at 10^digits
  phantom_index = phantom_naming_convention(nodeMatrix, linkMatrix)
  
+ ! the boolean lists need to be allocated and initialized as containing all .false. values
  allocate(visited_flag_weight(size(nodeMatrix,1)))
  visited_flag_weight(:) = .false.
  
@@ -174,29 +176,39 @@
  allocate(partition_boolean(size(linkMatrix,1)))
  partition_boolean(:) = .false.
  
+ ! allocate the tuple list to be the size of the linkMatrix
  allocate (weight_range(size(linkMatrix,1),2))
  
+ ! determine the weight directly upstream of each node
  call local_node_weighting(lr_target, nodeMatrix, linkMatrix)
  
+ ! allocate the container for the nodes in each part, initialize with NULL values
  allocate (subnetwork_container_nodes &
     (multiprocessors,size(nodeMatrix,1),size(nodeMatrix,2)))
  subnetwork_container_nodes(:,:,:)= -998877
     
+ ! allocate the container for the links in each part, initialize with NULL values
  allocate (subnetwork_container_links &
     (multiprocessors,size(linkMatrix,1),size(linkMatrix,2)))
  subnetwork_container_links(:,:,:)= -998877
     
+ ! this do loop is the BIPquick main process.  For each multiprocessor a subcontainer of nodes is populated.  The contents of this do loop determine which nodes are included.
  do mp = 1, multiprocessors
+	! for the identification of each part, the totalweight of all nodes must be reset and reassigned
     nodeMatrix(:, nr_totalweight_u) = 0.0
     call nr_totalweight_assigner(nodeMatrix, weight_index, max_weight,&
                 visited_flag_weight, visit_network_mask)
                 
+	! the partition_threshold for the next part is always equal to the size of the remaining graph divided by the number of processors remaining
     partition_threshold = max_weight/real(multiprocessors - mp + 1)
                 
+	! the effective_root is determined either as the node that exactly equals the partition_threshold, or rather the node that is the nearest overestimate of the partition_threshold
     effective_root = ideal_partition_check &
     (ideal_exists, max_weight, partition_threshold, nodeMatrix)
     
+	! within the ideal_partition_check, a boolean ideal_exists becomes .true. if the effective_root exactly equals the partition_threshold
     if(ideal_exists .eqv. .true.) then
+		! if an ideal_
         call subnetwork_carving &
             (effective_root, mp, subnetwork_container_nodes, visit_network_mask, & 
              nodeMatrix, linkMatrix)
