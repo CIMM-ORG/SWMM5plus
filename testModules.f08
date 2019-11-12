@@ -1,6 +1,16 @@
+! program a1
+! 
+! use read_width_depth
+! use setting_definition
+! 
+! print*, setting%Method%AdjustWidthDepth%cellSizeTarget
+! 
+! end program a1
+
 program a1
 
 use read_width_depth
+use array_index
 
  integer :: unit = 11
  integer :: n_rows_in_file_node = 0
@@ -14,14 +24,16 @@ use read_width_depth
  real, dimension(:), allocatable :: xDistance
  real, dimension(:), allocatable :: Breadth
  
- real, dimension(:,:,:), allocatable :: widthDepthData
+ real, target, dimension(:,:,:), allocatable :: widthDepthData
  
  character(len=:), allocatable :: cellType(:)
  
  real, dimension(:,:), allocatable :: dWidth
  real, dimension(:,:), allocatable :: dDepth
  
- integer :: nfix
+ real, pointer :: up2W(:,:)
+ 
+ integer :: nfix,ii,depth,width
 
  open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
  n_rows_in_file_node = read_number_of_cells(unit)
@@ -51,6 +63,15 @@ use read_width_depth
  nfix = nfix + count(dWidth < 0.0 .or. dDepth < 0.0)
  
  print*, nfix
+ 
+ ii=1
+ depth = 2
+ print*, widthDepthData(ii,numberPairs(ii)+1,depth)
+ 
+ width = 1
+ up2W => widthDepthData(:, :, width)
+ 
+ print*, up2W(2,2)
 
 
 
