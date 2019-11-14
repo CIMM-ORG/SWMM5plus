@@ -156,15 +156,59 @@
 !========================================================================== 
 !==========================================================================
 !
+ subroutine nonmonotonic_subdivide &
+    ()
+!
+! initialize the link-node system and boundary conditions for a simple channel
+! 
+ character(64) :: subroutine_name = 'nonmonotonic_subdivide'
+ 
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ 
+ 
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine nonmonotonic_subdivide
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine face_zbottom ()
+!
+! initialize the link-node system and boundary conditions for a simple channel
+! 
+ character(64) :: subroutine_name = 'nonmonotonic_subdivide'
+ 
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ faceZbottom (2:NX) = &
+         (zBottom(1:NX-1)*Length(2:NX) + zBottom(2:NX)*Length(1:NX-1)) &
+        /(Length(2:NX) + Length(1:NX-1))
+
+ faceZbottom (1)  = zBottom(1)
+ faceZbottom (NX) = zBottom(NX-1)
+ 
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine nonmonotonic_subdivide
+!
+!========================================================================== 
+!==========================================================================
+!
 subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
  
  character(64) :: subroutine_name = 'widthdepth_pair_auxiliary'
  
- integer, dimension(:), allocatable :: numberPairs
+ integer, intent(inout) :: numberPairs(:)
  
- real, target, dimension(:,:,:), allocatable :: widthDepthData
+ real, target, intent(inout) :: widthDepthData(:,:,:)
  
- character(len=:), allocatable :: cellType(:)
+ character, intent(in) :: cellType(:)
  
  real, pointer :: width(:,:), depth(:,:), area(:,:), areaTBL(:,:)
  real, pointer :: dWidth(:,:), dDepth(:,:), angle(:,:), perimeterBL(:,:)
@@ -244,9 +288,9 @@ subroutine widthdepth_pair_consistency (widthDepthData, numberPairs)
  
  character(64) :: subroutine_name = 'widthdepth_pair_consistency'
  
- integer, dimension(:), allocatable :: numberPairs
+ integer, intent(inout) :: numberPairs(:)
  
- real, dimension(:,:,:), allocatable :: widthDepthData
+ real, target, intent(inout) :: widthDepthData(:,:,:)
  
  real, dimension(:,:), allocatable :: dWidth
  real, dimension(:,:), allocatable :: dDepth
@@ -309,7 +353,7 @@ subroutine widthdepth_pair_fix (widthDepthData)
  
  character(64) :: subroutine_name = 'widthdepth_pair_fix'
  
- real, target, dimension(:,:,:), allocatable :: widthDepthData
+ real, target, intent(inout) :: widthDepthData(:,:,:)
  
  real, pointer :: up2W(:,:), up1W(:,:), lowW(:,:)
  real, pointer :: up2D(:,:), up1D(:,:), lowD(:,:)
