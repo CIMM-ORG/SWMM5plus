@@ -208,15 +208,21 @@
     
 	! within the ideal_partition_check, a boolean ideal_exists becomes .true. if the effective_root exactly equals the partition_threshold
     if(ideal_exists .eqv. .true.) then
-		! if an ideal_
+		! if an ideal node is found, the subnetwork_carving() function is called on that node to extract the upstream sub-graph as a complete part
         call subnetwork_carving &
             (effective_root, mp, subnetwork_container_nodes, visit_network_mask, & 
              nodeMatrix, linkMatrix)
     else
+		! if an ideal node is NOT found, the network needs to be checked for a link that "spans" the partition_threshold.  
+		! "Span" means that the partition_threshold exists in the range [upstream_node_weight, downstream_node_weight]
+		! The weight_range tuple array is initialized as null rather than zeroes because zero is a potentially real value
         weight_range(:,:) = -998877
+		! The spanning_check() function populates the weight_range array and then searches the array for any row (and corresponding link) that bounds the partition_threshold
         call spanning_check &
             (spanning_link, weight_range, linkMatrix, nodeMatrix, lr_target, &
              partition_threshold, partition_boolean)
+		! If a spanning link is not found, that indicates no precise partition is attainable (Case 3)
+		! This do while loop clips out the 
         do while (spanning_link == -998877)
             do ii= 1,size(nodeMatrix,1)
                 if (nodeMatrix(ii, ni_idx) == effective_root) then
@@ -268,8 +274,6 @@
             (int(nodeMatrix(phantom_array_location, ni_idx)), mp, &
             subnetwork_container_nodes, visit_network_mask, nodeMatrix, &
             linkMatrix)
-!     else
-!         print*, "Edge case is not implemented yet"
     endif
     
     do ii=1, size(visit_network_mask,1)
@@ -279,18 +283,22 @@
     enddo
  enddo
  
+ ! Allocates and initializes two arrays that are used in postprocessing
  allocate(accounted_for_links(size(linkMatrix,1)))
  accounted_for_links(:) = -998877
  
  allocate(nodes_container(size(nodeMatrix,1),size(nodeMatrix,2)))
  nodes_container(:,:) = -998877
  
+ ! For each pre-defined part, populate a dummy variable with the nodes information for that part.
+ ! Call the subnetwork_links() function which determines, on the basis of a parts nodes, which links are also on that part
  do mp = 1, size(subnetwork_container_nodes,1)
     nodes_container(:,:) = subnetwork_container_nodes(mp,:,:)
     call subnetworks_links (mp,nodes_container, subnetwork_container_links, &
         linkMatrix, accounted_for_links)
  enddo
  
+ ! Calls a preprocessing function that collapses the separated graph parts back into a single array
  call reorganize_arrays(nodeMatrix, linkMatrix, multiprocessors, &
             subnetwork_container_nodes, subnetwork_container_links)
  
