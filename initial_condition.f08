@@ -218,11 +218,11 @@
         endwhere
         
 
-        if (linkI(ii,li_geometry) == lRectangular ) then
+        if (linkI(ii,li_geometry) == lRectangularChannel ) then
             !% handle rectangular elements
             
             where (elem2I(:,e2i_link_ID) == Lindx)
-                elem2I(:,e2i_geometry)  = eRectangular            
+                elem2I(:,e2i_geometry)  = eRectangularChannel            
                 elem2R(:,e2r_Topwidth)  = linkR(ii,lr_BreadthScale)
                 elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
@@ -300,7 +300,7 @@
     
     ! HACK -- need other geometry types
     
-    where ((elemMI(:,eMi_geometry) == eRectangular) .and. &
+    where ((elemMI(:,eMi_geometry) == eRectangularChannel) .and. &
            (elemMI(:,eMi_elem_type) == eJunctionChannel))
         elemMR(:,eMr_Area)      = elemMR(:,eMr_HydDepth) * elemMR(:,eMr_Topwidth)
         elemMR(:,eMr_Volume)    = elemMR(:,eMr_Area)     * elemMR(:,eMr_Length)

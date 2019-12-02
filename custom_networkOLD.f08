@@ -97,7 +97,7 @@
  linkI(:,li_link_type) = lChannel
 
 ! assign all as rectangular channels
- linkI(:,li_geometry) = lRectangular
+ linkI(:,li_geometry) = lRectangularChannel
 
 ! assign the link position and mappings
 
@@ -249,7 +249,7 @@
  linkI(:,li_link_type) = lChannel
 
 ! assign all as rectangular channels
- linkI(:,li_geometry) = lRectangular
+ linkI(:,li_geometry) = lRectangularChannel
 
 ! assign the link position and mappings
 
@@ -437,7 +437,7 @@
  linkI(:,li_link_type) = lChannel
 
 ! assign all as rectangular channels
- linkI(:,li_geometry) = lRectangular
+ linkI(:,li_geometry) = lRectangularChannel
 
 ! assign the link position and mappings
 
@@ -618,7 +618,7 @@
  linkI(:,li_link_type) = lChannel
 
 ! assign all as rectangular channels
- linkI(:,li_geometry) = lRectangular
+ linkI(:,li_geometry) = lRectangularChannel
 
 ! assign the link position and mappings
 

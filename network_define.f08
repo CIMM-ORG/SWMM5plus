@@ -797,7 +797,7 @@
                                             * linkR(thislink,lr_ElementLength)
     
     select case (linkI(thisLink,li_geometry))
-        case (lRectangular)
+        case (lRectangularChannel)
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
@@ -932,7 +932,7 @@
                                          * elem2R(lastElem2,e2r_Length)
     
     select case (elem2I(thisElem2,e2i_geometry))
-        case (eRectangular)
+        case (eRectangularChannel)
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
@@ -1063,7 +1063,7 @@
     thisElemM = thisElemM+1
     elemMI(jElem,eMi_idx)             = jElem
     elemMI(jElem,eMi_elem_type)       = eJunctionChannel ! HACK - PIPE NOT HANDLED
-    elemMI(jElem,eMi_geometry)        = eRectangular ! HACK - NEED AN APPROACH TO ASSIGN
+    elemMI(jElem,eMi_geometry)        = eRectangularChannel ! HACK - NEED AN APPROACH TO ASSIGN
     elemMI(jElem,eMi_nfaces)          = nodeI(thisNode,ni_N_link_u) + nodeI(thisNode,ni_N_link_d)
     elemMI(jElem,eMi_nfaces_d)        = nodeI(thisNode,ni_N_link_d)
     elemMI(jElem,eMi_nfaces_u)        = nodeI(thisNode,ni_N_link_u)
@@ -1085,7 +1085,7 @@
                                             - 0.5* elemMR(jElem,eMr_LengthDn(mm)) &
                                             * linkR(dlink,lr_Slope)       
         select case (elemMI(jElem,eMi_geometry))
-            case (eRectangular)
+            case (eRectangularChannel)
                 elemMR(jElem,eMr_TopwidthDn(mm))     =  linkR(dlink,lr_BreadthScale)        
                 elemMR(jElem,eMr_BreadthscaleDn(mm)) =  linkR(dlink,lr_BreadthScale)        
             case default
@@ -1107,7 +1107,7 @@
                                             + 0.5* elemMR(jElem,eMr_LengthUp(mm)) &
                                             * linkR(dlink,lr_Slope)           
         select case (elemMI(jElem,eMi_geometry))
-            case (eRectangular)
+            case (eRectangularChannel)
                 elemMR(jElem,eMr_TopwidthUp(mm))     =  linkR(dlink,lr_BreadthScale)        
                 elemMR(jElem,eMr_BreadthScaleUp(mm)) =  linkR(dlink,lr_BreadthScale)        
             case default
@@ -1276,7 +1276,7 @@
     elem2R(thisElem2,e2r_Zbottom)          = zcenter
         
     select case (linkI(thisLink,li_geometry))
-        case (lRectangular)
+        case (lRectangularChannel)
             elem2R(thisElem2,e2r_Topwidth)      = linkR(thisLink,lr_BreadthScale)
             elem2R(thisElem2,e2r_BreadthScale)  = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)

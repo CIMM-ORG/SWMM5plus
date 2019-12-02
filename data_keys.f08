@@ -15,15 +15,21 @@
     implicit none
     
     ! data types for elemI(:,ei_elem_type). faceI(:,e_type_u), faceI(:,e_type_d)
-    integer, parameter :: eChannel          = 1    ! ID for an open channel element
-    integer, parameter :: ePipe             = 2    ! ID for an pipe
-    integer, parameter :: eJunctionChannel  = 3    ! ID for a junction 
-    integer, parameter :: eJunctionPipe     = 4    ! ID for a junction 
-    integer, parameter :: eCulvert          = 5    ! ID for a culvert in an open channel
-    integer, parameter :: ePump             = 6   ! ID for a pump
-    integer, parameter :: eValve            = 7   ! ID for a valve
-    integer, parameter :: eBCup             = 8   ! ID for face upstream BC
-    integer, parameter :: eBCdn             = 9   ! ID for face downstream BC
+    integer, parameter :: eChannel          = 1   ! ID for an open channel element
+    integer, parameter :: ePipe             = 2   ! ID for an pipe
+    integer, parameter :: eJunctionChannel  = 3   ! ID for a junction 
+    integer, parameter :: eJunctionPipe     = 4   ! ID for a junction 
+    integer, parameter :: eCulvert          = 5   ! ID for a culvert in an open channel
+    integer, parameter :: ePumpChannel      = 6   ! ID for a pump
+    integer, parameter :: ePumpPipe         = 7   ! ID for a pump
+    integer, parameter :: eValveChannel     = 8   ! ID for a valve
+    integer, parameter :: eValvePipe        = 9   ! ID for a valve
+    integer, parameter :: eOrificeChannel   = 10  ! ID for an orifice
+    integer, parameter :: eOrificePipe      = 11  ! ID for an orifice
+    integer, parameter :: eWeirChannel      = 12  ! ID for a weir
+    integer, parameter :: eWeirPipe         = 13  ! ID for a weir
+    integer, parameter :: eBCup             = 14  ! ID for face upstream BC
+    integer, parameter :: eBCdn             = 15  ! ID for face downstream BC
     
     ! data types for faceI(:,fi_type)
     integer, parameter :: fChannel          = eChannel  ! ID for open channel on both sides
@@ -33,10 +39,17 @@
     integer, parameter :: fBCdn             = eBCdn   ! ID for face downstream BC    
     
     ! date types for elemI(:,ei_geometry)
-    integer, parameter :: eRectangular = 1  ! ID for rectangular chanel
-    integer, parameter :: eParabolic   = 2  ! ID for parabolic channel
-    integer, parameter :: eTrapezoidal = 3  ! ID for trapezoidal channel
-    integer, parameter :: eWidthDepth  = 4  ! ID for general geometry by data pairs
+    integer, parameter :: eRectangularChannel = 1  ! ID for rectangular channel
+    integer, parameter :: eParabolicChannel   = 2  ! ID for parabolic channel
+    integer, parameter :: eTrapezoidalChannel = 3  ! ID for trapezoidal channel
+    integer, parameter :: eWidthDepthChannel  = 4  ! ID for general geometry by data pairs
+    integer, parameter :: eCircularOrifice    = 5  ! ID for orifice
+    integer, parameter :: eTransverseWeir     = 6  ! ID for transverse weir
+    integer, parameter :: eSideFlowWeir       = 7  ! ID for sideflow weir
+    integer, parameter :: eRoadwayWeir        = 8  ! ID for roadway weir
+    integer, parameter :: eVnotchWeir         = 9  ! ID for V_notch weir
+    integer, parameter :: eTrapezoidalWeir    = 10 ! ID for trapezoidal weir
+    
 
     ! data types for elemI(:,ei_roughness_type)
     integer, parameter :: eManningsN    = 1   ! ID for mannings n for roughness_type
@@ -64,10 +77,16 @@
     integer, parameter :: lpipe         = ePipe     ! ID for link that is pipe
     
    ! data types for linkI(:,li_geometry) (must corresponde with ei_geometry)
-    integer, parameter :: lRectangular   = eRectangular    ! ID for link that rectangular channel
-    integer, parameter :: lParabolic     = eParabolic  ! ID for parabolic channel
-    integer, parameter :: lTrapezoidal   = eTrapezoidal  ! ID for trapezoidal channel
-    integer, parameter :: lWidthDepth    = eWidthDepth  ! ID for general geometry by data pairs
+    integer, parameter :: lRectangularChannel = eRectangularChannel ! ID for link that rectangular channel
+    integer, parameter :: lParabolicChannel   = eParabolicChannel   ! ID for parabolic channel
+    integer, parameter :: lTrapezoidalChannel = eTrapezoidalChannel ! ID for trapezoidal channel
+    integer, parameter :: lWidthDepthChannel  = eWidthDepthChannel  ! ID for general geometry by data pairs
+    integer, parameter :: lCircularOrifice    = eCircularOrifice    ! ID for orifice
+    integer, parameter :: lTransverseWeir     = eTransverseWeir     ! ID for transverse weir
+    integer, parameter :: lSideFlowWeir       = eSideFlowWeir       ! ID for sideflow weir
+    integer, parameter :: lRoadwayWeir        = eRoadwayWeir        ! ID for roadway weir
+    integer, parameter :: lVnotchWeir         = eVnotchWeir         ! ID for V_notch weir
+    integer, parameter :: lTrapezoidalWeir    = eTrapezoidalWeir    ! ID for trapezoidal weir
 
     ! data types for linkII(:,li_roughness_type)
     integer, parameter :: lManningsN    = eManningsN   ! ID for mannings n for roughness_type

@@ -355,15 +355,20 @@
     ! storage for temp array index positions
     integer, dimension(fr_n_temp) :: fr_Temp = nullvalueI
 
-!%  elem2YN COLUMN INDEXES FOR LOGICAL DATA ON CHANNEL ELEMENT ---------------
+!%  elem2YN COLUMN INDEXES FOR LOGICAL DATA ON 2 FACE ELEMENT ----------------
     ! column index for logical data in elem2YN array
     integer, parameter :: e2YN_IsSmallVolume   = 1
     integer, parameter :: e2YN_IsAdhocFlowrate = 2
-    integer, parameter :: e2YN_temp1           = 3
-    integer, parameter :: e2YN_temp2           = 4
-    integer, parameter :: e2YN_temp3           = 5
-    integer, parameter :: e2YN_temp4           = 6
-    integer, parameter :: e2YN_idx_max         = 6
+    integer, parameter :: e2YN_IsChannel       = 3
+    integer, parameter :: e2YN_IsPipe          = 4
+    integer, parameter :: e2YN_IsWeir          = 5
+    integer, parameter :: e2YN_IsOrifice       = 6
+    integer, parameter :: e2YN_IsPump          = 7
+    integer, parameter :: e2YN_temp1           = 8
+    integer, parameter :: e2YN_temp2           = 9
+    integer, parameter :: e2YN_temp3           = 10
+    integer, parameter :: e2YN_temp4           = 11
+    integer, parameter :: e2YN_idx_max         = 11
 
     integer, parameter :: e2YN_n_temp = 4
     ! storage for temp array index positions

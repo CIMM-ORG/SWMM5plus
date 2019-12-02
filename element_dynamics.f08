@@ -496,21 +496,32 @@
  integer,           intent(in)      :: elem2I(:,:)
  logical,   target, intent(in out)  :: elem2YN(:,:)
  
- integer    ::  indx(2), maskindx1, maskindx2
+ integer    ::  indx(2), maskindx1
  
  real,      pointer :: wavespeed(:), tscale_up(:), tscale_dn(:), velocity(:)
  real,      pointer :: length(:)
- logical,   pointer :: maskarray1(:), maskarray2(:)
+ logical,   pointer :: maskarrayChannel(:), maskarrayPipeC(:), maskarrayPipeP(:)
+ logical,   pointer :: maskarrayWeirC(:), maskarrayWeirP(:), maskarrayValveC(:) 
+ logical,   pointer :: maskarrayValveP(:), maskarrayOrificeC(:)
+ logical,   pointer :: maskarrayOrificeP(:), maskarrayPumpC(:) 
+ logical,   pointer :: maskarrayPumpP(:), maskarray1(:)
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
 
+ maskarrayChannel  => elem2YN(:,e2YN_IsChannel)
+ maskarrayPipe     => elem2YN(:,e2YN_IsPipe)
+ maskarrayWeirC    => elem2YN(:,e2YN_IsWeirChannel)
+ maskarrayWeirP    => elem2YN(:,e2YN_IsWeirPipe)
+ maskarrayOrificeC => elem2YN(:,e2YN_IsOrificeChannel)
+ maskarrayOrificeP => elem2YN(:,e2YN_IsOrificePipe)
+ maskarrayPumpC    => elem2YN(:,e2YN_IsPumpChannel)
+ maskarrayPumpP    => elem2YN(:,e2YN_IsPumpPipe)
+ maskarrayValveC   => elem2YN(:,e2YN_IsValveChannel)
+ maskarrayValveP   => elem2YN(:,e2YN_IsValvePipe)
+
  maskindx1 = e2YN_Temp(next_e2YN_temparray) 
  maskarray1 => elem2YN(:,maskindx1)
- next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
-
- maskindx2 = e2YN_Temp(next_e2YN_temparray) 
- maskarray2 => elem2YN(:,maskindx2)
  next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
  
  wavespeed => elem2R(:,e2r_Temp(next_e2r_temparray))
@@ -523,27 +534,47 @@
  velocity  => elem2R(:,e2r_Velocity_new)
  length    => elem2R(:,e2r_Length)
 
- maskarray1 = (elem2I(:,e2i_elem_type) == eChannel)
+ maskarrayChannel  = (elem2I(:,e2i_elem_type) == eChannel)
+ maskarrayPipe     = (elem2I(:,e2i_elem_type) == ePipe   )
+ maskarrayWeirC    = (elem2I(:,e2i_elem_type) == eWeirChannel)
+ maskarrayWeirP    = (elem2I(:,e2i_elem_type) == eWeirPipe)
+ maskarrayOrificeC = (elem2I(:,e2i_elem_type) == eOrificeChannel)
+ maskarrayOrificeP = (elem2I(:,e2i_elem_type) == eOrificePipe)
+ maskarrayPumpC    = (elem2I(:,e2i_elem_type) == ePumpChannel)
+ maskarrayPumpP    = (elem2I(:,e2i_elem_type) == ePumpPipe)
+ maskarrayValveC   = (elem2I(:,e2i_elem_type) == eValveChannel)
+ maskarrayValveP   = (elem2I(:,e2i_elem_type) == eValvePipe)
  
 !%  compute timescale 
- where (maskarray1) 
+ where (maskarrayChannel) 
     wavespeed = sqrt( grav * elem2R(:,e2r_HydDepth ))
     tscale_up = - onehalfR * length / (velocity - wavespeed)
     tscale_dn = + onehalfR * length / (velocity + wavespeed)
+ elsewhere(maskarrayPipe)
+ elsewhere(maskarrayWeirC)
+ elsewhere(maskarrayWeirP)
+ elsewhere(maskarrayOrificeC)
+ elsewhere(maskarrayOrificeP)
+ elsewhere(maskarrayPumpC)
+ elsewhere(maskarrayPumpP)
+ elsewhere(maskarrayValveC)
+ elsewhere(maskarrayValveP)
  endwhere
+ 
+ !TODO We have to add the limiter for each type of element base on their physic
  
 !%  limiter for large, negative, and small values
  indx(1) = e2r_Timescale_u
  indx(2) = e2r_Timescale_d
  call timescale_limiter &
-    (elem2R, elem2I, elem2YN, indx, maskindx1, maskindx2)
+    (elem2R, elem2I, elem2YN, indx, e2YN_IsChannel, maskindx1)
  
  wavespeed = nullvalueR
+ maskarrayChannel = nullvalueL
  maskarray1 = nullvalueL
- maskarray2 = nullvalueL
- nullify(wavespeed, maskarray1, maskarray2)
+ nullify(wavespeed, maskarrayChannel, maskarray1)
  next_e2r_temparray = next_e2r_temparray-1
- next_e2YN_temparray=next_e2YN_temparray-2
+ next_e2YN_temparray=next_e2YN_temparray-1
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine timescale_value_channel

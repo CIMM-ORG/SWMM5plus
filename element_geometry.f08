@@ -283,7 +283,7 @@
 
 
 
- where ( (elemI(:,ei_geometry)  == eRectangular) .and. &
+ where ( (elemI(:,ei_geometry)  == eRectangularChannel) .and. &
          (elemI(:,ei_elem_type) == elem_typ_value    )         )
     area        = volume / length
     eta         = zbottom + (area / breadth)
@@ -352,7 +352,7 @@
         case (0)
             !%  used for initiation when there are no face values
             !%  simple injection of junction eta
-            where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
+            where ( (elemMI(:,eMi_geometry)  == eRectangularChannel)     .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfacesDir) >= mm)  )
                 eta = etaM
@@ -360,7 +360,7 @@
         case (1)
             !%  used before face values are updated (ie. etaF is old)
             !%  inject etaM with estimated correction for old gradient
-            where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
+            where ( (elemMI(:,eMi_geometry)  == eRectangularChannel)     .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfacesDir) >= mm)  )
                 eta = etaM + onehalfR * (faceR(fdir,fr_Eta_dir) - etaMold)
@@ -368,7 +368,7 @@
         case (2)
             !%  used after face values are updated (ie. etaF is new)
             !%  Average of face and junction value
-            where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
+            where ( (elemMI(:,eMi_geometry)  == eRectangularChannel)     .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfacesDir) >= mm)  )
                 eta = onehalfR * (faceR(fdir,fr_Eta_dir) + etaM)
@@ -378,7 +378,7 @@
             print *, 'error: unexpected value of ',method_EtaM,' for method_EtaM in ',trim(subroutine_name)
     end select
 
-    where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
+    where ( (elemMI(:,eMi_geometry)  == eRectangularChannel)     .and. &
             (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
             (elemMI(:,eMi_nfacesDir) >= mm)  )
         area = (eta - zbottom) * breadth
