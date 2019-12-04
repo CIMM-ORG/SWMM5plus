@@ -500,7 +500,7 @@
  
  real,      pointer :: wavespeed(:), tscale_up(:), tscale_dn(:), velocity(:)
  real,      pointer :: length(:)
- logical,   pointer :: maskarrayChannel(:), maskarrayPipeC(:), maskarrayPipeP(:)
+ logical,   pointer :: maskarrayChannel(:), maskarrayPipe(:)
  logical,   pointer :: maskarrayWeirC(:), maskarrayWeirP(:), maskarrayValveC(:) 
  logical,   pointer :: maskarrayValveP(:), maskarrayOrificeC(:)
  logical,   pointer :: maskarrayOrificeP(:), maskarrayPumpC(:) 

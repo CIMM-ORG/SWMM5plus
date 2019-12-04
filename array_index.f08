@@ -357,18 +357,23 @@
 
 !%  elem2YN COLUMN INDEXES FOR LOGICAL DATA ON 2 FACE ELEMENT ----------------
     ! column index for logical data in elem2YN array
-    integer, parameter :: e2YN_IsSmallVolume   = 1
-    integer, parameter :: e2YN_IsAdhocFlowrate = 2
-    integer, parameter :: e2YN_IsChannel       = 3
-    integer, parameter :: e2YN_IsPipe          = 4
-    integer, parameter :: e2YN_IsWeir          = 5
-    integer, parameter :: e2YN_IsOrifice       = 6
-    integer, parameter :: e2YN_IsPump          = 7
-    integer, parameter :: e2YN_temp1           = 8
-    integer, parameter :: e2YN_temp2           = 9
-    integer, parameter :: e2YN_temp3           = 10
-    integer, parameter :: e2YN_temp4           = 11
-    integer, parameter :: e2YN_idx_max         = 11
+    integer, parameter :: e2YN_IsSmallVolume    = 1
+    integer, parameter :: e2YN_IsAdhocFlowrate  = 2
+    integer, parameter :: e2YN_IsChannel        = 3
+    integer, parameter :: e2YN_IsPipe           = 4
+    integer, parameter :: e2YN_IsWeirChannel    = 5
+    integer, parameter :: e2YN_IsWeirPipe       = 6
+    integer, parameter :: e2YN_IsOrificeChannel = 7
+    integer, parameter :: e2YN_IsOrificePipe    = 8
+    integer, parameter :: e2YN_IsPumpChannel    = 9
+    integer, parameter :: e2YN_IsPumpPipe       = 10
+    integer, parameter :: e2YN_IsValveChannel   = 11
+    integer, parameter :: e2YN_IsValvePipe      = 12
+    integer, parameter :: e2YN_temp1            = 13
+    integer, parameter :: e2YN_temp2            = 14
+    integer, parameter :: e2YN_temp3            = 15
+    integer, parameter :: e2YN_temp4            = 16
+    integer, parameter :: e2YN_idx_max          = 16
 
     integer, parameter :: e2YN_n_temp = 4
     ! storage for temp array index positions
