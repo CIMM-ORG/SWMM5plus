@@ -157,16 +157,47 @@
 !==========================================================================
 !
  subroutine nonmonotonic_subdivide &
-    ()
+    (faceZbottom, zbottom, Length, xValues, NX, newLength, newXValues)
 !
 ! initialize the link-node system and boundary conditions for a simple channel
 ! 
  character(64) :: subroutine_name = 'nonmonotonic_subdivide'
  
+ real, intent(inout) :: faceZbottom(:)
+ real, intent(inout) :: zBottom(:)
+ real, intent(inout) :: Length(:)
+ real, intent(inout) :: xValues(:)
+ real, intent(inout) :: newLength(:), newXValues(:)
+ real, allocatable :: temp1(:),temp2(:)
+ integer, intent(inout) :: NX
+ logical, allocatable :: isnonmonotonic(:)
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
+ allocate(isnonmonotonic(NX))
+ isnonmonotonic= 0
+ 
+! find the z at the faces
+ call face_zbottom(faceZbottom, zbottom, Length, NX)
+ 
+ print *, "checking for nonmonotonic elements"
+ 
+! determine number of non-monotonic zbottom product of signs is negative
+ allocate(temp1(NX))
+ allocate(temp2(NX))
+ temp1(1:NX) = faceZbottom (1:NX) - zbottom(1:NX)
+ temp2(1:NX) = faceZbottom (1:NX) - zbottom(2:NX+1)
+ where (temp1*temp2 < zeroR)
+    isnonmonotonic = .true.
+ endwhere
+ 
+!set array for integer counting of non-monotonic cells
+              
+ where( isnonmonotonic )
+    newLength = onehalfR*Length
+    newXValues = xValues - onehalfR*Length
+ endwhere
  
  
 
@@ -176,12 +207,16 @@
 !========================================================================== 
 !==========================================================================
 !
- subroutine face_zbottom ()
+ subroutine face_zbottom (faceZbottom, zBottom, Length, NX)
 !
 ! initialize the link-node system and boundary conditions for a simple channel
 ! 
- character(64) :: subroutine_name = 'nonmonotonic_subdivide'
+ character(64) :: subroutine_name = 'face_zbottom'
  
+ real, intent(inout) :: faceZbottom(:)
+ real, intent(in)    :: zBottom(:)
+ real, intent(in)    :: Length(:)
+ integer, intent(in) :: NX
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -195,7 +230,7 @@
  
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
- end subroutine nonmonotonic_subdivide
+ end subroutine face_zbottom
 !
 !========================================================================== 
 !==========================================================================

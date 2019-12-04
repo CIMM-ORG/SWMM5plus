@@ -72,6 +72,8 @@ use array_index
  up2W => widthDepthData(:, :, width)
  
  print*, up2W(2,2)
+ 
+ print*, sign(-12,5)
 
 
 
