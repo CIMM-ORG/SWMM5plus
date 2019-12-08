@@ -21,6 +21,7 @@
     private
     
     public :: case_waller_creek_initialize
+    public :: nonmonotonic_subdivide
 
     integer :: debuglevel = 0
     
@@ -170,7 +171,9 @@
  real, intent(inout) :: newLength(:), newXValues(:)
  real, allocatable :: temp1(:),temp2(:)
  integer, intent(inout) :: NX
- logical, allocatable :: isnonmonotonic(:)
+ integer :: newNX
+ integer, allocatable :: isnonmonotonic(:)
+ integer :: ii
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -187,17 +190,27 @@
  allocate(temp1(NX))
  allocate(temp2(NX))
  temp1(1:NX) = faceZbottom (1:NX) - zbottom(1:NX)
- temp2(1:NX) = faceZbottom (1:NX) - zbottom(2:NX+1)
+ temp2(1:NX) = zbottom (1:NX) - faceZbottom(2:NX+1)
+
+ ! set array for integer counting of non-monotonic cells
  where (temp1*temp2 < zeroR)
-    isnonmonotonic = .true.
+    isnonmonotonic = 1
  endwhere
  
-!set array for integer counting of non-monotonic cells
+! counting the new elements
+ newNX = NX + count(isnonmonotonic/= 0)
+ 
+! print('Checking for non-monotonic zbottom, 1=found')
+ do ii = 1, NX
+    if (isnonmonotonic(ii) /= 0) then
+        print*, isnonmonotonic(ii), ii, faceZbottom(ii), zbottom(ii), faceZbottom(ii+1)
+    endif
+ enddo
               
- where( isnonmonotonic )
-    newLength = onehalfR*Length
-    newXValues = xValues - onehalfR*Length
- endwhere
+!  where( isnonmonotonic )
+!     newLength = onehalfR*Length
+!     newXValues = xValues - onehalfR*Length
+!  endwhere
  
  
 
@@ -226,7 +239,7 @@
         /(Length(2:NX) + Length(1:NX-1))
 
  faceZbottom (1)  = zBottom(1)
- faceZbottom (NX) = zBottom(NX-1)
+ faceZbottom (NX+1) = zBottom(NX)
  
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
