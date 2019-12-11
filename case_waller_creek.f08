@@ -203,7 +203,7 @@
 ! print('Checking for non-monotonic zbottom, 1=found')
  do ii = 1, NX
     if (isnonmonotonic(ii) /= 0) then
-        print*, isnonmonotonic(ii), ii, faceZbottom(ii), zbottom(ii), faceZbottom(ii+1)
+        print*, "nonmonotonic element ==", ii, faceZbottom(ii), zbottom(ii), faceZbottom(ii+1)
     endif
  enddo
               
