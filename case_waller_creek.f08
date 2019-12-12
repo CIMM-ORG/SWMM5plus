@@ -15,6 +15,7 @@
     use globals
     use setting_definition
     use read_width_depth
+    use utility
 
     implicit none
     
@@ -158,28 +159,57 @@
 !==========================================================================
 !
  subroutine nonmonotonic_subdivide &
-    (faceZbottom, zbottom, Length, xValues, NX, newLength, newXValues)
+     (ID, numberPairs, ManningsN, Length, zBottom, xDistance,                  &
+      Breadth, widthDepthData, cellType, NX, faceZBottom, max_number_of_pairs, &
+      newID, newNumberPairs, newManningsN, newLength, newZBottom,              &
+      newXDistance, newBreadth, newWidthDepthData)
 !
 ! initialize the link-node system and boundary conditions for a simple channel
 ! 
  character(64) :: subroutine_name = 'nonmonotonic_subdivide'
  
- real, intent(inout) :: faceZbottom(:)
- real, intent(inout) :: zBottom(:)
- real, intent(inout) :: Length(:)
- real, intent(inout) :: xValues(:)
- real, intent(inout) :: newLength(:), newXValues(:)
- real, allocatable :: temp1(:),temp2(:)
+ 
  integer, intent(inout) :: NX
- integer :: newNX
- integer, allocatable :: isnonmonotonic(:)
- integer :: ii
+ integer, intent(inout) :: max_number_of_pairs
+ integer :: newNX = 0
+ integer :: ii, jj
+ 
+ integer :: allocation_status
+ character(len=99) :: emsg
+ 
+ integer, intent(in) :: ID(:)
+ integer, intent(in) :: numberPairs(:)
+ real, intent(in)    :: ManningsN(:)
+ real, intent(in)    :: Length(:)
+ real, intent(in)    :: zBottom(:)
+ real, intent(in)    :: xDistance(:)
+ real, intent(in)    :: Breadth(:)
+ real, intent(in)    :: widthDepthData(:,:,:)
+ character, intent(in)    :: cellType(:)
+ 
+ real,    dimension(:),     allocatable :: faceZBottom
+ real,    dimension(:),     allocatable :: temp1
+ real,    dimension(:),     allocatable :: temp2
+ integer, dimension(:),     allocatable :: isnonmonotonic
+ 
+ integer, dimension(:),     allocatable :: newID
+ integer, dimension(:),     allocatable :: newNumberPairs
+ real,    dimension(:),     allocatable :: newManningsN
+ real,    dimension(:),     allocatable :: newLength
+ real,    dimension(:),     allocatable :: newZBottom
+ real,    dimension(:),     allocatable :: newXDistance
+ real,    dimension(:),     allocatable :: newBreadth
+ real,    dimension(:,:,:), allocatable :: newWidthDepthData
+ character(len=:),          allocatable :: newCellType(:)
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
  allocate(isnonmonotonic(NX))
  isnonmonotonic= 0
+ 
+ allocate(faceZBottom(NX+1))
+ faceZBottom(:) = 0.0
  
 ! find the z at the faces
  call face_zbottom(faceZbottom, zbottom, Length, NX)
@@ -200,20 +230,81 @@
 ! counting the new elements
  newNX = NX + count(isnonmonotonic/= 0)
  
+ allocate(newID(newNX), stat=allocation_status, errmsg=emsg)
+ call utility_check_allocation (allocation_status, emsg)
+ newID(:) = 0
+ 
+ allocate(newNumberPairs(newNX), stat=allocation_status, errmsg=emsg)
+ call utility_check_allocation (allocation_status, emsg)
+ newNumberPairs(:) = 0
+ 
+ allocate(newManningsN(newNX), stat=allocation_status, errmsg=emsg)
+ call utility_check_allocation (allocation_status, emsg)
+ newManningsN(:) = 0.0
+ 
+ allocate(newLength(newNX), stat=allocation_status, errmsg=emsg)
+ call utility_check_allocation (allocation_status, emsg)
+ newLength(:) = 0.0
+ 
+ allocate(newZBottom(newNX), stat=allocation_status, errmsg=emsg)
+ call utility_check_allocation (allocation_status, emsg)
+ newZBottom(:) = 0.0
+ 
+ allocate(newXDistance(newNX), stat=allocation_status, errmsg=emsg)
+ call utility_check_allocation (allocation_status, emsg)
+ newXDistance(:) = 0.0
+ 
+ allocate(newBreadth(newNX), stat=allocation_status, errmsg=emsg)
+ call utility_check_allocation (allocation_status, emsg)
+ newBreadth(:) = 0.0
+ 
+!+1 is a ghost cell for the chack that the width-depth pairs cover enough
+!depth and fixing of vertical walls
+ allocate(newWidthDepthData(newNX, max_number_of_pairs+1, wd_idx_max), stat=allocation_status, errmsg=emsg)
+ call utility_check_allocation (allocation_status, emsg)
+ newWidthDepthData(:,:,:) = 0.0
+ 
+ allocate(character(100):: newCellType(newNX), stat=allocation_status, errmsg=emsg)
+ call utility_check_allocation (allocation_status, emsg)
+ 
 ! print('Checking for non-monotonic zbottom, 1=found')
+ jj = 1
  do ii = 1, NX
     if (isnonmonotonic(ii) /= 0) then
         print*, "nonmonotonic element ==", ii, faceZbottom(ii), zbottom(ii), faceZbottom(ii+1)
+        newID          (jj)   = jj
+        newID          (jj+1) = jj + 1
+        newNumberPairs (jj)   = numberPairs (ii)
+        newNumberPairs (jj+1) = numberPairs (ii)
+        newManningsN   (jj)   = ManningsN   (ii)
+        newManningsN   (jj+1) = ManningsN   (ii)
+        newLength      (jj)   = onehalfR*Length (ii)
+        newLength      (jj+1) = onehalfR*Length (ii)
+        newZBottom     (jj)   = zBottom     (ii)
+        newZBottom     (jj+1) = zBottom     (ii)
+        newXDistance   (jj)   = onehalfR*xDistance (ii) - onehalfR*Length (ii)
+        newXDistance   (jj+1) = onehalfR*xDistance (ii) - onehalfR*Length (ii)
+        newBreadth     (jj)   = Breadth     (ii)
+        newBreadth     (jj+1) = Breadth     (ii)
+        newWidthDepthData(jj,:,:)   = widthDepthData (ii,:,:)
+        newWidthDepthData(jj+1,:,:) = widthDepthData (ii,:,:)
+        newCellType    (jj)   = cellType    (ii)
+        newCellType    (jj+1) = cellType    (ii)
+        jj = jj + 2
+    else
+        newID          (jj) = jj
+        newNumberPairs (jj) = numberPairs (ii)
+        newManningsN   (jj) = ManningsN   (ii)
+        newLength      (jj) = Length      (ii)
+        newZBottom     (jj) = zBottom     (ii)
+        newXDistance   (jj) = xDistance   (ii)
+        newBreadth     (jj) = Breadth     (ii)
+        newWidthDepthData(jj,:,:) = widthDepthData (ii,:,:)
+        newCellType    (jj) = cellType    (ii)
+        jj = jj + 1
     endif
  enddo
-              
-!  where( isnonmonotonic )
-!     newLength = onehalfR*Length
-!     newXValues = xValues - onehalfR*Length
-!  endwhere
  
- 
-
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine nonmonotonic_subdivide
 !

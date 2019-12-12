@@ -16,10 +16,17 @@ program a1
  real, dimension(:), allocatable :: xDistance
  real, dimension(:), allocatable :: Breadth
  real, dimension(:), allocatable :: faceZBottom
- real, dimension(:), allocatable :: newLength
- real, dimension(:), allocatable :: newXValues
  
  real, dimension(:,:,:), allocatable :: widthDepthData
+ 
+ integer, dimension(:),     allocatable :: newID
+ integer, dimension(:),     allocatable :: newNumberPairs
+ real,    dimension(:),     allocatable :: newManningsN
+ real,    dimension(:),     allocatable :: newLength
+ real,    dimension(:),     allocatable :: newZBottom
+ real,    dimension(:),     allocatable :: newXDistance
+ real,    dimension(:),     allocatable :: newBreadth
+ real,    dimension(:,:,:), allocatable :: newWidthDepthData
  
  character(len=:), allocatable :: cellType(:)
 
@@ -28,22 +35,18 @@ program a1
  max_number_of_pairs = read_max_number_of_pairs(unit)
  print*, n_rows_in_file_node
  print*, max_number_of_pairs
- 
- allocate(newLength(n_rows_in_file_node))
- newLength(:) = 0.0
- 
- allocate(faceZBottom(n_rows_in_file_node+1))
- faceZBottom(:) = 0.0
- 
- allocate(newXValues(n_rows_in_file_node))
- newXValues(:) = 0.0
 
  call read_widthdepth_pairs &
      (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
       Breadth, widthDepthData, cellType)
 
  call nonmonotonic_subdivide &
-     (faceZBottom, zBottom, Length, xDistance, n_rows_in_file_node, newLength, newXValues)
+      (ID, numberPairs, ManningsN, Length, zBottom, xDistance,             &
+      Breadth, widthDepthData, cellType, n_rows_in_file_node, faceZBottom, &
+      max_number_of_pairs, newID, newNumberPairs, newManningsN, newLength, &
+      newZBottom, newXDistance, newBreadth, newWidthDepthData)
+
+ 
 
 end program a1
 
