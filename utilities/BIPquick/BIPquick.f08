@@ -19,6 +19,10 @@
  integer, parameter :: ni_Mlink_d3       =11 ! the index of the 3rd link directly downstream
  integer, parameter :: nr_directweight_u =12 ! the cumulative weight of the links directly upstream
  integer, parameter :: nr_totalweight_u  =13 ! the cumulative weight of all links upstream
+ integer, parameter :: nr_temp1          =14 ! 
+ integer, parameter :: nr_temp2          =15 ! 
+ integer, parameter :: nr_temp3          =16 ! 
+ integer, parameter :: nr_totAllocation  =16 ! 
  
  
  integer, parameter :: link_id                 = 1 ! link ID
@@ -33,6 +37,10 @@
  integer, parameter :: lr_InitialFlowrate      =10 ! initial flow rate
  integer, parameter :: lr_InitialUpstreamDepth =11 ! initial upstream depth
  integer, parameter :: lr_InitialDnstreamDepth =12 ! initial downstream depth
+ integer, parameter :: lr_temp1                =13 ! 
+ integer, parameter :: lr_temp2                =14 ! 
+ integer, parameter :: lr_temp3                =15 ! 
+ integer, parameter :: lr_totAllocation        =15 ! 
  
 
  real(dp)    :: lr_target = 1.0							! for the time being, the target length of an element is a hardcoded parameter
@@ -84,6 +92,7 @@
  
  integer :: debuglevel = 0
  integer :: debuglevelall = 0
+ integer :: numTempColumns = 3
  
 !-------------------------------------------------------------------------- 
  
@@ -96,7 +105,7 @@
  n_rows_excluding_header_node = n_rows_in_file_node - header_row
  n_rows_plus_processors_node = n_rows_excluding_header_node + multiprocessors -1
  
- allocate(nodeMatrix(n_rows_plus_processors_node, nr_totalweight_u))
+ allocate(nodeMatrix(n_rows_plus_processors_node, nr_totAllocation))
  nodeMatrix(:,:)=-998877
  
  read(runit,*)
@@ -134,7 +143,7 @@
  n_rows_excluding_header_link = n_rows_in_file_link - header_row
  n_rows_plus_processors_link = n_rows_excluding_header_link + multiprocessors -1
  
- allocate(linkMatrix(n_rows_plus_processors_link, lr_InitialDnstreamDepth))
+ allocate(linkMatrix(n_rows_plus_processors_link, lr_totAllocation))
  linkMatrix(:,:)=-998877
  
  read(lunit,*)
