@@ -11,11 +11,12 @@
     use bc
     use case_simple_channel
     use case_y_channel
+    use case_waller_creek
+    use read_width_depth
     use data_keys
     use globals
     use setting_definition
     use utility
-    use read_width_depth
 
     implicit none
 
@@ -60,18 +61,19 @@
  real :: climit, cvel, uz, lz
  
  !Waller Creek 
- real, dimension(:), allocatable :: ID
- real, dimension(:), allocatable :: ManningsNWaller
- real, dimension(:), allocatable :: Length
- real, dimension(:), allocatable :: zBottom
- real, dimension(:), allocatable :: xDistance
- real, dimension(:), allocatable :: Breadth
- integer, dimension(:),     allocatable :: numberPairs
- real,    dimension(:,:,:), allocatable :: widthDepthData
- character(len=:), allocatable :: cellType(:)
- real :: inflowBC, heightBC, Waller_Creek_initial_depth
- real :: geometry_downstream_minimum_length
- real :: Waller_Creek_cellsize_target
+ real, dimension(:), allocatable :: init_ID
+ real, dimension(:), allocatable :: init_ManningsN
+ real, dimension(:), allocatable :: init_Length
+ real, dimension(:), allocatable :: init_zBottom
+ real, dimension(:), allocatable :: init_xDistance
+ real, dimension(:), allocatable :: init_Breadth
+ integer, dimension(:),     allocatable :: init_numberPairs
+ real,    dimension(:,:,:), allocatable :: init_widthDepthData
+ character(len=:), allocatable :: init_cellType(:)
+ real, dimension(:), allocatable :: faceZBottom
+!  real :: inflowBC, heightBC, Waller_Creek_initial_depth
+!  real :: geometry_downstream_minimum_length
+!  real :: Waller_Creek_cellsize_target
  
  logical :: geometry_add_downstream_buffer
  
@@ -147,17 +149,30 @@
         !stop
         
     !% Write a new case statement for each unique test case
-!     case ('Waller_Creek')
-!     
-!         !open the Waller Creek depth list
-!         open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
-!         
-!         n_rows_in_file_node = read_number_of_cells(unit)
-!         max_number_of_pairs = read_max_number_of_pairs(unit)
-! 
-!         call read_widthdepth_pairs &
-!             (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-!             Breadth, widthDepthData, cellType)
+    case ('Waller_Creek')
+    
+        !open the Waller Creek depth list
+        open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
+        
+        
+        n_rows_in_file_node = read_number_of_cells(unit)
+        max_number_of_pairs = read_max_number_of_pairs(unit)
+
+        call read_widthdepth_pairs &
+            (unit, init_ID, init_numberPairs, init_ManningsN, init_Length,    &
+             init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, &
+             init_cellType)
+             
+        call nonmonotonic_subdivide &
+            (init_ID, init_numberPairs, init_ManningsN, init_Length,          &
+             init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, &
+             init_cellType, n_rows_in_file_node, faceZBottom,                 &
+             max_number_of_pairs,
+             newID, newNumberPairs,         &
+             newManningsN, newLength, newZBottom, newXDistance, newBreadth,   &
+             newWidthDepthData)
+        
+        stop
 !             
 !         !Boundary conditions
 !         inflowBC = 1.0

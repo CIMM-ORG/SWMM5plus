@@ -84,7 +84,8 @@
 
  setting%TestCase%UseTestCase = .true.
  !setting%TestCase%TestName = 'simple_channel_001'
- setting%TestCase%TestName = 'y_channel_002'
+ !setting%TestCase%TestName = 'y_channel_002'
+ setting%TestCase%TestName = 'waller_creek'
 
 !%  hard-code for debug output
  setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
