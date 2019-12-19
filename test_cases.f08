@@ -215,10 +215,9 @@
         lowerZ             = newZBottom
         subdivide_length(:) = 10.0
         
-        
-        print*, channel_length
-        
-        stop
+        call this_setting_for_time_and_steps &
+            (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, &
+             display_interval, 2)
         
         
         
