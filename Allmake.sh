@@ -30,6 +30,8 @@ SOURCESF="  type_definitions.f08\
         adjustments.f08\
         allocate_storage.f08\
         bc.f08\
+        read_width_depth.f08\
+        case_waller_creek.f08\
         case_simple_channel.f08\
         case_y_channel.f08\
         checking.f08\

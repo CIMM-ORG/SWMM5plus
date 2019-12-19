@@ -61,16 +61,28 @@
  real :: climit, cvel, uz, lz
  
  !Waller Creek 
- real, dimension(:), allocatable :: init_ID
- real, dimension(:), allocatable :: init_ManningsN
- real, dimension(:), allocatable :: init_Length
- real, dimension(:), allocatable :: init_zBottom
- real, dimension(:), allocatable :: init_xDistance
- real, dimension(:), allocatable :: init_Breadth
- integer, dimension(:),     allocatable :: init_numberPairs
+ integer, dimension(:), allocatable :: init_ID
+ integer, dimension(:), allocatable :: init_numberPairs
+ real,    dimension(:), allocatable :: init_ManningsN
+ real,    dimension(:), allocatable :: init_Length
+ real,    dimension(:), allocatable :: init_zBottom
+ real,    dimension(:), allocatable :: init_xDistance
+ real,    dimension(:), allocatable :: init_Breadth
  real,    dimension(:,:,:), allocatable :: init_widthDepthData
  character(len=:), allocatable :: init_cellType(:)
  real, dimension(:), allocatable :: faceZBottom
+ 
+ integer, dimension(:),     allocatable :: newID
+ integer, dimension(:),     allocatable :: newNumberPairs
+ real,    dimension(:),     allocatable :: newManningsN
+ real,    dimension(:),     allocatable :: newLength
+ real,    dimension(:),     allocatable :: newZBottom
+ real,    dimension(:),     allocatable :: newXDistance
+ real,    dimension(:),     allocatable :: newBreadth
+ real,    dimension(:,:,:), allocatable :: newWidthDepthData
+ character(len=:),          allocatable :: newCellType(:)
+ 
+ 
 !  real :: inflowBC, heightBC, Waller_Creek_initial_depth
 !  real :: geometry_downstream_minimum_length
 !  real :: Waller_Creek_cellsize_target
@@ -149,30 +161,33 @@
         !stop
         
     !% Write a new case statement for each unique test case
-    case ('Waller_Creek')
+    case ('waller_creek')
     
         !open the Waller Creek depth list
         open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
         
-        
+        ! get the number of links and number of pairs per each link from the file
         n_rows_in_file_node = read_number_of_cells(unit)
         max_number_of_pairs = read_max_number_of_pairs(unit)
+        
+        print*, n_rows_in_file_node
+        
+        stop
 
+        ! read the entire data from the width-depth list
         call read_widthdepth_pairs &
             (unit, init_ID, init_numberPairs, init_ManningsN, init_Length,    &
              init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, &
              init_cellType)
-             
+        
+        ! dividing nun monotonic elements
         call nonmonotonic_subdivide &
             (init_ID, init_numberPairs, init_ManningsN, init_Length,          &
              init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, &
              init_cellType, n_rows_in_file_node, faceZBottom,                 &
-             max_number_of_pairs,
-             newID, newNumberPairs,         &
-             newManningsN, newLength, newZBottom, newXDistance, newBreadth,   &
-             newWidthDepthData)
-        
-        stop
+             max_number_of_pairs, newID, newNumberPairs, newManningsN,        &
+             newLength, newZBottom, newXDistance, newBreadth, newWidthDepthData)
+
 !             
 !         !Boundary conditions
 !         inflowBC = 1.0
