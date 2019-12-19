@@ -83,9 +83,9 @@
  character(len=:),          allocatable :: newCellType(:)
  
  
-!  real :: inflowBC, heightBC, Waller_Creek_initial_depth
-!  real :: geometry_downstream_minimum_length
-!  real :: Waller_Creek_cellsize_target
+ real :: inflowBC, heightBC, Waller_Creek_initial_depth
+ real :: geometry_downstream_minimum_length
+ real :: Waller_Creek_cellsize_target
  
  logical :: geometry_add_downstream_buffer
  
@@ -169,10 +169,6 @@
         ! get the number of links and number of pairs per each link from the file
         n_rows_in_file_node = read_number_of_cells(unit)
         max_number_of_pairs = read_max_number_of_pairs(unit)
-        
-        print*, n_rows_in_file_node
-        
-        stop
 
         ! read the entire data from the width-depth list
         call read_widthdepth_pairs &
@@ -187,57 +183,45 @@
              init_cellType, n_rows_in_file_node, faceZBottom,                 &
              max_number_of_pairs, newID, newNumberPairs, newManningsN,        &
              newLength, newZBottom, newXDistance, newBreadth, newWidthDepthData)
+             
+        
+        N_link = newID(size(newID))
+        N_node = N_link + 1
+        N_BCupstream = 1
+        N_BCdnstream = 1
+        
+        !% create the local variables that must be populated to set up the test case
+        call control_variable_allocation &
+            (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, subdivide_length, flowrate, area, &
+             velocity,  Froude, ManningsN, idepth_type)
+             
+        ! step controls
+        display_interval = 1000
+        first_step = 1
+        last_step  =  40000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
-!             
-!         !Boundary conditions
-!         inflowBC = 1.0
-!         heightBC = 132.0
-!         
-!         !Inital depth
-!         Waller_Creek_initial_depth = 0.5
-!         geometry_downstream_minimum_length = 0.0
-!         Waller_Creek_cellsize_target = 10
-!         
-!         !TODO addition of buffer cell is not implemented yet
-!         geometry_add_downstream_buffer = .false.
-! 
-!         N_link = read_number_of_cells(unit)
-!         N_node = N_link + 1
-!         N_BCupstream = 1
-!         N_BCdnstream = 1
-!         
-!         
-!         N_link = newNumLink
-!         N_node = N_link + 1
-! 
-!         !% create the local variables that must be populated to set up the test case
-!         call control_variable_allocation &
-!             (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-!              channel_breadth, subdivide_length, flowrate, area, &
-!              velocity, Froude, ManningsN, idepth_type)
-! 
-!         ! step controls
-!         display_interval = 1000
-!         first_step = 1
-!         last_step  =  40000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
-! 
-!         ! set up flow and time step for differen subcases
-!         ! tests that ran:  Fr = 0.25, 0.5
-!         Froude       = 0.25   ! determines flowrate and slope to get Froude
-!         CFL          = 0.6  ! determines dt from subdivide_length
-! 
-!         ! keep these physics fixed
-!         channel_breadth = 3.0
-!         depth_upstream  = 0.5
-!         depth_dnstream  = 0.5
-!         idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
-!         ManningsN       = 0.015
-!         channel_length    = 10000.0
-!         lowerZ          = 0.3
-!         subdivide_length = 5000.0
-! 
-!         !print *, flowrate, depth_dnstream
-!         !stop
+        ! set up flow and time step for differen subcases
+        Froude(:)    = 0.25   ! determines flowrate and slope to get Froude
+        CFL          = 0.6  ! determines dt from subdivide_length
+
+        ! keep these physics fixed
+        channel_breadth    = newBreadth
+        depth_upstream(:)  = 0.3
+        depth_dnstream(:)  = 0.3
+        idepth_type        = 1  !1 = uniform, 2=linear, 3=exponential decay
+        ManningsN          = newManningsN
+        channel_length     = newLength
+        lowerZ             = newZBottom
+        subdivide_length(:) = 10.0
+        
+        
+        print*, channel_length
+        
+        stop
+        
+        
+        
 
     case ('y_channel_002')
 
