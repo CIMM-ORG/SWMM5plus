@@ -162,7 +162,7 @@
      (ID, numberPairs, ManningsN, Length, zBottom, xDistance,                  &
       Breadth, widthDepthData, cellType, NX, faceZBottom, max_number_of_pairs, &
       newID, newNumberPairs, newManningsN, newLength, newZBottom,              &
-      newXDistance, newBreadth, newWidthDepthData)
+      newXDistance, newBreadth, newWidthDepthData, subdivide_length_check)
 !
 ! initialize the link-node system and boundary conditions for a simple channel
 ! 
@@ -186,6 +186,8 @@
  real, intent(in)    :: Breadth(:)
  real, intent(in)    :: widthDepthData(:,:,:)
  character, intent(in)    :: cellType(:)
+ 
+ real, intent(in)    :: subdivide_length_check
  
  real,    dimension(:),     allocatable :: faceZBottom
  real,    dimension(:),     allocatable :: temp1

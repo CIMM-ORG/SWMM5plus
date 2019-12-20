@@ -92,6 +92,8 @@
  integer :: unit = 11
  integer :: n_rows_in_file_node = 0
  integer :: max_number_of_pairs = 0
+ 
+ real :: subdivide_length_check = 10.0
 
 
 !--------------------------------------------------------------------------
@@ -175,6 +177,9 @@
             (unit, init_ID, init_numberPairs, init_ManningsN, init_Length,    &
              init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, &
              init_cellType)
+             
+        ! subdivide length for checking the length of nonmonotonic elements
+        subdivide_length_check = 10.0
         
         ! dividing nun monotonic elements
         call nonmonotonic_subdivide &
@@ -182,7 +187,8 @@
              init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, &
              init_cellType, n_rows_in_file_node, faceZBottom,                 &
              max_number_of_pairs, newID, newNumberPairs, newManningsN,        &
-             newLength, newZBottom, newXDistance, newBreadth, newWidthDepthData)
+             newLength, newZBottom, newXDistance, newBreadth,                 &
+             newWidthDepthData, subdivide_length_check)
              
         
         N_link = newID(size(newID))
@@ -206,13 +212,13 @@
         CFL          = 0.6  ! determines dt from subdivide_length
 
         ! keep these physics fixed
-        channel_breadth    = newBreadth
-        depth_upstream(:)  = 0.3
-        depth_dnstream(:)  = 0.3
-        idepth_type        = 1  !1 = uniform, 2=linear, 3=exponential decay
-        ManningsN          = newManningsN
-        channel_length     = newLength
-        lowerZ             = newZBottom
+        channel_breadth     = newBreadth
+        depth_upstream(:)   = 0.3
+        depth_dnstream(:)   = 0.3
+        idepth_type         = 1  !1 = uniform, 2=linear, 3=exponential decay
+        ManningsN           = newManningsN
+        channel_length      = newLength
+        lowerZ              = newZBottom
         subdivide_length(:) = 10.0
         
         call this_setting_for_time_and_steps &

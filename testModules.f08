@@ -44,7 +44,8 @@ program a1
       (ID, numberPairs, ManningsN, Length, zBottom, xDistance,             &
       Breadth, widthDepthData, cellType, n_rows_in_file_node, faceZBottom, &
       max_number_of_pairs, newID, newNumberPairs, newManningsN, newLength, &
-      newZBottom, newXDistance, newBreadth, newWidthDepthData)
+      newZBottom, newXDistance, newBreadth, newWidthDepthData,             &
+      subdivide_length_check)
 
  
 
