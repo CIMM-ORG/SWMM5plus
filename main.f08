@@ -71,10 +71,10 @@
  type(threadedfileType), allocatable, dimension(:) :: threadedfile
 
 !--------------------------------------------------------------------------
- print *
+ print *, ''
  print *, '====================================================='
  print *, 'starting main program'
- print *,
+ print *, ''
 
 !%  simulation controls
  call setting_default

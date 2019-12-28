@@ -382,7 +382,7 @@ subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
  ! set areas to zero above the uppermost pair
  do ii = 1, eIn1
     if(cellType(ii) == 'widthdepth_pair') then
-        area(ii, numberPairs(ii):eIn1) = 0.0
+        area(ii, numberPairs(ii):eIn1) = zeroR
     endif
  enddo
  
@@ -397,27 +397,27 @@ subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
  
  where(dWidth > setting%Method%AdjustWidthDepth%SmallWidth)
     ! pairs that are not 90 degree angles
-    angle = atan(2.0 * dDepth / dWidth)
+    angle = atan(twoR * dDepth / dWidth)
  elsewhere
     ! a near-90 degree angle will have an infinite tangent.
     ! we handle this case by setting all these angles to pi/2 - small value 
-    angle = pi/onehalfR - setting%Method%AdjustWidthDepth%angleMinimum
+    angle = pi/twoR - setting%Method%AdjustWidthDepth%angleMinimum
  endwhere
  
  ! accumulated area of the trapezoids to the ii width-depth level
- areaTBL(:,1) = 0.0
+ areaTBL(:,1) = zeroR
  areaTBL(:,2:eIn1) = areaTBL(:,1:eIn1-1) + area(:,1:eIn1-1)
  
  ! check that the setting maximum area value is greater than any accumulated 
  ! area at the uppermost level.
  if (setting%Method%AdjustWidthDepth%areaMaximum < maxval(areaTBL(:, eIn1))) then
-    setting%Method%AdjustWidthDepth%areaMaximum = 2.0 * maxval(areaTBL(:, eIn1))
+    setting%Method%AdjustWidthDepth%areaMaximum = twoR * maxval(areaTBL(:, eIn1))
  endif
  
  ! perimeter below this layer
- perimeterBL(:,1) = 0.0
+ perimeterBL(:,1) = zeroR
  perimeterBL(:,2:eIn1) = perimeterBL(:,1:eIn1-1) &
-        + 2.0 * sqrt(dDepth(:,1:eIn1-1)**2.0 + 0.5 * dWidth(:,1:eIn1-1)**2.0)
+        + twoR * sqrt(dDepth(:,1:eIn1-1)**twoR + onehalfR * dWidth(:,1:eIn1-1)**twoR)
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine widthdepth_pair_auxiliary
