@@ -141,7 +141,13 @@
     integer, parameter :: e2r_Roughness          = 20
     integer, parameter :: e2r_VolumeConservation = 21
     integer, parameter :: e2r_FroudeNumber       = 22
-    integer, parameter :: e2r_idx_base1          = 22
+    integer, parameter :: e2r_Bottomwidth        = 23
+    integer, parameter :: e2r_LeftSlope          = 24
+    integer, parameter :: e2r_rightSlope         = 25
+    integer, parameter :: e2r_Power              = 26
+    integer, parameter :: e2r_BottomRadius       = 27
+    integer, parameter :: e2r_TopRadius          = 28
+    integer, parameter :: e2r_idx_base1          = 28
 
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
     integer, parameter :: e2r_temp2              = e2r_idx_base1 + 2

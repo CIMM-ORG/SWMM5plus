@@ -173,13 +173,6 @@
         real    :: Velocity     = 0.0     ! m/s
         real    :: Volume       = 1.0e-6  ! m^3
     end type zerovalueType
-    
-    !%  setting%geometryCrossSection
-    type geometryCrossSectionType
-        real :: parabolaValue   = 0.0
-        real :: gA              = 0.0
-        real :: trapezoidAngle  = 0.0
-    end type geometryCrossSectionType
 
 !% FIRST LEVEL TYPE  ----------------------------------------------
     type settingType
@@ -195,7 +188,6 @@
         type(testcaseType)            :: TestCase     ! custom setup for test cases
         type(timeType)                :: Time         ! controls of time step
         type(zerovalueType)           :: ZeroValue    ! finite values to represent small or negative values
-        type(geometryCrossSectionType):: geometryCrossSection !finite values for the geometry cross-section
     end type settingType
 
 

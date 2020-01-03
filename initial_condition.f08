@@ -262,7 +262,10 @@
             !% handle trapezoidal elements
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eTrapezoidal
-                elem2R(:,e2r_Area)      = 0.0!!Ask Ben
+                elem2R(:,e2r_Area)      = elem2R(:,e2r_BreadthScale)           &
+                    * elem2R(:,e2r_HydDepth)                                   &
+                    - onehalfR * elem2R(:,e2r_HydDepth) **twoR                 &
+                    * (tan(lTrapezoidAngle) + tan(lTrapezoidAngle))
                 elem2R(:,e2r_Topwidth)  = 0.0
                 elem2R(:,e2r_Eta)       = 0.0
                 elem2R(:,e2r_Volume)    = 0.0
