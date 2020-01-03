@@ -117,6 +117,8 @@
  real,      pointer :: dup, ddn
  integer,   pointer :: Lindx, LdepthType
  integer :: ii, ei_max, mm
+ 
+ real :: trapz_tanTheta, CC, BB
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -213,10 +215,8 @@
             elem2I(:,e2i_roughness_type) = linkI(ii,li_roughness_type)
             elem2R(:,e2r_Roughness)      = linkR(ii,lr_Roughness)
             elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
-            elem2R(:,e2r_Eta)            = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
             elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)            
         endwhere
-        
 
         if (linkI(ii,li_geometry) == lRectangular ) then
             !% handle rectangular elements
@@ -224,13 +224,55 @@
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eRectangular            
                 elem2R(:,e2r_Topwidth)  = linkR(ii,lr_BreadthScale)
+                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
                 elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
             endwhere
+            
+        elseif (linkI(ii,li_geometry) == lParabolic ) then
+            !% handle parabolic elements
+            
+            where (elem2I(:,e2i_link_ID) == Lindx)
+                elem2I(:,e2i_geometry)  = eParabolic
+                elem2R(:,e2r_Area)      = 0.0!!Ask Ben
+                elem2R(:,e2r_Topwidth)  = twoR                                 &
+                    * sqrt(elem2R(:,e2r_HydDepth)/setting%geometryCrossSection%gA)
+                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)                &
+                    + setting%geometryCrossSection%parabolaValue ** onethirdR  &
+                    * (threefourthR * elem2R(:,e2r_Area)) ** twothirdR 
+                elem2R(:,e2r_Volume)    = 0.0!!Ask Ben
+                elem2R(:,e2r_Perimeter) =                                      &
+                    (twothirdR / setting%geometryCrossSection%parabolaValue)   & 
+                    * ((oneR + setting%geometryCrossSection%parabolaValue * elem2R(:,e2r_HydDepth)) ** (threeR/twoR) - oneR)
+            endwhere
+            
+        elseif (linkI(ii,li_geometry) == lTrapezoidal ) then
+            !% handle trapezoidal elements
+            where (elem2I(:,e2i_link_ID) == Lindx)
+                elem2I(:,e2i_geometry)  = eTrapezoidal
+                elem2R(:,e2r_Area)      = 0.0!!Ask Ben
+                elem2R(:,e2r_Topwidth)  = 0.0
+                elem2R(:,e2r_Eta)       = 0.0
+                elem2R(:,e2r_Volume)    = 0.0
+                elem2R(:,e2r_Perimeter) = 0.0
+            endwhere
+            
+        elseif (linkI(ii,li_geometry) == lWidthDepth ) then
+            !% handle width-depth elements
+            
+            where (elem2I(:,e2i_link_ID) == Lindx)
+                elem2I(:,e2i_geometry)  = eWidthDepth
+                elem2R(:,e2r_Topwidth)  = 0.0
+                elem2R(:,e2r_Eta)       = 0.0
+                elem2R(:,e2r_Area)      = 0.0
+                elem2R(:,e2r_Volume)    = 0.0
+                elem2R(:,e2r_Perimeter) = 0.0
+            endwhere
+            
         else
             !% handle elements of other geometry types
-            print *, 'error: initialization for non-rectangular elements needed in ',subroutine_name
+            print *, 'error: initialization for non-defined elements needed in ',subroutine_name
             stop
         end if
         
