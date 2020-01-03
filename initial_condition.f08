@@ -235,16 +235,27 @@
             
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eParabolic
-                elem2R(:,e2r_Area)      = 0.0!!Ask Ben
+                
+                elem2R(:,e2r_Area)      = pi * elem2R(:,e2r_BreadthScale) ** twoR &
+                    + (pi * elem2R(:,e2r_BreadthScale)                         &
+                    / (six * elem2R(:,e2r_HydDepth) ** twoR))                  &
+                    * ((elem2R(:,e2r_BreadthScale) ** twoR                     &
+                    + fourR * elem2R(:,e2r_HydDepth) ** twoR) ** (threeR/twoR) &
+                    - elem2R(:,e2r_BreadthScale) ** threeR)
+                    
                 elem2R(:,e2r_Topwidth)  = twoR                                 &
                     * sqrt(elem2R(:,e2r_HydDepth)/setting%geometryCrossSection%gA)
+                    
                 elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)                &
                     + setting%geometryCrossSection%parabolaValue ** onethirdR  &
                     * (threefourthR * elem2R(:,e2r_Area)) ** twothirdR 
-                elem2R(:,e2r_Volume)    = 0.0!!Ask Ben
+                    
+                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                
                 elem2R(:,e2r_Perimeter) =                                      &
                     (twothirdR / setting%geometryCrossSection%parabolaValue)   & 
-                    * ((oneR + setting%geometryCrossSection%parabolaValue * elem2R(:,e2r_HydDepth)) ** (threeR/twoR) - oneR)
+                    * ((oneR + setting%geometryCrossSection%parabolaValue      &
+                    * elem2R(:,e2r_HydDepth)) ** (threeR/twoR) - oneR)
             endwhere
             
         elseif (linkI(ii,li_geometry) == lTrapezoidal ) then
