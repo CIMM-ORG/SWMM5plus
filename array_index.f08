@@ -132,22 +132,17 @@
     integer, parameter :: e2r_Area               = 11
     integer, parameter :: e2r_Topwidth           = 12
     integer, parameter :: e2r_Perimeter          = 13
-    integer, parameter :: e2r_HydDepth           = 14
-    integer, parameter :: e2r_HydRadius          = 15
-    integer, parameter :: e2r_X                  = 16
-    integer, parameter :: e2r_Length             = 17
-    integer, parameter :: e2r_Zbottom            = 18
-    integer, parameter :: e2r_BreadthScale       = 19
-    integer, parameter :: e2r_Roughness          = 20
-    integer, parameter :: e2r_VolumeConservation = 21
-    integer, parameter :: e2r_FroudeNumber       = 22
-    integer, parameter :: e2r_Bottomwidth        = 23
-    integer, parameter :: e2r_LeftSlope          = 24
-    integer, parameter :: e2r_rightSlope         = 25
-    integer, parameter :: e2r_Power              = 26
-    integer, parameter :: e2r_BottomRadius       = 27
-    integer, parameter :: e2r_TopRadius          = 28
-    integer, parameter :: e2r_idx_base1          = 28
+    integer, parameter :: e2r_Depth              = 14
+    integer, parameter :: e2r_HydDepth           = 15
+    integer, parameter :: e2r_HydRadius          = 16
+    integer, parameter :: e2r_X                  = 17
+    integer, parameter :: e2r_Length             = 18
+    integer, parameter :: e2r_Zbottom            = 19
+    integer, parameter :: e2r_BreadthScale       = 20
+    integer, parameter :: e2r_Roughness          = 21
+    integer, parameter :: e2r_VolumeConservation = 22
+    integer, parameter :: e2r_FroudeNumber       = 23
+    integer, parameter :: e2r_idx_base1          = 23
 
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
     integer, parameter :: e2r_temp2              = e2r_idx_base1 + 2
@@ -449,13 +444,16 @@
     integer, parameter :: lr_BreadthScale           = 2
     integer, parameter :: lr_ElementLength          = 3
     integer, parameter :: lr_Slope                  = 4
-    integer, parameter :: lr_Roughness              = 5
-    integer, parameter :: lr_InitialFlowrate        = 6
-    integer, parameter :: lr_InitialDepth           = 7
-    integer, parameter :: lr_InitialUpstreamDepth   = 8
-    integer, parameter :: lr_InitialDnstreamDepth   = 9
-    integer, parameter :: lr_temp1                  = 10
-    integer, parameter :: lr_idx_max                = 10
+    integer, parameter :: lr_LeftSlope              = 5
+    integer, parameter :: lr_RightSlope             = 6
+    integer, parameter :: lr_Roughness              = 7
+    integer, parameter :: lr_InitialFlowrate        = 8
+    integer, parameter :: lr_InitialDepth           = 9
+    integer, parameter :: lr_InitialUpstreamDepth   = 10
+    integer, parameter :: lr_InitialDnstreamDepth   = 11
+    integer, parameter :: lr_ParabolaValue          = 12
+    integer, parameter :: lr_temp1                  = 13
+    integer, parameter :: lr_idx_max                = 13
 
 !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array

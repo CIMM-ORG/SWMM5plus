@@ -139,11 +139,11 @@
             if (linkR(ii,lr_InitialDepth) /= nullvalueR) then        
                 !%  if the link has a uniform depth as an initial condition
                 where (elem2I(:,e2i_link_ID) == Lindx)
-                    elem2R(:,e2r_HydDepth) = linkR(ii,lr_InitialDepth)
+                    elem2R(:,e2r_Depth) = linkR(ii,lr_InitialDepth)
                 endwhere
             else
                 where (elem2I(:,e2i_link_ID) == Lindx)
-                    elem2R(:,e2r_HydDepth) = 0.5*(dup + ddn)
+                    elem2R(:,e2r_Depth) = 0.5*(dup + ddn)
                 endwhere
             endif
         
@@ -151,7 +151,7 @@
             !% if the link has linearly-varying depth 
             !% depth at the downstream element (link position =1)
             where ( (elem2I(:,e2i_link_Pos) == 1) .and. (elem2I(:,e2i_link_ID) == Lindx) )
-                elem2R(:,e2r_HydDepth) = ddn   
+                elem2R(:,e2r_Depth) = ddn   
             endwhere
             
             !%  using a linear distribution over the links 
@@ -160,7 +160,7 @@
                 !% find the element that is at the mm position in the link
                 where ( (elem2I(:,e2i_link_Pos) == mm) .and. (elem2I(:,e2i_link_ID) == Lindx) )
                     ! use a linear interp
-                    elem2R(:,e2r_HydDepth) = ddn + (dup - ddn) * real(mm-1) / real(ei_max-1)
+                    elem2R(:,e2r_Depth) = ddn + (dup - ddn) * real(mm-1) / real(ei_max-1)
                 endwhere
             end do
             
@@ -174,7 +174,7 @@
             !% if the link has linearly-varying depth 
             !% depth at the downstream element (link position =1)
             where ( (elem2I(:,e2i_link_Pos) == 1) .and. (elem2I(:,e2i_link_ID) == Lindx) )
-                elem2R(:,e2r_HydDepth) = ddn   
+                elem2R(:,e2r_Depth) = ddn   
             endwhere
 
             !%  using a linear distribution over the links 
@@ -187,20 +187,20 @@
                     !%  depth decreases exponentially going upstream
                     where ( (elem2I(:,e2i_link_Pos) == mm) .and. &
                         (elem2I(:,e2i_link_ID) == Lindx)        )
-                         elem2R(:,e2r_HydDepth) = (ddn-dup) * exp(-real(mm-1)) + dup
+                         elem2R(:,e2r_Depth) = (ddn-dup) * exp(-real(mm-1)) + dup
                     endwhere
                 elseif (ddn - dup < zeroR) then
                     !%  depth increases exponentially going upstream
                     where ( (elem2I(:,e2i_link_Pos) == mm) .and. &
                         (elem2I(:,e2i_link_ID) == Lindx)        )
-                        elem2R(:,e2r_HydDepth) = dup - (dup-ddn) * exp(-real(mm-1))
+                        elem2R(:,e2r_Depth) = dup - (dup-ddn) * exp(-real(mm-1))
                     endwhere
                 else
                     !%  uniform depth
                     where ( (elem2I(:,e2i_link_Pos) == mm) .and. &
                         (elem2I(:,e2i_link_ID) == Lindx)        )
                         ! use a linear interp
-                        elem2R(:,e2r_HydDepth) = ddn
+                        elem2R(:,e2r_Depth) = ddn
                     endwhere
                      
                 endif
@@ -214,7 +214,6 @@
         where (elem2I(:,e2i_link_ID) == Lindx)
             elem2I(:,e2i_roughness_type) = linkI(ii,li_roughness_type)
             elem2R(:,e2r_Roughness)      = linkR(ii,lr_Roughness)
-            elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
             elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)            
         endwhere
 
@@ -222,7 +221,9 @@
             !% handle rectangular elements
             
             where (elem2I(:,e2i_link_ID) == Lindx)
-                elem2I(:,e2i_geometry)  = eRectangular            
+                elem2I(:,e2i_geometry)  = eRectangular
+                elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
+                elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
                 elem2R(:,e2r_Topwidth)  = linkR(ii,lr_BreadthScale)
                 elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
@@ -232,44 +233,113 @@
             
         elseif (linkI(ii,li_geometry) == lParabolic ) then
             !% handle parabolic elements
-            
+            ! Input Topwidth, InitialDepth
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eParabolic
                 
-                elem2R(:,e2r_Area)      = pi * elem2R(:,e2r_BreadthScale) ** twoR &
-                    + (pi * elem2R(:,e2r_BreadthScale)                         &
-                    / (six * elem2R(:,e2r_HydDepth) ** twoR))                  &
-                    * ((elem2R(:,e2r_BreadthScale) ** twoR                     &
-                    + fourR * elem2R(:,e2r_HydDepth) ** twoR) ** (threeR/twoR) &
-                    - elem2R(:,e2r_BreadthScale) ** threeR)
+                ! calculate hyd depth from the depth
+                elem2R(:,e2r_HydDepth) = twothirdR * elem2R(:,e2r_Depth)
+                
+                elem2R(:,e2r_BreadthScale) = zeroR
                     
-                elem2R(:,e2r_Topwidth)  = twoR                                 &
-                    * sqrt(elem2R(:,e2r_HydDepth)/setting%geometryCrossSection%gA)
+                elem2R(:,e2r_Topwidth)  = twoR &
+                    * sqrt(elem2R(:,e2r_Depth)/linkR(ii,lr_ParabolaValue))
+                
+                elem2R(:,e2r_Area)      = twothirdR * elem2R(:,e2r_Depth) &
+                    * elem2R(:,e2r_Topwidth)
+                    
+                elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Topwidth) &
+                   *( &
+                        sqrt &
+                        ( &
+                            oneR  &
+                            + (fourR  &
+                            * elem2R(:,e2r_Depth)/elem2R(:,e2r_Topwidth))**twoR &
+                        )  &
+                        + (elem2R(:,e2r_Topwidth)/fourR * elem2R(:,e2r_Depth)) &
+                        *log &
+                        ( &
+                            fourR * elem2R(:,e2r_Depth)/elem2R(:,e2r_Topwidth)  &
+                            + sqrt &
+                            ( &
+                                oneR  &
+                                + (fourR  &
+                                * elem2R(:,e2r_Depth)/elem2R(:,e2r_Topwidth))**twoR &
+                            ) &
+                        )  &
+                    )
                     
                 elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)                &
-                    + setting%geometryCrossSection%parabolaValue ** onethirdR  &
-                    * (threefourthR * elem2R(:,e2r_Area)) ** twothirdR 
+                    + elem2R(:,e2r_HydDepth) 
                     
-                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
-                
-                elem2R(:,e2r_Perimeter) =                                      &
-                    (twothirdR / setting%geometryCrossSection%parabolaValue)   & 
-                    * ((oneR + setting%geometryCrossSection%parabolaValue      &
-                    * elem2R(:,e2r_HydDepth)) ** (threeR/twoR) - oneR)
+                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) &
+                    * elem2R(:,e2r_Length)
+                    
             endwhere
             
         elseif (linkI(ii,li_geometry) == lTrapezoidal ) then
             !% handle trapezoidal elements
+            ! Input: Left Slope, Right Slope, Bottom Width, InitialDepth
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eTrapezoidal
-                elem2R(:,e2r_Area)      = elem2R(:,e2r_BreadthScale)           &
-                    * elem2R(:,e2r_HydDepth)                                   &
-                    - onehalfR * elem2R(:,e2r_HydDepth) **twoR                 &
-                    * (tan(lTrapezoidAngle) + tan(lTrapezoidAngle))
-                elem2R(:,e2r_Topwidth)  = 0.0
-                elem2R(:,e2r_Eta)       = 0.0
-                elem2R(:,e2r_Volume)    = 0.0
-                elem2R(:,e2r_Perimeter) = 0.0
+                
+                elem2R(:,e2r_BreadthScale) = linkR(ii,lr_BreadthScale)
+                
+                ! (Bottom width + averageSlope * hydraulicDepth)*hydraulicDepth
+                elem2R(:,e2r_Area)      = (elem2R(:,e2r_BreadthScale)           &
+                    + onehalfR &
+                    * (linkR(ii,lr_LeftSlope) + linkR(ii,lr_RightSlope)) &
+                    * elem2R(:,e2r_Depth)) * elem2R(:,e2r_Depth)
+
+                ! Bottom width + (lslope + rslope) * hydraulicDepth
+                elem2R(:,e2r_Topwidth)  = elem2R(:,e2r_BreadthScale)            &
+                    + elem2R(:,e2r_Depth)                                   &
+                    * (linkR(ii,lr_LeftSlope) + linkR(ii,lr_RightSlope))
+                    
+                elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Area) / elem2R(:,e2r_Topwidth)
+                
+                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)                &
+                    + elem2R(:,e2r_HydDepth)
+                
+                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) &
+                    * elem2R(:,e2r_Length)
+                
+                ! Bottom width + hydraulicDepth*lengthSidewall
+                elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) &
+                    + elem2R(:,e2r_Depth) &
+                    * (sqrt(oneR + linkR(ii,lr_LeftSlope)**twoR) &
+                    + sqrt(oneR + linkR(ii,lr_RightSlope)**twoR))
+            endwhere
+            
+        elseif (linkI(ii,li_geometry) == lTriangle ) then
+            !% handle triangle elements
+            ! Input: Left Slope, Right Slope, InitialDepth
+            where (elem2I(:,e2i_link_ID) == Lindx)
+                elem2I(:,e2i_geometry)  = eTriangle
+                
+                elem2R(:,e2r_HydDepth) = onehalfR * elem2R(:,e2r_Depth)
+                
+                elem2R(:,e2r_BreadthScale) = zeroR
+                
+                ! (averageSlope * hydraulicDepth)*hydraulicDepth
+                elem2R(:,e2r_Area) = onehalfR &
+                    * (linkR(ii,lr_LeftSlope) + linkR(ii,lr_RightSlope)) &
+                    * elem2R(:,e2r_Depth) * elem2R(:,e2r_Depth)
+
+                ! (lslope + rslope) * hydraulicDepth
+                elem2R(:,e2r_Topwidth) = elem2R(:,e2r_Depth)               &
+                    * (linkR(ii,lr_LeftSlope) + linkR(ii,lr_RightSlope))
+                
+                elem2R(:,e2r_Eta) = elem2R(:,e2r_Zbottom)                &
+                    + elem2R(:,e2r_HydDepth)
+                
+                elem2R(:,e2r_Volume) = elem2R(:,e2r_Area) &
+                    * elem2R(:,e2r_Length)
+                
+                ! hydraulicDepth*lengthSidewall
+                elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Depth) &
+                    * (sqrt(oneR + linkR(ii,lr_LeftSlope)**twoR) &
+                    + sqrt(oneR + linkR(ii,lr_RightSlope)**twoR))
             endwhere
             
         elseif (linkI(ii,li_geometry) == lWidthDepth ) then
@@ -277,13 +347,15 @@
             
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eWidthDepth
+                
+                elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
+                
                 elem2R(:,e2r_Topwidth)  = 0.0
                 elem2R(:,e2r_Eta)       = 0.0
                 elem2R(:,e2r_Area)      = 0.0
                 elem2R(:,e2r_Volume)    = 0.0
                 elem2R(:,e2r_Perimeter) = 0.0
             endwhere
-            
         else
             !% handle elements of other geometry types
             print *, 'error: initialization for non-defined elements needed in ',subroutine_name
