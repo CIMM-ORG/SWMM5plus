@@ -798,9 +798,25 @@
     
     select case (linkI(thisLink,li_geometry))
         case (lRectangular)
-            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
+        case (lParabolic)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth) = twoR &
+                * sqrt(linkR(thisLink,lr_InitialDepth)/linkR(thisLink,lr_ParabolaValue))
+        case (lTrapezoidal)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth) = linkR(thisLink,lr_BreadthScale)   &
+                    + linkR(thisLink,lr_InitialDepth)                          &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lTriangle)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lWidthDepth)
+            elem2R(thisElem2,e2r_Topwidth)     = 0.0
+            elem2R(thisElem2,e2r_BreadthScale) = 0.0
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1277,9 +1293,25 @@
         
     select case (linkI(thisLink,li_geometry))
         case (lRectangular)
-            elem2R(thisElem2,e2r_Topwidth)      = linkR(thisLink,lr_BreadthScale)
-            elem2R(thisElem2,e2r_BreadthScale)  = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
+        case (lParabolic)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth) = twoR &
+                * sqrt(linkR(thisLink,lr_InitialDepth)/linkR(thisLink,lr_ParabolaValue))
+        case (lTrapezoidal)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth) = linkR(thisLink,lr_BreadthScale)   &
+                    + linkR(thisLink,lr_InitialDepth)                          &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lTriangle)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lWidthDepth)
+            elem2R(thisElem2,e2r_Topwidth)     = 0.0
+            elem2R(thisElem2,e2r_BreadthScale) = 0.0
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
