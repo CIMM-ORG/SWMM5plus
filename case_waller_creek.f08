@@ -211,7 +211,7 @@
  isnonmonotonic= 0
  
  allocate(faceZBottom(NX+1))
- faceZBottom(:) = 0.0
+ faceZbottom(:) = 0.0
  
 ! find the z at the faces
  call face_zbottom(faceZbottom, zbottom, Length, NX)
@@ -230,7 +230,7 @@
  endwhere
  
 ! counting the new elements
- newNX = NX + count(isnonmonotonic/= 0)
+ newNX = NX + twoI * count(isnonmonotonic/= 0)
  
  allocate(newID(newNX), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
@@ -276,23 +276,35 @@
         print*, "nonmonotonic element ==", ii, faceZbottom(ii), zbottom(ii), faceZbottom(ii+1)
         newID          (jj)   = jj
         newID          (jj+1) = jj + 1
+        newID          (jj+2) = jj + 2
         newNumberPairs (jj)   = numberPairs (ii)
         newNumberPairs (jj+1) = numberPairs (ii)
+        newNumberPairs (jj+2) = numberPairs (ii)
         newManningsN   (jj)   = ManningsN   (ii)
         newManningsN   (jj+1) = ManningsN   (ii)
-        newLength      (jj)   = onehalfR*Length (ii)
-        newLength      (jj+1) = onehalfR*Length (ii)
-        newZBottom     (jj)   = zBottom     (ii)
+        newManningsN   (jj+2) = ManningsN   (ii)
+        newLength      (jj)   = onehalfR*Length (ii)                           &
+            - onehalfR * subdivide_length_check
+        newLength      (jj+1) = subdivide_length_check
+        newLength      (jj+2) = onehalfR*Length (ii)                           &
+            - onehalfR * subdivide_length_check
+        newZBottom     (jj)   = faceZbottom (ii)                               &
+            - onehalfR * (faceZbottom (ii) - zBottom (ii))
         newZBottom     (jj+1) = zBottom     (ii)
-        newXDistance   (jj)   = onehalfR*xDistance (ii) - onehalfR*Length (ii)
-        newXDistance   (jj+1) = onehalfR*xDistance (ii) - onehalfR*Length (ii)
+        newZBottom     (jj+2) = zBottom (ii)                                   &
+            - onehalfR * (zBottom (ii) - faceZbottom (ii))
+        newXDistance   (jj)   = onehalfR*xDistance (ii)                        &
+            - onehalfR*Length (ii) - onehalfR * subdivide_length_check
+        newXDistance   (jj+1) = newXDistance   (jj) + subdivide_length_check
+        newXDistance   (jj+2) = newXDistance   (jj+1)                          &
+            + onehalfR*Length (ii) - onehalfR * subdivide_length_check
         newBreadth     (jj)   = Breadth     (ii)
         newBreadth     (jj+1) = Breadth     (ii)
         newWidthDepthData(jj,:,:)   = widthDepthData (ii,:,:)
         newWidthDepthData(jj+1,:,:) = widthDepthData (ii,:,:)
         newCellType    (jj)   = cellType    (ii)
         newCellType    (jj+1) = cellType    (ii)
-        jj = jj + 2
+        jj = jj + 3
     else
         newID          (jj) = jj
         newNumberPairs (jj) = numberPairs (ii)

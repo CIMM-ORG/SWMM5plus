@@ -47,7 +47,8 @@ program a1
       newZBottom, newXDistance, newBreadth, newWidthDepthData,             &
       subdivide_length_check)
 
- 
+ print*, size(ID)
+ print*, newID
 
 end program a1
 
