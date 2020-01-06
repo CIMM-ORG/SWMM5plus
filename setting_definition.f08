@@ -157,6 +157,15 @@
         real    :: Volume       = 1.0e-6  ! m^3
     end type zerovalueType
 
+    !%  setting%WeirSetting
+    type WeirType
+        real    :: WeirDischargeCoeff   = 1.45 ! m^3/s
+        real    :: EndContraction       = 0    ! Number of End Contraction(0, 1, 2)
+        real    :: WeirHeight           = 0.3  ! Vertical Height of Weir Opening m
+        real    :: WeirWidth            = 1
+        real    :: WeirSideSlope        = 1
+    end type WeirType
+
 !% FIRST LEVEL TYPE  ----------------------------------------------
     type settingType
         integer :: dummy
@@ -171,6 +180,7 @@
         type(testcaseType)          :: TestCase     ! custom setup for test cases
         type(timeType)              :: Time         ! controls of time step
         type(zerovalueType)         :: ZeroValue    ! finite values to represent small or negative values
+        type(WeirType)              :: Weir         ! This contains the weir settings 
     end type settingType
 
 

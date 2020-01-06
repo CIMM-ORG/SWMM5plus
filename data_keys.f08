@@ -13,23 +13,26 @@
     use globals
 
     implicit none
-    
+
+    ! data types for elemI(:,ei_meta_elem_type).
+    integer, parameter :: eHQ                = 1   ! ID for a HQ meta-element
+    integer, parameter :: eQonly             = 2   ! ID for a Q only meta-element
+    integer, parameter :: eHonly             = 3   ! ID for a H only meta-element 
+    integer, parameter :: eNonHQ             = 4   ! ID for a non HQ meta-element
+
     ! data types for elemI(:,ei_elem_type). faceI(:,e_type_u), faceI(:,e_type_d)
     integer, parameter :: eChannel          = 1   ! ID for an open channel element
     integer, parameter :: ePipe             = 2   ! ID for an pipe
     integer, parameter :: eJunctionChannel  = 3   ! ID for a junction 
     integer, parameter :: eJunctionPipe     = 4   ! ID for a junction 
     integer, parameter :: eCulvert          = 5   ! ID for a culvert in an open channel
-    integer, parameter :: ePumpChannel      = 6   ! ID for a pump
-    integer, parameter :: ePumpPipe         = 7   ! ID for a pump
-    integer, parameter :: eValveChannel     = 8   ! ID for a valve
-    integer, parameter :: eValvePipe        = 9   ! ID for a valve
-    integer, parameter :: eOrificeChannel   = 10  ! ID for an orifice
-    integer, parameter :: eOrificePipe      = 11  ! ID for an orifice
-    integer, parameter :: eWeirChannel      = 12  ! ID for a weir
-    integer, parameter :: eWeirPipe         = 13  ! ID for a weir
-    integer, parameter :: eBCup             = 14  ! ID for face upstream BC
-    integer, parameter :: eBCdn             = 15  ! ID for face downstream BC
+    integer, parameter :: ePump             = 6   ! ID for a pump
+    integer, parameter :: eValve            = 7   ! ID for a valve
+    integer, parameter :: eOrifice          = 8  ! ID for an orifice
+    integer, parameter :: eWeir             = 9  ! ID for a weir
+    integer, parameter :: eStorage          = 10  ! ID for a storage
+    integer, parameter :: eBCup             = 11  ! ID for face upstream BC
+    integer, parameter :: eBCdn             = 12  ! ID for face downstream BC
     
     ! data types for faceI(:,fi_type)
     integer, parameter :: fChannel          = eChannel  ! ID for open channel on both sides
@@ -49,6 +52,7 @@
     integer, parameter :: eRoadwayWeir        = 8  ! ID for roadway weir
     integer, parameter :: eVnotchWeir         = 9  ! ID for V_notch weir
     integer, parameter :: eTrapezoidalWeir    = 10 ! ID for trapezoidal weir
+    integer, parameter :: eWidthDepthStorage  = 11 ! ID for general geometry by data pairs for storage
     
 
     ! data types for elemI(:,ei_roughness_type)

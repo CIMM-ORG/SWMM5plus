@@ -86,6 +86,10 @@
  call rectangular_geometry_update &
     (elem2R, elem2I, e2r_VolumeColumn, &
      elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM)
+!% triangular geometry only for v-notch weir. This needed to be checked
+ call triangular_geometry_update &
+    (elem2R, elem2I, e2r_Volume_new, &
+     elemMR, elemMI, eMr_Volume_new, faceR, eMr_EtaOld, method_EtaM )
 
 !% HACK -- NEED OTHER GEOMETRY TYPES
 
@@ -245,7 +249,8 @@
      ei_geometry, ei_elem_type, elem_typ_value,  &
      er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
      er_Perimeter, er_HydDepth, er_HydRadius, er_Volume)
-!
+! Here elemR is used to make the subroutine more general. Because this is
+! used both for channel and junction.
 ! computes element geometry for a rectangular channel or a channeljunction
 !
  character(64) :: subroutine_name = 'rectangular_channel_or_junction'
@@ -282,7 +287,7 @@
  topwidth   => elemR(:,er_Topwidth)
 
 
-
+! This function calculates the geometric properties for rectengular channel and junctions
  where ( (elemI(:,ei_geometry)  == eRectangularChannel) .and. &
          (elemI(:,ei_elem_type) == elem_typ_value    )         )
     area        = volume / length
@@ -389,6 +394,96 @@
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine rectangular_junction_leg
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine triangular_geometry_update &
+    (elem2R, elem2I, e2r_Volume_new, &
+     elemMR, elemMI, eMr_Volume_new, faceR, eMr_EtaOld, method_EtaM )
+
+ character(64) :: subroutine_name = 'triangular_geometry_update'
+
+ real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
+ real,      intent(in)      :: faceR(:,:)
+ integer,   intent(in)      :: elem2I(:,:), elemMI(:,:)
+ integer,   intent(in)      :: e2r_Volume_new, eMr_Volume_new, eMr_EtaOld
+ integer,   intent(in)      :: method_EtaM
+!
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+!%  basic geometry update for rectangular channels and junctions
+
+!%  rectangular geometry for channels
+ call v_notch_weir &
+    (elem2R, elem2I, &
+     e2i_geometry, e2i_elem_type, eWeir,  &
+     e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
+     e2r_Perimeter, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new)
+
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine triangular_geometry_update
+!
+!==========================================================================
+!==========================================================================
+!
+ subroutine v_notch_weir &
+    (elemR, elemI, &
+     ei_geometry, ei_elem_type, elem_typ_value,  &
+     er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
+     er_Perimeter, er_HydDepth, er_HydRadius, er_Volume)
+!
+ character(64) :: subroutine_name = 'v_notch_weir'
+
+ real,      target,     intent(in out)  :: elemR(:,:)
+
+ integer,   intent(in)      :: elemI(:,:)
+ integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_typ_value
+ integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale
+ integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
+ integer,   intent(in)      :: er_HydDepth, er_HydRadius, er_Volume
+
+
+ real,  pointer  :: volume(:), length(:), zbottom(:), breadth(:)
+ real,  pointer  :: area(:), eta(:), perimeter(:), hyddepth(:), hydradius(:)
+ real,  pointer  :: topwidth(:)
+
+
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+ ! inputs
+ volume     => elemR(:,er_Volume)
+ length     => elemR(:,er_Length)
+ zbottom    => elemR(:,er_Zbottom)
+ breadth    => elemR(:,er_BreadthScale)
+
+! outputs
+ area       => elemR(:,er_Area)
+ eta        => elemR(:,er_Eta)
+ perimeter  => elemR(:,er_Perimeter)
+ hyddepth   => elemR(:,er_HydDepth)
+ hydradius  => elemR(:,er_HydRadius)
+ topwidth   => elemR(:,er_Topwidth)
+
+
+! This function calculates the geometric properties for rectengular channel and junctions
+ where ( (elemI(:,ei_geometry)  == eVnotchWeir) .and. &
+         (elemI(:,ei_elem_type) == elem_typ_value    )         )
+    area        = volume / length
+    !eta needed to be checked
+    eta         = zbottom + (2 * area / breadth)
+    topwidth    = breadth
+    ! This needed to be checked
+    perimeter   = breadth + 2.0 * sqrt(onefourthR * breadth ** 2 + ( eta - zbottom ) ** 2)
+    hyddepth    = area / topwidth
+    hydradius   = area / perimeter
+ endwhere
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine v_notch_weir
 !
 !==========================================================================
 ! END OF MODULE element_geometry

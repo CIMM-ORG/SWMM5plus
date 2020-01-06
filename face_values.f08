@@ -55,19 +55,19 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
- call face_interp_for_elem2 &
-    (elem2R, faceR, faceI, faceYN, bcdataDn, bcdataUp, e2r_Volume_new)
+ call face_interp_for_elements &
+    (elem2R, elemMR,faceR, faceI, faceYN, bcdataDn, bcdataUp, e2r_Volume_new, eMr_Volume_new)
 
  call bc_applied_onface &
     (faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity_new, thisTime)
 
- if (N_elemM > 0) then
-    call face_interp_for_upstreamchannel_to_downstreamjunction &
-        (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
+ ! if (N_elemM > 0) then
+ !    call face_interp_for_upstreamchannel_to_downstreamjunction &
+ !        (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
        
-    call face_interp_for_downstreamchannel_to_upstreamjunction &
-        (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
- endif
+ !    call face_interp_for_downstreamchannel_to_upstreamjunction &
+ !        (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
+ ! endif
  
  call face_hydraulic_jump (elem2R, elemMR, faceR, faceI, e2r_Velocity_new, eMr_Velocity_new)
  
@@ -142,14 +142,170 @@
  end subroutine face_bc_flowrate_update_onevalue
 !
 !========================================================================== 
+!========================================================================== 
+ subroutine face_interp_for_elements &
+    (elem2R, elemMR,faceR, faceI, faceYN, bcdataDn, bcdataUp, e2r_Volume_new, eMr_Volume_new)
+
+! face interpolation for all the elements
+
+ character(64) :: subroutine_name = 'face_interp_for_elements'
+ 
+ integer,               intent(in)      :: faceI(:,:)
+ real,      target,     intent(in out)  :: faceR(:,:)
+ real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
+ integer,               intent(in)      :: e2r_Volume_new, eMr_Volume_new
+ logical,   target,     intent(in out)  :: faceYN(:,:)
+ type(bcType),          intent(in)      :: bcdataDn(:), bcdataUp(:)
+     
+ logical,   pointer  :: facemask_HQ2up(:), facemask_HQ2dn(:)
+ logical,   pointer  :: facemask_HQmup(:), facemask_HQmdn(:)
+ logical,   pointer  :: facemask_Hup(:), facemask_Hdn(:)
+ logical,   pointer  :: facemask_Qup(:), facemask_Qdn(:)
+ real,      pointer  :: weightUp(:), weightDn(:)
+ real,      pointer  :: inoutarray(:)
+
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ weightUp => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+ weightDn => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+
+ facemask_HQ2up     => faceYN(:,fYN_IsHQ2up)
+ facemask_HQ2dn     => faceYN(:,fYN_IsHQ2dn)
+ facemask_HQmup     => faceYN(:,fYN_IsHQmup)
+ facemask_HQmdn     => faceYN(:,fYN_IsHQmdn)
+ facemask_Hup       => faceYN(:,fYN_IsHup)
+ facemask_Hdn       => faceYN(:,fYN_IsHdn)
+ facemask_Qup       => faceYN(:,fYN_IsQup)
+ facemask_Qdn       => faceYN(:,fYN_IsQdn)
+
+ facemask_HQ2up = ( (faceI(:,fi_meta_etype_u) == eHQ) .and. &
+                    (faceI(:,fi_etype_u) == eChannel) )
+ facemask_HQ2dn = ( (faceI(:,fi_meta_etype_d) == eHQ) .and. &
+                    (faceI(:,fi_etype_d) == eChannel) )
+ facemask_HQmup = ( (faceI(:,fi_meta_etype_u) == eHQ) .and. &
+                    (faceI(:,fi_etype_u) == eJunctionChannel) )
+ facemask_HQmdn = ( (faceI(:,fi_meta_etype_d) == eHQ) .and. &
+                    (faceI(:,fi_etype_d) == eJunctionChannel) )
+ facemask_Hup  = ( faceI(:,fi_meta_etype_u) == eHonly )
+ facemask_Hdn  = ( faceI(:,fi_meta_etype_d) == eHonly )
+ facemask_Qup  = ( faceI(:,fi_meta_etype_u) == eQonly )
+ facemask_Qdn  = ( faceI(:,fi_meta_etype_d) == eQonly )
+
+ weightUp = setting%Limiter%Timescale%Maximum
+ weightDn = setting%Limiter%Timescale%Maximum
+
+ where ( (facemask_HQ2up) .and. (facemask_HQ2dn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_u) 
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_d) 
+
+ elsewhere ( (facemask_HQ2up) .and. (facemask_HQmdn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_u) 
+    
+ elsewhere ( (facemask_HQ2up) .and. (facemask_Qdn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_u) 
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_d) 
+
+ elsewhere ( (facemask_HQ2up) .and. (facemask_Hdn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_u) 
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_H_d)
+
+ elsewhere ( (facemask_HQmup) .and. (facemask_HQ2dn) )
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_d)
+
+ elsewhere ( (facemask_HQmup) .and. (facemask_Qdn) )
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_d)
+
+ elsewhere ( (facemask_HQmup) .and. (facemask_Hdn) )
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_d)
+
+ elsewhere ( (facemask_Qup) .and. (facemask_HQ2dn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_u) 
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_d)
+
+ elsewhere ( (facemask_Qup) .and. (facemask_HQmdn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_u) 
+
+ elsewhere ( (facemask_Qup) .and. (facemask_Hdn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_u) 
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_H_d) 
+
+ elsewhere ( (facemask_Hup) .and. (facemask_HQ2dn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_H_u) 
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_d) 
+
+ elsewhere ( (facemask_Hup) .and. (facemask_HQmdn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_u) 
+
+ elsewhere ( (facemask_Hup) .and. (facemask_Qdn) )
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_H_u) 
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_d) 
+ endwhere
+
+
+ call face_interp_for_elem2faces &
+    (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_HQ2up, facemask_HQ2dn, weightUp, &
+        weightDn, bcdataUp, e2r_Volume_new)
+ call face_interp_for_upstreamchannel_to_downstreamjunction &
+    (elem2R, elemMR, faceR, faceI, faceYN, facemask_HQ2up, facemask_HQmdn, &
+        weightUp, e2r_Volume_new, eMr_Volume_new)
+ call face_interp_for_elem2faces &
+    (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_HQ2up, facemask_Qdn, weightUp, &
+        weightDn, bcdataUp, e2r_Volume_new)
+ call face_interp_for_elem2faces &
+    (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_HQ2up, facemask_Hdn, weightUp, &
+        weightDn, bcdataUp, e2r_Volume_new) 
+ call face_interp_for_downstreamchannel_to_upstreamjunction &
+    (elem2R, elemMR, faceR, faceI, faceYN, facemask_HQmup, facemask_HQ2dn, &
+         weightDn, e2r_Volume_new, eMr_Volume_new)
+ call face_interp_for_downstreamchannel_to_upstreamjunction &
+    (elem2R, elemMR, faceR, faceI, faceYN, facemask_HQmup, facemask_Qdn, &
+         weightDn, e2r_Volume_new, eMr_Volume_new)
+ call face_interp_for_downstreamchannel_to_upstreamjunction &
+    (elem2R, elemMR, faceR, faceI, faceYN, facemask_HQmup, facemask_Hdn, &
+         weightDn, e2r_Volume_new, eMr_Volume_new)
+ call face_interp_for_elem2faces &
+    (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_Qup, facemask_HQ2dn, weightUp, &
+        weightDn, bcdataUp, e2r_Volume_new) 
+ call face_interp_for_upstreamchannel_to_downstreamjunction &
+    (elem2R, elemMR, faceR, faceI, faceYN, facemask_Qup, facemask_HQmdn, &
+        weightUp, e2r_Volume_new, eMr_Volume_new)
+ call face_interp_for_elem2faces &
+    (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_Qup, facemask_Hdn, weightUp, &
+        weightDn, bcdataUp, e2r_Volume_new)
+ call face_interp_for_elem2faces &
+    (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_Hup, facemask_HQ2dn, weightUp, &
+        weightDn, bcdataUp, e2r_Volume_new)
+ call face_interp_for_upstreamchannel_to_downstreamjunction &
+    (elem2R, elemMR, faceR, faceI, faceYN, facemask_Hup, facemask_HQmdn, &
+        weightUp, e2r_Volume_new, eMr_Volume_new)
+ call face_interp_for_elem2faces &
+    (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_Hup, facemask_Qdn, weightUp, &
+        weightDn, bcdataUp, e2r_Volume_new)
+
+ weightUp = nullvalueR
+ weightDn = nullvalueR
+
+ nullify(weightUp, weightDn)
+
+ next_fr_temparray = next_fr_temparray - 2
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine face_interp_for_elements
+!==========================================================================
 !==========================================================================
 !
- subroutine face_interp_for_elem2 &
-    (elem2R, faceR, faceI, faceYN, bcdataDn, bcdataUp, e2r_Volume_new)
+ subroutine face_interp_for_elem2faces &
+    (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_meta_u, facemask_meta_d, weightUp, &
+        weightDn, bcdataUp, e2r_Volume_new)
 !
 ! face interpolation between elements that have only 2 faces
 ! 
- character(64) :: subroutine_name = 'face_interp_for_elem2'
+ character(64) :: subroutine_name = 'face_interp_for_elem2faces'
  
  integer,               intent(in)      :: faceI(:,:)
  real,      target,     intent(in out)  :: faceR(:,:)
@@ -157,10 +313,12 @@
  logical,   target,     intent(in out)  :: faceYN(:,:)
  type(bcType),          intent(in)      :: bcdataDn(:), bcdataUp(:)
  integer,               intent(in)      :: e2r_Volume_new
-     
- logical,   pointer  :: facemask(:)
- real,      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
+ real,                  intent(in)      :: weightUp(:), weightDn(:)     
+ logical,               intent(in)      :: facemask_meta_u(:), facemask_meta_d(:)
+
+ real,      pointer  :: valueUp(:), valueDn(:)
  real,      pointer  :: inoutarray(:)
+ logical,   pointer  :: facemask(:)
  
  integer :: mm
  
@@ -174,29 +332,12 @@
 
  valueDn => faceR(:,fr_Temp(next_fr_temparray))
  next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
- 
- weightUp => faceR(:,fr_Temp(next_fr_temparray))
- next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
 
- weightDn => faceR(:,fr_Temp(next_fr_temparray))
- next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+ facemask    => faceYN(:,fYN_Temp(next_fYN_temparray))
+ next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp)
 
- facemask   => faceYN(:,fYN_Temp(next_fYN_temparray))
- next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp) 
+ facemask  = ((facemask_meta_u) .and. (facemask_meta_d))
 
- facemask = ( (faceI(:,fi_etype_u) == eChannel) .and. &
-              (faceI(:,fi_etype_d) == eChannel) )
-                      
-!%  use timescale for interpolation for Topwidth, Area, Flowrate
- weightUp = setting%Limiter%Timescale%Maximum
- weightDn = setting%Limiter%Timescale%Maximum
- where (facemask)
-    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_d) !tscale acting downstream from upstream element
-    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_u) !tscale acting upstream from downstream element
- endwhere
-
- 
-!%  set of face interpolations that use timescale weighting
  frset = (/fr_Topwidth,   fr_Area_d, fr_Flowrate /)
  e2rset= (/e2r_Topwidth, e2r_Area,  e2r_Flowrate /)
  
@@ -231,24 +372,25 @@
  
  facemask = nullvalueL
  nullify(facemask)
- next_fYN_temparray = next_fYN_temparray - 1
  
  valueUp = nullvalueR
  valueDn = nullvalueR
- weightUp = nullvalueR
- weightDn = nullvalueR
- nullify(valueUp, valueDn, weightUp, weightDn)
- next_fr_temparray = next_fr_temparray - 4
+ nullify(valueUp, valueDn)
+ next_fr_temparray = next_fr_temparray - 2
+
+ next_fYN_temparray = next_fYN_temparray - 1
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine face_interp_for_elem2
+ end subroutine face_interp_for_elem2faces
 !
 !========================================================================== 
 !==========================================================================
 !
  subroutine face_interp_for_upstreamchannel_to_downstreamjunction &
-    (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
-!
+    (elem2R, elemMR, faceR, faceI, faceYN, facemask_meta_u, facemask_meta_d, &
+        weightUp, e2r_Volume_new, eMr_Volume_new)
+
+
 ! face interpolation with a junction downstream and channel upstream
 ! i.e. this is from an upstream junction branch to the channel
 ! 
@@ -259,9 +401,12 @@
  real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
  logical,   target,     intent(in out)  :: faceYN(:,:)
  integer,               intent(in)      :: e2r_Volume_new, eMr_Volume_new
+ logical,               intent(in)      :: facemask_meta_u(:), facemask_meta_d(:)
+ real,                  intent(in)      :: weightUp(:) 
+
  
  logical,   pointer  :: facemask(:)
- real,      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
+ real,      pointer  :: valueUp(:), valueDn(:), weightDn(:)
  
  integer :: mm
 
@@ -273,40 +418,23 @@
 
  valueDn => faceR(:,fr_Temp(next_fr_temparray))
  next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
- 
- weightUp => faceR(:,fr_Temp(next_fr_temparray))
- next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
 
  weightDn => faceR(:,fr_Temp(next_fr_temparray))
  next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+ 
 
  facemask   => faceYN(:,fYN_Temp(next_fYN_temparray))
  next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp) 
 
- facemask = ( (faceI(:,fi_etype_u) == eChannel) .and. &
-              (faceI(:,fi_etype_d) == eJunctionChannel) )
+ facemask = ( (facemask_meta_u) .and. (facemask_meta_d) )
 
- where (facemask)
-    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_d) !tscale acting downstream
- endwhere
  
- do mm=1,upstream_face_per_elemM
- 
-!    print *, trim(subroutine_name)
-!    print *, mm
-!    print *, facemask
-!    print *, faceI(:,fi_branch_d)
-!    print *, faceI(:,fi_Melem_d)
-!    print *
-!    
-    
+ do mm=1,upstream_face_per_elemM 
+
     where ( (facemask) .and. (faceI(:,fi_branch_d) == mm) )
         weightDn = elemMR(faceI(:,fi_Melem_d),eMr_TimescaleUp(mm)) !tscale acting upstream
     endwhere
  end do
-
-!print *, trim(subroutine_name)
-!stop 
  
 !%  use timescale for interpolation for Topwidth, Area, Flowrate 
  call interp_with_junction_downstream &
@@ -346,10 +474,10 @@
  
  valueUp = nullvalueR
  valueDn = nullvalueR
- weightUp = nullvalueR
  weightDn = nullvalueR
- nullify(valueUp, valueDn, weightUp, weightDn)
- next_fr_temparray = next_fr_temparray - 4
+
+ nullify(valueUp, valueDn, weightDn)
+ next_fr_temparray = next_fr_temparray - 3
      
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine face_interp_for_upstreamchannel_to_downstreamjunction
@@ -358,21 +486,25 @@
 !==========================================================================
 !
  subroutine face_interp_for_downstreamchannel_to_upstreamjunction &
-    (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
+    (elem2R, elemMR, faceR, faceI, faceYN, facemask_meta_u, facemask_meta_d, &
+     weightDn, e2r_Volume_new, eMr_Volume_new)
 !
 ! face interpolation with a junction upstream and channel downstream
 ! i.e. this is from a downstream junction branch to the downstream channel
 ! 
  character(64) :: subroutine_name = 'face_interp_for_downstreamchannel_to_upstreamjunction'
- 
+
  integer,               intent(in)      :: faceI(:,:)
  real,      target,     intent(in out)  :: faceR(:,:)
  real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
  logical,   target,     intent(in out)  :: faceYN(:,:)
  integer,               intent(in)      :: e2r_Volume_new, eMr_Volume_new
+ logical,               intent(in)      :: facemask_meta_u(:), facemask_meta_d(:)
+ real,                  intent(in)      :: weightDn(:) 
+
  
  logical,   pointer  :: facemask(:)
- real,      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
+ real,      pointer  :: valueUp(:), valueDn(:), weightUp(:)
  
  integer :: mm
 
@@ -388,18 +520,11 @@
  weightUp => faceR(:,fr_Temp(next_fr_temparray))
  next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
 
- weightDn => faceR(:,fr_Temp(next_fr_temparray))
- next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
 
  facemask   => faceYN(:,fYN_Temp(next_fYN_temparray))
  next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp) 
 
- facemask = ( (faceI(:,fi_etype_d) == eChannel) .and. &
-              (faceI(:,fi_etype_u) == eJunctionChannel) )
-
- where (facemask)
-    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_u) !tscale acting upstream
- endwhere
+ facemask = ( (facemask_meta_u) .and. (facemask_meta_d) )
  
  do mm=1,dnstream_face_per_elemM
     where ( (facemask) .and. (faceI(:,fi_branch_u) == mm) )
@@ -446,9 +571,8 @@
  valueUp = nullvalueR
  valueDn = nullvalueR
  weightUp = nullvalueR
- weightDn = nullvalueR
- nullify(valueUp, valueDn, weightUp, weightDn)
- next_fr_temparray = next_fr_temparray - 4
+ nullify(valueUp, valueDn, weightUp)
+ next_fr_temparray = next_fr_temparray - 3
      
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine face_interp_for_downstreamchannel_to_upstreamjunction
@@ -685,6 +809,9 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
  where (facemask)
+    !e2r_ThisType calls the values from e2rset = [12 11 4] one by one
+    !Then the valueUp is set as the variable
+    !And these variables are Topwidth, Area and Flowrate
     valueUp  = elem2R(faceI(:,fi_Melem_u),e2r_ThisType)
     valueDn  = elem2R(faceI(:,fi_Melem_d),e2r_ThisType)
  endwhere 

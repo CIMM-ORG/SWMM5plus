@@ -247,8 +247,8 @@
 
  do ii=1,size(bcdata)
     eID => bcdata(ii)%ElemGhostID
-    elem2R(eID,e2r_Timescale_u) = setting%Limiter%Timescale%Maximum
-    elem2R(eID,e2r_Timescale_d) = setting%Limiter%Timescale%Maximum
+    elem2R(eID,e2r_Timescale_Q_u) = setting%Limiter%Timescale%Maximum !Fixing Timescale for new element implementation
+    elem2R(eID,e2r_Timescale_Q_d) = setting%Limiter%Timescale%Maximum
  end do
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name

@@ -474,6 +474,10 @@
 ! in branch flowrate and velocities have already been updated in place, so
 ! no need to use a eMr..new index
  call timescale_value_junction (elemMR, elemMI, elemMYN)
+
+ call timescale_value_HonlyElement (elem2R, elem2I, elem2YN)
+
+ call timescale_value_QonlyElement (elem2R, elem2I, elem2YN)
  
  call bc_timescale_value (elem2R, bcdataDn)
 
@@ -483,6 +487,112 @@
  end subroutine element_timescale
 !
 !========================================================================== 
+!==========================================================================
+ subroutine timescale_value_HonlyElement &
+    (elem2R, elem2I, elem2YN)
+
+ character(64) :: subroutine_name = 'timescale_value_HonlyElement'
+    
+ real,      target, intent(in out)  :: elem2R(:,:)
+ integer,           intent(in)      :: elem2I(:,:)
+ logical,   target, intent(in out)  :: elem2YN(:,:)
+ 
+ integer    ::  indx(2), maskindx1
+ 
+ real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
+ real,      pointer :: tscale_H_up(:), tscale_H_dn(:), wavespeed(:)
+ real,      pointer :: tscale_G_up(:), tscale_G_dn(:), velocity(:)
+ real,      pointer :: length(:) 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+ tscale_Q_up => elem2R(:,e2r_Timescale_Q_u)
+ tscale_Q_dn => elem2R(:,e2r_Timescale_Q_d)
+ tscale_H_up => elem2R(:,e2r_Timescale_H_u)
+ tscale_H_dn => elem2R(:,e2r_Timescale_H_d)
+ tscale_G_up => elem2R(:,e2r_Timescale_G_u)
+ tscale_G_dn => elem2R(:,e2r_Timescale_G_d)
+
+!For Honly meta elements, the timescale for H is minimum. Timescale for Q and G is maximum
+!TODO:Storage can be multi faced. So fix for multi faces. 
+
+ where ( (elem2I(:,e2i_meta_elem_type) == eHonly) .and. &
+         (elem2I(:,e2i_elem_type) == eStorage) )
+    tscale_Q_up = setting%Limiter%Timescale%Maximum
+    tscale_Q_dn = setting%Limiter%Timescale%Maximum
+    tscale_H_up = setting%Limiter%Timescale%Minimum
+    tscale_H_dn = setting%Limiter%Timescale%Minimum
+    tscale_G_up = setting%Limiter%Timescale%Maximum
+    tscale_G_dn = setting%Limiter%Timescale%Maximum
+ endwhere
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine timescale_value_HonlyElement
+!
+!==========================================================================
+ subroutine timescale_value_QonlyElement &
+    (elem2R, elem2I, elem2YN)
+
+ character(64) :: subroutine_name = 'timescale_value_QonlyElement'
+    
+ real,      target, intent(in out)  :: elem2R(:,:)
+ integer,           intent(in)      :: elem2I(:,:)
+ logical,   target, intent(in out)  :: elem2YN(:,:)
+ 
+ integer    ::  indx(2), maskindx1
+ 
+ real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
+ real,      pointer :: tscale_H_up(:), tscale_H_dn(:), wavespeed(:)
+ real,      pointer :: tscale_G_up(:), tscale_G_dn(:), velocity(:)
+ real,      pointer :: length(:) 
+ logical,   pointer :: maskarray1(:)
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+ tscale_Q_up => elem2R(:,e2r_Timescale_Q_u)
+ tscale_Q_dn => elem2R(:,e2r_Timescale_Q_d)
+ tscale_H_up => elem2R(:,e2r_Timescale_H_u)
+ tscale_H_dn => elem2R(:,e2r_Timescale_H_d)
+ tscale_G_up => elem2R(:,e2r_Timescale_G_u)
+ tscale_G_dn => elem2R(:,e2r_Timescale_G_d)
+
+!For Qonly meta elements, the timescale for Q is minimum. Timescale for H and G is maximum
+
+ where ( (elem2I(:,e2i_meta_elem_type) == eQonly) .and. &
+         (elem2I(:,e2i_elem_type) == eWeir) )
+
+    tscale_Q_up = setting%Limiter%Timescale%Minimum
+    tscale_Q_dn = setting%Limiter%Timescale%Minimum
+    tscale_H_up = setting%Limiter%Timescale%Maximum
+    tscale_H_dn = setting%Limiter%Timescale%Maximum
+    tscale_G_up = setting%Limiter%Timescale%Maximum
+    tscale_G_dn = setting%Limiter%Timescale%Maximum
+
+ elsewhere( (elem2I(:,e2i_meta_elem_type) == eQonly) .and. &
+            (elem2I(:,e2i_elem_type) == eOrifice) )
+
+    tscale_Q_up = setting%Limiter%Timescale%Minimum
+    tscale_Q_dn = setting%Limiter%Timescale%Minimum
+    tscale_H_up = setting%Limiter%Timescale%Maximum
+    tscale_H_dn = setting%Limiter%Timescale%Maximum
+    tscale_G_up = setting%Limiter%Timescale%Maximum
+    tscale_G_dn = setting%Limiter%Timescale%Maximum
+
+ elsewhere( (elem2I(:,e2i_meta_elem_type) == eQonly) .and. &
+                (elem2I(:,e2i_elem_type) == ePump) )
+
+    tscale_Q_up = setting%Limiter%Timescale%Minimum
+    tscale_Q_dn = setting%Limiter%Timescale%Minimum
+    tscale_H_up = setting%Limiter%Timescale%Maximum
+    tscale_H_dn = setting%Limiter%Timescale%Maximum
+    tscale_G_up = setting%Limiter%Timescale%Maximum
+    tscale_G_dn = setting%Limiter%Timescale%Maximum
+
+ endwhere
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine timescale_value_QonlyElement
+!
 !==========================================================================
 !
  subroutine timescale_value_channel &
@@ -498,27 +608,15 @@
  
  integer    ::  indx(2), maskindx1
  
- real,      pointer :: wavespeed(:), tscale_up(:), tscale_dn(:), velocity(:)
- real,      pointer :: length(:)
- logical,   pointer :: maskarrayChannel(:), maskarrayPipe(:)
- logical,   pointer :: maskarrayWeirC(:), maskarrayWeirP(:), maskarrayValveC(:) 
- logical,   pointer :: maskarrayValveP(:), maskarrayOrificeC(:)
- logical,   pointer :: maskarrayOrificeP(:), maskarrayPumpC(:) 
- logical,   pointer :: maskarrayPumpP(:), maskarray1(:)
+ real,      pointer :: wavespeed(:), velocity(:)
+ real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
+ real,      pointer :: tscale_H_up(:), tscale_H_dn(:)
+ real,      pointer :: tscale_G_up(:), tscale_G_dn(:)
+ real,      pointer :: length(:) 
+ logical,   pointer :: maskarray1(:)
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
-
- maskarrayChannel  => elem2YN(:,e2YN_IsChannel)
- maskarrayPipe     => elem2YN(:,e2YN_IsPipe)
- maskarrayWeirC    => elem2YN(:,e2YN_IsWeirChannel)
- maskarrayWeirP    => elem2YN(:,e2YN_IsWeirPipe)
- maskarrayOrificeC => elem2YN(:,e2YN_IsOrificeChannel)
- maskarrayOrificeP => elem2YN(:,e2YN_IsOrificePipe)
- maskarrayPumpC    => elem2YN(:,e2YN_IsPumpChannel)
- maskarrayPumpP    => elem2YN(:,e2YN_IsPumpPipe)
- maskarrayValveC   => elem2YN(:,e2YN_IsValveChannel)
- maskarrayValveP   => elem2YN(:,e2YN_IsValvePipe)
 
  maskindx1 = e2YN_Temp(next_e2YN_temparray) 
  maskarray1 => elem2YN(:,maskindx1)
@@ -529,50 +627,53 @@
  
  wavespeed = zeroR
  
- tscale_up => elem2R(:,e2r_Timescale_u)
- tscale_dn => elem2R(:,e2r_Timescale_d)
+ tscale_Q_up => elem2R(:,e2r_Timescale_Q_u)
+ tscale_Q_dn => elem2R(:,e2r_Timescale_Q_d)
+ tscale_H_up => elem2R(:,e2r_Timescale_H_u)
+ tscale_H_dn => elem2R(:,e2r_Timescale_H_d)
+ tscale_G_up => elem2R(:,e2r_Timescale_G_u)
+ tscale_G_dn => elem2R(:,e2r_Timescale_G_d)
+ 
  velocity  => elem2R(:,e2r_Velocity_new)
  length    => elem2R(:,e2r_Length)
-
- maskarrayChannel  = (elem2I(:,e2i_elem_type) == eChannel)
- maskarrayPipe     = (elem2I(:,e2i_elem_type) == ePipe   )
- maskarrayWeirC    = (elem2I(:,e2i_elem_type) == eWeirChannel)
- maskarrayWeirP    = (elem2I(:,e2i_elem_type) == eWeirPipe)
- maskarrayOrificeC = (elem2I(:,e2i_elem_type) == eOrificeChannel)
- maskarrayOrificeP = (elem2I(:,e2i_elem_type) == eOrificePipe)
- maskarrayPumpC    = (elem2I(:,e2i_elem_type) == ePumpChannel)
- maskarrayPumpP    = (elem2I(:,e2i_elem_type) == ePumpPipe)
- maskarrayValveC   = (elem2I(:,e2i_elem_type) == eValveChannel)
- maskarrayValveP   = (elem2I(:,e2i_elem_type) == eValvePipe)
  
 !%  compute timescale 
- where (maskarrayChannel) 
+
+ where ( (elem2I(:,e2i_meta_elem_type) == eHQ) .and. &
+         (elem2I(:,e2i_elem_type) == eChannel) )
+
     wavespeed = sqrt( grav * elem2R(:,e2r_HydDepth ))
-    tscale_up = - onehalfR * length / (velocity - wavespeed)
-    tscale_dn = + onehalfR * length / (velocity + wavespeed)
- elsewhere(maskarrayPipe)
- elsewhere(maskarrayWeirC)
- elsewhere(maskarrayWeirP)
- elsewhere(maskarrayOrificeC)
- elsewhere(maskarrayOrificeP)
- elsewhere(maskarrayPumpC)
- elsewhere(maskarrayPumpP)
- elsewhere(maskarrayValveC)
- elsewhere(maskarrayValveP)
+    tscale_Q_up = - onehalfR * length / (velocity - wavespeed)
+    tscale_Q_dn = + onehalfR * length / (velocity + wavespeed)
+    tscale_G_up = tscale_Q_up
+    tscale_G_dn = tscale_G_dn
+
+ elsewhere( (elem2I(:,e2i_meta_elem_type) == eHQ) .and. &
+            (elem2I(:,e2i_elem_type) == ePipe) )
  endwhere
  
+! e2r_Timescale_G_u = e2r_Timescale_Q_u
+! e2r_Timescale_G_d = e2r_Timescale_Q_d
+
  !TODO We have to add the limiter for each type of element base on their physic
- 
+ !TODO we have to add timescale calculation for e2r_Timescale_H_d and e2r_Timescale_H_u
+ !from Hodges and Liu (2019)
+
 !%  limiter for large, negative, and small values
- indx(1) = e2r_Timescale_u
- indx(2) = e2r_Timescale_d
+
+ indx(1) = e2r_Timescale_Q_u
+ indx(2) = e2r_Timescale_Q_d
+
+!indx(1) = e2r_Timescale_Q_u
+!indx(2) = e2r_Timescale_Q_d
+
+
  call timescale_limiter &
     (elem2R, elem2I, elem2YN, indx, e2YN_IsChannel, maskindx1)
  
  wavespeed = nullvalueR
- maskarrayChannel = nullvalueL
  maskarray1 = nullvalueL
- nullify(wavespeed, maskarrayChannel, maskarray1)
+ nullify(wavespeed, maskarray1)
  next_e2r_temparray = next_e2r_temparray-1
  next_e2YN_temparray=next_e2YN_temparray-1
  
@@ -726,6 +827,14 @@
 !========================================================================== 
 !==========================================================================
 !
+! subroutine timescale_Qelement
+!        (elem2R, elem2I, elem2YN, e2r_Velocity_new)
+!
+!
+!========================================================================== 
+!==========================================================================
+!
+
  subroutine timescale_limiter &
     (elemR, elemI, elemYN, indx, maskindx1, maskindx2 )
 !

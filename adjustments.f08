@@ -365,8 +365,8 @@
  elemFlow   => elem2R(:,e2r_Flowrate)
  elemVel    => elem2R(:,e2r_Velocity)
  elemArea   => elem2R(:,e2r_Area)
- tscaleUp   => elem2R(:,e2r_Timescale_u) 
- tscaleDn   => elem2R(:,e2r_Timescale_d) 
+ tscaleUp   => elem2R(:,e2r_Timescale_Q_u) !Timescale modification for the new element implementation
+ tscaleDn   => elem2R(:,e2r_Timescale_Q_d) !Timescale modification for the new element implementation
  elemAdjust => elem2R(:,e2r_adjustflow)
  
  elemMask   => elem2YN(:,e2YN_mask)
