@@ -214,7 +214,10 @@
         where (elem2I(:,e2i_link_ID) == Lindx)
             elem2I(:,e2i_roughness_type) = linkI(ii,li_roughness_type)
             elem2R(:,e2r_Roughness)      = linkR(ii,lr_Roughness)
-            elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)            
+            elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)
+            elem2R(:,e2r_LeftSlope)      = linkR(ii,lr_LeftSlope)
+            elem2R(:,e2r_RightSlope)     = linkR(ii,lr_RightSlope)
+            elem2R(:,e2r_ParabolaValue)  = linkR(ii,lr_ParabolaValue)
         endwhere
 
         if (linkI(ii,li_geometry) == lRectangular ) then
@@ -243,7 +246,7 @@
                 elem2R(:,e2r_BreadthScale) = zeroR
                     
                 elem2R(:,e2r_Topwidth)  = twoR &
-                    * sqrt(elem2R(:,e2r_Depth)/linkR(ii,lr_ParabolaValue))
+                    * sqrt(elem2R(:,e2r_Depth)/elem2R(:,e2r_ParabolaValue))
                 
                 elem2R(:,e2r_Area)      = twothirdR * elem2R(:,e2r_Depth) &
                     * elem2R(:,e2r_Topwidth)
@@ -288,13 +291,13 @@
                 ! (Bottom width + averageSlope * hydraulicDepth)*hydraulicDepth
                 elem2R(:,e2r_Area)      = (elem2R(:,e2r_BreadthScale)           &
                     + onehalfR &
-                    * (linkR(ii,lr_LeftSlope) + linkR(ii,lr_RightSlope)) &
+                    * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                     * elem2R(:,e2r_Depth)) * elem2R(:,e2r_Depth)
 
                 ! Bottom width + (lslope + rslope) * hydraulicDepth
                 elem2R(:,e2r_Topwidth)  = elem2R(:,e2r_BreadthScale)            &
                     + elem2R(:,e2r_Depth)                                   &
-                    * (linkR(ii,lr_LeftSlope) + linkR(ii,lr_RightSlope))
+                    * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
                     
                 elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Area) / elem2R(:,e2r_Topwidth)
                 
@@ -307,8 +310,8 @@
                 ! Bottom width + hydraulicDepth*lengthSidewall
                 elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) &
                     + elem2R(:,e2r_Depth) &
-                    * (sqrt(oneR + linkR(ii,lr_LeftSlope)**twoR) &
-                    + sqrt(oneR + linkR(ii,lr_RightSlope)**twoR))
+                    * (sqrt(oneR + elem2R(:,e2r_LeftSlope)**twoR) &
+                    + sqrt(oneR + elem2R(:,e2r_RightSlope)**twoR))
             endwhere
             
         elseif (linkI(ii,li_geometry) == lTriangle ) then
@@ -323,12 +326,12 @@
                 
                 ! (averageSlope * hydraulicDepth)*hydraulicDepth
                 elem2R(:,e2r_Area) = onehalfR &
-                    * (linkR(ii,lr_LeftSlope) + linkR(ii,lr_RightSlope)) &
+                    * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                     * elem2R(:,e2r_Depth) * elem2R(:,e2r_Depth)
 
                 ! (lslope + rslope) * hydraulicDepth
                 elem2R(:,e2r_Topwidth) = elem2R(:,e2r_Depth)               &
-                    * (linkR(ii,lr_LeftSlope) + linkR(ii,lr_RightSlope))
+                    * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
                 
                 elem2R(:,e2r_Eta) = elem2R(:,e2r_Zbottom)                &
                     + elem2R(:,e2r_HydDepth)
@@ -338,8 +341,8 @@
                 
                 ! hydraulicDepth*lengthSidewall
                 elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Depth) &
-                    * (sqrt(oneR + linkR(ii,lr_LeftSlope)**twoR) &
-                    + sqrt(oneR + linkR(ii,lr_RightSlope)**twoR))
+                    * (sqrt(oneR + elem2R(:,e2r_LeftSlope)**twoR) &
+                    + sqrt(oneR + elem2R(:,e2r_RightSlope)**twoR))
             endwhere
             
         elseif (linkI(ii,li_geometry) == lWidthDepth ) then

@@ -142,7 +142,10 @@
     integer, parameter :: e2r_Roughness          = 21
     integer, parameter :: e2r_VolumeConservation = 22
     integer, parameter :: e2r_FroudeNumber       = 23
-    integer, parameter :: e2r_idx_base1          = 23
+    integer, parameter :: e2r_LeftSlope          = 24
+    integer, parameter :: e2r_RightSlope         = 25
+    integer, parameter :: e2r_ParabolaValue      = 26
+    integer, parameter :: e2r_idx_base1          = 26
 
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
     integer, parameter :: e2r_temp2              = e2r_idx_base1 + 2
@@ -169,16 +172,17 @@
     integer, parameter :: eMr_Area               = 9
     integer, parameter :: eMr_Topwidth           = 10
     integer, parameter :: eMr_Perimeter          = 11
-    integer, parameter :: eMr_HydDepth           = 12
-    integer, parameter :: eMr_HydRadius          = 13
-    integer, parameter :: eMr_X                  = 14
-    integer, parameter :: eMr_Length             = 15
-    integer, parameter :: eMr_Zbottom            = 16
-    integer, parameter :: eMr_BreadthScale       = 17
-    integer, parameter :: eMr_Roughness          = 18
-    integer, parameter :: eMr_VolumeConservation = 19
-    integer, parameter :: eMr_FroudeNumber       = 20
-    integer, parameter :: eMr_idx_base1          = 20
+    integer, parameter :: eMr_Depth              = 12
+    integer, parameter :: eMr_HydDepth           = 13
+    integer, parameter :: eMr_HydRadius          = 14
+    integer, parameter :: eMr_X                  = 15
+    integer, parameter :: eMr_Length             = 16
+    integer, parameter :: eMr_Zbottom            = 17
+    integer, parameter :: eMr_BreadthScale       = 18
+    integer, parameter :: eMr_Roughness          = 19
+    integer, parameter :: eMr_VolumeConservation = 20
+    integer, parameter :: eMr_FroudeNumber       = 21
+    integer, parameter :: eMr_idx_base1          = 21
 
     ! column indexes for real branch data on a multi-branch junction
     ! note that these indexes must be consecutive by type
