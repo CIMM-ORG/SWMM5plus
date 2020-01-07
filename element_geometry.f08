@@ -18,6 +18,7 @@
     use setting_definition
     use globals
     use utility
+    use weir
 
     implicit none
 
@@ -88,8 +89,8 @@
      elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM)
 !% triangular geometry only for v-notch weir. This needed to be checked
  call triangular_geometry_update &
-    (elem2R, elem2I, e2r_Volume_new, &
-     elemMR, elemMI, eMr_Volume_new, faceR, eMr_EtaOld, method_EtaM )
+    (elem2R, elem2I, e2r_VolumeColumn, &
+     elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM )
 
 !% HACK -- NEED OTHER GEOMETRY TYPES
 

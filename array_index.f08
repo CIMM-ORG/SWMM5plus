@@ -139,15 +139,16 @@
     integer, parameter :: e2r_Area               = 15
     integer, parameter :: e2r_Topwidth           = 16
     integer, parameter :: e2r_Perimeter          = 17
-    integer, parameter :: e2r_HydDepth           = 18
-    integer, parameter :: e2r_HydRadius          = 19
-    integer, parameter :: e2r_X                  = 20
-    integer, parameter :: e2r_Length             = 21
-    integer, parameter :: e2r_Zbottom            = 22
-    integer, parameter :: e2r_BreadthScale       = 23
-    integer, parameter :: e2r_Roughness          = 24
-    integer, parameter :: e2r_VolumeConservation = 25
-    integer, parameter :: e2r_FroudeNumber       = 26
+    integer, parameter :: e2r_Depth              = 18
+    integer, parameter :: e2r_HydDepth           = 19
+    integer, parameter :: e2r_HydRadius          = 20
+    integer, parameter :: e2r_X                  = 21
+    integer, parameter :: e2r_Length             = 22
+    integer, parameter :: e2r_Zbottom            = 23
+    integer, parameter :: e2r_BreadthScale       = 24
+    integer, parameter :: e2r_Roughness          = 25
+    integer, parameter :: e2r_VolumeConservation = 26
+    integer, parameter :: e2r_FroudeNumber       = 27
     integer, parameter :: e2r_idx_base1          = 27
 
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
@@ -175,16 +176,17 @@
     integer, parameter :: eMr_Area               = 9
     integer, parameter :: eMr_Topwidth           = 10
     integer, parameter :: eMr_Perimeter          = 11
-    integer, parameter :: eMr_HydDepth           = 12
-    integer, parameter :: eMr_HydRadius          = 13
-    integer, parameter :: eMr_X                  = 14
-    integer, parameter :: eMr_Length             = 15
-    integer, parameter :: eMr_Zbottom            = 16
-    integer, parameter :: eMr_BreadthScale       = 17
-    integer, parameter :: eMr_Roughness          = 18
-    integer, parameter :: eMr_VolumeConservation = 19
-    integer, parameter :: eMr_FroudeNumber       = 20
-    integer, parameter :: eMr_idx_base1          = 20
+    integer, parameter :: eMr_Depth              = 12
+    integer, parameter :: eMr_HydDepth           = 13
+    integer, parameter :: eMr_HydRadius          = 14
+    integer, parameter :: eMr_X                  = 15
+    integer, parameter :: eMr_Length             = 16
+    integer, parameter :: eMr_Zbottom            = 17
+    integer, parameter :: eMr_BreadthScale       = 18
+    integer, parameter :: eMr_Roughness          = 19
+    integer, parameter :: eMr_VolumeConservation = 20
+    integer, parameter :: eMr_FroudeNumber       = 21
+    integer, parameter :: eMr_idx_base1          = 21
 
     ! column indexes for real branch data on a multi-branch junction
     ! note that these indexes must be consecutive by type

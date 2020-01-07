@@ -157,7 +157,7 @@
         real    :: Volume       = 1.0e-6  ! m^3
     end type zerovalueType
 
-    !%  setting%WeirSetting
+    !%  setting%Weir
     type WeirType
         real    :: WeirDischargeCoeff   = 1.45 ! m^3/s
         real    :: EndContraction       = 0    ! Number of End Contraction(0, 1, 2)

@@ -17,6 +17,7 @@
     use globals
     use setting_definition
     use utility
+    use weir
 
     implicit none
 
@@ -89,6 +90,12 @@
 
 
         call sve_rk2_step &
+            (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
+             e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
+             elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+             thiscoef(ii))
+
+        call weir_step &
             (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
              e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
              elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
@@ -297,7 +304,7 @@ endif
  call adjust_negative_volume_reset (volume2new)
  call adjust_negative_volume_reset (volumeMnew)
 
-!%  VELOCITY - divide out the volume to get the actual velocity
+!%  VELOCITY - divide out the volume to get the ae2r_Tempctual velocity
  where (elem2I(:,e2i_elem_type) == eChannel)
     velocity2new = velocity2new / volume2new
  endwhere

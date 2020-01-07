@@ -644,8 +644,8 @@
  zbottom  => elem2R(:,e2r_Zbottom)
  length   => elem2R(:,e2r_Length)
  breadth => elem2R(:,e2r_BreadthScale)
- timesUp => elem2R(:,e2r_Timescale_u)
- timesDn => elem2R(:,e2r_Timescale_d)
+ timesUp => elem2R(:,e2r_Timescale_Q_u)
+ timesDn => elem2R(:,e2r_Timescale_Q_d)
 
  Qface => faceR(:,fr_Flowrate)
  Vup   => faceR(:,fr_Velocity_u)
