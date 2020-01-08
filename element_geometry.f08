@@ -209,14 +209,16 @@
     (elem2R, elem2I, &
      e2i_geometry, e2i_elem_type, eChannel,  &
      e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
-     e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new)
+     e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new,    &
+     e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue)
 
 !%  rectangular geomety for junctions
  call rectangular_channel_or_junction &
     (elemMR, elemMI, &
      eMi_geometry, eMi_elem_type, eJunctionChannel,  &
      eMr_Length, eMr_Zbottom, eMr_BreadthScale, eMr_Topwidth, eMr_Area, eMr_Eta, &
-     eMr_Perimeter, eMr_Depth, eMr_HydDepth, eMr_HydRadius, eMr_Volume_new)
+     eMr_Perimeter, eMr_Depth, eMr_HydDepth, eMr_HydRadius, eMr_Volume_new,    &
+     eMr_LeftSlope, eMr_RightSlope, eMr_ParabolaValue)
 
 !% upstream branches
 !% note the fr_Eta_d is used for the upstream face, whose downstream eta is
@@ -244,7 +246,8 @@
     (elemR, elemI, &
      ei_geometry, ei_elem_type, elem_typ_value,  &
      er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
-     er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_Volume)
+     er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_Volume,    &
+     er_LeftSlope, er_RightSlope, er_ParabolaValue)
 !
 ! computes element geometry for a rectangular channel or a channeljunction
 !
@@ -257,21 +260,25 @@
  integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale
  integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
  integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_Volume
+ integer,   intent(in)      :: er_LeftSlope, er_RightSlope, er_ParabolaValue
 
 
  real,  pointer  :: volume(:), length(:), zbottom(:), breadth(:)
  real,  pointer  :: area(:), eta(:), perimeter(:), depth(:), hyddepth(:)
  real,  pointer  :: hydradius(:), topwidth(:)
-
+ real,  pointer  :: leftSlope(:), rightSlope(:), parabolaValue(:)
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
  ! inputs
- volume     => elemR(:,er_Volume)
- length     => elemR(:,er_Length)
- zbottom    => elemR(:,er_Zbottom)
- breadth    => elemR(:,er_BreadthScale)
+ volume        => elemR(:,er_Volume)
+ length        => elemR(:,er_Length)
+ zbottom       => elemR(:,er_Zbottom)
+ breadth       => elemR(:,er_BreadthScale)
+ leftSlope     => elemR(:,er_LeftSlope)
+ rightSlope    => elemR(:,er_RightSlope)
+ parabolaValue => elemR(:,er_ParabolaValue)
 
 ! outputs
  area       => elemR(:,er_Area)
@@ -295,27 +302,54 @@
     
  elsewhere (elemI(:,ei_geometry)  == eParabolic)
     area        = volume / length
-    
-    
-    eta         = zbottom + (area / breadth)
-    topwidth    = 0
-    perimeter   = 0
-    hyddepth    = 0
-    depth       = 0
-    hydradius   = 0
+    eta         = zbottom + parabolaValue ** oneThirdR &
+                    * (threefourthR * area) ** twothirdR
+    hyddepth    = parabolaValue ** oneThirdR * (threefourthR * area) ** twothirdR
+    depth       = (threeR / twoR) * hyddepth
+    topwidth    = twoR * sqrt(depth/parabolaValue)
+    perimeter   = onehalfR * topwidth &
+                   *( &
+                        sqrt( oneR + (fourR * depth/topwidth)**twoR )  &
+                        + (topwidth/fourR * depth) &
+                        *log &
+                        ( &
+                            fourR * depth/topwidth  &
+                            + sqrt( oneR + (fourR * depth/topwidth)**twoR ) &
+                        )  &
+                    )
+    hydradius   = area / perimeter
     
  elsewhere (elemI(:,ei_geometry)  == eTrapezoidal)
+    area        = volume / length
+    depth       = - onehalfR * (breadth/(onehalfR*(leftSlope + rightSlope)) &
+                    - sqrt((breadth/(onehalfR*(leftSlope + rightSlope))) ** twoR &
+                    + fourR * area/(onehalfR*(leftSlope + rightSlope))))
+    
+    eta         = zbottom + depth
+    topwidth    = breadth + depth * (leftSlope + rightSlope)
+    hyddepth    = area / topwidth
+    perimeter   = breadth + depth &
+                    * (sqrt(oneR + leftSlope**twoR ) &
+                     + sqrt(oneR + rightSlope**twoR))
+    hydradius   = area / perimeter
+    
  elsewhere (elemI(:,ei_geometry)  == eTriangle)
     area        = volume / length
-    !eta needed to be checked
-    eta         = zbottom + (2 * area / breadth)
-    topwidth    = breadth
-    ! This needed to be checked
-    perimeter   = breadth + 2.0 * sqrt(onefourthR * breadth ** 2 + ( eta - zbottom ) ** 2)
-    hyddepth    = area / topwidth
+    depth       = sqrt(abs(area/(onehalfR*(leftSlope + rightSlope))))
+    hyddepth    = zbottom + onehalfR * depth
+    eta         = zbottom + hyddepth
+    topwidth    = (leftSlope + rightSlope) * depth
+    perimeter   = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
     hydradius   = area / perimeter
+    
  elsewhere (elemI(:,ei_geometry)  == eWidthDepth)
- 
+    area        = 0.0
+    eta         = 0.0
+    hyddepth    = 0.0
+    depth       = 0.0
+    topwidth    = 0.0
+    perimeter   = 0.0
+    hydradius   = 0.0
  endwhere
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -404,7 +438,6 @@
     end select
 
     where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
-            (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
             (elemMI(:,eMi_nfacesDir) >= mm)  )
         area = (eta - zbottom) * breadth
         topwidth = breadth

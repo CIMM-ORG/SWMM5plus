@@ -182,7 +182,10 @@
     integer, parameter :: eMr_Roughness          = 19
     integer, parameter :: eMr_VolumeConservation = 20
     integer, parameter :: eMr_FroudeNumber       = 21
-    integer, parameter :: eMr_idx_base1          = 21
+    integer, parameter :: eMr_LeftSlope          = 22
+    integer, parameter :: eMr_RightSlope         = 23
+    integer, parameter :: eMr_ParabolaValue      = 24
+    integer, parameter :: eMr_idx_base1          = 24
 
     ! column indexes for real branch data on a multi-branch junction
     ! note that these indexes must be consecutive by type
