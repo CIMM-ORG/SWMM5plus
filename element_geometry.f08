@@ -83,7 +83,7 @@
     (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_elevation, ilocaldummy)
 
 !% rectangular geometry
- call rectangular_geometry_update &
+ call geometry_update &
     (elem2R, elem2I, e2r_VolumeColumn, &
      elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM)
 
@@ -183,14 +183,14 @@
 !
 !==========================================================================
 !
- subroutine rectangular_geometry_update &
+ subroutine geometry_update &
     (elem2R, elem2I, e2r_Volume_new, &
      elemMR, elemMI, eMr_Volume_new, faceR, eMr_EtaOld, method_EtaM )
 !
 ! Note that volume used is in a eTr storage location so that the update
 ! can be used on a temporary volume
 !
- character(64) :: subroutine_name = 'rectangular_geometry_update'
+ character(64) :: subroutine_name = 'geometry_update'
 
  real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
  real,      intent(in)      :: faceR(:,:)
@@ -205,7 +205,7 @@
 !%  basic geometry update for rectangular channels and junctions
 
 !%  rectangular geometry for channels
- call rectangular_channel_or_junction &
+ call channel_or_junction &
     (elem2R, elem2I, &
      e2i_geometry, e2i_elem_type, eChannel,  &
      e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
@@ -213,7 +213,7 @@
      e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue)
 
 !%  rectangular geomety for junctions
- call rectangular_channel_or_junction &
+ call channel_or_junction &
     (elemMR, elemMI, &
      eMi_geometry, eMi_elem_type, eJunctionChannel,  &
      eMr_Length, eMr_Zbottom, eMr_BreadthScale, eMr_Topwidth, eMr_Area, eMr_Eta, &
@@ -237,12 +237,12 @@
 
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine rectangular_geometry_update
+ end subroutine geometry_update
 !
 !==========================================================================
 !==========================================================================
 !
- subroutine rectangular_channel_or_junction &
+ subroutine channel_or_junction &
     (elemR, elemI, &
      ei_geometry, ei_elem_type, elem_typ_value,  &
      er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
@@ -251,7 +251,7 @@
 !
 ! computes element geometry for a rectangular channel or a channeljunction
 !
- character(64) :: subroutine_name = 'rectangular_channel_or_junction'
+ character(64) :: subroutine_name = 'channel_or_junction'
 
  real,      target,     intent(in out)  :: elemR(:,:)
 
@@ -353,7 +353,7 @@
  endwhere
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine rectangular_channel_or_junction
+ end subroutine channel_or_junction
 !
 !==========================================================================
 !==========================================================================
