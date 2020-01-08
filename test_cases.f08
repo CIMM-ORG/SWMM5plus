@@ -51,8 +51,10 @@
  real, dimension(:), allocatable :: subdivide_length, channel_length, channel_breadth
  real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
-
+ real, dimension(:), allocatable :: parabolaValue, leftSlope, rightSlope
+ 
  integer, dimension(:), allocatable :: idepth_type
+ integer, dimension(:), allocatable :: channel_geometry
 
  real :: CFL
 
@@ -94,6 +96,8 @@
  integer :: max_number_of_pairs = 0
  
  real :: subdivide_length_check = 10.0
+ 
+ integer :: ii
 
 
 !--------------------------------------------------------------------------
@@ -113,7 +117,8 @@
         call control_variable_allocation &
             (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
              channel_breadth, subdivide_length, flowrate, area, &
-             velocity, Froude, ManningsN, idepth_type)
+             velocity, Froude, ManningsN, idepth_type, channel_geometry, &
+             parabolaValue, leftSlope, rightSlope)
 
         ! step controls
         display_interval = 1000
@@ -127,6 +132,12 @@
 
         ! keep these physics fixed
         channel_breadth = 3.0
+        
+        ! assign geometry type for links
+        do ii=1,N_link
+            channel_geometry(ii) = lRectangular
+        end do
+
         depth_upstream  = 1.0
         depth_dnstream  = 1.0
         idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
@@ -134,11 +145,17 @@
         channel_length    = 10000.0
         lowerZ          = 1.0
         subdivide_length = 5000.0
+        
+        ! rectangular geometry
+        parabolaValue = zeroR
+        leftSlope     = zeroR
+        rightSlope    = zeroR
 
         call froude_driven_setup &
             (upperZ(1), area(1), flowrate(1), velocity(1),  &
              Froude(1),  channel_breadth(1), ManningsN(1), channel_length(1), &
-             lowerZ(1),  depth_upstream(1) )
+             lowerZ(1),  depth_upstream(1), channel_geometry(1), &
+             parabolaValue(1), leftSlope(1), rightSlope(1))
 
         call this_setting_for_time_and_steps &
             (CFL, velocity, depth_upstream, subdivide_length, &
@@ -200,7 +217,8 @@
         call control_variable_allocation &
             (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
              channel_breadth, subdivide_length, flowrate, area, &
-             velocity,  Froude, ManningsN, idepth_type)
+             velocity,  Froude, ManningsN, idepth_type, channel_geometry, &
+             parabolaValue, leftSlope, rightSlope)
              
         ! step controls
         display_interval = 1000
@@ -213,6 +231,12 @@
 
         ! keep these physics fixed
         channel_breadth     = newBreadth
+        
+        ! assign geometry type for links
+        do ii=1,N_link
+            channel_geometry(ii) = lWidthDepth
+        end do
+        
         depth_upstream(:)   = 0.3
         depth_dnstream(:)   = 0.3
         idepth_type         = 1  !1 = uniform, 2=linear, 3=exponential decay
@@ -220,6 +244,11 @@
         channel_length      = newLength
         lowerZ              = newZBottom
         subdivide_length(:) = 10.0
+        
+        ! rectangular geometry
+        parabolaValue = zeroR
+        leftSlope     = zeroR
+        rightSlope    = zeroR
         
         call this_setting_for_time_and_steps &
             (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, &
@@ -238,7 +267,8 @@
         call control_variable_allocation &
             (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
              channel_breadth, subdivide_length, flowrate, area, &
-             velocity,  Froude, ManningsN, idepth_type)
+             velocity,  Froude, ManningsN, idepth_type, channel_geometry, &
+             parabolaValue, leftSlope, rightSlope)
 
         ! step controls
         display_interval = 1000
@@ -266,6 +296,11 @@
         channel_breadth(1)   = 3.0
         channel_breadth(2)   = 3.0
         channel_breadth(3)   = 3.0
+        
+        ! assign geometry type for links
+        do ii=1,N_link
+            channel_geometry(ii) = lRectangular
+        end do
 
         channel_length(1)    = 1000.0
         channel_length(2)    = 1000.0
@@ -275,6 +310,11 @@
         subdivide_length(1) = 100.0
         subdivide_length(2) = 100.0
         subdivide_length(3) = 100.0
+        
+        ! rectangular geometry
+        parabolaValue = zeroR
+        leftSlope     = zeroR
+        rightSlope    = zeroR
 
 
         ! get consistent bottom Z values for the desired Froude number in each link
@@ -286,7 +326,8 @@
             call froude_driven_setup &
                 (uz, area(mm), flowrate(mm), velocity(mm),                               &
                  Froude(mm), channel_breadth(mm), ManningsN(mm), channel_length(mm), &
-                 lz, depth_upstream(mm) )
+                 lz, depth_upstream(mm), channel_geometry(mm), &
+                 parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
             select case (mm)
                 case (1)
                     ! the upstream z of the downstream link becomes the lower z of the upstream links
@@ -342,7 +383,8 @@
  subroutine control_variable_allocation &
     (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
      channel_breadth, subdivide_length, flowrate, area, &
-     velocity,  Froude, ManningsN, idepth_type)
+     velocity,  Froude, ManningsN, idepth_type, channel_geometry, &
+     parabolaValue, leftSlope, rightSlope)
 
  character(64) :: subroutine_name = 'control_variable_allocation'
 
@@ -350,8 +392,10 @@
  real, dimension(:), allocatable, intent(out) :: subdivide_length, channel_length, channel_breadth
  real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
+ real, dimension(:), allocatable, intent(out) :: parabolaValue, leftSlope, rightSlope
 
  integer, dimension(:), allocatable, intent(out) :: idepth_type
+ integer, dimension(:), allocatable, intent(out) :: channel_geometry
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -370,6 +414,10 @@
     allocate(Froude(N_link))
     allocate(ManningsN(N_link))
     allocate(idepth_type(N_link))
+    allocate(channel_geometry(N_link))
+    allocate(parabolaValue(N_link))
+    allocate(leftSlope(N_link))
+    allocate(rightSlope(N_link))
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine control_variable_allocation
@@ -428,27 +476,47 @@
  subroutine froude_driven_setup &
     (upperZ, area, flowrate, velocity,  &
      Froude,  breadth, ManningsN, total_length, &
-     lowerZ, depth)
+     lowerZ, depth, channel_geometry, parabolaValue, leftSlope, rightSlope)
 
  character(64) :: subroutine_name = 'froude_driven_setup'
 
  real,  intent(out)    :: area, flowrate, velocity, upperZ
  real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
  real,  intent(in)     :: depth
+ real,  intent(in)     :: parabolaValue, leftSlope, rightSlope
 
  real :: perimeter, rh, slope
+ integer, intent(in) :: channel_geometry
+ 
 
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
- area = depth * breadth
- perimeter = 2.0 * depth + breadth
- rh = area / perimeter
- velocity = Froude * sqrt(grav * depth)
- flowrate = area * velocity
- slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
- upperZ = lowerZ + slope * total_length
+ select case (channel_geometry)
+    case(lRectangular)
+        area = depth * breadth
+        perimeter = 2.0 * depth + breadth
+        rh = area / perimeter
+        velocity = Froude * sqrt(grav * depth)
+        flowrate = area * velocity
+        slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+        upperZ = lowerZ + slope * total_length
+    case(lParabolic)
+        area = depth * breadth
+        perimeter = 2.0 * depth + breadth
+        rh = area / perimeter
+        velocity = Froude * sqrt(grav * depth)
+        flowrate = area * velocity
+        slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+        upperZ = lowerZ + slope * total_length
+    case(lTrapezoidal)
+        
+    case(lTriangle)
+        
+    case(lWidthDepth)
+        
+ end select
 
 
 ! print *, area
