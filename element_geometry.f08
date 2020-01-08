@@ -475,10 +475,10 @@ subroutine triangular_geometry_update &
          (elemI(:,ei_elem_type) == elem_typ_value    )         )
     area        = volume / length
     !eta needed to be checked
-    eta         = zbottom + (2 * area / breadth)
+    eta         = zbottom + (2.0 * area / breadth)
     topwidth    = breadth
     ! This needed to be checked
-    perimeter   = breadth + 2.0 * sqrt(onefourthR * breadth ** 2 + ( eta - zbottom ) ** 2)
+    perimeter   = breadth + 2.0 * sqrt(onefourthR * breadth ** 2.0 + ( eta - zbottom ) ** 2.0)
     hyddepth    = area / topwidth
     hydradius   = area / perimeter
  endwhere

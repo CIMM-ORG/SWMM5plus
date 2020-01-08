@@ -37,6 +37,8 @@
     ! data types for faceI(:,fi_type)
     integer, parameter :: fChannel          = eChannel  ! ID for open channel on both sides
     integer, parameter :: fPipe             = ePipe  ! ID for pipe on both sides
+    integer, parameter :: fWeir             = eWeir  ! ID for pipe on both sides
+    integer, parameter :: fOrifice          = eOrifice
     integer, parameter :: fMultiple         = eJunctionChannel  ! ID for moderation by separate up/dn element types
     integer, parameter :: fBCup             = eBCup   ! ID for face upstream BC
     integer, parameter :: fBCdn             = eBCdn   ! ID for face downstream BC    
@@ -78,7 +80,8 @@
     ! data types for linkI(:,li_link_type)
     ! note that these must correspond to element types
     integer, parameter :: lchannel      = eChannel     ! ID for link that is open channel
-    integer, parameter :: lpipe         = ePipe     ! ID for link that is pipe
+    integer, parameter :: lpipe         = ePipe        ! ID for link that is pipe
+    integer, parameter :: lweir         = eWeir        ! ID for link that is weir
     
    ! data types for linkI(:,li_geometry) (must corresponde with ei_geometry)
     integer, parameter :: lRectangularChannel = eRectangularChannel ! ID for link that rectangular channel

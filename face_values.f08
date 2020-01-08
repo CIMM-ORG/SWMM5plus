@@ -85,8 +85,8 @@
     !% at end of first step of RK2, the face flow rate is the BC outflow for the step
     call face_bc_flowrate_update (bcdataDn, bcdataUp, faceR)
  endif
- 
- 
+
+
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine face_update
 !
@@ -421,7 +421,6 @@
 
  weightDn => faceR(:,fr_Temp(next_fr_temparray))
  next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
- 
 
  facemask   => faceYN(:,fYN_Temp(next_fYN_temparray))
  next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp) 
@@ -945,7 +944,6 @@
  endwhere
 
  end subroutine linear_interpolation
-!
 !========================================================================== 
 ! END OF MODULE face_values
 !==========================================================================

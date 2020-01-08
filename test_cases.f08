@@ -10,6 +10,7 @@
     use array_index
     use bc
     use case_simple_channel
+    use case_simple_weir
     use case_y_channel
     use data_keys
     use globals
@@ -47,6 +48,7 @@
 
  real, dimension(:), allocatable :: depth_dnstream, depth_upstream
  real, dimension(:), allocatable :: subdivide_length, channel_length, channel_breadth
+ real, dimension(:), allocatable :: weir_length, weir_breadth
  real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
 
@@ -219,7 +221,65 @@
         !print *, linkR(:,lr_InitialFlowrate)
         !print *, trim(subroutine_name)
         !stop
+    case ('simple_weir_003')
 
+        N_link = 1
+        N_node = 0
+        N_BCupstream = 1
+        N_BCdnstream = 1
+
+        !% create the local variables that must be populated to set up the test case
+        call control_variable_allocation &
+            (depth_dnstream, depth_upstream, lowerZ, upperZ, weir_length, &
+             weir_breadth, subdivide_length, flowrate, area, &
+             velocity, Froude, ManningsN, idepth_type)
+
+        ! step controls
+        display_interval = 1000
+        first_step = 1
+        last_step  =  10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+
+        ! set up flow and time step for differen subcases
+        ! tests that ran:  Fr = 0.25, 0.5
+        Froude       = 0.25   ! determines flowrate and slope to get Froude
+        CFL          = 0.25  ! determines dt from subdivide_length
+
+        ! keep these physics fixed
+        weir_breadth    = setting%Weir%WeirWidth
+        depth_upstream  = 6.0
+        depth_dnstream  = 1.0
+        idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
+        ManningsN       = 0.03
+        weir_length     = 200
+        lowerZ          = 1.0
+        subdivide_length = weir_length
+
+        call froude_driven_setup &
+            (upperZ(1), area(1), flowrate(1), velocity(1),  &
+             Froude(1),  weir_breadth(1), ManningsN(1), weir_length(1), &
+             lowerZ(1),  depth_upstream(1) )
+
+        call this_setting_for_time_and_steps &
+            (CFL, velocity, depth_upstream, subdivide_length, &
+             first_step, last_step, display_interval,2)
+
+        call case_simple_weir_initialize &
+            (weir_length(1), weir_breadth(1), subdivide_length(1), &
+             lowerZ(1), upperZ(1), flowrate(1), depth_upstream(1), depth_dnstream(1), &
+             ManningsN(1), lManningsN, idepth_type(1),                                   &
+             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
+             bcdataDn, bcdataUp)
+
+        if (.not. setting%Debugout%SuppressAllFiles) then
+            call write_testcase_setup_file &
+                (Froude, CFL, flowrate, velocity, depth_upstream,   &
+                 depth_dnstream, weir_breadth, area, &
+                 weir_length, subdivide_length, &
+                 lowerZ, upperZ, ManningsN)
+        endif
+
+        !print *, flowrate, depth_dnstream
+        !stop
     case default
         print *, setting%TestCase%TestName
         print *, 'error: no valid test case of ',&
@@ -339,6 +399,7 @@
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
+!This needed to be fixed for other geometry types
  area = depth * breadth
  perimeter = 2.0 * depth + breadth
  rh = area / perimeter

@@ -101,8 +101,8 @@
  zbottom  => elem2R(:,e2r_Zbottom)
  length   => elem2R(:,e2r_Length)
  breadth => elem2R(:,e2r_BreadthScale)
- timesUp => elem2R(:,e2r_Timescale_u)
- timesDn => elem2R(:,e2r_Timescale_d)
+ timesUp => elem2R(:,e2r_Timescale_Q_u)
+ timesDn => elem2R(:,e2r_Timescale_Q_d)
 
  Qface => faceR(:,fr_Flowrate)
  Vup   => faceR(:,fr_Velocity_u)
@@ -354,8 +354,8 @@
  wavespeed => elem2R(:,e2r_wavespeed)
  wavespeed = sqrt(grav * elem2R(:,e2r_HydDepth))
 
- tscaleUp => elem2R(:,e2r_Timescale_u)
- tscaleDn => elem2R(:,e2r_Timescale_d)
+ tscaleUp => elem2R(:,e2r_Timescale_Q_u)
+ tscaleDn => elem2R(:,e2r_Timescale_Q_d)
 
  tscaleUp = + (onehalfR * elem2R(:,e2r_Length) ) / (wavespeed - elem2R(:,e2r_Velocity))
  tscaleDn = + (onehalfR * elem2R(:,e2r_Length) ) / (wavespeed + elem2R(:,e2r_Velocity))

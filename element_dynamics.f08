@@ -77,7 +77,7 @@
         (elem2R, elem2YN, e2r_Velocity_new, e2r_Volume_new, &
          elemMR, elemMYN, eMr_Velocity_new, eMr_Volume_new)   
  endif
-    
+
 !%  flowrate updated from velocity 
  call element_flowrate_update  &
      (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Velocity_new, eMr_Velocity_new)
@@ -651,6 +651,8 @@
     tscale_Q_dn = + onehalfR * length / (velocity + wavespeed)
     tscale_G_up = tscale_Q_up
     tscale_G_dn = tscale_G_dn
+    tscale_H_up = tscale_Q_up
+    tscale_H_dn = tscale_Q_up
 
  elsewhere( (elem2I(:,e2i_meta_elem_type) == eHQ) .and. &
             (elem2I(:,e2i_elem_type) == ePipe) )

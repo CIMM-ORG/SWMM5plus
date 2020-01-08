@@ -77,6 +77,7 @@
  elemMR(:,eMr_Velocity_new)  = zeroR
     
  if (  count(elem2I(:,e2i_elem_type) == eChannel) &
+     + count(elem2I(:,e2i_elem_type) == eWeir) & 
      + count(elemMI(:,eMi_elem_type) == eJunctionChannel) > zeroI) then
 
     !%  coefficients for the rk2 steps

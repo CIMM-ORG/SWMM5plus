@@ -63,17 +63,18 @@
 !%  elemMI ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
     ! column index for integer central data on a multi-branch junction
     integer, parameter :: eMi_idx             = 1    ! unique index of each element
-    integer, parameter :: eMi_elem_type       = 2    ! type of element
-    integer, parameter :: eMi_geometry        = 3    ! type of geometry
-    integer, parameter :: eMi_nfaces          = 4    ! number of faces for each element
-    integer, parameter :: eMi_nfaces_u        = 5    ! number of upstream faces for each element
-    integer, parameter :: eMi_nfaces_d        = 6    ! number of downstream faces for each element
-    integer, parameter :: eMi_roughness_type  = 7    ! roughness type
-    integer, parameter :: eMi_node_ID         = 8    ! ID of node in the link/node space
-    integer, parameter :: eMi_temp1           = 9
-    integer, parameter :: eMi_temp2           = 10
+    integer, parameter :: eMi_meta_elem_type  = 2    ! type of meta element
+    integer, parameter :: eMi_elem_type       = 3    ! type of element
+    integer, parameter :: eMi_geometry        = 4    ! type of geometry
+    integer, parameter :: eMi_nfaces          = 5    ! number of faces for each element
+    integer, parameter :: eMi_nfaces_u        = 6    ! number of upstream faces for each element
+    integer, parameter :: eMi_nfaces_d        = 7    ! number of downstream faces for each element
+    integer, parameter :: eMi_roughness_type  = 8    ! roughness type
+    integer, parameter :: eMi_node_ID         = 9    ! ID of node in the link/node space
+    integer, parameter :: eMi_temp1           = 10
+    integer, parameter :: eMi_temp2           = 11
 
-    integer, parameter :: eMi_idx_base1       = 10    ! number of base data stored
+    integer, parameter :: eMi_idx_base1       = 11    ! number of base data stored
 
     integer, parameter :: eMi_n_temp          = 2     ! matching the the number of eMi_tempX arrays
     ! storage for temp array index positions
@@ -379,9 +380,11 @@
     integer, parameter :: fr_temp2       = 14
     integer, parameter :: fr_temp3       = 15
     integer, parameter :: fr_temp4       = 16
-    integer, parameter :: fr_idx_max     = 16
+    integer, parameter :: fr_temp5       = 17
+    integer, parameter :: fr_temp6       = 18
+    integer, parameter :: fr_idx_max     = 18
 
-    integer, parameter :: fr_n_temp       = 4
+    integer, parameter :: fr_n_temp       = 6
     ! storage for temp array index positions
     integer, dimension(fr_n_temp) :: fr_Temp = nullvalueI
 

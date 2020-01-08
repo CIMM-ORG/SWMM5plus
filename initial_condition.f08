@@ -46,7 +46,7 @@
  real,                intent(in)      :: linkR(:,:), nodeR(:,:)
  integer,   target,   intent(in)      :: linkI(:,:), nodeI(:,:)
  real,                intent(in)      :: thisTime
- 
+
  type(bcType),        intent(in out)      :: bcdataDn(:), bcdataUp(:)  
  
  integer :: idx
@@ -74,12 +74,24 @@
  call element_dynamics_update &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
-     e2r_Volume, eMr_Volume, thisTime)          
-      
+     e2r_Volume, eMr_Volume, thisTime)  
+
+ call meta_element_assign &
+    (elem2I, e2i_elem_type, e2i_meta_elem_type) 
+ ! call meta_element_assign &
+ !    (elemMI, eMi_elem_type, eMi_meta_elem_type)        
+
  call face_update &
     (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity,  &
      e2r_Volume, eMr_Volume, thisTime, 0)
+
+ call face_meta_element_assign &
+    (faceI, elem2I, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
+     fi_meta_etype_d, e2i_Meta_elem_type) 
+ ! call face_meta_element_assign &
+ !    (faceI, elemMI, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
+ !     fi_meta_etype_d, eMi_Meta_elem_type)
 
  !% set the element-specific smallvolume value
  !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
@@ -228,6 +240,19 @@
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
                 elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
             endwhere
+        elseif (linkI(ii,li_geometry) == lVnotchWeir ) then
+            !% handle triangular elements
+            !% Talk to Ehsan about this
+            where (elem2I(:,e2i_link_ID) == Lindx)
+                ! All the geometry calculation here are similar to the geometry calculation in weir module
+                elem2I(:,e2i_geometry)  = eVnotchWeir           
+                elem2R(:,e2r_Topwidth)  = setting%Weir%WeirWidth
+                elem2R(:,e2r_Area)      = setting%Weir%WeirSideSlope * elem2R(:,e2r_HydDepth) ** twoR
+                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
+                elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Topwidth) + twoR * sqrt(onefourthR &
+                                          * elem2R(:,e2r_Topwidth) ** twoR + elem2R(:,e2r_HydDepth) ** twoR)
+
+            endwhere  
         else
             !% handle elements of other geometry types
             print *, 'error: initialization for non-rectangular elements needed in ',subroutine_name
@@ -324,6 +349,88 @@
 !
 !========================================================================== 
 !==========================================================================
+!
+ subroutine meta_element_assign (elemI, ei_elem_type, ei_meta_elem_type)
+!
+! Assign meta element type to elements
+!
+
+ character(64) :: subroutine_name = 'meta_element_assign'
+ 
+ integer,   target,     intent(inout)    :: elemI(:,:)
+ integer,               intent(in)       :: ei_elem_type         
+
+ integer,               intent(in)       :: ei_meta_elem_type
+
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+    
+ where ( (elemI(:,ei_elem_type) == eChannel)             .or. &
+         (elemI(:,ei_elem_type) == ePipe)                .or. &
+         (elemI(:,ei_elem_type) == eJunctionChannel)     .or. &
+         (elemI(:,ei_elem_type) == eJunctionPipe)  )
+        elemI(:,ei_meta_elem_type) = eHQ
+
+ elsewhere ( (elemI(:,ei_elem_type) == eWeir)            .or. &
+             (elemI(:,ei_elem_type) == eorifice)         .or. &
+             (elemI(:,ei_elem_type) == ePump)  )   
+        elemI(:,ei_meta_elem_type) = eQonly
+
+ elsewhere ( (elemI(:,ei_elem_type) == eStorage) )
+        elemI(:,ei_meta_elem_type) = eHonly
+        
+ elsewhere ( (elemI(:,ei_elem_type) == eBCup)            .or. &
+             (elemI(:,ei_elem_type) == eBCdn)  )
+        ! Assigning nonHQ meta elem type to boundary conditions. Confirm this!
+        elemI(:,ei_meta_elem_type) = eNonHQ
+ end where
+ 
+ ! print*,'------------------------'
+ ! print*, elemI(:,ei_meta_elem_type), 'meta element type'
+ ! print*,'-----------------------'
+
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine meta_element_assign 
+!
+!========================================================================== 
+!==========================================================================
+ subroutine face_meta_element_assign &
+    (faceI, elemI, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
+     fi_meta_etype_d, ei_Meta_elem_type)
+
+ character(64) :: subroutine_name = 'interp_with_junction_upstream'
+ 
+ integer,      target,     intent(in out)  :: faceI(:,:), elemI(:,:)
+ integer,                  intent(in)      :: N_face, fi_Melem_u, fi_Melem_d
+ integer,                  intent(in)      :: fi_meta_etype_u, fi_meta_etype_d
+ integer,                  intent(in)      :: ei_Meta_elem_type 
+
+ integer :: ii
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ do ii=1, N_face
+    faceI(ii,fi_meta_etype_u) = elemI(faceI(ii,fi_Melem_u), ei_Meta_elem_type)
+    faceI(ii,fi_meta_etype_d) = elemI(faceI(ii,fi_Melem_d), ei_Meta_elem_type)
+end do
+
+ ! print*,'---------------------------------------------'
+ ! print*, N_face, 'number of faces'
+ ! print*, faceI(1,fi_meta_etype_u), 'face 1 u/s meta elem type'
+ ! print*, faceI(2,fi_meta_etype_u), 'face 2 u/s meta elem type'
+ ! print*, faceI(1,fi_meta_etype_d), 'face 1 d/s meta elem type'
+ ! print*, faceI(2,fi_meta_etype_d), 'face 2 d/s meta elem type'
+ ! print*,'---------------------------------------------'
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine face_meta_element_assign
+!
+!========================================================================== 
+!==========================================================================
+!
 !
 ! subroutine initial_condition_setupOLD &
 !    (elem2R, elemMR, elem2I, elemMI, elem2YN, elemMYN, &

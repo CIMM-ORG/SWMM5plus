@@ -31,6 +31,7 @@ SOURCESF="  type_definitions.f08\
         allocate_storage.f08\
         bc.f08\
         case_simple_channel.f08\
+        case_simple_weir.f08\
         case_y_channel.f08\
         checking.f08\
         debug.f08\

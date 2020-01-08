@@ -106,8 +106,26 @@
      volume2new, velocity2new, volumeMnew, velocityMnew, &
      elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      wWidth, wHeight, wCoeff, wSideSlope, EffectiveHead, thiscoef)
-
  
+
+ ! print *,'====================================================='
+ ! print *, 'Weir Time Scale U/S'
+ ! print *, elem2R(2,e2r_Timescale_Q_u)
+ ! print *,'====================================================='
+ ! print *, 'Weir Time Scale D/S'
+ ! print *, elem2R(2,e2r_Timescale_Q_d)
+ ! print *,'====================================================='
+ ! print *, 'Weir Effective Length'
+ ! print *, elem2R(2,e2r_Length)
+ ! print *,'====================================================='
+ ! print *, 'Weir Crown'
+ ! print *, elem2R(2,e2r_Depth)
+ ! print *,'====================================================='
+ ! print *, 'Weir Effective Head'
+ ! print *, elem2R(2,e2r_Temp(next_e2r_temparray-1))
+ ! print *,'====================================================='
+
+
  ! release temporary arrays
  EffectiveHead  = nullvalueR
  nullify(EffectiveHead)
@@ -196,7 +214,7 @@ subroutine weir_effective_length &
 ! Calculate Effective Length (This part is straight up from SWMM source code)
  where ( (elem2I(:,e2i_elem_type) == eWeir ) )
     wLength  = 2*thiscoef*sqrt(grav*wHeight)
-    wLength  = min(wLength, 200)
+    wLength  = min(wLength, 200.0)
  endwhere
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

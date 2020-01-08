@@ -19,7 +19,7 @@
     
     public :: case_y_channel_initialize    
 
-    integer :: debuglevel = 1
+    integer :: debuglevel = 0
     
  contains
 !

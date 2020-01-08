@@ -120,12 +120,12 @@
     (elem2R, elemMR, faceR, linkR, nodeR, elem2I, elemMI, faceI, &
      linkI, nodeI, nodeYN, elem2Name, elemMName, faceName, linkName, nodeName)   
 
+
 !%   setup the geometric relationships between the junction branches and the main values
  call junction_geometry_setup (elemMR, elemMI) 
  
 !%   assign branch mappings for faces 
  call junction_branch_assigned_to_faces (faceI, elemMI)
-  
 
 !% Debug output
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
@@ -160,18 +160,18 @@
     do ii=first_elem2_index, first_elem2_index+N_elem2-1
         print *, ii, elem2R(ii,e2r_Length), elem2R(ii,e2r_Topwidth), elem2R(ii,e2r_Zbottom)
     enddo
-    
+
     print *
     print *, '------------- faces -----------------expecting ',N_face
     print *
-    print *, 'h)       ii,         idx,     Melem_u,    Melem_d,    etype_u,    etype_d'
+    print *, 'g)       ii,         idx,     Melem_u,    Melem_d,    etype_u,    etype_d'
     do ii=first_face_index, first_face_index+N_face-1
         print *, ii, faceI(ii,fi_idx), faceI(ii,fi_Melem_u), faceI(ii,fi_Melem_d), &
                      faceI(ii,fi_etype_u), faceI(ii,fi_etype_d)
     enddo
     
     print * 
-    print *, 'i)       ii,         Zbottom,     Topwidth'
+    print *, 'h)       ii,         Zbottom,     Topwidth'
     do ii=first_face_index, first_face_index+N_face-1
         print *, ii, faceR(ii,fr_Zbottom), faceR(ii,fr_Topwidth)
     enddo
@@ -801,6 +801,13 @@
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
+
+        !%%%%%%%%%%%%%%%%%%%%%%%
+        ! For now the weir breadth scale is set to zero and topwidth is gotten from weir setting. Might
+        !%%%%%%%%%%%%%%%%%%%%%%
+        case (lVnotchWeir)
+            elem2R(thisElem2,e2r_Topwidth)     = setting%Weir%WeirWidth
+            elem2R(thisElem2,e2r_BreadthScale) = 0.0
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -936,6 +943,12 @@
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+            !%%%%%%%%%%%%%%%%%%%%%
+        !Check if this is right
+        !%%%%%%%%%%%%%%%%%%%%
+        case (lVnotchWeir)
+            elem2R(thisElem2,e2r_Topwidth)     = setting%Weir%WeirWidth
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1280,6 +1293,13 @@
             elem2R(thisElem2,e2r_Topwidth)      = linkR(thisLink,lr_BreadthScale)
             elem2R(thisElem2,e2r_BreadthScale)  = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
+
+        !%%%%%%%%%%%%%%%%%%%%%
+        !Check if this is right
+        !%%%%%%%%%%%%%%%%%%%%
+        case (lVnotchWeir)
+            elem2R(thisElem2,e2r_Topwidth)     = setting%Weir%WeirWidth
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1382,6 +1402,8 @@
         f_result = fChannel
     elseif (up_elem_type == fPipe) then
         f_result = fPipe 
+    elseif (up_elem_type == fWeir) then
+        f_result = fWeir
     else
         print *, 'upstream element: ',up_elem_type
         print *, 'dnstream element: ',dn_elem_type

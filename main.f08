@@ -83,8 +83,9 @@
 !%  hard-code setting for test cases
 
  setting%TestCase%UseTestCase = .true.
- !setting%TestCase%TestName = 'simple_channel_001'
- setting%TestCase%TestName = 'y_channel_002'
+ ! setting%TestCase%TestName = 'simple_channel_001'
+ ! setting%TestCase%TestName = 'y_channel_002'
+ setting%TestCase%TestName = 'simple_weir_003'
 
 !%  hard-code for debug output
  setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
@@ -136,17 +137,15 @@
      elemMR, elemMI, elemMYN, elemMName, &
      faceR,  faceI,  faceYN,  faceName)
 !print *, 'in main'
-!stop
+
 !% check the boundary condition data arrays are correctly defined
  call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
-
-
 
 !% set the initial conditions throughout
  call initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
      linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime)
-
+    
 !% check consistency of the smallvolume setup
  call checking_smallvolume_consistency (elem2R, elemMR)
 
@@ -178,7 +177,6 @@ faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
  call time_marching &
     (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
      bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile)
-
 !% uncomment this if you want a final debug output
 ! call debug_output &
 !    (debugfile, &
@@ -194,10 +192,19 @@ faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 
 !%  close out the debug files
  call debug_finalize(debugfile)
-
- print *
- print *, 'finished main program'
- print *, '====================='
+ ! print *,'====================================================='
+ ! print *, 'Weir Time Scale U/S'
+ ! print *, elem2R(:,e2r_Timescale_Q_u)
+ ! print *,'====================================================='
+ ! print *, 'Weir Time Scale D/S'
+ ! print *, elem2R(:,e2r_Timescale_Q_d)
+ ! print *,'====================================================='
+ ! print *, 'Weir Effective Head'
+ ! print *, elem2R(:,e2r_Length)
+ ! print *,'====================================================='
+ ! print *
+ ! print *, 'finished main program'
+ ! print *, '====================='
  print *, char(7)  ! sound the system beep
 
  end program main
