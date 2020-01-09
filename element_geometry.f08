@@ -386,7 +386,7 @@
 
  integer,   pointer :: fdir(:)
  real,      pointer :: eta(:), etaM(:), etaMold(:), area(:), zbottom(:)
- real,      pointer :: depth(:), topwidth(:), breadth(:)
+ real,      pointer :: depth(:), topwidth(:), breadth(:), etaFace(:)
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -400,6 +400,7 @@
     zbottom     => elemMR(:,eMr_ZbottomDir(mm))
     breadth     => elemMR(:,eMr_BreadthScaleDir(mm))
     fdir        => elemMI(:,eMi_MfaceDir(mm))
+    etaFace     => faceR (:,fr_Eta_dir)
 
     ! computed
     eta         => elemMR(:,eMr_EtaDir(mm))
@@ -422,7 +423,7 @@
             where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfacesDir) >= mm)  )
-                eta = etaM + onehalfR * (faceR(fdir,fr_Eta_dir) - etaMold)
+                eta = etaM + onehalfR * (etaFace(fdir) - etaMold)
             endwhere
         case (2)
             !%  used after face values are updated (ie. etaF is new)
@@ -430,7 +431,7 @@
             where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfacesDir) >= mm)  )
-                eta = onehalfR * (faceR(fdir,fr_Eta_dir) + etaM)
+                eta = onehalfR * (etaFace(fdir) + etaM)
             endwhere
         case default
             print *, method_EtaM
