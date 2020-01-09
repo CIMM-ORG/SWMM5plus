@@ -155,14 +155,14 @@
 !        (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
 !         bcdataDn, bcdataUp, thistime, dt)
 !
-print*,'weir --------------------------------------'    
-print*,elem2R(2,e2r_Area), ' Area ', elem2R(2,e2r_Timescale_Q_d), 'Time_Q_d', elem2R(2,e2r_Timescale_Q_d), 'Time_Q_u'
-print*,'face up--------------------------------------'    
-print*,faceR(2,fr_area_d), 'area dn', faceR(2,fr_area_u), 'area up', faceR(2, fr_eta_u), 'Eta U', faceR(2, fr_eta_d), 'Eta D'
-print*,'face dn--------------------------------------'    
-print*,faceR(1,fr_area_d), 'area dn', faceR(1,fr_area_u), 'area up', faceR(1, fr_eta_u), 'Eta U', faceR(1, fr_eta_d), 'Eta D'
-print*,'face dn--------------------------------------'
-stop
+! print*,'weir --------------------------------------'    
+! print*,elem2R(2,e2r_Area), ' Area ', elem2R(2,e2r_Timescale_Q_d), 'Time_Q_d', elem2R(2,e2r_Timescale_Q_d), 'Time_Q_u'
+! print*,'face up--------------------------------------'    
+! print*,faceR(2,fr_area_d), 'area dn', faceR(2,fr_area_u), 'area up', faceR(2, fr_eta_u), 'Eta U', faceR(2, fr_eta_d), 'Eta D'
+! print*,'face dn--------------------------------------'    
+! print*,faceR(1,fr_area_d), 'area dn', faceR(1,fr_area_u), 'area up', faceR(1, fr_eta_u), 'Eta U', faceR(1, fr_eta_d), 'Eta D'
+! print*,'face dn--------------------------------------'
+! stop
     ! increment the counters
     thisstep    = thisstep + 1
     restartStep = restartStep + 1

@@ -246,7 +246,7 @@
 
         ! keep these physics fixed
         weir_breadth    = setting%Weir%WeirWidth
-        depth_upstream  = 6.0
+        depth_upstream  = 2.0
         depth_dnstream  = 1.0
         idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
         ManningsN       = 0.03
