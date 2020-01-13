@@ -113,7 +113,8 @@
 
     !%  setting%SmallVolume
     type smallvolumeType
-        logical ::  UseSmallVolumes = .true. ! YN to determine if smallvolume adjustments used
+        ! Dont using small volumes for weir case. Needed to be changed later
+        logical ::  UseSmallVolumes = .false. ! YN to determine if smallvolume adjustments used
         real    ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
         real    ::  ManningsN        = 0.01
         real    ::  MinimumTopwidth  = 0.5   ! m   Minimum value used for smallvolume reset
@@ -161,9 +162,10 @@
     type WeirType
         real    :: WeirDischargeCoeff   = 1.45 ! m^3/s
         real    :: EndContraction       = 0    ! Number of End Contraction(0, 1, 2)
-        real    :: WeirHeight           = 0.3  ! Vertical Height of Weir Opening m
+        real    :: WeirHeight           = 0.5  ! Vertical Height of Weir Opening m
         real    :: WeirWidth            = 1
         real    :: WeirSideSlope        = 1
+        real    :: WeirInletOffset      = 1.5
     end type WeirType
 
 !% FIRST LEVEL TYPE  ----------------------------------------------

@@ -83,9 +83,9 @@
 !%  hard-code setting for test cases
 
  setting%TestCase%UseTestCase = .true.
- ! setting%TestCase%TestName = 'simple_channel_001'
+ setting%TestCase%TestName = 'simple_channel_001'
  ! setting%TestCase%TestName = 'y_channel_002'
- setting%TestCase%TestName = 'simple_weir_003'
+ ! setting%TestCase%TestName = 'simple_weir_003'
 
 !%  hard-code for debug output
  setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
@@ -145,10 +145,21 @@
  call initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
      linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime)
-    
+    ! print*, '================================='
+    ! print*, elem2R(2,e2r_TopWidth), 'e2r_TopWidth', elem2R(2, e2r_Area), 'e2r_Area', elem2R(2, e2r_Volume), 'e2r_Volume'
+    ! print*, '================================='
+    ! print*, elem2R(2,e2r_Flowrate), 'e2r_Flowrate', elem2R(2, e2r_Area), 'e2r_Velocity'
+    ! print*, '================================='
+    ! print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'
+    ! print*, '================================='
+    ! print*, elem2R(2,e2r_Zbottom), 'e2r_Zbottom', elem2R(2, e2r_Depth), 'e2r_Depth'
+    ! print*, '================================='
+    ! print*, elem2R(:,e2r_SmallVolume), 'e2r_SmallVolume'
+    ! print*, '++++++++++++++++++++++++++++++++++++'
+    ! print*, elemMR(:,eMr_SmallVolume), 'eMr_SmallVolume'
 !% check consistency of the smallvolume setup
  call checking_smallvolume_consistency (elem2R, elemMR)
-
+ 
 ! initialize the diagnostics
  call diagnostic_initialize &
     (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, &
@@ -171,6 +182,7 @@ faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 
 ! initialize output by threaded link
  call output_threaded_by_link_initialize (threadedfile)
+
 
 
 !%  time marching of continuity and momentum

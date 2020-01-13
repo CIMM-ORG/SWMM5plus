@@ -382,9 +382,12 @@
     integer, parameter :: fr_temp4       = 16
     integer, parameter :: fr_temp5       = 17
     integer, parameter :: fr_temp6       = 18
-    integer, parameter :: fr_idx_max     = 18
+    integer, parameter :: fr_temp7       = 19
+    integer, parameter :: fr_temp8       = 20
+    integer, parameter :: fr_temp9       = 21
+    integer, parameter :: fr_idx_max     = 21
 
-    integer, parameter :: fr_n_temp       = 6
+    integer, parameter :: fr_n_temp       = 9
     ! storage for temp array index positions
     integer, dimension(fr_n_temp) :: fr_Temp = nullvalueI
 

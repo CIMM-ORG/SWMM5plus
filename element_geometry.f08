@@ -421,7 +421,7 @@ subroutine triangular_geometry_update &
     (elem2R, elem2I, &
      e2i_geometry, e2i_elem_type, eWeir,  &
      e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
-     e2r_Perimeter, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new)
+     e2r_Perimeter, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new, e2r_Depth)
 
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -434,7 +434,7 @@ subroutine triangular_geometry_update &
     (elemR, elemI, &
      ei_geometry, ei_elem_type, elem_typ_value,  &
      er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
-     er_Perimeter, er_HydDepth, er_HydRadius, er_Volume)
+     er_Perimeter, er_HydDepth, er_HydRadius, er_Volume, er_Depth)
 !
  character(64) :: subroutine_name = 'v_notch_weir'
 
@@ -444,12 +444,12 @@ subroutine triangular_geometry_update &
  integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_typ_value
  integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale
  integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
- integer,   intent(in)      :: er_HydDepth, er_HydRadius, er_Volume
+ integer,   intent(in)      :: er_HydDepth, er_HydRadius, er_Volume, er_Depth
 
 
  real,  pointer  :: volume(:), length(:), zbottom(:), breadth(:)
  real,  pointer  :: area(:), eta(:), perimeter(:), hyddepth(:), hydradius(:)
- real,  pointer  :: topwidth(:)
+ real,  pointer  :: topwidth(:), depth(:)
 
 
 !--------------------------------------------------------------------------
@@ -468,18 +468,19 @@ subroutine triangular_geometry_update &
  hyddepth   => elemR(:,er_HydDepth)
  hydradius  => elemR(:,er_HydRadius)
  topwidth   => elemR(:,er_Topwidth)
-
+ depth      => elemR(:,er_Depth)
 
 ! This function calculates the geometric properties for rectengular channel and junctions
  where ( (elemI(:,ei_geometry)  == eVnotchWeir) .and. &
          (elemI(:,ei_elem_type) == elem_typ_value    )         )
     area        = volume / length
     !eta needed to be checked
-    eta         = zbottom + (2.0 * area / breadth)
-    topwidth    = breadth
+    depth       = sqrt(abs(area/setting%Weir%WeirSideSlope))
+    hyddepth    = onehalfR * depth
+    eta         = zbottom + hyddepth
+    topwidth    = twoR * setting%Weir%WeirSideSlope * depth
     ! This needed to be checked
-    perimeter   = breadth + 2.0 * sqrt(onefourthR * breadth ** 2.0 + ( eta - zbottom ) ** 2.0)
-    hyddepth    = area / topwidth
+    perimeter   = twoR * depth * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
     hydradius   = area / perimeter
  endwhere
 

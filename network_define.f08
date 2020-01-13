@@ -808,6 +808,7 @@
         case (lVnotchWeir)
             elem2R(thisElem2,e2r_Topwidth)     = setting%Weir%WeirWidth
             elem2R(thisElem2,e2r_BreadthScale) = 0.0
+            elem2R(thisElem2,e2r_Zbottom)      = 1.0 !!!!!Just for Weir implementation
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop

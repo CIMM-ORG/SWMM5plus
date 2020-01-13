@@ -46,7 +46,7 @@
  type(string), dimension(:),   allocatable, intent(out) :: nodeName
  type(bcType), dimension(:),   allocatable, intent(out) :: bcdataUp, bcdataDn
 
- real, dimension(:), allocatable :: depth_dnstream, depth_upstream
+ real, dimension(:), allocatable :: depth_dnstream, depth_upstream, head
  real, dimension(:), allocatable :: subdivide_length, channel_length, channel_breadth
  real, dimension(:), allocatable :: weir_length, weir_breadth
  real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
@@ -246,18 +246,19 @@
 
         ! keep these physics fixed
         weir_breadth    = setting%Weir%WeirWidth
-        depth_upstream  = 2.0
-        depth_dnstream  = 1.0
+        depth_upstream  = 3.0
+        depth_dnstream  = 2.0
         idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
         ManningsN       = 0.03
-        weir_length     = 200
+        weir_length     = 2.0
         lowerZ          = 1.0
+        head            = depth_upstream - depth_dnstream - setting%Weir%WeirHeight
         subdivide_length = weir_length
 
         call froude_driven_setup &
             (upperZ(1), area(1), flowrate(1), velocity(1),  &
              Froude(1),  weir_breadth(1), ManningsN(1), weir_length(1), &
-             lowerZ(1),  depth_upstream(1) )
+             lowerZ(1),  head(1) )
 
         call this_setting_for_time_and_steps &
             (CFL, velocity, depth_upstream, subdivide_length, &
@@ -400,13 +401,25 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
 !This needed to be fixed for other geometry types
- area = depth * breadth
- perimeter = 2.0 * depth + breadth
- rh = area / perimeter
- velocity = Froude * sqrt(grav * depth)
- flowrate = area * velocity
- slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
- upperZ = lowerZ + slope * total_length
+! where ((elemI(:,e2i_geometry) == eRectangularChannel))
+!     area = depth * breadth
+!     perimeter = 2.0 * depth + breadth
+!     rh = area / perimeter
+!     velocity = Froude * sqrt(grav * depth)
+!     flowrate = area * velocity
+!     slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+!     upperZ = lowerZ + slope * total_length
+
+ ! elsewhere ( (elemI(:,e2i_geometry)  == eVnotchWeir) )
+    area        = setting%Weir%WeirSideSlope * depth ** twoR
+    perimeter   = breadth + twoR * sqrt(onefourthR * breadth ** twoR + depth ** twoR)
+    rh          = area / perimeter
+    velocity    = (setting%Weir%WeirDischargeCoeff * setting%Weir%WeirSideSlope * depth ** 2.5) / area
+    flowrate    = area * velocity
+    slope       = zeroR
+    upperZ      = lowerZ
+
+ ! endwhere
 
 
 ! print *, area

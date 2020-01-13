@@ -97,7 +97,10 @@
  fr_Temp(4) = fr_temp4
  fr_Temp(5) = fr_temp5
  fr_Temp(6) = fr_temp6
- if (fr_n_temp > 6) then
+ fr_Temp(7) = fr_temp7
+ fr_Temp(8) = fr_temp8
+ fr_Temp(9) = fr_temp9
+ if (fr_n_temp > 9) then
     print *, 'error need to update initialization of fr_Temp in ',subroutine_name
     stop
  endif

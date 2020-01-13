@@ -124,8 +124,10 @@
  ! print *, 'Weir Effective Head'
  ! print *, elem2R(2,e2r_Temp(next_e2r_temparray-1))
  ! print *,'====================================================='
+ ! print *, 'Eta Up', faceR(:,fr_Eta_d), 'Eta Dn', faceR(:,fr_Eta_u)
+ ! print *,  elem2R(2,e2r_BreadthScale)
 
-
+! stop
  ! release temporary arrays
  EffectiveHead  = nullvalueR
  nullify(EffectiveHead)
@@ -168,6 +170,7 @@ subroutine weir_effective_head &
  idn   => elem2I(:,e2i_Mface_d)
 
 
+
  where     ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
              (fEup(idn) .GE. fEdn(iup)) )
     EffectiveHead  = fEup(idn) - wCrest
@@ -180,6 +183,16 @@ subroutine weir_effective_head &
              (fEup(idn) .LT. wCrest) .and. &
              (fEdn(iup) .LT. wCrest) )
     EffectiveHead = 0
+
+ elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+             (fEup(idn) .GT. wCrown) .and. &
+             (fEup(idn) .GT. fEdn(iup) ) )
+    EffectiveHead = wCrown - wCrest
+
+ elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+             (fEdn(iup) .GT. wCrown) .and. &
+             (fEdn(iup) .GT. fEup(idn) ) )
+    EffectiveHead =  wCrest - wCrown
 
  endwhere
 
@@ -213,7 +226,7 @@ subroutine weir_effective_length &
 
 ! Calculate Effective Length (This part is straight up from SWMM source code)
  where ( (elem2I(:,e2i_elem_type) == eWeir ) )
-    wLength  = 2*thiscoef*sqrt(grav*wHeight)
+    wLength  = twoR*thiscoef*sqrt(grav*wHeight)
     wLength  = min(wLength, 200.0)
  endwhere
 
@@ -257,7 +270,7 @@ subroutine weir_effective_length &
     volume2new   = thiscoef * wCoeff * wSideSlope * EffectiveHead ** 2.5
 
     ! Area of the weir is sideslope*water_depth^2
-    velocity2new = volume2new /(thiscoef * wSideSlope * EffectiveHead ** 2)
+    velocity2new = volume2new /(thiscoef * wSideSlope * EffectiveHead ** twoR)
 
  endwhere
 

@@ -562,35 +562,17 @@
 
 !For Qonly meta elements, the timescale for Q is minimum. Timescale for H and G is maximum
 
- where ( (elem2I(:,e2i_meta_elem_type) == eQonly) .and. &
-         (elem2I(:,e2i_elem_type) == eWeir) )
+ where ( (elem2I(:,e2i_meta_elem_type) == eQonly) )
 
     tscale_Q_up = setting%Limiter%Timescale%Minimum
     tscale_Q_dn = setting%Limiter%Timescale%Minimum
+
     tscale_H_up = setting%Limiter%Timescale%Maximum
     tscale_H_dn = setting%Limiter%Timescale%Maximum
+
     tscale_G_up = setting%Limiter%Timescale%Maximum
     tscale_G_dn = setting%Limiter%Timescale%Maximum
 
- elsewhere( (elem2I(:,e2i_meta_elem_type) == eQonly) .and. &
-            (elem2I(:,e2i_elem_type) == eOrifice) )
-
-    tscale_Q_up = setting%Limiter%Timescale%Minimum
-    tscale_Q_dn = setting%Limiter%Timescale%Minimum
-    tscale_H_up = setting%Limiter%Timescale%Maximum
-    tscale_H_dn = setting%Limiter%Timescale%Maximum
-    tscale_G_up = setting%Limiter%Timescale%Maximum
-    tscale_G_dn = setting%Limiter%Timescale%Maximum
-
- elsewhere( (elem2I(:,e2i_meta_elem_type) == eQonly) .and. &
-                (elem2I(:,e2i_elem_type) == ePump) )
-
-    tscale_Q_up = setting%Limiter%Timescale%Minimum
-    tscale_Q_dn = setting%Limiter%Timescale%Minimum
-    tscale_H_up = setting%Limiter%Timescale%Maximum
-    tscale_H_dn = setting%Limiter%Timescale%Maximum
-    tscale_G_up = setting%Limiter%Timescale%Maximum
-    tscale_G_dn = setting%Limiter%Timescale%Maximum
 
  endwhere
 

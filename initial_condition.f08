@@ -70,25 +70,27 @@
     (elem2R, elem2I, elem2YN, e2r_Volume, &
      elemMR, elemMI, elemMYN, eMr_Volume, &
      faceR, faceI, bcdataDn, bcdataUp, thisTime, 0)
+
+call meta_element_assign &
+    (elem2I, e2i_elem_type, e2i_meta_elem_type) 
  
  call element_dynamics_update &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
      e2r_Volume, eMr_Volume, thisTime)  
 
- call meta_element_assign &
-    (elem2I, e2i_elem_type, e2i_meta_elem_type) 
  ! call meta_element_assign &
- !    (elemMI, eMi_elem_type, eMi_meta_elem_type)        
+ !    (elemMI, eMi_elem_type, eMi_meta_elem_type)  
+
+ call face_meta_element_assign &
+    (faceI, elem2I, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
+     fi_meta_etype_d, e2i_Meta_elem_type)       
 
  call face_update &
     (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity,  &
      e2r_Volume, eMr_Volume, thisTime, 0)
 
- call face_meta_element_assign &
-    (faceI, elem2I, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
-     fi_meta_etype_d, e2i_Meta_elem_type) 
  ! call face_meta_element_assign &
  !    (faceI, elemMI, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
  !     fi_meta_etype_d, eMi_Meta_elem_type)
@@ -99,10 +101,10 @@
     elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length) 
     elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length) 
  else
+
     elem2R(:,e2r_SmallVolume) = zeroR
     elemMR(:,eMr_SmallVolume) = zeroR
  endif
-
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine initial_condition_setup
@@ -156,7 +158,6 @@
                     elem2R(:,e2r_HydDepth) = 0.5*(dup + ddn)
                 endwhere
             endif
-        
         case (2)        
             !% if the link has linearly-varying depth 
             !% depth at the downstream element (link position =1)
@@ -218,7 +219,7 @@
             end do
 
         end select
-    
+        print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'
         !%  handle all the initial conditions that don't depend on geometry type
         !%
         where (elem2I(:,e2i_link_ID) == Lindx)
@@ -229,7 +230,7 @@
             elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)            
         endwhere
         
-
+        print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'
         if (linkI(ii,li_geometry) == lRectangularChannel ) then
             !% handle rectangular elements
             
@@ -240,19 +241,22 @@
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
                 elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
             endwhere
+
         elseif (linkI(ii,li_geometry) == lVnotchWeir ) then
             !% handle triangular elements
             !% Talk to Ehsan about this
             where (elem2I(:,e2i_link_ID) == Lindx)
                 ! All the geometry calculation here are similar to the geometry calculation in weir module
-                elem2I(:,e2i_geometry)  = eVnotchWeir           
-                elem2R(:,e2r_Topwidth)  = setting%Weir%WeirWidth
-                elem2R(:,e2r_Area)      = setting%Weir%WeirSideSlope * elem2R(:,e2r_HydDepth) ** twoR
-                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
-                elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Topwidth) + twoR * sqrt(onefourthR &
-                                          * elem2R(:,e2r_Topwidth) ** twoR + elem2R(:,e2r_HydDepth) ** twoR)
+                elem2I(:,e2i_geometry)      = eVnotchWeir 
+                elem2R(:,e2r_BreadthScale)  = zeroR          
+                elem2R(:,e2r_Topwidth)      = elem2R(:,e2r_HydDepth) * setting%Weir%WeirSideSlope
+                elem2R(:,e2r_Area)          = setting%Weir%WeirSideSlope * elem2R(:,e2r_HydDepth) ** twoR
+                elem2R(:,e2r_Volume)        = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
+                elem2R(:,e2r_Perimeter)     = elem2R(:,e2r_Topwidth) + twoR * sqrt(onefourthR &
+                                                * elem2R(:,e2r_Topwidth) ** twoR + elem2R(:,e2r_HydDepth) ** twoR)
 
             endwhere  
+
         else
             !% handle elements of other geometry types
             print *, 'error: initialization for non-rectangular elements needed in ',subroutine_name

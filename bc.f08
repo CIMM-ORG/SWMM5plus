@@ -247,6 +247,7 @@
 
  do ii=1,size(bcdata)
     eID => bcdata(ii)%ElemGhostID
+    ! All the timescales for boundary are Maximum. So here using the value for timescale flowrate
     elem2R(eID,e2r_Timescale_Q_u) = setting%Limiter%Timescale%Maximum !Fixing Timescale for new element implementation
     elem2R(eID,e2r_Timescale_Q_d) = setting%Limiter%Timescale%Maximum
  end do
