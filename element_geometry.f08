@@ -244,7 +244,7 @@
 !
  subroutine channel_or_junction &
     (elemR, elemI, &
-     ei_geometry, ei_elem_type, elem_typ_value,  &
+     ei_geometry, ei_elem_type, elem_type_value,  &
      er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
      er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_Volume,    &
      er_LeftSlope, er_RightSlope, er_ParabolaValue)
@@ -256,7 +256,7 @@
  real,      target,     intent(in out)  :: elemR(:,:)
 
  integer,   intent(in)      :: elemI(:,:)
- integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_typ_value
+ integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_type_value
  integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale
  integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
  integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_Volume
@@ -289,9 +289,8 @@
  hydradius  => elemR(:,er_HydRadius)
  topwidth   => elemR(:,er_Topwidth)
 
-
-
- where (elemI(:,ei_geometry)  == eRectangular)
+ where ( (elemI(:,ei_geometry)  == eRectangular) .and. &
+         (elemI(:,ei_elem_type) == elem_type_value    )         )
     area        = volume / length
     eta         = zbottom + (area / breadth)
     topwidth    = breadth
@@ -300,7 +299,8 @@
     depth       = hyddepth
     hydradius   = area / perimeter
     
- elsewhere (elemI(:,ei_geometry)  == eParabolic)
+ elsewhere ( (elemI(:,ei_geometry)  == eParabolic) .and. &
+         (elemI(:,ei_elem_type) == elem_type_value    )         )
     area        = volume / length
     eta         = zbottom + parabolaValue ** oneThirdR &
                     * (threefourthR * area) ** twothirdR
@@ -319,7 +319,8 @@
                     )
     hydradius   = area / perimeter
     
- elsewhere (elemI(:,ei_geometry)  == eTrapezoidal)
+ elsewhere ( (elemI(:,ei_geometry)  == eTrapezoidal) .and. &
+         (elemI(:,ei_elem_type) == elem_type_value    )         )
     area        = volume / length
     depth       = - onehalfR * (breadth/(onehalfR*(leftSlope + rightSlope)) &
                     - sqrt((breadth/(onehalfR*(leftSlope + rightSlope))) ** twoR &
@@ -333,7 +334,8 @@
                      + sqrt(oneR + rightSlope**twoR))
     hydradius   = area / perimeter
     
- elsewhere (elemI(:,ei_geometry)  == eTriangle)
+ elsewhere ( (elemI(:,ei_geometry)  == eTriangle) .and. &
+         (elemI(:,ei_elem_type) == elem_type_value    )         )
     area        = volume / length
     depth       = sqrt(abs(area/(onehalfR*(leftSlope + rightSlope))))
     hyddepth    = zbottom + onehalfR * depth
@@ -342,7 +344,8 @@
     perimeter   = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
     hydradius   = area / perimeter
     
- elsewhere (elemI(:,ei_geometry)  == eWidthDepth)
+ elsewhere ( (elemI(:,ei_geometry)  == eWidthDepth) .and. &
+         (elemI(:,ei_elem_type) == elem_type_value    )         )
     area        = 0.0
     eta         = 0.0
     hyddepth    = 0.0
