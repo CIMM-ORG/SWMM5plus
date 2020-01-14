@@ -487,10 +487,14 @@
 
  call bc_timescale_value (elem2R, bcdataUp)
 
- print*,'-------------------------------------------------'
- print*, elem2R(:, e2r_Timescale_Q_u), 'e2r_Timescale_Q_u'
- print*,'-------------------------------------------------'
- print*, elem2R(:, e2r_Timescale_Q_d), 'e2r_Timescale_Q_d'
+ ! print*,'-------------------------------------------------'
+ ! print*, elem2R(:, e2r_Timescale_Q_u), 'e2r_Timescale_Q_u'
+ ! print*,'-------------------------------------------------'
+ ! print*, elem2R(:, e2r_Timescale_Q_d), 'e2r_Timescale_Q_d'
+ print*, '----------------------------------'
+ print*, eMr_TimescaleUp, 'elemMR tscale up' 
+ print*, '----------------------------------'
+ print*, eMr_TimescaleDn, 'elemMR tscale dn'
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine element_timescale
@@ -600,20 +604,24 @@
  integer,           intent(in)      :: elem2I(:,:)
  logical,   target, intent(in out)  :: elem2YN(:,:)
  
- integer    ::  indx(2), maskindx1
+ integer    ::  indx(2), maskindx1, maskindx2
  
  real,      pointer :: wavespeed(:), velocity(:)
  real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
  real,      pointer :: tscale_H_up(:), tscale_H_dn(:)
  real,      pointer :: tscale_G_up(:), tscale_G_dn(:)
  real,      pointer :: length(:) 
- logical,   pointer :: maskarray1(:)
+ logical,   pointer :: maskarray1(:), maskarray2(:)
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
 
  maskindx1 = e2YN_Temp(next_e2YN_temparray) 
  maskarray1 => elem2YN(:,maskindx1)
+ next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
+
+ maskindx2 = e2YN_Temp(next_e2YN_temparray) 
+ maskarray2 => elem2YN(:,maskindx1)
  next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
  
  wavespeed => elem2R(:,e2r_Temp(next_e2r_temparray))
@@ -633,9 +641,10 @@
  
 !%  compute timescale 
 
- where ( (elem2I(:,e2i_meta_elem_type) == eHQ) .and. &
-         (elem2I(:,e2i_elem_type) == eChannel) )
+ maskarray1 = ( (elem2I(:,e2i_meta_elem_type) == eHQ) .and. &
+                (elem2I(:,e2i_elem_type) == eChannel) )
 
+where (maskarray1)
     wavespeed = sqrt( grav * elem2R(:,e2r_HydDepth ))
     tscale_Q_up = - onehalfR * length / (velocity - wavespeed)
     tscale_Q_dn = + onehalfR * length / (velocity + wavespeed)
@@ -644,8 +653,6 @@
     tscale_H_up = tscale_Q_up
     tscale_H_dn = tscale_Q_up
 
- elsewhere( (elem2I(:,e2i_meta_elem_type) == eHQ) .and. &
-            (elem2I(:,e2i_elem_type) == ePipe) )
  endwhere
  
 ! e2r_Timescale_G_u = e2r_Timescale_Q_u
@@ -660,18 +667,16 @@
  indx(1) = e2r_Timescale_Q_u
  indx(2) = e2r_Timescale_Q_d
 
-!indx(1) = e2r_Timescale_Q_u
-!indx(2) = e2r_Timescale_Q_d
-
 
  call timescale_limiter &
-    (elem2R, elem2I, elem2YN, indx, e2YN_IsChannel, maskindx1)
+    (elem2R, elem2I, elem2YN, indx, maskindx1, maskindx2)
  
  wavespeed = nullvalueR
  maskarray1 = nullvalueL
- nullify(wavespeed, maskarray1)
+ maskarray2 = nullvalueL
+ nullify(wavespeed, maskarray1, maskarray2)
  next_e2r_temparray = next_e2r_temparray-1
- next_e2YN_temparray=next_e2YN_temparray-1
+ next_e2YN_temparray=next_e2YN_temparray-2
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine timescale_value_channel
@@ -725,6 +730,11 @@
  wavespeed = nullvalueR
  nullify(wavespeed)
  next_eMr_temparray = next_eMr_temparray-1
+
+ print*, '----------------------------------'
+ print*, eMr_TimescaleUp, 'elemMR tscale up' 
+ print*, '----------------------------------'
+ print*, eMr_TimescaleDn, 'elemMR tscale dn'
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine timescale_value_junction
@@ -832,7 +842,7 @@
 !
 
  subroutine timescale_limiter &
-    (elemR, elemI, elemYN, indx, maskindx1, maskindx2 )
+    (elemR, elemI, elemYN, indx, maskindx1, maskindx2)
 !
 ! limits the timescales to prevent negatives, small values, or large values
 ! 
