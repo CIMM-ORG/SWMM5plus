@@ -621,7 +621,7 @@
  next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
 
  maskindx2 = e2YN_Temp(next_e2YN_temparray) 
- maskarray2 => elem2YN(:,maskindx1)
+ maskarray2 => elem2YN(:,maskindx2)
  next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
  
  wavespeed => elem2R(:,e2r_Temp(next_e2r_temparray))
@@ -641,8 +641,7 @@
  
 !%  compute timescale 
 
- maskarray1 = ( (elem2I(:,e2i_meta_elem_type) == eHQ) .and. &
-                (elem2I(:,e2i_elem_type) == eChannel) )
+ maskarray1 = ( (elem2I(:,e2i_elem_type) == eChannel) )
 
 where (maskarray1)
     wavespeed = sqrt( grav * elem2R(:,e2r_HydDepth ))
@@ -651,7 +650,7 @@ where (maskarray1)
     tscale_G_up = tscale_Q_up
     tscale_G_dn = tscale_G_dn
     tscale_H_up = tscale_Q_up
-    tscale_H_dn = tscale_Q_up
+    tscale_H_dn = tscale_Q_dn
 
  endwhere
  
@@ -828,14 +827,6 @@ where (maskarray1)
 !========================================================================== 
 !==========================================================================
 !
-! subroutine timescale_Qelement
-!        (elem2R, elem2I, elem2YN, e2r_Velocity_new)
-!
-!
-!========================================================================== 
-!==========================================================================
-!
-
  subroutine timescale_limiter &
     (elemR, elemI, elemYN, indx, maskindx1, maskindx2)
 !
