@@ -23,7 +23,7 @@
     
     public :: network_initiation
     
-    integer:: debuglevel = 0
+    integer:: debuglevel = 1
     
  contains
 !

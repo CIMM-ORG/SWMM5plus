@@ -486,6 +486,11 @@
  call bc_timescale_value (elem2R, bcdataDn)
 
  call bc_timescale_value (elem2R, bcdataUp)
+
+ print*,'-------------------------------------------------'
+ print*, elem2R(:, e2r_Timescale_Q_u), 'e2r_Timescale_Q_u'
+ print*,'-------------------------------------------------'
+ print*, elem2R(:, e2r_Timescale_Q_d), 'e2r_Timescale_Q_d'
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine element_timescale

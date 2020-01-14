@@ -402,22 +402,22 @@
 
 !This needed to be fixed for other geometry types
 ! where ((elemI(:,e2i_geometry) == eRectangularChannel))
-!     area = depth * breadth
-!     perimeter = 2.0 * depth + breadth
-!     rh = area / perimeter
-!     velocity = Froude * sqrt(grav * depth)
-!     flowrate = area * velocity
-!     slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
-!     upperZ = lowerZ + slope * total_length
+    area = depth * breadth
+    perimeter = 2.0 * depth + breadth
+    rh = area / perimeter
+    velocity = Froude * sqrt(grav * depth)
+    flowrate = area * velocity
+    slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+    upperZ = lowerZ + slope * total_length
 
- ! elsewhere ( (elemI(:,e2i_geometry)  == eVnotchWeir) )
-    area        = setting%Weir%WeirSideSlope * depth ** twoR
-    perimeter   = breadth + twoR * sqrt(onefourthR * breadth ** twoR + depth ** twoR)
-    rh          = area / perimeter
-    velocity    = (setting%Weir%WeirDischargeCoeff * setting%Weir%WeirSideSlope * depth ** 2.5) / area
-    flowrate    = area * velocity
-    slope       = zeroR
-    upperZ      = lowerZ
+ ! ! elsewhere ( (elemI(:,e2i_geometry)  == eVnotchWeir) )
+ !    area        = setting%Weir%WeirSideSlope * depth ** twoR
+ !    perimeter   = breadth + twoR * sqrt(onefourthR * breadth ** twoR + depth ** twoR)
+ !    rh          = area / perimeter
+ !    velocity    = (setting%Weir%WeirDischargeCoeff * setting%Weir%WeirSideSlope * depth ** 2.5) / area
+ !    flowrate    = area * velocity
+ !    slope       = zeroR
+ !    upperZ      = lowerZ
 
  ! endwhere
 
