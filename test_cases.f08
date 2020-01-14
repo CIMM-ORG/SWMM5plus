@@ -488,6 +488,8 @@
  real :: perimeter, rh, slope
  integer, intent(in) :: channel_geometry
  
+ real :: topWidth , xParabola , hDepth
+ 
 
 
 !--------------------------------------------------------------------------
@@ -495,28 +497,46 @@
 
  select case (channel_geometry)
     case(lRectangular)
-        area = depth * breadth
-        perimeter = 2.0 * depth + breadth
-        rh = area / perimeter
-        velocity = Froude * sqrt(grav * depth)
-        flowrate = area * velocity
-        slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
-        upperZ = lowerZ + slope * total_length
-    case(lParabolic)
-        area = depth * breadth
-        perimeter = 2.0 * depth + breadth
-        rh = area / perimeter
-        velocity = Froude * sqrt(grav * depth)
-        flowrate = area * velocity
-        slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
-        upperZ = lowerZ + slope * total_length
-    case(lTrapezoidal)
+        hDepth = depth
+        topWidth = breadth
+        area = hDepth * breadth
+        perimeter = 2.0 * hDepth + breadth
         
+    case(lParabolic)
+        hDepth = (twoR / threeR) * depth
+        topWidth = twoR * sqrt(abs(depth/parabolaValue))
+        area = twothirdR * topWidth * depth
+        xParabola = fourR * depth / topWidth
+        perimeter = onehalfR * topwidth &
+            *( sqrt( oneR + xParabola**twoR ) + oneR / xParabola &
+            * log ( xParabola + sqrt( oneR + xParabola**twoR )) )
+            
+    case(lTrapezoidal)
+        area = (breadth + onehalfR * (leftSlope + rightSlope) * depth ) * depth
+        topWidth = breadth + (leftSlope + rightSlope) * depth
+        hDepth = area / topWidth
+        perimeter = breadth + depth * (sqrt(oneR + leftSlope**twoR ) &
+                    + sqrt(oneR + rightSlope**twoR))
+                    
     case(lTriangle)
+        area = onehalfR * (leftSlope + rightSlope) * depth ** twoR
+        topWidth = (leftSlope + rightSlope) * depth
+        hDepth = onehalfR * depth
+        perimeter = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
         
     case(lWidthDepth)
+        area = 0.0
+        topWidth = 0.0
+        hDepth = 0.0
+        perimeter = 0.0 
         
  end select
+ 
+ rh = area / perimeter
+ velocity = Froude * sqrt(grav * hDepth)
+ flowrate = area * velocity
+ slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+ upperZ = lowerZ + slope * total_length
 
 
 ! print *, area
