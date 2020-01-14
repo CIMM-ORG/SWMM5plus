@@ -184,7 +184,7 @@ faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 ! initialize output by threaded link
  call output_threaded_by_link_initialize (threadedfile)
 
-stop
+! stop
 
 !%  time marching of continuity and momentum
  call time_marching &

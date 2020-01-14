@@ -539,6 +539,8 @@
  end subroutine timescale_value_HonlyElement
 !
 !==========================================================================
+!==========================================================================
+!
  subroutine timescale_value_QonlyElement &
     (elem2R, elem2I, elem2YN)
 
@@ -584,6 +586,7 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine timescale_value_QonlyElement
 !
+!==========================================================================
 !==========================================================================
 !
  subroutine timescale_value_channel &

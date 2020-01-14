@@ -250,6 +250,10 @@
     ! All the timescales for boundary are Maximum. So here using the value for timescale flowrate
     elem2R(eID,e2r_Timescale_Q_u) = setting%Limiter%Timescale%Maximum !Fixing Timescale for new element implementation
     elem2R(eID,e2r_Timescale_Q_d) = setting%Limiter%Timescale%Maximum
+    elem2R(eID,e2r_Timescale_H_u) = setting%Limiter%Timescale%Maximum !Fixing Timescale for new element implementation
+    elem2R(eID,e2r_Timescale_H_d) = setting%Limiter%Timescale%Maximum
+    elem2R(eID,e2r_Timescale_G_u) = setting%Limiter%Timescale%Maximum !Fixing Timescale for new element implementation
+    elem2R(eID,e2r_Timescale_G_d) = setting%Limiter%Timescale%Maximum
  end do
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name

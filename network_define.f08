@@ -797,7 +797,7 @@
                                             * linkR(thislink,lr_ElementLength)
     
     select case (linkI(thisLink,li_geometry))
-        case (lRectangularChannel)
+        case (eRectangularChannel)
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
