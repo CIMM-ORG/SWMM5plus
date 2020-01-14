@@ -71,10 +71,10 @@
      elemMR, elemMI, elemMYN, eMr_Volume, &
      faceR, faceI, bcdataDn, bcdataUp, thisTime, 0)
 
-call meta_element_assign &
+ call meta_element_assign &
     (elem2I, e2i_elem_type, e2i_meta_elem_type) 
 
-call meta_element_assign &
+ call meta_element_assign &
     (elemMI, eMi_elem_type, eMi_meta_elem_type) 
  
  call element_dynamics_update &

@@ -136,8 +136,8 @@
       eMr_Flowrate, eMr_Area, eMr_Velocity_new, eMi_elem_type, eJunctionChannel)
 
  call flowrate_from_velocity &
-    ( elemMR, elemMI, &
-      eMr_Flowrate, eMr_Area, eMr_Velocity_new, eMi_elem_type, eWeir)
+    ( elem2R, elem2I, &
+      e2r_Flowrate, e2r_Area, e2r_Velocity_new, e2i_elem_type, eWeir)
 
 
 !%  FLOWS AND VELOCITIES IN JUNCTION BRANCHES -----------------
@@ -491,10 +491,10 @@
  ! print*, elem2R(:, e2r_Timescale_Q_u), 'e2r_Timescale_Q_u'
  ! print*,'-------------------------------------------------'
  ! print*, elem2R(:, e2r_Timescale_Q_d), 'e2r_Timescale_Q_d'
- print*, '----------------------------------'
- print*, eMr_TimescaleUp, 'elemMR tscale up' 
- print*, '----------------------------------'
- print*, eMr_TimescaleDn, 'elemMR tscale dn'
+ ! print*, '----------------------------------'
+ ! print*, eMr_TimescaleUp, 'elemMR tscale up' 
+ ! print*, '----------------------------------'
+ ! print*, eMr_TimescaleDn, 'elemMR tscale dn'
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine element_timescale
@@ -730,11 +730,6 @@ where (maskarray1)
  wavespeed = nullvalueR
  nullify(wavespeed)
  next_eMr_temparray = next_eMr_temparray-1
-
- print*, '----------------------------------'
- print*, eMr_TimescaleUp, 'elemMR tscale up' 
- print*, '----------------------------------'
- print*, eMr_TimescaleDn, 'elemMR tscale dn'
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine timescale_value_junction
