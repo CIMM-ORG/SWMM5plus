@@ -224,7 +224,7 @@
     case ('simple_weir_003')
 
         N_link = 1
-        N_node = 0
+        N_node = 2
         N_BCupstream = 1
         N_BCdnstream = 1
 
