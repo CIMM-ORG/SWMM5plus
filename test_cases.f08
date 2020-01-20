@@ -71,8 +71,8 @@
  real,    dimension(:), allocatable :: init_xDistance
  real,    dimension(:), allocatable :: init_Breadth
  real,    dimension(:,:,:), allocatable :: init_widthDepthData
- character(len=:), allocatable :: init_cellType(:)
- real, dimension(:), allocatable :: faceZBottom
+ character(len=:),          allocatable :: init_cellType(:)
+ real, dimension(:),        allocatable :: faceZBottom
  
  integer, dimension(:),     allocatable :: newID
  integer, dimension(:),     allocatable :: newNumberPairs
@@ -205,7 +205,7 @@
              init_cellType, n_rows_in_file_node, faceZBottom,                 &
              max_number_of_pairs, newID, newNumberPairs, newManningsN,        &
              newLength, newZBottom, newXDistance, newBreadth,                 &
-             newWidthDepthData, subdivide_length_check)
+             newWidthDepthData, newCellType, subdivide_length_check)
              
         
         N_link = newID(size(newID))
@@ -250,10 +250,30 @@
         leftSlope     = zeroR
         rightSlope    = zeroR
         
+        !calculate the geometry related information from widthDepth information
+        !and store it at the same matrix
+        !BUG The celltype is not passed correctly. Data is corrupted.
+        call widthdepth_pair_auxiliary (newWidthDepthData, newCellType, newNumberPairs)
+        
+        ! Calculate the surface are below the water depth
+        ! create a new subroutine for easily transfering data to froude_driven_setup
+        !Pass the widthDepth matrix into the froude_driven_setup
+        !Froude Driven Setup for each element
+        
         call this_setting_for_time_and_steps &
             (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, &
              display_interval, 2)
         
+        !TODO
+        !case call for case_waller_creek_initialize
+        
+        if (.not. setting%Debugout%SuppressAllFiles) then
+            call write_testcase_setup_file &
+                (Froude, CFL, flowrate, velocity, depth_upstream,   &
+                 depth_dnstream, channel_breadth, area, &
+                 channel_length, subdivide_length, &
+                 lowerZ, upperZ, ManningsN)
+        endif
         
         
 

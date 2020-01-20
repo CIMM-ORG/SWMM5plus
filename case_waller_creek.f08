@@ -23,6 +23,7 @@
     
     public :: case_waller_creek_initialize
     public :: nonmonotonic_subdivide
+    public :: widthdepth_pair_auxiliary
 
     integer :: debuglevel = 0
     
@@ -162,7 +163,8 @@
      (ID, numberPairs, ManningsN, Length, zBottom, xDistance,                  &
       Breadth, widthDepthData, cellType, NX, faceZBottom, max_number_of_pairs, &
       newID, newNumberPairs, newManningsN, newLength, newZBottom,              &
-      newXDistance, newBreadth, newWidthDepthData, subdivide_length_check)
+      newXDistance, newBreadth, newWidthDepthData, newCellType,                &
+      subdivide_length_check)
 !
 ! initialize the link-node system and boundary conditions for a simple channel
 ! 
