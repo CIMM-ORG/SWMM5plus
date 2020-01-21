@@ -395,9 +395,8 @@ subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
  area(:,2:eIn1) = onehalfR * (width(:,2:eIn1) + width(:,1:eIn1-1)) &
                            * (depth(:,2:eIn1) - depth(:,1:eIn1-1))
 
-        
  ! set areas to zero above the uppermost pair
- do ii = 1, eIn1
+ do ii = 1, size(widthDepthData,1)
     if(cellType(ii)%str == 'widthdepth_pair') then
         area(ii, numberPairs(ii):eIn1) = zeroR
     endif

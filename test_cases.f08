@@ -543,12 +543,6 @@
         hDepth = onehalfR * depth
         perimeter = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
         
-    case(lWidthDepth)
-        area = 0.0
-        topWidth = 0.0
-        hDepth = 0.0
-        perimeter = 0.0 
-        
  end select
  
  rh = area / perimeter
@@ -570,6 +564,40 @@
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine froude_driven_setup
+!
+!==========================================================================
+!==========================================================================
+!
+ subroutine froude_driven_setup_for_width_depth_pair_data &
+    (upperZ, area, flowrate, velocity,  &
+     Froude,  breadth, ManningsN, total_length, &
+     lowerZ, depth)
+
+ character(64) :: subroutine_name = 'froude_driven_setup_for_width_depth_pair_data'
+
+ real,  intent(out)    :: area, flowrate, velocity, upperZ
+ real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
+ real,  intent(in)     :: depth
+
+ real :: perimeter, rh, slope, hDepth, topWidth
+ 
+
+
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+ area = 0.0
+ topWidth = 0.0
+ hDepth = 0.0
+ perimeter = 0.0 
+ rh = area / perimeter
+ velocity = Froude * sqrt(grav * hDepth)
+ flowrate = area * velocity
+ slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+ upperZ = lowerZ + slope * total_length
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine froude_driven_setup_for_width_depth_pair_data
 !
 !==========================================================================
 !==========================================================================
