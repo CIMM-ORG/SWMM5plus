@@ -187,24 +187,24 @@
  real, intent(in)    :: xDistance(:)
  real, intent(in)    :: Breadth(:)
  real, intent(in)    :: widthDepthData(:,:,:)
- character, intent(in)    :: cellType(:)
+ type(string), intent(in out)   :: cellType(:)
  
  real, intent(in)    :: subdivide_length_check
  
- real,    dimension(:),     allocatable :: faceZBottom
- real,    dimension(:),     allocatable :: temp1
- real,    dimension(:),     allocatable :: temp2
- integer, dimension(:),     allocatable :: isnonmonotonic
+ real,    dimension(:),      allocatable :: faceZBottom
+ real,    dimension(:),      allocatable :: temp1
+ real,    dimension(:),      allocatable :: temp2
+ integer, dimension(:),      allocatable :: isnonmonotonic
  
- integer, dimension(:),     allocatable :: newID
- integer, dimension(:),     allocatable :: newNumberPairs
- real,    dimension(:),     allocatable :: newManningsN
- real,    dimension(:),     allocatable :: newLength
- real,    dimension(:),     allocatable :: newZBottom
- real,    dimension(:),     allocatable :: newXDistance
- real,    dimension(:),     allocatable :: newBreadth
- real,    dimension(:,:,:), allocatable :: newWidthDepthData
- character(len=:),          allocatable :: newCellType(:)
+ integer, dimension(:),      allocatable :: newID
+ integer, dimension(:),      allocatable :: newNumberPairs
+ real,    dimension(:),      allocatable :: newManningsN
+ real,    dimension(:),      allocatable :: newLength
+ real,    dimension(:),      allocatable :: newZBottom
+ real,    dimension(:),      allocatable :: newXDistance
+ real,    dimension(:),      allocatable :: newBreadth
+ real,    dimension(:,:,:),  allocatable :: newWidthDepthData
+ type(string), dimension(:), allocatable :: newCellType(:)
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -268,7 +268,7 @@
  call utility_check_allocation (allocation_status, emsg)
  newWidthDepthData(:,:,:) = 0.0
  
- allocate(character(100):: newCellType(newNX), stat=allocation_status, errmsg=emsg)
+ allocate(newCellType(newNX), stat=allocation_status, errmsg=emsg)
  call utility_check_allocation (allocation_status, emsg)
  
 ! print('Checking for non-monotonic zbottom, 1=found')
@@ -302,10 +302,13 @@
             + onehalfR*Length (ii) - onehalfR * subdivide_length_check
         newBreadth     (jj)   = Breadth     (ii)
         newBreadth     (jj+1) = Breadth     (ii)
+        newBreadth     (jj+2) = Breadth     (ii)
         newWidthDepthData(jj,:,:)   = widthDepthData (ii,:,:)
         newWidthDepthData(jj+1,:,:) = widthDepthData (ii,:,:)
-        newCellType    (jj)   = cellType    (ii)
-        newCellType    (jj+1) = cellType    (ii)
+        newWidthDepthData(jj+2,:,:) = widthDepthData (ii,:,:)
+        newCellType      (jj)%str   = cellType    (ii)%str
+        newCellType      (jj+1)%str = cellType    (ii)%str
+        newCellType      (jj+2)%str = cellType    (ii)%str
         jj = jj + 3
     else
         newID          (jj) = jj
@@ -316,7 +319,7 @@
         newXDistance   (jj) = xDistance   (ii)
         newBreadth     (jj) = Breadth     (ii)
         newWidthDepthData(jj,:,:) = widthDepthData (ii,:,:)
-        newCellType    (jj) = cellType    (ii)
+        newCellType      (jj)%str = cellType       (ii)%str
         jj = jj + 1
     endif
  enddo
@@ -363,7 +366,7 @@ subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
  
  real, target, intent(inout) :: widthDepthData(:,:,:)
  
- character, intent(in) :: cellType(:)
+ type(string), intent(in out)   :: cellType(:)
  
  real, pointer :: width(:,:), depth(:,:), area(:,:), areaTBL(:,:)
  real, pointer :: dWidth(:,:), dDepth(:,:), angle(:,:), perimeterBL(:,:)
@@ -395,7 +398,7 @@ subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
         
  ! set areas to zero above the uppermost pair
  do ii = 1, eIn1
-    if(cellType(ii) == 'widthdepth_pair') then
+    if(cellType(ii)%str == 'widthdepth_pair') then
         area(ii, numberPairs(ii):eIn1) = zeroR
     endif
  enddo

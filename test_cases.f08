@@ -70,19 +70,20 @@
  real,    dimension(:), allocatable :: init_zBottom
  real,    dimension(:), allocatable :: init_xDistance
  real,    dimension(:), allocatable :: init_Breadth
- real,    dimension(:,:,:), allocatable :: init_widthDepthData
- character(len=:),          allocatable :: init_cellType(:)
- real, dimension(:),        allocatable :: faceZBottom
+ real,    dimension(:,:,:),  allocatable :: init_widthDepthData
+ type(string), dimension(:), allocatable :: init_cellType
+!  character(len=:),          allocatable :: init_cellType(:)
+ real, dimension(:),         allocatable :: faceZBottom
  
- integer, dimension(:),     allocatable :: newID
- integer, dimension(:),     allocatable :: newNumberPairs
- real,    dimension(:),     allocatable :: newManningsN
- real,    dimension(:),     allocatable :: newLength
- real,    dimension(:),     allocatable :: newZBottom
- real,    dimension(:),     allocatable :: newXDistance
- real,    dimension(:),     allocatable :: newBreadth
- real,    dimension(:,:,:), allocatable :: newWidthDepthData
- character(len=:),          allocatable :: newCellType(:)
+ integer, dimension(:),      allocatable :: newID
+ integer, dimension(:),      allocatable :: newNumberPairs
+ real,    dimension(:),      allocatable :: newManningsN
+ real,    dimension(:),      allocatable :: newLength
+ real,    dimension(:),      allocatable :: newZBottom
+ real,    dimension(:),      allocatable :: newXDistance
+ real,    dimension(:),      allocatable :: newBreadth
+ real,    dimension(:,:,:),  allocatable :: newWidthDepthData
+ type(string), dimension(:), allocatable :: newCellType(:)
  
  
  real :: inflowBC, heightBC, Waller_Creek_initial_depth
@@ -206,7 +207,6 @@
              max_number_of_pairs, newID, newNumberPairs, newManningsN,        &
              newLength, newZBottom, newXDistance, newBreadth,                 &
              newWidthDepthData, newCellType, subdivide_length_check)
-             
         
         N_link = newID(size(newID))
         N_node = N_link + 1
@@ -252,7 +252,6 @@
         
         !calculate the geometry related information from widthDepth information
         !and store it at the same matrix
-        !BUG The celltype is not passed correctly. Data is corrupted.
         call widthdepth_pair_auxiliary (newWidthDepthData, newCellType, newNumberPairs)
         
         ! Calculate the surface are below the water depth

@@ -28,7 +28,7 @@ program a1
  real,    dimension(:),     allocatable :: newBreadth
  real,    dimension(:,:,:), allocatable :: newWidthDepthData
  
- character(len=:), allocatable :: cellType(:)
+ type(string), dimension(:), allocatable :: cellType
 
  open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
  n_rows_in_file_node = read_number_of_cells(unit)
@@ -39,16 +39,22 @@ program a1
  call read_widthdepth_pairs &
      (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
       Breadth, widthDepthData, cellType)
+      
+ do ii=1, n_rows_in_file_node
+    print*, "cellatype = ", cellType(ii)%str
+ enddo
+ 
+ stop
 
- call nonmonotonic_subdivide &
-      (ID, numberPairs, ManningsN, Length, zBottom, xDistance,             &
-      Breadth, widthDepthData, cellType, n_rows_in_file_node, faceZBottom, &
-      max_number_of_pairs, newID, newNumberPairs, newManningsN, newLength, &
-      newZBottom, newXDistance, newBreadth, newWidthDepthData,             &
-      subdivide_length_check)
+!  call nonmonotonic_subdivide &
+!       (ID, numberPairs, ManningsN, Length, zBottom, xDistance,             &
+!       Breadth, widthDepthData, cellType, n_rows_in_file_node, faceZBottom, &
+!       max_number_of_pairs, newID, newNumberPairs, newManningsN, newLength, &
+!       newZBottom, newXDistance, newBreadth, newWidthDepthData,             &
+!       subdivide_length_check)
 
- print*, size(ID)
- print*, newID
+!  print*, size(ID)
+!  print*, newID
 
 end program a1
 

@@ -80,7 +80,8 @@
  
  real, dimension(:,:,:), allocatable :: widthDepthData
  
- character(len=:), allocatable :: cellType(:)
+ type(string), dimension(:), allocatable :: cellType
+!  character(len=:), allocatable :: cellType(:)
  
  character(len=256) :: value1
  character(len=256) :: value2
@@ -123,7 +124,7 @@
  allocate(widthDepthData(number_of_cells, max_number_of_pairs+1, wd_idx_max), stat=allocation_status, errmsg=emsg)
  widthDepthData(:,:,:) = 0.0
  
- allocate(character(100):: cellType(number_of_cells), stat=allocation_status, errmsg=emsg)
+ allocate(cellType(number_of_cells), stat=allocation_status, errmsg=emsg)
  
  rewind(iunit)
  do while (dont_quit .eqv. .true.)
@@ -175,7 +176,7 @@
         read(value2 , *, iostat=istat) Breadth(icell)
     elseif (value1 == 'cellType') then
         if (value2 == 'channel_WidthDepthPairs') then
-            cellType(icell) = 'widthdepth_pair'
+            cellType(icell)%str = 'widthdepth_pair'
         else
             print*,'error: unknown value for cellType'
         endif
