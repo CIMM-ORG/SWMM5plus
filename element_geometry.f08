@@ -294,21 +294,25 @@
  integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_Volume
  integer,   intent(in)      :: er_LeftSlope, er_RightSlope, er_ParabolaValue
  
- integer, intent(in out)    :: wdID(:)
- integer, intent(in out)    :: wdnumberPairs(:)
- real,    intent(in out)    :: wdManningsN(:)
- real,    intent(in out)    :: wdLength(:)
- real,    intent(in out)    :: wdzBottom(:)
- real,    intent(in out)    :: wdxDistance(:)
- real,    intent(in out)    :: wdBreadth(:)
- real,    intent(in out)    :: widthDepthData(:,:,:)
- type(string), intent(in out)   :: wdcellType(:)
+ integer, target, intent(in out)    :: wdID(:)
+ integer, target, intent(in out)    :: wdnumberPairs(:)
+ real,    target, intent(in out)    :: wdManningsN(:)
+ real,    target, intent(in out)    :: wdLength(:)
+ real,    target, intent(in out)    :: wdzBottom(:)
+ real,    target, intent(in out)    :: wdxDistance(:)
+ real,    target, intent(in out)    :: wdBreadth(:)
+ real,    target, intent(in out)    :: widthDepthData(:,:,:)
+ type(string), target, intent(in out)   :: wdcellType(:)
 
 
- real,  pointer  :: volume(:), length(:), zbottom(:), breadth(:)
- real,  pointer  :: area(:), eta(:), perimeter(:), depth(:), hyddepth(:)
- real,  pointer  :: hydradius(:), topwidth(:)
- real,  pointer  :: leftSlope(:), rightSlope(:), parabolaValue(:)
+ real, pointer :: volume(:), length(:), zbottom(:), breadth(:)
+ real, pointer :: area(:), eta(:), perimeter(:), depth(:), hyddepth(:)
+ real, pointer :: hydradius(:), topwidth(:)
+ real, pointer :: leftSlope(:), rightSlope(:), parabolaValue(:)
+ 
+ real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+ real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+ real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -330,6 +334,15 @@
  hyddepth   => elemR(:,er_HydDepth)
  hydradius  => elemR(:,er_HydRadius)
  topwidth   => elemR(:,er_Topwidth)
+ 
+ widthAtLayerTop         => widthDepthData (:,:, wd_widthAtLayerTop)
+ depthAtLayerTop         => widthDepthData (:,:, wd_depthAtLayerTop)
+ areaThisLayer           => widthDepthData (:,:, wd_areaThisLayer)
+ areaTotalBelowThisLayer => widthDepthData (:,:, wd_areaTotalBelowThisLayer)
+ dWidth                  => widthDepthData (:,:, wd_Dwidth)
+ dDepth                  => widthDepthData (:,:, wd_Ddepth)
+ angle                   => widthDepthData (:,:, wd_angle)
+ perimeterBelowThisLayer => widthDepthData (:,:, wd_perimeterBelowThisLayer)
 
  where ( (elemI(:,ei_geometry)  == eRectangular) .and. &
          (elemI(:,ei_elem_type) == elem_type_value    )         )
@@ -388,7 +401,6 @@
     
  elsewhere ( (elemI(:,ei_geometry)  == eWidthDepth) .and. &
          (elemI(:,ei_elem_type) == elem_type_value    )         )
-    
 !     ind = minloc(volume, 1.0)
 !     area        = volume / length
 !     hyddepth    = DD
