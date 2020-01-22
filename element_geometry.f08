@@ -36,7 +36,9 @@
  subroutine element_geometry_update &
     (elem2R, elem2I, elem2YN, e2r_VolumeColumn, &
      elemMR, elemMI, elemMYN, eMr_VolumeColumn, &
-     faceR, faceI, bcdataDn, bcdataUp, thisTime, method_EtaM  )
+     faceR, faceI, bcdataDn, bcdataUp, thisTime, method_EtaM, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 !
 ! Note that volume is handled as a separate temporary index location
 ! (rather than from the elemR(:,er_Volume) array) because we use
@@ -59,6 +61,16 @@
 
 
  integer, parameter :: ilocaldummy = 0
+ 
+ integer, intent(in out)    :: ID(:)
+ integer, intent(in out)    :: numberPairs(:)
+ real,    intent(in out)    :: ManningsN(:)
+ real,    intent(in out)    :: Length(:)
+ real,    intent(in out)    :: zBottom(:)
+ real,    intent(in out)    :: xDistance(:)
+ real,    intent(in out)    :: Breadth(:)
+ real,    intent(in out)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: cellType(:)
 
 
 !--------------------------------------------------------------------------
@@ -85,7 +97,9 @@
 !% rectangular geometry
  call geometry_update &
     (elem2R, elem2I, e2r_VolumeColumn, &
-     elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM)
+     elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 
 !% HACK -- NEED OTHER GEOMETRY TYPES
 
@@ -185,7 +199,9 @@
 !
  subroutine geometry_update &
     (elem2R, elem2I, e2r_Volume_new, &
-     elemMR, elemMI, eMr_Volume_new, faceR, eMr_EtaOld, method_EtaM )
+     elemMR, elemMI, eMr_Volume_new, faceR, eMr_EtaOld, method_EtaM, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 !
 ! Note that volume used is in a eTr storage location so that the update
 ! can be used on a temporary volume
@@ -197,6 +213,16 @@
  integer,   intent(in)      :: elem2I(:,:), elemMI(:,:)
  integer,   intent(in)      :: e2r_Volume_new, eMr_Volume_new, eMr_EtaOld
  integer,   intent(in)      :: method_EtaM
+ 
+ integer, intent(in out)    :: ID(:)
+ integer, intent(in out)    :: numberPairs(:)
+ real,    intent(in out)    :: ManningsN(:)
+ real,    intent(in out)    :: Length(:)
+ real,    intent(in out)    :: zBottom(:)
+ real,    intent(in out)    :: xDistance(:)
+ real,    intent(in out)    :: Breadth(:)
+ real,    intent(in out)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: cellType(:)
 
 
 !--------------------------------------------------------------------------
@@ -210,7 +236,9 @@
      e2i_geometry, e2i_elem_type, eChannel,  &
      e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
      e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new,    &
-     e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue)
+     e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 
 !%  rectangular geomety for junctions
  call channel_or_junction &
@@ -218,7 +246,9 @@
      eMi_geometry, eMi_elem_type, eJunctionChannel,  &
      eMr_Length, eMr_Zbottom, eMr_BreadthScale, eMr_Topwidth, eMr_Area, eMr_Eta, &
      eMr_Perimeter, eMr_Depth, eMr_HydDepth, eMr_HydRadius, eMr_Volume_new,    &
-     eMr_LeftSlope, eMr_RightSlope, eMr_ParabolaValue)
+     eMr_LeftSlope, eMr_RightSlope, eMr_ParabolaValue, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 
 !% upstream branches
 !% note the fr_Eta_d is used for the upstream face, whose downstream eta is
@@ -247,7 +277,9 @@
      ei_geometry, ei_elem_type, elem_type_value,  &
      er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
      er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_Volume,    &
-     er_LeftSlope, er_RightSlope, er_ParabolaValue)
+     er_LeftSlope, er_RightSlope, er_ParabolaValue, &
+     wdID, wdnumberPairs, wdManningsN, wdLength, wdzBottom, wdxDistance, &
+     wdBreadth, widthDepthData, wdcellType)
 !
 ! computes element geometry for a rectangular channel or a channeljunction
 !
@@ -261,6 +293,16 @@
  integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
  integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_Volume
  integer,   intent(in)      :: er_LeftSlope, er_RightSlope, er_ParabolaValue
+ 
+ integer, intent(in out)    :: wdID(:)
+ integer, intent(in out)    :: wdnumberPairs(:)
+ real,    intent(in out)    :: wdManningsN(:)
+ real,    intent(in out)    :: wdLength(:)
+ real,    intent(in out)    :: wdzBottom(:)
+ real,    intent(in out)    :: wdxDistance(:)
+ real,    intent(in out)    :: wdBreadth(:)
+ real,    intent(in out)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: wdcellType(:)
 
 
  real,  pointer  :: volume(:), length(:), zbottom(:), breadth(:)
@@ -338,7 +380,7 @@
          (elemI(:,ei_elem_type) == elem_type_value    )         )
     area        = volume / length
     depth       = sqrt(abs(area/(onehalfR*(leftSlope + rightSlope))))
-    hyddepth    = zbottom + onehalfR * depth
+    hyddepth    = onehalfR * depth
     eta         = zbottom + hyddepth
     topwidth    = (leftSlope + rightSlope) * depth
     perimeter   = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
@@ -346,13 +388,15 @@
     
  elsewhere ( (elemI(:,ei_geometry)  == eWidthDepth) .and. &
          (elemI(:,ei_elem_type) == elem_type_value    )         )
-    area        = 0.0
-    eta         = 0.0
-    hyddepth    = 0.0
-    depth       = 0.0
-    topwidth    = 0.0
-    perimeter   = 0.0
-    hydradius   = 0.0
+    
+!     ind = minloc(volume, 1.0)
+!     area        = volume / length
+!     hyddepth    = DD
+!     eta         = zbottom + hyddepth
+!     depth       = hyddepth
+!     topwidth    = 0.0
+!     perimeter   = 0.0
+!     hydradius   = area / perimeter
  endwhere
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

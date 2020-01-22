@@ -35,7 +35,9 @@
 !
  subroutine initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, thisTime)
+     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, thisTime, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
  
  character(64) :: subroutine_name = 'initial_condition_setup'
  
@@ -48,6 +50,16 @@
  real,                intent(in)      :: thisTime
  
  type(bcType),        intent(in out)      :: bcdataDn(:), bcdataUp(:)  
+ 
+ integer, intent(in out)    :: ID(:)
+ integer, intent(in out)    :: numberPairs(:)
+ real,    intent(in out)    :: ManningsN(:)
+ real,    intent(in out)    :: Length(:)
+ real,    intent(in out)    :: zBottom(:)
+ real,    intent(in out)    :: xDistance(:)
+ real,    intent(in out)    :: Breadth(:)
+ real,    intent(in out)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: cellType(:)
  
  integer :: idx
  
@@ -69,7 +81,9 @@
  call element_geometry_update &
     (elem2R, elem2I, elem2YN, e2r_Volume, &
      elemMR, elemMI, elemMYN, eMr_Volume, &
-     faceR, faceI, bcdataDn, bcdataUp, thisTime, 0)
+     faceR, faceI, bcdataDn, bcdataUp, thisTime, 0, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
  
  call element_dynamics_update &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &

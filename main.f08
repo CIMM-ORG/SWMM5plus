@@ -69,6 +69,16 @@
 
 !% threaded output files
  type(threadedfileType), allocatable, dimension(:) :: threadedfile
+ 
+ integer, dimension(:),      allocatable :: wdID
+ integer, dimension(:),      allocatable :: wdNumberPairs
+ real,    dimension(:),      allocatable :: wdManningsN
+ real,    dimension(:),      allocatable :: wdLength
+ real,    dimension(:),      allocatable :: wdZBottom
+ real,    dimension(:),      allocatable :: wdXDistance
+ real,    dimension(:),      allocatable :: wdBreadth
+ real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
+ type(string), dimension(:), allocatable :: wdCellType(:)
 
 !--------------------------------------------------------------------------
  print *, ''
@@ -83,9 +93,9 @@
 !%  hard-code setting for test cases
 
  setting%TestCase%UseTestCase = .true.
- !setting%TestCase%TestName = 'simple_channel_001'
+ setting%TestCase%TestName = 'simple_channel_001'
  !setting%TestCase%TestName = 'y_channel_002'
- setting%TestCase%TestName = 'waller_creek'
+ !setting%TestCase%TestName = 'waller_creek'
 
 !%  hard-code for debug output
  setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
@@ -122,7 +132,9 @@
  if (setting%TestCase%UseTestCase) then
     call test_case_initiation &
         (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-         bcdataDn, bcdataUp)
+         bcdataDn, bcdataUp, &
+         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
+         wdBreadth, wdWidthDepthData, wdCellType)
  else
     print *, 'error - code only designed for use with test cases'
     stop
@@ -146,7 +158,9 @@
 !% set the initial conditions throughout
  call initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime)
+     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
+     wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
+     wdBreadth, wdWidthDepthData, wdCellType)
 
 !% check consistency of the smallvolume setup
  call checking_smallvolume_consistency (elem2R, elemMR)
@@ -178,7 +192,9 @@ faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 !%  time marching of continuity and momentum
  call time_marching &
     (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
-     bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile)
+     bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile, &
+     wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
+     wdBreadth, wdWidthDepthData, wdCellType)
 
 !% uncomment this if you want a final debug output
 ! call debug_output &

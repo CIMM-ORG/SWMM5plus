@@ -33,7 +33,9 @@
 !
  subroutine test_case_initiation &
     (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-     bcdataDn, bcdataUp)
+     bcdataDn, bcdataUp, &
+     newID, newNumberPairs, newManningsN, newLength, newZBottom, newXDistance, &
+     newBreadth, newWidthDepthData, newCellType)
 
  character(64) :: subroutine_name = 'test_case_initiation'
 
@@ -72,7 +74,6 @@
  real,    dimension(:), allocatable :: init_Breadth
  real,    dimension(:,:,:),  allocatable :: init_widthDepthData
  type(string), dimension(:), allocatable :: init_cellType
-!  character(len=:),          allocatable :: init_cellType(:)
  real, dimension(:),         allocatable :: faceZBottom
  
  integer, dimension(:),      allocatable :: newID
@@ -580,12 +581,13 @@
  real,  intent(in)     :: depth
 
  real :: perimeter, rh, slope, hDepth, topWidth
- 
-
+ real :: AA, BB, CC, DD
+ real :: area_difference, local_difference, ind
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
+ area_difference = 0.0
  hDepth = depth
  topWidth = 0.0
  perimeter = 0.0
