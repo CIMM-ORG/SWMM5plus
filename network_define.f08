@@ -805,15 +805,15 @@
         !%%%%%%%%%%%%%%%%%%%%%%%
         ! For now the weir breadth scale is set to zero and topwidth is gotten from weir setting. Might
         !%%%%%%%%%%%%%%%%%%%%%%
-        case (lVnotchWeir)
-            elem2R(thisElem2,e2r_Topwidth)     = setting%Weir%WeirWidth
-            elem2R(thisElem2,e2r_BreadthScale) = 0.0
-            elem2R(thisElem2,e2r_Zbottom)      = 1.0 !!!!!Just for Weir implementation
+        case (lVnotchWeir)           
+            elem2R(thisElem2,e2r_Topwidth)     = twoR * setting%Weir%WeirSideSlope * linkR(thislink, lr_InitialDepth)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
     end select
- 
+    
     ! use the node name for the ghost element
     elem2Name(thisElem2) = nodeName(thisNode)
  
@@ -948,7 +948,7 @@
         !Check if this is right
         !%%%%%%%%%%%%%%%%%%%%
         case (lVnotchWeir)
-            elem2R(thisElem2,e2r_Topwidth)     = setting%Weir%WeirWidth
+            elem2R(thisElem2,e2r_Topwidth)     = twoR * setting%Weir%WeirSideSlope * linkR(thislink, lr_InitialDepth)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
@@ -1299,7 +1299,7 @@
         !Check if this is right
         !%%%%%%%%%%%%%%%%%%%%
         case (lVnotchWeir)
-            elem2R(thisElem2,e2r_Topwidth)     = setting%Weir%WeirWidth
+            elem2R(thisElem2,e2r_Topwidth)     = twoR * setting%Weir%WeirSideSlope * linkR(thislink, lr_InitialDepth)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name

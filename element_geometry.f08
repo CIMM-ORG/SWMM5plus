@@ -480,10 +480,19 @@ subroutine triangular_geometry_update &
     eta         = zbottom + hyddepth
     topwidth    = twoR * setting%Weir%WeirSideSlope * depth
     ! This needed to be checked
-    perimeter   = twoR * depth * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
-    hydradius   = area / perimeter
+    perimeter   = twoR * depth * sqrt(oneR + setting%Weir%WeirSideSlope ** 2)
+    hydradius   = (setting%Weir%WeirSideSlope * depth) / (twoR * sqrt(oneR + setting%Weir%WeirSideSlope ** 2))
  endwhere
-
+ print*, 'START OF ELEMENT GEOMETRY'
+ print*, 'area'
+ print*, area
+ print*, 'topwidth'
+ print*, topwidth
+ print*, 'depth'
+ print*, depth
+ print*, 'hydradius'
+ print*, hydradius
+ print*, 'END of ELEMENT GEOMETRY'
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine v_notch_weir
 !

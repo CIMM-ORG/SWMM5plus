@@ -79,7 +79,6 @@
  if (  count(elem2I(:,e2i_elem_type) == eChannel) &
      + count(elem2I(:,e2i_elem_type) == eWeir) & 
      + count(elemMI(:,eMi_elem_type) == eJunctionChannel) > zeroI) then
-         ! + count(elem2I(:,e2i_elem_type) == eWeir) & 
 
     !%  coefficients for the rk2 steps
     thiscoef(1) = onehalfR
@@ -130,6 +129,10 @@
     call overwrite_old_values &
         (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
          e2r_Volume, e2r_Volume_new, e2i_elem_type, eChannel, .true.)
+
+    call overwrite_old_values &
+        (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
+         e2r_Volume, e2r_Volume_new, e2i_elem_type, eWeir, .true.)
 
     call overwrite_old_values &
         (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
@@ -370,10 +373,20 @@ endif
         
 !%  Updating the face values by interpolation from neighbor elements
 !%  This uses the estimated values from the branches
+ print *,'Start of face update'
+ print *, faceR(:,fr_HydDepth_d), 'H d'
+ print *,'====================================================='
+ print *, faceR(:,fr_HydDepth_u), 'H u'
+ print *,'====================================================='
  call face_update &
     (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
      bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, &
      e2r_Volume_new, eMr_Volume_new, steptime, rkiteration)
+ print *,'*****************************************************'
+ print *, faceR(:,fr_HydDepth_d), 'H d'
+ print *,'*****************************************************'
+ print *, faceR(:,fr_HydDepth_u), 'H u'
+ print *,'End of face update'
     
 !% fix the junction branches by interp with face values
  call element_geometry_branch_fix (elemMR, elemMI, faceR, faceI )

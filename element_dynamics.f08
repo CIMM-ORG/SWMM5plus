@@ -90,7 +90,9 @@
  call element_timescale &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, bcdataDn, bcdataUp, &
      e2r_Velocity_new)
-
+ 
+ print*, elem2R(:,e2r_Flowrate), 'e2r_Flowrate'
+ print*, 'END OF ELEMENT DYNAMICS'
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine element_dynamics_update
 !

@@ -128,7 +128,6 @@
     stop
  end if
 
-
 !% create the network of elements from link and node data
  call network_initiation &
     (linkI, linkR, linkYN, linkName, &
@@ -146,19 +145,39 @@
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
      linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime)
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_TopWidth), 'e2r_TopWidth', elem2R(2, e2r_Area), 'e2r_Area', elem2R(2, e2r_Volume), 'e2r_Volume'
+    ! print*, elem2R(2,e2r_Depth), 'Depth'
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_Flowrate), 'e2r_Flowrate', elem2R(2, e2r_Area), 'e2r_Velocity'
+    ! print*, elem2R(2,e2r_HydDepth), 'HydDepth'
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'
+    ! print*, elem2R(2,e2r_Area), 'Area'
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_Zbottom), 'e2r_Zbottom', elem2R(2, e2r_Depth), 'e2r_Depth'
+    ! print*, elem2R(2,e2r_Topwidth), 'Top Width'
     ! print*, '================================='
-    ! print*, elem2R(:,e2r_SmallVolume), 'e2r_SmallVolume'
-    ! print*, '++++++++++++++++++++++++++++++++++++'
-    ! print*, elemMR(:,eMr_SmallVolume), 'eMr_SmallVolume'
+    ! print*, elem2R(2,e2r_Eta), 'Eta'
+    ! print*, '================================='
+    ! print*, elem2R(2,e2r_Volume), 'Volume'
+    ! print*, '================================='
+    ! print*, elem2R(2,e2r_Perimeter), 'Perimeter'
+    ! print*, elem2R(:, e2r_Timescale_G_u), 'T G u'
+    ! print*, '================================='
+    ! print*, elem2R(:, e2r_Timescale_G_d), 'T G d'
+    ! print*, '================================='
+    ! print*, elem2R(:, e2r_Timescale_H_u), 'T H u'
+    ! print*, '================================='
+    ! print*, elem2R(:, e2r_Timescale_H_d), 'T H d'
+    ! print*, '================================='
+    ! print*, elem2R(:, e2r_Timescale_Q_u), 'T Q u'
+    ! print*, '================================='
+    ! print*, elem2R(:, e2r_Timescale_Q_d), 'T Q d'
+    ! print*, '================================='
+    ! print*, faceR(:,fr_HydDepth_d), 'fr_HydDepth_d'
+    ! print*, '================================='
+    ! print*, faceR(:,fr_HydDepth_u), 'fr_HydDepth_u'
+    ! print*, '================================='
+   
+    ! stop
 !% check consistency of the smallvolume setup
- ! stop
+ 
  call checking_smallvolume_consistency (elem2R, elemMR)
  
 ! initialize the diagnostics

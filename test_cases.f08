@@ -235,9 +235,9 @@
              velocity, Froude, ManningsN, idepth_type)
 
         ! step controls
-        display_interval = 1000
+        display_interval = 1
         first_step = 1
-        last_step  =  10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+        last_step  = 2 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5
@@ -247,12 +247,12 @@
         ! keep these physics fixed
         weir_breadth    = setting%Weir%WeirWidth
         depth_upstream  = 3.0
-        depth_dnstream  = 2.0
+        depth_dnstream  = 1.0
         idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
         ManningsN       = 0.03
-        weir_length     = 2.0
+        weir_length     = 1.0
         lowerZ          = 1.0
-        head            = depth_upstream - depth_dnstream - setting%Weir%WeirHeight
+        head            = depth_upstream - setting%Weir%WeirInletOffset 
         subdivide_length = weir_length
 
         call froude_driven_setup &
@@ -421,8 +421,9 @@ select case (setting%TestCase%TestName)
         upperZ = lowerZ + slope * total_length
 
     case ('simple_weir_003')
+        ! These needed to be changed when the weir is surcharged
         area        = setting%Weir%WeirSideSlope * depth ** twoR
-        perimeter   = breadth + twoR * sqrt(onefourthR * breadth ** twoR + depth ** twoR)
+        perimeter   = twoR * depth * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
         rh          = area / perimeter
         velocity    = (setting%Weir%WeirDischargeCoeff * setting%Weir%WeirSideSlope * depth ** 2.5) / area
         flowrate    = area * velocity
@@ -432,16 +433,16 @@ end select
  
 
 
-! print *, area
-! print *, perimeter
-! print *, rh
-! print *, velocity
-! print *, flowrate
-! print *, slope
-! print *, upperZ, lowerZ
-! print *, total_length
-! print *, slope*total_length
-
+print *, area
+print *, perimeter
+print *, rh
+print *, velocity
+print *, flowrate
+print *, slope
+print *, upperZ, lowerZ
+print *, total_length
+print *, slope*total_length
+ 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine froude_driven_setup
 !

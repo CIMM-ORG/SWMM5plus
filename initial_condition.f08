@@ -59,7 +59,7 @@
     (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
    
  call initial_junction_conditions &
-    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)    
+    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)   
 
  !% set the bc elements (outside of face) to null values
  call bc_nullify_ghost_elem (elem2R, bcdataDn)
@@ -146,6 +146,7 @@
     !% up and downstream depths on this link
     dup => linkR(ii,lr_InitialUpstreamDepth)
     ddn => linkR(ii,lr_InitialDnstreamDepth)
+
             
     select case (LdepthType)
     
@@ -155,18 +156,18 @@
             if (linkR(ii,lr_InitialDepth) /= nullvalueR) then        
                 !%  if the link has a uniform depth as an initial condition
                 where (elem2I(:,e2i_link_ID) == Lindx)
-                    elem2R(:,e2r_HydDepth) = linkR(ii,lr_InitialDepth)
+                    elem2R(:,e2r_Depth) = linkR(ii,lr_InitialDepth)
                 endwhere
             else
                 where (elem2I(:,e2i_link_ID) == Lindx)
-                    elem2R(:,e2r_HydDepth) = 0.5*(dup + ddn)
+                    elem2R(:,e2r_Depth) = 0.5*(dup + ddn)
                 endwhere
             endif
         case (2)        
             !% if the link has linearly-varying depth 
             !% depth at the downstream element (link position =1)
             where ( (elem2I(:,e2i_link_Pos) == 1) .and. (elem2I(:,e2i_link_ID) == Lindx) )
-                elem2R(:,e2r_HydDepth) = ddn   
+                elem2R(:,e2r_Depth) = ddn   
             endwhere
             
             !%  using a linear distribution over the links 
@@ -175,7 +176,7 @@
                 !% find the element that is at the mm position in the link
                 where ( (elem2I(:,e2i_link_Pos) == mm) .and. (elem2I(:,e2i_link_ID) == Lindx) )
                     ! use a linear interp
-                    elem2R(:,e2r_HydDepth) = ddn + (dup - ddn) * real(mm-1) / real(ei_max-1)
+                    elem2R(:,e2r_Depth) = ddn + (dup - ddn) * real(mm-1) / real(ei_max-1)
                 endwhere
             end do
             
@@ -189,7 +190,7 @@
             !% if the link has linearly-varying depth 
             !% depth at the downstream element (link position =1)
             where ( (elem2I(:,e2i_link_Pos) == 1) .and. (elem2I(:,e2i_link_ID) == Lindx) )
-                elem2R(:,e2r_HydDepth) = ddn   
+                elem2R(:,e2r_Depth) = ddn   
             endwhere
 
             !%  using a linear distribution over the links 
@@ -208,80 +209,72 @@
                     !%  depth increases exponentially going upstream
                     where ( (elem2I(:,e2i_link_Pos) == mm) .and. &
                         (elem2I(:,e2i_link_ID) == Lindx)        )
-                        elem2R(:,e2r_HydDepth) = dup - (dup-ddn) * exp(-real(mm-1))
+                        elem2R(:,e2r_Depth) = dup - (dup-ddn) * exp(-real(mm-1))
                     endwhere
                 else
                     !%  uniform depth
                     where ( (elem2I(:,e2i_link_Pos) == mm) .and. &
                         (elem2I(:,e2i_link_ID) == Lindx)        )
                         ! use a linear interp
-                        elem2R(:,e2r_HydDepth) = ddn
+                        elem2R(:,e2r_Depth) = ddn
                     endwhere
                      
                 endif
                             
             end do
-
         end select
-        print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'
         !%  handle all the initial conditions that don't depend on geometry type
         !%
         where (elem2I(:,e2i_link_ID) == Lindx)
             elem2I(:,e2i_roughness_type) = linkI(ii,li_roughness_type)
             elem2R(:,e2r_Roughness)      = linkR(ii,lr_Roughness)
-            elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
-            elem2R(:,e2r_Eta)            = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
-            elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)            
+            elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)
+            elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)               
         endwhere
         
-        print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'
+        ! print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'
         if (linkI(ii,li_geometry) == lRectangularChannel ) then
             !% handle rectangular elements
             
             where (elem2I(:,e2i_link_ID) == Lindx)
-                elem2I(:,e2i_geometry)  = eRectangularChannel            
+                elem2I(:,e2i_geometry)  = eRectangularChannel 
+                elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
+                elem2R(:,e2r_BreadthScale)  = linkR(ii,lr_BreadthScale)         
                 elem2R(:,e2r_Topwidth)  = linkR(ii,lr_BreadthScale)
+                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
                 elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
             endwhere
-
+            print*, elem2R(:,e2r_Volume)
         elseif (linkI(ii,li_geometry) == lVnotchWeir ) then
             !% handle triangular elements
             !% Talk to Ehsan about this
             where (elem2I(:,e2i_link_ID) == Lindx)
                 ! All the geometry calculation here are similar to the geometry calculation in weir module
-                elem2I(:,e2i_geometry)      = eVnotchWeir 
-                elem2R(:,e2r_BreadthScale)  = zeroR          
-                elem2R(:,e2r_Topwidth)      = elem2R(:,e2r_HydDepth) * setting%Weir%WeirSideSlope
-                elem2R(:,e2r_Area)          = setting%Weir%WeirSideSlope * elem2R(:,e2r_HydDepth) ** twoR
-                elem2R(:,e2r_Volume)        = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
-                elem2R(:,e2r_Perimeter)     = elem2R(:,e2r_Topwidth) + twoR * sqrt(onefourthR &
-                                                * elem2R(:,e2r_Topwidth) ** twoR + elem2R(:,e2r_HydDepth) ** twoR)
-
-            endwhere  
-
+                elem2I(:,e2i_geometry)      = eVnotchWeir
+                ! For weir element the hydraulic depth is the depth of water in the element 
+                elem2R(:,e2r_HydDepth)      = onehalfR * elem2R(:, e2r_Depth)
+                elem2R(:,e2r_BreadthScale)  = zeroR 
+                elem2R(:,e2r_Area)          = setting%Weir%WeirSideSlope * elem2R(:,e2r_Depth) ** twoR 
+                elem2R(:,e2r_Topwidth)      = twoR * setting%Weir%WeirSideSlope * elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Eta)           = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Volume)        = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                elem2R(:,e2r_Perimeter)     = twoR * elem2R(:,e2r_HydDepth) * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
+            endwhere
         else
             !% handle elements of other geometry types
             print *, 'error: initialization for non-rectangular elements needed in ',subroutine_name
-            stop
+
         end if
         
         !%  Update velocity
         where (  (elem2I(:,e2i_link_ID) == Lindx) .and. (elem2R(:,e2r_Area) > zeroR) )
             elem2R(:,e2r_Velocity)  = elem2R(:,e2r_Flowrate) / elem2R(:,e2r_Area)
         endwhere
-        
-        !print *, elem2R(:,e2r_HydDepth)
-        !stop
-
+    
  enddo
- 
- !print *, elem2R(:,e2r_Flowrate)
- !print *, trim(subroutine_name)
- !stop
 
- 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine initial_conditions_from_linkdata
 !
@@ -394,10 +387,10 @@
         elemI(:,ei_meta_elem_type) = eNonHQ
  end where
  
- print*,'------------------------'
- print*, elemI(:,ei_meta_elem_type), 'meta element type'
- print*,'-----------------------'
- ! print*, elemI
+ ! print*,'------------------------'
+ ! print*, elemI(:,ei_meta_elem_type), 'meta element type'
+ ! print*,'-----------------------'
+ ! ! print*, elemI
 
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -426,21 +419,21 @@
     faceI(ii,fi_meta_etype_d) = elemI(faceI(ii,fi_Melem_d), ei_Meta_elem_type)
 end do
 
- print*,'---------------------------------------------'
- print*, N_face, 'number of faces'
- ! print*, faceI(:,fi_meta_etype_u), 'face 1 u/s meta elem type'
- ! print*, faceI(2,fi_meta_etype_u), 'face 2 u/s meta elem type'
- ! print*, faceI(:,fi_meta_etype_d), 'face 1 d/s meta elem type'
- ! print*, faceI(2,fi_meta_etype_d), 'face 2 d/s meta elem type'
- print*, faceI(:,fi_type), 'face elem type'
- print*,'---------------------------------------------'
- print*, faceI(:,fi_Melem_d), 'face u/s elem map'
- print*,'---------------------------------------------'
- print*, faceI(:,fi_Melem_u), 'face d/s elem map'
- print*,'---------------------------------------------'
- print*, faceI(:,fi_meta_etype_u), 'face u/s meta elem type'
- print*,'---------------------------------------------'
- print*, faceI(:,fi_meta_etype_d), 'face d/s meta elem type'
+ ! print*,'---------------------------------------------'
+ ! print*, N_face, 'number of faces'
+ ! ! print*, faceI(:,fi_meta_etype_u), 'face 1 u/s meta elem type'
+ ! ! print*, faceI(2,fi_meta_etype_u), 'face 2 u/s meta elem type'
+ ! ! print*, faceI(:,fi_meta_etype_d), 'face 1 d/s meta elem type'
+ ! ! print*, faceI(2,fi_meta_etype_d), 'face 2 d/s meta elem type'
+ ! print*, faceI(:,fi_type), 'face elem type'
+ ! print*,'---------------------------------------------'
+ ! print*, faceI(:,fi_Melem_d), 'face u/s elem map'
+ ! print*,'---------------------------------------------'
+ ! print*, faceI(:,fi_Melem_u), 'face d/s elem map'
+ ! print*,'---------------------------------------------'
+ ! print*, faceI(:,fi_meta_etype_u), 'face u/s meta elem type'
+ ! print*,'---------------------------------------------'
+ ! print*, faceI(:,fi_meta_etype_d), 'face d/s meta elem type'
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine face_meta_element_assign

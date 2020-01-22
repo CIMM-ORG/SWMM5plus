@@ -163,7 +163,7 @@
 ! print*,faceR(1,fr_area_d), 'area dn', faceR(1,fr_area_u), 'area up', faceR(1, fr_eta_u), 'Eta U', faceR(1, fr_eta_d), 'Eta D'
 ! print*,'face dn--------------------------------------'
 ! print*,'weir --------------------------------------'    
-! print*,elem2R(2,e2r_Eta), ' = Eta '
+! print*,elem2R(:,e2r_Eta), ' = Eta '
 ! stop
     ! increment the counters
     thisstep    = thisstep + 1
