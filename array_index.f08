@@ -501,7 +501,9 @@
     integer, parameter :: wd_Ddepth                  = 6
     integer, parameter :: wd_angle                   = 7
     integer, parameter :: wd_perimeterBelowThisLayer = 8
-    integer, parameter :: wd_idx_max                 = 8
+    integer, parameter :: wd_area_difference         = 9
+    integer, parameter :: wd_local_difference        = 10
+    integer, parameter :: wd_idx_max                 = 10
 
 !==========================================================================
 ! END OF MODULE array_index

@@ -313,6 +313,10 @@
  real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
  real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
  real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+ real, pointer :: area_difference(:,:), local_difference(:,:)
+ 
+ real :: AA, BB, CC, DD
+ integer :: ii
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -343,6 +347,8 @@
  dDepth                  => widthDepthData (:,:, wd_Ddepth)
  angle                   => widthDepthData (:,:, wd_angle)
  perimeterBelowThisLayer => widthDepthData (:,:, wd_perimeterBelowThisLayer)
+ area_difference         => widthDepthData (:,:, wd_area_difference)
+ local_difference        => widthDepthData (:,:, wd_local_difference)
 
  where ( (elemI(:,ei_geometry)  == eRectangular) .and. &
          (elemI(:,ei_elem_type) == elem_type_value    )         )
@@ -398,18 +404,25 @@
     topwidth    = (leftSlope + rightSlope) * depth
     perimeter   = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
     hydradius   = area / perimeter
-    
- elsewhere ( (elemI(:,ei_geometry)  == eWidthDepth) .and. &
-         (elemI(:,ei_elem_type) == elem_type_value    )         )
-!     ind = minloc(volume, 1.0)
-!     area        = volume / length
-!     hyddepth    = DD
-!     eta         = zbottom + hyddepth
-!     depth       = hyddepth
-!     topwidth    = 0.0
-!     perimeter   = 0.0
-!     hydradius   = area / perimeter
+ 
  endwhere
+ 
+ do ii=1, size()
+    if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
+         (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
+         
+            area            = volume / length
+            area_difference = area
+            ind = minloc(volume, 1.0)
+            area            = volume / length
+            hyddepth        = DD
+            eta             = zbottom + hyddepth
+            depth           = hyddepth
+            topwidth        = 0.0
+            perimeter       = 0.0
+            hydradius       = area / perimeter
+    endif
+ enddo
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine channel_or_junction
