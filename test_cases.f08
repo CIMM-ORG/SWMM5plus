@@ -586,10 +586,11 @@
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
- area = 0.0
+ hDepth = depth
  topWidth = 0.0
- hDepth = 0.0
- perimeter = 0.0 
+ perimeter = 0.0
+ 
+ area = topWidth * hDepth
  rh = area / perimeter
  velocity = Froude * sqrt(grav * hDepth)
  flowrate = area * velocity
