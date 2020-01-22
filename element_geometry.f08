@@ -407,20 +407,20 @@
  
  endwhere
  
- do ii=1, size()
+ do ii=1, size(volume,1)
     if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
          (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
          
-            area            = volume / length
-            area_difference = area
-            ind = minloc(volume, 1.0)
-            area            = volume / length
-            hyddepth        = DD
-            eta             = zbottom + hyddepth
-            depth           = hyddepth
-            topwidth        = 0.0
-            perimeter       = 0.0
-            hydradius       = area / perimeter
+            area (ii) = volume(ii) / length(ii)
+!             area_difference = area (ii) - 
+!             ind = minloc(volume, 1.0)
+!             area            = volume / length
+!             hyddepth        = DD
+!             eta             = zbottom + hyddepth
+!             depth           = hyddepth
+!             topwidth        = 0.0
+!             perimeter       = 0.0
+!             hydradius       = area / perimeter
     endif
  enddo
 

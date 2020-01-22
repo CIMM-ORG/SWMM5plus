@@ -33,16 +33,80 @@
 !==========================================================================
 !
  subroutine case_waller_creek_initialize &
-    ()
+    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
+     initial_flowrate, depth_upstream, depth_dnstream,   &
+     ManningsN, roughness_type, idepth_type,                             &
+     linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
+     bcdataDn, bcdataUp, &
+     wdID, wdnumberPairs, wdxDistance, widthDepthData, wdcellType)
 !
 ! initialize the link-node system and boundary conditions for a simple channel
 ! 
  character(64) :: subroutine_name = 'case_waller_creek_initialize'
  
+ real,  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
+ real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
+ real,  intent(in)  :: depth_upstream(:), depth_dnstream(:)
+ real,  intent(in)  :: ManningsN(:)
+ 
+ integer, intent(in):: roughness_type, idepth_type(:)
+ 
+ integer, target, intent(in out)    :: wdID(:)
+ integer, target, intent(in out)    :: wdnumberPairs(:)
+ real,    target, intent(in out)    :: wdxDistance(:)
+ real,    target, intent(in out)    :: widthDepthData(:,:,:)
+ type(string), target, intent(in out)   :: wdcellType(:)
+ 
+ integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI 
+ integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
+ 
+ real,      dimension(:,:), allocatable, target, intent(out)    :: linkR 
+ real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR 
+ 
+ logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
+ logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
+ 
+ type(string), dimension(:), allocatable, target, intent(out)   :: linkName 
+ type(string), dimension(:), allocatable, target, intent(out)   :: nodeName
+ 
+ type(bcType), dimension(:), allocatable, intent(out) :: bcdataUp, bcdataDn
+
+ integer    :: ntimepoint, ndnstreamBC, nupstreamBC 
  
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+
+! Boundary conditions
+ ntimepoint = 2
+ nupstreamBC = 1
+ ndnstreamBC = 1
  
+! check if  
+ 
+ call bc_allocate &
+    (bcdataDn, bcdataUp, ndnstreamBC, nupstreamBC, ntimepoint) 
+
+! assign values
+! upstream is default to flowrate
+ bcdataUp(1)%NodeID = 1
+ bcdataUp(1)%TimeArray(1)  = setting%Time%StartTime
+ bcdataUp(1)%TimeArray(2)  = setting%Time%EndTime + 100.0 !s
+ bcdataUp(1)%ValueArray(1) = initial_flowrate(1)  ! m^3/s
+ bcdataUp(1)%ValueArray(2) = initial_flowrate(1)  ! m^3/2
+ 
+! downstream is default to elevation
+ bcdataDn(1)%NodeID = 2
+ bcdataDn(1)%TimeArray(1)     = setting%Time%StartTime 
+ bcdataDn(1)%TimeArray(2)     = setting%Time%EndTime + 100.0 !s
+ bcdataDn(1)%ValueArray(1)    = lowerZ(size(lowerZ)) +  depth_dnstream(size(depth_dnstream)) ! m
+ bcdataDn(1)%ValueArray(2)    = lowerZ(size(lowerZ)) +  depth_dnstream(size(depth_dnstream)) ! m
+ 
+ call case_waller_creek_links_and_nodes &
+    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
+     initial_flowrate, depth_upstream, depth_dnstream, ManningsN, &
+     roughness_type,  idepth_type, &
+     linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
+     wdID, wdnumberPairs, wdxDistance, widthDepthData, wdcellType)
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine case_waller_creek_initialize
@@ -53,108 +117,141 @@
 !
 !==========================================================================
 !
-! subroutine define_geometry (geometry_downstream_minimum_length, &
-!     n_rows_in_file_node)
-!  
-!  character(64) :: subroutine_name = 'define_geometry'
-!  
-!  real, dimension(:), allocatable, target, intent(inout) :: Length
-!  real, dimension(:), allocatable, target, intent(inout) :: xDistance
-!  integer, dimension(:), allocatable, target, intent(inout) :: nadd
-!  real, dimension(:), allocatable, target, intent(inout) :: xface
-!  real, dimension(:), allocatable, target, intent(inout) :: dx
-!  
-!  real, dimension(:,:,:), allocatable :: outputWidthDepthData
-!  
-!  real, intent(in) :: geometry_downstream_minimum_length
-!  real, intent(in) :: n_rows_in_file_node
-!  
-!  real, pointer :: nWidth(:,:), nDepth(:,:), nArea(:,:), nAreaTBL(:,:)
-!  real, pointer :: ndWidth(:,:), ndDepth(:,:), nAngle(:,:), nPerimeterBL(:,:)
-!  
-!  !private
-!  real :: oldX, oldL
-!  integer :: NXold, ncell, NX
-!  
-!   
-! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
-!  
-!  !stretching out the last cell
-!  if (geometry_downstream_minimum_length > 0.0) then
-!     oldX = xDistance(size(xDistance))
-!     oldL = Length(size(Length))
-!     if (geometry_downstream_minimum_length > oldL) then
-!         Length(size(Length)) = geometry_downstream_minimum_length
-!         xDistance(size(xDistance)) = oldX &
-!             + 0.5*(geometry_downstream_minimum_length-oldL)
-!     endif
-!  endif
-!  
-!  !splitting domain into smaller cells
-!  ncell = 0
-!  NX = n_rows_in_file_node
-!  NXold = NX
-!  if (setting%Method%AdjustWidthDepth%cellSizeTarget > 0.0) then
-!     ! check widthdepth pair geometry for consistency
-!     call widthdepth_pair_consistency (NX, widthDepthData, cellType)
-!     ! compute additional geometry data for widthdepth pairs
-!     call widthdepth_pair_auxiliary (NX, widthDepthData, cellType)
-!     
-!     ! cycle through to find the number of cells to add at each cross-section
-!     allocate(nadd(size(Length,1))
-!     nadd(:) = 0
-!     where(Length > (1.5*setting%Method%AdjustWidthDepth%cellSizeTarget))
-!         nadd = int(Length/setting%Method%AdjustWidthDepth%cellSizeTarget)
-!     elsewhere
-!         nadd = 1
-!     endwhere
-!     
-!     ncell = ncell + sum(nadd)
-!     
-!     NX = ncell
-!     allocate(outputWidthDepthData(NX, size(widthDepthData,2), wd_idx_max), stat=allocation_status, errmsg=emsg)
-!     outputWidthDepthData(:,:,:) = 0.0
-!     
-!     allocate(xface(size(Length,1))
-!     allocate(dx(size(Length,1))
-!     
-!     xface = xDistance - 0.5 * Length
-!     xface(NXold) = xDistance(NXold-1) + Length(NXold-1)
-!     
-!     dx = Length/nadd
-!     
-!     nWidth       => outputWidthDepthData (:,:, wd_widthThisLayer)
-!     nDepth       => outputWidthDepthData (:,:, wd_depthAtLayerTop)
-!     nArea        => outputWidthDepthData (:,:, wd_areaThisLayer)
-!     nAreaTBL     => outputWidthDepthData (:,:, wd_areaTotalBelowThisLayer)
-!     ndWidth      => outputWidthDepthData (:,:, wd_Dwidth)
-!     ndDepth      => outputWidthDepthData (:,:, wd_Ddepth)
-!     nAngle       => outputWidthDepthData (:,:, angle)
-!     nPerimeterBL => outputWidthDepthData (:,:, perimeterBelowThisLayer)
-!     
-!     outputLength = dx
-!     outputXDistance = xface + 0.5*dx
-!     outputManningsN = ManningsN
-!     
-!     
-!  endif
-!  
-!  
-!  
-!  
-!  
-!  
-!  
-!  
-!  
-!  
-!  
-!  
-!  
-!  
-!  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
-!  end subroutine define_geometry
+  subroutine case_waller_creek_links_and_nodes &
+    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
+     initial_flowrate, depth_upstream, depth_dnstream, ManningsN,       &
+     roughness_type, idepth_type, &
+     linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
+     wdID, wdnumberPairs, wdxDistance, widthDepthData, wdcellType)
+!
+! creates a simple rectangular channel with 1 link and 2 nodes
+! 
+ character(64) :: subroutine_name = 'case_waller_creek_links_and_nodes'
+ 
+ real,  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
+ real,  intent(in)  :: lowerZ(:), upperZ(:), ManningsN(:), initial_flowrate(:)
+ real,  intent(in)  :: depth_upstream(:), depth_dnstream(:)
+ 
+ integer, intent(in):: roughness_type, idepth_type(:)
+ 
+ integer, target, intent(in out)    :: wdID(:)
+ integer, target, intent(in out)    :: wdnumberPairs(:)
+ real,    target, intent(in out)    :: wdxDistance(:)
+ real,    target, intent(in out)    :: widthDepthData(:,:,:)
+ type(string), target, intent(in out)   :: wdcellType(:)
+ 
+ integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI 
+ integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
+ 
+ real,      dimension(:,:), allocatable, target, intent(out)    :: linkR 
+ real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR 
+ 
+ logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
+ logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
+ 
+ type(string), dimension(:), allocatable, target, intent(out)   :: linkName 
+ type(string), dimension(:), allocatable, target, intent(out)   :: nodeName
+ 
+ integer :: mm, ii
+    
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ N_link = wdID(size(wdID))
+ N_node = N_link + 1
+ 
+ call allocate_linknode_storage &
+    (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName)
+ 
+! assign the indexes
+ linkI(:,li_idx) = (/ (ii, ii=1,N_link) /)
+ nodeI(:,ni_idx) = (/ (ii, ii=1,N_node) /)
+ 
+! assign names for links
+ do ii=1,N_link
+    linkName(ii)%str = 'widthdepth_pair'
+ end do
+    
+! assign zeros for accumulators
+ nodeI(:,ni_N_link_d) = 0    
+ nodeI(:,ni_N_link_u) = 0   
+ 
+! assign uniform physical data 
+ linkI(:,li_roughness_type)  = roughness_type
+ linkR(:,lr_Roughness)       = ManningsN
+ 
+! designate the downstream node
+ ! designate the upstream nodes
+ nodeI(1,ni_node_type) = nBCup
+
+ nodeR(1,nr_Zbottom) = upperZ(1)
+ 
+ nodeName(1)%str = 'UpstreamBC'
+ 
+ do ii=2,N_node - 1
+    nodeI(ii,ni_node_type) = nJ2
+
+    nodeR(ii,nr_Zbottom) = upperZ(ii-1)
+    
+    nodeName(ii)%str = 'Junction'
+ end do
+    
+! designate the downstream node
+ nodeI(N_node,ni_node_type) = nBCdn
+
+ nodeR(N_node,nr_Zbottom) = lowerZ(1)
+ 
+ nodeName(N_node)%str = 'DownstreamBC'
+ 
+! assign the link types
+ linkI(:,li_link_type) = lChannel
+
+! assign all as rectangular channels
+ linkI(:,li_geometry) = lRectangular
+
+! assign the link position and mappings
+
+ do ii=1,N_link
+    linkI(ii,li_Mnode_u) = ii
+    linkI(ii,li_Mnode_d) = ii + 1
+ end do
+ 
+ do mm=1,N_link
+    linkR(mm,lr_Length)          = channel_length(mm)
+    linkR(mm,lr_BreadthScale)    = channel_breadth(mm) 
+    linkR(mm,lr_ElementLength)   = subdivide_length(mm)
+    linkR(mm,lr_InitialFlowrate) = initial_flowrate(mm)
+    linkI(mm,li_InitialDepthType)= idepth_type(mm)
+ enddo
+ linkR(:  ,lr_InitialDnstreamDepth) = depth_dnstream(:)
+ linkR(:  ,lr_InitialUpstreamDepth) = depth_upstream(:)
+ 
+ 
+ !print *, initial_flowrate
+ !print *,trim(subroutine_name)
+ !stop
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) then
+    print *
+    print *, subroutine_name,'-----------------------------------'
+    print *, 'link info'
+    print *, linkI(:,li_idx), ' idx'
+    print *, linkI(:,li_link_type), ' type'
+    print *, linkI(:,li_Mnode_u) , ' upstream node'
+    print *, linkI(:,li_Mnode_d) , ' downstream node'
+    print *, ''
+    print *, 'node info'
+    print *, nodeI(:,ni_idx), ' idx'
+    print *, nodeI(:,ni_node_type), ' type'
+    !print *, nodeI(:,ni_N_link_d), 'number of downstream links'
+    !print *, nodeI(:,ni_Mlink_d1), 'downstream1 link'
+    !print *, nodeI(:,ni_N_link_u), 'number of upstream links'
+    !print *, nodeI(:,ni_Mlink_u1), 'upstream1 link'
+ endif
+  
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine case_waller_creek_links_and_nodes
 !
 !========================================================================== 
 !==========================================================================
@@ -570,24 +667,6 @@ subroutine widthdepth_pair_fix (widthDepthData)
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine widthdepth_pair_fix
-!
-!========================================================================== 
-!==========================================================================
-!
- subroutine case_waller_creek_links_and_nodes &
-    ()
-!
-! creates a simple rectangular channel with 1 link and 2 nodes
-! 
- character(64) :: subroutine_name = 'case_waller_creek_links_and_nodes'
- 
-  
-!-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
- 
- 
- if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
- end subroutine case_waller_creek_links_and_nodes
 !
 !========================================================================== 
 ! END OF MODULE case_waller_creek

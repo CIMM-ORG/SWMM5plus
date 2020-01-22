@@ -255,17 +255,20 @@
         !and store it at the same matrix
         call widthdepth_pair_auxiliary (newWidthDepthData, newCellType, newNumberPairs)
         
-        ! Calculate the surface are below the water depth
-        ! create a new subroutine for easily transfering data to froude_driven_setup
         !Pass the widthDepth matrix into the froude_driven_setup
         !Froude Driven Setup for each element
         
         call this_setting_for_time_and_steps &
             (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, &
              display_interval, 2)
-        
-        !TODO
-        !case call for case_waller_creek_initialize
+             
+        call case_waller_creek_initialize &
+            (channel_length, channel_breadth, subdivide_length, &
+             lowerZ, upperZ, flowrate, depth_upstream, depth_dnstream, &
+             ManningsN, lManningsN, idepth_type,                                   &
+             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
+             bcdataDn, bcdataUp, newID, newNumberPairs, &
+             newXDistance, newWidthDepthData, newCellType)
         
         if (.not. setting%Debugout%SuppressAllFiles) then
             call write_testcase_setup_file &
