@@ -373,20 +373,10 @@ endif
         
 !%  Updating the face values by interpolation from neighbor elements
 !%  This uses the estimated values from the branches
- print *,'Start of face update'
- print *, faceR(:,fr_HydDepth_d), 'H d'
- print *,'====================================================='
- print *, faceR(:,fr_HydDepth_u), 'H u'
- print *,'====================================================='
  call face_update &
     (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
      bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, &
      e2r_Volume_new, eMr_Volume_new, steptime, rkiteration)
- print *,'*****************************************************'
- print *, faceR(:,fr_HydDepth_d), 'H d'
- print *,'*****************************************************'
- print *, faceR(:,fr_HydDepth_u), 'H u'
- print *,'End of face update'
     
 !% fix the junction branches by interp with face values
  call element_geometry_branch_fix (elemMR, elemMI, faceR, faceI )

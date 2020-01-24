@@ -72,7 +72,7 @@
  call face_hydraulic_jump (elem2R, elemMR, faceR, faceI, e2r_Velocity_new, eMr_Velocity_new)
  
  call face_surface_elevation_interp (elem2R, elemMR, faceR, faceI, faceYN)
- 
+
 !% compute depth
  faceR(:,fr_HydDepth_u) = zeroR
  faceR(:,fr_HydDepth_d) = zeroR

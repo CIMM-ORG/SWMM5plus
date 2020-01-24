@@ -53,7 +53,7 @@
 
  real,  pointer ::  wCoeff, wWidth, wHeight, wSideSlope, wInletoffset    !Weir discharge coefficient, Width, Height, sideslope
 
- integer, pointer                   :: iup(:), idn(:)
+ integer, pointer                   :: iup(:), idn(:), dir(:)
  integer :: mm
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -74,16 +74,19 @@
  wCrown       => elem2R(:,e2r_Depth)
  wZbottom     => elem2R(:,e2r_Zbottom)
 
-!%  temporary space for channel elements
+!%  temporary space for elem2
  EffectiveHead => elem2R(:,e2r_Temp(next_e2r_temparray))
  next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
  wCrest        => elem2R(:,e2r_Temp(next_e2r_temparray))
  next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
+ dir           => elem2I(:,e2i_Temp(next_e2i_temparray))
+ next_e2i_temparray = utility_advance_temp_array (next_e2i_temparray,e2i_n_temp)
 
 !%  zero temporary arrays
  EffectiveHead = zeroR
+ dir = zeroI
 
 
 !%  pointers for weir settings
@@ -93,14 +96,14 @@
  wSideSlope     => setting%Weir%WeirSideSlope
  wInletoffset   => setting%Weir%WeirInletOffset 
 
- where ( ( elem2I(:,e2i_elem_type) == eWeir ) )
-    wCrest = wInletoffset
-    wCrown = wCrest + wHeight
- endwhere
+ ! where ( ( elem2I(:,e2i_elem_type) == eWeir ) )
+ !    wCrest = wInletoffset
+ !    wCrown = wCrest + wHeight
+ ! endwhere
 
  call weir_effective_head &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     wCrest, wCrown, EffectiveHead)
+     wCrest, wCrown, dir, EffectiveHead)
  
  call weir_effective_length &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, & 
@@ -110,7 +113,9 @@
     (volume2old, velocity2old, volumeMold, velocityMold, &
      volume2new, velocity2new, volumeMnew, velocityMnew, &
      elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     wWidth, wHeight, wCoeff, wSideSlope, EffectiveHead, thiscoef)
+     wWidth, wHeight, wCoeff, wSideSlope, dir, EffectiveHead, &
+     thiscoef)
+
  
  ! print *,'====================================================='
  ! print *, faceR(:,fr_HydDepth_d), 'H d'
@@ -126,8 +131,12 @@
  ! release temporary arrays
  EffectiveHead  = nullvalueR
  wCrest         = nullvalueR
+
+ dir            = nullvalueI
  nullify(EffectiveHead, wCrest)
+ nullify(dir)
  next_e2r_temparray = next_e2r_temparray - 2
+ next_e2i_temparray = next_e2i_temparray - 1
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
@@ -138,7 +147,7 @@
 !
 subroutine weir_effective_head &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     wCrest, wCrown, EffectiveHead)
+     wCrest, wCrown, dir, EffectiveHead)
 !
  character(64) :: subroutine_name = 'weir_effective_head'
 
@@ -150,50 +159,65 @@ subroutine weir_effective_head &
 
  real,  pointer   ::  wCrest(:), wCrown(:), EffectiveHead(:)
 
- real,  pointer   ::  fHdn(:), fHup(:)
- integer, pointer ::  iup(:), idn(:)
+ real,  pointer   ::  fEdn(:), fEup(:)
+ integer, pointer ::  iup(:), idn(:), dir(:)
 
  integer :: mm
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
 !%  pointers for convenience in notation
- fHdn  => faceR(:,fr_HydDepth_d)
- fHup  => faceR(:,fr_HydDepth_u)
+ fEdn  => faceR(:,fr_Eta_d)
+ fEup  => faceR(:,fr_Eta_u)
 
 !% Calculate Effective Head (Assuming the flow is U/S to D/S needed to be fixed for flow revarsal
  iup   => elem2I(:,e2i_Mface_u)
  idn   => elem2I(:,e2i_Mface_d)
 
- where     ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
-             (fHup(idn) .GT. fHdn(iup)) )
-    EffectiveHead  = fHup(idn) - wCrest
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
+              (fEdn(iup) .GE. fEup(idn)) )
 
- elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
-             (fHup(idn) .LT. fHdn(iup)) )
-    EffectiveHead  = wCrest - fHdn(iup)
+            dir = oneI
+            EffectiveHead = fEdn(iup)  - fEup(idn)
 
- elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
-             (fHup(idn) .LT. wCrest) .and. &
-             (fHdn(iup) .LT. wCrest) )
-    EffectiveHead = zeroR
+ elsewhere ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
+              (fEdn(iup) .LT. fEup(idn)) )
 
- elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
-             (fHup(idn) .GT. wCrown) .and. &
-             (fHup(idn) .GT. fHdn(iup) ) )
-    EffectiveHead = wCrown - wCrest
+            dir = -oneI
+            EffectiveHead = fEup(idn) - fEdn(iup)
+ endwhere
 
- elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
-             (fHdn(iup) .GT. wCrown) .and. &
-             (fHdn(iup) .GT. fHup(idn) ) )
-    EffectiveHead =  wCrest - wCrown
+ ! where     ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+ !             (fEup(idn) .GT. fEdn(iup)) )
+ !    EffectiveHead  = fEup(idn) - wCrest
 
- elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
-             (fHup(idn) .EQ. fHdn(iup)) )
-    EffectiveHead =  zeroR
+ ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+ !             (fEup(idn) .LT. fEdn(iup)) )
+ !    EffectiveHead  = wCrest - fEdn(iup)
+
+ ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+ !             (fEup(idn) .LT. wCrest) .and. &
+ !             (fEdn(iup) .LT. wCrest) )
+ !    EffectiveHead = zeroR
+
+ ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+ !             (fEup(idn) .GT. wCrown) .and. &
+ !             (fEup(idn) .GT. fEdn(iup) ) )
+ !    EffectiveHead = wCrown - wCrest
+
+ ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+ !             (fEdn(iup) .GT. wCrown) .and. &
+ !             (fEdn(iup) .GT. fEup(idn) ) )
+ !    EffectiveHead =  wCrest - wCrown
+
+ ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+ !             (fEup(idn) .EQ. fEdn(iup)) )
+ !    EffectiveHead =  zeroR
 
 !Need a fix for surcharge
- endwhere
+
+ ! print*, EffectiveHead
+ ! stop
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
@@ -240,7 +264,8 @@ subroutine weir_effective_length &
     (volume2old, velocity2old, volumeMold, velocityMold, &
      volume2new, velocity2new, volumeMnew, velocityMnew, &
      elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     wWidth, wHeight, wCoeff, wSideSlope, EffectiveHead, thiscoef)
+     wWidth, wHeight, wCoeff, wSideSlope, dir, EffectiveHead, &
+     thiscoef)
 !
  character(64) :: subroutine_name = 'weir_flow'
 
@@ -257,6 +282,8 @@ subroutine weir_effective_length &
  real,  pointer ::  EffectiveHead(:), depth_element(:)
  real,  pointer ::  wCoeff, wWidth, wHeight, wSideSlope     !Weir discharge coefficient, Width, Height
 
+ integer, pointer :: dir(:)
+
  integer :: mm
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -267,29 +294,29 @@ subroutine weir_effective_length &
          (elem2I(:,e2i_geometry)  == eVnotchWeir) )
 
     ! Volume is weir flow equation * dt (this case dt = thiscoef)
-    volume2new   = wCoeff * wSideSlope * EffectiveHead ** 2.5
-
-    volume2new   = volume2old + thiscoef*volume2new
-
-    
-    velocity2new = wCoeff * sqrt(abs(EffectiveHead)) / wSideSlope
+    volume2new   = thiscoef * wCoeff * wSideSlope * EffectiveHead ** 2.5
+  
+    velocity2new = dir * wCoeff * sqrt(abs(EffectiveHead)) / wSideSlope
 
  endwhere
- print *,'====================================================='
- print *, faceR(:,fr_HydDepth_d), 'H d'
- print *,'====================================================='
- print *, faceR(:,fr_HydDepth_u), 'H u'
- print *,'====================================================='
- print *, 'Weir Effective Head'
- print *, EffectiveHead
- print*, '+++++++++++++++++++++++++'
- print *, 'Volume new'
- print *, volume2new
- print *, 'Velocity new'
- print *, velocity2new
- print *, 'RK2 coeff'
- print *, thiscoef
- print*,'END OF STEP'
+ ! print *,'====================================================='
+ ! print *, faceR(:,fr_HydDepth_d), 'H d'
+ ! print *,'====================================================='
+ ! print *, faceR(:,fr_HydDepth_u), 'H u'
+ ! print *,'====================================================='
+ ! print *, 'Weir Effective Head'
+ ! print *, EffectiveHead
+ ! print*, '+++++++++++++++++++++++++'
+ ! print *, 'Volume new'
+ ! print *, volume2new
+ ! print *, 'Velocity new'
+ ! print *, velocity2new
+ ! print *, 'RK2 coeff'
+ ! print *, thiscoef
+ ! print *, 'dir'
+ ! print *, dir
+ ! print *,'END OF STEP'
+
 !%  pointers for volume and velocity storage (updating)
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 

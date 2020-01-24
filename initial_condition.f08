@@ -80,9 +80,7 @@
  call element_dynamics_update &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
-     e2r_Volume, eMr_Volume, thisTime)  
-
-
+     e2r_Volume, eMr_Volume, thisTime)   
 
  call face_meta_element_assign &
     (faceI, elem2I, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
@@ -257,7 +255,7 @@
                 elem2R(:,e2r_HydDepth)      = onehalfR * elem2R(:, e2r_Depth)
                 elem2R(:,e2r_BreadthScale)  = zeroR 
                 elem2R(:,e2r_Area)          = setting%Weir%WeirSideSlope * elem2R(:,e2r_Depth) ** twoR 
-                elem2R(:,e2r_Topwidth)      = twoR * setting%Weir%WeirSideSlope * elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Topwidth)      = twoR * setting%Weir%WeirSideSlope * elem2R(:,e2r_Depth)
                 elem2R(:,e2r_Eta)           = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Volume)        = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
                 elem2R(:,e2r_Perimeter)     = twoR * elem2R(:,e2r_HydDepth) * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
@@ -267,7 +265,7 @@
             print *, 'error: initialization for non-rectangular elements needed in ',subroutine_name
 
         end if
-        
+
         !%  Update velocity
         where (  (elem2I(:,e2i_link_ID) == Lindx) .and. (elem2R(:,e2r_Area) > zeroR) )
             elem2R(:,e2r_Velocity)  = elem2R(:,e2r_Flowrate) / elem2R(:,e2r_Area)

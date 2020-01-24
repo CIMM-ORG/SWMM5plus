@@ -147,7 +147,7 @@
 
  call bc_face_othervalues (faceR, faceI, elem2R, bcdataDn)
  call bc_face_othervalues (faceR, faceI, elem2R, bcdataUp)
- 
+
  call  bc_ghost_othervalues &
     (elem2R, elem2I, faceR, faceI, bcdataUp, e2i_Mface_u, e2r_Velocity_new,  &
      fr_Area_d, fr_Velocity_d, fr_HydDepth_d, fr_Eta_d)
@@ -574,7 +574,6 @@
  integer    :: ii
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
  do ii=1,size(bcdata)
     bcdata%thisValue = utility_linear_interpolate_within_indexlist &
                         (thisTime, bcdata(ii)%TimeArray, bcdata(ii)%ValueArray )

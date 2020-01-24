@@ -474,7 +474,6 @@ subroutine triangular_geometry_update &
  where ( (elemI(:,ei_geometry)  == eVnotchWeir) .and. &
          (elemI(:,ei_elem_type) == elem_typ_value    )         )
     area        = volume / length
-    !eta needed to be checked
     depth       = sqrt(abs(area/setting%Weir%WeirSideSlope))
     hyddepth    = onehalfR * depth
     eta         = zbottom + hyddepth
@@ -483,16 +482,16 @@ subroutine triangular_geometry_update &
     perimeter   = twoR * depth * sqrt(oneR + setting%Weir%WeirSideSlope ** 2)
     hydradius   = (setting%Weir%WeirSideSlope * depth) / (twoR * sqrt(oneR + setting%Weir%WeirSideSlope ** 2))
  endwhere
- print*, 'START OF ELEMENT GEOMETRY'
- print*, 'area'
- print*, area
- print*, 'topwidth'
- print*, topwidth
- print*, 'depth'
- print*, depth
- print*, 'hydradius'
- print*, hydradius
- print*, 'END of ELEMENT GEOMETRY'
+ ! print*, 'START OF ELEMENT GEOMETRY'
+ ! print*, 'area'
+ ! print*, area
+ ! print*, 'topwidth'
+ ! print*, topwidth
+ ! print*, 'depth'
+ ! print*, depth
+ ! print*, 'eta'
+ ! print*, eta
+ ! print*, 'END of ELEMENT GEOMETRY'
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine v_notch_weir
 !

@@ -235,9 +235,9 @@
              velocity, Froude, ManningsN, idepth_type)
 
         ! step controls
-        display_interval = 1
+        display_interval = 1000
         first_step = 1
-        last_step  = 2 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+        last_step  = 10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5
@@ -246,13 +246,13 @@
 
         ! keep these physics fixed
         weir_breadth    = setting%Weir%WeirWidth
-        depth_upstream  = 3.0
-        depth_dnstream  = 1.0
+        depth_upstream  = 1.0
+        depth_dnstream  = 0.5
         idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
         ManningsN       = 0.03
-        weir_length     = 1.0
+        weir_length     = 0.01
         lowerZ          = 1.0
-        head            = depth_upstream - setting%Weir%WeirInletOffset 
+        head            = (depth_upstream - depth_dnstream) * onehalfR
         subdivide_length = weir_length
 
         call froude_driven_setup &

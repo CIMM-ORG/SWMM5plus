@@ -145,19 +145,22 @@
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
      linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime)
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_Depth), 'Depth'
+    ! print*, elem2R(:,e2r_Depth), 'Depth'
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_HydDepth), 'HydDepth'
+    ! print*, elem2R(:,e2r_HydDepth), 'HydDepth'
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_Area), 'Area'
+    ! print*, elem2R(:,e2r_Area), 'Area'
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_Topwidth), 'Top Width'
+    ! print*, elem2R(:,e2r_Topwidth), 'Top Width'
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_Eta), 'Eta'
+    ! print*, elem2R(:,e2r_Zbottom), 'Z bottom'
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_Volume), 'Volume'
+    ! print*, elem2R(:,e2r_Eta), 'Eta'
     ! print*, '================================='
-    ! print*, elem2R(2,e2r_Perimeter), 'Perimeter'
+    ! print*, elem2R(:,e2r_Volume), 'Volume'
+    ! print*, '================================='
+    ! print*, elem2R(:,e2r_Perimeter), 'Perimeter'
+    ! print*, '================================='
     ! print*, elem2R(:, e2r_Timescale_G_u), 'T G u'
     ! print*, '================================='
     ! print*, elem2R(:, e2r_Timescale_G_d), 'T G d'
@@ -170,12 +173,10 @@
     ! print*, '================================='
     ! print*, elem2R(:, e2r_Timescale_Q_d), 'T Q d'
     ! print*, '================================='
-    ! print*, faceR(:,fr_HydDepth_d), 'fr_HydDepth_d'
+    ! print*, faceR(:,fr_Eta_d), 'fr_Eta_d'
     ! print*, '================================='
-    ! print*, faceR(:,fr_HydDepth_u), 'fr_HydDepth_u'
+    ! print*, faceR(:,fr_Eta_u), 'fr_Eta_u'
     ! print*, '================================='
-   
-    ! stop
 !% check consistency of the smallvolume setup
  
  call checking_smallvolume_consistency (elem2R, elemMR)
@@ -202,8 +203,6 @@ faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 
 ! initialize output by threaded link
  call output_threaded_by_link_initialize (threadedfile)
-
-! stop
 
 !%  time marching of continuity and momentum
  call time_marching &

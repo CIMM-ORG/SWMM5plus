@@ -802,13 +802,10 @@
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
 
-        !%%%%%%%%%%%%%%%%%%%%%%%
-        ! For now the weir breadth scale is set to zero and topwidth is gotten from weir setting. Might
-        !%%%%%%%%%%%%%%%%%%%%%%
         case (lVnotchWeir)           
             elem2R(thisElem2,e2r_Topwidth)     = twoR * setting%Weir%WeirSideSlope * linkR(thislink, lr_InitialDepth)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
-            
+                                                
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
