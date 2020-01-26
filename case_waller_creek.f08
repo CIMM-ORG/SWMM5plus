@@ -227,11 +227,6 @@
  linkR(:  ,lr_InitialDnstreamDepth) = depth_dnstream(:)
  linkR(:  ,lr_InitialUpstreamDepth) = depth_upstream(:)
  
- 
- !print *, initial_flowrate
- !print *,trim(subroutine_name)
- !stop
- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
     print *
     print *, subroutine_name,'-----------------------------------'
