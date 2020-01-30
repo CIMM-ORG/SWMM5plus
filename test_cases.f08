@@ -256,7 +256,30 @@
         call widthdepth_pair_auxiliary (newWidthDepthData, newCellType, newNumberPairs)
         
         !Pass the widthDepth matrix into the froude_driven_setup
-        !Froude Driven Setup for each element
+        !Initial_condition_for_link_node_model
+        
+        !use depth_upstream to calculate the surface area at the inlet
+        
+        ! calculate the perimeter
+        !rh = area / perimeter
+        !velocity = Froude * sqrt(grav * hDepth)
+        !flowrate = area * velocity
+        !slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+        !upperZ = lowerZ + slope * total_length
+        
+        ! calculate the hydraulic radius for the upstream
+        
+        ! calculate the valocity from Fr number
+        
+        ! Calculate the slope
+        
+        ! check to see if the Hr doesn't go above the data we have
+        
+        ! calculate the surface area of the inlet base on the final Ht
+        
+        ! calculate the Sj
+        
+        
         
         call this_setting_for_time_and_steps &
             (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, &
@@ -572,16 +595,22 @@
 !==========================================================================
 !==========================================================================
 !
- subroutine froude_driven_setup_for_width_depth_pair_data &
+ subroutine Initial_condition_for_width_depth_system &
     (upperZ, area, flowrate, velocity,  &
      Froude,  breadth, ManningsN, total_length, &
      lowerZ, depth)
 
- character(64) :: subroutine_name = 'froude_driven_setup_for_width_depth_pair_data'
+ character(64) :: subroutine_name = 'Initial_condition_for_width_depth_system'
 
  real,  intent(out)    :: area, flowrate, velocity, upperZ
  real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
  real,  intent(in)     :: depth
+ 
+!  integer, target, intent(in out)    :: wdID(:)
+!  integer, target, intent(in out)    :: wdnumberPairs(:)
+!  real,    target, intent(in out)    :: wdxDistance(:)
+!  real,    target, intent(in out)    :: widthDepthData(:,:,:)
+!  type(string), target, intent(in out)   :: wdcellType(:)
 
  real :: perimeter, rh, slope, hDepth, topWidth
  real :: AA, BB, CC, DD
@@ -589,7 +618,7 @@
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
+ 
  area_difference = 0.0
  hDepth = depth
  topWidth = 0.0
@@ -603,7 +632,7 @@
  upperZ = lowerZ + slope * total_length
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
- end subroutine froude_driven_setup_for_width_depth_pair_data
+ end subroutine Initial_condition_for_width_depth_system
 !
 !==========================================================================
 !==========================================================================

@@ -408,11 +408,14 @@
  endwhere
  
  do ii=1, size(volume,1)
-    if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
-         (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
+!     if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
+!          (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
          
             area (ii) = volume(ii) / length(ii)
-!             area_difference = area (ii) - 
+            area_difference(ii,:) = area (ii) - areaTotalBelowThisLayer(elemI(ii,e2i_link_ID),:)
+            local_difference(ii,:) = area_difference(ii,:) - areaThisLayer(elemI(ii,e2i_link_ID),:)
+            print*, findloc(sign(1.0, area_difference(ii,:)*local_difference(ii,:)), -1.0)
+            stop
 !             ind = minloc(volume, 1.0)
 !             area            = volume / length
 !             hyddepth        = DD
@@ -421,7 +424,7 @@
 !             topwidth        = 0.0
 !             perimeter       = 0.0
 !             hydradius       = area / perimeter
-    endif
+!     endif
  enddo
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

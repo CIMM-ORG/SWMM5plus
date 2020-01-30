@@ -244,7 +244,7 @@
  do ii=1,N_link
     !%  get the upstream node of the link  
     thisnode = linkI(ii,li_Mnode_u)
-    print *, thisnode
+    print *, 'this node=', thisnode
     if ((thisnode < 1) .or. (thisnode > N_node)) then
         print *, ii,'= this link'
         print *, thisnode,'= upstream node assigned'

@@ -1,62 +1,75 @@
-program a1
+program find_positive
+  implicit none
 
- use read_width_depth
- use setting_definition
- use case_waller_creek
+  integer, allocatable :: data(:)
 
- integer :: unit = 11
- integer :: n_rows_in_file_node = 0
- integer :: max_number_of_pairs = 0
- integer, dimension(:), allocatable :: ID
- integer, dimension(:), allocatable :: numberPairs
- 
- real, dimension(:), allocatable :: ManningsN
- real, dimension(:), allocatable :: Length
- real, dimension(:), allocatable :: zBottom
- real, dimension(:), allocatable :: xDistance
- real, dimension(:), allocatable :: Breadth
- real, dimension(:), allocatable :: faceZBottom
- 
- real, dimension(:,:,:), allocatable :: widthDepthData
- 
- integer, dimension(:),     allocatable :: newID
- integer, dimension(:),     allocatable :: newNumberPairs
- real,    dimension(:),     allocatable :: newManningsN
- real,    dimension(:),     allocatable :: newLength
- real,    dimension(:),     allocatable :: newZBottom
- real,    dimension(:),     allocatable :: newXDistance
- real,    dimension(:),     allocatable :: newBreadth
- real,    dimension(:,:,:), allocatable :: newWidthDepthData
- 
- type(string), dimension(:), allocatable :: cellType
+  data = [-3,  3,  0,  2, -3]
+  write(*,*) data
 
- open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
- n_rows_in_file_node = read_number_of_cells(unit)
- max_number_of_pairs = read_max_number_of_pairs(unit)
- print*, n_rows_in_file_node
- print*, max_number_of_pairs
+  write(*,*) findloc(sign(1, data), -1)
+  write(*,*) findloc(sign(1, data), 1, back=.true.)
 
- call read_widthdepth_pairs &
-     (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-      Breadth, widthDepthData, cellType)
-      
- do ii=1, n_rows_in_file_node
-    print*, "cellatype = ", cellType(ii)%str
- enddo
- 
- stop
+end program find_positive
 
-!  call nonmonotonic_subdivide &
-!       (ID, numberPairs, ManningsN, Length, zBottom, xDistance,             &
-!       Breadth, widthDepthData, cellType, n_rows_in_file_node, faceZBottom, &
-!       max_number_of_pairs, newID, newNumberPairs, newManningsN, newLength, &
-!       newZBottom, newXDistance, newBreadth, newWidthDepthData,             &
-!       subdivide_length_check)
-
-!  print*, size(ID)
-!  print*, newID
-
-end program a1
+! program a1
+! 
+!  use read_width_depth
+!  use setting_definition
+!  use case_waller_creek
+! 
+!  integer :: unit = 11
+!  integer :: n_rows_in_file_node = 0
+!  integer :: max_number_of_pairs = 0
+!  integer, dimension(:), allocatable :: ID
+!  integer, dimension(:), allocatable :: numberPairs
+!  
+!  real, dimension(:), allocatable :: ManningsN
+!  real, dimension(:), allocatable :: Length
+!  real, dimension(:), allocatable :: zBottom
+!  real, dimension(:), allocatable :: xDistance
+!  real, dimension(:), allocatable :: Breadth
+!  real, dimension(:), allocatable :: faceZBottom
+!  
+!  real, dimension(:,:,:), allocatable :: widthDepthData
+!  
+!  integer, dimension(:),     allocatable :: newID
+!  integer, dimension(:),     allocatable :: newNumberPairs
+!  real,    dimension(:),     allocatable :: newManningsN
+!  real,    dimension(:),     allocatable :: newLength
+!  real,    dimension(:),     allocatable :: newZBottom
+!  real,    dimension(:),     allocatable :: newXDistance
+!  real,    dimension(:),     allocatable :: newBreadth
+!  real,    dimension(:,:,:), allocatable :: newWidthDepthData
+!  
+!  type(string), dimension(:), allocatable :: cellType
+! 
+!  open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
+!  n_rows_in_file_node = read_number_of_cells(unit)
+!  max_number_of_pairs = read_max_number_of_pairs(unit)
+!  print*, n_rows_in_file_node
+!  print*, max_number_of_pairs
+! 
+!  call read_widthdepth_pairs &
+!      (unit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+!       Breadth, widthDepthData, cellType)
+!       
+!  do ii=1, n_rows_in_file_node
+!     print*, "cellatype = ", cellType(ii)%str
+!  enddo
+!  
+!  stop
+! 
+! !  call nonmonotonic_subdivide &
+! !       (ID, numberPairs, ManningsN, Length, zBottom, xDistance,             &
+! !       Breadth, widthDepthData, cellType, n_rows_in_file_node, faceZBottom, &
+! !       max_number_of_pairs, newID, newNumberPairs, newManningsN, newLength, &
+! !       newZBottom, newXDistance, newBreadth, newWidthDepthData,             &
+! !       subdivide_length_check)
+! 
+! !  print*, size(ID)
+! !  print*, newID
+! 
+! end program a1
 
 ! program a1
 ! 

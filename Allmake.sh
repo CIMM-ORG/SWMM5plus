@@ -9,7 +9,7 @@ mkdir "$DIRThreaded"
 echo Compiling the SWMMengine ...
 
 # Compiler/Linker settings
-FC=gfortran
+FC=gfortran-9
 OPTFLAGS=-g
 FFLAGS=-02
 PROGRAM=SWMM

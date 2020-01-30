@@ -153,8 +153,6 @@
 !% check the boundary condition data arrays are correctly defined
  call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
 
-
-
 !% set the initial conditions throughout
  call initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
