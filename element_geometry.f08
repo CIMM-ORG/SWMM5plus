@@ -316,7 +316,7 @@
  real, pointer :: area_difference(:,:), local_difference(:,:)
  
  real :: AA, BB, CC, DD
- integer :: ii
+ integer :: ii,ind
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -408,23 +408,27 @@
  endwhere
  
  do ii=1, size(volume,1)
-!     if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
-!          (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
+    if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
+         (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
          
             area (ii) = volume(ii) / length(ii)
             area_difference(ii,:) = area (ii) - areaTotalBelowThisLayer(elemI(ii,e2i_link_ID),:)
             local_difference(ii,:) = area_difference(ii,:) - areaThisLayer(elemI(ii,e2i_link_ID),:)
-            print*, findloc(sign(1.0, area_difference(ii,:)*local_difference(ii,:)), -1.0)
-            stop
-!             ind = minloc(volume, 1.0)
-!             area            = volume / length
-!             hyddepth        = DD
-!             eta             = zbottom + hyddepth
-!             depth           = hyddepth
-!             topwidth        = 0.0
-!             perimeter       = 0.0
-!             hydradius       = area / perimeter
-!     endif
+            ind = findloc(sign(oneR, area_difference(ii,:)*local_difference(ii,:)), -1.0, DIM=1)
+            
+            AA = oneR/tan(angle(ii,ind))
+            BB = widthAtLayerTop(ii,ind) - dWidth(ii,ind)
+            CC = - area_difference(ii,ind)
+            DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
+            
+            hyddepth (ii)  = DD + depthAtLayerTop(ii,ind) - dDepth(ii,ind)
+            eta (ii)       = zbottom (ii) + hyddepth (ii)
+            depth (ii)     = hyddepth(ii)
+            topwidth (ii)  = widthAtLayerTop(ii,ind) - (dDepth(ii,ind)-DD) &
+                            *dWidth(ii,ind)/dDepth(ii,ind)
+            perimeter (ii) = perimeterBelowThisLayer(ii,ind) + twoR * DD/sin(angle(ii,ind))
+            hydradius (ii) = area(ii) / perimeter(ii)
+    endif
  enddo
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

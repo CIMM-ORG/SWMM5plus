@@ -1,15 +1,12 @@
-program find_positive
-  implicit none
+program test_sign
+  print *, sign(-12,1)
+  print *, sign(-12,0)
+  print *, sign(-12,-1)
 
-  integer, allocatable :: data(:)
-
-  data = [-3,  3,  0,  2, -3]
-  write(*,*) data
-
-  write(*,*) findloc(sign(1, data), -1)
-  write(*,*) findloc(sign(1, data), 1, back=.true.)
-
-end program find_positive
+  print *, sign(-12.,1.)
+  print *, sign(-12.,0.)
+  print *, sign(-12.,-1.)
+end program test_sign
 
 ! program a1
 ! 
