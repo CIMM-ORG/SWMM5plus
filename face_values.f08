@@ -55,7 +55,7 @@
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
- call face_interp_for_elem2 &
+ call face_interp_for_elem2faces &
     (elem2R, faceR, faceI, faceYN, bcdataDn, bcdataUp, e2r_Volume_new)
 
  call bc_applied_onface &
@@ -143,12 +143,12 @@
 !
 !========================================================================== 
 !========================================================================== 
- subroutine face_interp_for_elem2 &
+ subroutine face_interp_for_elem2faces &
     (elem2R, faceR, faceI, faceYN, bcdataDn, bcdataUp, e2r_Volume_new)
 
 ! face interpolation for all the elements
 
- character(64) :: subroutine_name = 'face_interp_for_elem2'
+ character(64) :: subroutine_name = 'face_interp_for_elem2faces'
  
  integer,               intent(in)      :: faceI(:,:)
  real,      target,     intent(in out)  :: faceR(:,:)
@@ -158,7 +158,6 @@
  type(bcType),          intent(in)      :: bcdataDn(:), bcdataUp(:)
      
  logical,   pointer  :: facemask_HQ2up(:), facemask_HQ2dn(:)
- logical,   pointer  :: facemask_HQmup(:), facemask_HQmdn(:)
  logical,   pointer  :: facemask_Hup(:), facemask_Hdn(:)
  logical,   pointer  :: facemask_Qup(:), facemask_Qdn(:)
  real,      pointer  :: inoutarray(:)
@@ -169,8 +168,6 @@
 
  facemask_HQ2up     => faceYN(:,fYN_IsHQ2up)
  facemask_HQ2dn     => faceYN(:,fYN_IsHQ2dn)
- facemask_HQmup     => faceYN(:,fYN_IsHQmup)
- facemask_HQmdn     => faceYN(:,fYN_IsHQmdn)
  facemask_Hup       => faceYN(:,fYN_IsHup)
  facemask_Hdn       => faceYN(:,fYN_IsHdn)
  facemask_Qup       => faceYN(:,fYN_IsQup)
@@ -192,40 +189,40 @@
 
 
 
- call face_interp_for_elem2faces &
+ call face_interp_for_elem2 &
     (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_HQ2up, facemask_HQ2dn, &
      bcdataUp, e2r_Volume_new)
- call face_interp_for_elem2faces &
+ call face_interp_for_elem2 &
     (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_HQ2up, facemask_Qdn, &
      bcdataUp, e2r_Volume_new)
- call face_interp_for_elem2faces &
+ call face_interp_for_elem2 &
     (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_HQ2up, facemask_Hdn, &
      bcdataUp, e2r_Volume_new)
- call face_interp_for_elem2faces &
+ call face_interp_for_elem2 &
     (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_Qup, facemask_HQ2dn, &
      bcdataUp, e2r_Volume_new) 
- call face_interp_for_elem2faces &
+ call face_interp_for_elem2 &
     (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_Qup, facemask_Hdn, &
      bcdataUp, e2r_Volume_new)
- call face_interp_for_elem2faces &
+ call face_interp_for_elem2 &
     (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_Hup, facemask_Qdn, &
      bcdataUp, e2r_Volume_new)
- call face_interp_for_elem2faces &
+ call face_interp_for_elem2 &
     (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_Hup, facemask_HQ2dn, &
      bcdataUp, e2r_Volume_new)
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine face_interp_for_elem2
+ end subroutine face_interp_for_elem2faces
 !==========================================================================
 !==========================================================================
 !
- subroutine face_interp_for_elem2faces &
+ subroutine face_interp_for_elem2 &
     (elem2R, faceR, faceI, faceYN, bcdataDn, facemask_meta_u, facemask_meta_d, &
      bcdataUp, e2r_Volume_new)
 !
 ! face interpolation between elements that have only 2 faces
 ! 
- character(64) :: subroutine_name = 'face_interp_for_elem2faces'
+ character(64) :: subroutine_name = 'face_interp_for_elem2'
  
  integer,               intent(in)      :: faceI(:,:)
  real,      target,     intent(in out)  :: faceR(:,:)
@@ -312,7 +309,7 @@ call interp_channel_onetype &
 ! so, I'm using the timescae for eta here
 call interp_channel_onetype &
     (faceR, facemask, faceI, elem2R, &
-     weightUpH, weightDnH, valueUp, valueDn, e2rset(2), frset(2))
+     weightUpG, weightDnG, valueUp, valueDn, e2rset(2), frset(2))
 
 call interp_channel_onetype &
     (faceR, facemask, faceI, elem2R, &
@@ -361,7 +358,7 @@ call interp_channel_onetype &
  next_fYN_temparray = next_fYN_temparray - 1
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine face_interp_for_elem2faces
+ end subroutine face_interp_for_elem2
 !
 !========================================================================== 
 !==========================================================================
@@ -730,9 +727,13 @@ call interp_channel_onetype &
 !%  use distance (length) for interpolation for free surface 
  where (faceI(:,fi_etype_d) == fChannel)
     weightDn = onehalfR * elem2R(faceI(:,fi_Melem_d),e2r_Length) 
+ elsewhere (faceI(:,fi_etype_d) == fWeir)
+    weightDn = onehalfR * elem2R(faceI(:,fi_Melem_d),e2r_Length)
  endwhere
  
  where (faceI(:,fi_etype_u) == fChannel)
+     weightUp = onehalfR * elem2R(faceI(:,fi_Melem_u),e2r_Length) 
+ elsewhere (faceI(:,fi_etype_u) == fWeir)
      weightUp = onehalfR * elem2R(faceI(:,fi_Melem_u),e2r_Length) 
  endwhere
 
@@ -753,9 +754,9 @@ call interp_channel_onetype &
 
 
 !%  set the mask for channel and mulitple elements without a hyd jump
- facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fMultiple)) &
+ facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fWeir) .or. (faceI(:,fi_etype_d) == fMultiple)) &
              & .and. &
-              ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fMultiple)) &
+              ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fWeir) .or. (faceI(:,fi_etype_u) == fMultiple)) &
              & .and. &
               (faceI(:,fi_jump_type) == jump_none) )
  

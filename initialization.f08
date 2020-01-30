@@ -147,8 +147,8 @@
  eMr_VelocityUp(ii) = eMr_Velocity_u1
  eMr_VelocityDn(ii) = eMr_Velocity_d1
  
- eMr_TimescaleUp(ii) = eMr_Timescale_Q_u1
- eMr_TimescaleDn(ii) = eMr_Timescale_Q_d1  
+ eMr_TimescaleUp(ii) = eMr_Timescale_u1
+ eMr_TimescaleDn(ii) = eMr_Timescale_d1  
  
  eMr_AreaUp(ii) = eMr_Area_u1
  eMr_AreaDn(ii) = eMr_Area_d1
@@ -179,7 +179,7 @@
     eMr_EtaUp(ii)            = eMr_Eta_u2
     eMr_FlowrateUp(ii)       = eMr_Flowrate_u2
     eMr_VelocityUp(ii)       = eMr_Velocity_u2    
-    eMr_TimescaleUp(ii)      = eMr_Timescale_Q_u2
+    eMr_TimescaleUp(ii)      = eMr_Timescale_u2
     eMr_AreaUp(ii)           = eMr_Area_u2
     eMr_TopwidthUp(ii)       = eMr_Topwidth_u2
     eMr_HydDepthUp(ii)       = eMr_HydDepth_u2
@@ -195,7 +195,7 @@
     eMr_EtaUp(ii)            = eMr_Eta_u3
     eMr_FlowrateUp(ii)       = eMr_Flowrate_u3
     eMr_VelocityUp(ii)       = eMr_Velocity_u3    
-    eMr_TimescaleUp(ii)      = eMr_Timescale_Q_u3 
+    eMr_TimescaleUp(ii)      = eMr_Timescale_u3 
     eMr_AreaUp(ii)           = eMr_Area_u3
     eMr_TopwidthUp(ii)       = eMr_Topwidth_u3
     eMr_HydDepthUp(ii)       = eMr_HydDepth_u3
@@ -216,7 +216,7 @@
     eMr_EtaDn(ii)            = eMr_Eta_d2
     eMr_FlowrateDn(ii)       = eMr_Flowrate_d2
     eMr_VelocityDn(ii)       = eMr_Velocity_d2    
-    eMr_TimescaleDn(ii)      = eMr_Timescale_Q_d2
+    eMr_TimescaleDn(ii)      = eMr_Timescale_d2
     eMr_AreaDn(ii)           = eMr_Area_d2
     eMr_TopwidthDn(ii)       = eMr_Topwidth_d2
     eMr_HydDepthDn(ii)       = eMr_HydDepth_d2
@@ -233,7 +233,7 @@
     eMr_EtaDn(ii)            = eMr_Eta_d3
     eMr_FlowrateDn(ii)       = eMr_Flowrate_d3
     eMr_VelocityDn(ii)       = eMr_Velocity_d3   
-    eMr_TimescaleDn(ii)      = eMr_Timescale_Q_d3
+    eMr_TimescaleDn(ii)      = eMr_Timescale_d3
     eMr_AreaDn(ii)           = eMr_Area_d3
     eMr_TopwidthDn(ii)       = eMr_Topwidth_d3
     eMr_HydDepthDn(ii)       = eMr_HydDepth_d3
@@ -391,12 +391,12 @@ end do
     stop
  endif
  
- if (eMr_TimescaleUp(ii)        /= eMr_Timescale_Q_u1) then
+ if (eMr_TimescaleUp(ii)        /= eMr_Timescale_u1) then
     print *, 'error: eMr_TimescaleUp(1) unexpectedly changed in code in ',subroutine_name
     stop
  endif
  
- if (eMr_TimescaleDn(ii)        /= eMr_Timescale_Q_d1) then
+ if (eMr_TimescaleDn(ii)        /= eMr_Timescale_d1) then
     print *, 'error: eMr_TimescaleDn(1) unexpectedly changed in code in ',subroutine_name
     stop
  endif
@@ -496,7 +496,7 @@ end do
         print *, 'error: eMr_VelocityUp(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif
-    if (eMr_TimescaleUp(ii)         /= eMr_Timescale_Q_u2) then
+    if (eMr_TimescaleUp(ii)         /= eMr_Timescale_u2) then
         print *, 'ii = ',ii
         print *, 'error: eMr_TimescaleUp(ii) unexpectedly changed in code in ',subroutine_name
         stop
@@ -564,7 +564,7 @@ end do
         print *, 'error: eMr_VelocityUp(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif
-    if (eMr_TimescaleUp(ii)         /= eMr_Timescale_Q_u3) then
+    if (eMr_TimescaleUp(ii)         /= eMr_Timescale_u3) then
         print *, 'ii = ',ii
         print *, 'error: eMr_TimescaleUp(ii) unexpectedly changed in code in ',subroutine_name
         stop
@@ -637,7 +637,7 @@ end do
         print *, 'error: eMr_VelocityDn(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif    
-    if (eMr_TimescaleDn(ii)         /= eMr_Timescale_Q_d2) then
+    if (eMr_TimescaleDn(ii)         /= eMr_Timescale_d2) then
         print *, 'ii = ',ii
         print *, 'error: eMr_TimescaleDn(ii) unexpectedly changed in code in ',subroutine_name
         stop
@@ -705,7 +705,7 @@ end do
         print *, 'error: eMr_VelocityDn(ii) unexpectedly changed in code in ',subroutine_name
         stop
     endif    
-    if (eMr_TimescaleDn(ii)         /= eMr_Timescale_Q_d3) then
+    if (eMr_TimescaleDn(ii)         /= eMr_Timescale_d3) then
         print *, 'ii = ',ii
         print *, 'error: eMr_Timescale_Dn(ii) unexpectedly changed in code in ',subroutine_name
         stop

@@ -144,39 +144,7 @@
  call initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
      linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime)
-    ! print*, '================================='
-    ! print*, elem2R(:,e2r_Depth), 'Depth'
-    ! print*, '================================='
-    ! print*, elem2R(:,e2r_HydDepth), 'HydDepth'
-    ! print*, '================================='
-    ! print*, elem2R(:,e2r_Area), 'Area'
-    ! print*, '================================='
-    ! print*, elem2R(:,e2r_Topwidth), 'Top Width'
-    ! print*, '================================='
-    ! print*, elem2R(:,e2r_Zbottom), 'Z bottom'
-    ! print*, '================================='
-    ! print*, elem2R(:,e2r_Eta), 'Eta'
-    ! print*, '================================='
-    ! print*, elem2R(:,e2r_Volume), 'Volume'
-    ! print*, '================================='
-    ! print*, elem2R(:,e2r_Perimeter), 'Perimeter'
-    ! print*, '================================='
-    ! print*, elem2R(:, e2r_Timescale_G_u), 'T G u'
-    ! print*, '================================='
-    ! print*, elem2R(:, e2r_Timescale_G_d), 'T G d'
-    ! print*, '================================='
-    ! print*, elem2R(:, e2r_Timescale_H_u), 'T H u'
-    ! print*, '================================='
-    ! print*, elem2R(:, e2r_Timescale_H_d), 'T H d'
-    ! print*, '================================='
-    ! print*, elem2R(:, e2r_Timescale_Q_u), 'T Q u'
-    ! print*, '================================='
-    ! print*, elem2R(:, e2r_Timescale_Q_d), 'T Q d'
-    ! print*, '================================='
-    ! print*, faceR(:,fr_Eta_d), 'fr_Eta_d'
-    ! print*, '================================='
-    ! print*, faceR(:,fr_Eta_u), 'fr_Eta_u'
-    ! print*, '================================='
+    
 !% check consistency of the smallvolume setup
  
  call checking_smallvolume_consistency (elem2R, elemMR)
@@ -223,19 +191,7 @@ faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 
 !%  close out the debug files
  call debug_finalize(debugfile)
- ! print *,'====================================================='
- ! print *, 'Weir Time Scale U/S'
- ! print *, elem2R(:,e2r_Timescale_Q_u)
- ! print *,'====================================================='
- ! print *, 'Weir Time Scale D/S'
- ! print *, elem2R(:,e2r_Timescale_Q_d)
- ! print *,'====================================================='
- ! print *, 'Weir Effective Head'
- ! print *, elem2R(:,e2r_Length)
- ! print *,'====================================================='
- ! print *
- ! print *, 'finished main program'
- ! print *, '====================='
+ 
  print *, char(7)  ! sound the system beep
 
  end program main

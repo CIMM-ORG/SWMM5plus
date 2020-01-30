@@ -84,11 +84,7 @@
 
  call face_meta_element_assign &
     (faceI, elem2I, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
-     fi_meta_etype_d, e2i_Meta_elem_type) 
-
- ! call face_meta_element_assign &
- !    (faceI, elemMI, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
- !     fi_meta_etype_d, eMi_Meta_elem_type)      
+     fi_meta_etype_d, e2i_Meta_elem_type)      
 
  call face_update &
     (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
@@ -385,12 +381,6 @@
         elemI(:,ei_meta_elem_type) = eNonHQ
  end where
  
- ! print*,'------------------------'
- ! print*, elemI(:,ei_meta_elem_type), 'meta element type'
- ! print*,'-----------------------'
- ! ! print*, elemI
-
-
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine meta_element_assign 
 !
@@ -415,23 +405,7 @@
  do ii=1, N_face
     faceI(ii,fi_meta_etype_u) = elemI(faceI(ii,fi_Melem_u), ei_Meta_elem_type)
     faceI(ii,fi_meta_etype_d) = elemI(faceI(ii,fi_Melem_d), ei_Meta_elem_type)
-end do
-
- ! print*,'---------------------------------------------'
- ! print*, N_face, 'number of faces'
- ! ! print*, faceI(:,fi_meta_etype_u), 'face 1 u/s meta elem type'
- ! ! print*, faceI(2,fi_meta_etype_u), 'face 2 u/s meta elem type'
- ! ! print*, faceI(:,fi_meta_etype_d), 'face 1 d/s meta elem type'
- ! ! print*, faceI(2,fi_meta_etype_d), 'face 2 d/s meta elem type'
- ! print*, faceI(:,fi_type), 'face elem type'
- ! print*,'---------------------------------------------'
- ! print*, faceI(:,fi_Melem_d), 'face u/s elem map'
- ! print*,'---------------------------------------------'
- ! print*, faceI(:,fi_Melem_u), 'face d/s elem map'
- ! print*,'---------------------------------------------'
- ! print*, faceI(:,fi_meta_etype_u), 'face u/s meta elem type'
- ! print*,'---------------------------------------------'
- ! print*, faceI(:,fi_meta_etype_d), 'face d/s meta elem type'
+ end do
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine face_meta_element_assign

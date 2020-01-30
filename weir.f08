@@ -96,10 +96,6 @@
  wSideSlope     => setting%Weir%WeirSideSlope
  wInletoffset   => setting%Weir%WeirInletOffset 
 
- ! where ( ( elem2I(:,e2i_elem_type) == eWeir ) )
- !    wCrest = wInletoffset
- !    wCrown = wCrest + wHeight
- ! endwhere
 
  call weir_effective_head &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
@@ -116,18 +112,6 @@
      wWidth, wHeight, wCoeff, wSideSlope, dir, EffectiveHead, &
      thiscoef)
 
- 
- ! print *,'====================================================='
- ! print *, faceR(:,fr_HydDepth_d), 'H d'
- ! print *,'====================================================='
- ! print *, faceR(:,fr_HydDepth_u), 'H u'
- ! print *,'====================================================='
- ! print *, 'Weir Effective Head'
- ! print *, EffectiveHead
-
-
-
-! stop
  ! release temporary arrays
  EffectiveHead  = nullvalueR
  wCrest         = nullvalueR
@@ -185,39 +169,11 @@ subroutine weir_effective_head &
 
             dir = -oneI
             EffectiveHead = fEup(idn) - fEdn(iup)
+
  endwhere
 
- ! where     ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
- !             (fEup(idn) .GT. fEdn(iup)) )
- !    EffectiveHead  = fEup(idn) - wCrest
-
- ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
- !             (fEup(idn) .LT. fEdn(iup)) )
- !    EffectiveHead  = wCrest - fEdn(iup)
-
- ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
- !             (fEup(idn) .LT. wCrest) .and. &
- !             (fEdn(iup) .LT. wCrest) )
- !    EffectiveHead = zeroR
-
- ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
- !             (fEup(idn) .GT. wCrown) .and. &
- !             (fEup(idn) .GT. fEdn(iup) ) )
- !    EffectiveHead = wCrown - wCrest
-
- ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
- !             (fEdn(iup) .GT. wCrown) .and. &
- !             (fEdn(iup) .GT. fEup(idn) ) )
- !    EffectiveHead =  wCrest - wCrown
-
- ! elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
- !             (fEup(idn) .EQ. fEdn(iup)) )
- !    EffectiveHead =  zeroR
 
 !Need a fix for surcharge
-
- ! print*, EffectiveHead
- ! stop
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
@@ -296,28 +252,10 @@ subroutine weir_effective_length &
     ! Volume is weir flow equation * dt (this case dt = thiscoef)
     volume2new   = thiscoef * wCoeff * wSideSlope * EffectiveHead ** 2.5
   
-    velocity2new = dir * wCoeff * sqrt(abs(EffectiveHead)) / wSideSlope
+    velocity2new = dir * wCoeff * sqrt(abs(EffectiveHead))
 
  endwhere
- ! print *,'====================================================='
- ! print *, faceR(:,fr_HydDepth_d), 'H d'
- ! print *,'====================================================='
- ! print *, faceR(:,fr_HydDepth_u), 'H u'
- ! print *,'====================================================='
- ! print *, 'Weir Effective Head'
- ! print *, EffectiveHead
- ! print*, '+++++++++++++++++++++++++'
- ! print *, 'Volume new'
- ! print *, volume2new
- ! print *, 'Velocity new'
- ! print *, velocity2new
- ! print *, 'RK2 coeff'
- ! print *, thiscoef
- ! print *, 'dir'
- ! print *, dir
- ! print *,'END OF STEP'
 
-!%  pointers for volume and velocity storage (updating)
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
  end subroutine weir_flow

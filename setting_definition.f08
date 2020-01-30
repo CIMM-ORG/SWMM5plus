@@ -160,7 +160,7 @@
 
     !%  setting%Weir
     type WeirType
-        real    :: WeirDischargeCoeff   = 1.3 ! m^3/s
+        real    :: WeirDischargeCoeff   = 1.4 ! m^3/s
         real    :: EndContraction       = 0.0    ! Number of End Contraction(0, 1, 2)
         real    :: WeirHeight           = 1.5  ! Vertical Height of Weir Opening m
         real    :: WeirWidth            = 3.0

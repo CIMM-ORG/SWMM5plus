@@ -223,106 +223,86 @@
     integer, parameter :: eMr_idx_base7     = eMr_idx_base6 + dnstream_face_per_elemM
 
 
-    integer, parameter :: eMr_Timescale_Q_u1  = eMr_idx_base7 + 1
-    integer, parameter :: eMr_Timescale_Q_u2  = eMr_idx_base7 + 2
-    integer, parameter :: eMr_Timescale_Q_u3  = eMr_idx_base7 + 3
-    integer, parameter :: eMr_idx_base8       = eMr_idx_base7  + upstream_face_per_elemM
+    integer, parameter :: eMr_Timescale_u1  = eMr_idx_base7 + 1
+    integer, parameter :: eMr_Timescale_u2  = eMr_idx_base7 + 2
+    integer, parameter :: eMr_Timescale_u3  = eMr_idx_base7 + 3
+    integer, parameter :: eMr_idx_base8     = eMr_idx_base7  + upstream_face_per_elemM
 
-    integer, parameter :: eMr_Timescale_H_u1  = eMr_idx_base8 + 1
-    integer, parameter :: eMr_Timescale_H_u2  = eMr_idx_base8 + 2
-    integer, parameter :: eMr_Timescale_H_u3  = eMr_idx_base8 + 3
-    integer, parameter :: eMr_idx_base9       = eMr_idx_base8  + upstream_face_per_elemM
+    integer, parameter :: eMr_Timescale_d1  = eMr_idx_base8 + 1
+    integer, parameter :: eMr_Timescale_d2  = eMr_idx_base8 + 2
+    integer, parameter :: eMr_Timescale_d3  = eMr_idx_base8 + 3
+    integer, parameter :: eMr_idx_base9     = eMr_idx_base8  + upstream_face_per_elemM
 
-    integer, parameter :: eMr_Timescale_G_u1  = eMr_idx_base9 + 1
-    integer, parameter :: eMr_Timescale_G_u2  = eMr_idx_base9 + 2
-    integer, parameter :: eMr_Timescale_G_u3  = eMr_idx_base9 + 3
-    integer, parameter :: eMr_idx_base10      = eMr_idx_base9  + upstream_face_per_elemM
+    integer, parameter :: eMr_Area_u1       = eMr_idx_base9 + 1
+    integer, parameter :: eMr_Area_u2       = eMr_idx_base9 + 2
+    integer, parameter :: eMr_Area_u3       = eMr_idx_base9 + 3
+    integer, parameter :: eMr_idx_base10    = eMr_idx_base9 + upstream_face_per_elemM
 
-    integer, parameter :: eMr_Timescale_Q_d1  = eMr_idx_base10 + 1
-    integer, parameter :: eMr_Timescale_Q_d2  = eMr_idx_base10 + 2
-    integer, parameter :: eMr_Timescale_Q_d3  = eMr_idx_base10 + 3
-    integer, parameter :: eMr_idx_base11      = eMr_idx_base10  + upstream_face_per_elemM
+    integer, parameter :: eMr_Area_d1       = eMr_idx_base10 + 1
+    integer, parameter :: eMr_Area_d2       = eMr_idx_base10 + 2
+    integer, parameter :: eMr_Area_d3       = eMr_idx_base10 + 3
+    integer, parameter :: eMr_idx_base11    = eMr_idx_base10 + dnstream_face_per_elemM
 
-    integer, parameter :: eMr_Timescale_H_d1  = eMr_idx_base11 + 1
-    integer, parameter :: eMr_Timescale_H_d2  = eMr_idx_base11 + 2
-    integer, parameter :: eMr_Timescale_H_d3  = eMr_idx_base11 + 3
-    integer, parameter :: eMr_idx_base12      = eMr_idx_base11  + upstream_face_per_elemM
+    integer, parameter :: eMr_Topwidth_u1   = eMr_idx_base11 + 1
+    integer, parameter :: eMr_Topwidth_u2   = eMr_idx_base11 + 2
+    integer, parameter :: eMr_Topwidth_u3   = eMr_idx_base11 + 3
+    integer, parameter :: eMr_idx_base12    = eMr_idx_base11 + upstream_face_per_elemM
 
-    integer, parameter :: eMr_Timescale_G_d1  = eMr_idx_base12 + 1
-    integer, parameter :: eMr_Timescale_G_d2  = eMr_idx_base12 + 2
-    integer, parameter :: eMr_Timescale_G_d3  = eMr_idx_base12 + 3
-    integer, parameter :: eMr_idx_base13      = eMr_idx_base12  + upstream_face_per_elemM
+    integer, parameter :: eMr_Topwidth_d1   = eMr_idx_base12 + 1
+    integer, parameter :: eMr_Topwidth_d2   = eMr_idx_base12 + 2
+    integer, parameter :: eMr_Topwidth_d3   = eMr_idx_base12 + 3
+    integer, parameter :: eMr_idx_base13    = eMr_idx_base12 + dnstream_face_per_elemM
 
-    integer, parameter :: eMr_Area_u1       = eMr_idx_base13 + 1
-    integer, parameter :: eMr_Area_u2       = eMr_idx_base13 + 2
-    integer, parameter :: eMr_Area_u3       = eMr_idx_base13 + 3
+    integer, parameter :: eMr_HydDepth_u1   = eMr_idx_base13 + 1
+    integer, parameter :: eMr_HydDepth_u2   = eMr_idx_base13 + 2
+    integer, parameter :: eMr_HydDepth_u3   = eMr_idx_base13 + 3
     integer, parameter :: eMr_idx_base14    = eMr_idx_base13 + upstream_face_per_elemM
 
-    integer, parameter :: eMr_Area_d1       = eMr_idx_base14 + 1
-    integer, parameter :: eMr_Area_d2       = eMr_idx_base14 + 2
-    integer, parameter :: eMr_Area_d3       = eMr_idx_base14 + 3
+    integer, parameter :: eMr_HydDepth_d1   = eMr_idx_base14 + 1
+    integer, parameter :: eMr_HydDepth_d2   = eMr_idx_base14 + 2
+    integer, parameter :: eMr_HydDepth_d3   = eMr_idx_base14 + 3
     integer, parameter :: eMr_idx_base15    = eMr_idx_base14 + dnstream_face_per_elemM
 
-    integer, parameter :: eMr_Topwidth_u1   = eMr_idx_base15 + 1
-    integer, parameter :: eMr_Topwidth_u2   = eMr_idx_base15 + 2
-    integer, parameter :: eMr_Topwidth_u3   = eMr_idx_base15 + 3
+    integer, parameter :: eMr_Length_u1     = eMr_idx_base15 + 1
+    integer, parameter :: eMr_Length_u2     = eMr_idx_base15 + 2
+    integer, parameter :: eMr_Length_u3     = eMr_idx_base15 + 3
     integer, parameter :: eMr_idx_base16    = eMr_idx_base15 + upstream_face_per_elemM
 
-    integer, parameter :: eMr_Topwidth_d1   = eMr_idx_base16 + 1
-    integer, parameter :: eMr_Topwidth_d2   = eMr_idx_base16 + 2
-    integer, parameter :: eMr_Topwidth_d3   = eMr_idx_base16 + 3
+    integer, parameter :: eMr_Length_d1     = eMr_idx_base16 + 1
+    integer, parameter :: eMr_Length_d2     = eMr_idx_base16 + 2
+    integer, parameter :: eMr_Length_d3     = eMr_idx_base16 + 3
     integer, parameter :: eMr_idx_base17    = eMr_idx_base16 + dnstream_face_per_elemM
 
-    integer, parameter :: eMr_HydDepth_u1   = eMr_idx_base17 + 1
-    integer, parameter :: eMr_HydDepth_u2   = eMr_idx_base17 + 2
-    integer, parameter :: eMr_HydDepth_u3   = eMr_idx_base17 + 3
+    integer, parameter :: eMr_Zbottom_u1    = eMr_idx_base17 + 1
+    integer, parameter :: eMr_Zbottom_u2    = eMr_idx_base17 + 2
+    integer, parameter :: eMr_Zbottom_u3    = eMr_idx_base17 + 3
     integer, parameter :: eMr_idx_base18    = eMr_idx_base17 + upstream_face_per_elemM
 
-    integer, parameter :: eMr_HydDepth_d1   = eMr_idx_base18 + 1
-    integer, parameter :: eMr_HydDepth_d2   = eMr_idx_base18 + 2
-    integer, parameter :: eMr_HydDepth_d3   = eMr_idx_base18 + 3
+    integer, parameter :: eMr_Zbottom_d1    = eMr_idx_base18 + 1
+    integer, parameter :: eMr_Zbottom_d2    = eMr_idx_base18 + 2
+    integer, parameter :: eMr_Zbottom_d3    = eMr_idx_base18 + 3
     integer, parameter :: eMr_idx_base19    = eMr_idx_base18 + dnstream_face_per_elemM
 
-    integer, parameter :: eMr_Length_u1     = eMr_idx_base19 + 1
-    integer, parameter :: eMr_Length_u2     = eMr_idx_base19 + 2
-    integer, parameter :: eMr_Length_u3     = eMr_idx_base19 + 3
-    integer, parameter :: eMr_idx_base20    = eMr_idx_base19 + upstream_face_per_elemM
+    integer, parameter :: eMr_BreadthScale_u1    = eMr_idx_base19 + 1
+    integer, parameter :: eMr_BreadthScale_u2    = eMr_idx_base19 + 2
+    integer, parameter :: eMr_BreadthScale_u3    = eMr_idx_base19 + 3
+    integer, parameter :: eMr_idx_base20         = eMr_idx_base19 + upstream_face_per_elemM
 
-    integer, parameter :: eMr_Length_d1     = eMr_idx_base20 + 1
-    integer, parameter :: eMr_Length_d2     = eMr_idx_base20 + 2
-    integer, parameter :: eMr_Length_d3     = eMr_idx_base20 + 3
-    integer, parameter :: eMr_idx_base21    = eMr_idx_base20 + dnstream_face_per_elemM
+    integer, parameter :: eMr_BreadthScale_d1    = eMr_idx_base20 + 1
+    integer, parameter :: eMr_BreadthScale_d2    = eMr_idx_base20 + 2
+    integer, parameter :: eMr_BreadthScale_d3    = eMr_idx_base20 + 3
+    integer, parameter :: eMr_idx_base21         = eMr_idx_base20 + dnstream_face_per_elemM
 
-    integer, parameter :: eMr_Zbottom_u1    = eMr_idx_base21 + 1
-    integer, parameter :: eMr_Zbottom_u2    = eMr_idx_base21 + 2
-    integer, parameter :: eMr_Zbottom_u3    = eMr_idx_base21 + 3
-    integer, parameter :: eMr_idx_base22    = eMr_idx_base21 + upstream_face_per_elemM
-
-    integer, parameter :: eMr_Zbottom_d1    = eMr_idx_base22 + 1
-    integer, parameter :: eMr_Zbottom_d2    = eMr_idx_base22 + 2
-    integer, parameter :: eMr_Zbottom_d3    = eMr_idx_base22 + 3
-    integer, parameter :: eMr_idx_base23    = eMr_idx_base22 + dnstream_face_per_elemM
-
-    integer, parameter :: eMr_BreadthScale_u1    = eMr_idx_base23 + 1
-    integer, parameter :: eMr_BreadthScale_u2    = eMr_idx_base23 + 2
-    integer, parameter :: eMr_BreadthScale_u3    = eMr_idx_base23 + 3
-    integer, parameter :: eMr_idx_base24         = eMr_idx_base23 + upstream_face_per_elemM
-
-    integer, parameter :: eMr_BreadthScale_d1    = eMr_idx_base24 + 1
-    integer, parameter :: eMr_BreadthScale_d2    = eMr_idx_base24 + 2
-    integer, parameter :: eMr_BreadthScale_d3    = eMr_idx_base24 + 3
-    integer, parameter :: eMr_idx_base25         = eMr_idx_base24 + dnstream_face_per_elemM
-
-    integer, parameter :: eMr_temp1              = eMr_idx_base25 + 1
-    integer, parameter :: eMr_temp2              = eMr_idx_base25 + 2
-    integer, parameter :: eMr_temp3              = eMr_idx_base25 + 3
-    integer, parameter :: eMr_temp4              = eMr_idx_base25 + 4
-    integer, parameter :: eMr_temp5              = eMr_idx_base25 + 5
-    integer, parameter :: eMr_temp6              = eMr_idx_base25 + 6
+    integer, parameter :: eMr_temp1              = eMr_idx_base21 + 1
+    integer, parameter :: eMr_temp2              = eMr_idx_base21 + 2
+    integer, parameter :: eMr_temp3              = eMr_idx_base21 + 3
+    integer, parameter :: eMr_temp4              = eMr_idx_base21 + 4
+    integer, parameter :: eMr_temp5              = eMr_idx_base21 + 5
+    integer, parameter :: eMr_temp6              = eMr_idx_base21 + 6
 
     integer, parameter :: eMr_n_temp       = 6
-    integer, parameter :: eMr_idx_base26   = eMr_idx_base25 + eMr_n_temp
-    integer, parameter :: eMr_idx_max      = eMr_idx_base26
+    integer, parameter :: eMr_idx_base22   = eMr_idx_base21 + eMr_n_temp
+    integer, parameter :: eMr_idx_max      = eMr_idx_base22
     ! storage for temp array index positions
     integer, dimension(eMr_n_temp) :: eMr_Temp = nullvalueI
 
@@ -395,13 +375,6 @@
     ! column index for logical data in elem2YN array
     integer, parameter :: e2YN_IsSmallVolume    = 1
     integer, parameter :: e2YN_IsAdhocFlowrate  = 2
-    integer, parameter :: e2YN_IsChannel        = 3
-    integer, parameter :: e2YN_IsPipe           = 4
-    integer, parameter :: e2YN_IsWeir           = 5
-    integer, parameter :: e2YN_IsOrifice        = 6
-    integer, parameter :: e2YN_IsPump           = 7
-    integer, parameter :: e2YN_IsValve          = 8
-    integer, parameter :: e2YN_IsStorage        = 9 ! do we need this? Because storage is multi face. This should be in eMYN_IsStorage  
     integer, parameter :: e2YN_temp1            = 10
     integer, parameter :: e2YN_temp2            = 11
     integer, parameter :: e2YN_temp3            = 12
@@ -429,16 +402,14 @@
 !%  faceYN COLUMN INDEXES FOR LOGICAL DATA ON FACE
     ! column index for logical data in elemYN array
     integer, parameter :: fYN_IsHQ2up            = 1
-    integer, parameter :: fYN_IsHQmup            = 2
-    integer, parameter :: fYN_IsHQ2dn            = 3
-    integer, parameter :: fYN_IsHQmdn            = 4
-    integer, parameter :: fYN_IsHup              = 5
-    integer, parameter :: fYN_IsHdn              = 6
-    integer, parameter :: fYN_IsQup              = 7
-    integer, parameter :: fYN_IsQdn              = 8
-    integer, parameter :: fYN_temp1              = 9
-    integer, parameter :: fYN_temp2              = 10
-    integer, parameter :: fYN_idx_max            = 10
+    integer, parameter :: fYN_IsHQ2dn            = 2
+    integer, parameter :: fYN_IsHup              = 3
+    integer, parameter :: fYN_IsHdn              = 4
+    integer, parameter :: fYN_IsQup              = 5
+    integer, parameter :: fYN_IsQdn              = 6
+    integer, parameter :: fYN_temp1              = 7
+    integer, parameter :: fYN_temp2              = 8
+    integer, parameter :: fYN_idx_max            = 8
 
     integer, parameter :: fYN_n_temp = 2
     ! storage for temp array index positions

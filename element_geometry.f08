@@ -470,7 +470,7 @@ subroutine triangular_geometry_update &
  topwidth   => elemR(:,er_Topwidth)
  depth      => elemR(:,er_Depth)
 
-! This function calculates the geometric properties for rectengular channel and junctions
+! This function calculates the geometric properties for triangular channel and junctions
  where ( (elemI(:,ei_geometry)  == eVnotchWeir) .and. &
          (elemI(:,ei_elem_type) == elem_typ_value    )         )
     area        = volume / length
@@ -478,20 +478,10 @@ subroutine triangular_geometry_update &
     hyddepth    = onehalfR * depth
     eta         = zbottom + hyddepth
     topwidth    = twoR * setting%Weir%WeirSideSlope * depth
-    ! This needed to be checked
     perimeter   = twoR * depth * sqrt(oneR + setting%Weir%WeirSideSlope ** 2)
     hydradius   = (setting%Weir%WeirSideSlope * depth) / (twoR * sqrt(oneR + setting%Weir%WeirSideSlope ** 2))
  endwhere
- ! print*, 'START OF ELEMENT GEOMETRY'
- ! print*, 'area'
- ! print*, area
- ! print*, 'topwidth'
- ! print*, topwidth
- ! print*, 'depth'
- ! print*, depth
- ! print*, 'eta'
- ! print*, eta
- ! print*, 'END of ELEMENT GEOMETRY'
+
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine v_notch_weir
 !

@@ -486,15 +486,6 @@
  call bc_timescale_value (elem2R, bcdataDn)
 
  call bc_timescale_value (elem2R, bcdataUp)
-
- ! print*,'-------------------------------------------------'
- ! print*, elem2R(:, e2r_Timescale_Q_u), 'e2r_Timescale_Q_u'
- ! print*,'-------------------------------------------------'
- ! print*, elem2R(:, e2r_Timescale_Q_d), 'e2r_Timescale_Q_d'
- ! print*, '----------------------------------'
- ! print*, eMr_TimescaleUp, 'elemMR tscale up' 
- ! print*, '----------------------------------'
- ! print*, eMr_TimescaleDn, 'elemMR tscale dn'
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine element_timescale
@@ -529,12 +520,13 @@
 !For Honly meta elements, the timescale for H is minimum. Timescale for Q and G is maximum
 !TODO:Storage can be multi faced. So fix for multi faces. 
 
- where ( (elem2I(:,e2i_meta_elem_type) == eHonly) .and. &
-         (elem2I(:,e2i_elem_type) == eStorage) )
+ where ( elem2I(:,e2i_meta_elem_type) == eHonly )
     tscale_Q_up = setting%Limiter%Timescale%Maximum
     tscale_Q_dn = setting%Limiter%Timescale%Maximum
+
     tscale_H_up = setting%Limiter%Timescale%Minimum
     tscale_H_dn = setting%Limiter%Timescale%Minimum
+    
     tscale_G_up = setting%Limiter%Timescale%Maximum
     tscale_G_dn = setting%Limiter%Timescale%Maximum
  endwhere

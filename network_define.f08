@@ -941,9 +941,7 @@
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
-            !%%%%%%%%%%%%%%%%%%%%%
-        !Check if this is right
-        !%%%%%%%%%%%%%%%%%%%%
+
         case (lVnotchWeir)
             elem2R(thisElem2,e2r_Topwidth)     = twoR * setting%Weir%WeirSideSlope * linkR(thislink, lr_InitialDepth)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
@@ -1292,9 +1290,6 @@
             elem2R(thisElem2,e2r_BreadthScale)  = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
 
-        !%%%%%%%%%%%%%%%%%%%%%
-        !Check if this is right
-        !%%%%%%%%%%%%%%%%%%%%
         case (lVnotchWeir)
             elem2R(thisElem2,e2r_Topwidth)     = twoR * setting%Weir%WeirSideSlope * linkR(thislink, lr_InitialDepth)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
