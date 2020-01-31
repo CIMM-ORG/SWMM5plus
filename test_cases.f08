@@ -235,9 +235,9 @@
              velocity, Froude, ManningsN, idepth_type)
 
         ! step controls
-        display_interval = 1
+        display_interval = 1000
         first_step = 1
-        last_step  = 100! note 1000 is good enough to show blow up or not, 10000 is smooth
+        last_step  = 10000! note 1000 is good enough to show blow up or not, 10000 is smooth
 
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5

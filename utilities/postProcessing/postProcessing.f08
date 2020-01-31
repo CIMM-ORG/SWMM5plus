@@ -8,13 +8,6 @@ module postProcessing
     implicit none
     private
 
-    ! public  :: get_link_lengths
-    ! public  :: get_data_index
-    ! public  :: get_link_items
-    ! public  :: get_time_steps
-    ! public  :: read_number_of_cells
-    ! public  :: read_number_of_links
-    ! public  :: get_all_link_data
     public  :: get_specific_link_data
 
     integer :: debuglevel = 0
@@ -66,7 +59,7 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
     call get_link_items &
         (iunit, n_cells, n_links, n_linkItems, max_linkItems)
     call get_data_index &
-        (iunit, max_linkItems, length_idx, data_idx)
+        (iunit, max_linkItems, length_idx, data_idx, n_timeSteps)
     call get_link_lengths &
         (iunit, n_links, max_linkItems, length_idx, link_lengths)    
     call get_all_link_data &
@@ -83,7 +76,9 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
         !T2 Link1: |Element1Data Element2Data ... ... ...|
         !.................................................
         specific_linkData(ii,:) = link_data(jj,:)
+   
     end do
+    
 if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
 end subroutine get_specific_link_data
 !
@@ -153,7 +148,7 @@ end subroutine get_all_link_data
 subroutine get_link_lengths &
     (iunit, n_links, max_linkItems, length_idx, link_lengths)
 
-    character(64) :: subroutine_name = 'get_data_index'
+    character(64) :: subroutine_name = 'get_link_lengths'
 
     integer, intent(in)                             :: iunit, n_links
     integer, intent(in)                             :: max_linkItems
@@ -217,11 +212,11 @@ end subroutine get_link_lengths
 !
 ! This function gets the index of saved link data
 subroutine get_data_index &
-    (iunit, max_linkItems, length_idx, data_idx)
+    (iunit, max_linkItems, length_idx, data_idx, n_timeSteps)
 
     character(64) :: subroutine_name = 'get_data_index'
 
-    integer, intent(in)                             :: iunit, max_linkItems
+    integer, intent(in)                             :: iunit, max_linkItems, n_timeSteps
     integer, dimension(:), allocatable              :: n_linkItems
     character(len=512)                              :: tmp
     integer                                         :: istat
@@ -236,9 +231,9 @@ subroutine get_data_index &
 !--------------------------------------------------------------------------
 if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
     
-    allocate(temp_idx(max_linkItems))
-    allocate(length_idx(max_linkItems))
-    allocate(data_idx(max_linkItems))
+    allocate(temp_idx(n_timeSteps))
+    allocate(length_idx(n_timeSteps))
+    allocate(data_idx(n_timeSteps))
 
     temp_idx(:) = nullvalueI
     length_idx(:) = nullvalueI
@@ -264,7 +259,7 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
     ! The 2nd line after '=rows_this_link_X_data' is link data. 
     data_idx = temp_idx + 2
     rewind(iunit)
-
+   
 if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
 end subroutine get_data_index
 !

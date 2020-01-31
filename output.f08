@@ -331,19 +331,19 @@
         case (fPipe)
             print *, 'error: pipe output not handled'
             stop
-        ! case (fWeir)
-        !     ! downstream last element from previous link - upstream face
-        !     thisdata(1) = faceR(elem2I(edn,e2i_Mface_d),FaceCol_u)
-        !     thisX(1)    = -elem2R(edn,e2r_Length)
-        !     ! downstream last element from previous linke - center
-        !     thisdata(2) =  elem2R(edn,elemCol)
-        !     thisX(2)    = -onehalfR * elem2R(edn,e2r_Length)
-        !     ! face downstream at link connection (node)
-        !     thisdata(3) = faceR(fdn,FaceCol_d)
-        !     thisX(3)    = -oneeighthR * elem2R(edn,e2r_Length)
-        !     ! face upstream at link connection (node)
-        !     thisdata(4) = faceR(fdn,FaceCol_u)
-        !     thisX(4)    = zeroR
+        case (fWeir)
+            ! downstream last element from previous link - upstream face
+            thisdata(1) = faceR(elem2I(edn,e2i_Mface_d),FaceCol_u)
+            thisX(1)    = -elem2R(edn,e2r_Length)
+            ! downstream last element from previous linke - center
+            thisdata(2) =  elem2R(edn,elemCol)
+            thisX(2)    = -onehalfR * elem2R(edn,e2r_Length)
+            ! face downstream at link connection (node)
+            thisdata(3) = faceR(fdn,FaceCol_d)
+            thisX(3)    = -oneeighthR * elem2R(edn,e2r_Length)
+            ! face upstream at link connection (node)
+            thisdata(4) = faceR(fdn,FaceCol_u)
+            thisX(4)    = zeroR
         case (fMultiple)
             bdn => faceI(fdn,fi_branch_d)
             ! downstram junction center
