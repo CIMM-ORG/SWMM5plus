@@ -16,8 +16,6 @@ module dll_module
     integer, parameter :: errid_severe = 3
     integer, parameter :: errid_fatal = 4
 
-    integer :: os_id
-
     type os_type
         character(10) :: endian
         character(len=:), allocatable :: newline
@@ -222,7 +220,7 @@ end module dll_module
 !-----------------------------------------------------------------------
 !Main program
 !-----------------------------------------------------------------------
-program test_load_dll
+program swmm_interface
     use, intrinsic :: iso_c_binding
     use dll_module
     implicit none
@@ -303,7 +301,7 @@ program test_load_dll
     end interface
 
     ! The interface runs a SWMM simulation using the C-SWMM engine
-    integer :: errstat, num_args, ppos, i
+    integer :: errstat, num_args, ppos, SI, US
     real(c_double) :: elapsedTime
     real(c_float) :: runoffErr, flowErr, qualErr
     character(len = 1024) :: errmsg
@@ -312,13 +310,17 @@ program test_load_dll
     character(len = 256) :: inpfile, rptfile, outfile
     type(os_type) :: os
     type(dll_type) :: dll
-    type(c_funptr) :: cfun
     procedure(swmm_open), pointer :: fswmm_open
     procedure(swmm_start), pointer :: fswmm_start
     procedure(swmm_step), pointer :: fswmm_step
     procedure(swmm_end), pointer :: fswmm_end
     procedure(swmm_getMassBalErr), pointer :: fswmm_getMassBalErr
     procedure(swmm_close), pointer :: fswmm_close
+    procedure(swmm_printInfo), pointer :: fswmm_printInfo
+
+    ! Define SWMM constants
+    US = 0
+    SI = 1
 
     ! Get current working directory and path separator
     call getcwd(cwd)
@@ -335,9 +337,9 @@ program test_load_dll
         outfile = inpfile(1:ppos) // "out"
     end if
 
-    dll%filename= trim(cwd) // path_separator // trim("libswmm5.so")
+    dll%filename = trim(cwd) // path_separator // "libswmm5.so"
 
-    ! (1) We open the SWMM file (swmm_open)
+    ! (1) SWMM file is openned (swmm_open)
     !   It is necessary to provide paths for the following files:
     !   - input (.inp)
     !   - report (.rpt)
@@ -362,8 +364,8 @@ program test_load_dll
     call load_dll(os, dll, errstat, errmsg )
     call print_error(errstat, 'load_swmm_step')
     call c_f_procpointer(dll%procaddr, fswmm_step)
-    elapsedTime = 10
-    do while (elapsedTime /= 0)
+    elapsedTime = 1.0
+    do while (elapsedTime /= 0) ! Simulation ends when elapsedTime == 0.0
         errstat = fswmm_step(elapsedTime)
         call print_error(errstat, dll%procname)
     end do
@@ -376,7 +378,15 @@ program test_load_dll
     errstat = fswmm_end()
     call print_error(errstat, dll%procname)
 
-    ! (5) Get Mass Balance Error (swmm_getMassBalErr)
+    ! (5) Retrieve information (swmm_printInfo)
+    dll%procname = "swmm_printInfo"
+    call load_dll(os, dll, errstat, errmsg )
+    call print_error(errstat, 'load_swmm_printInfo')
+    call c_f_procpointer(dll%procaddr, fswmm_printInfo)
+    errstat = fswmm_printInfo(SI)
+    call print_error(errstat, dll%procname)
+
+    ! (6) Get Mass Balance Error (swmm_getMassBalErr)
     dll%procname = "swmm_getMassBalErr"
     call load_dll(os, dll, errstat, errmsg )
     call print_error(errstat, 'load_swmm_getMassBalErr')
@@ -385,7 +395,7 @@ program test_load_dll
     call print_error(errstat, dll%procname)
     print *, "Run-off error: ", runoffErr, " Flow error: ", flowErr, " Qual error: ", qualErr
 
-    ! (6) Close SWMM engine (swmm_close)
+    ! (7) Close SWMM engine (swmm_close)
     dll%procname = "swmm_close"
     call load_dll(os, dll, errstat, errmsg )
     call print_error(errstat, 'load_swmm_close')
@@ -395,4 +405,4 @@ program test_load_dll
 
     call free_dll (os, dll, errstat, errmsg)
 
-end program test_load_dll
+end program swmm_interface

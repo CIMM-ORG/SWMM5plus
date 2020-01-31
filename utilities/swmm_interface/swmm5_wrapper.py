@@ -101,14 +101,14 @@ def print_info(inp, units):
 	'''
 	Inputs:  inp (str) = Path to the input file .inp
 			 units (int) = unit system (US, SI)
-			 libpath (str) = path to 
+			 libpath (str) = path to
 	Outputs: None
 	Purpose: creates CSV files with information for SWMM6 FORTRAN engine
 
 	Creates two files:
 
 		nodes_info.csv
-			(int) n_left: number of nodes left in the list 
+			(int) n_left: number of nodes left in the list
 				(the first row tells the total number of nodes)
 			(string) node_id: id of the node
 			(int) ni_idx: index of the node in SWMM's data structure for nodes
@@ -127,7 +127,7 @@ def print_info(inp, units):
 			(int) ni_Mlink_d3: id of third link connected downstream to the node
 
 		links_info.csv
-			(int) l_left: number of links left in the list 
+			(int) l_left: number of links left in the list
 			(string) link_id
 			(int) li_idx
 			(int) li_link_type
@@ -143,7 +143,6 @@ def print_info(inp, units):
 	'''
 
 	global _SWMM5
-	
 
 	if platform.system() == 'Windows':
 		libpath =  'libswmm5.dll'
