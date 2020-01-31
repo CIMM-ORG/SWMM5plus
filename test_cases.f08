@@ -83,7 +83,7 @@
  real,    dimension(:),      allocatable :: newZBottom
  real,    dimension(:),      allocatable :: newXDistance
  real,    dimension(:),      allocatable :: newBreadth
- real,    dimension(:,:,:),  allocatable :: newWidthDepthData
+ real,    dimension(:,:,:),  allocatable, target :: newWidthDepthData
  type(string), dimension(:), allocatable :: newCellType(:)
  
  
@@ -100,6 +100,11 @@
  real :: subdivide_length_check = 10.0
  
  integer :: ii
+ 
+ real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+ real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+ real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+ real, pointer :: area_difference(:,:), local_difference(:,:)
 
 
 !--------------------------------------------------------------------------
@@ -254,6 +259,17 @@
         !calculate the geometry related information from widthDepth information
         !and store it at the same matrix
         call widthdepth_pair_auxiliary (newWidthDepthData, newCellType, newNumberPairs)
+        
+        widthAtLayerTop         => newWidthDepthData (:,:, wd_widthAtLayerTop)
+        depthAtLayerTop         => newWidthDepthData (:,:, wd_depthAtLayerTop)
+        areaThisLayer           => newWidthDepthData (:,:, wd_areaThisLayer)
+        areaTotalBelowThisLayer => newWidthDepthData (:,:, wd_areaTotalBelowThisLayer)
+        dWidth                  => newWidthDepthData (:,:, wd_Dwidth)
+        dDepth                  => newWidthDepthData (:,:, wd_Ddepth)
+        angle                   => newWidthDepthData (:,:, wd_angle)
+        perimeterBelowThisLayer => newWidthDepthData (:,:, wd_perimeterBelowThisLayer)
+        area_difference         => newWidthDepthData (:,:, wd_area_difference)
+        local_difference        => newWidthDepthData (:,:, wd_local_difference)
         
         !Pass the widthDepth matrix into the froude_driven_setup
         !Initial_condition_for_link_node_model
@@ -619,17 +635,29 @@
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
- area_difference = 0.0
- hDepth = depth
- topWidth = 0.0
- perimeter = 0.0
- 
- area = topWidth * hDepth
- rh = area / perimeter
- velocity = Froude * sqrt(grav * hDepth)
- flowrate = area * velocity
- slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
- upperZ = lowerZ + slope * total_length
+!  area_difference = 0.0
+!  hDepth = depth
+!  area (ii) = volume(ii) / length(ii)
+!  area_difference(ii,:) = area (ii) - areaTotalBelowThisLayer(elemI(ii,e2i_link_ID),:)
+!  local_difference(ii,:) = area_difference(ii,:) - areaThisLayer(elemI(ii,e2i_link_ID),:)
+!  ind = findloc(sign(oneR, area_difference(ii,:)*local_difference(ii,:)), -1.0, DIM=1) 
+! 
+!  AA = oneR/tan(angle(ii,ind))
+!  BB = widthAtLayerTop(ii,ind) - dWidth(ii,ind)
+!  CC = - area_difference(ii,ind)
+!  DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
+! 
+!  hDepth = DD + depthAtLayerTop(ii,ind) - dDepth(ii,ind)
+!  topWidth = widthAtLayerTop(ii,ind) - (dDepth(ii,ind)-DD) &
+!             *dWidth(ii,ind)/dDepth(ii,ind)
+!  perimeter = perimeterBelowThisLayer(ii,ind) + twoR * DD/sin(angle(ii,ind))
+!  
+!  area = topWidth * hDepth
+!  rh = area / perimeter
+!  velocity = Froude * sqrt(grav * hDepth)
+!  flowrate = area * velocity
+!  slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+!  upperZ = lowerZ + slope * total_length
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine Initial_condition_for_width_depth_system
