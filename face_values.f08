@@ -309,7 +309,7 @@ call interp_channel_onetype &
 ! so, I'm using the timescae for eta here
 call interp_channel_onetype &
     (faceR, facemask, faceI, elem2R, &
-     weightUpG, weightDnG, valueUp, valueDn, e2rset(2), frset(2))
+     weightUpH, weightDnH, valueUp, valueDn, e2rset(2), frset(2))
 
 call interp_channel_onetype &
     (faceR, facemask, faceI, elem2R, &

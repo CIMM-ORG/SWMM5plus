@@ -83,9 +83,9 @@
 !%  hard-code setting for test cases
 
  setting%TestCase%UseTestCase = .true.
- ! setting%TestCase%TestName = 'simple_channel_001'
+ setting%TestCase%TestName = 'simple_channel_001'
  ! setting%TestCase%TestName = 'y_channel_002'
- setting%TestCase%TestName = 'simple_weir_003'
+ ! setting%TestCase%TestName = 'simple_weir_003'
 
 !%  hard-code for debug output
  setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
