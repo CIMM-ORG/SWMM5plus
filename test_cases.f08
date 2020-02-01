@@ -260,16 +260,10 @@
         !and store it at the same matrix
         call widthdepth_pair_auxiliary (newWidthDepthData, newCellType, newNumberPairs)
         
-        widthAtLayerTop         => newWidthDepthData (:,:, wd_widthAtLayerTop)
-        depthAtLayerTop         => newWidthDepthData (:,:, wd_depthAtLayerTop)
-        areaThisLayer           => newWidthDepthData (:,:, wd_areaThisLayer)
-        areaTotalBelowThisLayer => newWidthDepthData (:,:, wd_areaTotalBelowThisLayer)
-        dWidth                  => newWidthDepthData (:,:, wd_Dwidth)
-        dDepth                  => newWidthDepthData (:,:, wd_Ddepth)
-        angle                   => newWidthDepthData (:,:, wd_angle)
-        perimeterBelowThisLayer => newWidthDepthData (:,:, wd_perimeterBelowThisLayer)
-        area_difference         => newWidthDepthData (:,:, wd_area_difference)
-        local_difference        => newWidthDepthData (:,:, wd_local_difference)
+        call Initial_condition_for_width_depth_system &
+            (upperZ, area, flowrate, velocity, Froude,  channel_breadth, &
+             ManningsN, channel_length, lowerZ, depth_upstream, newWidthDepthData)
+        
         
         !Pass the widthDepth matrix into the froude_driven_setup
         !Initial_condition_for_link_node_model
@@ -614,29 +608,43 @@
  subroutine Initial_condition_for_width_depth_system &
     (upperZ, area, flowrate, velocity,  &
      Froude,  breadth, ManningsN, total_length, &
-     lowerZ, depth)
+     lowerZ, depth, widthDepthData)
 
  character(64) :: subroutine_name = 'Initial_condition_for_width_depth_system'
 
- real,  intent(out)    :: area, flowrate, velocity, upperZ
- real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
- real,  intent(in)     :: depth
- 
-!  integer, target, intent(in out)    :: wdID(:)
-!  integer, target, intent(in out)    :: wdnumberPairs(:)
-!  real,    target, intent(in out)    :: wdxDistance(:)
-!  real,    target, intent(in out)    :: widthDepthData(:,:,:)
-!  type(string), target, intent(in out)   :: wdcellType(:)
+ real,  intent(out)    :: area(:), flowrate(:), velocity(:), upperZ(:)
+ real,  intent(in)     :: Froude(:),  breadth(:), ManningsN(:), lowerZ(:), total_length(:)
+ real,  intent(in)     :: depth(:)
+!  
+ real,    target, intent(in out)    :: widthDepthData(:,:,:)
 
  real :: perimeter, rh, slope, hDepth, topWidth
  real :: AA, BB, CC, DD
- real :: area_difference, local_difference, ind
+ integer :: ind(size(depth,1)), ii
+ 
+ real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+ real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+ real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+ real, pointer :: area_difference(:,:), local_difference(:,:), depthTBL(:,:)
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
-!  area_difference = 0.0
-!  hDepth = depth
+ widthAtLayerTop         => widthDepthData (:,:, wd_widthAtLayerTop)
+ depthAtLayerTop         => widthDepthData (:,:, wd_depthAtLayerTop)
+ areaThisLayer           => widthDepthData (:,:, wd_areaThisLayer)
+ areaTotalBelowThisLayer => widthDepthData (:,:, wd_areaTotalBelowThisLayer)
+ depthTBL                => widthDepthData (:,:, wd_depthTotalBelowThisLayer)
+ dWidth                  => widthDepthData (:,:, wd_Dwidth)
+ dDepth                  => widthDepthData (:,:, wd_Ddepth)
+ angle                   => widthDepthData (:,:, wd_angle)
+ perimeterBelowThisLayer => widthDepthData (:,:, wd_perimeterBelowThisLayer)
+ area_difference         => widthDepthData (:,:, wd_area_difference)
+ local_difference        => widthDepthData (:,:, wd_local_difference)
+ 
+ do ii= 1, N_link
+    ind(ii) = minloc(abs(depthTBL(ii,:)-depth(ii)))
+ enddo
 !  area (ii) = volume(ii) / length(ii)
 !  area_difference(ii,:) = area (ii) - areaTotalBelowThisLayer(elemI(ii,e2i_link_ID),:)
 !  local_difference(ii,:) = area_difference(ii,:) - areaThisLayer(elemI(ii,e2i_link_ID),:)

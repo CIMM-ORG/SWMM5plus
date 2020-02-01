@@ -313,7 +313,7 @@
  real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
  real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
  real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
- real, pointer :: area_difference(:,:), local_difference(:,:)
+ real, dimension(:), allocatable :: area_difference, local_difference
  
  real :: AA, BB, CC, DD
  integer :: ii,ind
@@ -347,8 +347,9 @@
  dDepth                  => widthDepthData (:,:, wd_Ddepth)
  angle                   => widthDepthData (:,:, wd_angle)
  perimeterBelowThisLayer => widthDepthData (:,:, wd_perimeterBelowThisLayer)
- area_difference         => widthDepthData (:,:, wd_area_difference)
- local_difference        => widthDepthData (:,:, wd_local_difference)
+ 
+ allocate (area_difference(size(widthDepthData,2)))
+ allocate (local_difference(size(widthDepthData,2)))
 
  where ( (elemI(:,ei_geometry)  == eRectangular) .and. &
          (elemI(:,ei_elem_type) == elem_type_value    )         )
@@ -411,14 +412,16 @@
     if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
          (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
          
+            area_difference  = zeroR
+            local_difference = zeroR
             area (ii) = volume(ii) / length(ii)
-            area_difference(ii,:) = area (ii) - areaTotalBelowThisLayer(elemI(ii,e2i_link_ID),:)
-            local_difference(ii,:) = area_difference(ii,:) - areaThisLayer(elemI(ii,e2i_link_ID),:)
-            ind = findloc(sign(oneR, area_difference(ii,:)*local_difference(ii,:)), -1.0, DIM=1)
+            area_difference(:) = area (ii) - areaTotalBelowThisLayer(elemI(ii,e2i_link_ID),:)
+            local_difference(:) = area_difference(:) - areaThisLayer(elemI(ii,e2i_link_ID),:)
+            ind = findloc(sign(oneR, area_difference(:)*local_difference(:)), -1.0, DIM=1)
             
             AA = oneR/tan(angle(ii,ind))
             BB = widthAtLayerTop(ii,ind) - dWidth(ii,ind)
-            CC = - area_difference(ii,ind)
+            CC = - area_difference(ind)
             DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
             
             hyddepth (ii)  = DD + depthAtLayerTop(ii,ind) - dDepth(ii,ind)

@@ -462,6 +462,8 @@ subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
  
  real, pointer :: width(:,:), depth(:,:), area(:,:), areaTBL(:,:)
  real, pointer :: dWidth(:,:), dDepth(:,:), angle(:,:), perimeterBL(:,:)
+ real, pointer :: rH(:,:), gammaBTL(:,:), depthTBL(:,:) 
+ real, pointer :: area_difference(:,:), local_difference(:,:)
  
  integer :: ii,jj
  integer :: eIn1
@@ -475,10 +477,15 @@ subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
  depth       => widthDepthData (:,:, wd_depthAtLayerTop)
  area        => widthDepthData (:,:, wd_areaThisLayer)
  areaTBL     => widthDepthData (:,:, wd_areaTotalBelowThisLayer)
+ depthTBL    => widthDepthData (:,:, wd_depthTotalBelowThisLayer)
  dWidth      => widthDepthData (:,:, wd_Dwidth)
  dDepth      => widthDepthData (:,:, wd_Ddepth)
  angle       => widthDepthData (:,:, wd_angle)
  perimeterBL => widthDepthData (:,:, wd_perimeterBelowThisLayer)
+ rH          => widthDepthData (:,:, wd_rHBelowThisLayer)
+ gammaBTL    => widthDepthData (:,:, wd_gammaBelowThisLayer)
+ area_difference  => widthDepthData (:,:, wd_area_difference)
+ local_difference => widthDepthData (:,:, wd_local_difference)
  
  ! lowest layer is triangular
  area(:,1) = onehalfR * width(:,1) * depth(:,1)
@@ -516,6 +523,9 @@ subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
  areaTBL(:,1) = zeroR
  areaTBL(:,2:eIn1) = areaTBL(:,1:eIn1-1) + area(:,1:eIn1-1)
  
+ depthTBL(:,1) = depth(:,1)
+ depthTBL(:,2:eIn1) = depthTBL(:,1:eIn1-1) + depth(:,1:eIn1-1)
+ 
  ! check that the setting maximum area value is greater than any accumulated 
  ! area at the uppermost level.
  if (setting%Method%AdjustWidthDepth%areaMaximum < maxval(areaTBL(:, eIn1))) then
@@ -526,6 +536,14 @@ subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
  perimeterBL(:,1) = zeroR
  perimeterBL(:,2:eIn1) = perimeterBL(:,1:eIn1-1) &
         + twoR * sqrt(dDepth(:,1:eIn1-1)**twoR + onehalfR * dWidth(:,1:eIn1-1)**twoR)
+        
+ rH(:,1) = zeroR
+ rH(:,2:eIn1) = areaTBL(:,2:eIn1)/perimeterBL(:,2:eIn1)
+ 
+ gammaBTL = areaTBL * rH**twothirdR
+ 
+ area_difference = area - areaTBL
+ local_difference = area_difference - area
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine widthdepth_pair_auxiliary

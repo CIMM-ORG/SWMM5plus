@@ -497,13 +497,16 @@
     integer, parameter :: wd_depthAtLayerTop         = 2
     integer, parameter :: wd_areaThisLayer           = 3
     integer, parameter :: wd_areaTotalBelowThisLayer = 4
-    integer, parameter :: wd_Dwidth                  = 5
-    integer, parameter :: wd_Ddepth                  = 6
-    integer, parameter :: wd_angle                   = 7
-    integer, parameter :: wd_perimeterBelowThisLayer = 8
-    integer, parameter :: wd_area_difference         = 9
-    integer, parameter :: wd_local_difference        = 10
-    integer, parameter :: wd_idx_max                 = 10
+    integer, parameter :: wd_depthTotalBelowThisLayer= 5
+    integer, parameter :: wd_Dwidth                  = 6
+    integer, parameter :: wd_Ddepth                  = 7
+    integer, parameter :: wd_angle                   = 8
+    integer, parameter :: wd_perimeterBelowThisLayer = 9
+    integer, parameter :: wd_rHBelowThisLayer        = 10
+    integer, parameter :: wd_gammaBelowThisLayer     = 11
+    integer, parameter :: wd_area_difference         = 12
+    integer, parameter :: wd_local_difference        = 13
+    integer, parameter :: wd_idx_max                 = 13
 
 !==========================================================================
 ! END OF MODULE array_index
