@@ -618,9 +618,10 @@
 !  
  real,    target, intent(in out)    :: widthDepthData(:,:,:)
 
- real :: perimeter, rh, slope, hDepth, topWidth
+ real :: perimeter(size(depth,1)), rh(size(depth,1)), slope(size(depth,1)), topWidth(size(depth,1))
  real :: AA, BB, CC, DD
- integer :: ind(size(depth,1)), ii
+ integer :: ind, ii
+ real :: temp1(size(depth,1)), hDepth(size(depth,1))
  
  real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
  real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
@@ -643,29 +644,25 @@
  local_difference        => widthDepthData (:,:, wd_local_difference)
  
  do ii= 1, N_link
-    ind(ii) = minloc(abs(depthTBL(ii,:)-depth(ii)))
+    temp1(:) = depthTBL(ii,:)-depth(ii)
+    ind = minloc(abs(temp1(:)), DIM=1)
+    
+    area (ii) =  areaTotalBelowThisLayer(ii, ind)
+    AA = oneR/tan(angle(ii,ind))
+    BB = widthAtLayerTop(ii,ind) - dWidth(ii,ind)
+    CC = - area_difference(ii,ind)
+    DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
+    
+    hdepth(ii) = DD + depthAtLayerTop(ii,ind) - dDepth(ii,ind)
+    topWidth(ii) = widthAtLayerTop(ii,ind) - (dDepth(ii,ind)-DD) &
+              *dWidth(ii,ind)/dDepth(ii,ind)
+    perimeter(ii) = perimeterBelowThisLayer(ii,ind) + twoR * DD/sin(angle(ii,ind))
  enddo
-!  area (ii) = volume(ii) / length(ii)
-!  area_difference(ii,:) = area (ii) - areaTotalBelowThisLayer(elemI(ii,e2i_link_ID),:)
-!  local_difference(ii,:) = area_difference(ii,:) - areaThisLayer(elemI(ii,e2i_link_ID),:)
-!  ind = findloc(sign(oneR, area_difference(ii,:)*local_difference(ii,:)), -1.0, DIM=1) 
-! 
-!  AA = oneR/tan(angle(ii,ind))
-!  BB = widthAtLayerTop(ii,ind) - dWidth(ii,ind)
-!  CC = - area_difference(ii,ind)
-!  DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
-! 
-!  hDepth = DD + depthAtLayerTop(ii,ind) - dDepth(ii,ind)
-!  topWidth = widthAtLayerTop(ii,ind) - (dDepth(ii,ind)-DD) &
-!             *dWidth(ii,ind)/dDepth(ii,ind)
-!  perimeter = perimeterBelowThisLayer(ii,ind) + twoR * DD/sin(angle(ii,ind))
-!  
-!  area = topWidth * hDepth
-!  rh = area / perimeter
-!  velocity = Froude * sqrt(grav * hDepth)
-!  flowrate = area * velocity
-!  slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
-!  upperZ = lowerZ + slope * total_length
+ rh = area / perimeter
+ velocity = Froude * sqrt(grav * hDepth)
+ flowrate = area * velocity
+ slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+ upperZ = lowerZ + slope * total_length
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine Initial_condition_for_width_depth_system
