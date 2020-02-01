@@ -663,6 +663,19 @@
  flowrate = area * velocity
  slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
  upperZ = lowerZ + slope * total_length
+ 
+!  do ii= 1, N_link
+!     print *, "elelment No. =", ii
+!     print *, area(ii)
+!     print *, perimeter(ii)
+!     print *, rh(ii)
+!     print *, velocity(ii)
+!     print *, flowrate(ii)
+!     print *, slope(ii)
+!     print *, upperZ(ii), lowerZ(ii)
+!     print *, total_length(ii)
+!     print *, slope(ii)*total_length(ii)
+!  enddo
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine Initial_condition_for_width_depth_system
