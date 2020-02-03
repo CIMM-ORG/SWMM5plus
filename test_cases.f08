@@ -264,33 +264,6 @@
             (upperZ, area, flowrate, velocity, Froude,  channel_breadth, &
              ManningsN, channel_length, lowerZ, depth_upstream, newWidthDepthData)
         
-        
-        !Pass the widthDepth matrix into the froude_driven_setup
-        !Initial_condition_for_link_node_model
-        
-        !use depth_upstream to calculate the surface area at the inlet
-        
-        ! calculate the perimeter
-        !rh = area / perimeter
-        !velocity = Froude * sqrt(grav * hDepth)
-        !flowrate = area * velocity
-        !slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
-        !upperZ = lowerZ + slope * total_length
-        
-        ! calculate the hydraulic radius for the upstream
-        
-        ! calculate the valocity from Fr number
-        
-        ! Calculate the slope
-        
-        ! check to see if the Hr doesn't go above the data we have
-        
-        ! calculate the surface area of the inlet base on the final Ht
-        
-        ! calculate the Sj
-        
-        
-        
         call this_setting_for_time_and_steps &
             (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, &
              display_interval, 2)
