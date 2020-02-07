@@ -49,8 +49,9 @@
  type(string), dimension(:),   allocatable, intent(out) :: nodeName
  type(bcType), dimension(:),   allocatable, intent(out) :: bcdataUp, bcdataDn
 
- real, dimension(:), allocatable :: depth_dnstream, depth_upstream
- real, dimension(:), allocatable :: subdivide_length, channel_length, channel_breadth
+ real, dimension(:), allocatable :: depth_dnstream, depth_upstream, init_depth
+ real, dimension(:), allocatable :: subdivide_length, channel_length
+ real, dimension(:), allocatable :: channel_breadth, channel_topwidth
  real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
  real, dimension(:), allocatable :: parabolaValue, leftSlope, rightSlope
@@ -122,8 +123,8 @@
 
         !% create the local variables that must be populated to set up the test case
         call control_variable_allocation &
-            (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-             channel_breadth, subdivide_length, flowrate, area, &
+            (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, channel_topwidth, subdivide_length, flowrate, area, &
              velocity, Froude, ManningsN, idepth_type, channel_geometry, &
              parabolaValue, leftSlope, rightSlope)
 
@@ -147,6 +148,7 @@
 
         depth_upstream  = 1.0
         depth_dnstream  = 1.0
+        init_depth      = 1.0
         idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
         ManningsN       = 0.03
         channel_length    = 10000.0
@@ -160,25 +162,25 @@
 
         call froude_driven_setup &
             (upperZ(1), area(1), flowrate(1), velocity(1),  &
-             Froude(1),  channel_breadth(1), ManningsN(1), channel_length(1), &
-             lowerZ(1),  depth_upstream(1), channel_geometry(1), &
-             parabolaValue(1), leftSlope(1), rightSlope(1))
+             Froude(1),  channel_breadth(1), channel_topwidth(1), ManningsN(1), & 
+             channel_length(1), lowerZ(1),  init_depth(1), &
+             channel_geometry(1), parabolaValue(1), leftSlope(1), rightSlope(1))
 
         call this_setting_for_time_and_steps &
-            (CFL, velocity, depth_upstream, subdivide_length, &
+            (CFL, velocity, init_depth, subdivide_length, &
              first_step, last_step, display_interval,2)
 
         call case_simple_channel_initialize &
-            (channel_length(1), channel_breadth(1), subdivide_length(1), &
-             lowerZ(1), upperZ(1), flowrate(1), depth_upstream(1), depth_dnstream(1), &
+            (channel_length(1), channel_breadth(1), channel_topwidth(1), subdivide_length(1), &
+             lowerZ(1), upperZ(1), flowrate(1), init_depth(1), depth_upstream(1), depth_dnstream(1), &
              ManningsN(1), lManningsN, idepth_type(1),                                   &
              linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
              bcdataDn, bcdataUp)
 
         if (.not. setting%Debugout%SuppressAllFiles) then
             call write_testcase_setup_file &
-                (Froude, CFL, flowrate, velocity, depth_upstream,   &
-                 depth_dnstream, channel_breadth, area, &
+                (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                 depth_dnstream, channel_breadth, channel_topwidth, area, &
                  channel_length, subdivide_length, &
                  lowerZ, upperZ, ManningsN)
         endif
@@ -221,8 +223,8 @@
         
         !% create the local variables that must be populated to set up the test case
         call control_variable_allocation &
-            (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-             channel_breadth, subdivide_length, flowrate, area, &
+            (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, channel_topwidth, subdivide_length, flowrate, area, &
              velocity,  Froude, ManningsN, idepth_type, channel_geometry, &
              parabolaValue, leftSlope, rightSlope)
              
@@ -245,6 +247,7 @@
         
         depth_upstream(:)   = 0.3
         depth_dnstream(:)   = 0.3
+        init_depth(:)       = 0.3
         idepth_type         = 1  !1 = uniform, 2=linear, 3=exponential decay
         ManningsN           = newManningsN
         channel_length      = newLength
@@ -262,15 +265,16 @@
         
         call Initial_condition_for_width_depth_system &
             (upperZ, area, flowrate, velocity, Froude,  channel_breadth, &
-             ManningsN, channel_length, lowerZ, depth_upstream, newWidthDepthData)
+             channel_topwidth, ManningsN, channel_length, lowerZ, &
+             init_depth, newWidthDepthData)
         
         call this_setting_for_time_and_steps &
-            (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, &
+            (CFL, velocity, init_depth, subdivide_length, first_step, last_step, &
              display_interval, 2)
              
         call case_waller_creek_initialize &
-            (channel_length, channel_breadth, subdivide_length, &
-             lowerZ, upperZ, flowrate, depth_upstream, depth_dnstream, &
+            (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
+             lowerZ, upperZ, flowrate, init_depth, depth_upstream, depth_dnstream, &
              ManningsN, lManningsN, idepth_type,                                   &
              linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
              bcdataDn, bcdataUp, newID, newNumberPairs, &
@@ -278,8 +282,8 @@
         
         if (.not. setting%Debugout%SuppressAllFiles) then
             call write_testcase_setup_file &
-                (Froude, CFL, flowrate, velocity, depth_upstream,   &
-                 depth_dnstream, channel_breadth, area, &
+                (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                 depth_dnstream, channel_breadth, channel_topwidth, area, &
                  channel_length, subdivide_length, &
                  lowerZ, upperZ, ManningsN)
         endif
@@ -294,8 +298,8 @@
         N_BCdnstream = 1
 
         call control_variable_allocation &
-            (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-             channel_breadth, subdivide_length, flowrate, area, &
+            (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, channel_topwidth, subdivide_length, flowrate, area, &
              velocity,  Froude, ManningsN, idepth_type, channel_geometry, &
              parabolaValue, leftSlope, rightSlope)
 
@@ -312,6 +316,7 @@
 
         CFL          = 0.6  ! determines dt from subdivide_length
 
+        init_depth(1:3)    = 1.0
         depth_dnstream(1)  = 1.0
         depth_upstream(1)  = 1.0 ! junction
 
@@ -354,8 +359,9 @@
             end if
             call froude_driven_setup &
                 (uz, area(mm), flowrate(mm), velocity(mm),                               &
-                 Froude(mm), channel_breadth(mm), ManningsN(mm), channel_length(mm), &
-                 lz, depth_upstream(mm), channel_geometry(mm), &
+                 Froude(mm), channel_breadth(mm), channel_topwidth(mm), &
+                 ManningsN(mm), channel_length(mm), &
+                 lz, init_depth(mm), channel_geometry(mm), &
                  parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
             select case (mm)
                 case (1)
@@ -370,20 +376,21 @@
         end do
 
         call this_setting_for_time_and_steps &
-            (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, &
+            (CFL, velocity, init_depth, subdivide_length, first_step, last_step, &
              display_interval, 2)
 
         call case_y_channel_initialize &
-            (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-             flowrate, depth_upstream, depth_dnstream,                  &
-             ManningsN, lManningsN, idepth_type,                            &
-             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
+            (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
+             lowerZ, upperZ, flowrate, init_depth, depth_upstream, depth_dnstream,       &
+             ManningsN, lManningsN, idepth_type,                             &
+             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
              bcdataDn, bcdataUp)
 
         if (.not. setting%Debugout%SuppressAllFiles) then
             call write_testcase_setup_file &
-                (Froude, CFL, flowrate, velocity, depth_upstream,   &
-                 depth_dnstream, channel_breadth, area, channel_length, subdivide_length, &
+                (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                 depth_dnstream, channel_breadth, channel_topwidth, area, &
+                 channel_length, subdivide_length, &
                  lowerZ, upperZ, ManningsN)
         endif
 
@@ -410,15 +417,16 @@
 !==========================================================================
 !
  subroutine control_variable_allocation &
-    (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-     channel_breadth, subdivide_length, flowrate, area, &
+    (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+     channel_breadth, channel_topwidth, subdivide_length, flowrate, area, &
      velocity,  Froude, ManningsN, idepth_type, channel_geometry, &
      parabolaValue, leftSlope, rightSlope)
 
  character(64) :: subroutine_name = 'control_variable_allocation'
 
- real, dimension(:), allocatable, intent(out) :: depth_dnstream, depth_upstream
- real, dimension(:), allocatable, intent(out) :: subdivide_length, channel_length, channel_breadth
+ real, dimension(:), allocatable, intent(out) :: depth_dnstream, depth_upstream, init_depth
+ real, dimension(:), allocatable, intent(out) :: subdivide_length, channel_length
+ real, dimension(:), allocatable, intent(out) :: channel_breadth, channel_topwidth
  real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
  real, dimension(:), allocatable, intent(out) :: parabolaValue, leftSlope, rightSlope
@@ -429,12 +437,14 @@
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
+    allocate(init_depth(N_link))
     allocate(depth_dnstream(N_link))
     allocate(depth_upstream(N_link))
     allocate(lowerZ(N_link))
     allocate(upperZ(N_link))
     allocate(channel_length(N_link))
     allocate(channel_breadth(N_link))
+    allocate(channel_topwidth(N_link))
     allocate(subdivide_length(N_link))
     !allocate(initial_flowrate(N_link))
     allocate(area(N_link))
@@ -504,12 +514,12 @@
 !
  subroutine froude_driven_setup &
     (upperZ, area, flowrate, velocity,  &
-     Froude,  breadth, ManningsN, total_length, &
+     Froude,  breadth, topwidth, ManningsN, total_length, &
      lowerZ, depth, channel_geometry, parabolaValue, leftSlope, rightSlope)
 
  character(64) :: subroutine_name = 'froude_driven_setup'
 
- real,  intent(out)    :: area, flowrate, velocity, upperZ
+ real,  intent(out)    :: area, flowrate, velocity, upperZ, topwidth
  real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
  real,  intent(in)     :: depth
  real,  intent(in)     :: parabolaValue, leftSlope, rightSlope
@@ -517,7 +527,7 @@
  real :: perimeter, rh, slope
  integer, intent(in) :: channel_geometry
  
- real :: topWidth , xParabola , hDepth
+ real :: xParabola , hDepth
  
 
 
@@ -527,29 +537,29 @@
  select case (channel_geometry)
     case(lRectangular)
         hDepth = depth
-        topWidth = breadth
+        topwidth = breadth
         area = hDepth * breadth
         perimeter = 2.0 * hDepth + breadth
         
     case(lParabolic)
         hDepth = (twoR / threeR) * depth
-        topWidth = twoR * sqrt(abs(depth/parabolaValue))
-        area = twothirdR * topWidth * depth
-        xParabola = fourR * depth / topWidth
+        topwidth = twoR * sqrt(abs(depth/parabolaValue))
+        area = twothirdR * topwidth * depth
+        xParabola = fourR * depth / topwidth
         perimeter = onehalfR * topwidth &
             *( sqrt( oneR + xParabola**twoR ) + oneR / xParabola &
             * log ( xParabola + sqrt( oneR + xParabola**twoR )) )
             
     case(lTrapezoidal)
         area = (breadth + onehalfR * (leftSlope + rightSlope) * depth ) * depth
-        topWidth = breadth + (leftSlope + rightSlope) * depth
-        hDepth = area / topWidth
+        topwidth = breadth + (leftSlope + rightSlope) * depth
+        hDepth = area / topwidth
         perimeter = breadth + depth * (sqrt(oneR + leftSlope**twoR ) &
                     + sqrt(oneR + rightSlope**twoR))
                     
     case(lTriangle)
         area = onehalfR * (leftSlope + rightSlope) * depth ** twoR
-        topWidth = (leftSlope + rightSlope) * depth
+        topwidth = (leftSlope + rightSlope) * depth
         hDepth = onehalfR * depth
         perimeter = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
         
@@ -580,18 +590,18 @@
 !
  subroutine Initial_condition_for_width_depth_system &
     (upperZ, area, flowrate, velocity,  &
-     Froude,  breadth, ManningsN, total_length, &
+     Froude,  breadth, topwidth, ManningsN, total_length, &
      lowerZ, depth, widthDepthData)
 
  character(64) :: subroutine_name = 'Initial_condition_for_width_depth_system'
 
- real,  intent(out)    :: area(:), flowrate(:), velocity(:), upperZ(:)
+ real,  intent(out)    :: area(:), flowrate(:), velocity(:), upperZ(:), topwidth(:)
  real,  intent(in)     :: Froude(:),  breadth(:), ManningsN(:), lowerZ(:), total_length(:)
  real,  intent(in)     :: depth(:)
 !  
  real,    target, intent(in out)    :: widthDepthData(:,:,:)
 
- real :: perimeter(size(depth,1)), rh(size(depth,1)), slope(size(depth,1)), topWidth(size(depth,1))
+ real :: perimeter(size(depth,1)), rh(size(depth,1)), slope(size(depth,1))
  real :: AA, BB, CC, DD
  integer :: ind, ii
  real :: temp1(size(depth,1)), hDepth(size(depth,1))
@@ -627,7 +637,7 @@
     DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
     
     hdepth(ii) = DD + depthAtLayerTop(ii,ind) - dDepth(ii,ind)
-    topWidth(ii) = widthAtLayerTop(ii,ind) - (dDepth(ii,ind)-DD) &
+    topwidth(ii) = widthAtLayerTop(ii,ind) - (dDepth(ii,ind)-DD) &
               *dWidth(ii,ind)/dDepth(ii,ind)
     perimeter(ii) = perimeterBelowThisLayer(ii,ind) + twoR * DD/sin(angle(ii,ind))
  enddo
@@ -657,15 +667,15 @@
 !==========================================================================
 !
  subroutine write_testcase_setup_file &
-    (Froude, CFL, flowrate, velocity, depth_upstream, depth_dnstream, breadth,  &
-     area, total_length, subdivide_length, lowerZ, upperZ, ManningsN)
+    (Froude, CFL, flowrate, velocity, init_depth, depth_upstream, depth_dnstream, breadth,  &
+     topwidth, area, total_length, subdivide_length, lowerZ, upperZ, ManningsN)
 
  character(64) :: subroutine_name = ' write_testcase_setup_file'
 
  real,  intent(in)  :: CFL
- real,  intent(in)  :: Froude(:),  flowrate(:), velocity(:),  breadth(:)
+ real,  intent(in)  :: Froude(:),  flowrate(:), velocity(:),  breadth(:), topwidth(:)
  real,  intent(in)  :: area(:), total_length(:), subdivide_length(:), lowerZ(:), upperZ(:)
- real,  intent(in)  :: ManningsN(:), depth_upstream(:), depth_dnstream(:)
+ real,  intent(in)  :: ManningsN(:), depth_upstream(:), depth_dnstream(:), init_depth(:)
 
  integer        :: UnitNumber
 
@@ -723,15 +733,17 @@
  write(UnitNumber,*) Froude  ,'=Froude'
  write(UnitNumber,*) CFL     ,'=CFL combined'
  write(UnitNumber,*) velocity * setting%Time%Dt / subdivide_length,'=CFL advective'
- write(UnitNumber,*) sqrt(grav * depth_upstream) * setting%Time%DT / subdivide_length,'=CFL barotropic'
+ write(UnitNumber,*) sqrt(grav * init_depth) * setting%Time%DT / subdivide_length,'=CFL barotropic'
  write(UnitNumber,*)
  write(UnitNumber,*) flowrate, '=flowrate'
  write(UnitNumber,*) velocity, '=velocity'
  write(UnitNumber,*) setting%Time%Dt,' = dt'
  write(UnitNumber,*)
+ write(UnitNumber,*) init_depth       ,'=init depth'
  write(UnitNumber,*) depth_upstream   ,'=depth upstream'
  write(UnitNumber,*) depth_dnstream   ,'=depth downstream'
  write(UnitNumber,*) breadth ,'=breadth'
+ write(UnitNumber,*) topwidth ,'=topwidth'
  write(UnitNumber,*) area    ,'=area'
  write(UnitNumber,*) total_length ,'=total_length'
  write(UnitNumber,*) subdivide_length ,'=subdivide_length'
