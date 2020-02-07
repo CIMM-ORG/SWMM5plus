@@ -230,7 +230,7 @@
  where (elemI(:,ei_elem_type) == eThisElemType)
     flowrate = area * velocity
  endwhere
- 
+
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine flowrate_from_velocity
 !
@@ -640,7 +640,7 @@ where (maskarray1)
     tscale_Q_up = - onehalfR * length / (velocity - wavespeed)
     tscale_Q_dn = + onehalfR * length / (velocity + wavespeed)
     tscale_G_up = tscale_Q_up
-    tscale_G_dn = tscale_G_dn
+    tscale_G_dn = tscale_Q_dn
     tscale_H_up = tscale_Q_up
     tscale_H_dn = tscale_Q_dn
 

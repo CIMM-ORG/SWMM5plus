@@ -70,8 +70,7 @@
 
  velocityMold => elemMR(:,eMr_Velocity_old)
  velocityMnew => elemMR(:,eMr_Velocity_new)
-
- wCrown       => elem2R(:,e2r_Depth)
+ 
  wZbottom     => elem2R(:,e2r_Zbottom)
 
 !%  temporary space for elem2
@@ -79,6 +78,9 @@
  next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
  wCrest        => elem2R(:,e2r_Temp(next_e2r_temparray))
+ next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
+ wCrown       => elem2R(:,e2r_Temp(next_e2r_temparray))
  next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
  dir           => elem2I(:,e2i_Temp(next_e2i_temparray))
@@ -95,7 +97,11 @@
  wHeight        => setting%Weir%WeirHeight
  wSideSlope     => setting%Weir%WeirSideSlope
  wInletoffset   => setting%Weir%WeirInletOffset 
-
+ 
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) )
+            wCrest =  wInletoffset + wZbottom
+            wCrown =  wCrest + wHeight
+ endwhere 
 
  call weir_effective_head &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
@@ -111,15 +117,16 @@
      elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      wWidth, wHeight, wCoeff, wSideSlope, dir, EffectiveHead, &
      thiscoef)
+    ! print*, EffectiveHead, 'EffectiveHead'
 
  ! release temporary arrays
  EffectiveHead  = nullvalueR
  wCrest         = nullvalueR
 
  dir            = nullvalueI
- nullify(EffectiveHead, wCrest)
+ nullify(EffectiveHead, wCrest, wCrown)
  nullify(dir)
- next_e2r_temparray = next_e2r_temparray - 2
+ next_e2r_temparray = next_e2r_temparray - 3
  next_e2i_temparray = next_e2i_temparray - 1
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -143,36 +150,69 @@ subroutine weir_effective_head &
 
  real,  pointer   ::  wCrest(:), wCrown(:), EffectiveHead(:)
 
- real,  pointer   ::  fEdn(:), fEup(:)
+ real,  pointer   ::  fHdn(:), fHup(:), nominalHup(:), nominalHdn(:)
  integer, pointer ::  iup(:), idn(:), dir(:)
 
  integer :: mm
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-!%  pointers for convenience in notation
- fEdn  => faceR(:,fr_Eta_d)
- fEup  => faceR(:,fr_Eta_u)
+!% temporary allocation of pointers
+ nominalHdn => elem2R(:,e2r_Temp(next_e2r_temparray))
+ next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+ 
+ nominalHup => elem2R(:,e2r_Temp(next_e2r_temparray))
+ next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
-!% Calculate Effective Head (Assuming the flow is U/S to D/S needed to be fixed for flow revarsal
+!%  pointers for convenience in notation
+ fHdn  => faceR(:,fr_HydDepth_d)
+ fHup  => faceR(:,fr_HydDepth_u)
+
  iup   => elem2I(:,e2i_Mface_u)
  idn   => elem2I(:,e2i_Mface_d)
 
  where      ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
-              (fEdn(iup) .GE. fEup(idn)) )
-
+              (fHup(iup) .GE. fHdn(idn)) )
             dir = oneI
-            EffectiveHead = fEdn(iup)  - fEup(idn)
-
- elsewhere ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
-              (fEdn(iup) .LT. fEup(idn)) )
-
+            nominalHup = fHup(iup)
+            nominalHdn = fHdn(idn)
+ elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and.   &
+              (fHdn(iup) .LT. fHup(idn)) )
             dir = -oneI
-            EffectiveHead = fEup(idn) - fEdn(iup)
-
+            nominalHup = fHdn(idn)
+            nominalHdn = fHup(iup)
  endwhere
 
+ ! print*, nominalHup, 'nominalHup 1'
+ ! print*, nominalHdn, 'nominalHdn 1'
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
+              (wCrest .GT. nominalHdn) )
+            nominalHdn = zeroR
+ endwhere
 
+ where  ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
+              (wCrest .GT. nominalHup) )
+            nominalHup = zeroR
+ endwhere
+ 
+ where  ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
+              (nominalHup .GT. wCrown) )
+            nominalHup = wCrown - wCrown
+            ! The weir will overflow in this case. This is needed to be fixed
+ endwhere
+
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) )
+            EffectiveHead =  nominalHup - nominalHdn
+ endwhere
+ ! print*, nominalHup, 'nominalHup 2'
+ ! print*, nominalHdn, 'nominalHdn 2'
+ ! print*, wCrest, 'wCrest'
+ ! print*, wCrown, 'wCrown'
+
+ nominalHdn = nullvalueR
+ nominalHup = nullvalueR
+ nullify(nominalHdn, nominalHup)
+ next_e2r_temparray = next_e2r_temparray - 2
 !Need a fix for surcharge
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

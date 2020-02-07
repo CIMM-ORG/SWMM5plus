@@ -144,9 +144,9 @@
  call initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
      linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime)
-    
+
 !% check consistency of the smallvolume setup
- 
+
  call checking_smallvolume_consistency (elem2R, elemMR)
  
 ! initialize the diagnostics

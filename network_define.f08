@@ -164,10 +164,10 @@
     print *
     print *, '------------- faces -----------------expecting ',N_face
     print *
-    print *, 'g)       ii,         idx,     Melem_u,    Melem_d,    etype_u,    etype_d'
+    print *, 'g)       ii,         idx,     Melem_u,    Melem_d,    etype_u,    etype_d,       ftype'
     do ii=first_face_index, first_face_index+N_face-1
         print *, ii, faceI(ii,fi_idx), faceI(ii,fi_Melem_u), faceI(ii,fi_Melem_d), &
-                     faceI(ii,fi_etype_u), faceI(ii,fi_etype_d)
+                     faceI(ii,fi_etype_u), faceI(ii,fi_etype_d), faceI(ii,fi_type)
     enddo
     
     print * 
@@ -1387,6 +1387,10 @@
         f_result = fBCup
     elseif (dn_elem_type == eBCdn) then
         f_result = fBCdn
+    ! elseif (dn_elem_type == eWeir) then
+    !     f_result = fWeir
+    ! elseif (up_elem_type == eWeir) then
+    !     f_result = fWeir
     else
         f_result = fMultiple
     endif

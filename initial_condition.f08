@@ -26,7 +26,7 @@
     
     public  :: initial_condition_setup
 
-    integer :: debuglevel = 0
+    integer :: debuglevel = 1
     
  contains
 !
@@ -57,9 +57,9 @@
  !% get data that can be extracted from links
  call initial_conditions_from_linkdata &
     (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
-   
+
  call initial_junction_conditions &
-    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)   
+    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
 
  !% set the bc elements (outside of face) to null values
  call bc_nullify_ghost_elem (elem2R, bcdataDn)
@@ -90,8 +90,6 @@
     (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity,  &
      e2r_Volume, eMr_Volume, thisTime, 0)
-
- 
 
  !% set the element-specific smallvolume value
  !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
@@ -240,7 +238,7 @@
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
                 elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
             endwhere
-            print*, elem2R(:,e2r_Volume)
+
         elseif (linkI(ii,li_geometry) == lVnotchWeir ) then
             !% handle triangular elements
             !% Talk to Ehsan about this

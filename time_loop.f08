@@ -22,7 +22,7 @@
 
     private
 
-    public :: time_marching
+    public  :: time_marching
 
     integer :: debuglevel = 0
 

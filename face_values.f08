@@ -69,10 +69,27 @@
         (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
  endif
  
+ ! print*,'-----------------------------------'
+ ! print*, faceR(:,fr_Area_d), 'fr_Area_d'
+ ! print*,'-----------------------------------'
+ ! print*, faceR(:,fr_Area_u), 'fr_Area_u'
+ ! print*,'-----------------------------------'
+ ! print*, faceR(:,fr_Topwidth), 'fr_Topwidth'
+ ! print*,'-----------------------------------'
+ ! print*, faceR(:,fr_HydDepth_d), 'fr_HydDepth_d'
+ ! print*,'-----------------------------------'
+ ! print*, faceR(:,fr_HydDepth_u), 'fr_HydDepth_u'
+ ! print*,'-----------------------------------'
+ ! print*, faceR(:,fr_Flowrate), 'fr_Flowrate'
+ ! print*,'-----------------------------------'
  call face_hydraulic_jump (elem2R, elemMR, faceR, faceI, e2r_Velocity_new, eMr_Velocity_new)
  
  call face_surface_elevation_interp (elem2R, elemMR, faceR, faceI, faceYN)
-
+ ! print*,'-------------after free suf interp----------------------'
+ ! print*, faceR(:,fr_Eta_d), 'fr_Eta_d'
+ ! print*,'-----------------------------------'
+ ! print*, faceR(:,fr_Eta_u), 'fr_Eta_u'
+ ! print*,'-----------------------------------'
 !% compute depth
  faceR(:,fr_HydDepth_u) = zeroR
  faceR(:,fr_HydDepth_d) = zeroR
@@ -80,7 +97,11 @@
     faceR(:,fr_HydDepth_u) = faceR(:,fr_Area_u) / faceR(:,fr_Topwidth)
     faceR(:,fr_HydDepth_d) = faceR(:,fr_Area_d) / faceR(:,fr_Topwidth)
  endwhere
- 
+ ! print*,'-------------after depth compute----------------------'
+ ! print*, faceR(:,fr_HydDepth_d), 'fr_HydDepth_d'
+ ! print*,'-----------------------------------'
+ ! print*, faceR(:,fr_HydDepth_u), 'fr_HydDepth_u'
+ ! print*,'-----------------------------------'
  if (thisIter == 1) then
     !% at end of first step of RK2, the face flow rate is the BC outflow for the step
     call face_bc_flowrate_update (bcdataDn, bcdataUp, faceR)

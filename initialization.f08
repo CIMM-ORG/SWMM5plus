@@ -54,7 +54,9 @@
  e2r_Temp(4) = e2r_temp4
  e2r_Temp(5) = e2r_temp5
  e2r_Temp(6) = e2r_temp6
- if (e2r_n_temp > 6) then
+ e2r_Temp(7) = e2r_temp7
+ e2r_Temp(8) = e2r_temp8
+ if (e2r_n_temp > 8) then
     print *, 'error need to update initialization of e2r_Temp in ',subroutine_name
     stop
  endif

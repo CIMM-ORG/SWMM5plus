@@ -312,7 +312,7 @@
 
     thisdata = nullvalueR
     thisX    = nullvalueR
-
+    print*, ii
     ! get the data of the element (or BC) downstream of link
     select case (ftypDn)
         case (fChannel)

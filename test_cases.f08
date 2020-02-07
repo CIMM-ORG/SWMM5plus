@@ -48,7 +48,6 @@
 
  real, dimension(:), allocatable :: depth_dnstream, depth_upstream, head
  real, dimension(:), allocatable :: subdivide_length, channel_length, channel_breadth
- real, dimension(:), allocatable :: weir_length, weir_breadth
  real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
 
@@ -223,16 +222,16 @@
         !stop
     case ('simple_weir_003')
 
-        N_link = 1
-        N_node = 2
+        N_link = 3
+        N_node = 4
         N_BCupstream = 1
         N_BCdnstream = 1
 
         !% create the local variables that must be populated to set up the test case
         call control_variable_allocation &
-            (depth_dnstream, depth_upstream, lowerZ, upperZ, weir_length, &
-             weir_breadth, subdivide_length, flowrate, area, &
-             velocity, Froude, ManningsN, idepth_type)
+            (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, subdivide_length, flowrate, area, &
+             velocity,  Froude, ManningsN, idepth_type)
 
         ! step controls
         display_interval = 1000
@@ -241,46 +240,92 @@
 
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5
-        Froude       = 0.25   ! determines flowrate and slope to get Froude
+
+        ! This is from case_y_channel
+        Froude(1)       = 0.25   ! determines flowrate and slope to get Froude
+        Froude(2)       = 0.25   ! determines flowrate and slope to get Froude
+        Froude(3)       = 0.25   ! determines flowrate and slope to get Froude
+
+
         CFL          = 0.25  ! determines dt from subdivide_length
 
         ! keep these physics fixed
-        weir_breadth    = setting%Weir%WeirWidth
-        depth_upstream  = 1.0
-        depth_dnstream  = 0.5
-        idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
-        ManningsN       = 0.03
-        weir_length     = 0.01
-        lowerZ          = 1.0
-        head            = (depth_upstream - depth_dnstream) * onehalfR
-        subdivide_length = weir_length
+        idepth_type        = 1  !1 = uniform, 2=linear, 3=exponential decay
+        ManningsN          = 0.03
+        
+        lowerZ(1)          = 1.0 
+        depth_dnstream(1)  = 0.01
+        depth_upstream(1)  = 0.01
 
-        call froude_driven_setup &
-            (upperZ(1), area(1), flowrate(1), velocity(1),  &
-             Froude(1),  weir_breadth(1), ManningsN(1), weir_length(1), &
-             lowerZ(1),  head(1) )
+        depth_dnstream(2)  = 0.0            !This is the depth in weir 
+        depth_upstream(2)  = 0.0          !This is the depth in weir
+
+        depth_dnstream(3)  = 1.0
+        depth_upstream(3)  = 1.0
+
+        channel_breadth(1)   = 3.0
+        channel_breadth(2)   = setting%Weir%WeirWidth
+        channel_breadth(3)   = 3.0
+
+        channel_length(1)    = 1000.0
+        channel_length(2)    = 1        !This is Weir Length
+        channel_length(3)    = 1000.0
+
+        subdivide_length(1) = 500.0
+        subdivide_length(2) = 1         !We are not subdividing weir element. So this value is same as weir length
+        subdivide_length(3) = 500.0
+
+        ! get consistent bottom Z values for the desired Froude number in each link
+        do mm=1,N_link
+            if (mm==1) then
+                ! start with the Z for the inflow link
+                lz = lowerZ(1)
+            end if
+            select case (mm)
+                case (1)
+                    call froude_driven_setup &
+                         (uz, area(mm), flowrate(mm), velocity(mm),                          &
+                         Froude(mm), channel_breadth(mm), ManningsN(mm), channel_length(mm), &
+                         lz, depth_upstream(mm) )
+                    ! the upstream z of the downstream link becomes the lower z of the upstream links
+                    lz = uz
+                    upperZ(1) = uz
+                case (2)
+                    call weir_setup &
+                         (uz, area(mm), flowrate(mm), velocity(mm),                          &
+                         Froude(mm), channel_breadth(mm), ManningsN(mm), channel_length(mm), &
+                         lz, depth_upstream(mm) )
+                    lowerZ(mm) = upperZ(1)
+                    upperZ(mm) = uz
+                    lz = uz
+                case (3)
+                    call froude_driven_setup &
+                         (uz, area(mm), flowrate(mm), velocity(mm),                          &
+                         Froude(mm), channel_breadth(mm), ManningsN(mm), channel_length(mm), &
+                         lz, depth_upstream(mm) )
+                    lowerZ(mm) = upperZ(2)
+                    upperZ(mm) = uz     
+            end select
+        end do 
 
         call this_setting_for_time_and_steps &
             (CFL, velocity, depth_upstream, subdivide_length, &
              first_step, last_step, display_interval,2)
 
         call case_simple_weir_initialize &
-            (weir_length(1), weir_breadth(1), subdivide_length(1), &
-             lowerZ(1), upperZ(1), flowrate(1), depth_upstream(1), depth_dnstream(1), &
-             ManningsN(1), lManningsN, idepth_type(1),                                   &
+            (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
+             flowrate, depth_upstream, depth_dnstream,                  &
+             ManningsN, lManningsN, idepth_type,                            &
              linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
              bcdataDn, bcdataUp)
 
         if (.not. setting%Debugout%SuppressAllFiles) then
             call write_testcase_setup_file &
                 (Froude, CFL, flowrate, velocity, depth_upstream,   &
-                 depth_dnstream, weir_breadth, area, &
-                 weir_length, subdivide_length, &
+                 depth_dnstream, channel_breadth, area, channel_length, subdivide_length, &
                  lowerZ, upperZ, ManningsN)
         endif
 
-        !print *, flowrate, depth_dnstream
-        !stop
     case default
         print *, setting%TestCase%TestName
         print *, 'error: no valid test case of ',&
@@ -401,50 +446,81 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
 !This needed to be fixed for other geometry types
-select case (setting%TestCase%TestName)
-    case ('simple_channel_001')
-        area = depth * breadth
-        perimeter = 2.0 * depth + breadth
-        rh = area / perimeter
-        velocity = Froude * sqrt(grav * depth)
-        flowrate = area * velocity
-        slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
-        upperZ = lowerZ + slope * total_length
+ area = depth * breadth
+ perimeter = 2.0 * depth + breadth
+ rh = area / perimeter
+ velocity = Froude * sqrt(grav * depth)
+ flowrate = area * velocity
+ slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+ upperZ = lowerZ + slope * total_length
 
-    case ('y_channel_002')
-        area = depth * breadth
-        perimeter = 2.0 * depth + breadth
-        rh = area / perimeter
-        velocity = Froude * sqrt(grav * depth)
-        flowrate = area * velocity
-        slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
-        upperZ = lowerZ + slope * total_length
-
-    case ('simple_weir_003')
-        ! These needed to be changed when the weir is surcharged
-        area        = setting%Weir%WeirSideSlope * depth ** twoR
-        perimeter   = twoR * depth * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
-        rh          = area / perimeter
-        velocity    = (setting%Weir%WeirDischargeCoeff * setting%Weir%WeirSideSlope * depth ** 2.5) / area
-        flowrate    = area * velocity
-        slope       = zeroR
-        upperZ      = lowerZ
-end select
  
 
-
-print *, area
-print *, perimeter
-print *, rh
-print *, velocity
-print *, flowrate
-print *, slope
-print *, upperZ, lowerZ
-print *, total_length
-print *, slope*total_length
+! print *,'-----------------'
+! print *, area, 'area'
+! print *, perimeter, 'perimeter'
+! print *, rh, 'rh'
+! print *, velocity, 'velocity'
+! print *, flowrate, 'flowrate'
+! print *, slope, 'slope'
+! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+! print *, total_length, 'total_length'
+! print *, slope*total_length, 'slope*total_length'
+! print *,'-----------------'
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine froude_driven_setup
+!
+!==========================================================================
+!==========================================================================
+!
+ subroutine weir_setup &
+    (upperZ, area, flowrate, velocity,  &
+     Froude,  breadth, ManningsN, total_length, &
+     lowerZ, depth)
+
+ character(64) :: subroutine_name = 'weir_setup'
+
+ real,  intent(out)    :: area, flowrate, velocity, upperZ
+ real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
+ real,  intent(in)     :: depth
+
+ real :: perimeter, rh, slope
+
+
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+! These needed to be changed when the weir is surcharged
+ area        = setting%Weir%WeirSideSlope * depth ** twoR
+ perimeter   = twoR * depth * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
+ !rh          = area / perimeter
+ !velocity    = (setting%Weir%WeirDischargeCoeff * setting%Weir%WeirSideSlope * depth ** 2.5) / area
+ !flowrate    = area * velocity
+ !Hard coading this to run the weir without any water
+ rh          = 0.0
+ velocity    = 0.0
+ flowrate    = 0.0
+ slope       = zeroR
+ upperZ      = lowerZ
+
+ 
+
+! print *,'-----------------'
+! print *, area, 'area'
+! print *, perimeter, 'perimeter'
+! print *, rh, 'rh'
+! print *, velocity, 'velocity'
+! print *, flowrate, 'flowrate'
+! print *, slope, 'slope'
+! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+! print *, total_length, 'total_length'
+! print *, slope*total_length, 'slope*total_length'
+! print *,'-----------------'
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine weir_setup
 !
 !==========================================================================
 !==========================================================================
