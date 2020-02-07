@@ -815,8 +815,8 @@
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
                     * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
         case (lWidthDepth)
-            elem2R(thisElem2,e2r_Topwidth)     = 0.0
-            elem2R(thisElem2,e2r_BreadthScale) = 0.0
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -952,6 +952,18 @@
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+        case (eParabolic)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+        case (eTrapezoidal)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+        case (eTriangle)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+        case (eWidthDepth)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1310,8 +1322,8 @@
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
                     * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
         case (lWidthDepth)
-            elem2R(thisElem2,e2r_Topwidth)     = 0.0
-            elem2R(thisElem2,e2r_BreadthScale) = 0.0
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop

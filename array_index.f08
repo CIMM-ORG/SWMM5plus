@@ -449,18 +449,19 @@
     ! column index for real data in the linkR array
     integer, parameter :: lr_Length                 = 1
     integer, parameter :: lr_BreadthScale           = 2
-    integer, parameter :: lr_ElementLength          = 3
-    integer, parameter :: lr_Slope                  = 4
-    integer, parameter :: lr_LeftSlope              = 5
-    integer, parameter :: lr_RightSlope             = 6
-    integer, parameter :: lr_Roughness              = 7
-    integer, parameter :: lr_InitialFlowrate        = 8
-    integer, parameter :: lr_InitialDepth           = 9
-    integer, parameter :: lr_InitialUpstreamDepth   = 10
-    integer, parameter :: lr_InitialDnstreamDepth   = 11
-    integer, parameter :: lr_ParabolaValue          = 12
-    integer, parameter :: lr_temp1                  = 13
-    integer, parameter :: lr_idx_max                = 13
+    integer, parameter :: lr_TopWidth               = 3
+    integer, parameter :: lr_ElementLength          = 4
+    integer, parameter :: lr_Slope                  = 5
+    integer, parameter :: lr_LeftSlope              = 6
+    integer, parameter :: lr_RightSlope             = 7
+    integer, parameter :: lr_Roughness              = 8
+    integer, parameter :: lr_InitialFlowrate        = 9
+    integer, parameter :: lr_InitialDepth           = 10
+    integer, parameter :: lr_InitialUpstreamDepth   = 11
+    integer, parameter :: lr_InitialDnstreamDepth   = 12
+    integer, parameter :: lr_ParabolaValue          = 13
+    integer, parameter :: lr_temp1                  = 14
+    integer, parameter :: lr_idx_max                = 14
 
 !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array
