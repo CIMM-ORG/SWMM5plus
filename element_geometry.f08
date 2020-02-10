@@ -316,7 +316,7 @@
  real, dimension(:), allocatable :: area_difference, local_difference
  
  real :: AA, BB, CC, DD
- integer :: ii,ind
+ integer :: ii,ind, linkIDTemp
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -412,24 +412,30 @@
     if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
          (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
          
+            linkIDTemp = elemI(ii,e2i_link_ID)
+         
             area_difference  = zeroR
             local_difference = zeroR
             area (ii) = volume(ii) / length(ii)
-            area_difference(:) = area (ii) - areaTotalBelowThisLayer(elemI(ii,e2i_link_ID),:)
-            local_difference(:) = area_difference(:) - areaThisLayer(elemI(ii,e2i_link_ID),:)
+            area_difference(:) = area (ii) - areaTotalBelowThisLayer(linkIDTemp,:)
+            local_difference(:) = area_difference(:) - areaThisLayer(linkIDTemp,:)
             ind = findloc(sign(oneR, area_difference(:)*local_difference(:)), -1.0, DIM=1)
             
-            AA = oneR/tan(angle(ii,ind))
-            BB = widthAtLayerTop(ii,ind) - dWidth(ii,ind)
+            if (ind == 0) then
+                ind = size(widthAtLayerTop(linkIDTemp,:),1)
+            endif
+            
+            AA = oneR/tan(angle(linkIDTemp,ind))
+            BB = widthAtLayerTop(linkIDTemp,ind) - dWidth(linkIDTemp,ind)
             CC = - area_difference(ind)
             DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
             
-            hyddepth (ii)  = DD + depthAtLayerTop(ii,ind) - dDepth(ii,ind)
+            hyddepth (ii)  = DD + depthAtLayerTop(linkIDTemp,ind) - dDepth(linkIDTemp,ind)
             eta (ii)       = zbottom (ii) + hyddepth (ii)
             depth (ii)     = hyddepth(ii)
-            topwidth (ii)  = widthAtLayerTop(ii,ind) - (dDepth(ii,ind)-DD) &
-                            *dWidth(ii,ind)/dDepth(ii,ind)
-            perimeter (ii) = perimeterBelowThisLayer(ii,ind) + twoR * DD/sin(angle(ii,ind))
+            topwidth (ii)  = widthAtLayerTop(linkIDTemp,ind) - (dDepth(linkIDTemp,ind)-DD) &
+                            *dWidth(linkIDTemp,ind)/dDepth(linkIDTemp,ind)
+            perimeter (ii) = perimeterBelowThisLayer(linkIDTemp,ind) + twoR * DD/sin(angle(linkIDTemp,ind))
             hydradius (ii) = area(ii) / perimeter(ii)
     endif
  enddo

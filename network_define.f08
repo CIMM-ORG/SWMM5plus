@@ -817,6 +817,7 @@
         case (lWidthDepth)
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            faceR(thisFace,fr_Topwidth)        = linkR(thisLink,lr_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -955,15 +956,19 @@
         case (eParabolic)
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
         case (eTrapezoidal)
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
         case (eTriangle)
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
         case (eWidthDepth)
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1324,6 +1329,7 @@
         case (lWidthDepth)
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop

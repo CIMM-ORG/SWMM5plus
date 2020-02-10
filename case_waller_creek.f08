@@ -185,13 +185,13 @@
  
 ! designate the downstream node
  ! designate the upstream nodes
- nodeI(1,ni_node_type) = nBCup
+ nodeI(1,ni_node_type) = nBCdn
 
- nodeR(1,nr_Zbottom) = upperZ(1)
+ nodeR(1,nr_Zbottom) = lowerZ(1)
  
- nodeName(1)%str = 'UpstreamBC'
+ nodeName(1)%str = 'DownstreamBC'
  
- do ii=2,N_node - 1
+ do ii=2,N_node
     nodeI(ii,ni_node_type) = nJ2
 
     nodeR(ii,nr_Zbottom) = upperZ(ii-1)
@@ -200,11 +200,11 @@
  end do
     
 ! designate the downstream node
- nodeI(N_node,ni_node_type) = nBCdn
+ nodeI(N_node,ni_node_type) = nBCup
 
- nodeR(N_node,nr_Zbottom) = lowerZ(1)
+ !nodeR(N_node,nr_Zbottom) = upperZ(1)
  
- nodeName(N_node)%str = 'DownstreamBC'
+ nodeName(N_node)%str = 'UpstreamBC'
  
 ! assign the link types
  linkI(:,li_link_type) = lChannel
@@ -215,8 +215,8 @@
 ! assign the link position and mappings
 
  do ii=1,N_link
-    linkI(ii,li_Mnode_u) = ii
-    linkI(ii,li_Mnode_d) = ii + 1
+    linkI(ii,li_Mnode_u) = ii + 1
+    linkI(ii,li_Mnode_d) = ii
  end do
  
  do mm=1,N_link

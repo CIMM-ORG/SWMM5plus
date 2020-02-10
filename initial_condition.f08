@@ -26,7 +26,7 @@
     
     public  :: initial_condition_setup
 
-    integer :: debuglevel = 0
+    integer :: debuglevel = 1
     
  contains
 !
