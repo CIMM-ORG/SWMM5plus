@@ -254,11 +254,11 @@
         ManningsN          = 0.03
         
         lowerZ(1)          = 1.0 
-        depth_dnstream(1)  = 0.01
-        depth_upstream(1)  = 0.01
+        depth_dnstream(1)  = 1.0e-7 
+        depth_upstream(1)  = 1.0e-7
 
-        depth_dnstream(2)  = 0.0            !This is the depth in weir 
-        depth_upstream(2)  = 0.0          !This is the depth in weir
+        depth_dnstream(2)  = 1.0e-7         !This is the depth in weir 
+        depth_upstream(2)  = 1.0e-7         !This is the depth in weir
 
         depth_dnstream(3)  = 1.0
         depth_upstream(3)  = 1.0
