@@ -1387,10 +1387,10 @@
         f_result = fBCup
     elseif (dn_elem_type == eBCdn) then
         f_result = fBCdn
-    ! elseif (dn_elem_type == eWeir) then
-    !     f_result = fWeir
-    ! elseif (up_elem_type == eWeir) then
-    !     f_result = fWeir
+    elseif (dn_elem_type == eWeir) then
+        f_result = fWeir
+    elseif (up_elem_type == eWeir) then
+        f_result = fWeir
     else
         f_result = fMultiple
     endif

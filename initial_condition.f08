@@ -95,7 +95,12 @@
  !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
  if (setting%SmallVolume%UseSmallVolumes) then
     elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length) 
-    elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length) 
+    elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length)
+    
+    where (elem2I(:,e2i_geometry) == eVnotchWeir)
+            elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_Topwidth) * elem2R(:,e2r_Length)
+    endwhere
+     
  else
 
     elem2R(:,e2r_SmallVolume) = zeroR
