@@ -285,9 +285,11 @@ program swmm_interface
             real(c_double) :: elapsedTime
             integer(c_int) :: swmm_step
         end function swmm_step
+
         ! function swmm_report()
 
         ! end function swmm_report
+
         ! function swmm_run()
 
         ! end function swmm_run
@@ -359,26 +361,18 @@ program swmm_interface
     errstat = fswmm_start(1)
     call print_error(errstat, dll%procname)
 
-    ! (3) Run SWMM simulation step by step (swmm_step)
-    dll%procname = "swmm_step"
-    call load_dll(os, dll, errstat, errmsg )
-    call print_error(errstat, 'load_swmm_step')
-    call c_f_procpointer(dll%procaddr, fswmm_step)
-    elapsedTime = 1.0
-    do while (elapsedTime /= 0) ! Simulation ends when elapsedTime == 0.0
-        errstat = fswmm_step(elapsedTime)
-        call print_error(errstat, dll%procname)
-    end do
+    ! ! (3) Run SWMM simulation step by step (swmm_step)
+    ! dll%procname = "swmm_step"
+    ! call load_dll(os, dll, errstat, errmsg )
+    ! call print_error(errstat, 'load_swmm_step')
+    ! call c_f_procpointer(dll%procaddr, fswmm_step)
+    ! elapsedTime = 1.0
+    ! do while (elapsedTime /= 0) ! Simulation ends when elapsedTime == 0.0
+    !     errstat = fswmm_step(elapsedTime)
+    !     call print_error(errstat, dll%procname)
+    ! end do
 
-    ! (4) End SWMM simulation (swmm_end)
-    dll%procname = "swmm_end"
-    call load_dll(os, dll, errstat, errmsg )
-    call print_error(errstat, 'load_swmm_end')
-    call c_f_procpointer(dll%procaddr, fswmm_end)
-    errstat = fswmm_end()
-    call print_error(errstat, dll%procname)
-
-    ! (5) Retrieve information (swmm_printInfo)
+    ! (4) Retrieve information (swmm_printInfo)
     dll%procname = "swmm_printInfo"
     call load_dll(os, dll, errstat, errmsg )
     call print_error(errstat, 'load_swmm_printInfo')
@@ -386,14 +380,23 @@ program swmm_interface
     errstat = fswmm_printInfo(SI)
     call print_error(errstat, dll%procname)
 
-    ! (6) Get Mass Balance Error (swmm_getMassBalErr)
-    dll%procname = "swmm_getMassBalErr"
+
+    ! (5) End SWMM simulation (swmm_end)
+    dll%procname = "swmm_end"
     call load_dll(os, dll, errstat, errmsg )
-    call print_error(errstat, 'load_swmm_getMassBalErr')
-    call c_f_procpointer(dll%procaddr, fswmm_getMassBalErr)
-    errstat = fswmm_getMassBalErr(runoffErr, flowErr, qualErr)
+    call print_error(errstat, 'load_swmm_end')
+    call c_f_procpointer(dll%procaddr, fswmm_end)
+    errstat = fswmm_end()
     call print_error(errstat, dll%procname)
-    print *, "Run-off error: ", runoffErr, " Flow error: ", flowErr, " Qual error: ", qualErr
+
+    ! (6) Get Mass Balance Error (swmm_getMassBalErr)
+    ! dll%procname = "swmm_getMassBalErr"
+    ! call load_dll(os, dll, errstat, errmsg )
+    ! call print_error(errstat, 'load_swmm_getMassBalErr')
+    ! call c_f_procpointer(dll%procaddr, fswmm_getMassBalErr)
+    ! errstat = fswmm_getMassBalErr(runoffErr, flowErr, qualErr)
+    ! call print_error(errstat, dll%procname)
+    ! print *, "Run-off error: ", runoffErr, " Flow error: ", flowErr, " Qual error: ", qualErr
 
     ! (7) Close SWMM engine (swmm_close)
     dll%procname = "swmm_close"

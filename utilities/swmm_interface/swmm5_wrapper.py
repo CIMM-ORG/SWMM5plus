@@ -154,6 +154,8 @@ def print_info(inp, units):
 	open_file(inp)  # Step 1
 	start(WRITE_REPORT)  # Step 2
 	error = _SWMM5.swmm_printInfo(units)
+	end()
+	close()
 	if (error == _ERROR_INVALID_TOPOLOGY):
 		raise(_ERROR_MSG_INVALID_TOPOLOGY)
 	elif (error == _ERROR_INCOHERENT):

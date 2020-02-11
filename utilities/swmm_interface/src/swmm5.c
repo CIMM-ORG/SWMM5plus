@@ -19,7 +19,7 @@
 //
 //   Build 5.1.008:
 //   - Support added for the MinGW compiler.
-//   - Reporting of project options moved to swmm_start. 
+//   - Reporting of project options moved to swmm_start.
 //   - Hot start file now read before routing system opened.
 //   - Final routing step adjusted so that total duration not exceeded.
 //
@@ -38,7 +38,7 @@
 //   Build 5.1.013:
 //   - Support added for saving average results within a reporting period.
 //   - SWMM engine now always compiled to a shared object library.
-//     
+//
 //-----------------------------------------------------------------------------
 #define _CRT_SECURE_NO_DEPRECATE
 
@@ -88,7 +88,7 @@
 #include "datetime.h"                  // date/time functions
 #include "objects.h"                   // definitions of SWMM's data objects
 #include "funcs.h"                     // declaration of all global functions
-#include "text.h"                      // listing of all text strings 
+#include "text.h"                      // listing of all text strings
 #define  EXTERN                        // defined as 'extern' in headers.h
 #include "globals.h"                   // declaration of all global variables
 #include "interface.h"
@@ -100,7 +100,7 @@
 //-----------------------------------------------------------------------------
 //  Unit conversion factors
 //-----------------------------------------------------------------------------
-const double Ucf[10][2] = 
+const double Ucf[10][2] =
       {//  US      SI
       {43200.0,   1097280.0 },         // RAINFALL (in/hr, mm/hr --> ft/sec)
       {12.0,      304.8     },         // RAINDEPTH (in, mm --> ft)
@@ -278,7 +278,7 @@ int DLLEXPORT swmm_open(char* f1, char* f2, char* f3)
 
 int DLLEXPORT swmm_start(int saveResults)
 //
-//  Input:   saveResults = TRUE if simulation results saved to binary file 
+//  Input:   saveResults = TRUE if simulation results saved to binary file
 //  Output:  returns an error code
 //  Purpose: starts a SWMM simulation.
 //
@@ -347,7 +347,7 @@ int DLLEXPORT swmm_start(int saveResults)
         massbal_open();
         stats_open();
 
-        // --- write project options to report file 
+        // --- write project options to report file
 	    report_writeOptions();
         if ( RptFlags.controls ) report_writeControlActionsHeading();
     }
@@ -494,7 +494,7 @@ void execRouting()
 
         // --- if no runoff analysis, update climate state (for evaporation)
         else climate_setState(getDateTime(NewRoutingTime));
-  
+
         // --- route flows & pollutants through drainage system
         //     (while updating NewRoutingTime)
         if ( DoRouting ) routing_execute(RouteModel, routingStep);
@@ -674,9 +674,30 @@ int  DLLEXPORT swmm_getError(char* errMsg, int msgLen)
 }
 
 // INTERFACE WITH FORTRAN
+
 int  DLLEXPORT swmm_printInfo(int units)
 {
-	return interface_print_info(units);
+	return i_print_info(units);
+}
+
+int DLLEXPORT swmm_num_nodes()
+{
+    return i_num_nodes();
+}
+
+int DLLEXPORT swmm_num_links()
+{
+    return i_num_links();
+}
+
+void DLLEXPORT swmm_record_nodes_data(float ** node_table, int units)
+{
+    return i_record_nodes_data(node_table, units);
+}
+
+void DLLEXPORT swmm_record_links_data(float ** link_table, int units)
+{
+    return i_record_links_data(link_table, units);
 }
 
 //=============================================================================

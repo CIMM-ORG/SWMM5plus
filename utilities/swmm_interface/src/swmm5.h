@@ -35,8 +35,8 @@
 // --- use "C" linkage for C++ programs
 
 #ifdef __cplusplus
-extern "C" { 
-#endif 
+extern "C" {
+#endif
 
 int  DLLEXPORT   swmm_run(char* f1, char* f2, char* f3);
 int  DLLEXPORT   swmm_open(char* f1, char* f2, char* f3);
@@ -51,8 +51,14 @@ int  DLLEXPORT   swmm_getVersion(void);
 int  DLLEXPORT   swmm_getError(char* errMsg, int msgLen);
 int  DLLEXPORT   swmm_getWarnings(void);
 
-#ifdef __cplusplus 
-}   // matches the linkage specification from above */ 
+int  DLLEXPORT swmm_printInfo(int units);
+int DLLEXPORT swmm_num_nodes();
+int DLLEXPORT swmm_num_links();
+void DLLEXPORT swmm_record_nodes_data(float ** node_table, int units);
+void DLLEXPORT swmm_record_links_data(float ** link_table, int units);
+
+#ifdef __cplusplus
+}   // matches the linkage specification from above */
 #endif
 
 #endif
