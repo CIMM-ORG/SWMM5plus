@@ -231,7 +231,7 @@
         ! step controls
         display_interval = 1000
         first_step = 1
-        last_step  =  40000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+        last_step  =  1000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
         ! set up flow and time step for differen subcases
         Froude(:)    = 0.25   ! determines flowrate and slope to get Froude

@@ -98,8 +98,10 @@
  !% set the element-specific smallvolume value
  !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
  if (setting%SmallVolume%UseSmallVolumes) then
-    elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length) 
-    elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length) 
+    elem2R(:,e2r_SmallVolume) = 0.01
+    elemMR(:,eMr_SmallVolume) = 0.01
+!     elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length) 
+!     elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length)
  else
     elem2R(:,e2r_SmallVolume) = zeroR
     elemMR(:,eMr_SmallVolume) = zeroR
@@ -369,7 +371,7 @@
                 elem2R(:,e2r_Topwidth)  = linkR(ii,lr_TopWidth)
                 
                 elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
-                elem2R(:,e2r_Area)      = linkR(ii,lr_TopWidth) * elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Area)      = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
                 elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth)
             endwhere
