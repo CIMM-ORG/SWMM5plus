@@ -76,7 +76,7 @@
 
     integer :: debugcounter = 0
 
-    integer, parameter :: debuglevelall = 1 ! set to 1 to get print of subroutine calls
+    integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
 
     integer :: idummyarray(1)
 

@@ -26,7 +26,7 @@
     
     public  :: initial_condition_setup
 
-    integer :: debuglevel = 1
+    integer :: debuglevel = 0
     
  contains
 !
@@ -364,14 +364,14 @@
             
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eWidthDepth
-                
+                elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
                 elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
+                elem2R(:,e2r_Topwidth)  = linkR(ii,lr_TopWidth)
                 
-                elem2R(:,e2r_Topwidth)  = 0.0
-                elem2R(:,e2r_Eta)       = 0.0
-                elem2R(:,e2r_Area)      = 0.0
-                elem2R(:,e2r_Volume)    = 0.0
-                elem2R(:,e2r_Perimeter) = 0.0
+                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Area)      = linkR(ii,lr_TopWidth) * elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth)
             endwhere
         else
             !% handle elements of other geometry types

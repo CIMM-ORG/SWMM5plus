@@ -130,7 +130,7 @@
 
     !%  setting%SmallVolume
     type smallvolumeType
-        logical ::  UseSmallVolumes = .true. ! YN to determine if smallvolume adjustments used
+        logical ::  UseSmallVolumes = .false. ! YN to determine if smallvolume adjustments used
         real    ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
         real    ::  ManningsN        = 0.01
         real    ::  MinimumTopwidth  = 0.5   ! m   Minimum value used for smallvolume reset
