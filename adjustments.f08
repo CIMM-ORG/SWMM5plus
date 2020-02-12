@@ -506,6 +506,18 @@
     (tvolume, smallvolumeratio, smallvolume, issmallvolume, &
      elemtype, thiselemtype)
 
+!%  for weir elements
+ smallvolumeratio   => elem2R(:,e2r_SmallvolumeRatio)
+ smallvolume        => elem2R(:,e2r_Smallvolume)
+ issmallvolume      => elem2YN(:,e2YN_IsSmallVolume) 
+ tvolume            => elem2R(:,eTr_Volume2)
+ elemtype           => elem2I(:,e2i_elem_type)
+ thiselemtype = eWeir
+    
+ call smallvolume_identification_for_element &
+    (tvolume, smallvolumeratio, smallvolume, issmallvolume, &
+     elemtype, thiselemtype)
+
 !%  for junction elements  
  smallvolumeratio   => elemMR(:,eMr_SmallvolumeRatio)
  smallvolume        => elemMR(:,eMr_Smallvolume) 

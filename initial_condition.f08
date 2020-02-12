@@ -19,6 +19,7 @@
     use junction
     use setting_definition
     use utility
+    use weir
     
     implicit none
     
@@ -26,7 +27,7 @@
     
     public  :: initial_condition_setup
 
-    integer :: debuglevel = 1
+    integer :: debuglevel = 0
     
  contains
 !
@@ -91,18 +92,20 @@
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity,  &
      e2r_Volume, eMr_Volume, thisTime, 0)
 
+!% set the new Eta for weir elements
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) )
+            elem2R(:,e2r_Eta) = max(faceR(elem2I(:,e2i_Mface_u),fr_Eta_d), faceR(elem2I(:,e2i_Mface_d),fr_Eta_u))
+ endwhere
+
  !% set the element-specific smallvolume value
  !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
  if (setting%SmallVolume%UseSmallVolumes) then
     elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length) 
     elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length)
-    
     where (elem2I(:,e2i_geometry) == eVnotchWeir)
             elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_Topwidth) * elem2R(:,e2r_Length)
-    endwhere
-     
+    endwhere     
  else
-
     elem2R(:,e2r_SmallVolume) = zeroR
     elemMR(:,eMr_SmallVolume) = zeroR
  endif
@@ -248,16 +251,28 @@
             !% handle triangular elements
             !% Talk to Ehsan about this
             where (elem2I(:,e2i_link_ID) == Lindx)
-                ! All the geometry calculation here are similar to the geometry calculation in weir module
+                ! ! All the geometry calculation here are similar to the geometry calculation in weir module
+                ! elem2I(:,e2i_geometry)      = eVnotchWeir
+                ! ! For weir element the hydraulic depth is the depth of water in the element 
+                ! elem2R(:,e2r_HydDepth)      = onehalfR * elem2R(:, e2r_Depth)
+                ! elem2R(:,e2r_BreadthScale)  = zeroR 
+                ! elem2R(:,e2r_Area)          = setting%Weir%WeirSideSlope * elem2R(:,e2r_Depth) ** twoR 
+                ! elem2R(:,e2r_Topwidth)      = twoR * setting%Weir%WeirSideSlope * elem2R(:,e2r_Depth)
+                ! elem2R(:,e2r_Eta)           = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_HydDepth)
+                ! elem2R(:,e2r_Volume)        = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                ! elem2R(:,e2r_Perimeter)     = twoR * elem2R(:,e2r_HydDepth) * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
+
+                ! Setting all the provisional geometry for weir to zero at first step
                 elem2I(:,e2i_geometry)      = eVnotchWeir
                 ! For weir element the hydraulic depth is the depth of water in the element 
-                elem2R(:,e2r_HydDepth)      = onehalfR * elem2R(:, e2r_Depth)
+                elem2R(:,e2r_HydDepth)      = zeroR
                 elem2R(:,e2r_BreadthScale)  = zeroR 
-                elem2R(:,e2r_Area)          = setting%Weir%WeirSideSlope * elem2R(:,e2r_Depth) ** twoR 
-                elem2R(:,e2r_Topwidth)      = twoR * setting%Weir%WeirSideSlope * elem2R(:,e2r_Depth)
-                elem2R(:,e2r_Eta)           = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_HydDepth)
-                elem2R(:,e2r_Volume)        = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
-                elem2R(:,e2r_Perimeter)     = twoR * elem2R(:,e2r_HydDepth) * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
+                elem2R(:,e2r_Area)          = zeroR
+                elem2R(:,e2r_Topwidth)      = zeroR
+                elem2R(:,e2r_Eta)           = zeroR
+                elem2R(:,e2r_Volume)        = zeroR
+                elem2R(:,e2r_Perimeter)     = zeroR
+
             endwhere
         else
             !% handle elements of other geometry types

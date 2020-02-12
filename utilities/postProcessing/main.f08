@@ -22,15 +22,15 @@ use postProcessing
     real,    dimension(:)  , allocatable       :: xx,yy
 
 
-open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_depth__20200210_1816.txt', status='OLD')
+open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_flowrate_20200212_1735.txt', status='OLD')
 
-specific_link = 3
+specific_link = 2
 call get_specific_link_data &
     (iunit, n_cells, n_links, n_linkItems, max_linkItems, n_timeSteps, &
     time_steps, data_idx, length_idx, link_lengths, link_data, &
     specific_link, specific_linkData)
 
-specific_linkElement = 4
+specific_linkElement = 5
 xx = time_steps
 yy = specific_linkData(:,specific_linkElement)
 ! print*, time_steps

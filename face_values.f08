@@ -22,6 +22,8 @@
     private
     
     public :: face_update
+    public :: flow_interp_for_upstream_weir_face
+    public :: flow_interp_for_downstream_weir_face
 
     integer :: debuglevel = 0
     
@@ -85,7 +87,6 @@
     !% at end of first step of RK2, the face flow rate is the BC outflow for the step
     call face_bc_flowrate_update (bcdataDn, bcdataUp, faceR)
  endif
-
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine face_update
@@ -304,9 +305,6 @@ call interp_channel_onetype &
     (faceR, facemask, faceI, elem2R, &
      weightUpG, weightDnG, valueUp, valueDn, e2rset(1), frset(1))
 
-! using timescale for eta
-! note: area is used to calculate free surface elevation
-! so, I'm using the timescae for eta here
 call interp_channel_onetype &
     (faceR, facemask, faceI, elem2R, &
      weightUpH, weightDnH, valueUp, valueDn, e2rset(2), frset(2))
@@ -325,7 +323,7 @@ call interp_channel_onetype &
     faceR(:,fr_Eta_u) = elem2R(faceI(:,fi_Melem_u),e2r_Eta)
     faceR(:,fr_Eta_d) = elem2R(faceI(:,fi_Melem_d),e2r_Eta)
  endwhere
- 
+
 !%  set velocities and upstream values on faces (without hydraulic jump)  
  call adjust_face_dynamic_limits &
     (faceR, faceI, elem2R(:,e2r_Volume_new), elem2R(:,e2r_Volume_new), facemask, .false.)    
@@ -568,6 +566,158 @@ call interp_channel_onetype &
 !========================================================================== 
 !==========================================================================
 !
+ subroutine flow_interp_for_upstream_weir_face &
+    (elem2R, faceR, faceI, faceYN)
+!
+! face interpolation between elements that have only 2 faces
+! 
+ character(64) :: subroutine_name = 'flow_interp_for_upstream_weir_face'
+ 
+ integer,               intent(in)      :: faceI(:,:)
+ real,      target,     intent(in out)  :: faceR(:,:)
+ real,      target,     intent(in)      :: elem2R(:,:)
+ logical,   target,     intent(in out)  :: faceYN(:,:)
+     
+ logical,   pointer  :: facemask(:)
+ real,      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
+ real,      pointer  :: inoutarray(:)
+ 
+ integer :: mm
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ valueUp => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+ valueDn => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+ 
+ weightUp => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+ weightDn => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+ facemask   => faceYN(:,fYN_Temp(next_fYN_temparray))
+ next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp) 
+
+ facemask = ( (faceI(:,fi_etype_u) == eWeir) )
+                      
+!%  use timescale for interpolation for Topwidth, Area, Flowrate
+ weightUp = setting%Limiter%Timescale%Maximum
+ weightDn = setting%Limiter%Timescale%Maximum
+
+ where (facemask)
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_d) !tscale acting downstream from upstream element
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_u) !tscale acting upstream from downstream element
+ endwhere
+
+call interp_channel_onetype &
+    (faceR, facemask, faceI, elem2R, &
+     weightUp, weightDn, valueUp, valueDn, e2r_Flowrate, fr_Flowrate)
+ 
+ 
+!%  set velocities and upstream values on faces (without hydraulic jump)  
+ where (facemask)
+    faceR(:,fr_Velocity_u) = faceR(:,fr_Velocity_d)
+ endwhere
+! call adjust_face_dynamic_limits &
+!    (faceR, faceI, elem2R(:,e2r_Volume_new), elem2R(:,e2r_Volume_new), facemask, .false.)    
+   
+ 
+ facemask = nullvalueL
+ nullify(facemask)
+ next_fYN_temparray = next_fYN_temparray - 1
+ 
+ valueUp = nullvalueR
+ valueDn = nullvalueR
+ weightUp = nullvalueR
+ weightDn = nullvalueR
+ nullify(valueUp, valueDn, weightUp, weightDn)
+ next_fr_temparray = next_fr_temparray - 4
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine flow_interp_for_upstream_weir_face
+!
+!========================================================================== 
+!==========================================================================
+!
+ subroutine flow_interp_for_downstream_weir_face &
+    (elem2R, faceR, faceI, faceYN)
+!
+! face interpolation between elements that have only 2 faces
+! 
+ character(64) :: subroutine_name = 'flow_interp_for_downstream_weir_face'
+ 
+ integer,               intent(in)      :: faceI(:,:)
+ real,      target,     intent(in out)  :: faceR(:,:)
+ real,      target,     intent(in)      :: elem2R(:,:)
+ logical,   target,     intent(in out)  :: faceYN(:,:)
+     
+ logical,   pointer  :: facemask(:)
+ real,      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
+ real,      pointer  :: inoutarray(:)
+ 
+ integer :: mm
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ valueUp => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+ valueDn => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+ 
+ weightUp => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+ weightDn => faceR(:,fr_Temp(next_fr_temparray))
+ next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+ facemask   => faceYN(:,fYN_Temp(next_fYN_temparray))
+ next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp) 
+
+ facemask = ( (faceI(:,fi_etype_d) == eWeir) )
+                      
+!%  use timescale for interpolation for Topwidth, Area, Flowrate
+ weightUp = setting%Limiter%Timescale%Maximum
+ weightDn = setting%Limiter%Timescale%Maximum
+
+ where (facemask)
+    weightUp = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_d) !tscale acting downstream from upstream element
+    weightDn = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_u) !tscale acting upstream from downstream element
+ endwhere
+
+call interp_channel_onetype &
+    (faceR, facemask, faceI, elem2R, &
+     weightUp, weightDn, valueUp, valueDn, e2r_Flowrate, fr_Flowrate)
+ 
+ 
+!%  set velocities and upstream values on faces (without hydraulic jump)  
+ where (facemask)
+    faceR(:,fr_Velocity_u) = faceR(:,fr_Velocity_d)
+ endwhere
+! call adjust_face_dynamic_limits &
+!    (faceR, faceI, elem2R(:,e2r_Volume_new), elem2R(:,e2r_Volume_new), facemask, .false.)    
+   
+ 
+ facemask = nullvalueL
+ nullify(facemask)
+ next_fYN_temparray = next_fYN_temparray - 1
+ 
+ valueUp = nullvalueR
+ valueDn = nullvalueR
+ weightUp = nullvalueR
+ weightDn = nullvalueR
+ nullify(valueUp, valueDn, weightUp, weightDn)
+ next_fr_temparray = next_fr_temparray - 4
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine flow_interp_for_downstream_weir_face
+!
+!========================================================================== 
+!==========================================================================
+!
  subroutine face_hydraulic_jump &
     (elem2R, elemMR, faceR, faceI, e2r_Velocity_new, eMr_Velocity_new)
 !
@@ -727,13 +877,9 @@ call interp_channel_onetype &
 !%  use distance (length) for interpolation for free surface 
  where (faceI(:,fi_etype_d) == fChannel)
     weightDn = onehalfR * elem2R(faceI(:,fi_Melem_d),e2r_Length) 
- elsewhere (faceI(:,fi_etype_d) == fWeir)
-    weightDn = onehalfR * elem2R(faceI(:,fi_Melem_d),e2r_Length)
  endwhere
  
  where (faceI(:,fi_etype_u) == fChannel)
-     weightUp = onehalfR * elem2R(faceI(:,fi_Melem_u),e2r_Length) 
- elsewhere (faceI(:,fi_etype_u) == fWeir)
      weightUp = onehalfR * elem2R(faceI(:,fi_Melem_u),e2r_Length) 
  endwhere
 
@@ -754,15 +900,28 @@ call interp_channel_onetype &
 
 
 !%  set the mask for channel and mulitple elements without a hyd jump
- facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fWeir) .or. (faceI(:,fi_etype_d) == fMultiple)) &
+ facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fMultiple)) &
              & .and. &
-              ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fWeir) .or. (faceI(:,fi_etype_u) == fMultiple)) &
+              ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fMultiple)) &
              & .and. &
               (faceI(:,fi_jump_type) == jump_none) )
  
  where (facemask)
     etaDn = (weightUp * etaDn + weightDn * etaUp) / ( weightUp + weightDn )
  endwhere
+
+ where (faceI(:,fi_etype_d) == fWeir)
+    ! for weir the weight of interpolation is timescale max.
+    ! the interpolation gives the eta of the element upstream.
+    etaDn = elem2R(faceI(:,fi_Melem_u),e2r_Eta)
+endwhere
+
+where (faceI(:,fi_etype_u) == fWeir)
+    ! for weir the weight of interpolation is timescale max.
+    ! the interpolation gives the eta of the element downstream.
+     etaUp = elem2R(faceI(:,fi_Melem_d),e2r_Eta)
+ endwhere
+
  etaUp = etaDn
 
  weightUp = nullvalueR

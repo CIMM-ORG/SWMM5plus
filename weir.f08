@@ -10,6 +10,7 @@
     use bc
     use data_keys
     use diagnostic
+    use face_values
     use globals
     use setting_definition
     use utility
@@ -19,6 +20,8 @@
     private
 
     public :: weir_step
+    public :: weir_freesurface_elevation
+    public :: weir_provisional_geometry
 
     integer :: debuglevel = 0
 
@@ -30,8 +33,8 @@
  subroutine weir_step &
     (e2r_Volume_old, e2r_Velocity_old, eMr_Volume_old, eMr_Velocity_old, &
      e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-     elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     thiscoef)
+     elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, &
+     elemMYN, thiscoef)
 !
  character(64) :: subroutine_name = 'weir_step'
  
@@ -42,22 +45,28 @@
  integer,   intent(in) :: eMr_Volume_new, eMr_Velocity_new
 
  real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
- real,      target, intent(in)      :: faceR(:,:)
+ integer,           intent(in out)  :: faceI(:,:)
+ real,      target, intent(in out)  :: faceR(:,:)
  integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
  logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+ logical,           intent(in out)  :: faceYN(:,:)
  real,              intent(in)      :: thiscoef
 
- real,  pointer ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
- real,  pointer ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
- real,  pointer ::  wFlow(:), wCrest(:), wCrown(:), wZbottom(:), EffectiveHead(:)
+ real,  pointer     ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
+ real,  pointer     ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
+ real,  pointer     ::  wFlow(:), wCrest(:), wCrown(:), wZbottom(:), wEta(:), EffectiveHead(:)
 
- real,  pointer ::  wCoeff, wWidth, wHeight, wSideSlope, wInletoffset    !Weir discharge coefficient, Width, Height, sideslope
+ real,  pointer     ::  wCoeff, wWidth, wHeight, wSideSlope, wInletoffset    !Weir discharge coefficient, Width, Height, sideslope
+ real,  pointer     ::  fEdn(:), fEup(:)
 
- integer, pointer                   :: iup(:), idn(:), dir(:)
+ integer, pointer   ::  iup(:), idn(:), dir(:)
  integer :: mm
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
+!%  pointers for convenience in notation
+ fEdn         => faceR(:,fr_Eta_d)
+ fEup         => faceR(:,fr_Eta_u)
 
  volume2old   => elem2R(:,e2r_Volume_old)
  volume2new   => elem2R(:,e2r_Volume_new)
@@ -73,6 +82,10 @@
 
  wflow        => elem2R(:,e2r_Flowrate)  
  wZbottom     => elem2R(:,e2r_Zbottom)
+ wEta         => elem2R(:,e2r_eta)
+
+ iup          => elem2I(:,e2i_Mface_u)
+ idn          => elem2I(:,e2i_Mface_d)
 
 !%  temporary space for elem2
  EffectiveHead => elem2R(:,e2r_Temp(next_e2r_temparray))
@@ -104,9 +117,14 @@
             wCrown =  wCrest + wHeight
  endwhere 
 
+
+ call weir_freesurface_elevation &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+     fEdn, fEup, iup, idn, wEta)
+
  call weir_effective_head &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     wCrest, wCrown, dir, EffectiveHead)
+     wCrest, wCrown, wEta, fEup, fEdn, iup, idn, dir, EffectiveHead)
  
  call weir_effective_length &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, & 
@@ -118,13 +136,32 @@
      wFlow, elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, &
      elemMYN, wWidth, wHeight, wCoeff, wSideSlope, dir,     &
      EffectiveHead, thiscoef)
-    ! print*, EffectiveHead, 'EffectiveHead'
+
+    ! print*, wFlow, 'wFlow before'
+    ! print*,'**************************************'
+    ! print*, faceR(:,fr_Flowrate), 'fr_Flowrate'
+    ! print*,'**************************************'
+    ! print*, faceR(:,fr_Velocity_u), 'fr_Velocity_u'
+    ! print*,'**************************************'
+    ! print*, faceR(:,fr_Velocity_d), 'fr_Velocity_d'
+    ! print*,'**************************************'
+ call flow_interp_for_upstream_weir_face (elem2R, faceR, faceI, faceYN)
+
+ call flow_interp_for_downstream_weir_face (elem2R, faceR, faceI, faceYN)
+
+    ! print*,'+++++++++++++++++++++++++++++++++++++'
+    ! print*, faceR(:,fr_Flowrate), 'fr_Flowrate'
+    ! print*,'+++++++++++++++++++++++++++++++++++++'
+    ! print*, faceR(:,fr_Velocity_u), 'fr_Velocity_u'
+    ! print*,'+++++++++++++++++++++++++++++++++++++'
+    ! print*, faceR(:,fr_Velocity_d), 'fr_Velocity_d'
+    ! print*,'+++++++++++++++++++++++++++++++++++++'
 
  ! release temporary arrays
  EffectiveHead  = nullvalueR
  wCrest         = nullvalueR
-
  dir            = nullvalueI
+
  nullify(EffectiveHead, wCrest, wCrown)
  nullify(dir)
  next_e2r_temparray = next_e2r_temparray - 3
@@ -137,9 +174,41 @@
 !==========================================================================
 !==========================================================================
 !
+subroutine weir_freesurface_elevation &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+     fEdn, fEup, iup, idn, wEta)
+!
+ character(64) :: subroutine_name = 'weir_freesurface_elevation'
+
+
+ real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+ real,      target, intent(in)      :: faceR(:,:)
+ integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+ logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+
+ real,  pointer   ::  fEdn(:), fEup(:)
+ real,  pointer   ::  wEta(:)
+ integer, pointer ::  iup(:), idn(:)
+
+ integer :: mm
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) )
+            wEta = max(fEdn(iup), fEup(idn))
+ endwhere
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+
+ end subroutine weir_freesurface_elevation
+!
+!========================================================================== 
+!==========================================================================
+!
 subroutine weir_effective_head &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     wCrest, wCrown, dir, EffectiveHead)
+     wCrest, wCrown, wEta, fEup, fEdn, iup, idn, dir, EffectiveHead)
 !
  character(64) :: subroutine_name = 'weir_effective_head'
 
@@ -149,9 +218,9 @@ subroutine weir_effective_head &
  integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
  logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
- real,  pointer   ::  wCrest(:), wCrown(:), EffectiveHead(:)
+ real,  pointer   ::  wCrest(:), wCrown(:), EffectiveHead(:), wEta(:)
 
- real,  pointer   ::  fHdn(:), fHup(:), nominalHup(:), nominalHdn(:)
+ real,  pointer   ::  fEup(:), fEdn(:), nominalEup(:), nominalEdn(:)
  integer, pointer ::  iup(:), idn(:), dir(:)
 
  integer :: mm
@@ -159,60 +228,42 @@ subroutine weir_effective_head &
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
 !% temporary allocation of pointers
- nominalHdn => elem2R(:,e2r_Temp(next_e2r_temparray))
+ nominalEdn => elem2R(:,e2r_Temp(next_e2r_temparray))
  next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
  
- nominalHup => elem2R(:,e2r_Temp(next_e2r_temparray))
+ nominalEup => elem2R(:,e2r_Temp(next_e2r_temparray))
  next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
-!%  pointers for convenience in notation
- fHdn  => faceR(:,fr_HydDepth_d)
- fHup  => faceR(:,fr_HydDepth_u)
-
- iup   => elem2I(:,e2i_Mface_u)
- idn   => elem2I(:,e2i_Mface_d)
-
+!% nominal upstream and downstream head calculation
  where      ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
-              (fHup(iup) .GE. fHdn(idn)) )
+              (fEdn(iup) .GE. fEup(idn)) )
             dir = oneI
-            nominalHup = fHup(iup)
-            nominalHdn = fHdn(idn)
+            nominalEup = fEdn(iup)
+            nominalEdn = fEup(idn)
  elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and.   &
-              (fHdn(iup) .LT. fHup(idn)) )
+              (fEdn(iup) .LT. fEup(idn)) )
             dir = -oneI
-            nominalHup = fHdn(idn)
-            nominalHdn = fHup(iup)
+            nominalEup = fEup(idn)
+            nominalEdn = fEdn(iup)
  endwhere
 
- ! print*, nominalHup, 'nominalHup 1'
- ! print*, nominalHdn, 'nominalHdn 1'
+!% effective head calculation
  where      ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
-              (wCrest .GT. nominalHdn) )
-            nominalHdn = zeroR
+              (wEta .GT. wCrest) )
+
+            EffectiveHead = min((wEta-wCrest), (nominalEup - nominalEdn))
+ elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
+              (wEta .LE. wCrest) )
+            EffectiveHead = zeroR
+
+ elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
+              (wEta .GT. wCrown) )
+            EffectiveHead = wCrown - wCrest
  endwhere
 
- where  ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
-              (wCrest .GT. nominalHup) )
-            nominalHup = zeroR
- endwhere
- 
- where  ( (elem2I(:,e2i_elem_type) == eWeir) .and.  &
-              (nominalHup .GT. wCrown) )
-            nominalHup = wCrown - wCrown
-            ! The weir will overflow in this case. This is needed to be fixed
- endwhere
-
- where      ( (elem2I(:,e2i_elem_type) == eWeir) )
-            EffectiveHead =  nominalHup - nominalHdn
- endwhere
- ! print*, nominalHup, 'nominalHup 2'
- ! print*, nominalHdn, 'nominalHdn 2'
- ! print*, wCrest, 'wCrest'
- ! print*, wCrown, 'wCrown'
-
- nominalHdn = nullvalueR
- nominalHup = nullvalueR
- nullify(nominalHdn, nominalHup)
+ nominalEdn = nullvalueR
+ nominalEup = nullvalueR
+ nullify(nominalEdn, nominalEup)
  next_e2r_temparray = next_e2r_temparray - 2
 !Need a fix for surcharge
 
@@ -299,6 +350,40 @@ subroutine weir_effective_length &
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
  end subroutine weir_flow
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine weir_provisional_geometry &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN)
+! this subroutine sets the weir geometry to zero.
+ character(64) :: subroutine_name = 'weir_provisional_geometry'
+
+
+ real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+ real,      target, intent(in)      :: faceR(:,:)
+ integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+ logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+
+ integer :: mm
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) )
+
+            elem2R(:,e2r_Area)        = 1.0e-7 
+            elem2R(:,e2r_Eta)         = 1.0e-7 
+            elem2R(:,e2r_Perimeter)   = 1.0e-7 
+            elem2R(:,e2r_HydDepth)    = 1.0e-7 
+            elem2R(:,e2r_HydRadius)   = 1.0e-7 
+            elem2R(:,e2r_Topwidth)    = 1.0e-7 
+            elem2R(:,e2r_Depth)       = 1.0e-7 
+ endwhere
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+
+ end subroutine weir_provisional_geometry
 !
 !==========================================================================
 !==========================================================================

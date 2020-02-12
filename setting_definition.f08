@@ -155,7 +155,7 @@
         real    :: Flowrate     = 0.0     ! m^3/s
         real    :: Topwidth     = 1.0e-4  ! m
         real    :: Velocity     = 0.0     ! m/s
-        real    :: Volume       = 1.0e-6  ! m^3
+        real    :: Volume       = 1.0e-7  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
     end type zerovalueType
 
     !%  setting%Weir

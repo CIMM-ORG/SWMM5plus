@@ -37,10 +37,10 @@ SOURCESF="  type_definitions.f08\
         debug.f08\
         diagnostic.f08\
         junction.f08\
+        face_values.f08\
         weir.f08\
         element_dynamics.f08\
         element_geometry.f08\
-        face_values.f08\
         explicit_euler.f08\
         friction_model.f08\
         initial_condition.f08\

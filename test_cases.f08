@@ -236,7 +236,7 @@
         ! step controls
         display_interval = 1000
         first_step = 1
-        last_step  =  10000! note 1000 is good enough to show blow up or not, 10000 is smooth
+        last_step  =  150000! note 1000 is good enough to show blow up or not, 10000 is smooth
 
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5
@@ -260,8 +260,8 @@
         depth_dnstream(2)  = 1.0e-2         !This is the depth in weir 
         depth_upstream(2)  = 1.0e-2         !This is the depth in weir
 
-        depth_dnstream(3)  = 1.0
-        depth_upstream(3)  = 1.0
+        depth_dnstream(3)  = 0.5
+        depth_upstream(3)  = 0.5
 
         channel_breadth(1)   = 3.0
         channel_breadth(2)   = setting%Weir%WeirWidth

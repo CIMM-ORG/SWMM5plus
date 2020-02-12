@@ -127,9 +127,12 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
             if (kk .le. n_cells) then
                 kk = kk + 3
                 ll = ll + 1
+                if (kk .gt. n_cells) Then
+                    exit
+                end if
             else
                 exit
-            end if
+            endif
         end if
     end do
     rewind(iunit)
@@ -242,6 +245,7 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
             temp_idx(jj) = ii
         end if
     end do
+    rewind(iunit)
     ! The line after '=rows_this_link_X_data' is link lenghts. 
     length_idx = temp_idx + 1
     ! The 2nd line after '=rows_this_link_X_data' is link data. 
@@ -300,7 +304,7 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
     end do
     ! Takes the first 'n_links' values of n_linkItems_tmp array
     ! [LinkItem1 LinkItem2 LinkItem3]
-    n_linkItems(:) = n_linkItems_tmp(n_links)
+    n_linkItems(:) = n_linkItems_tmp(1:n_links)
     max_linkItems = n_linkItems_tmp(specific_link)
     rewind(iunit)
 

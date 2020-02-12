@@ -96,12 +96,18 @@
              elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
              thiscoef(ii))
 
-        call weir_step &
-            (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
-             e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-             elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-             thiscoef(ii))
-             
+            ! print*,'after RK2 step'
+            ! print*, elem2R(:,e2r_Volume_new), 'e2r_Volume_new'
+            ! print*,'----------------------------------------------'
+            ! print*, elem2R(:,e2r_Volume), 'e2r_Volume_old'
+            ! print*,'----------------------------------------------'
+            ! print*, elem2R(:,e2r_Velocity_new), 'e2r_Volume_new'
+            ! print*,'----------------------------------------------'
+            ! print*, elem2R(:,e2r_Eta), 'e2r_Eta'
+            ! print*,'----------------------------------------------'
+        
+        ! call weir_provisional_geometry &
+        !     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN)            
  
         call rk2_update_auxiliary_variables &
             (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new, &
@@ -109,8 +115,23 @@
              elemMR, elemMI, elemMYN, &
              faceR,  faceI,  faceYN,  &
              bcdataDn, bcdataUp, steptime, ii)
+
+            ! print*,'after aux update step'
+            ! print*, elem2R(:,e2r_Volume_new), 'e2r_Volume_new'
+            ! print*,'----------------------------------------------'
+            ! print*, elem2R(:,e2r_Volume), 'e2r_Volume_old'
+            ! print*,'----------------------------------------------'
+            ! print*, elem2R(:,e2r_Velocity_new), 'e2r_Volume_new'
+            ! print*,'----------------------------------------------'
+            ! print*, elem2R(:,e2r_Eta), 'e2r_Eta'
+            ! print*,'----------------------------------------------'
+
+        call weir_step &
+            (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
+             e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
+             elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, &
+             thiscoef(ii))
              
-  
     
         if (ii==1) then
             !% store the net face fluxes that are used for volume advance.
