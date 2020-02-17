@@ -6,13 +6,13 @@ DIRThreaded=OutputThreaded
 mkdir "$DIRDebug"
 mkdir "$DIRThreaded"
 
-echo Compiling the SWMMengine ...
+echo Compiling the testModules ...
 
 # Compiler/Linker settings
 FC=gfortran-9
 OPTFLAGS=-g
 FFLAGS=-02
-PROGRAM=SWMM
+PROGRAM=testModules
 PRG_OBJ=$PROGRAM.o
 
 echo Choosing $FC as a compiler ...
@@ -51,7 +51,7 @@ SOURCESF="  type_definitions.f08\
         test_cases.f08\
         runge_kutta.f08\
         time_loop.f08\
-        main.f08\
+        testModules.f08
         stub.f08\
     "
 

@@ -244,7 +244,7 @@
  do ii=1,N_link
     !%  get the upstream node of the link  
     thisnode = linkI(ii,li_Mnode_u)
-    print *, thisnode
+    print *, 'this node=', thisnode
     if ((thisnode < 1) .or. (thisnode > N_node)) then
         print *, ii,'= this link'
         print *, thisnode,'= upstream node assigned'
@@ -798,9 +798,26 @@
     
     select case (linkI(thisLink,li_geometry))
         case (lRectangular)
-            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
+        case (lParabolic)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth) = twoR &
+                * sqrt(linkR(thisLink,lr_InitialDepth)/linkR(thisLink,lr_ParabolaValue))
+        case (lTrapezoidal)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth) = linkR(thisLink,lr_BreadthScale)   &
+                    + linkR(thisLink,lr_InitialDepth)                          &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lTriangle)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lWidthDepth)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            faceR(thisFace,fr_Topwidth)        = linkR(thisLink,lr_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -936,6 +953,22 @@
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+        case (eParabolic)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+        case (eTrapezoidal)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+        case (eTriangle)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+        case (eWidthDepth)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1277,9 +1310,26 @@
         
     select case (linkI(thisLink,li_geometry))
         case (lRectangular)
-            elem2R(thisElem2,e2r_Topwidth)      = linkR(thisLink,lr_BreadthScale)
-            elem2R(thisElem2,e2r_BreadthScale)  = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
+        case (lParabolic)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth) = twoR &
+                * sqrt(linkR(thisLink,lr_InitialDepth)/linkR(thisLink,lr_ParabolaValue))
+        case (lTrapezoidal)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth) = linkR(thisLink,lr_BreadthScale)   &
+                    + linkR(thisLink,lr_InitialDepth)                          &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lTriangle)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lWidthDepth)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
