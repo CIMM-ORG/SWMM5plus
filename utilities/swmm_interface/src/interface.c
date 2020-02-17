@@ -3,38 +3,6 @@
 #include <math.h>
 #include <string.h>
 
-// Row in Nodes (Fortran)
-enum node_attributes {
-  e_ni_node_type,
-  e_ni_N_link_u,
-  e_ni_N_link_d,
-  e_ni_Mlink_u1,
-  e_ni_Mlink_u2,
-  e_ni_Mlink_u3,
-  e_ni_Mlink_d1,
-  e_ni_Mlink_d2,
-  e_ni_Mlink_d3,
-  e_nr_Zbottom
-};
-
-// Row in Nodes (Fortran)
-enum link_attributes {
-  e_li_link_type,
-  e_li_roughness_type,
-  e_li_geometry,
-  e_li_Mnode_u,
-  e_li_Mnode_d,
-  e_li_InitialDepthType,
-  e_lr_Length,
-  e_lr_BreadthScale,
-  e_lr_Slope,
-  e_lr_Roughness,
-  e_lr_InitialFlowrate,
-  e_lr_InitialDepth,
-  e_lr_InitialUpstreamDepth,
-  e_lr_InitialDnstreamDepth
-};
-
 int i_add_link(
 	int li_idx,
 	int ni_idx,
@@ -383,7 +351,7 @@ int i_num_nodes ()
     return Nobjects[NODE];
 }
 
-void i_record_nodes_data(float ** node_table, int units)
+void i_record_nodes_data(double * nodeMatrix, int units)
 {
     float * ni_N_link_u = (float *) calloc(Nobjects[NODE], sizeof(float));
     float * ni_N_link_d = (float *) calloc(Nobjects[NODE], sizeof(float));
@@ -393,8 +361,10 @@ void i_record_nodes_data(float ** node_table, int units)
     float * ni_Mlink_d1 = (float *) calloc(Nobjects[NODE], sizeof(float));
     float * ni_Mlink_d2 = (float *) calloc(Nobjects[NODE], sizeof(float));
     float * ni_Mlink_d3 = (float *) calloc(Nobjects[NODE], sizeof(float));
-    float attrs[NUM_NODE_ATTRS];
+    float attrs[num_node_attributes];
     float flow_units, length_units, manning_units;
+    int len = num_node_attributes * Nobjects[NODE];
+    int x, y;
 
     // Choosing unit system
 	if (units == US) {
@@ -409,19 +379,15 @@ void i_record_nodes_data(float ** node_table, int units)
 	}
 
     i_init_node_tmp_table( ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
-	for (int i = 0; i < Nobjects[NODE]; i++)
+	for (int i = 0; i < len; i+=num_node_attributes)
     {
-        i_get_node_attrs(i+FIDX, length_units, attrs, ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
-        node_table[e_ni_node_type][i] = attrs[e_ni_node_type];
-        node_table[e_ni_N_link_u][i] = attrs[e_ni_N_link_u];
-        node_table[e_ni_N_link_d][i] = attrs[e_ni_N_link_d];
-        node_table[e_ni_Mlink_u1][i] = attrs[e_ni_Mlink_u1];
-        node_table[e_ni_Mlink_u2][i] = attrs[e_ni_Mlink_u2];
-        node_table[e_ni_Mlink_u3][i] = attrs[e_ni_Mlink_u3];
-        node_table[e_ni_Mlink_d1][i] = attrs[e_ni_Mlink_d1];
-        node_table[e_ni_Mlink_d2][i] = attrs[e_ni_Mlink_d2];
-        node_table[e_ni_Mlink_d3][i] = attrs[e_ni_Mlink_d3];
-        node_table[e_nr_Zbottom][i] = attrs[e_nr_Zbottom];
+        x = i % num_node_attributes;
+        y = floor(i / num_node_attributes);
+        i_get_node_attrs(x+FIDX, length_units, attrs, ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
+        for (int j = 0; j < num_node_attributes; j++)
+        {
+            nodeMatrix[i+j] = attrs[j];
+        }
     }
     free(ni_N_link_u);
     free(ni_Mlink_u1);
@@ -433,28 +399,19 @@ void i_record_nodes_data(float ** node_table, int units)
     free(ni_Mlink_d3);
 }
 
-void i_record_links_data(float ** link_table, int units)
+void i_record_links_data(double * linkMatrix, int units)
 {
-	for (int i = 0; i < Nobjects[LINK]; i++)
+    int len = num_link_attributes * Nobjects[LINK];
+    int x, y;
+	for (int i = 0; i < len; i++)
     {
-        link_table[e_li_link_type][i] = i_get_link_attribute(i+FIDX, e_li_link_type, units);
-        link_table[e_li_roughness_type][i] = i_get_link_attribute(i+FIDX, e_li_roughness_type, units);
-        link_table[e_li_geometry][i] = i_get_link_attribute(i+FIDX, e_li_geometry, units);
-        link_table[e_li_Mnode_u][i] = i_get_link_attribute(i+FIDX, e_li_Mnode_u, units);
-        link_table[e_li_Mnode_d][i] = i_get_link_attribute(i+FIDX, e_li_Mnode_d, units);
-        link_table[e_li_InitialDepthType][i] = i_get_link_attribute(i+FIDX, e_li_InitialDepthType, units);
-        link_table[e_lr_Length][i] = i_get_link_attribute(i+FIDX, e_lr_Length, units);
-        link_table[e_lr_BreadthScale][i] = i_get_link_attribute(i+FIDX, e_lr_BreadthScale, units);
-        link_table[e_lr_Slope][i] = i_get_link_attribute(i+FIDX, e_lr_Slope, units);
-        link_table[e_lr_Roughness][i] = i_get_link_attribute(i+FIDX, e_lr_Roughness, units);
-        link_table[e_lr_InitialFlowrate][i] = i_get_link_attribute(i+FIDX, e_lr_InitialFlowrate, units);
-        link_table[e_lr_InitialDepth][i] = i_get_link_attribute(i+FIDX, e_lr_InitialDepth, units);
-        link_table[e_lr_InitialUpstreamDepth][i] = i_get_link_attribute(i+FIDX, e_lr_InitialUpstreamDepth, units);
-        link_table[e_lr_InitialDnstreamDepth][i] = i_get_link_attribute(i+FIDX, e_lr_InitialDnstreamDepth, units);
+        y = i % num_link_attributes;
+        x = floor(i/num_link_attributes);
+        linkMatrix[i] = i_get_link_attribute(x+FIDX, y, units);
     }
 }
 
-int i_print_info(int units)
+void i_print_info(int units)
 {
 	FILE *f_nodes;
 	FILE *f_links;
@@ -469,7 +426,7 @@ int i_print_info(int units)
     float * ni_Mlink_d1 = (float *) malloc(Nobjects[NODE]*sizeof(float));
     float * ni_Mlink_d2 = (float *) malloc(Nobjects[NODE]*sizeof(float));
     float * ni_Mlink_d3 = (float *) malloc(Nobjects[NODE]*sizeof(float));
-    float attrs[NUM_NODE_ATTRS];
+    float attrs[num_node_attributes];
     float flow_units, length_units, manning_units;
 
     // Choosing unit system
