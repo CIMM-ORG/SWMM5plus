@@ -675,11 +675,6 @@ int  DLLEXPORT swmm_getError(char* errMsg, int msgLen)
 
 // INTERFACE WITH FORTRAN
 
-int  DLLEXPORT swmm_printInfo(int units)
-{
-	return i_print_info(units);
-}
-
 int DLLEXPORT swmm_num_nodes()
 {
     return i_num_nodes();
@@ -690,14 +685,29 @@ int DLLEXPORT swmm_num_links()
     return i_num_links();
 }
 
-void DLLEXPORT swmm_record_nodes_data(float ** node_table, int units)
+int DLLEXPORT swmm_num_link_attrs ()
 {
-    return i_record_nodes_data(node_table, units);
+    return num_link_attributes;
 }
 
-void DLLEXPORT swmm_record_links_data(float ** link_table, int units)
+int DLLEXPORT swmm_num_node_attrs ()
 {
-    return i_record_links_data(link_table, units);
+    return num_node_attributes;
+}
+
+void DLLEXPORT swmm_save_linkMatrix(double * linkMatrix, int * lenX, int * lenY, int * units)
+{
+    i_record_links_data(linkMatrix, *units);
+}
+
+void DLLEXPORT swmm_save_nodeMatrix(double * nodeMatrix, int * lenX, int * lenY, int * units)
+{
+    i_record_nodes_data(nodeMatrix, *units);
+}
+
+void  DLLEXPORT swmm_printInfo(int * units)
+{
+	i_print_info(*units);
 }
 
 //=============================================================================

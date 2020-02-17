@@ -44,9 +44,40 @@
 // Fortran starting index
 #define FIDX 1
 
-// Number of attrs
-#define NUM_NODE_ATTRS 10
-#define NUM_LINK_ATTRS 14
+// Row in Nodes (Fortran)
+enum node_attributes {
+  e_ni_node_type,
+  e_ni_N_link_u,
+  e_ni_N_link_d,
+  e_ni_Mlink_u1,
+  e_ni_Mlink_u2,
+  e_ni_Mlink_u3,
+  e_ni_Mlink_d1,
+  e_ni_Mlink_d2,
+  e_ni_Mlink_d3,
+  e_nr_Zbottom,
+  num_node_attributes // this is always the last
+};
+
+// Row in Nodes (Fortran)
+enum link_attributes {
+  e_li_link_type,
+  e_li_roughness_type,
+  e_li_geometry,
+  e_li_Mnode_u,
+  e_li_Mnode_d,
+  e_li_InitialDepthType,
+  e_lr_Length,
+  e_lr_BreadthScale,
+  e_lr_Slope,
+  e_lr_Roughness,
+  e_lr_InitialFlowrate,
+  e_lr_InitialDepth,
+  e_lr_InitialUpstreamDepth,
+  e_lr_InitialDnstreamDepth,
+  num_link_attributes // this is always the last
+};
+
 
 int i_add_link (int li_idx, int ni_idx, int direction, float * ni_N_link_u, float * ni_Mlink_u1, float * ni_Mlink_u2, float * ni_Mlink_u3, float * ni_N_link_d, float * ni_Mlink_d1, float * ni_Mlink_d2, float * ni_Mlink_d3);
 float i_get_node_type (int k, float total_n_links);
@@ -56,6 +87,6 @@ int i_get_node_attrs (int k, int length_units, float * attrs, float * ni_N_link_
 float i_get_link_attribute (int k, int attr, int units);
 int i_num_links();
 int i_num_nodes();
-void i_record_nodes_data (float ** node_table, int units);
-void i_record_links_data (float ** link_table, int units);
-int i_print_info (int);
+void i_record_nodes_data (double * nodeMatrix, int units);
+void i_record_links_data (double * linkMatrix, int units);
+void i_print_info (int);

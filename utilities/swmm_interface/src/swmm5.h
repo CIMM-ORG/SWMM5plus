@@ -51,11 +51,13 @@ int  DLLEXPORT   swmm_getVersion(void);
 int  DLLEXPORT   swmm_getError(char* errMsg, int msgLen);
 int  DLLEXPORT   swmm_getWarnings(void);
 
-int  DLLEXPORT swmm_printInfo(int units);
-int DLLEXPORT swmm_num_nodes();
-int DLLEXPORT swmm_num_links();
-void DLLEXPORT swmm_record_nodes_data(float ** node_table, int units);
-void DLLEXPORT swmm_record_links_data(float ** link_table, int units);
+int DLLEXPORT swmm_num_nodes(void);
+int DLLEXPORT swmm_num_links(void);
+int DLLEXPORT swmm_num_node_attrs (void);
+int DLLEXPORT swmm_num_link_attrs (void);
+void DLLEXPORT swmm_save_linkMatrix(double * linkMatrix, int * lenX, int * lenY, int * units);
+void DLLEXPORT swmm_save_nodeMatrix(double * nodeMatrix, int * lenX, int * lenY, int * units);
+void DLLEXPORT swmm_printInfo(int * units);
 
 #ifdef __cplusplus
 }   // matches the linkage specification from above */
