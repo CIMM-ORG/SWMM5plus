@@ -252,7 +252,7 @@
         ManningsN           = newManningsN
         channel_length      = newLength
         lowerZ              = newZBottom
-        subdivide_length(:) = 10.0
+        subdivide_length(:) = 5000.0
         
         ! rectangular geometry
         parabolaValue = zeroR
