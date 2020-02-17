@@ -36,7 +36,8 @@
     integer, parameter :: eRectangular = 1  ! ID for rectangular chanel
     integer, parameter :: eParabolic   = 2  ! ID for parabolic channel
     integer, parameter :: eTrapezoidal = 3  ! ID for trapezoidal channel
-    integer, parameter :: eWidthDepth  = 4  ! ID for general geometry by data pairs
+    integer, parameter :: eTriangle    = 4  ! ID for trapezoidal channel
+    integer, parameter :: eWidthDepth  = 5  ! ID for general geometry by data pairs
 
     ! data types for elemI(:,ei_roughness_type)
     integer, parameter :: eManningsN    = 1   ! ID for mannings n for roughness_type
@@ -67,6 +68,7 @@
     integer, parameter :: lRectangular   = eRectangular    ! ID for link that rectangular channel
     integer, parameter :: lParabolic     = eParabolic  ! ID for parabolic channel
     integer, parameter :: lTrapezoidal   = eTrapezoidal  ! ID for trapezoidal channel
+    integer, parameter :: lTriangle      = eTriangle  ! ID for triangle channel
     integer, parameter :: lWidthDepth    = eWidthDepth  ! ID for general geometry by data pairs
 
     ! data types for linkII(:,li_roughness_type)

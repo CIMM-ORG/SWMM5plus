@@ -239,6 +239,8 @@
  integer,   pointer :: etype2(:), etypeM(:)
  real               :: channelVolume, junctionVolume, totalVolume
  real               :: inflowRate, outflowRate
+ 
+ integer :: ii
     
   
 !-------------------------------------------------------------------------- 
@@ -246,6 +248,10 @@
  
  etype2 => elem2I(:,e2i_elem_type)
  etypeM => elemMI(:,eMi_elem_type)
+ 
+!  do ii= 1, size(elem2R(:,e2r_Volume),1)
+!     print*, "elem2R(:,e2r_Volume) = ii =", ii, " == ", elem2R(ii,e2r_Volume)
+!  enddo
  
  channelVolume  = sum(elem2R(:,e2r_Volume),1,etype2 == eChannel)
  junctionVolume = sum(elemMR(:,eMr_Volume),1,etypeM == eJunctionChannel) 

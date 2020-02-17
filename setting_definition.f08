@@ -1,3 +1,5 @@
+!
+! 2019-10 @EhsanMadadi added keys for widt-depth cases.
 !==========================================================================
  module setting_definition
 !
@@ -18,6 +20,20 @@
         logical ::  Apply = .true.
         real    ::  Coef  = 0.1
     end type adjustVshapedFlowrateType
+    
+    !% setting%Method%AdjustWidthDepth
+    type adjustWidthDepthType
+        logical :: Apply               = .true.
+        logical :: AddDownstreamBuffer = .false.
+        real    :: AdjustFractionMax   = 0.05
+        real    :: AdjustFraction      = 0.01
+        real    :: SmallWidth          = 1e-8
+        real    :: DownstreamMinLength = 0.0
+        real    :: depthMaxExpected    = 5.0
+        real    :: angleMinimum        = 0.1
+        real    :: areaMaximum         = 2.0
+        real    :: cellSizeTarget      = 10.0
+    endtype adjustWidthDepthType
 
     !% setting%Limiter%BC
     type BClimiterType
@@ -94,6 +110,7 @@
     !%  setting%Method
     type methodType
         type(adjustVshapedFlowrateType) :: AdjustVshapedFlowrate
+        type(adjustWidthDepthType)      :: AdjustWidthDepth
     end type methodType
 
     !%  setting%OutputThreadedLink
@@ -148,7 +165,7 @@
 
     !%  setting%ZeroValue
     type zerovalueType
-        logical :: UseZeroValues = .true.
+        logical :: UseZeroValues = .false.
         real    :: Area         = 1.0e-7  ! m^2
         real    :: Depth        = 1.0e-4  ! m
         real    :: Flowrate     = 0.0     ! m^3/s
@@ -160,17 +177,17 @@
 !% FIRST LEVEL TYPE  ----------------------------------------------
     type settingType
         integer :: dummy
-        type(constantType)          :: Constant     ! constants
-        type(debugoutType)          :: DebugOut     ! control of debougout files
-        type(epsilonType)           :: Eps          ! epsilons used to provide bandwidth for comparisons
-        type(limiterType)           :: Limiter      ! maximum and minimum limiters
-        type(methodType)            :: Method       ! controls over simulation methods
-        type(outputThreadedLinkType):: OutputThreadedLink ! controls output for threaded link
-        type(smallvolumeType)       :: SmallVolume   ! controls for small volumes
-        type(stepType)              :: Step         ! controls over simulation time stepping
-        type(testcaseType)          :: TestCase     ! custom setup for test cases
-        type(timeType)              :: Time         ! controls of time step
-        type(zerovalueType)         :: ZeroValue    ! finite values to represent small or negative values
+        type(constantType)            :: Constant     ! constants
+        type(debugoutType)            :: DebugOut     ! control of debougout files
+        type(epsilonType)             :: Eps          ! epsilons used to provide bandwidth for comparisons
+        type(limiterType)             :: Limiter      ! maximum and minimum limiters
+        type(methodType)              :: Method       ! controls over simulation methods
+        type(outputThreadedLinkType)  :: OutputThreadedLink ! controls output for threaded link
+        type(smallvolumeType)         :: SmallVolume   ! controls for small volumes
+        type(stepType)                :: Step         ! controls over simulation time stepping
+        type(testcaseType)            :: TestCase     ! custom setup for test cases
+        type(timeType)                :: Time         ! controls of time step
+        type(zerovalueType)           :: ZeroValue    ! finite values to represent small or negative values
     end type settingType
 
 

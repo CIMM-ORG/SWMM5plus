@@ -35,7 +35,9 @@
 !
  subroutine time_marching &
     (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
-     bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile)
+     bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 !
 ! top-level iteration for continuity and momentum solution
 !
@@ -63,6 +65,16 @@
  integer :: ii
 
  character(len=32) :: outdataName
+ 
+ integer, intent(in out)    :: ID(:)
+ integer, intent(in out)    :: numberPairs(:)
+ real,    intent(in out)    :: ManningsN(:)
+ real,    intent(in out)    :: Length(:)
+ real,    intent(in out)    :: zBottom(:)
+ real,    intent(in out)    :: xDistance(:)
+ real,    intent(in out)    :: Breadth(:)
+ real,    intent(in out)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: cellType(:)
 
 
 !--------------------------------------------------------------------------
@@ -125,7 +137,9 @@
     !% Runge-Kutta 2nd-order advance
     call rk2 &
         (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
-         bcdataDn, bcdataUp, thistime, dt)
+         bcdataDn, bcdataUp, thistime, dt, &
+         ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+         Breadth, widthDepthData, cellType)
 
     !% compute the element froude number (diagnostic only)
     call diagnostic_froude_number (elem2R, elem2I, elemMR, elemMI)
