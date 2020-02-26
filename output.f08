@@ -494,8 +494,6 @@
     end select
     ndata = eLast + 2
 
-
-
 !    do mm=1,ndata
 !        print *, mm, thisX(mm), thisdata(mm)
 !    end do
@@ -509,8 +507,6 @@
 
 
  end do
-
-
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine output_one_threaded_data_by_link

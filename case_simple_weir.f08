@@ -88,8 +88,8 @@
  bcdataUp(1)%NodeID = 4
  bcdataUp(1)%TimeArray(1)  = setting%Time%StartTime
  bcdataUp(1)%TimeArray(2)  = setting%Time%EndTime + 100.0 !s
- bcdataUp(1)%ValueArray(1) = initial_flowrate(1)  ! m^3/s
- bcdataUp(1)%ValueArray(2) = initial_flowrate(1)  ! m^3/2
+ bcdataUp(1)%ValueArray(1) = initial_flowrate(3)  ! m^3/s
+ bcdataUp(1)%ValueArray(2) = initial_flowrate(3)  ! m^3/2
     
  call case_simple_weir_and_nodes &
     (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &

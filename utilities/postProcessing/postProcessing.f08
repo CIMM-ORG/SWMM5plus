@@ -27,7 +27,8 @@ contains
 subroutine get_specific_link_data &
     (iunit, n_cells, n_links, n_linkItems, max_linkItems, n_timeSteps, &
     time_steps, data_idx, length_idx, link_lengths, link_data, &
-    specific_link, specific_linkData)
+    specific_link, specific_linkData, link_long_data, link_long_lengths, &
+    z_bottoms)
 
     character(64) :: subroutine_name = 'get_specific_link_data'
 
@@ -44,6 +45,8 @@ subroutine get_specific_link_data &
     real, dimension(:,:), allocatable, intent(inout):: link_data
     real, dimension(:), allocatable, intent(inout)  :: link_lengths        
     real, dimension(:,:), allocatable, intent(out)  :: specific_linkData
+    real, dimension(:,:), allocatable, intent(inout)  :: link_long_data
+    real, dimension(:),   allocatable, intent(inout)  :: link_long_lengths, z_bottoms
 
     integer :: allocation_status
     character(len=99) :: emsg
@@ -64,6 +67,8 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
         (iunit, n_links, max_linkItems, length_idx, specific_link, link_lengths)    
     call get_all_link_data &
         (iunit, n_cells, max_linkItems, data_idx, link_data, specific_link, n_links)
+    call get_longitudinal_link_data &
+        (iunit, n_cells, max_linkItems, data_idx, n_links,link_long_data, link_long_lengths, z_bottoms)
     
     ! All the link data is saved here in a single array
     allocate(specific_linkData(n_timeSteps, max_linkItems))
@@ -73,6 +78,113 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
 
 if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
 end subroutine get_specific_link_data
+!
+!==========================================================================
+!==========================================================================
+!
+! This function is hard coded to get longitudinal profile of the simple weir test case
+subroutine get_longitudinal_link_data &
+    (iunit, n_cells, max_linkItems, data_idx, n_links,link_long_data, link_long_lengths, z_bottoms)
+
+    character(64) :: subroutine_name = 'get_longitudinal_link_data'
+
+    integer, intent(in)                             :: iunit, n_cells
+    integer, intent(in)                             :: max_linkItems, n_links
+    integer, dimension(:), intent(in)               :: data_idx     
+    integer                                         :: istat, nn, mm
+    character(len=512)                              :: tmp
+    real, dimension(:), allocatable                 :: link_long_data_temp
+    real, dimension(:), allocatable                 :: link_data_temp1, link_data_temp2
+    real, dimension(:,:), allocatable, intent(out)  :: link_long_data
+    real, dimension(:),   allocatable, intent(out)  :: link_long_lengths, z_bottoms
+
+    integer :: allocation_status
+    character(len=99) :: emsg
+
+    integer :: ii, jj, kk, ll, pp
+
+!--------------------------------------------------------------------------
+if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+    nn = 19
+    mm = n_cells/n_links
+
+    allocate(link_long_data_temp (nn))
+    allocate(link_long_lengths (nn))
+    allocate(z_bottoms(nn))
+    allocate(link_long_data(mm, nn))
+    allocate(link_data_temp1 (12))
+    allocate(link_data_temp2 (9))
+
+    link_long_data_temp(:) = nullvalueR
+    link_data_temp1(:) = nullvalueR
+    link_data_temp2(:) = nullvalueR
+    link_long_data(:,:) = nullvalueR
+    link_long_lengths = (/-500.0, 0.0 , 1.0, 250.0, 500.0, 501.0, 750.0 , 1000.0, 1001.0,  &
+                          1002.0, 1003.0, 1004.0, 1253.0, 1503.0, 1504.0, 1753.0, &
+                          2003.0, 2004.0, 2503.0/)
+    z_bottoms = (/4.92885780, 4.65990210, 4.65990210, 4.39094639, 4.12199116, 4.12199116, 3.85303521, &
+                  3.58407974, 3.58407974, 3.58407974, 3.58407974, 3.58407974, 2.93805981, 2.29203987, &
+                  2.29203987, 1.64601994, 1.00000000, 1.00000000, 0.35398006/)
+
+    ii = 0
+    kk = 1
+    ll = 1
+    pp = 1
+    jj = data_idx(kk)
+    ! This is the same algorithm as the 'get_link_lengths'
+    rewind(iunit)
+    do ii = 1, data_idx(n_cells)
+            if (ii .lt. jj) then
+                read(iunit, *)
+            else
+                if (ll .eq. 1) then
+                    read(iunit, *)link_data_temp1
+                    link_long_data_temp(19) = link_data_temp1(2)
+                    link_long_data_temp(18) = link_data_temp1(3)
+                    link_long_data_temp(17) = link_data_temp1(4)
+                    link_long_data_temp(16) = link_data_temp1(5)
+                    link_long_data_temp(15) = link_data_temp1(6)
+                    link_long_data_temp(14) = link_data_temp1(7)
+                    link_long_data_temp(13) = link_data_temp1(8)
+                    link_long_data_temp(12) = link_data_temp1(9)
+                    kk = kk + 1
+                    ll = 2
+                    jj = data_idx(kk)
+                elseif (ll .eq. 2) then
+                    read(iunit, *)link_data_temp2
+                    link_long_data_temp(11) = link_data_temp2(4)
+                    link_long_data_temp(10) = link_data_temp2(5)
+                    link_long_data_temp(9)  = link_data_temp2(6)
+                    kk = kk + 1
+                    ll = 3
+                    jj = data_idx(kk)
+                elseif (ll .eq. 3) then
+                    read(iunit, *)link_data_temp1
+                    link_long_data_temp(8) = link_data_temp1(4)
+                    link_long_data_temp(7) = link_data_temp1(5)
+                    link_long_data_temp(6) = link_data_temp1(6)
+                    link_long_data_temp(5) = link_data_temp1(7)
+                    link_long_data_temp(4) = link_data_temp1(8)
+                    link_long_data_temp(3) = link_data_temp1(9)
+                    link_long_data_temp(2) = link_data_temp1(10)
+                    link_long_data_temp(1) = link_data_temp1(11)
+                    kk = kk + 1
+                    ll = 1
+                    jj = data_idx(kk)
+                    link_long_data(pp,:) = link_long_data_temp
+                    pp = pp + 1
+
+                    if (kk .gt. n_cells) Then
+                        exit
+                    end if
+
+                end if
+            end if
+    end do
+    rewind(iunit)
+
+if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+end subroutine get_longitudinal_link_data
 !
 !==========================================================================
 !==========================================================================

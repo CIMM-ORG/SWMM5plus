@@ -71,6 +71,10 @@
         (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
  endif
  
+ call flow_interp_for_upstream_weir_face (elem2R, faceR, faceI, faceYN)
+
+ call flow_interp_for_downstream_weir_face (elem2R, faceR, faceI, faceYN)
+
  call face_hydraulic_jump (elem2R, elemMR, faceR, faceI, e2r_Velocity_new, eMr_Velocity_new)
  
  call face_surface_elevation_interp (elem2R, elemMR, faceR, faceI, faceYN)

@@ -103,7 +103,13 @@
 
 !% reset the geometry (non-volume) where values are below minimums
  call adjust_for_zero_geometry (elem2R, elem2YN, elemMR, elemMI, elemMYN)
-
+! print*, elem2R(:,e2r_Area), 'er_Area'
+! print*, elem2R(:,e2r_Eta), 'er_Eta'
+! print*, elem2R(:,e2r_Perimeter), 'er_Perimeter'
+! print*, elem2R(:,e2r_HydDepth), 'er_HydDepth'
+! print*, elem2R(:,e2r_HydRadius), 'er_HydRadius'
+! print*, elem2R(:,e2r_Topwidth), 'er_Topwidth'
+! print*, elem2R(:,e2r_Depth), 'er_Depth'
 !%  release the temp array
  etaold = nullvalueR
  nullify(etaold)

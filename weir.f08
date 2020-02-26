@@ -117,7 +117,9 @@
             wCrown =  wCrest + wHeight
  endwhere 
 
-
+ call weir_provisional_geometry &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN) 
+    
  call weir_freesurface_elevation &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      fEdn, fEup, iup, idn, wEta)
@@ -145,9 +147,9 @@
     ! print*,'**************************************'
     ! print*, faceR(:,fr_Velocity_d), 'fr_Velocity_d'
     ! print*,'**************************************'
- call flow_interp_for_upstream_weir_face (elem2R, faceR, faceI, faceYN)
+ ! call flow_interp_for_upstream_weir_face (elem2R, faceR, faceI, faceYN)
 
- call flow_interp_for_downstream_weir_face (elem2R, faceR, faceI, faceYN)
+ ! call flow_interp_for_downstream_weir_face (elem2R, faceR, faceI, faceYN)
 
     ! print*,'+++++++++++++++++++++++++++++++++++++'
     ! print*, faceR(:,fr_Flowrate), 'fr_Flowrate'
@@ -341,7 +343,7 @@ subroutine weir_effective_length &
  where ( (elem2I(:,e2i_elem_type) == eWeir ).and. &
          (elem2I(:,e2i_geometry)  == eVnotchWeir) )
 
-    wFlow        = dir*wCoeff * wSideSlope * EffectiveHead ** 2.5
+    wFlow        = dir * wCoeff * wSideSlope * EffectiveHead ** 2.5
     velocity2new = dir * wCoeff * sqrt(abs(EffectiveHead))
     ! Volume is weir flow equation * dt (this case dt = thiscoef)
     volume2new   = thiscoef * wCoeff * wSideSlope * EffectiveHead ** 2.5  
