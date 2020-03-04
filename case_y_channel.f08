@@ -191,7 +191,7 @@
  linkI(:,li_link_type) = lChannel
 
 ! assign all as rectangular channels
- linkI(:,li_geometry) = lRectangularChannel
+ linkI(:,li_geometry) = lRectangular
 
 ! assign the link position and mappings
 
@@ -227,7 +227,7 @@
     print *, linkI(:,li_link_type), ' type'
     print *, linkI(:,li_Mnode_u) , ' upstream node'
     print *, linkI(:,li_Mnode_d) , ' downstream node'
-    print *,
+
     print *, 'node info'
     print *, nodeI(:,ni_idx), ' idx'
     print *, nodeI(:,ni_node_type), ' type'

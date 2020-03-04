@@ -36,7 +36,9 @@
 !
  subroutine initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, thisTime)
+     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, thisTime, ID,           &
+     numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,            &
+     widthDepthData, cellType)
  
  character(64) :: subroutine_name = 'initial_condition_setup'
  
@@ -47,8 +49,18 @@
  real,                intent(in)      :: linkR(:,:), nodeR(:,:)
  integer,   target,   intent(in)      :: linkI(:,:), nodeI(:,:)
  real,                intent(in)      :: thisTime
-
+ 
  type(bcType),        intent(in out)      :: bcdataDn(:), bcdataUp(:)  
+ 
+ integer, intent(inout)    :: ID(:)
+ integer, intent(inout)    :: numberPairs(:)
+ real,    intent(inout)    :: ManningsN(:)
+ real,    intent(inout)    :: Length(:)
+ real,    intent(inout)    :: zBottom(:)
+ real,    intent(inout)    :: xDistance(:)
+ real,    intent(inout)    :: Breadth(:)
+ real,    intent(inout)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: cellType(:)
  
  integer :: idx
  
@@ -70,7 +82,9 @@
  call element_geometry_update &
     (elem2R, elem2I, elem2YN, e2r_Volume, &
      elemMR, elemMI, elemMYN, eMr_Volume, &
-     faceR, faceI, bcdataDn, bcdataUp, thisTime, 0)
+     faceR, faceI, bcdataDn, bcdataUp, thisTime, 0, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 
  call meta_element_assign &
     (elem2I, e2i_elem_type, e2i_meta_elem_type) 
@@ -102,7 +116,7 @@
  if (setting%SmallVolume%UseSmallVolumes) then
     elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length) 
     elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length)
-    where (elem2I(:,e2i_geometry) == eVnotchWeir)
+    where (elem2I(:,e2i_geometry) == eTriangular)
             elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_Topwidth) * elem2R(:,e2r_Length)
     endwhere     
  else
@@ -233,51 +247,146 @@
         endwhere
         
         ! print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'
-        if (linkI(ii,li_geometry) == lRectangularChannel ) then
+ if (linkI(ii,li_geometry) == lRectangular ) then
             !% handle rectangular elements
             
             where (elem2I(:,e2i_link_ID) == Lindx)
-                elem2I(:,e2i_geometry)  = eRectangularChannel 
-                elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
-                elem2R(:,e2r_BreadthScale)  = linkR(ii,lr_BreadthScale)         
+                elem2I(:,e2i_geometry)  = eRectangular
+                elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
+                elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
                 elem2R(:,e2r_Topwidth)  = linkR(ii,lr_BreadthScale)
-                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
                 elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
             endwhere
-
-        elseif (linkI(ii,li_geometry) == lVnotchWeir ) then
-            !% handle triangular elements
-            !% Talk to Ehsan about this
+            
+        elseif (linkI(ii,li_geometry) == lParabolic ) then
+            !% handle parabolic elements
+            ! Input Topwidth, InitialDepth
             where (elem2I(:,e2i_link_ID) == Lindx)
-                ! ! All the geometry calculation here are similar to the geometry calculation in weir module
-                ! elem2I(:,e2i_geometry)      = eVnotchWeir
-                ! ! For weir element the hydraulic depth is the depth of water in the element 
-                ! elem2R(:,e2r_HydDepth)      = onehalfR * elem2R(:, e2r_Depth)
-                ! elem2R(:,e2r_BreadthScale)  = zeroR 
-                ! elem2R(:,e2r_Area)          = setting%Weir%WeirSideSlope * elem2R(:,e2r_Depth) ** twoR 
-                ! elem2R(:,e2r_Topwidth)      = twoR * setting%Weir%WeirSideSlope * elem2R(:,e2r_Depth)
-                ! elem2R(:,e2r_Eta)           = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_HydDepth)
-                ! elem2R(:,e2r_Volume)        = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
-                ! elem2R(:,e2r_Perimeter)     = twoR * elem2R(:,e2r_HydDepth) * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
-
-                ! Setting all the provisional geometry for weir to zero at first step
-                elem2I(:,e2i_geometry)      = eVnotchWeir
-                ! For weir element the hydraulic depth is the depth of water in the element 
-                elem2R(:,e2r_HydDepth)      = zeroR
-                elem2R(:,e2r_BreadthScale)  = zeroR 
-                elem2R(:,e2r_Area)          = zeroR
-                elem2R(:,e2r_Topwidth)      = zeroR
-                elem2R(:,e2r_Eta)           = zeroR
-                elem2R(:,e2r_Volume)        = zeroR
-                elem2R(:,e2r_Perimeter)     = zeroR
-
+                elem2I(:,e2i_geometry)  = eParabolic
+                
+                ! calculate hyd depth from the depth
+                elem2R(:,e2r_HydDepth) = twothirdR * elem2R(:,e2r_Depth)
+                
+                elem2R(:,e2r_BreadthScale) = zeroR
+                    
+                elem2R(:,e2r_Topwidth)  = twoR &
+                    * sqrt(elem2R(:,e2r_Depth)/elem2R(:,e2r_ParabolaValue))
+                
+                elem2R(:,e2r_Area)      = twothirdR * elem2R(:,e2r_Depth) &
+                    * elem2R(:,e2r_Topwidth)
+                    
+                elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Topwidth) &
+                   *( &
+                        sqrt &
+                        ( &
+                            oneR  &
+                            + (fourR  &
+                            * elem2R(:,e2r_Depth)/elem2R(:,e2r_Topwidth))**twoR &
+                        )  &
+                        + (elem2R(:,e2r_Topwidth)/fourR * elem2R(:,e2r_Depth)) &
+                        *log &
+                        ( &
+                            fourR * elem2R(:,e2r_Depth)/elem2R(:,e2r_Topwidth)  &
+                            + sqrt &
+                            ( &
+                                oneR  &
+                                + (fourR  &
+                                * elem2R(:,e2r_Depth)/elem2R(:,e2r_Topwidth))**twoR &
+                            ) &
+                        )  &
+                    )
+                    
+                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)                &
+                    + elem2R(:,e2r_HydDepth) 
+                    
+                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) &
+                    * elem2R(:,e2r_Length)
+                    
+            endwhere
+            
+        elseif (linkI(ii,li_geometry) == lTrapezoidal ) then
+            !% handle trapezoidal elements
+            ! Input: Left Slope, Right Slope, Bottom Width, InitialDepth
+            where (elem2I(:,e2i_link_ID) == Lindx)
+                elem2I(:,e2i_geometry)  = eTrapezoidal
+                
+                elem2R(:,e2r_BreadthScale) = linkR(ii,lr_BreadthScale)
+                
+                ! (Bottom width + averageSlope * hydraulicDepth)*hydraulicDepth
+                elem2R(:,e2r_Area)      = (elem2R(:,e2r_BreadthScale)           &
+                    + onehalfR &
+                    * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
+                    * elem2R(:,e2r_Depth)) * elem2R(:,e2r_Depth)
+                ! Bottom width + (lslope + rslope) * hydraulicDepth
+                elem2R(:,e2r_Topwidth)  = elem2R(:,e2r_BreadthScale)            &
+                    + elem2R(:,e2r_Depth)                                   &
+                    * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
+                    
+                elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Area) / elem2R(:,e2r_Topwidth)
+                
+                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)                &
+                    + elem2R(:,e2r_HydDepth)
+                
+                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) &
+                    * elem2R(:,e2r_Length)
+                
+                ! Bottom width + hydraulicDepth*lengthSidewall
+                elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) &
+                    + elem2R(:,e2r_Depth) &
+                    * (sqrt(oneR + elem2R(:,e2r_LeftSlope)**twoR) &
+                    + sqrt(oneR + elem2R(:,e2r_RightSlope)**twoR))
+            endwhere
+            
+        elseif (linkI(ii,li_geometry) == lTriangular ) then
+            !% handle triangle elements
+            ! Input: Left Slope, Right Slope, InitialDepth
+            where (elem2I(:,e2i_link_ID) == Lindx)
+                elem2I(:,e2i_geometry)  = eTriangular
+                
+                elem2R(:,e2r_HydDepth) = onehalfR * elem2R(:,e2r_Depth)
+                
+                elem2R(:,e2r_BreadthScale) = zeroR
+                
+                ! (averageSlope * hydraulicDepth)*hydraulicDepth
+                elem2R(:,e2r_Area) = onehalfR &
+                    * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
+                    * elem2R(:,e2r_Depth) * elem2R(:,e2r_Depth)
+                ! (lslope + rslope) * hydraulicDepth
+                elem2R(:,e2r_Topwidth) = elem2R(:,e2r_Depth)               &
+                    * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
+                
+                elem2R(:,e2r_Eta) = elem2R(:,e2r_Zbottom)                &
+                    + elem2R(:,e2r_HydDepth)
+                
+                elem2R(:,e2r_Volume) = elem2R(:,e2r_Area) &
+                    * elem2R(:,e2r_Length)
+                
+                ! hydraulicDepth*lengthSidewall
+                elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Depth) &
+                    * (sqrt(oneR + elem2R(:,e2r_LeftSlope)**twoR) &
+                    + sqrt(oneR + elem2R(:,e2r_RightSlope)**twoR))
+            endwhere
+            
+        elseif (linkI(ii,li_geometry) == lWidthDepth ) then
+            !% handle width-depth elements
+            
+            where (elem2I(:,e2i_link_ID) == Lindx)
+                elem2I(:,e2i_geometry)       = eWidthDepth
+                elem2R(:,e2r_HydDepth)       = elem2R(:,e2r_Depth)
+                elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
+                elem2R(:,e2r_Topwidth)       = linkR(ii,lr_TopWidth)              
+                elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Area)      = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth)
             endwhere
         else
             !% handle elements of other geometry types
-            print *, 'error: initialization for non-rectangular elements needed in ',subroutine_name
-
+            print *, 'error: initialization for non-defined elements needed in ',subroutine_name
+            stop
         end if
 
         !%  Update velocity
@@ -338,7 +447,7 @@
     
     ! HACK -- need other geometry types
     
-    where ((elemMI(:,eMi_geometry) == eRectangularChannel) .and. &
+    where ((elemMI(:,eMi_geometry) == eRectangular) .and. &
            (elemMI(:,eMi_elem_type) == eJunctionChannel))
         elemMR(:,eMr_Area)      = elemMR(:,eMr_HydDepth) * elemMR(:,eMr_Topwidth)
         elemMR(:,eMr_Volume)    = elemMR(:,eMr_Area)     * elemMR(:,eMr_Length)

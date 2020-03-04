@@ -50,6 +50,8 @@
  real, dimension(:), allocatable :: subdivide_length, channel_length, channel_breadth
  real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
+ real, dimension(:), allocatable :: left_slope, right_slope, inlet_offset 
+ real, dimension(:), allocatable :: discharge_coefficient, full_depth
 
  integer, dimension(:), allocatable :: idepth_type
 
@@ -76,8 +78,9 @@
         !% create the local variables that must be populated to set up the test case
         call control_variable_allocation &
             (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-             channel_breadth, subdivide_length, flowrate, area, &
-             velocity, Froude, ManningsN, idepth_type)
+             channel_breadth, subdivide_length, left_slope, flowrate,        &
+             right_slope, inlet_offset, discharge_coefficient, full_depth,   &
+             area, velocity,  Froude, ManningsN, idepth_type)
 
         ! step controls
         display_interval = 1000
@@ -98,6 +101,12 @@
         channel_length    = 10000.0
         lowerZ          = 1.0
         subdivide_length = 5000.0
+
+        left_slope   = nullValueR
+        right_slope  = nullValueR
+        inlet_offset = nullValueR
+        discharge_coefficient = nullValueR
+        full_depth   = nullValueR
 
         call froude_driven_setup &
             (upperZ(1), area(1), flowrate(1), velocity(1),  &
@@ -135,8 +144,9 @@
 
         call control_variable_allocation &
             (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-             channel_breadth, subdivide_length, flowrate, area, &
-             velocity,  Froude, ManningsN, idepth_type)
+             channel_breadth, subdivide_length, left_slope, flowrate,        &
+             right_slope, inlet_offset, discharge_coefficient, full_depth,   &
+             area, velocity,  Froude, ManningsN, idepth_type)
 
         ! step controls
         display_interval = 1000
@@ -174,6 +184,12 @@
         subdivide_length(2) = 100.0
         subdivide_length(3) = 100.0
 
+
+        left_slope   = nullValueR
+        right_slope  = nullValueR
+        inlet_offset = nullValueR
+        discharge_coefficient = nullValueR
+        full_depth   = nullValueR
 
         ! get consistent bottom Z values for the desired Froude number in each link
         do mm=1,N_link
@@ -230,8 +246,9 @@
         !% create the local variables that must be populated to set up the test case
         call control_variable_allocation &
             (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-             channel_breadth, subdivide_length, flowrate, area, &
-             velocity,  Froude, ManningsN, idepth_type)
+             channel_breadth, subdivide_length, left_slope, flowrate,        &
+             right_slope, inlet_offset, discharge_coefficient, full_depth,   &
+             area, velocity,  Froude, ManningsN, idepth_type)
 
         ! step controls
         display_interval = 100
@@ -264,7 +281,7 @@
         depth_upstream(3)  = 0.25
 
         channel_breadth(1)   = 3.0
-        channel_breadth(2)   = setting%Weir%WeirWidth
+        channel_breadth(2)   = 3.0
         channel_breadth(3)   = 3.0
 
         channel_length(1)    = 1000.0
@@ -274,6 +291,12 @@
         subdivide_length(1) = 500.0
         subdivide_length(2) = 1         !We are not subdividing weir element. So this value is same as weir length
         subdivide_length(3) = 500.0
+
+        left_slope   = 1.0
+        right_slope  = 1.0
+        inlet_offset = 1.0
+        discharge_coefficient = 1.40
+        full_depth   = 1.5 
 
         ! get consistent bottom Z values for the desired Froude number in each link
         do mm=1,N_link
@@ -292,9 +315,9 @@
                     upperZ(1) = uz
                 case (2)
                     call weir_setup &
-                         (uz, area(mm), flowrate(mm), velocity(mm),                          &
-                         Froude(mm), channel_breadth(mm), ManningsN(mm), channel_length(mm), &
-                         lz, depth_upstream(mm) )
+                         (uz, area(mm), flowrate(mm), velocity(mm), left_slope(mm), Froude(mm), &
+                          channel_breadth(mm), ManningsN(mm), channel_length(mm), lz,           &
+                          depth_upstream(mm) )
                     lowerZ(mm) = upperZ(1)
                     upperZ(mm) = uz
                     lz = uz
@@ -313,11 +336,11 @@
              first_step, last_step, display_interval,2)
 
         call case_simple_weir_initialize &
-            (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-             flowrate, depth_upstream, depth_dnstream,                  &
-             ManningsN, lManningsN, idepth_type,                            &
-             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
-             bcdataDn, bcdataUp)
+            (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,  &
+             flowrate, depth_upstream, depth_dnstream, left_slope, right_slope,  &
+             inlet_offset, discharge_coefficient, ManningsN, full_depth,         &
+             lManningsN, idepth_type, linkR, nodeR, linkI, nodeI,linkYN, nodeYN, &
+             linkName, nodeName, bcdataDn, bcdataUp)
 
         if (.not. setting%Debugout%SuppressAllFiles) then
             call write_testcase_setup_file &
@@ -344,8 +367,9 @@
 !
  subroutine control_variable_allocation &
     (depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-     channel_breadth, subdivide_length, flowrate, area, &
-     velocity,  Froude, ManningsN, idepth_type)
+     channel_breadth, subdivide_length, left_slope, flowrate,        &
+     right_slope, inlet_offset, discharge_coefficient, full_depth,   &
+     area, velocity,  Froude, ManningsN, idepth_type)
 
  character(64) :: subroutine_name = 'control_variable_allocation'
 
@@ -353,6 +377,8 @@
  real, dimension(:), allocatable, intent(out) :: subdivide_length, channel_length, channel_breadth
  real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
+ real, dimension(:), allocatable, intent(out) :: left_slope, right_slope, inlet_offset
+ real, dimension(:), allocatable, intent(out) :: discharge_coefficient, full_depth
 
  integer, dimension(:), allocatable, intent(out) :: idepth_type
 
@@ -372,6 +398,11 @@
     allocate(flowrate(N_link))
     allocate(Froude(N_link))
     allocate(ManningsN(N_link))
+    allocate(left_slope(N_link))
+    allocate(right_slope(N_link))
+    allocate(inlet_offset(N_link))
+    allocate(discharge_coefficient(N_link))
+    allocate(full_depth(N_link))
     allocate(idepth_type(N_link))
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
@@ -475,26 +506,24 @@
 !==========================================================================
 !
  subroutine weir_setup &
-    (upperZ, area, flowrate, velocity,  &
-     Froude,  breadth, ManningsN, total_length, &
-     lowerZ, depth)
+    (upperZ, area, flowrate, velocity, sideslope, Froude,  breadth, &
+     ManningsN, total_length, lowerZ, depth)
 
  character(64) :: subroutine_name = 'weir_setup'
 
  real,  intent(out)    :: area, flowrate, velocity, upperZ
  real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
- real,  intent(in)     :: depth
+ real,  intent(in)     :: depth, sideslope
 
  real :: perimeter, rh, slope
-
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
 
 ! These needed to be changed when the weir is surcharged
- area        = setting%Weir%WeirSideSlope * depth ** twoR
- perimeter   = twoR * depth * sqrt(1 + setting%Weir%WeirSideSlope ** 2)
+ area        = sideslope* depth ** twoR
+ perimeter   = twoR * depth * sqrt(1 + sideslope ** 2)
  !rh          = area / perimeter
  !velocity    = (setting%Weir%WeirDischargeCoeff * setting%Weir%WeirSideSlope * depth ** 2.5) / area
  !flowrate    = area * velocity

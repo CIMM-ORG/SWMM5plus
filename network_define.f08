@@ -780,32 +780,49 @@
     linkI(thisLink,li_assigned) = setAssigned(thisLink, li_assigned, lUnassigned, lAssigned, linkI)
 
     !% Assign the ghost element - use values for upstream link
-    elem2I(thisElem2,e2i_idx)            = thisElem2
-    elem2I(thisElem2,e2i_elem_type)      = eBCdn
-    elem2I(thisElem2,e2i_geometry)       = linkI(thisLink,li_geometry)
-    elem2I(thisElem2,e2i_roughness_type) = linkI(thisLink,li_roughness_type)
-    elem2I(thisElem2,e2i_link_ID)        = thisLink
-    elem2I(thisElem2,e2i_link_Pos)       = nullvalueI
-    elem2I(thisElem2,e2i_Mface_u)        = thisFace
-    elem2I(thisElem2,e2i_Mface_d)        = nullvalueI
+    elem2I(thisElem2,e2i_idx)               = thisElem2
+    elem2I(thisElem2,e2i_elem_type)         = eBCdn
+    elem2I(thisElem2,e2i_geometry)          = linkI(thisLink,li_geometry)
+    elem2I(thisElem2,e2i_roughness_type)    = linkI(thisLink,li_roughness_type)
+    elem2I(thisElem2,e2i_link_ID)           = thisLink
+    elem2I(thisElem2,e2i_link_Pos)          = nullvalueI
+    elem2I(thisElem2,e2i_Mface_u)           = thisFace
+    elem2I(thisElem2,e2i_Mface_d)           = nullvalueI
     
-    elem2R(thisElem2,e2r_Length)         = linkR(thislink,lr_ElementLength)
+    elem2R(thisElem2,e2r_Length)            = linkR(thislink,lr_ElementLength)
+    elem2R(thisElem2,e2r_InletOffset)       = linkR(thisLink,lr_InletOffset)
+    elem2R(thisElem2,e2r_DischargeCoeff)    = linkR(thisLink,lr_DischargeCoeff)
+    elem2R(thisElem2,e2r_LeftSlope)         = linkR(thisLink,lr_LeftSlope)
+    elem2R(thisElem2,e2r_RightSlope)        = linkR(thisLink,lr_RightSlope)
+    elem2R(thisElem2,e2r_FullDepth)         = linkR(thisLink,lr_FullDepth)
     
     !% note the following has a minus as we are going downstream for the ghost
-    elem2R(thisElem2,e2r_Zbottom)        = nodeR(thisNode,nr_Zbottom)          &
+    elem2R(thisElem2,e2r_Zbottom)           = nodeR(thisNode,nr_Zbottom)       &
                                             - 0.5 * linkR(thisLink,lr_Slope)   &
-                                            * linkR(thislink,lr_ElementLength)
-    
-    select case (linkI(thisLink,li_geometry))
-        case (eRectangularChannel)
-            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
-            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-            !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
+                                            * linkR(thislink,lr_ElementLength)    
 
-        case (lVnotchWeir)           
-            elem2R(thisElem2,e2r_Topwidth)     = twoR * setting%Weir%WeirSideSlope * linkR(thislink, lr_InitialDepth)
+    select case (linkI(thisLink,li_geometry))
+        case (lRectangular)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
+            !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
+        case (lParabolic)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
-                                                
+            elem2R(thisElem2,e2r_Topwidth) = twoR &
+                * sqrt(linkR(thisLink,lr_InitialDepth)/linkR(thisLink,lr_ParabolaValue))
+        case (lTrapezoidal)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)   &
+                    + linkR(thisLink,lr_InitialDepth)                              &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lTriangular)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lWidthDepth)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -937,14 +954,26 @@
                                          * elem2R(lastElem2,e2r_Length)
     
     select case (elem2I(thisElem2,e2i_geometry))
-        case (eRectangularChannel)
+        case (eRectangular)
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
-
-        case (lVnotchWeir)
-            elem2R(thisElem2,e2r_Topwidth)     = twoR * setting%Weir%WeirSideSlope * linkR(thislink, lr_InitialDepth)
-            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+        case (eParabolic)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+        case (eTrapezoidal)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+        case (eTriangular)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+        case (eWidthDepth)
+            elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1071,8 +1100,8 @@
     lastElemM = thisElemM
     thisElemM = thisElemM+1
     elemMI(jElem,eMi_idx)             = jElem
-    elemMI(jElem,eMi_elem_type)       = eJunctionChannel ! HACK - PIPE NOT HANDLED
-    elemMI(jElem,eMi_geometry)        = eRectangularChannel ! HACK - NEED AN APPROACH TO ASSIGN
+    elemMI(jElem,eMi_elem_type)       = eJunctionChannel    ! HACK - PIPE NOT HANDLED
+    elemMI(jElem,eMi_geometry)        = eRectangular        ! HACK - NEED AN APPROACH TO ASSIGN
     elemMI(jElem,eMi_nfaces)          = nodeI(thisNode,ni_N_link_u) + nodeI(thisNode,ni_N_link_d)
     elemMI(jElem,eMi_nfaces_d)        = nodeI(thisNode,ni_N_link_d)
     elemMI(jElem,eMi_nfaces_u)        = nodeI(thisNode,ni_N_link_u)
@@ -1094,7 +1123,7 @@
                                             - 0.5* elemMR(jElem,eMr_LengthDn(mm)) &
                                             * linkR(dlink,lr_Slope)       
         select case (elemMI(jElem,eMi_geometry))
-            case (eRectangularChannel)
+            case (eRectangular)
                 elemMR(jElem,eMr_TopwidthDn(mm))     =  linkR(dlink,lr_BreadthScale)        
                 elemMR(jElem,eMr_BreadthscaleDn(mm)) =  linkR(dlink,lr_BreadthScale)        
             case default
@@ -1116,7 +1145,7 @@
                                             + 0.5* elemMR(jElem,eMr_LengthUp(mm)) &
                                             * linkR(dlink,lr_Slope)           
         select case (elemMI(jElem,eMi_geometry))
-            case (eRectangularChannel)
+            case (eRectangular)
                 elemMR(jElem,eMr_TopwidthUp(mm))     =  linkR(dlink,lr_BreadthScale)        
                 elemMR(jElem,eMr_BreadthScaleUp(mm)) =  linkR(dlink,lr_BreadthScale)        
             case default
@@ -1268,31 +1297,51 @@
  
  do mm = 1,linkI(thisLink,li_N_element)
     !%  store the elem info
-    elem2I(thisElem2,e2i_idx)              = thisElem2
-    elem2I(thisElem2,e2i_elem_type)        = linkI(thisLink,li_link_type)
-    elem2I(thisElem2,e2i_geometry)         = linkI(thislink,li_geometry)
-    elem2I(thisElem2,e2i_roughness_type)   = linkI(thisLink,li_roughness_type)
-    elem2I(thisElem2,e2i_link_ID)          = thisLink
-    elem2I(thisElem2,e2i_link_Pos)         = mm
-    elem2I(thisElem2,e2i_Mface_d)          = lastFace
-    elem2I(thisElem2,e2i_Mface_u)          = thisFace
+    elem2I(thisElem2,e2i_idx)               = thisElem2
+    elem2I(thisElem2,e2i_elem_type)         = linkI(thisLink,li_link_type)
+    elem2I(thisElem2,e2i_geometry)          = linkI(thislink,li_geometry)
+    elem2I(thisElem2,e2i_roughness_type)    = linkI(thisLink,li_roughness_type) 
+    elem2I(thisElem2,e2i_link_ID)           = thisLink
+    elem2I(thisElem2,e2i_link_Pos)          = mm
+    elem2I(thisElem2,e2i_Mface_d)           = lastFace
+    elem2I(thisElem2,e2i_Mface_u)           = thisFace
     
-    elem2R(thisElem2,e2r_Length)           = linkR(thislink,lr_ElementLength)
+    elem2R(thisElem2,e2r_Length)            = linkR(thislink,lr_ElementLength)
+    elem2R(thisElem2,e2r_Zbottom)           = zcenter
+    elem2R(thisElem2,e2r_InletOffset)       = linkR(thisLink,lr_InletOffset)
+    elem2R(thisElem2,e2r_DischargeCoeff)    = linkR(thisLink,lr_DischargeCoeff)
+    elem2R(thisElem2,e2r_LeftSlope)         = linkR(thisLink,lr_LeftSlope)
+    elem2R(thisElem2,e2r_RightSlope)        = linkR(thisLink,lr_RightSlope)
+    elem2R(thisElem2,e2r_FullDepth)         = linkR(thisLink,lr_FullDepth)
     
     zcenter = zcenter + linkR(thislink,lr_Slope) * linkR(thislink,lr_ElementLength)
     zface   = zface   + linkR(thislink,lr_Slope) * linkR(thislink,lr_ElementLength)
     
-    elem2R(thisElem2,e2r_Zbottom)          = zcenter
+    
         
     select case (linkI(thisLink,li_geometry))
-        case (lRectangularChannel)
-            elem2R(thisElem2,e2r_Topwidth)      = linkR(thisLink,lr_BreadthScale)
-            elem2R(thisElem2,e2r_BreadthScale)  = linkR(thisLink,lr_BreadthScale)
+        case (lRectangular)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
 
-        case (lVnotchWeir)
-            elem2R(thisElem2,e2r_Topwidth)     = twoR * setting%Weir%WeirSideSlope * linkR(thislink, lr_InitialDepth)
+        case (lParabolic)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth) = twoR &
+                * sqrt(linkR(thisLink,lr_InitialDepth)/linkR(thisLink,lr_ParabolaValue))
+        case (lTrapezoidal)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)   &
+                    + linkR(thisLink,lr_InitialDepth)                              &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lTriangular)
+            elem2R(thisElem2,e2r_BreadthScale) = zeroR
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
+                    * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
+        case (lWidthDepth)
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop

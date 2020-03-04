@@ -18,7 +18,6 @@
     use setting_definition
     use globals
     use utility
-    use weir
 
     implicit none
 
@@ -37,7 +36,9 @@
  subroutine element_geometry_update &
     (elem2R, elem2I, elem2YN, e2r_VolumeColumn, &
      elemMR, elemMI, elemMYN, eMr_VolumeColumn, &
-     faceR, faceI, bcdataDn, bcdataUp, thisTime, method_EtaM  )
+     faceR, faceI, bcdataDn, bcdataUp, thisTime, method_EtaM, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 !
 ! Note that volume is handled as a separate temporary index location
 ! (rather than from the elemR(:,er_Volume) array) because we use
@@ -60,6 +61,16 @@
 
 
  integer, parameter :: ilocaldummy = 0
+ 
+ integer, intent(in out)    :: ID(:)
+ integer, intent(in out)    :: numberPairs(:)
+ real,    intent(in out)    :: ManningsN(:)
+ real,    intent(in out)    :: Length(:)
+ real,    intent(in out)    :: zBottom(:)
+ real,    intent(in out)    :: xDistance(:)
+ real,    intent(in out)    :: Breadth(:)
+ real,    intent(in out)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: cellType(:)
 
 
 !--------------------------------------------------------------------------
@@ -83,14 +94,12 @@
  call bc_applied_onelement &
     (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_elevation, ilocaldummy)
 
-!% rectangular geometry
- call rectangular_geometry_update &
+!% rectangular, parabolic, trapezoidal, triangular, width-depth geometry
+ call geometry_update &
     (elem2R, elem2I, e2r_VolumeColumn, &
-     elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM)
-!% triangular geometry only for v-notch weir. This needed to be checked
- call triangular_geometry_update &
-    (elem2R, elem2I, e2r_VolumeColumn, &
-     elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM )
+     elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 
 !% HACK -- NEED OTHER GEOMETRY TYPES
 
@@ -103,13 +112,7 @@
 
 !% reset the geometry (non-volume) where values are below minimums
  call adjust_for_zero_geometry (elem2R, elem2YN, elemMR, elemMI, elemMYN)
-! print*, elem2R(:,e2r_Area), 'er_Area'
-! print*, elem2R(:,e2r_Eta), 'er_Eta'
-! print*, elem2R(:,e2r_Perimeter), 'er_Perimeter'
-! print*, elem2R(:,e2r_HydDepth), 'er_HydDepth'
-! print*, elem2R(:,e2r_HydRadius), 'er_HydRadius'
-! print*, elem2R(:,e2r_Topwidth), 'er_Topwidth'
-! print*, elem2R(:,e2r_Depth), 'er_Depth'
+
 !%  release the temp array
  etaold = nullvalueR
  nullify(etaold)
@@ -194,40 +197,58 @@
 !
 !==========================================================================
 !
- subroutine rectangular_geometry_update &
+ subroutine geometry_update &
     (elem2R, elem2I, e2r_Volume_new, &
-     elemMR, elemMI, eMr_Volume_new, faceR, eMr_EtaOld, method_EtaM )
+     elemMR, elemMI, eMr_Volume_new, faceR, eMr_EtaOld, method_EtaM, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 !
 ! Note that volume used is in a eTr storage location so that the update
 ! can be used on a temporary volume
 !
- character(64) :: subroutine_name = 'rectangular_geometry_update'
+ character(64) :: subroutine_name = 'geometry_update'
 
  real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
  real,      intent(in)      :: faceR(:,:)
  integer,   intent(in)      :: elem2I(:,:), elemMI(:,:)
  integer,   intent(in)      :: e2r_Volume_new, eMr_Volume_new, eMr_EtaOld
  integer,   intent(in)      :: method_EtaM
+ 
+ integer, intent(in out)    :: ID(:)
+ integer, intent(in out)    :: numberPairs(:)
+ real,    intent(in out)    :: ManningsN(:)
+ real,    intent(in out)    :: Length(:)
+ real,    intent(in out)    :: zBottom(:)
+ real,    intent(in out)    :: xDistance(:)
+ real,    intent(in out)    :: Breadth(:)
+ real,    intent(in out)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: cellType(:)
 
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-!%  basic geometry update for rectangular channels and junctions
+!%  basic geometry update for rectangular channels, weirs, orifice and junctions
 
 !%  rectangular geometry for channels
- call rectangular_channel_or_junction &
+ call channel_or_junction &
     (elem2R, elem2I, &
      e2i_geometry, e2i_elem_type, eChannel,  &
      e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
-     e2r_Perimeter, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new)
+     e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new,    &
+     e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 
 !%  rectangular geomety for junctions
- call rectangular_channel_or_junction &
+ call channel_or_junction &
     (elemMR, elemMI, &
      eMi_geometry, eMi_elem_type, eJunctionChannel,  &
      eMr_Length, eMr_Zbottom, eMr_BreadthScale, eMr_Topwidth, eMr_Area, eMr_Eta, &
-     eMr_Perimeter, eMr_HydDepth, eMr_HydRadius, eMr_Volume_new)
+     eMr_Perimeter, eMr_Depth, eMr_HydDepth, eMr_HydRadius, eMr_Volume_new,    &
+     eMr_LeftSlope, eMr_RightSlope, eMr_ParabolaValue, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
 
 !% upstream branches
 !% note the fr_Eta_d is used for the upstream face, whose downstream eta is
@@ -246,67 +267,181 @@
 
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine rectangular_geometry_update
+ end subroutine geometry_update
 !
 !==========================================================================
 !==========================================================================
 !
- subroutine rectangular_channel_or_junction &
+ subroutine channel_or_junction &
     (elemR, elemI, &
-     ei_geometry, ei_elem_type, elem_typ_value,  &
+     ei_geometry, ei_elem_type, elem_type_value,  &
      er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
-     er_Perimeter, er_HydDepth, er_HydRadius, er_Volume)
-! Here elemR is used to make the subroutine more general. Because this is
-! used both for channel and junction.
+     er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_Volume,    &
+     er_LeftSlope, er_RightSlope, er_ParabolaValue, &
+     wdID, wdnumberPairs, wdManningsN, wdLength, wdzBottom, wdxDistance, &
+     wdBreadth, widthDepthData, wdcellType)
+!
 ! computes element geometry for a rectangular channel or a channeljunction
 !
- character(64) :: subroutine_name = 'rectangular_channel_or_junction'
+ character(64) :: subroutine_name = 'channel_or_junction'
 
  real,      target,     intent(in out)  :: elemR(:,:)
 
  integer,   intent(in)      :: elemI(:,:)
- integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_typ_value
+ integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_type_value
  integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale
  integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
- integer,   intent(in)      :: er_HydDepth, er_HydRadius, er_Volume
+ integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_Volume
+ integer,   intent(in)      :: er_LeftSlope, er_RightSlope, er_ParabolaValue
+ 
+ integer, target, intent(in out)    :: wdID(:)
+ integer, target, intent(in out)    :: wdnumberPairs(:)
+ real,    target, intent(in out)    :: wdManningsN(:)
+ real,    target, intent(in out)    :: wdLength(:)
+ real,    target, intent(in out)    :: wdzBottom(:)
+ real,    target, intent(in out)    :: wdxDistance(:)
+ real,    target, intent(in out)    :: wdBreadth(:)
+ real,    target, intent(in out)    :: widthDepthData(:,:,:)
+ type(string), target, intent(in out)   :: wdcellType(:)
 
 
- real,  pointer  :: volume(:), length(:), zbottom(:), breadth(:)
- real,  pointer  :: area(:), eta(:), perimeter(:), hyddepth(:), hydradius(:)
- real,  pointer  :: topwidth(:)
-
+ real, pointer :: volume(:), length(:), zbottom(:), breadth(:)
+ real, pointer :: area(:), eta(:), perimeter(:), depth(:), hyddepth(:)
+ real, pointer :: hydradius(:), topwidth(:)
+ real, pointer :: leftSlope(:), rightSlope(:), parabolaValue(:)
+ 
+ real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+ real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+ real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+ real, dimension(:), allocatable :: area_difference, local_difference
+ 
+ real :: AA, BB, CC, DD
+ integer :: ii,ind, linkIDTemp
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
  ! inputs
- volume     => elemR(:,er_Volume)
- length     => elemR(:,er_Length)
- zbottom    => elemR(:,er_Zbottom)
- breadth    => elemR(:,er_BreadthScale)
+ volume        => elemR(:,er_Volume)
+ length        => elemR(:,er_Length)
+ zbottom       => elemR(:,er_Zbottom)
+ breadth       => elemR(:,er_BreadthScale)
+ leftSlope     => elemR(:,er_LeftSlope)
+ rightSlope    => elemR(:,er_RightSlope)
+ parabolaValue => elemR(:,er_ParabolaValue)
 
 ! outputs
  area       => elemR(:,er_Area)
  eta        => elemR(:,er_Eta)
  perimeter  => elemR(:,er_Perimeter)
+ depth      => elemR(:,er_Depth)
  hyddepth   => elemR(:,er_HydDepth)
  hydradius  => elemR(:,er_HydRadius)
  topwidth   => elemR(:,er_Topwidth)
+ 
+ widthAtLayerTop         => widthDepthData (:,:, wd_widthAtLayerTop)
+ depthAtLayerTop         => widthDepthData (:,:, wd_depthAtLayerTop)
+ areaThisLayer           => widthDepthData (:,:, wd_areaThisLayer)
+ areaTotalBelowThisLayer => widthDepthData (:,:, wd_areaTotalBelowThisLayer)
+ dWidth                  => widthDepthData (:,:, wd_Dwidth)
+ dDepth                  => widthDepthData (:,:, wd_Ddepth)
+ angle                   => widthDepthData (:,:, wd_angle)
+ perimeterBelowThisLayer => widthDepthData (:,:, wd_perimeterBelowThisLayer)
+ 
+ allocate (area_difference(size(widthDepthData,2)))
+ allocate (local_difference(size(widthDepthData,2)))
 
-
-! This function calculates the geometric properties for rectengular channel and junctions
- where ( (elemI(:,ei_geometry)  == eRectangularChannel) .and. &
-         (elemI(:,ei_elem_type) == elem_typ_value    )         )
+ where ( (elemI(:,ei_geometry)  == eRectangular) .and. &
+         (elemI(:,ei_elem_type) == elem_type_value    )         )
     area        = volume / length
     eta         = zbottom + (area / breadth)
     topwidth    = breadth
     perimeter   = breadth + 2.0 * ( eta - zbottom )
-    hyddepth    = area / topwidth
+    hyddepth    = area / breadth
+    depth       = hyddepth
     hydradius   = area / perimeter
+    
+ elsewhere ( (elemI(:,ei_geometry)  == eParabolic) .and. &
+         (elemI(:,ei_elem_type) == elem_type_value    )         )
+    area        = volume / length
+    eta         = zbottom + parabolaValue ** oneThirdR &
+                    * (threefourthR * area) ** twothirdR
+    hyddepth    = parabolaValue ** oneThirdR * (threefourthR * area) ** twothirdR
+    depth       = (threeR / twoR) * hyddepth
+    topwidth    = twoR * sqrt(depth/parabolaValue)
+    perimeter   = onehalfR * topwidth &
+                   *( &
+                        sqrt( oneR + (fourR * depth/topwidth)**twoR )  &
+                        + (topwidth/fourR * depth) &
+                        *log &
+                        ( &
+                            fourR * depth/topwidth  &
+                            + sqrt( oneR + (fourR * depth/topwidth)**twoR ) &
+                        )  &
+                    )
+    hydradius   = area / perimeter
+    
+ elsewhere ( (elemI(:,ei_geometry)  == eTrapezoidal) .and. &
+         (elemI(:,ei_elem_type) == elem_type_value    )         )
+    area        = volume / length
+    depth       = - onehalfR * (breadth/(onehalfR*(leftSlope + rightSlope)) &
+                    - sqrt((breadth/(onehalfR*(leftSlope + rightSlope))) ** twoR &
+                    + fourR * area/(onehalfR*(leftSlope + rightSlope))))
+    
+    eta         = zbottom + depth
+    topwidth    = breadth + depth * (leftSlope + rightSlope)
+    hyddepth    = area / topwidth
+    perimeter   = breadth + depth &
+                    * (sqrt(oneR + leftSlope**twoR ) &
+                     + sqrt(oneR + rightSlope**twoR))
+    hydradius   = area / perimeter
+    
+ elsewhere ( (elemI(:,ei_geometry)  == eTriangular) .and. &
+         (elemI(:,ei_elem_type) == elem_type_value    )         )
+    area        = volume / length
+    depth       = sqrt(abs(area/(onehalfR*(leftSlope + rightSlope))))
+    hyddepth    = onehalfR * depth
+    eta         = zbottom + hyddepth
+    topwidth    = (leftSlope + rightSlope) * depth
+    perimeter   = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
+    hydradius   = area / perimeter
+ 
  endwhere
+ 
+ do ii=1, size(volume,1)
+    if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
+         (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
+         
+            linkIDTemp = elemI(ii,e2i_link_ID)
+         
+            area_difference  = zeroR
+            local_difference = zeroR
+            area (ii) = volume(ii) / length(ii)
+            area_difference(:) = area (ii) - areaTotalBelowThisLayer(linkIDTemp,:)
+            local_difference(:) = area_difference(:) - areaThisLayer(linkIDTemp,:)
+            ind = findloc(sign(oneR, area_difference(:)*local_difference(:)), -1.0, DIM=1)
+            
+            if (ind == 0) then
+                ind = size(widthAtLayerTop(linkIDTemp,:),1)
+            endif
+            
+            AA = oneR/tan(angle(linkIDTemp,ind))
+            BB = widthAtLayerTop(linkIDTemp,ind) - dWidth(linkIDTemp,ind)
+            CC = - area_difference(ind)
+            DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
+            
+            hyddepth (ii)  = DD + depthAtLayerTop(linkIDTemp,ind) - dDepth(linkIDTemp,ind)
+            eta (ii)       = zbottom (ii) + hyddepth (ii)
+            depth (ii)     = hyddepth(ii)
+            topwidth (ii)  = widthAtLayerTop(linkIDTemp,ind) - (dDepth(linkIDTemp,ind)-DD) &
+                            *dWidth(linkIDTemp,ind)/dDepth(linkIDTemp,ind)
+            perimeter (ii) = perimeterBelowThisLayer(linkIDTemp,ind) + twoR * DD/sin(angle(linkIDTemp,ind))
+            hydradius (ii) = area(ii) / perimeter(ii)
+    endif
+ enddo
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine rectangular_channel_or_junction
+ end subroutine channel_or_junction
 !
 !==========================================================================
 !==========================================================================
@@ -339,7 +474,7 @@
 
  integer,   pointer :: fdir(:)
  real,      pointer :: eta(:), etaM(:), etaMold(:), area(:), zbottom(:)
- real,      pointer :: depth(:), topwidth(:), breadth(:)
+ real,      pointer :: depth(:), topwidth(:), breadth(:), etaFace(:)
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -353,6 +488,7 @@
     zbottom     => elemMR(:,eMr_ZbottomDir(mm))
     breadth     => elemMR(:,eMr_BreadthScaleDir(mm))
     fdir        => elemMI(:,eMi_MfaceDir(mm))
+    etaFace     => faceR (:,fr_Eta_dir)
 
     ! computed
     eta         => elemMR(:,eMr_EtaDir(mm))
@@ -364,7 +500,7 @@
         case (0)
             !%  used for initiation when there are no face values
             !%  simple injection of junction eta
-            where ( (elemMI(:,eMi_geometry)  == eRectangularChannel)     .and. &
+            where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfacesDir) >= mm)  )
                 eta = etaM
@@ -372,26 +508,25 @@
         case (1)
             !%  used before face values are updated (ie. etaF is old)
             !%  inject etaM with estimated correction for old gradient
-            where ( (elemMI(:,eMi_geometry)  == eRectangularChannel)     .and. &
+            where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfacesDir) >= mm)  )
-                eta = etaM + onehalfR * (faceR(fdir,fr_Eta_dir) - etaMold)
+                eta = etaM + onehalfR * (etaFace(fdir) - etaMold)
             endwhere
         case (2)
             !%  used after face values are updated (ie. etaF is new)
             !%  Average of face and junction value
-            where ( (elemMI(:,eMi_geometry)  == eRectangularChannel)     .and. &
+            where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfacesDir) >= mm)  )
-                eta = onehalfR * (faceR(fdir,fr_Eta_dir) + etaM)
+                eta = onehalfR * (etaFace(fdir) + etaM)
             endwhere
         case default
             print *, method_EtaM
             print *, 'error: unexpected value of ',method_EtaM,' for method_EtaM in ',trim(subroutine_name)
     end select
 
-    where ( (elemMI(:,eMi_geometry)  == eRectangularChannel)     .and. &
-            (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
+    where ( (elemMI(:,eMi_geometry)  == eRectangular)     .and. &
             (elemMI(:,eMi_nfacesDir) >= mm)  )
         area = (eta - zbottom) * breadth
         topwidth = breadth
@@ -401,95 +536,6 @@
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine rectangular_junction_leg
-!
-!==========================================================================
-!==========================================================================
-!
-subroutine triangular_geometry_update &
-    (elem2R, elem2I, e2r_Volume_new, &
-     elemMR, elemMI, eMr_Volume_new, faceR, eMr_EtaOld, method_EtaM )
-
- character(64) :: subroutine_name = 'triangular_geometry_update'
-
- real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
- real,      intent(in)      :: faceR(:,:)
- integer,   intent(in)      :: elem2I(:,:), elemMI(:,:)
- integer,   intent(in)      :: e2r_Volume_new, eMr_Volume_new, eMr_EtaOld
- integer,   intent(in)      :: method_EtaM
-!
-!--------------------------------------------------------------------------
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-!%  basic geometry update for rectangular channels and junctions
-
-!%  rectangular geometry for channels
- call v_notch_weir &
-    (elem2R, elem2I, &
-     e2i_geometry, e2i_elem_type, eWeir,  &
-     e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
-     e2r_Perimeter, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new, e2r_Depth)
-
-
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine triangular_geometry_update
-!
-!==========================================================================
-!==========================================================================
-!
- subroutine v_notch_weir &
-    (elemR, elemI, &
-     ei_geometry, ei_elem_type, elem_typ_value,  &
-     er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
-     er_Perimeter, er_HydDepth, er_HydRadius, er_Volume, er_Depth)
-!
- character(64) :: subroutine_name = 'v_notch_weir'
-
- real,      target,     intent(in out)  :: elemR(:,:)
-
- integer,   intent(in)      :: elemI(:,:)
- integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_typ_value
- integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale
- integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
- integer,   intent(in)      :: er_HydDepth, er_HydRadius, er_Volume, er_Depth
-
-
- real,  pointer  :: volume(:), length(:), zbottom(:), breadth(:)
- real,  pointer  :: area(:), eta(:), perimeter(:), hyddepth(:), hydradius(:)
- real,  pointer  :: topwidth(:), depth(:)
-
-
-!--------------------------------------------------------------------------
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
- ! inputs
- volume     => elemR(:,er_Volume)
- length     => elemR(:,er_Length)
- zbottom    => elemR(:,er_Zbottom)
- breadth    => elemR(:,er_BreadthScale)
-
-! outputs
- area       => elemR(:,er_Area)
- eta        => elemR(:,er_Eta)
- perimeter  => elemR(:,er_Perimeter)
- hyddepth   => elemR(:,er_HydDepth)
- hydradius  => elemR(:,er_HydRadius)
- topwidth   => elemR(:,er_Topwidth)
- depth      => elemR(:,er_Depth)
-
-! This function calculates the geometric properties for triangular channel and junctions
- where ( (elemI(:,ei_geometry)  == eVnotchWeir) .and. &
-         (elemI(:,ei_elem_type) == elem_typ_value    )         )
-    area        = volume / length
-    depth       = sqrt(abs(area/setting%Weir%WeirSideSlope))
-    hyddepth    = onehalfR * depth
-    eta         = zbottom + hyddepth
-    topwidth    = twoR * setting%Weir%WeirSideSlope * depth
-    perimeter   = twoR * depth * sqrt(oneR + setting%Weir%WeirSideSlope ** 2)
-    hydradius   = (setting%Weir%WeirSideSlope * depth) / (twoR * sqrt(oneR + setting%Weir%WeirSideSlope ** 2))
- endwhere
-
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
- end subroutine v_notch_weir
 !
 !==========================================================================
 ! END OF MODULE element_geometry

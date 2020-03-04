@@ -9,7 +9,7 @@ mkdir "$DIRThreaded"
 echo Compiling the SWMMengine ...
 
 # Compiler/Linker settings
-FC=gfortran
+FC=gfortran-9
 OPTFLAGS=-g
 FFLAGS=-02
 PROGRAM=SWMM
@@ -30,6 +30,7 @@ SOURCESF="  type_definitions.f08\
         adjustments.f08\
         allocate_storage.f08\
         bc.f08\
+        read_width_depth.f08\
         case_simple_channel.f08\
         case_simple_weir.f08\
         case_y_channel.f08\

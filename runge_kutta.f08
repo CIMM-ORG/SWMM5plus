@@ -32,8 +32,9 @@
 !==========================================================================
 !
  subroutine rk2 &
-    (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
-     bcdataDn, bcdataUp, thistime, dt)
+    (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN,       &
+     faceYN, bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, &
+     Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
 !
 ! runge-kutta time advance for a single time step
 !
@@ -52,6 +53,16 @@
  real    :: thiscoef(2), steptime
 
  integer :: ilink
+
+ integer, intent(in out)    :: ID(:)
+ integer, intent(in out)    :: numberPairs(:)
+ real,    intent(in out)    :: ManningsN(:)
+ real,    intent(in out)    :: Length(:)
+ real,    intent(in out)    :: zBottom(:)
+ real,    intent(in out)    :: xDistance(:)
+ real,    intent(in out)    :: Breadth(:)
+ real,    intent(in out)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: cellType(:)
     
 
 !--------------------------------------------------------------------------
@@ -106,18 +117,17 @@
             ! print*, elem2R(:,e2r_Eta), 'e2r_Eta'
             ! print*,'----------------------------------------------'
         call weir_step &
-            (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
-             e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-             elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, &
-             thiscoef(ii))
+            (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
+             e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
+             faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
                    
  
         call rk2_update_auxiliary_variables &
             (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new, &
-             elem2R, elem2I, elem2YN, &
-             elemMR, elemMI, elemMYN, &
-             faceR,  faceI,  faceYN,  &
-             bcdataDn, bcdataUp, steptime, ii)
+             elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  faceI,    &
+             faceYN,  bcdataDn, bcdataUp, steptime, ii, ID, numberPairs,         &
+             ManningsN, Length, zBottom, xDistance,  Breadth, widthDepthData,    &
+             cellType)
 
             ! print*,'after aux update step'
             ! print*, elem2R(:,e2r_Volume_new), 'e2r_Volume_new'
@@ -357,10 +367,10 @@ endif
 !
  subroutine rk2_update_auxiliary_variables &
     (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new, &
-     elem2R, elem2I, elem2YN, &
-     elemMR, elemMI, elemMYN, &
-     faceR,  faceI,  faceYN,  &
-     bcdataDn, bcdataUp, steptime, rkiteration)
+     elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  faceI,    &
+     faceYN, bcdataDn, bcdataUp, steptime, rkiteration, ID, numberPairs, &
+     ManningsN, Length, zBottom, xDistance, Breadth, widthDepthData,     &
+     cellType)
 
  character(64) :: subroutine_name = 'rk2_update_auxiliary_variables'
 
@@ -373,15 +383,26 @@ endif
  integer,           intent(in)      :: e2r_Volume_new,   eMr_Volume_new
  integer,           intent(in)      :: rkiteration
  real,              intent(in)      :: steptime
+ 
+ integer, intent(in out)    :: ID(:)
+ integer, intent(in out)    :: numberPairs(:)
+ real,    intent(in out)    :: ManningsN(:)
+ real,    intent(in out)    :: Length(:)
+ real,    intent(in out)    :: zBottom(:)
+ real,    intent(in out)    :: xDistance(:)
+ real,    intent(in out)    :: Breadth(:)
+ real,    intent(in out)    :: widthDepthData(:,:,:)
+ type(string), intent(in out)   :: cellType(:)
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name  
     
 !%  advance all geometry and dynamics
  call element_geometry_update &
-    (elem2R, elem2I, elem2YN, e2r_Volume_new, &
-     elemMR, elemMI, elemMYN, eMr_Volume_new, &
-     faceR, faceI, bcdataDn, bcdataUp, steptime, 1)    
+    (elem2R, elem2I, elem2YN, e2r_Volume_new, elemMR, elemMI, elemMYN,  &
+     eMr_Volume_new, faceR, faceI, bcdataDn, bcdataUp, steptime, 1, ID, &
+     numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,       &
+     widthDepthData, cellType)    
     
 !%  at this point, the channels and the junction main sections have the correct
 !%  geometry, but the junction branches have provisional geometry that is

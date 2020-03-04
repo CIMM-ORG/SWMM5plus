@@ -30,10 +30,10 @@
 !
  subroutine case_simple_weir_initialize &
     (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-    initial_flowrate, depth_upstream, depth_dnstream,   &
-    ManningsN, roughness_type, idepth_type,                             &
-    linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
-    bcdataDn, bcdataUp)
+    initial_flowrate, depth_upstream, depth_dnstream, left_slope,       &
+    right_slope, inlet_offset, discharge_coefficient, ManningsN,        &
+    full_depth, roughness_type, idepth_type, linkR, nodeR, linkI,       &
+    nodeI,linkYN, nodeYN, linkName, nodeName, bcdataDn, bcdataUp)
 !
 ! initialize the link-node system and boundary conditions for a simple channel
 ! 
@@ -41,8 +41,9 @@
  
  real,  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
  real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
- real,  intent(in)  :: depth_upstream(:), depth_dnstream(:)
- real,  intent(in)  :: ManningsN(:)
+ real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), left_slope(:)
+ real,  intent(in)  :: right_slope(:), inlet_offset(:), discharge_coefficient(:)
+ real,  intent(in)  :: full_depth(:), ManningsN(:)
  
  integer, intent(in):: roughness_type, idepth_type(:)
  
@@ -92,10 +93,11 @@
  bcdataUp(1)%ValueArray(2) = initial_flowrate(3)  ! m^3/2
     
  call case_simple_weir_and_nodes &
-    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-     initial_flowrate, depth_upstream, depth_dnstream, ManningsN,       &
-     roughness_type, idepth_type, &
-     linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName)
+    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,  &
+     initial_flowrate, depth_upstream, depth_dnstream, ManningsN,        &
+     roughness_type, idepth_type, left_slope, right_slope, inlet_offset, &
+     discharge_coefficient, full_depth, linkR, nodeR, linkI, nodeI,      &
+     linkYN, nodeYN, linkName, nodeName)
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
 
@@ -107,10 +109,11 @@
 !
 !==========================================================================
  subroutine case_simple_weir_and_nodes &
-    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-     initial_flowrate, depth_upstream, depth_dnstream, ManningsN,       &
-     roughness_type, idepth_type, &
-     linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName)
+    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,  &
+     initial_flowrate, depth_upstream, depth_dnstream, ManningsN,        &
+     roughness_type, idepth_type, left_slope, right_slope, inlet_offset, &
+     discharge_coefficient, full_depth, linkR, nodeR, linkI, nodeI,      &
+     linkYN, nodeYN, linkName, nodeName)
 !
 ! creates a weir in between two rectangular channels
 ! 
@@ -118,7 +121,9 @@
 
  real,  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
  real,  intent(in)  :: lowerZ(:), upperZ(:), ManningsN(:), initial_flowrate(:)
- real,  intent(in)  :: depth_upstream(:), depth_dnstream(:)
+ real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), left_slope(:)
+ real,  intent(in)  :: right_slope(:), inlet_offset(:), discharge_coefficient(:)
+ real,  intent(in)  :: full_depth(:)
  
  integer, intent(in):: roughness_type, idepth_type(:)
  
@@ -188,9 +193,9 @@
  linkI(3,li_link_type) = lChannel
 
 ! assign link geometry
- linkI(1,li_geometry) = lRectangularChannel
- linkI(2,li_geometry) = lVnotchWeir
- linkI(3,li_geometry) = lRectangularChannel
+ linkI(1,li_geometry) = lRectangular
+ linkI(2,li_geometry) = lTriangular
+ linkI(3,li_geometry) = lRectangular
 
 ! assign the link position and mappings
  linkI(1,li_Mnode_d) = 1
@@ -202,13 +207,17 @@
  linkI(3,li_Mnode_d) = 3
  linkI(3,li_Mnode_u) = 4
 
-
  linkR(1,lr_Length)                 = channel_length(1)
  linkR(1,lr_BreadthScale)           = channel_breadth(1) 
  linkR(1,lr_ElementLength)          = subdivide_length(1)
  linkR(1,lr_InitialFlowrate)        = initial_flowrate(1)
  linkR(1,lr_InitialUpstreamDepth)   = depth_upstream(1)
  linkR(1,lr_InitialDnstreamDepth)   = depth_dnstream(1)
+ linkR(1,lr_LeftSlope)              = left_slope(1)
+ linkR(1,lr_RightSlope)             = right_slope(1)
+ linkR(1,lr_InletOffset)            = inlet_offset(1)
+ linkR(1,lr_DischargeCoeff)         = discharge_coefficient(1)
+ linkR(1,lr_FullDepth)              = full_depth(1)
  linkI(1,li_InitialDepthType)       = idepth_type(1)
 
  linkR(2,lr_Length)                 = channel_length(2)           ! I'm keeping these the same for this moment. Because it will pass the same values from test_cases
@@ -217,6 +226,11 @@
  linkR(2,lr_InitialFlowrate)        = initial_flowrate(2)
  linkR(2,lr_InitialUpstreamDepth)   = depth_upstream(2)
  linkR(2,lr_InitialDnstreamDepth)   = depth_dnstream(2)
+ linkR(2,lr_LeftSlope)              = left_slope(2)
+ linkR(2,lr_RightSlope)             = right_slope(2)
+ linkR(2,lr_InletOffset)            = inlet_offset(2)
+ linkR(2,lr_DischargeCoeff)         = discharge_coefficient(2)
+ linkR(2,lr_FullDepth)              = full_depth(2)
  linkI(2,li_InitialDepthType)       = idepth_type(2)
 
  linkR(3,lr_Length)                 = channel_length(3)
@@ -225,8 +239,13 @@
  linkR(3,lr_InitialFlowrate)        = initial_flowrate(3)
  linkR(3,lr_InitialUpstreamDepth)   = depth_upstream(3)
  linkR(3,lr_InitialDnstreamDepth)   = depth_dnstream(3)
+ linkR(3,lr_LeftSlope)              = left_slope(3)
+ linkR(3,lr_RightSlope)             = right_slope(3)
+ linkR(3,lr_InletOffset)            = inlet_offset(3)
+ linkR(3,lr_DischargeCoeff)         = discharge_coefficient(3)
+ linkR(3,lr_FullDepth)              = full_depth(3)
  linkI(3,li_InitialDepthType)       = idepth_type(3)
- 
+
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
     print *
     print *, subroutine_name,'-----------------------------------'
@@ -238,7 +257,6 @@
     print *, linkR(:,lr_InitialDnstreamDepth), 'downstream depth'
     print *, linkR(:,lr_InitialUpstreamDepth), 'upstream depth'
 
-    print *,
     print *, 'node info'
     print *, nodeI(:,ni_idx), ' idx'
     print *, nodeI(:,ni_node_type), ' type'
