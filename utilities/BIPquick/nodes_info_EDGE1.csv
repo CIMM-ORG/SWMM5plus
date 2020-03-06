@@ -1,0 +1,3 @@
+n_left,node_id,ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3,,
+2,1,0,0,0,1,-998877,-998877,-998877,0,-998877,-998877,-998877,-998877
+1,2,1,1,1,0,0,-998877,-998877,-998877,-998877,-998877,-998877,-998877
