@@ -113,6 +113,7 @@
             wCrown =  wCrest + wHeight
  endwhere 
 
+
  call weir_provisional_geometry &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN) 
     
@@ -134,13 +135,11 @@
      faceR, elem2I, elemMI, elem2YN, elemMYN, wHeight, wCoeff,       &
      wSideSlope, dir, EffectiveHead, thiscoef)
 
-    ! print*, wFlow, 'wFlow before'
+    ! print*, wCrest, 'wCrest'
     ! print*,'**************************************'
     ! print*, wEta, 'wEta'
     ! print*,'**************************************'
     ! print*, EffectiveHead, 'EffectiveHead'
-    ! print*,'**************************************'
-    ! print*, wInletoffset, 'wInletoffset'
     ! print*,'**************************************'
     ! stop
  ! call flow_interp_for_upstream_weir_face (elem2R, faceR, faceI, faceYN)
@@ -227,6 +226,7 @@ subroutine weir_effective_head &
 
 !% effective head calculation
  where      ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .GT. wCrest) )
+    
             EffectiveHead = min((wEta-wCrest), dir*(fEdn(iup) - fEup(idn)))
 
  elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .LE. wCrest) )

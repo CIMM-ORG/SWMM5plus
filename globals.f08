@@ -27,8 +27,11 @@
     real,    parameter :: twoR       = 2.0
     real,    parameter :: threeR     = 3.0
     real,    parameter :: fourR      = 4.0
+    real,    parameter :: six        = 6.0
     real,    parameter :: eightR     = 8.0
     real,    parameter :: tenR       = 10.0
+    real,    parameter :: pi         = 4.d0*datan(1.d0)
+
 
     real,    parameter :: oneeighthR    = oneR   / eightR
     real,    parameter :: onefourthR   = oneR   / fourR
@@ -39,6 +42,7 @@
 
     integer, parameter :: zeroI      = 0
     integer, parameter :: oneI       = 1
+    integer, parameter :: twoI       = 2
 
     integer :: N_link
     integer :: N_node

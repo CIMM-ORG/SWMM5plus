@@ -28,9 +28,9 @@
 !==========================================================================
 !
  subroutine case_simple_channel_initialize &
-    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-    initial_flowrate, depth_upstream, depth_dnstream,   &
-    ManningsN, roughness_type, idepth_type,                             &
+    (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
+    lowerZ, upperZ, initial_flowrate, init_depth, depth_upstream, &
+    depth_dnstream, ManningsN, roughness_type, idepth_type,             &
     linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
     bcdataDn, bcdataUp)
 !
@@ -38,9 +38,10 @@
 ! 
  character(64) :: subroutine_name = 'case_simple_channel_initialize'
  
- real,  intent(in)  :: channel_length, channel_breadth, subdivide_length
+ real,  intent(in)  :: channel_length, channel_breadth
+ real,  intent(in)  :: channel_topwidth, subdivide_length
  real,  intent(in)  :: lowerZ, upperZ, ManningsN, initial_flowrate
- real,  intent(in)  :: depth_upstream, depth_dnstream
+ real,  intent(in)  :: depth_upstream, depth_dnstream, init_depth
  
  integer, intent(in):: roughness_type, idepth_type
  
@@ -90,9 +91,9 @@
  bcdataUp(1)%ValueArray(2) = initial_flowrate  ! m^3/2
     
  call case_simple_channel_links_and_nodes &
-    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-    initial_flowrate, depth_upstream, depth_dnstream, ManningsN, &
-    roughness_type,  idepth_type, &
+    (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
+    lowerZ, upperZ, initial_flowrate, init_depth, depth_upstream, &
+    depth_dnstream, ManningsN, roughness_type,  idepth_type, &
     linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName)
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
@@ -105,18 +106,19 @@
 !==========================================================================
 !
  subroutine case_simple_channel_links_and_nodes &
-    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-     initial_flowrate, depth_upstream, depth_dnstream, ManningsN,       &
-     roughness_type, idepth_type, &
+    (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
+     lowerZ, upperZ, initial_flowrate, init_depth, depth_upstream, & 
+     depth_dnstream, ManningsN, roughness_type, idepth_type, &
      linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName)
 !
 ! creates a simple rectangular channel with 1 link and 2 nodes
 ! 
  character(64) :: subroutine_name = 'case_simple_channel_links_and_nodes'
  
- real,  intent(in)  :: channel_length, channel_breadth, subdivide_length
+ real,  intent(in)  :: channel_length, channel_breadth
+ real,  intent(in)  :: channel_topwidth, subdivide_length
  real,  intent(in)  :: lowerZ, upperZ, ManningsN, initial_flowrate
- real,  intent(in)  :: depth_upstream, depth_dnstream
+ real,  intent(in)  :: depth_upstream, depth_dnstream, init_depth
  
  integer, intent(in):: roughness_type, idepth_type
  
@@ -187,8 +189,10 @@
 
  linkR(1,lr_Length)          = channel_length
  linkR(1,lr_BreadthScale)    = channel_breadth 
+ linkR(1,lr_TopWidth)        = channel_topwidth 
  linkR(1,lr_ElementLength)   = subdivide_length
  linkR(1,lr_InitialFlowrate) = initial_flowrate
+ linkR(1,lr_InitialDepth)    = init_depth
  linkR(1,lr_InitialUpstreamDepth)    = depth_upstream
  linkR(1,lr_InitialDnstreamDepth)    = depth_dnstream
  linkI(1,li_InitialDepthType)        = idepth_type
@@ -201,7 +205,7 @@
     print *, linkI(:,li_link_type), ' type'
     print *, linkI(:,li_Mnode_u) , ' upstream node'
     print *, linkI(:,li_Mnode_d) , ' downstream node'
-
+    print *, ''
     print *, 'node info'
     print *, nodeI(:,ni_idx), ' idx'
     print *, nodeI(:,ni_node_type), ' type'

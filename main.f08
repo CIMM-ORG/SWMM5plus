@@ -16,7 +16,7 @@
  use network_define
  use output
  use setting_definition
- use type_definitions
+ use type_definitions 
  use test_cases
  use time_loop
  use utility
@@ -96,6 +96,7 @@
  setting%TestCase%TestName = 'simple_channel_001'
  ! setting%TestCase%TestName = 'y_channel_002'
  ! setting%TestCase%TestName = 'simple_weir_003'
+ ! setting%TestCase%TestName = 'waller_creek'
 
 !%  hard-code for debug output
  setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
@@ -132,7 +133,9 @@
  if (setting%TestCase%UseTestCase) then
     call test_case_initiation &
         (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-         bcdataDn, bcdataUp)
+         bcdataDn, bcdataUp, &
+         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
+         wdBreadth, wdWidthDepthData, wdCellType)
  else
     print *, 'error - code only designed for use with test cases'
     stop
@@ -165,7 +168,19 @@
  call diagnostic_initialize &
     (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, &
      bcdataUp, bcdataDn)
-
+! print*, elem2R(:, e2r_Flowrate), 'e2r_Flowrate'
+! print*, '.................................................'
+! print*, elem2R(:, e2r_Velocity), 'e2r_Velocity'
+! print*, '.................................................'
+! print*, elem2R(:, e2r_HydDepth), 'e2r_HydDepth'
+! print*, '.................................................'
+! print*, elem2R(:, e2r_Eta), 'e2r_Eta'
+! print*, '.................................................'
+! print*, elem2R(:, e2r_Timescale_Q_u), 'e2r_Timescale_Q_u'
+! print*, '.................................................'
+! print*, elem2R(:, e2r_Timescale_Q_d), 'e2r_Timescale_Q_d'
+! print*, '.................................................'
+! stop
 !% setting a zero starting condition is useful for robustness tests
 print *, 'in main setting flowrate and velocity to 0'
 elem2R(:,e2r_Velocity) = 0.0
@@ -204,7 +219,9 @@ faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 
 !%  close out the debug files
  call debug_finalize(debugfile)
- 
+ print *
+ print *, 'finished main program'
+ print *, '====================='
  print *, char(7)  ! sound the system beep
 
  end program main

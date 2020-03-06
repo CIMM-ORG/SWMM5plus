@@ -19,6 +19,20 @@
         real    ::  Coef  = 0.1
     end type adjustVshapedFlowrateType
 
+    !% setting%Method%AdjustWidthDepth
+    type adjustWidthDepthType
+        logical :: Apply               = .true.
+        logical :: AddDownstreamBuffer = .false.
+        real    :: AdjustFractionMax   = 0.05
+        real    :: AdjustFraction      = 0.01
+        real    :: SmallWidth          = 1e-8
+        real    :: DownstreamMinLength = 0.0
+        real    :: depthMaxExpected    = 5.0
+        real    :: angleMinimum        = 0.1
+        real    :: areaMaximum         = 2.0
+        real    :: cellSizeTarget      = 10.0
+    endtype adjustWidthDepthType
+
     !% setting%Limiter%BC
     type BClimiterType
         logical :: UseInflowFroudeNumberLimiter = .true.
@@ -94,6 +108,7 @@
     !%  setting%Method
     type methodType
         type(adjustVshapedFlowrateType) :: AdjustVshapedFlowrate
+        type(adjustWidthDepthType)      :: AdjustWidthDepth
     end type methodType
 
     !%  setting%OutputThreadedLink

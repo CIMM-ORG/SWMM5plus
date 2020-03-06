@@ -94,7 +94,7 @@
  call bc_applied_onelement &
     (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_elevation, ilocaldummy)
 
-!% rectangular, parabolic, trapezoidal, triangular, width-depth geometry
+!% rectangular geometry
  call geometry_update &
     (elem2R, elem2I, e2r_VolumeColumn, &
      elemMR, elemMI, eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM, &
@@ -228,7 +228,7 @@
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-!%  basic geometry update for rectangular channels, weirs, orifice and junctions
+!%  basic geometry update for rectangular channels and junctions
 
 !%  rectangular geometry for channels
  call channel_or_junction &

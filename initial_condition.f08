@@ -149,6 +149,8 @@
  real,      pointer :: dup, ddn
  integer,   pointer :: Lindx, LdepthType
  integer :: ii, ei_max, mm
+ 
+ real :: trapz_tanTheta, CC, BB
   
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -237,13 +239,16 @@
                             
             end do
         end select
+
         !%  handle all the initial conditions that don't depend on geometry type
         !%
         where (elem2I(:,e2i_link_ID) == Lindx)
             elem2I(:,e2i_roughness_type) = linkI(ii,li_roughness_type)
             elem2R(:,e2r_Roughness)      = linkR(ii,lr_Roughness)
             elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)
-            elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)               
+            elem2R(:,e2r_LeftSlope)      = linkR(ii,lr_LeftSlope)
+            elem2R(:,e2r_RightSlope)     = linkR(ii,lr_RightSlope)
+            elem2R(:,e2r_ParabolaValue)  = linkR(ii,lr_ParabolaValue)
         endwhere
         
         ! print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'

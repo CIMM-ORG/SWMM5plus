@@ -316,7 +316,7 @@ call interp_channel_onetype &
 call interp_channel_onetype &
     (faceR, facemask, faceI, elem2R, &
      weightUpQ, weightDnQ, valueUp, valueDn, e2rset(3), frset(3))
-  
+    
 !%  store the duplicate areas (later adjusted for jumps)
  where (facemask) 
     faceR(:,fr_Area_u) = faceR(:,fr_Area_d)  

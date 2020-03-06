@@ -81,14 +81,14 @@
 
 !%   assign links to nodes
  call network_node_assignment (nodeI, linkI) 
- 
+
 !%   confirm that the link-node network is valid   
  call network_check_node_link_match (linkI, nodeI)
 
 !%   check that sufficient BC locations have been identified 
  call network_check_BC (nodeI, N_node)
-     
-!%   get the slope of each link given the node Z values
+
+ !%   get the slope of each link given the node Z values
  call network_get_link_slope (linkR, nodeR, linkI, nodeI)
 
 ! HACK - need a check here to look for non-monotonic zbottom in the link/node
@@ -107,7 +107,6 @@
     (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
      elem2Name, elemMname, faceName)
  
-
 !%   ensure elemMR (junction) array has zero values in the multiple geometry storage
  call initialize_array_zerovalues (elemMR) 
  call initialize_dummy_values &
@@ -120,10 +119,9 @@
     (elem2R, elemMR, faceR, linkR, nodeR, elem2I, elemMI, faceI, &
      linkI, nodeI, nodeYN, elem2Name, elemMName, faceName, linkName, nodeName)   
 
-
 !%   setup the geometric relationships between the junction branches and the main values
  call junction_geometry_setup (elemMR, elemMI) 
- 
+
 !%   assign branch mappings for faces 
  call junction_branch_assigned_to_faces (faceI, elemMI)
 
@@ -1317,7 +1315,7 @@
     zcenter = zcenter + linkR(thislink,lr_Slope) * linkR(thislink,lr_ElementLength)
     zface   = zface   + linkR(thislink,lr_Slope) * linkR(thislink,lr_ElementLength)
     
-    
+    elem2R(thisElem2,e2r_Zbottom)          = zcenter
         
     select case (linkI(thisLink,li_geometry))
         case (lRectangular)

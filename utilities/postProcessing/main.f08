@@ -24,7 +24,7 @@ use postProcessing
     real,    dimension(:)  , allocatable       :: xx,yy
 
 
-open(newunit=iunit, file='/home/saz/SWMM/SWMMengine_02222020_test/OutputThreaded/out_depth__20200224_1246.txt', status='OLD')
+open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_depth__20200304_1614.txt', status='OLD')
 
 specific_link = 1
 call get_specific_link_data &
@@ -35,7 +35,7 @@ call get_specific_link_data &
 
 
 
-plot_type = 1
+plot_type = 3
 specific_linkElement = 1
 ! 1 = time series, 2 = longitudinal, 3 = hardcoded weir long
 if (plot_type .eq. 1)  then
@@ -75,7 +75,7 @@ elseif (plot_type .eq. 3)  then !this is hard coded for simple weir case
             write(7,*)xx(i), yy(i)
         end do
     end do
-    call system('gnuplot -p plot_long_ben.plt')
+    call system('gnuplot -p plot_long.plt')
     ! close(7,status='delete')
 else
     print*,'Invalid print type'

@@ -134,6 +134,7 @@
  call flowrate_from_velocity &
     ( elemMR, elemMI, &
       eMr_Flowrate, eMr_Area, eMr_Velocity_new, eMi_elem_type, eJunctionChannel)
+    
 
 !%  FLOWS AND VELOCITIES IN JUNCTION BRANCHES -----------------
 !%  The total flowrate is distributed among both outflow and inflow branches
