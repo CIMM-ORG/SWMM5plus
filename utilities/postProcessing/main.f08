@@ -76,7 +76,7 @@ elseif (plot_type .eq. 3)  then !this is hard coded for simple weir case
         end do
     end do
     call system('gnuplot -p plot_long.plt')
-    ! close(7,status='delete')
+    close(7,status='delete')
 else
     print*,'Invalid print type'
 endif
