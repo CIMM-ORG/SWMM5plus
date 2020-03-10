@@ -107,15 +107,6 @@
              elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
              thiscoef(ii))
 
-            ! print*,'after RK2 step'
-            ! print*, elem2R(:,e2r_Volume_new), 'e2r_Volume_new'
-            ! print*,'----------------------------------------------'
-            ! print*, elem2R(:,e2r_Volume), 'e2r_Volume_old'
-            ! print*,'----------------------------------------------'
-            ! print*, elem2R(:,e2r_Velocity_new), 'e2r_Volume_new'
-            ! print*,'----------------------------------------------'
-            ! print*, elem2R(:,e2r_Eta), 'e2r_Eta'
-            ! print*,'----------------------------------------------'
         call weir_step &
             (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
              e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
@@ -128,20 +119,7 @@
              faceYN,  bcdataDn, bcdataUp, steptime, ii, ID, numberPairs,         &
              ManningsN, Length, zBottom, xDistance,  Breadth, widthDepthData,    &
              cellType)
-
-            ! print*,'after aux update step'
-            ! print*, elem2R(:,e2r_Volume_new), 'e2r_Volume_new'
-            ! print*,'----------------------------------------------'
-            ! print*, elem2R(:,e2r_Volume), 'e2r_Volume_old'
-            ! print*,'----------------------------------------------'
-            ! print*, elem2R(:,e2r_Velocity_new), 'e2r_Volume_new'
-            ! print*,'----------------------------------------------'
-            ! print*, elem2R(:,e2r_Eta), 'e2r_Eta'
-            ! print*,'----------------------------------------------'
-
-        
-             
-    
+                      
         if (ii==1) then
             !% store the net face fluxes that are used for volume advance.
             call diagnostic_element_volume_conservation_fluxes &

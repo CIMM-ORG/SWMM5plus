@@ -93,9 +93,9 @@
 !%  hard-code setting for test cases
 
  setting%TestCase%UseTestCase = .true.
- setting%TestCase%TestName = 'simple_channel_001'
+ ! setting%TestCase%TestName = 'simple_channel_001'
  ! setting%TestCase%TestName = 'y_channel_002'
- ! setting%TestCase%TestName = 'simple_weir_003'
+ setting%TestCase%TestName = 'simple_weir_003'
  ! setting%TestCase%TestName = 'waller_creek'
 
 !%  hard-code for debug output
@@ -168,19 +168,7 @@
  call diagnostic_initialize &
     (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, &
      bcdataUp, bcdataDn)
-! print*, elem2R(:, e2r_Flowrate), 'e2r_Flowrate'
-! print*, '.................................................'
-! print*, elem2R(:, e2r_Velocity), 'e2r_Velocity'
-! print*, '.................................................'
-! print*, elem2R(:, e2r_HydDepth), 'e2r_HydDepth'
-! print*, '.................................................'
-! print*, elem2R(:, e2r_Eta), 'e2r_Eta'
-! print*, '.................................................'
-! print*, elem2R(:, e2r_Timescale_Q_u), 'e2r_Timescale_Q_u'
-! print*, '.................................................'
-! print*, elem2R(:, e2r_Timescale_Q_d), 'e2r_Timescale_Q_d'
-! print*, '.................................................'
-! stop
+    
 !% setting a zero starting condition is useful for robustness tests
 print *, 'in main setting flowrate and velocity to 0'
 elem2R(:,e2r_Velocity) = 0.0

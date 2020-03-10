@@ -318,6 +318,7 @@
 
         CFL          = 0.6  ! determines dt from subdivide_length
 
+        init_depth(1:3)    = 1.0
         depth_dnstream(1)  = 1.0
         depth_upstream(1)  = 1.0 ! junction
 
@@ -411,7 +412,7 @@
              leftSlope, rightSlope, inletOffset, dischargeCoefficient, fullDepth)
 
         ! step controls
-        display_interval = 5000
+        display_interval = 100
         first_step = 1
         last_step  =  30000
 
@@ -430,15 +431,21 @@
         idepth_type        = 1  !1 = uniform, 2=linear, 3=exponential decay
         ManningsN          = 0.03
         
+        channel_geometry(1) = lRectangular
         lowerZ(1)          = 1.0 
         depth_dnstream(1)  = 1.0e-2 
         depth_upstream(1)  = 1.0e-2
+        init_depth(1)      = 1.0e-2
 
+        channel_geometry(2) = lTriangular
         depth_dnstream(2)  = 1.0e-2         !This is the depth in weir 
         depth_upstream(2)  = 1.0e-2         !This is the depth in weir
-
+        init_depth(2)      = 1.0e-2         
+        
+        channel_geometry(3) = lRectangular
         depth_dnstream(3)  = 0.25
         depth_upstream(3)  = 0.25
+        init_depth(3)      = 0.25
 
         channel_breadth(1)   = 3.0
         channel_breadth(2)   = 3.0
@@ -698,17 +705,18 @@ subroutine froude_driven_setup &
  upperZ = lowerZ + slope * total_length
 
 
-! print *,'-----------------'
-! print *, area, 'area'
-! print *, perimeter, 'perimeter'
-! print *, rh, 'rh'
-! print *, velocity, 'velocity'
-! print *, flowrate, 'flowrate'
-! print *, slope, 'slope'
-! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
-! print *, total_length, 'total_length'
-! print *, slope*total_length, 'slope*total_length'
-! print *,'-----------------'
+print *,'-----------------'
+print *, area, 'area'
+print *, hDepth, 'hDepth'
+print *, perimeter, 'perimeter'
+print *, rh, 'rh'
+print *, velocity, 'velocity'
+print *, flowrate, 'flowrate'
+print *, slope, 'slope'
+print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+print *, total_length, 'total_length'
+print *, slope*total_length, 'slope*total_length'
+print *,'-----------------'
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine froude_driven_setup
@@ -747,17 +755,17 @@ subroutine froude_driven_setup &
 
  
 
-! print *,'-----------------'
-! print *, area, 'area'
-! print *, perimeter, 'perimeter'
-! print *, rh, 'rh'
-! print *, velocity, 'velocity'
-! print *, flowrate, 'flowrate'
-! print *, slope, 'slope'
-! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
-! print *, total_length, 'total_length'
-! print *, slope*total_length, 'slope*total_length'
-! print *,'-----------------'
+print *,'-----------------'
+print *, area, 'area'
+print *, perimeter, 'perimeter'
+print *, rh, 'rh'
+print *, velocity, 'velocity'
+print *, flowrate, 'flowrate'
+print *, slope, 'slope'
+print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+print *, total_length, 'total_length'
+print *, slope*total_length, 'slope*total_length'
+print *,'-----------------'
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine weir_setup

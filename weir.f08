@@ -135,24 +135,6 @@
      faceR, elem2I, elemMI, elem2YN, elemMYN, wHeight, wCoeff,       &
      wSideSlope, dir, EffectiveHead, thiscoef)
 
-    ! print*, wCrest, 'wCrest'
-    ! print*,'**************************************'
-    ! print*, wEta, 'wEta'
-    ! print*,'**************************************'
-    ! print*, EffectiveHead, 'EffectiveHead'
-    ! print*,'**************************************'
-    ! stop
- ! call flow_interp_for_upstream_weir_face (elem2R, faceR, faceI, faceYN)
-
- ! call flow_interp_for_downstream_weir_face (elem2R, faceR, faceI, faceYN)
-
-    ! print*,'+++++++++++++++++++++++++++++++++++++'
-    ! print*, faceR(:,fr_Flowrate), 'fr_Flowrate'
-    ! print*,'+++++++++++++++++++++++++++++++++++++'
-    ! print*, faceR(:,fr_Velocity_u), 'fr_Velocity_u'
-    ! print*,'+++++++++++++++++++++++++++++++++++++'
-    ! print*, faceR(:,fr_Velocity_d), 'fr_Velocity_d'
-    ! print*,'+++++++++++++++++++++++++++++++++++++'
 
  ! release temporary arrays
  EffectiveHead  = nullvalueR
