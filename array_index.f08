@@ -156,7 +156,8 @@
     integer, parameter :: e2r_InletOffset        = 31   ! inlet offset for weir or orifice element
     integer, parameter :: e2r_DischargeCoeff     = 32   ! discharge coefficient for weir or orifice element
     integer, parameter :: e2r_FullDepth          = 33   ! vertical opening of pipe, weir, orifice
-    integer, parameter :: e2r_idx_base1          = 33
+    integer, parameter :: e2r_EndContractions    = 34   ! End contractions for rectengular and trapezoidal weir
+    integer, parameter :: e2r_idx_base1          = 34
 
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
     integer, parameter :: e2r_temp2              = e2r_idx_base1 + 2
