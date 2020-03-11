@@ -85,7 +85,8 @@
  wZbottom           => elem2R(:,e2r_Zbottom)
  wHeight            => elem2R(:,e2r_FullDepth)
  wEta               => elem2R(:,e2r_eta)
- wCoeff             => elem2R(:,e2r_DischargeCoeff)
+ wCoeffTriangular   => elem2R(:,e2r_DischargeCoeff1)
+ wCoeffRectangular  => elem2R(:,e2r_DischargeCoeff2)
  wInletoffset       => elem2R(:,e2r_InletOffset)
  wSideSlope         => elem2R(:,e2r_LeftSlope)
  wEndContractions   => elem2R(:,e2r_EndContractions)
@@ -259,9 +260,19 @@ subroutine weir_effective_length &
 ! Calculate Effective Length (This part is straight up from SWMM source code)
  where ( (elem2I(:,e2i_elem_type) == eWeir ) )
     wLength  = min(twoR*thiscoef*sqrt(grav*wHeight), 200.0)
-    ! effective crest length is used in rectangular and trapezoidal weir flow calculation
+
+! effective crest length is used in rectangular and trapezoidal weir flow calculation
+ elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+             (elem2I(:,e2i_geometry)  == eRectangular) )
+    
     EffectiveCrestLength = max(twoR * wSideSlope * wHeight - 0.1 * &
             wEndContractions * EffectiveHead, 0.0)
+
+ elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+             (elem2I(:,e2i_geometry)  == eTrapezoidal) )
+
+    EffectiveCrestLength = twoR*wSideSlope*wHeight
+
  endwhere
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

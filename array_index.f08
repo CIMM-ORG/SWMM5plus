@@ -154,10 +154,11 @@
     integer, parameter :: e2r_RightSlope         = 29   ! for specialized geometry and weir element
     integer, parameter :: e2r_ParabolaValue      = 30   ! for specialized geometry
     integer, parameter :: e2r_InletOffset        = 31   ! inlet offset for weir or orifice element
-    integer, parameter :: e2r_DischargeCoeff     = 32   ! discharge coefficient for weir or orifice element
-    integer, parameter :: e2r_FullDepth          = 33   ! vertical opening of pipe, weir, orifice
-    integer, parameter :: e2r_EndContractions    = 34   ! End contractions for rectengular and trapezoidal weir
-    integer, parameter :: e2r_idx_base1          = 34
+    integer, parameter :: e2r_DischargeCoeff1    = 32   ! discharge coefficient for triangular weir part or orifice element
+    integer, parameter :: e2r_DischargeCoeff2    = 33   ! discharge coefficient for rectangular weir part
+    integer, parameter :: e2r_FullDepth          = 34   ! vertical opening of pipe, weir, orifice
+    integer, parameter :: e2r_EndContractions    = 35   ! End contractions for rectengular and trapezoidal weir
+    integer, parameter :: e2r_idx_base1          = 35
 
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
     integer, parameter :: e2r_temp2              = e2r_idx_base1 + 2
