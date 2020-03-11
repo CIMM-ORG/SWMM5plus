@@ -11,7 +11,6 @@
 
     use setting_definition
     use type_definitions
-
     implicit none
 
     public
@@ -79,7 +78,6 @@
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
 
     integer :: idummyarray(1)
-
 
 !==========================================================================
 ! END OF MODULE globals

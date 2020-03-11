@@ -17,5 +17,5 @@ make
 cd ..
 
 echo Generating DLL
-cp src/libswmm5.so .
+cp src/libswmm5.so ../../
 rm -r src

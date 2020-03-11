@@ -2,6 +2,7 @@
 !
  program main
 
+ use interface
  use allocate_storage
  use array_index
  use bc
@@ -69,7 +70,7 @@
 
 !% threaded output files
  type(threadedfileType), allocatable, dimension(:) :: threadedfile
- 
+
  integer, dimension(:),      allocatable :: wdID
  integer, dimension(:),      allocatable :: wdNumberPairs
  real,    dimension(:),      allocatable :: wdManningsN
@@ -80,11 +81,22 @@
  real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
  type(string), dimension(:), allocatable :: wdCellType(:)
 
+!% args
+ integer :: num_args
+ character(len = 256) :: inpfile
+
 !--------------------------------------------------------------------------
  print *, ''
  print *, '====================================================='
  print *, 'starting main program'
  print *, ''
+
+
+!% Retrieve .inp file path from args
+ num_args = command_argument_count()
+ call get_command_argument(1, inpfile)
+ print *, inpfile
+ call load_swmm_data(inpfile)
 
 !%  simulation controls
  call setting_default
@@ -181,7 +193,6 @@ elemMR(:,eMr_VelocityUp(:)) = 0.0
 faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.0
 faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.0
 faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
-
 
 ! initialize output by threaded link
  call output_threaded_by_link_initialize (threadedfile)
