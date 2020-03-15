@@ -30,10 +30,11 @@
 !
  subroutine case_simple_weir_initialize &
     (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-    initial_flowrate, depth_upstream, depth_dnstream, left_slope,       &
-    right_slope, inlet_offset, discharge_coefficient, ManningsN,        &
-    full_depth, roughness_type, idepth_type, linkR, nodeR, linkI,       &
-    nodeI,linkYN, nodeYN, linkName, nodeName, bcdataDn, bcdataUp)
+    initial_flowrate, depth_upstream, depth_dnstream, initial_depth,    &
+    side_slope, inlet_offset, discharge_coefficient1,                   &
+    discharge_coefficient2, full_depth, end_contractions, ManningsN,    &
+    roughness_type, idepth_type, linkR, nodeR, linkI, nodeI,linkYN,     &
+    nodeYN, linkName, nodeName, bcdataDn, bcdataUp)
 !
 ! initialize the link-node system and boundary conditions for a simple channel
 ! 
@@ -41,8 +42,9 @@
  
  real,  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
  real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
- real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), left_slope(:)
- real,  intent(in)  :: right_slope(:), inlet_offset(:), discharge_coefficient(:)
+ real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
+ real,  intent(in)  :: side_slope(:), inlet_offset(:), end_contractions(:)
+ real,  intent(in)  :: discharge_coefficient1(:), discharge_coefficient2(:)
  real,  intent(in)  :: full_depth(:), ManningsN(:)
  
  integer, intent(in):: roughness_type, idepth_type(:)
@@ -93,11 +95,12 @@
  bcdataUp(1)%ValueArray(2) = initial_flowrate(3)  ! m^3/2
     
  call case_simple_weir_and_nodes &
-    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,  &
-     initial_flowrate, depth_upstream, depth_dnstream, ManningsN,        &
-     roughness_type, idepth_type, left_slope, right_slope, inlet_offset, &
-     discharge_coefficient, full_depth, linkR, nodeR, linkI, nodeI,      &
-     linkYN, nodeYN, linkName, nodeName)
+    (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
+     initial_flowrate, depth_upstream, depth_dnstream, initial_depth,    &
+     side_slope, inlet_offset, discharge_coefficient1,                   &
+     discharge_coefficient2, full_depth, end_contractions, ManningsN,    &
+     roughness_type, idepth_type, linkR, nodeR, linkI, nodeI,linkYN,     &
+     nodeYN, linkName, nodeName)
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
 
@@ -110,20 +113,22 @@
 !==========================================================================
  subroutine case_simple_weir_and_nodes &
     (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,  &
-     initial_flowrate, depth_upstream, depth_dnstream, ManningsN,        &
-     roughness_type, idepth_type, left_slope, right_slope, inlet_offset, &
-     discharge_coefficient, full_depth, linkR, nodeR, linkI, nodeI,      &
-     linkYN, nodeYN, linkName, nodeName)
+     initial_flowrate, depth_upstream, depth_dnstream, initial_depth,    &
+     side_slope, inlet_offset, discharge_coefficient1,                   &
+     discharge_coefficient2, full_depth, end_contractions, ManningsN,    &
+     roughness_type, idepth_type, linkR, nodeR, linkI, nodeI,linkYN,     &
+     nodeYN, linkName, nodeName)
 !
 ! creates a weir in between two rectangular channels
 ! 
  character(64) :: subroutine_name = 'case_simple_weir_and_nodes'
 
  real,  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
- real,  intent(in)  :: lowerZ(:), upperZ(:), ManningsN(:), initial_flowrate(:)
- real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), left_slope(:)
- real,  intent(in)  :: right_slope(:), inlet_offset(:), discharge_coefficient(:)
- real,  intent(in)  :: full_depth(:)
+ real,  intent(in)  :: lowerZ(:), upperZ(:), initial_flowrate(:)
+ real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
+ real,  intent(in)  :: side_slope(:), inlet_offset(:), end_contractions(:)
+ real,  intent(in)  :: discharge_coefficient1(:), discharge_coefficient2(:)
+ real,  intent(in)  :: full_depth(:), ManningsN(:)
  
  integer, intent(in):: roughness_type, idepth_type(:)
  
@@ -139,7 +144,7 @@
  type(string), dimension(:), allocatable, target, intent(out)   :: linkName 
  type(string), dimension(:), allocatable, target, intent(out)   :: nodeName
  
- integer :: ii
+ integer :: ii, mm
 
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
@@ -207,44 +212,22 @@
  linkI(3,li_Mnode_d) = 3
  linkI(3,li_Mnode_u) = 4
 
- linkR(1,lr_Length)                 = channel_length(1)
- linkR(1,lr_BreadthScale)           = channel_breadth(1) 
- linkR(1,lr_ElementLength)          = subdivide_length(1)
- linkR(1,lr_InitialFlowrate)        = initial_flowrate(1)
- linkR(1,lr_InitialUpstreamDepth)   = depth_upstream(1)
- linkR(1,lr_InitialDnstreamDepth)   = depth_dnstream(1)
- linkR(1,lr_LeftSlope)              = left_slope(1)
- linkR(1,lr_RightSlope)             = right_slope(1)
- linkR(1,lr_InletOffset)            = inlet_offset(1)
- linkR(1,lr_DischargeCoeff)         = discharge_coefficient(1)
- linkR(1,lr_FullDepth)              = full_depth(1)
- linkI(1,li_InitialDepthType)       = idepth_type(1)
-
- linkR(2,lr_Length)                 = channel_length(2)           ! I'm keeping these the same for this moment. Because it will pass the same values from test_cases
- linkR(2,lr_BreadthScale)           = channel_breadth(2) 
- linkR(2,lr_ElementLength)          = subdivide_length(2)
- linkR(2,lr_InitialFlowrate)        = initial_flowrate(2)
- linkR(2,lr_InitialUpstreamDepth)   = depth_upstream(2)
- linkR(2,lr_InitialDnstreamDepth)   = depth_dnstream(2)
- linkR(2,lr_LeftSlope)              = left_slope(2)
- linkR(2,lr_RightSlope)             = right_slope(2)
- linkR(2,lr_InletOffset)            = inlet_offset(2)
- linkR(2,lr_DischargeCoeff)         = discharge_coefficient(2)
- linkR(2,lr_FullDepth)              = full_depth(2)
- linkI(2,li_InitialDepthType)       = idepth_type(2)
-
- linkR(3,lr_Length)                 = channel_length(3)
- linkR(3,lr_BreadthScale)           = channel_breadth(3)
- linkR(3,lr_ElementLength)          = subdivide_length(3)
- linkR(3,lr_InitialFlowrate)        = initial_flowrate(3)
- linkR(3,lr_InitialUpstreamDepth)   = depth_upstream(3)
- linkR(3,lr_InitialDnstreamDepth)   = depth_dnstream(3)
- linkR(3,lr_LeftSlope)              = left_slope(3)
- linkR(3,lr_RightSlope)             = right_slope(3)
- linkR(3,lr_InletOffset)            = inlet_offset(3)
- linkR(3,lr_DischargeCoeff)         = discharge_coefficient(3)
- linkR(3,lr_FullDepth)              = full_depth(3)
- linkI(3,li_InitialDepthType)       = idepth_type(3)
+do mm = 1,N_link
+    linkR(mm,lr_Length)                 = channel_length(mm)
+    linkR(mm,lr_BreadthScale)           = channel_breadth(mm) 
+    linkR(mm,lr_ElementLength)          = subdivide_length(mm)
+    linkR(mm,lr_InitialFlowrate)        = initial_flowrate(mm)
+    linkR(mm,lr_InitialUpstreamDepth)   = depth_upstream(mm)
+    linkR(mm,lr_InitialDnstreamDepth)   = depth_dnstream(mm)
+    linkR(mm,lr_InitialDepth)           = initial_depth(mm)
+    linkR(mm,lr_SideSlope)              = side_slope(mm)
+    linkR(mm,lr_InletOffset)            = inlet_offset(mm)
+    linkR(mm,lr_DischargeCoeff1)        = discharge_coefficient1(mm)
+    linkR(mm,lr_DischargeCoeff2)        = discharge_coefficient2(mm)
+    linkR(mm,lr_FullDepth)              = full_depth(mm)
+    linkR(mm,lr_EndContractions)        = end_contractions(mm)
+    linkI(mm,li_InitialDepthType)       = idepth_type(mm)
+end do
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
     print *

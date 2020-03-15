@@ -55,8 +55,10 @@
  real, dimension(:), allocatable :: channel_breadth, channel_topwidth
  real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
- real, dimension(:), allocatable :: dischargeCoefficient, fullDepth, inletOffset 
+ real, dimension(:), allocatable :: fullDepth, inletOffset, sideSlope 
  real, dimension(:), allocatable :: parabolaValue, leftSlope, rightSlope
+ real, dimension(:), allocatable :: dischargeCoefficient1, dischargeCoefficient2
+ real, dimension(:), allocatable :: endContractions
 
  integer, dimension(:), allocatable :: idepth_type
  integer, dimension(:), allocatable :: channel_geometry
@@ -128,7 +130,8 @@
             (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
              channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
              velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-             leftSlope, rightSlope, inletOffset, dischargeCoefficient, fullDepth)
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
 
         ! step controls
         display_interval = 1000
@@ -229,7 +232,8 @@
             (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
              channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
              velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-             leftSlope, rightSlope, inletOffset, dischargeCoefficient, fullDepth)
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
              
         ! step controls
         display_interval = 1000
@@ -303,7 +307,8 @@
             (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
              channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
              velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-             leftSlope, rightSlope, inletOffset, dischargeCoefficient, fullDepth)
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
 
         ! step controls
         display_interval = 1000
@@ -341,13 +346,6 @@
         subdivide_length(1) = 100.0
         subdivide_length(2) = 100.0
         subdivide_length(3) = 100.0
-
-
-        leftSlope   = nullValueR
-        rightSlope  = nullValueR
-        inletOffset = nullValueR
-        dischargeCoefficient = nullValueR
-        fullDepth   = nullValueR
 
         ! get consistent bottom Z values for the desired Froude number in each link
         do mm=1,N_link
@@ -409,7 +407,8 @@
             (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
              channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
              velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-             leftSlope, rightSlope, inletOffset, dischargeCoefficient, fullDepth)
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
 
         ! step controls
         display_interval = 100
@@ -420,11 +419,7 @@
         ! tests that ran:  Fr = 0.25, 0.5
 
         ! This is from case_y_channel
-        Froude(1)       = 0.25   ! determines flowrate and slope to get Froude
-        Froude(2)       = 0.25   ! determines flowrate and slope to get Froude
-        Froude(3)       = 0.25   ! determines flowrate and slope to get Froude
-
-
+        Froude       = 0.25   ! determines flowrate and slope to get Froude
         CFL          = 0.25  ! determines dt from subdivide_length
 
         ! keep these physics fixed
@@ -447,30 +442,29 @@
         depth_upstream(3)  = 0.25
         init_depth(3)      = 0.25
 
-        channel_breadth(1)   = 3.0
-        channel_breadth(2)   = 3.0
-        channel_breadth(3)   = 3.0
-
-        channel_length(1)    = 1000.0
+        channel_breadth      = 3.0
+        channel_length       = 1000.0
         channel_length(2)    = 1        !This is Weir Length
-        channel_length(3)    = 1000.0
 
-        subdivide_length(1) = 500.0
-        subdivide_length(2) = 1         !We are not subdividing weir element. So this value is same as weir length
-        subdivide_length(3) = 500.0
+        subdivide_length     = 500.0
+        subdivide_length(2)  = 1        !We are not subdividing weir element. So this value is same as weir length
+
 
         
-        leftSlope   = nullValueR
-        rightSlope  = nullValueR
-        inletOffset = nullValueR
-        dischargeCoefficient = nullValueR
-        fullDepth   = nullValueR
+        leftSlope             = nullValueR
+        rightSlope            = nullValueR
+        sideSlope             = nullValueR
+        inletOffset           = nullValueR
+        dischargeCoefficient1 = nullValueR
+        dischargeCoefficient2 = nullValueR
+        fullDepth             = nullValueR
+        endContractions       = nullValueR
 
-        leftSlope(2)   = 1.0
-        rightSlope(2)  = 1.0
-        inletOffset(2) = 1.0
-        dischargeCoefficient(2) = 1.40
-        fullDepth(2)   = 1.5 
+        ! wier settings
+        inletOffset(2)             = 1.0
+        dischargeCoefficient1(2)   = 1.40
+        fullDepth(2)               = 1.5 
+        sideSlope(2)               = 1.0
 
         ! get consistent bottom Z values for the desired Froude number in each link
         do mm=1,N_link
@@ -491,7 +485,7 @@
                     upperZ(1) = uz
                 case (2)
                     call weir_setup &
-                         (uz, area(mm), flowrate(mm), velocity(mm), leftSlope(mm), Froude(mm), &
+                         (uz, area(mm), flowrate(mm), velocity(mm), sideslope(mm), Froude(mm), &
                           channel_breadth(mm), ManningsN(mm), channel_length(mm), lz,           &
                           depth_upstream(mm) )
                     lowerZ(mm) = upperZ(1)
@@ -514,11 +508,12 @@
              first_step, last_step, display_interval,2)
 
         call case_simple_weir_initialize &
-            (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,  &
-             flowrate, depth_upstream, depth_dnstream, leftSlope, rightSlope,    &
-             inletOffset, dischargeCoefficient, ManningsN, fullDepth,            &
-             lManningsN, idepth_type, linkR, nodeR, linkI, nodeI,linkYN, nodeYN, &
-             linkName, nodeName, bcdataDn, bcdataUp)
+            (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,    &
+             flowrate, depth_upstream, depth_dnstream, init_depth,                 &
+             sideslope, inletOffset, dischargeCoefficient1, dischargeCoefficient2, &
+             fullDepth, endContractions, ManningsN, lManningsN, idepth_type,       &
+             linkR, nodeR, linkI, nodeI,linkYN, nodeYN, linkName, nodeName,        &
+             bcdataDn, bcdataUp)
 
         if (.not. setting%Debugout%SuppressAllFiles) then
             call write_testcase_setup_file &
@@ -548,7 +543,8 @@
     (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
      channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
      velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-     leftSlope, rightSlope, inletOffset, dischargeCoefficient, fullDepth)
+     leftSlope, rightSlope, sideSlope, inletOffset, dischargeCoefficient1,       &
+     dischargeCoefficient2, fullDepth, endContractions)
 
  character(64) :: subroutine_name = 'control_variable_allocation'
 
@@ -558,8 +554,9 @@
  real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
  real, dimension(:), allocatable, intent(out) :: parabolaValue, leftSlope, rightSlope
- real, dimension(:), allocatable, intent(out) :: inletOffset
- real, dimension(:), allocatable, intent(out) :: dischargeCoefficient, fullDepth
+ real, dimension(:), allocatable, intent(out) :: inletOffset, sideSlope
+ real, dimension(:), allocatable, intent(out) :: dischargeCoefficient1, dischargeCoefficient2
+ real, dimension(:), allocatable, intent(out) :: fullDepth, endContractions
 
  integer, dimension(:), allocatable, intent(out) :: idepth_type
  integer, dimension(:), allocatable, intent(out) :: channel_geometry
@@ -586,10 +583,13 @@
     allocate(parabolaValue(N_link))
     allocate(leftSlope(N_link))
     allocate(rightSlope(N_link))
+    allocate(sideSlope(N_link))
     allocate(inletOffset(N_link))
-    allocate(dischargeCoefficient(N_link))
+    allocate(dischargeCoefficient1(N_link))
+    allocate(dischargeCoefficient2(N_link))
     allocate(fullDepth(N_link))
     allocate(idepth_type(N_link))
+    allocate(endContractions(N_link))
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine control_variable_allocation

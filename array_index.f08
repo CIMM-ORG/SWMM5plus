@@ -150,15 +150,16 @@
     integer, parameter :: e2r_Roughness          = 25
     integer, parameter :: e2r_VolumeConservation = 26
     integer, parameter :: e2r_FroudeNumber       = 27
-    integer, parameter :: e2r_LeftSlope          = 28   ! for specialized geometry and weir element
-    integer, parameter :: e2r_RightSlope         = 29   ! for specialized geometry and weir element
+    integer, parameter :: e2r_LeftSlope          = 28   ! for specialized geometry
+    integer, parameter :: e2r_RightSlope         = 29   ! for specialized geometry
     integer, parameter :: e2r_ParabolaValue      = 30   ! for specialized geometry
-    integer, parameter :: e2r_InletOffset        = 31   ! inlet offset for weir or orifice element
-    integer, parameter :: e2r_DischargeCoeff1    = 32   ! discharge coefficient for triangular weir part or orifice element
-    integer, parameter :: e2r_DischargeCoeff2    = 33   ! discharge coefficient for rectangular weir part
-    integer, parameter :: e2r_FullDepth          = 34   ! vertical opening of pipe, weir, orifice
-    integer, parameter :: e2r_EndContractions    = 35   ! End contractions for rectengular and trapezoidal weir
-    integer, parameter :: e2r_idx_base1          = 35
+    integer, parameter :: e2r_SideSlope          = 31   ! for specialized geometry
+    integer, parameter :: e2r_InletOffset        = 32   ! inlet offset for weir or orifice element
+    integer, parameter :: e2r_DischargeCoeff1    = 33   ! discharge coefficient for triangular weir part or orifice element
+    integer, parameter :: e2r_DischargeCoeff2    = 34   ! discharge coefficient for rectangular weir part
+    integer, parameter :: e2r_FullDepth          = 35   ! vertical opening of pipe, weir, orifice
+    integer, parameter :: e2r_EndContractions    = 36   ! End contractions for rectengular and trapezoidal weir
+    integer, parameter :: e2r_idx_base1          = 36
 
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
     integer, parameter :: e2r_temp2              = e2r_idx_base1 + 2
@@ -453,19 +454,25 @@
     integer, parameter :: lr_TopWidth               = 3
     integer, parameter :: lr_ElementLength          = 4
     integer, parameter :: lr_Slope                  = 5
-    integer, parameter :: lr_Roughness              = 6
-    integer, parameter :: lr_LeftSlope              = 7
-    integer, parameter :: lr_RightSlope             = 8
-    integer, parameter :: lr_InletOffset            = 9   ! inlet offset for link
-    integer, parameter :: lr_DischargeCoeff         = 10  ! discharge coefficient for weir or orifice link
-    integer, parameter :: lr_FullDepth              = 11  ! vertical opening of pipe, weir, orifice link
-    integer, parameter :: lr_InitialFlowrate        = 12
-    integer, parameter :: lr_InitialDepth           = 13
-    integer, parameter :: lr_InitialUpstreamDepth   = 14
-    integer, parameter :: lr_InitialDnstreamDepth   = 15
-    integer, parameter :: lr_ParabolaValue          = 16
-    integer, parameter :: lr_temp1                  = 17
-    integer, parameter :: lr_idx_max                = 17
+    integer, parameter :: lr_LeftSlope              = 6
+    integer, parameter :: lr_RightSlope             = 7
+    integer, parameter :: lr_Roughness              = 8
+    integer, parameter :: lr_InitialFlowrate        = 9
+    integer, parameter :: lr_InitialDepth           = 10
+    integer, parameter :: lr_InitialUpstreamDepth   = 11
+    integer, parameter :: lr_InitialDnstreamDepth   = 12
+    integer, parameter :: lr_ParabolaValue          = 13
+    integer, parameter :: lr_SideSlope              = 14   ! for weirs only
+    integer, parameter :: lr_InletOffset            = 15   ! inlet offset for weir or orifice element
+    integer, parameter :: lr_DischargeCoeff1        = 16   ! discharge coefficient for triangular weir part or orifice element
+    integer, parameter :: lr_DischargeCoeff2        = 17   ! discharge coefficient for rectangular weir part
+    integer, parameter :: lr_FullDepth              = 18   ! vertical opening of pipe, weir, orifice
+    integer, parameter :: lr_EndContractions        = 19
+    integer, parameter :: lr_temp1                  = 20
+    integer, parameter :: lr_idx_max                = 20
+   
+    
+
 
 !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array

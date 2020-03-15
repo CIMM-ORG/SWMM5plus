@@ -789,10 +789,13 @@
     
     elem2R(thisElem2,e2r_Length)            = linkR(thislink,lr_ElementLength)
     elem2R(thisElem2,e2r_InletOffset)       = linkR(thisLink,lr_InletOffset)
-    elem2R(thisElem2,e2r_DischargeCoeff)    = linkR(thisLink,lr_DischargeCoeff)
+    elem2R(thisElem2,e2r_DischargeCoeff1)   = linkR(thisLink,lr_DischargeCoeff1)
+    elem2R(thisElem2,e2r_DischargeCoeff2)   = linkR(thisLink,lr_DischargeCoeff2)
     elem2R(thisElem2,e2r_LeftSlope)         = linkR(thisLink,lr_LeftSlope)
     elem2R(thisElem2,e2r_RightSlope)        = linkR(thisLink,lr_RightSlope)
+    elem2R(thisElem2,e2r_SideSlope)         = linkR(thisLink,lr_SideSlope)
     elem2R(thisElem2,e2r_FullDepth)         = linkR(thisLink,lr_FullDepth)
+    elem2R(thisElem2,e2r_EndContractions)   = linkR(thisLink,lr_EndContractions)
     
     !% note the following has a minus as we are going downstream for the ghost
     elem2R(thisElem2,e2r_Zbottom)           = nodeR(thisNode,nr_Zbottom)       &
@@ -1307,9 +1310,12 @@
     elem2R(thisElem2,e2r_Length)            = linkR(thislink,lr_ElementLength)
     elem2R(thisElem2,e2r_Zbottom)           = zcenter
     elem2R(thisElem2,e2r_InletOffset)       = linkR(thisLink,lr_InletOffset)
-    elem2R(thisElem2,e2r_DischargeCoeff)    = linkR(thisLink,lr_DischargeCoeff)
+    elem2R(thisElem2,e2r_DischargeCoeff1)   = linkR(thisLink,lr_DischargeCoeff1)
+    elem2R(thisElem2,e2r_DischargeCoeff2)   = linkR(thisLink,lr_DischargeCoeff2)
     elem2R(thisElem2,e2r_LeftSlope)         = linkR(thisLink,lr_LeftSlope)
     elem2R(thisElem2,e2r_RightSlope)        = linkR(thisLink,lr_RightSlope)
+    elem2R(thisElem2,e2r_SideSlope)         = linkR(thisLink,lr_SideSlope)
+    elem2R(thisElem2,e2r_EndContractions)   = linkR(thisLink,lr_EndContractions)
     elem2R(thisElem2,e2r_FullDepth)         = linkR(thisLink,lr_FullDepth)
     
     zcenter = zcenter + linkR(thislink,lr_Slope) * linkR(thislink,lr_ElementLength)
