@@ -310,6 +310,11 @@
              leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
              dischargeCoefficient2, fullDepth, endContractions)
 
+        ! step controls
+        display_interval = 1000
+        first_step = 1
+        last_step  = 10000! note 1000 is good enough to show blow up or not, 10000 is smooth
+
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5
         Froude(1)       = 0.8   ! determines flowrate and slope to get Froude
@@ -346,6 +351,12 @@
         subdivide_length(1) = 100.0
         subdivide_length(2) = 100.0
         subdivide_length(3) = 100.0
+        
+        ! rectangular geometry
+        parabolaValue = zeroR
+        leftSlope     = zeroR
+        rightSlope    = zeroR
+
 
         ! get consistent bottom Z values for the desired Froude number in each link
         do mm=1,N_link
