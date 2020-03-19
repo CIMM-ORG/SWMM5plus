@@ -310,11 +310,6 @@
              leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
              dischargeCoefficient2, fullDepth, endContractions)
 
-        ! step controls
-        display_interval = 1000
-        first_step = 1
-        last_step  = 10000! note 1000 is good enough to show blow up or not, 10000 is smooth
-
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5
         Froude(1)       = 0.8   ! determines flowrate and slope to get Froude
@@ -337,6 +332,11 @@
         channel_breadth(1)   = 3.0
         channel_breadth(2)   = 3.0
         channel_breadth(3)   = 3.0
+        
+        ! assign geometry type for links
+        do ii=1,N_link
+            channel_geometry(ii) = lRectangular
+        end do
 
         channel_length(1)    = 1000.0
         channel_length(2)    = 1000.0
