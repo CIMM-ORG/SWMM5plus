@@ -242,7 +242,7 @@
  do ii=1,N_link
     !%  get the upstream node of the link  
     thisnode = linkI(ii,li_Mnode_u)
-    print *, thisnode
+    print *, 'this node=', thisnode
     if ((thisnode < 1) .or. (thisnode > N_node)) then
         print *, ii,'= this link'
         print *, thisnode,'= upstream node assigned'
@@ -823,7 +823,7 @@
         case (lWidthDepth)
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-            faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
+            faceR(thisFace,fr_Topwidth)        = linkR(thisLink,lr_Topwidth)
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1328,7 +1328,6 @@
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)
             !faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Breadth)
-
         case (lParabolic)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
             elem2R(thisElem2,e2r_Topwidth) = twoR &

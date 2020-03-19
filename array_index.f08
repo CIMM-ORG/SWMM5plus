@@ -73,7 +73,6 @@
     integer, parameter :: eMi_node_ID         = 9    ! ID of node in the link/node space
     integer, parameter :: eMi_temp1           = 10
     integer, parameter :: eMi_temp2           = 11
-
     integer, parameter :: eMi_idx_base1       = 11    ! number of base data stored
 
     integer, parameter :: eMi_n_temp          = 2     ! matching the the number of eMi_tempX arrays
@@ -95,7 +94,6 @@
     integer, dimension(dnstream_face_per_elemM) :: eMi_MfaceDn = nullvalueI
     integer, dimension(upstream_face_per_elemM + dnstream_face_per_elemM) :: eMi_MfaceAll = nullvalueI
 
-
 !%  faceI ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
     ! column index for integer data in the faceI array
     integer, parameter :: fi_idx                = 1    ! unique index of each face
@@ -116,8 +114,8 @@
     integer, parameter :: fi_temp1              = 16
     integer, parameter :: fi_temp2              = 17
     integer, parameter :: fi_idx_max            = 17    !
-
     integer, parameter :: fi_n_temp       = 2
+
     ! storage for temp array index positions
     integer, dimension(fi_n_temp) :: fi_Temp = nullvalueI
 
@@ -160,7 +158,6 @@
     integer, parameter :: e2r_FullDepth          = 35   ! vertical opening of pipe, weir, orifice
     integer, parameter :: e2r_EndContractions    = 36   ! End contractions for rectengular and trapezoidal weir
     integer, parameter :: e2r_idx_base1          = 36
-
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
     integer, parameter :: e2r_temp2              = e2r_idx_base1 + 2
     integer, parameter :: e2r_temp3              = e2r_idx_base1 + 3
@@ -169,9 +166,9 @@
     integer, parameter :: e2r_temp6              = e2r_idx_base1 + 6
     integer, parameter :: e2r_temp7              = e2r_idx_base1 + 7
     integer, parameter :: e2r_temp8              = e2r_idx_base1 + 8
-
     integer, parameter :: e2r_n_temp       = 8
     integer, parameter :: e2r_idx_max = e2r_idx_base1 + e2r_n_temp
+
     ! storage for temp array index positions
     integer, dimension(e2r_n_temp) :: e2r_Temp = nullvalueI
 
@@ -202,9 +199,11 @@
     integer, parameter :: eMr_RightSlope         = 23
     integer, parameter :: eMr_ParabolaValue      = 24
     integer, parameter :: eMr_idx_base1          = 24
+
     ! column indexes for real branch data on a multi-branch junction
     ! note that these indexes must be consecutive by type
     ! always the upstream u1,u2,u3 then the downstream d1, d2, d3
+
     integer, parameter :: eMr_Eta_u1        = eMr_idx_base1 + 1    ! Q in the u1 branch
     integer, parameter :: eMr_Eta_u2        = eMr_idx_base1 + 2
     integer, parameter :: eMr_Eta_u3        = eMr_idx_base1 + 3
@@ -277,14 +276,17 @@
     integer, parameter :: eMr_Zbottom_d2    = eMr_idx_base18 + 2
     integer, parameter :: eMr_Zbottom_d3    = eMr_idx_base18 + 3
     integer, parameter :: eMr_idx_base19    = eMr_idx_base18 + dnstream_face_per_elemM
+
     integer, parameter :: eMr_BreadthScale_u1    = eMr_idx_base19 + 1
     integer, parameter :: eMr_BreadthScale_u2    = eMr_idx_base19 + 2
     integer, parameter :: eMr_BreadthScale_u3    = eMr_idx_base19 + 3
     integer, parameter :: eMr_idx_base20         = eMr_idx_base19 + upstream_face_per_elemM
+
     integer, parameter :: eMr_BreadthScale_d1    = eMr_idx_base20 + 1
     integer, parameter :: eMr_BreadthScale_d2    = eMr_idx_base20 + 2
     integer, parameter :: eMr_BreadthScale_d3    = eMr_idx_base20 + 3
     integer, parameter :: eMr_idx_base21         = eMr_idx_base20 + dnstream_face_per_elemM
+
     integer, parameter :: eMr_temp1              = eMr_idx_base21 + 1
     integer, parameter :: eMr_temp2              = eMr_idx_base21 + 2
     integer, parameter :: eMr_temp3              = eMr_idx_base21 + 3
@@ -294,8 +296,10 @@
     integer, parameter :: eMr_n_temp       = 6
     integer, parameter :: eMr_idx_base22   = eMr_idx_base21 + eMr_n_temp
     integer, parameter :: eMr_idx_max      = eMr_idx_base22
+
     ! storage for temp array index positions
     integer, dimension(eMr_n_temp) :: eMr_Temp = nullvalueI
+
     ! storage arrays for all the column indexes on upstream branches
     integer, dimension(upstream_face_per_elemM) :: eMr_EtaUp            = nullvalueI
     integer, dimension(upstream_face_per_elemM) :: eMr_FlowrateUp       = nullvalueI
@@ -470,9 +474,6 @@
     integer, parameter :: lr_EndContractions        = 19
     integer, parameter :: lr_temp1                  = 20
     integer, parameter :: lr_idx_max                = 20
-   
-    
-
 
 !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array
@@ -503,8 +504,8 @@
     ! column index for logical data in linkYN array
     integer, parameter :: lYN_temp1     = 1
     integer, parameter :: lYN_idx_max   = 1
-
-!% widthDepth COLUMN INDEXES
+    
+ !% widthDepth COLUMN INDEXES
     integer, parameter :: wd_widthAtLayerTop         = 1
     integer, parameter :: wd_depthAtLayerTop         = 2
     integer, parameter :: wd_areaThisLayer           = 3
@@ -519,7 +520,7 @@
     integer, parameter :: wd_area_difference         = 12
     integer, parameter :: wd_local_difference        = 13
     integer, parameter :: wd_idx_max                 = 13
-
+    
 !==========================================================================
 ! END OF MODULE array_index
 !==========================================================================

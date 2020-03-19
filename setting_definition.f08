@@ -1,3 +1,5 @@
+!
+! 2019-10 @EhsanMadadi added keys for widt-depth cases.
 !==========================================================================
  module setting_definition
 !
@@ -18,7 +20,7 @@
         logical ::  Apply = .true.
         real    ::  Coef  = 0.1
     end type adjustVshapedFlowrateType
-
+    
     !% setting%Method%AdjustWidthDepth
     type adjustWidthDepthType
         logical :: Apply               = .true.
@@ -197,7 +199,7 @@
         type(testcaseType)          :: TestCase     ! custom setup for test cases
         type(timeType)              :: Time         ! controls of time step
         type(zerovalueType)         :: ZeroValue    ! finite values to represent small or negative values
-        type(WeirType)              :: Weir         ! This contains the weir settings 
+        type(WeirType)              :: Weir         ! This contains the weir settings (only for initial implimentation purpose)
     end type settingType
 
 

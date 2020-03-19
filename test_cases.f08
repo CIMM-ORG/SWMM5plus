@@ -33,10 +33,9 @@
 !==========================================================================
 !
  subroutine test_case_initiation &
-    (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-     bcdataDn, bcdataUp, &
-     newID, newNumberPairs, newManningsN, newLength, newZBottom, newXDistance, &
-     newBreadth, newWidthDepthData, newCellType)
+    (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
+     bcdataDn, bcdataUp, newID, newNumberPairs, newManningsN, newLength, &
+     newZBottom, newXDistance, newBreadth, newWidthDepthData, newCellType)
 
  character(64) :: subroutine_name = 'test_case_initiation'
 
@@ -68,7 +67,7 @@
  integer :: first_step, last_step, display_interval, mm
 
  real :: climit, cvel, uz, lz
-
+ 
  !Waller Creek 
  integer, dimension(:), allocatable :: init_ID
  integer, dimension(:), allocatable :: init_numberPairs
@@ -110,8 +109,7 @@
  real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
  real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
  real, pointer :: area_difference(:,:), local_difference(:,:)
-
-
+ 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -193,7 +191,6 @@
         !print *, flowrate, depth_dnstream
         !stop
         
-
     !% Write a new case statement for each unique test case
     case ('waller_creek')
     
@@ -295,7 +292,6 @@
                  lowerZ, upperZ, ManningsN)
         endif
         
-
     case ('y_channel_002')
 
         N_link = 3
@@ -365,10 +361,9 @@
                 lz = lowerZ(1)
             end if
             call froude_driven_setup &
-                 (uz, area(mm), flowrate(mm), velocity(mm),                               &
-                  Froude(mm), channel_breadth(mm), channel_topwidth(mm), &
-                  ManningsN(mm), channel_length(mm), &
-                  lz, init_depth(mm), channel_geometry(mm), &
+                 (uz, area(mm), flowrate(mm), velocity(mm), Froude(mm),         &
+                  channel_breadth(mm), channel_topwidth(mm), ManningsN(mm),     &
+                  channel_length(mm), lz, init_depth(mm), channel_geometry(mm), &
                   parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
             select case (mm)
                 case (1)
@@ -383,7 +378,7 @@
         end do
 
         call this_setting_for_time_and_steps &
-            (CFL, velocity, depth_upstream, subdivide_length, first_step, last_step, &
+            (CFL, velocity, init_depth, subdivide_length, first_step, last_step, &
              display_interval, 2)
 
         call case_y_channel_initialize &
@@ -716,18 +711,18 @@ subroutine froude_driven_setup &
  upperZ = lowerZ + slope * total_length
 
 
-print *,'-----------------'
-print *, area, 'area'
-print *, hDepth, 'hDepth'
-print *, perimeter, 'perimeter'
-print *, rh, 'rh'
-print *, velocity, 'velocity'
-print *, flowrate, 'flowrate'
-print *, slope, 'slope'
-print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
-print *, total_length, 'total_length'
-print *, slope*total_length, 'slope*total_length'
-print *,'-----------------'
+! print *,'-----------------'
+! print *, area, 'area'
+! print *, hDepth, 'hDepth'
+! print *, perimeter, 'perimeter'
+! print *, rh, 'rh'
+! print *, velocity, 'velocity'
+! print *, flowrate, 'flowrate'
+! print *, slope, 'slope'
+! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+! print *, total_length, 'total_length'
+! print *, slope*total_length, 'slope*total_length'
+! print *,'-----------------'
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine froude_driven_setup
@@ -762,21 +757,19 @@ print *,'-----------------'
  velocity    = 0.0
  flowrate    = 0.0
  slope       = zeroR
- upperZ      = lowerZ
+ upperZ      = lowerZ 
 
- 
-
-print *,'-----------------'
-print *, area, 'area'
-print *, perimeter, 'perimeter'
-print *, rh, 'rh'
-print *, velocity, 'velocity'
-print *, flowrate, 'flowrate'
-print *, slope, 'slope'
-print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
-print *, total_length, 'total_length'
-print *, slope*total_length, 'slope*total_length'
-print *,'-----------------'
+! print *,'-----------------'
+! print *, area, 'area'
+! print *, perimeter, 'perimeter'
+! print *, rh, 'rh'
+! print *, velocity, 'velocity'
+! print *, flowrate, 'flowrate'
+! print *, slope, 'slope'
+! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+! print *, total_length, 'total_length'
+! print *, slope*total_length, 'slope*total_length'
+! print *,'-----------------'
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine weir_setup

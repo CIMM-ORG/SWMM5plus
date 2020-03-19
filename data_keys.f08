@@ -50,7 +50,6 @@
     integer, parameter :: eTriangular  = 4  ! ID for triangular channel, weir
     integer, parameter :: eWidthDepth  = 5  ! ID for general geometry by data pairs
     integer, parameter :: eCircular    = 6  ! ID for circular pipe, orifice
-    
 
     ! data types for elemI(:,ei_roughness_type)
     integer, parameter :: eManningsN    = 1   ! ID for mannings n for roughness_type

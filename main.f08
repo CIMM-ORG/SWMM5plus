@@ -95,8 +95,9 @@
  setting%TestCase%UseTestCase = .true.
  ! setting%TestCase%TestName = 'simple_channel_001'
  ! setting%TestCase%TestName = 'y_channel_002'
- setting%TestCase%TestName = 'simple_weir_003'
- ! setting%TestCase%TestName = 'waller_creek'
+ ! setting%TestCase%TestName = 'simple_weir_003'
+ setting%TestCase%TestName = 'waller_creek'
+
 
 !%  hard-code for debug output
  setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
@@ -192,6 +193,7 @@ faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
      bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile,         &
      wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance,     &
      wdBreadth, wdWidthDepthData, wdCellType)
+
 !% uncomment this if you want a final debug output
 ! call debug_output &
 !    (debugfile, &

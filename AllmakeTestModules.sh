@@ -6,13 +6,13 @@ DIRThreaded=OutputThreaded
 mkdir "$DIRDebug"
 mkdir "$DIRThreaded"
 
-echo Compiling the SWMMengine ...
+echo Compiling the testModules ...
 
 # Compiler/Linker settings
 FC=gfortran-9
 OPTFLAGS=-g
 FFLAGS=-02
-PROGRAM=SWMM
+PROGRAM=testModules
 PRG_OBJ=$PROGRAM.o
 
 echo Choosing $FC as a compiler ...
@@ -33,16 +33,14 @@ SOURCESF="  type_definitions.f08\
         read_width_depth.f08\
         case_waller_creek.f08\
         case_simple_channel.f08\
-        case_simple_weir.f08\
         case_y_channel.f08\
         checking.f08\
         debug.f08\
         diagnostic.f08\
         junction.f08\
-        face_values.f08\
-        weir.f08\
         element_dynamics.f08\
         element_geometry.f08\
+        face_values.f08\
         explicit_euler.f08\
         friction_model.f08\
         initial_condition.f08\
@@ -53,7 +51,7 @@ SOURCESF="  type_definitions.f08\
         test_cases.f08\
         runge_kutta.f08\
         time_loop.f08\
-        main.f08\
+        testModules.f08
         stub.f08\
     "
 

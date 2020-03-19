@@ -63,7 +63,6 @@
  real,    intent(in out)    :: Breadth(:)
  real,    intent(in out)    :: widthDepthData(:,:,:)
  type(string), intent(in out)   :: cellType(:)
-    
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -122,7 +121,7 @@
              faceYN,  bcdataDn, bcdataUp, steptime, ii, ID, numberPairs,         &
              ManningsN, Length, zBottom, xDistance,  Breadth, widthDepthData,    &
              cellType)
-                      
+
         if (ii==1) then
             !% store the net face fluxes that are used for volume advance.
             call diagnostic_element_volume_conservation_fluxes &

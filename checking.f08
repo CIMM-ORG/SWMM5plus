@@ -73,10 +73,15 @@
  character(64) :: subroutine_name = 'checking_smallvolume_consistency'
  
  real,  intent(in)  :: elem2R(:,:), elemMR(:,:) 
+ integer :: ii
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
  if (.not. setting%SmallVolume%UseSmallVolumes) return
+ 
+!  do ii= 1 , size(elem2R(:,e2r_SmallVolume),1)
+!     print*, "ii=", ii, "elem2R(ii,e2r_SmallVolume)", elem2R(ii,e2r_SmallVolume)
+!  enddo
  
  if (any(elem2R(:,e2r_SmallVolume) <= setting%ZeroValue%Volume) .or. &
      any(elemMR(:,eMr_SmallVolume) <= setting%ZeroValue%Volume)        ) then

@@ -60,6 +60,7 @@
  real,    intent(inout)    :: xDistance(:)
  real,    intent(inout)    :: Breadth(:)
  real,    intent(inout)    :: widthDepthData(:,:,:)
+
  type(string), intent(in out)   :: cellType(:)
  
  integer :: idx
@@ -114,8 +115,10 @@
  !% set the element-specific smallvolume value
  !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
  if (setting%SmallVolume%UseSmallVolumes) then
-    elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length) 
-    elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length)
+    elem2R(:,e2r_SmallVolume) = 0.01
+    elemMR(:,eMr_SmallVolume) = 0.01
+!     elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length) 
+!     elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length)
     where (elem2I(:,e2i_geometry) == eTriangular)
             elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_Topwidth) * elem2R(:,e2r_Length)
     endwhere     
@@ -219,7 +222,7 @@
                     !%  depth decreases exponentially going upstream
                     where ( (elem2I(:,e2i_link_Pos) == mm) .and. &
                         (elem2I(:,e2i_link_ID) == Lindx)        )
-                         elem2R(:,e2r_HydDepth) = (ddn-dup) * exp(-real(mm-1)) + dup
+                         elem2R(:,e2r_Depth) = (ddn-dup) * exp(-real(mm-1)) + dup
                     endwhere
                 elseif (ddn - dup < zeroR) then
                     !%  depth increases exponentially going upstream
@@ -250,11 +253,9 @@
             elem2R(:,e2r_RightSlope)     = linkR(ii,lr_RightSlope)
             elem2R(:,e2r_ParabolaValue)  = linkR(ii,lr_ParabolaValue)
         endwhere
-        
-        ! print*, elem2R(2,e2r_Eta), 'e2r_Eta', elem2R(2, e2r_HydDepth), 'e2r_HydDepth'
- if (linkI(ii,li_geometry) == lRectangular ) then
+
+        if (linkI(ii,li_geometry) == lRectangular ) then
             !% handle rectangular elements
-            
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eRectangular
                 elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
@@ -325,6 +326,7 @@
                     + onehalfR &
                     * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                     * elem2R(:,e2r_Depth)) * elem2R(:,e2r_Depth)
+
                 ! Bottom width + (lslope + rslope) * hydraulicDepth
                 elem2R(:,e2r_Topwidth)  = elem2R(:,e2r_BreadthScale)            &
                     + elem2R(:,e2r_Depth)                                   &
@@ -350,7 +352,7 @@
             ! Input: Left Slope, Right Slope, InitialDepth
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eTriangular
-                
+
                 elem2R(:,e2r_HydDepth) = onehalfR * elem2R(:,e2r_Depth)
                 
                 elem2R(:,e2r_BreadthScale) = zeroR
@@ -359,6 +361,7 @@
                 elem2R(:,e2r_Area) = onehalfR &
                     * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                     * elem2R(:,e2r_Depth) * elem2R(:,e2r_Depth)
+
                 ! (lslope + rslope) * hydraulicDepth
                 elem2R(:,e2r_Topwidth) = elem2R(:,e2r_Depth)               &
                     * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
@@ -379,10 +382,11 @@
             !% handle width-depth elements
             
             where (elem2I(:,e2i_link_ID) == Lindx)
-                elem2I(:,e2i_geometry)       = eWidthDepth
-                elem2R(:,e2r_HydDepth)       = elem2R(:,e2r_Depth)
+
+                elem2I(:,e2i_geometry)  = eWidthDepth
+                elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
                 elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
-                elem2R(:,e2r_Topwidth)       = linkR(ii,lr_TopWidth)              
+                elem2R(:,e2r_Topwidth)  = linkR(ii,lr_TopWidth)
                 elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Area)      = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
