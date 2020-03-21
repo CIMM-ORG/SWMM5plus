@@ -17,11 +17,11 @@
 
     implicit none
 
-    private
-
     public :: weir_step
     public :: weir_freesurface_elevation
     public :: weir_provisional_geometry
+
+    private
 
     integer :: debuglevel = 0
 
@@ -83,7 +83,7 @@
  velocityMnew => elemMR(:,eMr_Velocity_new)
 
 !%  pointers for weir settings
- wflow              => elem2R(:,e2r_Flowrate)
+ wFlow              => elem2R(:,e2r_Flowrate)
  wEta               => elem2R(:,e2r_eta)  
  wZbottom           => elem2R(:,e2r_Zbottom)
  wHeight            => elem2R(:,e2r_FullDepth)
@@ -150,7 +150,7 @@
  EffectiveCrestLength   = nullvalueR
  wCrest                 = nullvalueR
  wCrown                 = nullvalueR
- dir                    = nullvalueI
+ dir                    = nullvalueR
 
  nullify(EffectiveHead, EffectiveCrestLength, wCrest, wCrown, dir)
  next_e2r_temparray = next_e2r_temparray - 5
@@ -263,10 +263,11 @@ subroutine weir_effective_length &
 ! Calculate Effective Length (This part is straight up from SWMM source code)
  where ( (elem2I(:,e2i_elem_type) == eWeir ) )
     wLength  = min(twoR*thiscoef*sqrt(grav*wHeight), 200.0)
+endwhere
 
 ! effective crest length is used in rectangular and trapezoidal weir flow calculation
- elsewhere ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
-             (elem2I(:,e2i_geometry)  == eRectangular) )
+ where ( (elem2I(:,e2i_elem_type) == eWeir ) .and. &
+         (elem2I(:,e2i_geometry)  == eRectangular) )
     
     EffectiveCrestLength = max(twoR * wSideSlope * wHeight - 0.1 * &
             wEndContractions * EffectiveHead, 0.0)

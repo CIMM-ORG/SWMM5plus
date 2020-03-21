@@ -166,7 +166,8 @@
     integer, parameter :: e2r_temp6              = e2r_idx_base1 + 6
     integer, parameter :: e2r_temp7              = e2r_idx_base1 + 7
     integer, parameter :: e2r_temp8              = e2r_idx_base1 + 8
-    integer, parameter :: e2r_n_temp       = 8
+    integer, parameter :: e2r_temp9              = e2r_idx_base1 + 9
+    integer, parameter :: e2r_n_temp       = 9
     integer, parameter :: e2r_idx_max = e2r_idx_base1 + e2r_n_temp
 
     ! storage for temp array index positions
