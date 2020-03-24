@@ -166,7 +166,7 @@
 
     !%  setting%ZeroValue
     type zerovalueType
-        logical :: UseZeroValues = .false.
+        logical :: UseZeroValues = .true.
         real    :: Area         = 1.0e-7  ! m^2
         real    :: Depth        = 1.0e-4  ! m
         real    :: Flowrate     = 0.0     ! m^3/s

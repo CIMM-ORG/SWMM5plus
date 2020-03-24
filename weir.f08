@@ -58,7 +58,7 @@
  real,  pointer     ::  wZbottom(:), wCrest(:), wCrown(:), wEndContractions(:)
  real,  pointer     ::  wCoeffTriangular(:), wCoeffRectangular(:)
  real,  pointer     ::  wHeight(:), wSideSlope(:), wInletoffset(:)      
- real,  pointer     ::  EffectiveHead(:), EffectiveCrestLength(:) 
+ real,  pointer     ::  EffectiveHead(:), EffectiveCrestLength(:), wCoeffOrif(:) 
  real,  pointer     ::  fEdn(:), fEup(:), dir(:)
 
  integer, pointer   ::  iup(:), idn(:)
@@ -109,6 +109,9 @@
  wCrown       => elem2R(:,e2r_Temp(next_e2r_temparray))
  next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
+ wCoeffOrif  => elem2R(:,e2r_Temp(next_e2r_temparray)) 
+ next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
  dir           => elem2R(:,e2r_Temp(next_e2r_temparray))
  next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
@@ -121,39 +124,52 @@
             wCrown =  wCrest + wHeight
  endwhere 
 
-
+!% set all weir element geometry values ~ zero values
  call weir_provisional_geometry &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN) 
-    
+ 
+!% get the eta in weir element from faces   
  call weir_freesurface_elevation &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      fEdn, fEup, iup, idn, dir,wEta)
 
- call weir_effective_head &
-    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     wCrest, wCrown, wEta, fEup, fEdn, iup, idn, dir, EffectiveHead)
- 
+!% calculate weir length and effective crest length
  call weir_effective_length &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, & 
      wHeight, wSideSlope, wEndContractions, EffectiveCrestLength, &
      EffectiveHead, thiscoef)
 
+! calculate the  equivalent orifice discharge coefficient while surcharged
+ call weir_surcharge_coefficient &
+    (volume2old, velocity2old, volumeMold, velocityMold, volume2new,   & 
+     velocity2new, volumeMnew, velocityMnew, wFlow, elem2R, elemMR,    &
+     faceR, elem2I, elemMI, elem2YN, elemMYN, wSideSlope,              &
+     wCoeffTriangular, wCoeffRectangular, dir, wHeight,                &
+     EffectiveCrestLength, wCoeffOrif, thiscoef)
+
+!% calculate effective head on weir element
+ call weir_effective_head &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+     wCrest, wCrown, wEta, fEup, fEdn, iup, idn, dir, EffectiveHead)
+
+!% calculate weir flow
  call weir_flow &
     (volume2old, velocity2old, volumeMold, velocityMold, volume2new, &
      velocity2new, volumeMnew, velocityMnew, wFlow, elem2R, elemMR,  &
-     faceR, elem2I, elemMI, elem2YN, elemMYN, wHeight, wSideSlope,   &
-     wCoeffTriangular, wCoeffRectangular, wEndContractions, dir,     &
-     EffectiveHead, EffectiveCrestLength, thiscoef)
+     faceR, elem2I, elemMI, elem2YN, elemMYN, wSideSlope,            &
+     wCoeffTriangular, wCoeffRectangular, dir, EffectiveHead,        &
+     EffectiveCrestLength, thiscoef)
 
  ! release temporary arrays
  EffectiveHead          = nullvalueR
  EffectiveCrestLength   = nullvalueR
+ wCoeffOrif             = nullvalueR
  wCrest                 = nullvalueR
  wCrown                 = nullvalueR
  dir                    = nullvalueR
 
- nullify(EffectiveHead, EffectiveCrestLength, wCrest, wCrown, dir)
- next_e2r_temparray = next_e2r_temparray - 5
+ nullify(EffectiveHead, EffectiveCrestLength, wCoeffOrif, wCrest, wCrown, dir)
+ next_e2r_temparray = next_e2r_temparray - 6
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
@@ -191,49 +207,6 @@ subroutine weir_freesurface_elevation &
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
  end subroutine weir_freesurface_elevation
-!
-!========================================================================== 
-!==========================================================================
-!
-subroutine weir_effective_head &
-    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     wCrest, wCrown, wEta, fEup, fEdn, iup, idn, dir, EffectiveHead)
-!
- character(64) :: subroutine_name = 'weir_effective_head'
-
-
- real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
- real,      target, intent(in)      :: faceR(:,:)
- integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
- logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
-
- real,  pointer   ::  wCrest(:), wCrown(:), EffectiveHead(:)
- real,  pointer   ::  fEup(:), fEdn(:), wEta(:), dir(:)
-
- integer, pointer ::  iup(:), idn(:)
-
- integer :: mm
-!--------------------------------------------------------------------------
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-
-!% effective head calculation
- where      ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .GT. wCrest) )
-    
-            EffectiveHead = min((wEta-wCrest), dir*(fEdn(iup) - fEup(idn)))
-
- elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .LE. wCrest) )
-            EffectiveHead = zeroR
-            
- elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .GT. wCrown) )
-            EffectiveHead = wCrown - wCrest
- endwhere
-
-!Need a fix for surcharge
-
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-
- end subroutine weir_effective_head
 !
 !========================================================================== 
 !==========================================================================
@@ -286,12 +259,101 @@ endwhere
 !==========================================================================
 !==========================================================================
 !
+subroutine weir_surcharge_coefficient &
+    (volume2old, velocity2old, volumeMold, velocityMold, volume2new,   & 
+     velocity2new, volumeMnew, velocityMnew, wFlow, elem2R, elemMR,    &
+     faceR, elem2I, elemMI, elem2YN, elemMYN, wSideSlope,              &
+     wCoeffTriangular, wCoeffRectangular, dir, wHeight,                &
+     EffectiveCrestLength, wCoeffOrif, thiscoef)
+!
+!% when weir is surcharged, the flow becomes orifice flow. this subroutine
+!% calculates the equivalent orifice discharge coefficient, wCoeffOrif
+!
+ character(64) :: subroutine_name = 'weir_surcharge_coefficient'
+ 
+ real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+ real,      target, intent(in)      :: faceR(:,:)
+ integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+ logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+ real,              intent(in)      :: thiscoef
+
+ real,  pointer ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
+ real,  pointer ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
+ real,  pointer ::  wFlow(:), wSideSlope(:) 
+ real,  pointer ::  wCoeffTriangular(:), wCoeffRectangular(:), wCoeffOrif(:)
+ real,  pointer ::  wHeight(:), EffectiveCrestLength(:), dir(:) 
+
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+ call weir_flow &
+    (volume2old, velocity2old, volumeMold, velocityMold, volume2new, &
+     velocity2new, volumeMnew, velocityMnew, wFlow, elem2R, elemMR,  &
+     faceR, elem2I, elemMI, elem2YN, elemMYN, wSideSlope,            &
+     wCoeffTriangular, wCoeffRectangular, dir, wHeight,              &
+     EffectiveCrestLength, thiscoef)
+
+        
+ where ( (elem2I(:,e2i_elem_type) == eWeir ) )  
+        wCoeffOrif = wFlow / sqrt(wHeight / twoR)
+ endwhere 
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+
+ end subroutine weir_surcharge_coefficient
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine weir_effective_head &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+     wCrest, wCrown, wEta, fEup, fEdn, iup, idn, dir, EffectiveHead)
+!
+ character(64) :: subroutine_name = 'weir_effective_head'
+
+
+ real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+ real,      target, intent(in)      :: faceR(:,:)
+ integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+ logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+
+ real,  pointer   ::  wCrest(:), wCrown(:), EffectiveHead(:)
+ real,  pointer   ::  fEup(:), fEdn(:), wEta(:), dir(:)
+
+ integer, pointer ::  iup(:), idn(:)
+
+ integer :: mm
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+!% effective head calculation
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .GT. wCrest) )
+    
+            EffectiveHead = min((wEta-wCrest), dir*(fEdn(iup) - fEup(idn)))
+
+ elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .LE. wCrest) )
+            EffectiveHead = zeroR
+            
+ elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .GT. wCrown) )
+            EffectiveHead = wCrown - wCrest
+ endwhere
+
+!Need a fix for surcharge
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+
+ end subroutine weir_effective_head
+!
+!========================================================================== 
+!==========================================================================
+!
  subroutine weir_flow &
     (volume2old, velocity2old, volumeMold, velocityMold, volume2new, &
      velocity2new, volumeMnew, velocityMnew, wFlow, elem2R, elemMR,  &
-     faceR, elem2I, elemMI, elem2YN, elemMYN, wHeight, wSideSlope,   &
-     wCoeffTriangular, wCoeffRectangular, wEndContractions, dir,     &
-     EffectiveHead, EffectiveCrestLength, thiscoef)
+     faceR, elem2I, elemMI, elem2YN, elemMYN, wSideSlope,            &
+     wCoeffTriangular, wCoeffRectangular, dir, EffectiveHead,        &
+     EffectiveCrestLength, thiscoef)
 !
  character(64) :: subroutine_name = 'weir_flow'
 
@@ -305,7 +367,7 @@ endwhere
  
  real,  pointer ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
  real,  pointer ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
- real,  pointer ::  wFlow(:), wSideSlope(:), wHeight(:), wEndContractions(:)
+ real,  pointer ::  wFlow(:), wSideSlope(:) 
  real,  pointer ::  wCoeffTriangular(:), wCoeffRectangular(:)
  real,  pointer ::  EffectiveHead(:), EffectiveCrestLength(:), dir(:)   
 

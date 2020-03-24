@@ -88,6 +88,9 @@
 !%   check that sufficient BC locations have been identified 
  call network_check_BC (nodeI, N_node)
 
+!%   check the geometry of weir and orifice elements
+ call network_check_geometry (linkI, N_link)
+
  !%   get the slope of each link given the node Z values
  call network_get_link_slope (linkR, nodeR, linkI, nodeI)
 
@@ -495,6 +498,76 @@
 !==========================================================================
 !==========================================================================
 !
+!
+ subroutine network_check_geometry &
+    (linkI, N_link)
+!    
+! check that BC nodes have correct upstream and downstream links
+!
+    character(64) :: subroutine_name = 'network_check_geometry'
+    integer, intent(in)     :: N_link
+    integer, intent(in)     :: linkI(:,:)
+    
+    integer :: ii
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    
+ do ii = 1,N_link
+    if ( linkI(ii,li_link_type) == eWeir ) then
+        if ( (linkI(ii,li_weir_type) == eSideFlowWeir) .and. &
+             (linkI(ii,li_geometry) /= eRectangular) ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular sideflow weir shape ',subroutine_name
+            stop
+        endif
+        
+        if ( (linkI(ii,li_weir_type) == eTransverseWeir) .and. &
+             (linkI(ii,li_geometry) /= eRectangular)   ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular transverse weir shape ',subroutine_name
+            stop
+        endif
+        
+        if ( (linkI(ii,li_weir_type) == eRoadWayWeir ) .and. &
+             (linkI(ii,li_geometry) /= eRectangular) ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular road way weir shape ',subroutine_name
+            stop
+        endif
+
+        if ( (linkI(ii,li_weir_type) == eVnotchWeir  ) .and. &
+             (linkI(ii,li_geometry) /= eTriangular ) ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular v-notch weir shape ',subroutine_name
+            stop
+        endif
+
+        if ( (linkI(ii,li_weir_type) == eTrapezoidalWeir  ) .and. &
+             (linkI(ii,li_geometry) /= eTrapezoidal )     ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular trapezoidal weir shape ',subroutine_name
+            stop
+        endif
+       
+    endif
+    
+    if ( linkI(ii,li_link_type) == eOrifice ) then
+        if ( (linkI(ii,li_geometry) /= eCircular)     .and. &
+             (linkI(ii,li_geometry) /= eRectangular) ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular orifice shape ',subroutine_name
+            stop
+        endif
+       
+    endif
+ enddo
+    
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name   
+ end subroutine network_check_geometry
+!
+!==========================================================================
+!==========================================================================
+!
  subroutine network_get_link_slope &
     (linkR, nodeR, linkI, nodeI)
 !
@@ -824,6 +897,8 @@
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
             faceR(thisFace,fr_Topwidth)        = linkR(thisLink,lr_Topwidth)
+        case (lCircular)
+            print*, 'in development'
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1300,6 +1375,9 @@
     !%  store the elem info
     elem2I(thisElem2,e2i_idx)               = thisElem2
     elem2I(thisElem2,e2i_elem_type)         = linkI(thisLink,li_link_type)
+    elem2I(thisElem2,e2i_weir_elem_type)    = linkI(thisLink,li_weir_type)
+    elem2I(thisElem2,e2i_orif_elem_type)    = linkI(thisLink,li_orif_type)
+    elem2I(thisElem2,e2i_pump_elem_type)    = linkI(thisLink,li_pump_type)
     elem2I(thisElem2,e2i_geometry)          = linkI(thislink,li_geometry)
     elem2I(thisElem2,e2i_roughness_type)    = linkI(thisLink,li_roughness_type) 
     elem2I(thisElem2,e2i_link_ID)           = thisLink

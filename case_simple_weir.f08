@@ -197,6 +197,9 @@
  linkI(2,li_link_type) = lWeir
  linkI(3,li_link_type) = lChannel
 
+! assign weir type
+ linkI(2,li_weir_type) = lVnotchWeir
+
 ! assign link geometry
  linkI(1,li_geometry) = lRectangular
  linkI(2,li_geometry) = lTriangular

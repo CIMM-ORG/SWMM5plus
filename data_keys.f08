@@ -28,11 +28,28 @@
     integer, parameter :: eCulvert          = 5   ! ID for a culvert in an open channel
     integer, parameter :: ePump             = 6   ! ID for a pump
     integer, parameter :: eValve            = 7   ! ID for a valve
-    integer, parameter :: eOrifice          = 8  ! ID for an orifice
-    integer, parameter :: eWeir             = 9  ! ID for a weir
+    integer, parameter :: eOrifice          = 8   ! ID for an orifice
+    integer, parameter :: eWeir             = 9   ! ID for a weir
     integer, parameter :: eStorage          = 10  ! ID for a storage
     integer, parameter :: eBCup             = 11  ! ID for face upstream BC
     integer, parameter :: eBCdn             = 12  ! ID for face downstream BC
+
+    ! date types for elemI(:,ei_weir_elem_type)
+    integer, parameter :: eTransverseWeir       = 1  ! ID for rectangular transverse weir
+    integer, parameter :: eSideFlowWeir         = 2  ! ID for rectangular sideflow weir
+    integer, parameter :: eRoadWayWeir          = 3  ! ID for rectangular roadway weir
+    integer, parameter :: eVnotchWeir           = 4  ! ID for triangular v-notch weir
+    integer, parameter :: eTrapezoidalWeir      = 5  ! ID for trapezoidal weir
+
+    ! date types for elemI(:,ei_orif_elem_type)
+    integer, parameter :: eBottomOrifice       = 1  ! ID for bottom orifice
+    integer, parameter :: eSideOrifice         = 2  ! ID for side orifice
+
+    ! date types for elemI(:,ei_pump_elem_type)
+    integer, parameter :: eType1Pump         = 1  ! ID for Type 1 pump
+    integer, parameter :: eType2Pump         = 2  ! ID for Type 2 pump
+    integer, parameter :: eType3Pump         = 3  ! ID for Type 3 pump
+    integer, parameter :: eType4Pump         = 4  ! ID for Type 4 pump
     
     ! data types for faceI(:,fi_type)
     integer, parameter :: fChannel          = eChannel  ! ID for open channel on both sides
@@ -77,6 +94,23 @@
     integer, parameter :: lpipe         = ePipe        ! ID for link that is pipe
     integer, parameter :: lweir         = eWeir        ! ID for link that is weir
     integer, parameter :: lOrifice      = eOrifice     ! ID for link that is orifice
+
+    ! date types for linkI(:,li_weir_type)
+    integer, parameter :: lTransverseWeir  = eTransverseWeir  ! ID for rectangular transverse weir
+    integer, parameter :: lSideFlowWeir    = eSideFlowWeir    ! ID for rectangular sideflow weir
+    integer, parameter :: lRoadWayWeir     = eRoadWayWeir     ! ID for rectangular roadway weir
+    integer, parameter :: lVnotchWeir      = eVnotchWeir      ! ID for triangular v-notch weir
+    integer, parameter :: lTrapezoidalWeir = eTrapezoidalWeir ! ID for trapezoidal weir
+
+    ! date types for linkI(:,li_orif_type)
+    integer, parameter :: lBottomOrifice = eBottomOrifice     ! ID for bottom orifice
+    integer, parameter :: lSideOrifice   = eSideOrifice       ! ID for side orifice
+
+    ! date types for elemI(:,li_pump_type)
+    integer, parameter :: lType1Pump    = eType1Pump  ! ID for Type 1 pump
+    integer, parameter :: lType2Pump    = eType2Pump  ! ID for Type 2 pump
+    integer, parameter :: lType3Pump    = eType3Pump  ! ID for Type 3 pump
+    integer, parameter :: lType4Pump    = eType4Pump  ! ID for Type 4 pump
     
    ! data types for linkI(:,li_geometry) (must corresponde with ei_geometry)
     integer, parameter :: lRectangular   = eRectangular     ! ID for link that rectangular channel, weir
@@ -96,10 +130,10 @@
     integer, parameter :: lDeferred     = -1
 
     ! data types for bcdata
-    integer, parameter :: bc_updn_downstream = 1
-    integer, parameter :: bc_updn_upstream   = 0   
-    integer, parameter :: bc_category_elevation = 0    
-    integer, parameter :: bc_category_inflowrate = 1    
+    integer, parameter :: bc_updn_downstream        = 1
+    integer, parameter :: bc_updn_upstream          = 0   
+    integer, parameter :: bc_category_elevation     = 0    
+    integer, parameter :: bc_category_inflowrate    = 1    
 
 !==========================================================================
 ! END OF MODULE data_keys

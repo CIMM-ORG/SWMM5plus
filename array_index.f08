@@ -43,13 +43,16 @@
     integer, parameter :: e2i_idx             = 1    ! unique index of each element
     integer, parameter :: e2i_meta_elem_type  = 2    ! unique indes of each meta element type
     integer, parameter :: e2i_elem_type       = 3    ! type of element
-    integer, parameter :: e2i_geometry        = 4    ! type of geometry
-    integer, parameter :: e2i_roughness_type  = 5    ! roughness type
-    integer, parameter :: e2i_link_ID         = 6    ! ID of link in the link/node space
-    integer, parameter :: e2i_link_Pos        = 7    ! position (elem from downstream = 1 to upstream = n) in link
-    integer, parameter :: e2i_Mface_u         = 8    ! map to upstream face
-    integer, parameter :: e2i_Mface_d         = 9    ! map to downstream face
-    integer, parameter :: e2i_idx_base1       = 10    ! number of base data stored
+    integer, parameter :: e2i_weir_elem_type  = 4    ! type of weir element
+    integer, parameter :: e2i_orif_elem_type  = 5    ! type of orifice element
+    integer, parameter :: e2i_pump_elem_type  = 6    ! type of pump element
+    integer, parameter :: e2i_geometry        = 7    ! type of geometry
+    integer, parameter :: e2i_roughness_type  = 8    ! roughness type
+    integer, parameter :: e2i_link_ID         = 9    ! ID of link in the link/node space
+    integer, parameter :: e2i_link_Pos        = 10   ! position (elem from downstream = 1 to upstream = n) in link
+    integer, parameter :: e2i_Mface_u         = 11   ! map to upstream face
+    integer, parameter :: e2i_Mface_d         = 12   ! map to downstream face
+    integer, parameter :: e2i_idx_base1       = 13   ! number of base data stored
 
     integer, parameter :: e2i_temp1           = e2i_idx_base1 + 1
     integer, parameter :: e2i_temp2           = e2i_idx_base1 + 2
@@ -105,16 +108,17 @@
     integer, parameter :: fi_etype_u            = 7    ! type of element in nominal upstream direction
     integer, parameter :: fi_etype_d            = 8    ! type of element in nominal downstream direction
     integer, parameter :: fi_branch_u           = 9    ! branch # if upstream is a junction
-    integer, parameter :: fi_branch_d           = 10    ! branch # if downstream is a junciton
-    integer, parameter :: fi_jump_type          = 11    ! type of hydraulic jump
-    integer, parameter :: fi_node_ID            = 12    ! ID of node if face corresponds to a node in link/node space
-    integer, parameter :: fi_link_ID            = 13    ! ID of link if face is interior of link
+    integer, parameter :: fi_branch_d           = 10   ! branch # if downstream is a junciton
+    integer, parameter :: fi_jump_type          = 11   ! type of hydraulic jump
+    integer, parameter :: fi_node_ID            = 12   ! ID of node if face corresponds to a node in link/node space
+    integer, parameter :: fi_link_ID            = 13   ! ID of link if face is interior of link
     integer, parameter :: fi_link_Pos           = 14   ! position of interior face by elem count (up to down) in link
     integer, parameter :: fi_BC_ID              = 15   ! ID of the BC if a BC face
     integer, parameter :: fi_temp1              = 16
     integer, parameter :: fi_temp2              = 17
-    integer, parameter :: fi_idx_max            = 17    !
-    integer, parameter :: fi_n_temp       = 2
+    integer, parameter :: fi_idx_max            = 17    
+
+    integer, parameter :: fi_n_temp             = 2
 
     ! storage for temp array index positions
     integer, dimension(fi_n_temp) :: fi_Temp = nullvalueI
@@ -412,19 +416,22 @@
     ! column index for integer data in linkI array
     integer, parameter :: li_idx              = 1
     integer, parameter :: li_link_type        = 2
-    integer, parameter :: li_geometry         = 3
-    integer, parameter :: li_roughness_type   = 4
-    integer, parameter :: li_N_element        = 5 ! Number of elements in this link
-    integer, parameter :: li_Mnode_u          = 6 ! map to upstream node connecting to link
-    integer, parameter :: li_Mnode_d          = 7 ! map to downstram node connecting to link
-    integer, parameter :: li_Melem_u          = 8 ! element ID of upstream element of link
-    integer, parameter :: li_Melem_d          = 9 ! element ID of downstream element of link
-    integer, parameter :: li_Mface_u          =10 ! face ID of upstream face of link
-    integer, parameter :: li_Mface_d          =11 ! face ID of downstream face of link
-    integer, parameter :: li_assigned         =12 ! given 1 when link is assigned
-    integer, parameter :: li_InitialDepthType =13 ! 1=uniform, 2= lineary change, 3=exponential decay
-    integer, parameter :: li_temp1            =14
-    integer, parameter :: li_idx_max          =14
+    integer, parameter :: li_weir_type        = 3  ! type of weir link
+    integer, parameter :: li_orif_type        = 4  ! type of orifice link
+    integer, parameter :: li_pump_type        = 5  ! type of pump link
+    integer, parameter :: li_geometry         = 6
+    integer, parameter :: li_roughness_type   = 7
+    integer, parameter :: li_N_element        = 8  ! Number of elements in this link
+    integer, parameter :: li_Mnode_u          = 9  ! map to upstream node connecting to link
+    integer, parameter :: li_Mnode_d          = 10 ! map to downstram node connecting to link
+    integer, parameter :: li_Melem_u          = 11 ! element ID of upstream element of link
+    integer, parameter :: li_Melem_d          = 12 ! element ID of downstream element of link
+    integer, parameter :: li_Mface_u          = 13 ! face ID of upstream face of link
+    integer, parameter :: li_Mface_d          = 14 ! face ID of downstream face of link
+    integer, parameter :: li_assigned         = 15 ! given 1 when link is assigned
+    integer, parameter :: li_InitialDepthType = 16 ! 1=uniform, 2= lineary change, 3=exponential decay
+    integer, parameter :: li_temp1            = 17
+    integer, parameter :: li_idx_max          = 17
 
 !%  nodeI COLUMN INDEXES FOR INTEGER DATA OF NODES IN LINK/NODE SYSTEM -------
     ! column index for integer data in nodeI array

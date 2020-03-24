@@ -133,9 +133,13 @@
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      fEdn, fEup, iup, idn, dir,oEta)
 
- ! call weir_effective_head &
- !    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
- !     wCrest, wCrown, wEta, fEup, fEdn, iup, idn, dir, EffectiveHead)
+ call orifice_effective_length &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, oHeight,  &
+     thiscoef)
+
+ call orifice_discharge_coefficients &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+     oHeight, oDischargeCoeff, cOrif, cWeir)
  
  ! call weir_effective_length &
  !    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, & 
@@ -236,7 +240,7 @@ subroutine orifice_freesurface_elevation &
 !
 subroutine orifice_discharge_coefficients &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-     fEdn, fEup, iup, idn, dir, wEta)
+     oHeight, oDischargeCoeff, cOrif, cWeir)
 !
  character(64) :: subroutine_name = 'orifice_discharge_coefficients'
 
@@ -248,7 +252,7 @@ subroutine orifice_discharge_coefficients &
 
  real,  pointer   ::  fEdn(:), fEup(:), oEta(:), dir(:)
 
- integer, pointer ::  iup(:), idn(:)
+ integer, pointer ::  cOrif(:), cWeir(:), oHeight(:), oDischargeCoeff(:)
 
  integer :: mm
 !--------------------------------------------------------------------------
@@ -256,13 +260,60 @@ subroutine orifice_discharge_coefficients &
 
 
  where      ( (elem2I(:,e2i_elem_type) == eOrifice) )
-            oEta = max(fEdn(iup), fEup(idn))
-            dir  = sign(oneR, ( fEdn(iup) - fEup(idn)))
+
+            ! in SWMM the discharge coeff for weir flow in orifice is calculated as:
+            ! Cw = Cd*(Yfull/2)^1/2*f
+            ! f = A(Yfull)*(2g)^1/2
+            ! here Yfull is the orifice opening. This opening can be changed ...
+            ! if there's a control in place (i.e. % valve opening)
+            ! in that case Yfull will change and it will also change the way ...
+            ! area is calculated below. SWMM uses a lookup table to calculate ...
+            ! area using A/Afull as a function of Y/Yfull. we need to do the ...
+            ! same as well. as current version does not have any controls, 
+            ! i am using Afull = pi/4*Yfull^2.
+
+            ! similar logic for discharge coeff for orifice flow
+
+            cWeir = oDischargeCoeff * sqrt(oHeight/2) * (pi * oHeight &
+                * oHeight/4.0) * sqrt(2 * grav)
+
+            cOrif = oDischargeCoeff * (pi * oHeight * oHeight/4.0) &
+                * sqrt(2 * grav)
  endwhere
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
  end subroutine orifice_discharge_coefficients
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine orifice_effective_length &
+    (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, oHeight,  &
+     thiscoef)
+!
+ character(64) :: subroutine_name = 'orifice_effective_length'
+
+
+ real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+ real,      target, intent(in)      :: faceR(:,:)
+ integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+ logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+ real,  pointer                     :: oHeight(:)
+ real,              intent(in)      :: thiscoef
+
+ integer :: mm
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+! Calculate Effective Length (This part is straight up from SWMM source code)
+ where ( (elem2I(:,e2i_elem_type) == eOrifice ) )
+    wLength  = min(twoR*thiscoef*sqrt(grav*oHeight), 200.0)
+ endwhere
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+
+ end subroutine orifice_effective_length
 !
 !==========================================================================
 !==========================================================================
