@@ -24,17 +24,12 @@ use postProcessing
     real,    dimension(:)  , allocatable       :: xx,yy
 
 
-<<<<<<< HEAD
-open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_depth__20200315_1253.txt', status='OLD')
-=======
-open(newunit=iunit, file='/home/saz/git_repo/SWMMengine/OutputThreaded/out_depth__20191111_1407.txt', status='OLD')
->>>>>>> master
+open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_depth__20200326_1835.txt', status='OLD')
 
 specific_link = 1
 call get_specific_link_data &
     (iunit, n_cells, n_links, n_linkItems, max_linkItems, n_timeSteps, &
     time_steps, data_idx, length_idx, link_lengths, link_data, &
-<<<<<<< HEAD
     specific_link, specific_linkData, link_long_data, link_long_lengths, &
     z_bottoms)
 
@@ -50,16 +45,6 @@ if (plot_type .eq. 1)  then
 ! print*, yy
     open (unit = 7, action = 'write', file = 'data.txt', status = 'replace')
     do i = 1,n_timeSteps
-=======
-    specific_link, specific_linkData)
-
-specific_linkElement = 10
-xx = time_steps
-yy = specific_linkData(:,specific_linkElement)
-
-open (unit = 7, action = 'write', file = 'data.txt', status = 'replace')
-do i = 1,n_timeSteps
->>>>>>> master
     write(7,*)xx(i), yy(i)
     end do
     call system('gnuplot -p plot.plt')
@@ -95,11 +80,5 @@ elseif (plot_type .eq. 3)  then !this is hard coded for simple weir case
 else
     print*,'Invalid print type'
 endif
-
-<<<<<<< HEAD
-=======
-call system('gnuplot -p plot.plt')
-close(7, status = 'delete')
->>>>>>> master
 
 end program Plot

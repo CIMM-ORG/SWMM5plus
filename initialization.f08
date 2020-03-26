@@ -48,16 +48,17 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
  
  ! initialize the indexes for temp arrays
- e2r_Temp(1) = e2r_temp1
- e2r_Temp(2) = e2r_temp2
- e2r_Temp(3) = e2r_temp3
- e2r_Temp(4) = e2r_temp4
- e2r_Temp(5) = e2r_temp5
- e2r_Temp(6) = e2r_temp6
- e2r_Temp(7) = e2r_temp7
- e2r_Temp(8) = e2r_temp8
- e2r_Temp(9) = e2r_temp9
- if (e2r_n_temp > 9) then
+ e2r_Temp(1)  = e2r_temp1
+ e2r_Temp(2)  = e2r_temp2
+ e2r_Temp(3)  = e2r_temp3
+ e2r_Temp(4)  = e2r_temp4
+ e2r_Temp(5)  = e2r_temp5
+ e2r_Temp(6)  = e2r_temp6
+ e2r_Temp(7)  = e2r_temp7
+ e2r_Temp(8)  = e2r_temp8
+ e2r_Temp(9)  = e2r_temp9
+ e2r_Temp(10) = e2r_temp10
+ if (e2r_n_temp > 10) then
     print *, 'error need to update initialization of e2r_Temp in ',subroutine_name
     stop
  endif

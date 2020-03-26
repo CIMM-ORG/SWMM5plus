@@ -853,6 +853,9 @@
     !% Assign the ghost element - use values for upstream link
     elem2I(thisElem2,e2i_idx)               = thisElem2
     elem2I(thisElem2,e2i_elem_type)         = eBCdn
+    elem2I(thisElem2,e2i_weir_elem_type)    = linkI(thisLink,li_weir_type)
+    elem2I(thisElem2,e2i_orif_elem_type)    = linkI(thisLink,li_orif_type)
+    elem2I(thisElem2,e2i_pump_elem_type)    = linkI(thisLink,li_pump_type)
     elem2I(thisElem2,e2i_geometry)          = linkI(thisLink,li_geometry)
     elem2I(thisElem2,e2i_roughness_type)    = linkI(thisLink,li_roughness_type)
     elem2I(thisElem2,e2i_link_ID)           = thisLink
@@ -1017,6 +1020,9 @@
     ! store the ghost element
     elem2I(thisElem2,e2i_idx)            = thisElem2
     elem2I(thisElem2,e2i_elem_type)      = eBCup
+    elem2I(thisElem2,e2i_weir_elem_type) = linkI(thisLink,li_weir_type)
+    elem2I(thisElem2,e2i_orif_elem_type) = linkI(thisLink,li_orif_type)
+    elem2I(thisElem2,e2i_pump_elem_type) = linkI(thisLink,li_pump_type)
     elem2I(thisElem2,e2i_geometry)       = elem2I(lastElem2,e2i_geometry)
     elem2I(thisElem2,e2i_roughness_type) = elem2I(lastElem2,e2i_roughness_type)
     elem2I(thisElem2,e2i_link_ID)        = dLink

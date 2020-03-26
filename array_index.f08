@@ -148,7 +148,7 @@
     integer, parameter :: e2r_X                  = 21
     integer, parameter :: e2r_Length             = 22
     integer, parameter :: e2r_Zbottom            = 23
-    integer, parameter :: e2r_BreadthScale       = 24
+    integer, parameter :: e2r_BreadthScale       = 24   ! bttom breadth for trapezoidal and rectangular geometry
     integer, parameter :: e2r_Roughness          = 25
     integer, parameter :: e2r_VolumeConservation = 26
     integer, parameter :: e2r_FroudeNumber       = 27
@@ -171,7 +171,8 @@
     integer, parameter :: e2r_temp7              = e2r_idx_base1 + 7
     integer, parameter :: e2r_temp8              = e2r_idx_base1 + 8
     integer, parameter :: e2r_temp9              = e2r_idx_base1 + 9
-    integer, parameter :: e2r_n_temp       = 9
+    integer, parameter :: e2r_temp10             = e2r_idx_base1 + 10
+    integer, parameter :: e2r_n_temp       = 10
     integer, parameter :: e2r_idx_max = e2r_idx_base1 + e2r_n_temp
 
     ! storage for temp array index positions
@@ -372,11 +373,12 @@
     ! column index for logical data in elem2YN array
     integer, parameter :: e2YN_IsSmallVolume    = 1
     integer, parameter :: e2YN_IsAdhocFlowrate  = 2
-    integer, parameter :: e2YN_temp1            = 10
-    integer, parameter :: e2YN_temp2            = 11
-    integer, parameter :: e2YN_temp3            = 12
-    integer, parameter :: e2YN_temp4            = 13
-    integer, parameter :: e2YN_idx_max          = 14
+    integer, parameter :: e2YN_CanSurcharge     = 3    ! weir surcharge
+    integer, parameter :: e2YN_temp1            = 4
+    integer, parameter :: e2YN_temp2            = 5
+    integer, parameter :: e2YN_temp3            = 6
+    integer, parameter :: e2YN_temp4            = 7
+    integer, parameter :: e2YN_idx_max          = 7
 
     integer, parameter :: e2YN_n_temp = 4
     ! storage for temp array index positions
