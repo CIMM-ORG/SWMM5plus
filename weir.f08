@@ -146,17 +146,17 @@
 
  dir = zeroI
 
-!% set all weir element geometry values ~ zero values
- call weir_provisional_geometry &
-    (elem2R, elemMR, faceR, elem2I, elemMI)
+! !% set all weir element geometry values ~ zero values
+!  call weir_provisional_geometry &
+!     (elem2R, elemMR, faceR, elem2I, elemMI)
 
-! set necessary weir setting and find eta on weir element    
+!% set necessary weir setting and find eta on weir element    
 call weir_initialize &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,  &
      wInletoffset, wZbottom, wCrown, wCrest, wHeight, wLength, &
      wEta, fEdn, fEup, iup, idn, dir, thiscoef)
  
-! calculate the  equivalent orifice discharge coefficient while surcharged
+!% calculate the  equivalent orifice discharge coefficient while surcharged
  call weir_surcharge_coefficient &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2new, &
      velocity2new, volumeMnew, velocityMnew, wFlow, wSideSlope,           &
@@ -251,7 +251,6 @@ subroutine weir_initialize &
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
 !% find weir crest, crown, length , eta flow direction
-!% and necessary facemask for submergence and surcharge correction
  where ( (elem2I(:,e2i_elem_type) == eWeir) )
 
         wCrest   =  wInletoffset + wZbottom
@@ -348,16 +347,17 @@ subroutine weir_effective_head &
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
 !% effective head calculation
- where      ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .GT. wCrest) )
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .LE. wCrest) )
+
+            EffectiveHead = zeroR
+ elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .GT. wCrest) .and.&
+              (wEta .LT. wCrown) )
 
             EffectiveHead = wEta - wCrest
             ! downstream submergence 
             maskarray1 = ((dir .GT. zeroI) .and. (fEup(idn) .GT. wCrest))
             ! upstream submergance
             maskarray2 = ((dir .LT. zeroI) .and. (fEdn(iup) .GT. wCrest))
- elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .LE. wCrest) )
-
-            EffectiveHead = zeroR
             
  elsewhere  ( (elem2I(:,e2i_elem_type) == eWeir) .and. (wEta .GT. wCrown) )
             ! non surcharge weir flow
