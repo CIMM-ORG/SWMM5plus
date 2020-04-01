@@ -1,63 +1,292 @@
+#include "swmm5.h"
 #include "headers.h"
 #include "interface.h"
 #include <math.h>
 #include <string.h>
 
-int add_link(
-	int li_idx,
-	int ni_idx,
-	int direction,
-	float * ni_N_link_u,
-	float * ni_Mlink_u1,
-	float * ni_Mlink_u2,
-	float * ni_Mlink_u3,
-	float * ni_N_link_d,
-	float * ni_Mlink_d1,
-	float * ni_Mlink_d2,
-	float * ni_Mlink_d3)
+API DLLEXPORT API_initialize (char* f1, char* f2, char* f3, int units)
 {
+    int error;
+    API api;
 
-	if (direction == UPSTREAM) {
-		ni_N_link_u[ni_idx] ++;
-		if (ni_N_link_u[ni_idx] <= 3) {
-			if (ni_N_link_u[ni_idx] == 1) {
-				ni_Mlink_u1[ni_idx] = li_idx;
-			}
-			else if (ni_N_link_u[ni_idx] == 2) {
-				ni_Mlink_u2[ni_idx] = li_idx;
-			}
-			else if (ni_N_link_u[ni_idx] == 3) {
-				ni_Mlink_u3[ni_idx] = li_idx;
-			}
-			else {
-				return -500;
-			}
-			return 0;
-		}
-		else {
-			return -400;
-		}
+    swmm_open(f1, f2, f3);
+    swmm_start(0);
+
+     // Choosing unit system
+    api.units.unit_system = units;
+	if (units == US)
+    {
+		api.units.flow_units = 1;
+		api.units.manning_units = 1;
+		api.units.length_units = 1;
 	}
-	else {
-		ni_N_link_d[ni_idx] ++;
-		if (ni_N_link_d[ni_idx] <= 3) {
-			if (ni_N_link_d[ni_idx] == 1) {
-				ni_Mlink_d1[ni_idx] = li_idx;
-			}
-			else if (ni_N_link_d[ni_idx] == 2) {
-				ni_Mlink_d2[ni_idx] = li_idx;
-			}
-			else if (ni_N_link_d[ni_idx] == 3) {
-				ni_Mlink_d3[ni_idx] = li_idx;
-			}
-			else {
+	else
+    {
+		api.units.flow_units = M3perFT3;
+		api.units.manning_units = pow(1 / MperFT, 1 / 3);
+		api.units.length_units = MperFT;
+	}
+    api.num_links = Nobjects[LINK];
+    api.num_nodes = Nobjects[NODE];
+    api.node_attributes = (float **) malloc(sizeof(float*)*num_node_attributes);
+    for (int i = 0; i < num_node_attributes; i++)
+        api.node_attributes[i] = (float *) calloc(api.num_nodes, sizeof(float));
+
+    // Initialization
+    for (int i = 0; i < api.num_nodes; i++)
+    {
+        api.node_attributes[ni_N_link_u][i] = 0;
+        api.node_attributes[ni_N_link_d][i] = 0;
+        api.node_attributes[ni_Mlink_u1][i] = nullvalueI;
+        api.node_attributes[ni_Mlink_u2][i] = nullvalueI;
+        api.node_attributes[ni_Mlink_u3][i] = nullvalueI;
+        api.node_attributes[ni_Mlink_d1][i] = nullvalueI;
+        api.node_attributes[ni_Mlink_d2][i] = nullvalueI;
+        api.node_attributes[ni_Mlink_d3][i] = nullvalueI;
+    }
+
+    // Count Links
+    for (int i = 0; i < api.num_nodes; i++)
+    {
+        add_link(&api, i, Link[i].node1, DOWNSTREAM);
+        add_link(&api, i, Link[i].node2, UPSTREAM);
+    }
+
+    return api;
+}
+
+int DLLEXPORT API_finalize (API* api)
+{
+    int error;
+    error = swmm_end();
+    if (error != 0) return error;
+    error = swmm_close();
+    if (error != 0) return error;
+
+    for (int i = 0; i < num_node_attributes; i++)
+        free(api->node_attributes[i]);
+    free(api->node_attributes);
+
+    return 0;
+}
+
+float DLLEXPORT API_get_node_attribute (API* api, int k, int attr)
+{
+    int i = k - FIDX;
+    if (attr == ni_node_type)
+    {
+        float total_n_links = api->node_attributes[ni_N_link_u][i] + api->node_attributes[ni_N_link_d][i];
+        return get_node_type(k, total_n_links);
+    }
+    else if (attr == ni_N_link_u)
+        return api->node_attributes[ni_N_link_u][i];
+    else if (attr == ni_N_link_d)
+        return api->node_attributes[ni_N_link_d][i];
+    else if (attr == ni_Mlink_u1)
+        return api->node_attributes[ni_Mlink_u1][i] + FIDX;
+    else if (attr == ni_Mlink_u2)
+        return api->node_attributes[ni_Mlink_u2][i] + FIDX;
+    else if (attr == ni_Mlink_u3)
+        return api->node_attributes[ni_Mlink_u3][i] + FIDX;
+    else if (attr == ni_Mlink_d1)
+        return api->node_attributes[ni_Mlink_d1][i] + FIDX;
+    else if (attr == ni_Mlink_d2)
+        return api->node_attributes[ni_Mlink_d2][i] + FIDX;
+    else if (attr == ni_Mlink_d3)
+        return api->node_attributes[ni_Mlink_d3][i] + FIDX;
+    else if (attr == nr_Zbottom)
+        return Node[i].invertElev * api->units.length_units;
+    return 0;
+}
+
+float DLLEXPORT API_get_link_attribute (API* api, int k, int attr)
+{
+    int i = k - FIDX;
+
+    if (attr == li_link_type || attr == li_geometry || attr == lr_BreadthScale)
+    {
+        return get_link_xsect_attrs(k, attr, api->units.length_units);
+    }
+    else if (attr == li_roughness_type)
+    {
+        // Manning coefficient by default at the moment
+        // We have to decide how to incorporate other types of coeffs
+        return E_MANNINGS_N;
+    }
+    else if (attr == li_Mnode_u)
+    {
+		return Link[i].node1;
+    }
+    else if (attr == li_Mnode_d)
+    {
+		return Link[i].node2;
+    }
+    else if (attr == li_InitialDepthType)
+    {
+        // DEFAULT
+        // Same issue as rou li_roughness_type
+        return 1;
+    }
+    else if (attr == lr_Length)
+    {
+        if (Link[i].type == CONDUIT)
+        {
+            return Conduit[Link[i].subIndex].length * api->units.length_units;
+        }
+        return 0;
+    }
+    else if (attr == lr_Slope)
+    {
+        float h, sign_h, X;
+
+        if (Link[i].type == CONDUIT)
+        {
+            h = (Node[Link[i].node1].invertElev - Node[Link[i].node2].invertElev) * api->units.length_units;
+            sign_h = SSIGN(h);
+            h = fabs(h);
+            X = sqrt(pow(Conduit[Link[i].subIndex].length * api->units.length_units, 2) - pow(h, 2));
+            return h / X;
+        }
+
+        return 0;
+    }
+    else if (attr == lr_Roughness)
+    {
+        if (Link[i].type == CONDUIT)
+        {
+            return Conduit[Link[i].subIndex].roughness * api->units.manning_units;
+        }
+
+        return 0;
+    }
+    else if (attr == lr_InitialFlowrate)
+    {
+        return Link[i].q0 * api->units.flow_units;
+    }
+    else if (attr == lr_InitialUpstreamDepth)
+    {
+        return Node[Link[i].node1].initDepth * api->units.length_units;
+    }
+    else if (attr == lr_InitialDnstreamDepth)
+    {
+        return Node[Link[i].node2].initDepth * api->units.length_units;
+    }
+    else if (attr == lr_InitialDepth)
+    {
+		return fabs(API_get_link_attribute(api, k, lr_InitialDnstreamDepth) - API_get_link_attribute(api, k, lr_InitialUpstreamDepth)) / 2;
+    }
+    else
+    {
+        return nullvalueI;
+    }
+}
+
+void DLLEXPORT API_print_info (API* api)
+{
+	FILE *f_nodes;
+	FILE *f_links;
+    int error;
+
+    #ifdef WINDOWS
+	    fopen_s(&f_nodes, "nodes_info.csv", "w");
+	    fopen_s(&f_links, "links_info.csv", "w");
+    #else
+	    f_nodes = fopen("nodes_info.csv", "w");
+	    f_links = fopen("links_info.csv", "w");
+    #endif
+
+	fprintf(f_nodes,
+		"n_left,node_id,ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3,nr_Zbottom\n");
+	for (int i = 0; i < api->num_nodes; i++)
+    {
+		fprintf(f_nodes, "%d,%s,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
+			api->num_nodes - i,
+			Node[i].ID,
+			i + 1,
+			api->node_attributes[ni_node_type][i],
+			api->node_attributes[ni_N_link_u][i],
+			api->node_attributes[ni_N_link_d][i],
+			api->node_attributes[ni_Mlink_u1][i],
+			api->node_attributes[ni_Mlink_u2][i],
+			api->node_attributes[ni_Mlink_u3][i],
+			api->node_attributes[ni_Mlink_d1][i],
+			api->node_attributes[ni_Mlink_d2][i],
+			api->node_attributes[ni_Mlink_d3][i],
+			api->node_attributes[nr_Zbottom][i]);
+	}
+    fclose(f_nodes);
+
+	fprintf(f_links,
+		"l_left,link_id,li_idx,li_link_type,li_roughness_type,li_geometry,li_Mnode_u,li_Mnode_d,li_InitialDepthType,lr_Length,lr_BreadthScale,lr_Slope,lr_Roughness,lr_InitialFlowrate,lr_InitialDepth,lr_InitialUpstreamDepth,lr_InitialDnstreamDepth\n");
+	for (int i = 0; i < api->num_links; i++) {
+		fprintf(f_links, "%d,%s,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.8f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
+			api->num_links - i,
+			Link[i].ID,
+			i + 1,
+			API_get_link_attribute(api, i+FIDX, li_link_type),
+			API_get_link_attribute(api, i+FIDX, li_roughness_type),
+			API_get_link_attribute(api, i+FIDX, li_geometry),
+			API_get_link_attribute(api, i+FIDX, li_Mnode_u),
+			API_get_link_attribute(api, i+FIDX, li_Mnode_d),
+			API_get_link_attribute(api, i+FIDX, li_InitialDepthType),
+			API_get_link_attribute(api, i+FIDX, lr_Length),
+			API_get_link_attribute(api, i+FIDX, lr_BreadthScale),
+			API_get_link_attribute(api, i+FIDX, lr_Slope),
+			API_get_link_attribute(api, i+FIDX, lr_Roughness),
+			API_get_link_attribute(api, i+FIDX, lr_InitialFlowrate),
+			API_get_link_attribute(api, i+FIDX, lr_InitialDepth),
+			API_get_link_attribute(api, i+FIDX, lr_InitialUpstreamDepth),
+			API_get_link_attribute(api, i+FIDX, lr_InitialDnstreamDepth));
+	} fclose(f_links);
+}
+
+int DLLEXPORT API_num_links (API* api)
+{
+    return api->num_links;
+}
+
+int DLLEXPORT API_num_nodes (API* api)
+{
+    return api->num_nodes;
+}
+
+int add_link (API* api, int li_idx, int ni_idx, int direction)
+{
+	if (direction == UPSTREAM)
+    {
+		api->node_attributes[ni_N_link_u][ni_idx] ++;
+		if (api->node_attributes[ni_N_link_u][ni_idx] <= 3)
+        {
+			if (api->node_attributes[ni_N_link_u][ni_idx] == 1)
+				api->node_attributes[ni_Mlink_u1][ni_idx] = li_idx;
+			else if (api->node_attributes[ni_N_link_u][ni_idx] == 2)
+				api->node_attributes[ni_Mlink_u2][ni_idx] = li_idx;
+			else if (api->node_attributes[ni_N_link_u][ni_idx] == 3)
+				api->node_attributes[ni_Mlink_u3][ni_idx] = li_idx;
+			else
 				return -500;
-			}
 			return 0;
 		}
-		else {
+		else
 			return -400;
+	}
+	else
+    {
+		api->node_attributes[ni_N_link_d][ni_idx] ++;
+		if (api->node_attributes[ni_N_link_d][ni_idx] <= 3)
+        {
+			if (api->node_attributes[ni_N_link_d][ni_idx] == 1)
+				api->node_attributes[ni_Mlink_d1][ni_idx] = li_idx;
+			else if (api->node_attributes[ni_N_link_d][ni_idx] == 2)
+				api->node_attributes[ni_Mlink_d2][ni_idx] = li_idx;
+			else if (api->node_attributes[ni_N_link_d][ni_idx] == 3)
+				api->node_attributes[ni_Mlink_d3][ni_idx] = li_idx;
+			else
+				return -500;
+			return 0;
 		}
+		else
+			return -400;
 	}
 	return -296;
 }
@@ -98,15 +327,15 @@ float get_link_xsect_attrs (int k, int attr, float length_units)
 
 	if (Link[i].xsect.type == RECT_CLOSED)
 	{
-        if (attr == e_li_geometry)
+        if (attr == li_geometry)
         {
 		    return L_RECTANGULAR;
         }
-        else if (attr == e_li_link_type)
+        else if (attr == li_link_type)
         {
 		    return L_PIPE;
         }
-        else if (attr == e_lr_BreadthScale)
+        else if (attr == lr_BreadthScale)
         {
             if (Link[i].type == CONDUIT)
             {
@@ -121,15 +350,15 @@ float get_link_xsect_attrs (int k, int attr, float length_units)
 	}
 	else if (Link[i].xsect.type == RECT_OPEN)
 	{
-        if (attr == e_li_geometry)
+        if (attr == li_geometry)
         {
 		    return L_RECTANGULAR;
         }
-        else if (attr == e_li_link_type)
+        else if (attr == li_link_type)
         {
             return L_CHANNEL;
         }
-        else if (attr == e_lr_BreadthScale)
+        else if (attr == lr_BreadthScale)
         {
             return Link[i].xsect.wMax * length_units;
         }
@@ -140,15 +369,15 @@ float get_link_xsect_attrs (int k, int attr, float length_units)
 	}
 	else if (Link[i].xsect.type == TRAPEZOIDAL)
 	{
-		if (attr == e_li_geometry)
+		if (attr == li_geometry)
         {
 		    return L_TRAPEZOIDAL;
         }
-		else if (attr == e_li_link_type)
+		else if (attr == li_link_type)
         {
             return L_CHANNEL;
         }
-		else if (attr == e_lr_BreadthScale)
+		else if (attr == lr_BreadthScale)
         {
             return Link[i].xsect.yBot * length_units;
         }
@@ -159,15 +388,15 @@ float get_link_xsect_attrs (int k, int attr, float length_units)
 	}
 	else if (Link[i].xsect.type == PARABOLIC)
 	{
-		if (attr == e_li_geometry)
+		if (attr == li_geometry)
         {
 		    return L_PARABOLIC;
         }
-		else if (attr == e_li_link_type)
+		else if (attr == li_link_type)
         {
             return L_CHANNEL;
         }
-		else if (attr == e_lr_BreadthScale)
+		else if (attr == lr_BreadthScale)
         {
             return Link[i].xsect.wMax * length_units;
         }
@@ -177,331 +406,4 @@ float get_link_xsect_attrs (int k, int attr, float length_units)
         }
 	}
     return nullvalueI;
-}
-
-int init_node_tmp_table(
-    float * ni_N_link_u,
-    float * ni_Mlink_u1,
-    float * ni_Mlink_u2,
-    float * ni_Mlink_u3,
-    float * ni_N_link_d,
-    float * ni_Mlink_d1,
-    float * ni_Mlink_d2,
-    float * ni_Mlink_d3)
-{
-    int error;
-    // Initialization
-    for (int i = 0; i < Nobjects[NODE]; i++) {
-        ni_N_link_u[i] = 0;
-        ni_N_link_d[i] = 0;
-        ni_Mlink_u1[i] = nullvalueI;
-        ni_Mlink_u2[i] = nullvalueI;
-        ni_Mlink_u3[i] = nullvalueI;
-        ni_Mlink_d1[i] = nullvalueI;
-        ni_Mlink_d2[i] = nullvalueI;
-        ni_Mlink_d3[i] = nullvalueI;
-    }
-
-    // Count Links
-    for (int i = 0; i < Nobjects[LINK]; i++)
-    {
-        error = add_link(i, Link[i].node1, DOWNSTREAM, ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
-        if (error != 0) return error;
-
-        error = add_link(i, Link[i].node2, UPSTREAM, ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
-        if (error != 0) return error;
-    }
-    return 0;
-}
-
-// Fortran indexes start in FIDX, therefore
-// k \in [FIDX, Nobjects[.]]
-int get_node_attrs (
-    int k,
-    int length_units,
-    float * attrs,
-    float * ni_N_link_u,
-    float * ni_Mlink_u1,
-    float * ni_Mlink_u2,
-    float * ni_Mlink_u3,
-    float * ni_N_link_d,
-    float * ni_Mlink_d1,
-    float * ni_Mlink_d2,
-    float * ni_Mlink_d3)
-{
-    int i = k - FIDX;
-    float total_n_links = ni_N_link_u[i] + ni_N_link_d[i];
-    attrs[e_ni_node_type] = get_node_type(k, total_n_links);
-    attrs[e_ni_N_link_u] = ni_N_link_u[i];
-    attrs[e_ni_N_link_d] = ni_N_link_d[i];
-    attrs[e_ni_Mlink_u1] = ni_Mlink_u1[i] + FIDX;
-    attrs[e_ni_Mlink_u2] = ni_Mlink_u2[i] + FIDX;
-    attrs[e_ni_Mlink_u3] = ni_Mlink_u3[i] + FIDX;
-    attrs[e_ni_Mlink_d1] = ni_Mlink_d1[i] + FIDX;
-    attrs[e_ni_Mlink_d2] = ni_Mlink_d2[i] + FIDX;
-    attrs[e_ni_Mlink_d3] = ni_Mlink_d3[i] + FIDX;
-    attrs[e_nr_Zbottom] = Node[i].invertElev * length_units;
-    return 0;
-}
-
-float get_link_attribute (int k, int attr, int units)
-{
-    float flow_units;
-    float manning_units;
-    float length_units;
-    int i = k - FIDX;
-
-    // Choosing unit system
-	if (units == US) {
-		flow_units = 1;
-		manning_units = 1;
-		length_units = 1;
-	}
-	else {
-		flow_units = M3perFT3;
-		manning_units = pow(1 / MperFT, 1 / 3);
-		length_units = MperFT;
-	}
-
-    if (attr == e_li_link_type || attr == e_li_geometry || attr == e_lr_BreadthScale)
-    {
-        return get_link_xsect_attrs(k, attr, length_units);
-    }
-    else if (attr == e_li_roughness_type)
-    {
-        // Manning coefficient by default at the moment
-        // We have to decide how to incorporate other types of coeffs
-        return E_MANNINGS_N;
-    }
-    else if (attr == e_li_Mnode_u)
-    {
-		return Link[i].node1;
-    }
-    else if (attr == e_li_Mnode_d)
-    {
-		return Link[i].node2;
-    }
-    else if (attr == e_li_InitialDepthType)
-    {
-        // DEFAULT
-        // Same issue as rou li_roughness_type
-        return 1;
-    }
-    else if (attr == e_lr_Length)
-    {
-        if (Link[i].type == CONDUIT)
-        {
-            return Conduit[Link[i].subIndex].length * length_units;
-        }
-        return 0;
-    }
-    else if (attr == e_lr_Slope)
-    {
-        float h, sign_h, X;
-
-        if (Link[i].type == CONDUIT)
-        {
-            h = (Node[Link[i].node1].invertElev - Node[Link[i].node2].invertElev) * length_units;
-            sign_h = SSIGN(h);
-            h = fabs(h);
-            X = sqrt(pow(Conduit[Link[i].subIndex].length * length_units, 2) - pow(h, 2));
-            return h / X;
-        }
-
-        return 0;
-    }
-    else if (attr == e_lr_Roughness)
-    {
-        if (Link[i].type == CONDUIT)
-        {
-            return Conduit[Link[i].subIndex].roughness * manning_units;
-        }
-
-        return 0;
-    }
-    else if (attr == e_lr_InitialFlowrate)
-    {
-        return Link[i].q0 * flow_units;
-    }
-    else if (attr == e_lr_InitialUpstreamDepth)
-    {
-        return Node[Link[i].node1].initDepth * length_units;
-    }
-    else if (attr == e_lr_InitialDnstreamDepth)
-    {
-        return Node[Link[i].node2].initDepth * length_units;
-    }
-    else if (attr == e_lr_InitialDepth)
-    {
-		return fabs(get_link_attribute(k, e_lr_InitialDnstreamDepth, units) - get_link_attribute(k, e_lr_InitialUpstreamDepth, units)) / 2;
-    }
-    else
-    {
-        return nullvalueI;
-    }
-}
-
-int DLLEXPORT num_links ()
-{
-    return Nobjects[LINK];
-}
-
-int DLLEXPORT num_nodes ()
-{
-    return Nobjects[NODE];
-}
-
-void DLLEXPORT record_nodes_data(double * nodeMatrix, int units)
-{
-    float * ni_N_link_u = (float *) calloc(Nobjects[NODE], sizeof(float));
-    float * ni_N_link_d = (float *) calloc(Nobjects[NODE], sizeof(float));
-    float * ni_Mlink_u1 = (float *) calloc(Nobjects[NODE], sizeof(float));
-    float * ni_Mlink_u2 = (float *) calloc(Nobjects[NODE], sizeof(float));
-    float * ni_Mlink_u3 = (float *) calloc(Nobjects[NODE], sizeof(float));
-    float * ni_Mlink_d1 = (float *) calloc(Nobjects[NODE], sizeof(float));
-    float * ni_Mlink_d2 = (float *) calloc(Nobjects[NODE], sizeof(float));
-    float * ni_Mlink_d3 = (float *) calloc(Nobjects[NODE], sizeof(float));
-    float attrs[num_node_attributes];
-    float flow_units, length_units, manning_units;
-    int len = num_node_attributes * Nobjects[NODE];
-    int x, y;
-
-    // Choosing unit system
-	if (units == US) {
-		flow_units = 1;
-		manning_units = 1;
-		length_units = 1;
-	}
-	else {
-		flow_units = M3perFT3;
-		manning_units = pow(1 / MperFT, 1 / 3);
-		length_units = MperFT;
-	}
-
-    init_node_tmp_table( ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
-	for (int i = 0; i < len; i+=num_node_attributes)
-    {
-        x = i % num_node_attributes;
-        y = floor(i / num_node_attributes);
-        get_node_attrs(x+FIDX, length_units, attrs, ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
-        for (int j = 0; j < num_node_attributes; j++)
-        {
-            nodeMatrix[i+j] = attrs[j];
-        }
-    }
-    free(ni_N_link_u);
-    free(ni_Mlink_u1);
-    free(ni_Mlink_u2);
-    free(ni_Mlink_u3);
-    free(ni_N_link_d);
-    free(ni_Mlink_d1);
-    free(ni_Mlink_d2);
-    free(ni_Mlink_d3);
-}
-
-void DLLEXPORT record_links_data(double * linkMatrix, int units)
-{
-    int len = num_link_attributes * Nobjects[LINK];
-    int x, y;
-	for (int i = 0; i < len; i++)
-    {
-        y = i % num_link_attributes;
-        x = floor(i/num_link_attributes);
-        linkMatrix[i] = get_link_attribute(x+FIDX, y, units);
-    }
-}
-
-void DLLEXPORT print_info(int units)
-{
-	FILE *f_nodes;
-	FILE *f_links;
-    int NNodes = Nobjects[NODE];
-    int NLinks = Nobjects[LINK];
-    int error;
-    float * ni_N_link_u = (float *) malloc(Nobjects[NODE]*sizeof(float));
-    float * ni_N_link_d = (float *) malloc(Nobjects[NODE]*sizeof(float));
-    float * ni_Mlink_u1 = (float *) malloc(Nobjects[NODE]*sizeof(float));
-    float * ni_Mlink_u2 = (float *) malloc(Nobjects[NODE]*sizeof(float));
-    float * ni_Mlink_u3 = (float *) malloc(Nobjects[NODE]*sizeof(float));
-    float * ni_Mlink_d1 = (float *) malloc(Nobjects[NODE]*sizeof(float));
-    float * ni_Mlink_d2 = (float *) malloc(Nobjects[NODE]*sizeof(float));
-    float * ni_Mlink_d3 = (float *) malloc(Nobjects[NODE]*sizeof(float));
-    float attrs[num_node_attributes];
-    float flow_units, length_units, manning_units;
-
-    // Choosing unit system
-	if (units == US) {
-		flow_units = 1;
-		manning_units = 1;
-		length_units = 1;
-	}
-	else {
-		flow_units = M3perFT3;
-		manning_units = pow(1 / MperFT, 1 / 3);
-		length_units = MperFT;
-	}
-
-    #ifdef WINDOWS
-	    fopen_s(&f_nodes, "nodes_info.csv", "w");
-	    fopen_s(&f_links, "links_info.csv", "w");
-    #else
-	    f_nodes = fopen("nodes_info.csv", "w");
-	    f_links = fopen("links_info.csv", "w");
-    #endif
-
-    error = init_node_tmp_table( ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
-	fprintf(f_nodes,
-		"n_left,node_id,ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3,nr_Zbottom\n");
-	for (int i = 0; i < NNodes; i++)
-    {
-        get_node_attrs(i+FIDX, length_units, attrs, ni_N_link_u, ni_Mlink_u1, ni_Mlink_u2, ni_Mlink_u3, ni_N_link_d, ni_Mlink_d1, ni_Mlink_d2, ni_Mlink_d3);
-		fprintf(f_nodes, "%d,%s,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
-			NNodes - i,
-			Node[i].ID,
-			i + 1,
-			attrs[e_ni_node_type],
-			attrs[e_ni_N_link_u],
-			attrs[e_ni_N_link_d],
-			attrs[e_ni_Mlink_u1],
-			attrs[e_ni_Mlink_u2],
-			attrs[e_ni_Mlink_u3],
-			attrs[e_ni_Mlink_d1],
-			attrs[e_ni_Mlink_d2],
-			attrs[e_ni_Mlink_d3],
-			attrs[e_nr_Zbottom]);
-	}
-    fclose(f_nodes);
-
-    // free tmp arrays
-    free(ni_N_link_u);
-    free(ni_Mlink_u1);
-    free(ni_Mlink_u2);
-    free(ni_Mlink_u3);
-    free(ni_N_link_d);
-    free(ni_Mlink_d1);
-    free(ni_Mlink_d2);
-    free(ni_Mlink_d3);
-
-	fprintf(f_links,
-		"l_left,link_id,li_idx,li_link_type,li_roughness_type,li_geometry,li_Mnode_u,li_Mnode_d,li_InitialDepthType,lr_Length,lr_BreadthScale,lr_Slope,lr_Roughness,lr_InitialFlowrate,lr_InitialDepth,lr_InitialUpstreamDepth,lr_InitialDnstreamDepth\n");
-	for (int i = 0; i < NLinks; i++) {
-		fprintf(f_links, "%d,%s,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.8f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
-			NLinks - i,
-			Link[i].ID,
-			i + 1,
-			get_link_attribute(i+FIDX, e_li_link_type, units),
-			get_link_attribute(i+FIDX, e_li_roughness_type, units),
-			get_link_attribute(i+FIDX, e_li_geometry, units),
-			get_link_attribute(i+FIDX, e_li_Mnode_u, units),
-			get_link_attribute(i+FIDX, e_li_Mnode_d, units),
-			get_link_attribute(i+FIDX, e_li_InitialDepthType, units),
-			get_link_attribute(i+FIDX, e_lr_Length, units),
-			get_link_attribute(i+FIDX, e_lr_BreadthScale, units),
-			get_link_attribute(i+FIDX, e_lr_Slope, units),
-			get_link_attribute(i+FIDX, e_lr_Roughness, units),
-			get_link_attribute(i+FIDX, e_lr_InitialFlowrate, units),
-			get_link_attribute(i+FIDX, e_lr_InitialDepth, units),
-			get_link_attribute(i+FIDX, e_lr_InitialUpstreamDepth, units),
-			get_link_attribute(i+FIDX, e_lr_InitialDnstreamDepth, units));
-	} fclose(f_links);
 }

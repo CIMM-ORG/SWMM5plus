@@ -1,159 +1,162 @@
 module interface
     use iso_c_binding
     use dll_mod
+    use globals
     implicit none
+
+    private
+
+    public :: populate_tables
+    ! public :: print_tables
 
     ! interface to C DLL
     abstract interface
-        function swmm_close()
-        use, intrinsic :: iso_c_binding
-        implicit none
-        integer(c_int) :: swmm_close
-        end function swmm_close
+        function API_initialize(api, f1, f2, f3, unit_system)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr) :: api
+            character(kind = c_char), dimension(*) :: f1, f2, f3
+            integer(c_int) :: unit_system, API_initialize
+        end function API_initialize
 
-        function swmm_end()
-        use, intrinsic :: iso_c_binding
-        implicit none
-        integer(c_int) :: swmm_end
-        end function swmm_end
+        function API_finalize(api)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr) :: api
+            integer (c_int) :: API_finalize
+        end function API_finalize
 
-        function swmm_getError(errMsg, msgLen)
-        use, intrinsic :: iso_c_binding
-        character(kind = c_char), dimension(*) :: errMsg
-        integer(c_int), intent(in) :: msgLen
-        integer(c_int) :: swmm_printInfo
-        end function swmm_getError
+        function API_get_node_attribute(api, k, attr)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr) :: api
+            integer(c_int) :: k
+            integer(c_int) :: attr
+            real(c_float) :: API_get_node_attribute
+        end function API_get_node_attribute
 
-        function swmm_getMassBalErr(runoffErr, flowErr, qualErr)
-        use, intrinsic :: iso_c_binding
-        implicit none
-        real(c_float) :: runoffErr, flowErr, qualErr
-        integer(c_int) :: swmm_getMassBalErr
-        end function swmm_getMassBalErr
+        function API_get_link_attribute(api, k, attr)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr) :: api
+            integer(c_int) :: k
+            integer(c_int) :: attr
+            real(c_float) :: API_get_link_attribute
+        end function API_get_link_attribute
 
-        function swmm_getVersion()
-        use, intrinsic :: iso_c_binding
-        implicit none
-        integer(c_int) :: swmm_getVersion
-        end function swmm_getVersion
+        subroutine API_print_info(api)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr) :: api
+        end subroutine API_print_info
 
-        function swmm_getWarnings()
-        use, intrinsic :: iso_c_binding
-        implicit none
-        integer(c_int) :: swmm_getWarnings
-        end function swmm_getWarnings
+        function API_num_links(api)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr) :: api
+            integer(c_int) :: API_num_links
+        end function API_num_links
 
-        function swmm_open(f1, f2, f3)
-        use, intrinsic :: iso_c_binding
-        implicit none
-        character(kind = c_char), dimension(*) :: f1, f2, f3
-        integer(c_int) :: swmm_open
-        end function swmm_open
+        function API_num_nodes(api)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr) :: api
+            integer(c_int) :: API_num_nodes
+        end function API_num_nodes
 
-        function swmm_start(saveResults)
-        use, intrinsic :: iso_c_binding
-        implicit none
-        integer(c_int), intent(in) :: saveResults
-        integer(c_int) :: swmm_start
-        end function swmm_start
-
-        function swmm_step(elapsedTime)
-        use, intrinsic :: iso_c_binding
-        implicit none
-        real(c_double) :: elapsedTime
-        integer(c_int) :: swmm_step
-        end function swmm_step
-
-        function print_info(units)
-        use, intrinsic :: iso_c_binding
-        implicit none
-        integer(c_int), intent(in) :: units
-        integer(c_int) :: print_info
-        end function print_info
     end interface
 
     type(os_type) :: os
     type(dll_type) :: dll
+    type(c_ptr) :: api
 
-    procedure(swmm_open), pointer :: fswmm_open
-    procedure(swmm_start), pointer :: fswmm_start
-    procedure(swmm_step), pointer :: fswmm_step
-    procedure(swmm_end), pointer :: fswmm_end
-    procedure(swmm_getMassBalErr), pointer :: fswmm_getMassBalErr
-    procedure(swmm_close), pointer :: fswmm_close
-    procedure(print_info), pointer :: fprint_info
+    procedure(API_initialize), pointer :: ptr_API_initialize
+    procedure(API_finalize), pointer :: ptr_API_finalize
+    procedure(API_get_node_attribute), pointer :: ptr_API_get_node_attribute
+    procedure(API_get_link_attribute), pointer :: ptr_API_get_link_attribute
+    procedure(API_print_info), pointer :: ptr_API_print_info
+    procedure(API_num_links), pointer :: ptr_API_num_links
+    procedure(API_num_nodes), pointer :: ptr_API_num_nodes
 
     contains
-        subroutine load_swmm_data(inpfile)
-            ! The interface runs a SWMM simulation using the C-SWMM engine
-            integer :: errstat, ppos, SI, US
-            real(c_double) :: elapsedTime
-            real(c_float) :: runoffErr, flowErr, qualErr
+        subroutine populate_tables(linkI, nodeI, linkR, nodeR, unit_system)
+            integer, dimension(:,:), allocatable, target, intent(in out) :: linkI
+            integer, dimension(:,:), allocatable, target, intent(in out) :: nodeI
+            real, dimension(:,:), allocatable, target, intent(in out) :: linkR
+            real, dimension(:,:), allocatable, target, intent(in out) :: nodeR
+            integer :: unit_system, errstat, ppos, num_args
             character(len = 1024) :: errmsg
-            character(len = 255) :: cwd
-            character(len = 1) :: path_separator
-            character(len = 256) :: inpfile, rptfile, outfile
-            ! Define SWMM constants
-            US = 0
-            SI = 1
+            character(len=1) :: path_separator
+            character(len=256) :: inp_file ! absolute path to .inp
+            character(len=256) :: rpt_file ! absolute path to .rpt
+            character(len=256) :: out_file ! absolute path to .out
+            character(len = 256) :: cwd
+
+            call init_os_type(1, os)
+            call init_dll(dll)
+
             ! Get current working directory and path separator
             call getcwd(cwd)
             path_separator = cwd(:1)
-            call init_os_type(1,os)
-            call init_dll(dll)
 
-            ppos = scan(trim(inpfile), '.', back = .true.)
+            !% Retrieve .inp file path from args
+            num_args = command_argument_count()
+            if (num_args < 1) then
+                print *, "error >>> path to .inp file was not defined"
+                stop
+            end if
+
+            call get_command_argument(1, inp_file)
+
+            ppos = scan(trim(inp_file), '.', back = .true.)
             if (ppos > 0) then
-                rptfile = inpfile(1:ppos) // "rpt"
-                outfile = inpfile(1:ppos) // "out"
+                rpt_file = inp_file(1:ppos) // "rpt"
+                out_file = inp_file(1:ppos) // "out"
             end if
 
             dll%filename = trim(cwd) // path_separator // "libswmm5.so"
 
-            ! (1) SWMM file is openned (swmm_open)
-            !   It is necessary to provide paths for the following files:
-            !   - input (.inp)
-            !   - report (.rpt)
-            !   - output (.out)
-            dll%procname = "swmm_open"
-            call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'load_swmm_open')
-            call c_f_procpointer(dll%procaddr, fswmm_open)
-            errstat = fswmm_open(trim(inpfile) // c_null_char, trim(rptfile) // c_null_char, trim(outfile) // c_null_char)
-            call print_error(errstat, dll%procname)
+            dll%procname = "API_initialize"
+            call load_dll(os, dll, errstat, errmsg)
+            call print_error(errstat, 'error >>> loading API_initialize')
+            call c_f_procpointer(dll%procaddr, ptr_API_initialize)
+            errstat = ptr_API_initialize &
+                ( api, &
+                  trim(inp_file) // c_null_char, &
+                  trim(rpt_file) // c_null_char, &
+                  trim(out_file) // c_null_char, &
+                  unit_system)
+            if (errstat /= 0) then
+                call print_error(errstat, dll%procname)
+                stop
+            end if
 
-            ! (2) SWMM simulation starts (swmm_start)
-            dll%procname = "swmm_start"
-            call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'load_swmm_start')
-            call c_f_procpointer(dll%procaddr, fswmm_start)
-            errstat = fswmm_start(1)
-            call print_error(errstat, dll%procname)
+            ! dll%procname = "API_num_links"
+            ! call load_dll(os, dll, errstat, errmsg)
+            ! call print_error(errstat, 'error >>> loading API_num_links')
+            ! call c_f_procpointer(dll%procaddr, ptr_API_num_links)
+            ! N_link = ptr_API_num_links(api)
 
-            ! (4) Retrieve information (print_info)
-            dll%procname = "print_info"
-            call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'load_print_info')
-            call c_f_procpointer(dll%procaddr, fprint_info)
-            errstat = fprint_info(SI)
-            call print_error(errstat, dll%procname)
+            ! dll%procname = "API_num_nodes"
+            ! call load_dll(os, dll, errstat, errmsg )
+            ! call print_error(errstat, 'error >>> loading API_num_nodes')
+            ! call c_f_procpointer(dll%procaddr, ptr_API_num_nodes)
+            ! N_node = ptr_API_num_nodes(api)
 
-            ! (5) End SWMM simulation (swmm_end)
-            dll%procname = "swmm_end"
-            call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'load_swmm_end')
-            call c_f_procpointer(dll%procaddr, fswmm_end)
-            errstat = fswmm_end()
-            call print_error(errstat, dll%procname)
+            print *, "NUM nodes", N_node, "NUM links", N_link
+            print *, inp_file
+            print *, rpt_file
+            print *, out_file
 
-            ! (7) Close SWMM engine (swmm_close)
-            dll%procname = "swmm_close"
+            dll%procname = "API_finalize"
             call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'load_swmm_close')
-            call c_f_procpointer(dll%procaddr, fswmm_close)
-            errstat = fswmm_close()
-            call print_error(errstat, dll%procname)
-            call free_dll (os, dll, errstat, errmsg)
+            call print_error(errstat, 'error >>> loading API_finalize')
+            call c_f_procpointer(dll%procaddr, ptr_API_finalize)
+            errstat = ptr_API_finalize(api)
+            if (errstat /= 0) then
+                call print_error(errstat, dll%procname)
+                stop
+            end if
 
-        end subroutine load_swmm_data
+        end subroutine populate_tables
 end module interface

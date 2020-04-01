@@ -16,6 +16,6 @@ echo Compiling SWMM C code
 make
 cd ..
 
-echo Generating DLL
+# echo Generating DLL
 cp src/libswmm5.so ../../
 rm -r src

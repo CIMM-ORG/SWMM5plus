@@ -22,10 +22,10 @@ echo Find all source files, create a list of corresponding object files ...
 
 # Find all source files, create a list of corresponding object files
 SOURCESF="  dll_mod.f08\
-        interface.f08\
         type_definitions.f08\
         setting_definition.f08\
         globals.f08\
+        interface.f08\
         array_index.f08\
         data_keys.f08\
         utility.f08\

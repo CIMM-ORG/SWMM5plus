@@ -32,41 +32,59 @@
 #define N_BC_UP 4
 
 // Fortran starting index
+// Fortran indexes start in FIDX, therefore
+// k \in [FIDX, Nobjects[.]]
 #define FIDX 1
 
 // Row in Nodes (Fortran)
 enum node_attributes {
-  e_ni_node_type,
-  e_ni_N_link_u,
-  e_ni_N_link_d,
-  e_ni_Mlink_u1,
-  e_ni_Mlink_u2,
-  e_ni_Mlink_u3,
-  e_ni_Mlink_d1,
-  e_ni_Mlink_d2,
-  e_ni_Mlink_d3,
-  e_nr_Zbottom,
+  ni_node_type,
+  ni_N_link_u,
+  ni_N_link_d,
+  ni_Mlink_u1,
+  ni_Mlink_u2,
+  ni_Mlink_u3,
+  ni_Mlink_d1,
+  ni_Mlink_d2,
+  ni_Mlink_d3,
+  nr_Zbottom,
   num_node_attributes // this is always the last
 };
 
 // Row in Nodes (Fortran)
 enum link_attributes {
-  e_li_link_type,
-  e_li_roughness_type,
-  e_li_geometry,
-  e_li_Mnode_u,
-  e_li_Mnode_d,
-  e_li_InitialDepthType,
-  e_lr_Length,
-  e_lr_BreadthScale,
-  e_lr_Slope,
-  e_lr_Roughness,
-  e_lr_InitialFlowrate,
-  e_lr_InitialDepth,
-  e_lr_InitialUpstreamDepth,
-  e_lr_InitialDnstreamDepth,
+  li_link_type,
+  li_roughness_type,
+  li_geometry,
+  li_Mnode_u,
+  li_Mnode_d,
+  li_InitialDepthType,
+  lr_Length,
+  lr_BreadthScale,
+  lr_Slope,
+  lr_Roughness,
+  lr_InitialFlowrate,
+  lr_InitialDepth,
+  lr_InitialUpstreamDepth,
+  lr_InitialDnstreamDepth,
   num_link_attributes // this is always the last
 };
+
+typedef struct
+{
+  int unit_system;
+  int length_units;
+  int flow_units;
+  int manning_units;
+} API_units;
+
+typedef struct
+{
+  float ** node_attributes;
+  int num_nodes;
+  int num_links;
+  API_units units;
+} API;
 
 #ifndef INTERFACE_H_
 #define INTERFACE_H_
@@ -95,18 +113,16 @@ enum link_attributes {
 extern "C" {
 #endif
 
-int add_link (int li_idx, int ni_idx, int direction, float * ni_N_link_u, float * ni_Mlink_u1, float * ni_Mlink_u2, float * ni_Mlink_u3, float * ni_N_link_d, float * ni_Mlink_d1, float * ni_Mlink_d2, float * ni_Mlink_d3);
+int add_link (API* api, int li_idx, int ni_idx, int direction);
 float get_node_type (int k, float total_n_links);
 float get_link_xsect_attrs (int k, int attr, float length_units);
-int init_node_tmp_table (float * ni_N_link_u, float * ni_Mlink_u1, float * ni_Mlink_u2, float * ni_Mlink_u3, float * ni_N_link_d, float * ni_Mlink_d1, float * ni_Mlink_d2, float * ni_Mlink_d3);
-int get_node_attrs (int k, int length_units, float * attrs, float * ni_N_link_u, float * ni_Mlink_u1, float * ni_Mlink_u2, float * ni_Mlink_u3, float * ni_N_link_d, float * ni_Mlink_d1, float * ni_Mlink_d2, float * ni_Mlink_d3);
-float get_link_attribute (int k, int attr, int units);
-int DLLEXPORT num_links();
-int DLLEXPORT num_nodes();
-void DLLEXPORT record_nodes_data (double * nodeMatrix, int units);
-void DLLEXPORT record_links_data (double * linkMatrix, int units);
-void DLLEXPORT print_info (int);
-
+API DLLEXPORT API_initialize (char* f1, char* f2, char* f3, int units);
+int DLLEXPORT API_finalize (API* api);
+float DLLEXPORT API_get_node_attribute (API* api, int k, int attr);
+float DLLEXPORT API_get_link_attribute (API* api, int k, int attr);
+void DLLEXPORT API_print_info (API* api);
+int DLLEXPORT API_num_links (API* api);
+int DLLEXPORT API_num_nodes (API* api);
 #ifdef __cplusplus
 }   // matches the linkage specification from above */
 #endif
