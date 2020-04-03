@@ -7,6 +7,7 @@ rm *.tar.gz
 
 mv Stormwater*/src .
 rm -r Stormwater*
+
 cp interface.h src/
 cp interface.c src/
 cp Makefile src/
@@ -16,6 +17,6 @@ echo Compiling SWMM C code
 make
 cd ..
 
-# echo Generating DLL
+echo Generating DLL
 cp src/libswmm5.so ../../
 rm -r src

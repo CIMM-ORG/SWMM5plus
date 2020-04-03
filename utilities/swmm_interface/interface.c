@@ -4,74 +4,78 @@
 #include <math.h>
 #include <string.h>
 
-API DLLEXPORT API_initialize (char* f1, char* f2, char* f3, int units)
+void* DLLEXPORT api_initialize (char* f1, char* f2, char* f3, int unit_system)
 {
     int error;
-    API api;
+    Interface* api = (Interface*) malloc(sizeof(Interface));
 
+    // --- open the files & read input data
     swmm_open(f1, f2, f3);
     swmm_start(0);
+    //  // Choosing unit system
+    api->units.unit_system = unit_system;
 
-     // Choosing unit system
-    api.units.unit_system = units;
-	if (units == US)
+	if (unit_system == US)
     {
-		api.units.flow_units = 1;
-		api.units.manning_units = 1;
-		api.units.length_units = 1;
+        api->units.flow_units = 1;
+		api->units.manning_units = 1;
+		api->units.length_units = 1;
 	}
 	else
     {
-		api.units.flow_units = M3perFT3;
-		api.units.manning_units = pow(1 / MperFT, 1 / 3);
-		api.units.length_units = MperFT;
+		api->units.flow_units = M3perFT3;
+		api->units.manning_units = pow(1 / MperFT, 1 / 3);
+		api->units.length_units = MperFT;
 	}
-    api.num_links = Nobjects[LINK];
-    api.num_nodes = Nobjects[NODE];
-    api.node_attributes = (float **) malloc(sizeof(float*)*num_node_attributes);
+
+    api->num_links = Nobjects[LINK];
+    api->num_nodes = Nobjects[NODE];
+    api->node_attributes = (float **) malloc(sizeof(float*)*num_node_attributes);
     for (int i = 0; i < num_node_attributes; i++)
-        api.node_attributes[i] = (float *) calloc(api.num_nodes, sizeof(float));
+        api->node_attributes[i] = (float *) calloc(api->num_nodes, sizeof(float));
 
     // Initialization
-    for (int i = 0; i < api.num_nodes; i++)
+    for (int i = 0; i < api->num_nodes; i++)
     {
-        api.node_attributes[ni_N_link_u][i] = 0;
-        api.node_attributes[ni_N_link_d][i] = 0;
-        api.node_attributes[ni_Mlink_u1][i] = nullvalueI;
-        api.node_attributes[ni_Mlink_u2][i] = nullvalueI;
-        api.node_attributes[ni_Mlink_u3][i] = nullvalueI;
-        api.node_attributes[ni_Mlink_d1][i] = nullvalueI;
-        api.node_attributes[ni_Mlink_d2][i] = nullvalueI;
-        api.node_attributes[ni_Mlink_d3][i] = nullvalueI;
+        api->node_attributes[ni_N_link_u][i] = 0;
+        api->node_attributes[ni_N_link_d][i] = 0;
+        api->node_attributes[ni_Mlink_u1][i] = nullvalueI;
+        api->node_attributes[ni_Mlink_u2][i] = nullvalueI;
+        api->node_attributes[ni_Mlink_u3][i] = nullvalueI;
+        api->node_attributes[ni_Mlink_d1][i] = nullvalueI;
+        api->node_attributes[ni_Mlink_d2][i] = nullvalueI;
+        api->node_attributes[ni_Mlink_d3][i] = nullvalueI;
     }
 
     // Count Links
-    for (int i = 0; i < api.num_nodes; i++)
+    for (int i = 0; i < api->num_links; i++)
     {
-        add_link(&api, i, Link[i].node1, DOWNSTREAM);
-        add_link(&api, i, Link[i].node2, UPSTREAM);
+        add_link(api, i, Link[i].node1, DOWNSTREAM);
+        add_link(api, i, Link[i].node2, UPSTREAM);
     }
 
-    return api;
+    return (void *) api;
 }
 
-int DLLEXPORT API_finalize (API* api)
+int DLLEXPORT api_finalize (void* fapi)
 {
-    int error;
-    error = swmm_end();
-    if (error != 0) return error;
-    error = swmm_close();
-    if (error != 0) return error;
+    Interface* api = (Interface*) fapi;
 
     for (int i = 0; i < num_node_attributes; i++)
         free(api->node_attributes[i]);
     free(api->node_attributes);
 
+    free((Interface*) fapi);
+
+    swmm_end();
+    swmm_close();
+
     return 0;
 }
 
-float DLLEXPORT API_get_node_attribute (API* api, int k, int attr)
+float DLLEXPORT api_get_node_attribute (void* fapi, int k, int attr)
 {
+    Interface* api = (Interface*) fapi;
     int i = k - FIDX;
     if (attr == ni_node_type)
     {
@@ -99,8 +103,9 @@ float DLLEXPORT API_get_node_attribute (API* api, int k, int attr)
     return 0;
 }
 
-float DLLEXPORT API_get_link_attribute (API* api, int k, int attr)
+float DLLEXPORT api_get_link_attribute (void* fapi, int k, int attr)
 {
+    Interface* api = (Interface*) fapi;
     int i = k - FIDX;
 
     if (attr == li_link_type || attr == li_geometry || attr == lr_BreadthScale)
@@ -173,7 +178,7 @@ float DLLEXPORT API_get_link_attribute (API* api, int k, int attr)
     }
     else if (attr == lr_InitialDepth)
     {
-		return fabs(API_get_link_attribute(api, k, lr_InitialDnstreamDepth) - API_get_link_attribute(api, k, lr_InitialUpstreamDepth)) / 2;
+		return fabs(api_get_link_attribute(api, k, lr_InitialDnstreamDepth) - api_get_link_attribute(api, k, lr_InitialUpstreamDepth)) / 2;
     }
     else
     {
@@ -181,8 +186,9 @@ float DLLEXPORT API_get_link_attribute (API* api, int k, int attr)
     }
 }
 
-void DLLEXPORT API_print_info (API* api)
+void DLLEXPORT api_print_info (void* fapi)
 {
+    Interface* api = (Interface*) fapi;
 	FILE *f_nodes;
 	FILE *f_links;
     int error;
@@ -223,34 +229,36 @@ void DLLEXPORT API_print_info (API* api)
 			api->num_links - i,
 			Link[i].ID,
 			i + 1,
-			API_get_link_attribute(api, i+FIDX, li_link_type),
-			API_get_link_attribute(api, i+FIDX, li_roughness_type),
-			API_get_link_attribute(api, i+FIDX, li_geometry),
-			API_get_link_attribute(api, i+FIDX, li_Mnode_u),
-			API_get_link_attribute(api, i+FIDX, li_Mnode_d),
-			API_get_link_attribute(api, i+FIDX, li_InitialDepthType),
-			API_get_link_attribute(api, i+FIDX, lr_Length),
-			API_get_link_attribute(api, i+FIDX, lr_BreadthScale),
-			API_get_link_attribute(api, i+FIDX, lr_Slope),
-			API_get_link_attribute(api, i+FIDX, lr_Roughness),
-			API_get_link_attribute(api, i+FIDX, lr_InitialFlowrate),
-			API_get_link_attribute(api, i+FIDX, lr_InitialDepth),
-			API_get_link_attribute(api, i+FIDX, lr_InitialUpstreamDepth),
-			API_get_link_attribute(api, i+FIDX, lr_InitialDnstreamDepth));
+			api_get_link_attribute(api, i+FIDX, li_link_type),
+			api_get_link_attribute(api, i+FIDX, li_roughness_type),
+			api_get_link_attribute(api, i+FIDX, li_geometry),
+			api_get_link_attribute(api, i+FIDX, li_Mnode_u),
+			api_get_link_attribute(api, i+FIDX, li_Mnode_d),
+			api_get_link_attribute(api, i+FIDX, li_InitialDepthType),
+			api_get_link_attribute(api, i+FIDX, lr_Length),
+			api_get_link_attribute(api, i+FIDX, lr_BreadthScale),
+			api_get_link_attribute(api, i+FIDX, lr_Slope),
+			api_get_link_attribute(api, i+FIDX, lr_Roughness),
+			api_get_link_attribute(api, i+FIDX, lr_InitialFlowrate),
+			api_get_link_attribute(api, i+FIDX, lr_InitialDepth),
+			api_get_link_attribute(api, i+FIDX, lr_InitialUpstreamDepth),
+			api_get_link_attribute(api, i+FIDX, lr_InitialDnstreamDepth));
 	} fclose(f_links);
 }
 
-int DLLEXPORT API_num_links (API* api)
+int DLLEXPORT api_num_links (void* fapi)
 {
+    Interface* api = (Interface*) fapi;
     return api->num_links;
 }
 
-int DLLEXPORT API_num_nodes (API* api)
+int DLLEXPORT api_num_nodes (void* fapi)
 {
+    Interface* api = (Interface*) fapi;
     return api->num_nodes;
 }
 
-int add_link (API* api, int li_idx, int ni_idx, int direction)
+int add_link (Interface* api, int li_idx, int ni_idx, int direction)
 {
 	if (direction == UPSTREAM)
     {

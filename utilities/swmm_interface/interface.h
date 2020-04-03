@@ -76,15 +76,15 @@ typedef struct
   int length_units;
   int flow_units;
   int manning_units;
-} API_units;
+} InterfaceUnits;
 
 typedef struct
 {
   float ** node_attributes;
   int num_nodes;
   int num_links;
-  API_units units;
-} API;
+  InterfaceUnits units;
+} Interface;
 
 #ifndef INTERFACE_H_
 #define INTERFACE_H_
@@ -113,16 +113,16 @@ typedef struct
 extern "C" {
 #endif
 
-int add_link (API* api, int li_idx, int ni_idx, int direction);
+int add_link (Interface* api, int li_idx, int ni_idx, int direction);
 float get_node_type (int k, float total_n_links);
 float get_link_xsect_attrs (int k, int attr, float length_units);
-API DLLEXPORT API_initialize (char* f1, char* f2, char* f3, int units);
-int DLLEXPORT API_finalize (API* api);
-float DLLEXPORT API_get_node_attribute (API* api, int k, int attr);
-float DLLEXPORT API_get_link_attribute (API* api, int k, int attr);
-void DLLEXPORT API_print_info (API* api);
-int DLLEXPORT API_num_links (API* api);
-int DLLEXPORT API_num_nodes (API* api);
+void* DLLEXPORT api_initialize (char* f1, char* f2, char* f3, int unit_system);
+int DLLEXPORT api_finalize (void* fapi);
+float DLLEXPORT api_get_node_attribute (void* fapi, int k, int attr);
+float DLLEXPORT api_get_link_attribute (void* fapi, int k, int attr);
+void DLLEXPORT api_print_info (void* fapi);
+int DLLEXPORT api_num_links (void* fapi);
+int DLLEXPORT api_num_nodes (void* fapi);
 #ifdef __cplusplus
 }   // matches the linkage specification from above */
 #endif
