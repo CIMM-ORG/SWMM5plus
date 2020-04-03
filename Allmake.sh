@@ -41,6 +41,7 @@ SOURCESF="  type_definitions.f08\
         junction.f08\
         face_values.f08\
         weir.f08\
+        orifice.f08\
         element_dynamics.f08\
         element_geometry.f08\
         explicit_euler.f08\

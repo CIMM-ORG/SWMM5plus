@@ -18,6 +18,7 @@
     use setting_definition
     use utility
     use weir
+    use orifice
 
     implicit none
 
@@ -113,8 +114,15 @@
                 e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
                 faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
         endif
-                   
- 
+
+        if ( count(elem2I(:,e2i_elem_type) == eOrifice)  > zeroI) then
+        ! call orifice step if orifices exist in the system
+            call orifice_step &
+                (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
+                e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
+                faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
+        endif
+              
         call rk2_update_auxiliary_variables &
             (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new, &
              elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  faceI,    &

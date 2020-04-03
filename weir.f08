@@ -60,6 +60,7 @@
  real,  pointer     ::  subFactor2(:), fEdn(:), fEup(:)
 
  integer, pointer   ::  iup(:), idn(:), dir(:)
+ 
  logical, pointer   ::  maskarrayUpSubmerge(:), maskarrayDnSubmerge(:)
  logical, pointer   ::  maskarraySurcharge(:)
 

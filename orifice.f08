@@ -17,11 +17,9 @@
 
     implicit none
 
-    private
+    public :: orifice_step
 
-    ! public :: weir_step
-    ! public :: weir_freesurface_elevation
-    ! public :: weir_provisional_geometry
+    private
 
     integer :: debuglevel = 0
 
@@ -48,16 +46,16 @@
  integer,           intent(in out)  :: faceI(:,:)
  real,      target, intent(in out)  :: faceR(:,:)
  integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
- logical,           intent(in)      :: elem2YN(:,:), elemMYN(:,:)
+ logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
  logical,           intent(in out)  :: faceYN(:,:)
  real,              intent(in)      :: thiscoef
 
  real,  pointer     ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
  real,  pointer     ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
- real,  pointer     ::  oFlow(:), oEta(:), oZbottom(:), oWidth(:)
- real,  pointer     ::  oFullDepth(:), oInletoffset(:) , oDischargeCoeff(:)  
- real,  pointer     ::  hCrest(:), hCrown(:), hCrit(:)   
- real,  pointer     ::  hEffective(:), subFactor(:)
+ real,  pointer     ::  oFlow(:), oEta(:), oZbottom(:), oLength(:), oWidth(:)
+ real,  pointer     ::  oFullDepth(:), oInletoffset(:), oDischargeCoeff(:)  
+ real,  pointer     ::  hCrest(:), hCrown(:), hCrit(:), hEffective(:)
+ real,  pointer     ::  cOrif(:), cWeir(:), subFactor(:)
  real,  pointer     ::  fEdn(:), fEup(:)
 
  integer, pointer   ::  iup(:), idn(:), dir(:)
@@ -85,10 +83,11 @@
  velocityMold => elemMR(:,eMr_Velocity_old)
  velocityMnew => elemMR(:,eMr_Velocity_new)
 
-!%  pointers for weir settings
+!%  pointers for orifice settings
  oFlow              => elem2R(:,e2r_Flowrate)
  oEta               => elem2R(:,e2r_eta)  
  oZbottom           => elem2R(:,e2r_Zbottom)
+ oLength            => elem2R(:,e2r_Length)
  oFullDepth         => elem2R(:,e2r_FullDepth)
  oWidth             => elem2R(:,e2r_BreadthScale)
  oDischargeCoeff    => elem2R(:,e2r_DischargeCoeff1)
@@ -184,7 +183,7 @@
 
  dir            = nullvalueI
 
- nullify(EffectiveHead, hCrest, hCrown, hCrit, cOrif, cWeir, subFactor, dir)
+ nullify(hEffective, hCrest, hCrown, hCrit, cOrif, cWeir, subFactor, dir)
  next_e2r_temparray  = next_e2r_temparray  - 7
  next_e2i_temparray  = next_e2i_temparray  - 1
  next_e2YN_temparray = next_e2YN_temparray - 3
@@ -198,7 +197,7 @@
 !
 subroutine orifice_provisional_geometry &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN)
-! this subroutine sets the weir geometry to zero.
+! this subroutine sets the orifice geometry to zero.
  character(64) :: subroutine_name = 'orifice_provisional_geometry'
 
 
@@ -259,10 +258,10 @@ subroutine orifice_initialize &
  where ( (elem2I(:,e2i_elem_type) == eOrifice) )
 
         hCrest   = oInletoffset + oZbottom
-        hCrown   = oCrest + oFullDepth
-        ! find the effective weir length
+        hCrown   = hCrest + oFullDepth
+        ! find the effective orifice length
         oLength  = min(twoR*thiscoef*sqrt(grav*oFullDepth), 200.0)
-        ! set the free surface elevation at weir element
+        ! set the free surface elevation at orifice element
         oEta = max(fEdn(iup), fEup(idn)) 
         dir  = int(sign(oneR, ( fEdn(iup) - fEup(idn))))
  endwhere 
@@ -284,7 +283,6 @@ subroutine orifice_equivalent_discharge_coefficient &
  real,      target, intent(in)      :: faceR(:,:)
  integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
  logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
- real,              intent(in)      :: thiscoef
 
  real,    pointer ::  oWidth(:), oFullDepth(:), oDischargeCoeff(:)
  real,    pointer ::  hCrit(:), cOrif(:), cWeir(:)
@@ -297,17 +295,18 @@ subroutine orifice_equivalent_discharge_coefficient &
  !% Co = CdAo(g)^0.5
  !% Cd = discharge coefficient
  !% Ao = Area of orifice opening
- where ( (elem2I(:, e2i_elem_type) == eOrifice) .and. 
-         (elem2I(:e2i_geometry) == eCircular) )
+ where     ( (elem2I(:,e2i_elem_type) == eOrifice) .and. & 
+             (elem2I(:,e2i_geometry) == eCircular) )
 
         cOrif = oDischargeCoeff * (pi/4.0 *oFullDepth **2) * &
         sqrt(twoR * grav)
 
- elsewhere ( (elem2I(:, e2i_elem_type) == eOrifice) .and. 
-         (elem2I(:e2i_geometry) == eRectangular) )
+ elsewhere ( (elem2I(:,e2i_elem_type) == eOrifice) .and. &  
+             (elem2I(:,e2i_geometry) == eRectangular) )
 
         cOrif = oDischargeCoeff * (oFullDepth * oWidth) * &
         sqrt(twoR * grav)
+
  endwhere   
 
  !% find critical height above opening where orifice flow
@@ -317,7 +316,7 @@ subroutine orifice_equivalent_discharge_coefficient &
  !% of the opening. For a basic sharp crested weir, Cw = 0.414.
 
  where ( (elem2I(:,e2i_orif_elem_type) == eBottomOrifice) .and. &
-         (elem2I(:e2i_geometry) == eRectangular) )
+         (elem2I(:,e2i_geometry) == eRectangular) )
 
         hCrit = oDischargeCoeff * (oFullDepth * oWidth) / &
         (0.414 * twoR * (oFullDepth + oWidth) )
@@ -325,20 +324,20 @@ subroutine orifice_equivalent_discharge_coefficient &
         sqrt(twoR * grav * hCrit)
 
  elsewhere ( (elem2I(:,e2i_orif_elem_type) == eBottomOrifice) .and. &
-             (elem2I(:e2i_geometry) == eCircular) )
+             (elem2I(:,e2i_geometry) == eCircular) )
         hcrit = oDischargeCoeff * oFullDepth / (0.414 * 4.0)
         cWeir = oDischargeCoeff * (pi/4.0 *oFullDepth **2) * &
         sqrt(twoR * grav * hCrit)
 
  elsewhere ( (elem2I(:,e2i_orif_elem_type) == eSideOrifice) .and. &
-             (elem2I(:e2i_geometry) == eRectangular))
+             (elem2I(:,e2i_geometry) == eRectangular))
 
         hCrit = oFullDepth
         cWeir = oDischargeCoeff * (oFullDepth * oWidth) * &
         sqrt(grav * hCrit)
 
  elsewhere ( (elem2I(:,e2i_orif_elem_type) == eSideOrifice) .and. &
-             (elem2I(:e2i_geometry) == eCircular))
+             (elem2I(:,e2i_geometry) == eCircular))
 
         hCrit = oFullDepth
         cWeir = oDischargeCoeff * (pi/4.0 *oFullDepth **2) * &
@@ -412,7 +411,7 @@ subroutine orifice_effective_head &
 
  elsewhere (elem2I(:,e2i_orif_elem_type) == eSideOrifice)
 
-            hEffective = min((oEta - (oCrest + oCrown)/twoR), &
+            hEffective = min((oEta - (hCrest + hCrown)/twoR), &
                 dir * ( fEdn(iup) - fEup(idn)))
  endwhere
 
@@ -466,10 +465,10 @@ subroutine orifice_effective_head &
 
  elsewhere (elem2I(:,e2i_elem_type) == eOrifice) 
 
-        oFlow        = dir * cOrif * sqrt(abs(hEffective)
+        oFlow        = dir * cOrif * sqrt(abs(hEffective))
         !% do the math to find the velocity (LATER) %!
         ! divide the flow by orifice opening (LATER)
-        velocity2new = dir * cOrif * sqrt(abs(hEffective)
+        velocity2new = dir * cOrif * sqrt(abs(hEffective))
         volume2new   = oFlow * thiscoef
  endwhere
    
