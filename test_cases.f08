@@ -454,11 +454,9 @@
 
         subdivide_length     = 500.0
         subdivide_length(2)  = 1        !We are not subdividing weir element. So this value is same as weir length
-
-
         
-        leftSlope             = nullValueR
-        rightSlope            = nullValueR
+        leftSlope             = 1.0
+        rightSlope            = 1.0
         sideSlope             = nullValueR
         inletOffset           = nullValueR
         dischargeCoefficient1 = nullValueR

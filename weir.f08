@@ -148,8 +148,8 @@
  dir = zeroI
 
 ! !% set all weir element geometry values ~ zero values
-!  call weir_provisional_geometry &
-!     (elem2R, elemMR, faceR, elem2I, elemMI)
+ call weir_provisional_geometry &
+    (elem2R, elemMR, faceR, elem2I, elemMI)
 
 !% set necessary weir setting and find eta on weir element    
 call weir_initialize &

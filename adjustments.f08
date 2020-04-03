@@ -159,17 +159,18 @@
     volFrac => setting%Limiter%flowrate%FaceVolumeTransport
     eUp => faceI(:,fi_Melem_u)
     eDn => faceI(:,fi_Melem_d)
-!if (Ltemp) then
-!    print *, trim(subroutine_name)
-!    print *, facemask
-!    print *, faceR(:,fr_flowrate)
-!    print *, eUp
-!    print *, volumeUp
-!    print *, volumeUp(eUp)
-!    print *, eDn
-!    print *, volumeDn
-!    !stop
-!endif    
+if (Ltemp) then
+   print *, trim(subroutine_name)
+   print *, facemask
+   print *, faceR(:,fr_flowrate)
+   print *, eUp
+   print *, volumeUp
+   print *, volumeUp(eUp)
+   print *, eDn
+   print *, volumeDn
+   print *, dt
+   !stop
+endif    
     !%   for a downstream flow, limit flux from the upstream volume
     where ((facemask) .and. (faceR(:,fr_flowrate)  > zeroR))
         faceR(:,fr_flowrate) =  min(volFrac * volumeUp(eUp) / dt, faceR(:,fr_flowrate))

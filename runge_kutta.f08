@@ -86,7 +86,7 @@
  elem2R(:,e2r_Velocity_new)  = zeroR
  elemMR(:,eMr_Volume_new)    = zeroR
  elemMR(:,eMr_Velocity_new)  = zeroR
-    
+ 
  if (  count(elem2I(:,e2i_elem_type) == eChannel) &
      + count(elem2I(:,e2i_elem_type) == eWeir) & 
      + count(elemMI(:,eMi_elem_type) == eJunctionChannel) > zeroI) then
