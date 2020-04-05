@@ -10,7 +10,6 @@ program main
    use debug
    use diagnostic
    use globals
-   use interface
    use initialization
    use initial_condition
    use junction
@@ -81,6 +80,7 @@ program main
    real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
    type(string), dimension(:), allocatable :: wdCellType(:)
 
+   integer :: hahaha
    !--------------------------------------------------------------------------
    print *, ''
    print *, '====================================================='
@@ -137,7 +137,8 @@ program main
          wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
          wdBreadth, wdWidthDepthData, wdCellType)
    else
-      call populate_tables(linkI, nodeI, linkR, nodeR, 0)
+      call initialize_linknode_arrays &
+         (linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
       print *, 'error - code only designed for use with test cases'
       stop
    end if
