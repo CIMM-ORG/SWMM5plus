@@ -13,6 +13,7 @@
     use case_y_channel
     use case_waller_creek
     use read_width_depth
+    use case_simple_weir
     use data_keys
     use globals
     use setting_definition
@@ -32,10 +33,9 @@
 !==========================================================================
 !
  subroutine test_case_initiation &
-    (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-     bcdataDn, bcdataUp, &
-     newID, newNumberPairs, newManningsN, newLength, newZBottom, newXDistance, &
-     newBreadth, newWidthDepthData, newCellType)
+    (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
+     bcdataDn, bcdataUp, newID, newNumberPairs, newManningsN, newLength, &
+     newZBottom, newXDistance, newBreadth, newWidthDepthData, newCellType)
 
  character(64) :: subroutine_name = 'test_case_initiation'
 
@@ -54,8 +54,11 @@
  real, dimension(:), allocatable :: channel_breadth, channel_topwidth
  real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
+ real, dimension(:), allocatable :: fullDepth, inletOffset, sideSlope 
  real, dimension(:), allocatable :: parabolaValue, leftSlope, rightSlope
- 
+ real, dimension(:), allocatable :: dischargeCoefficient1, dischargeCoefficient2
+ real, dimension(:), allocatable :: endContractions
+
  integer, dimension(:), allocatable :: idepth_type
  integer, dimension(:), allocatable :: channel_geometry
 
@@ -106,8 +109,7 @@
  real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
  real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
  real, pointer :: area_difference(:,:), local_difference(:,:)
-
-
+ 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -124,9 +126,10 @@
         !% create the local variables that must be populated to set up the test case
         call control_variable_allocation &
             (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-             channel_breadth, channel_topwidth, subdivide_length, flowrate, area, &
-             velocity, Froude, ManningsN, idepth_type, channel_geometry, &
-             parabolaValue, leftSlope, rightSlope)
+             channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+             velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
 
         ! step controls
         display_interval = 1000
@@ -224,9 +227,10 @@
         !% create the local variables that must be populated to set up the test case
         call control_variable_allocation &
             (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-             channel_breadth, channel_topwidth, subdivide_length, flowrate, area, &
-             velocity,  Froude, ManningsN, idepth_type, channel_geometry, &
-             parabolaValue, leftSlope, rightSlope)
+             channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+             velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
              
         ! step controls
         display_interval = 1000
@@ -288,8 +292,6 @@
                  lowerZ, upperZ, ManningsN)
         endif
         
-        
-
     case ('y_channel_002')
 
         N_link = 3
@@ -299,9 +301,10 @@
 
         call control_variable_allocation &
             (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-             channel_breadth, channel_topwidth, subdivide_length, flowrate, area, &
-             velocity,  Froude, ManningsN, idepth_type, channel_geometry, &
-             parabolaValue, leftSlope, rightSlope)
+             channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+             velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
 
         ! step controls
         display_interval = 1000
@@ -358,11 +361,10 @@
                 lz = lowerZ(1)
             end if
             call froude_driven_setup &
-                (uz, area(mm), flowrate(mm), velocity(mm),                               &
-                 Froude(mm), channel_breadth(mm), channel_topwidth(mm), &
-                 ManningsN(mm), channel_length(mm), &
-                 lz, init_depth(mm), channel_geometry(mm), &
-                 parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
+                 (uz, area(mm), flowrate(mm), velocity(mm), Froude(mm),         &
+                  channel_breadth(mm), channel_topwidth(mm), ManningsN(mm),     &
+                  channel_length(mm), lz, init_depth(mm), channel_geometry(mm), &
+                  parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
             select case (mm)
                 case (1)
                     ! the upstream z of the downstream link becomes the lower z of the upstream links
@@ -399,6 +401,131 @@
         !print *, linkR(:,lr_InitialFlowrate)
         !print *, trim(subroutine_name)
         !stop
+    case ('simple_weir_003')
+
+        N_link = 3
+        N_node = 4
+        N_BCupstream = 1
+        N_BCdnstream = 1
+
+        !% create the local variables that must be populated to set up the test case
+        call control_variable_allocation &
+            (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+             velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
+
+        ! step controls
+        display_interval = 100
+        first_step = 1
+        last_step  =  30000
+
+        ! set up flow and time step for differen subcases
+        ! tests that ran:  Fr = 0.25, 0.5
+
+        ! This is from case_y_channel
+        Froude       = 0.25   ! determines flowrate and slope to get Froude
+        CFL          = 0.25  ! determines dt from subdivide_length
+
+        ! keep these physics fixed
+        idepth_type        = 1  !1 = uniform, 2=linear, 3=exponential decay
+        ManningsN          = 0.03
+        
+        channel_geometry(1) = lRectangular
+        lowerZ(1)          = 1.0 
+        depth_dnstream(1)  = 1.0e-2 
+        depth_upstream(1)  = 1.0e-2
+        init_depth(1)      = 1.0e-2
+
+        channel_geometry(2) = lTriangular
+        depth_dnstream(2)  = 1.0e-2         !This is the depth in weir 
+        depth_upstream(2)  = 1.0e-2         !This is the depth in weir
+        init_depth(2)      = 1.0e-2         
+        
+        channel_geometry(3) = lRectangular
+        depth_dnstream(3)  = 0.25
+        depth_upstream(3)  = 0.25
+        init_depth(3)      = 0.25
+
+        channel_breadth      = 3.0
+        channel_length       = 1000.0
+        channel_length(2)    = 1        !This is Weir Length
+
+        subdivide_length     = 500.0
+        subdivide_length(2)  = 1        !We are not subdividing weir element. So this value is same as weir length
+        
+        leftSlope             = 1.0
+        rightSlope            = 1.0
+        sideSlope             = nullValueR
+        inletOffset           = nullValueR
+        dischargeCoefficient1 = nullValueR
+        dischargeCoefficient2 = nullValueR
+        fullDepth             = nullValueR
+        endContractions       = nullValueR
+
+        ! wier settings
+        inletOffset(2)             = 1.0
+        dischargeCoefficient1(2)   = 1.40
+        fullDepth(2)               = 1.5 
+        sideSlope(2)               = 1.0
+
+        ! get consistent bottom Z values for the desired Froude number in each link
+        do mm=1,N_link
+            if (mm==1) then
+                ! start with the Z for the inflow link
+                lz = lowerZ(1)
+            end if
+            select case (mm)
+                case (1)
+                    call froude_driven_setup &
+                         (uz, area(mm), flowrate(mm), velocity(mm),                               &
+                         Froude(mm), channel_breadth(mm), channel_topwidth(mm), &
+                         ManningsN(mm), channel_length(mm), &
+                         lz, init_depth(mm), channel_geometry(mm), &
+                         parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
+                    ! the upstream z of the downstream link becomes the lower z of the upstream links
+                    lz = uz
+                    upperZ(1) = uz
+                case (2)
+                    call weir_setup &
+                         (uz, area(mm), flowrate(mm), velocity(mm), sideslope(mm), Froude(mm), &
+                          channel_breadth(mm), ManningsN(mm), channel_length(mm), lz,           &
+                          depth_upstream(mm) )
+                    lowerZ(mm) = upperZ(1)
+                    upperZ(mm) = uz
+                    lz = uz
+                case (3)
+                    call froude_driven_setup &
+                         (uz, area(mm), flowrate(mm), velocity(mm),                               &
+                          Froude(mm), channel_breadth(mm), channel_topwidth(mm), &
+                          ManningsN(mm), channel_length(mm), &
+                          lz, init_depth(mm), channel_geometry(mm), &
+                          parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
+                    lowerZ(mm) = upperZ(2)
+                    upperZ(mm) = uz     
+            end select
+        end do 
+
+        call this_setting_for_time_and_steps &
+            (CFL, velocity, depth_upstream, subdivide_length, &
+             first_step, last_step, display_interval,2)
+
+        call case_simple_weir_initialize &
+            (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,    &
+             flowrate, depth_upstream, depth_dnstream, init_depth,                 &
+             sideslope, inletOffset, dischargeCoefficient1, dischargeCoefficient2, &
+             fullDepth, endContractions, ManningsN, lManningsN, idepth_type,       &
+             linkR, nodeR, linkI, nodeI,linkYN, nodeYN, linkName, nodeName,        &
+             bcdataDn, bcdataUp)
+
+        if (.not. setting%Debugout%SuppressAllFiles) then
+            call write_testcase_setup_file &
+                (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                 depth_dnstream, channel_breadth, channel_topwidth, area, &
+                 channel_length, subdivide_length, &
+                 lowerZ, upperZ, ManningsN)
+        endif
 
     case default
         print *, setting%TestCase%TestName
@@ -418,9 +545,10 @@
 !
  subroutine control_variable_allocation &
     (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-     channel_breadth, channel_topwidth, subdivide_length, flowrate, area, &
-     velocity,  Froude, ManningsN, idepth_type, channel_geometry, &
-     parabolaValue, leftSlope, rightSlope)
+     channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+     velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+     leftSlope, rightSlope, sideSlope, inletOffset, dischargeCoefficient1,       &
+     dischargeCoefficient2, fullDepth, endContractions)
 
  character(64) :: subroutine_name = 'control_variable_allocation'
 
@@ -430,6 +558,9 @@
  real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate
  real, dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
  real, dimension(:), allocatable, intent(out) :: parabolaValue, leftSlope, rightSlope
+ real, dimension(:), allocatable, intent(out) :: inletOffset, sideSlope
+ real, dimension(:), allocatable, intent(out) :: dischargeCoefficient1, dischargeCoefficient2
+ real, dimension(:), allocatable, intent(out) :: fullDepth, endContractions
 
  integer, dimension(:), allocatable, intent(out) :: idepth_type
  integer, dimension(:), allocatable, intent(out) :: channel_geometry
@@ -452,11 +583,17 @@
     allocate(flowrate(N_link))
     allocate(Froude(N_link))
     allocate(ManningsN(N_link))
-    allocate(idepth_type(N_link))
     allocate(channel_geometry(N_link))
     allocate(parabolaValue(N_link))
     allocate(leftSlope(N_link))
     allocate(rightSlope(N_link))
+    allocate(sideSlope(N_link))
+    allocate(inletOffset(N_link))
+    allocate(dischargeCoefficient1(N_link))
+    allocate(dischargeCoefficient2(N_link))
+    allocate(fullDepth(N_link))
+    allocate(idepth_type(N_link))
+    allocate(endContractions(N_link))
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine control_variable_allocation
@@ -512,7 +649,7 @@
 !==========================================================================
 !==========================================================================
 !
- subroutine froude_driven_setup &
+subroutine froude_driven_setup &
     (upperZ, area, flowrate, velocity,  &
      Froude,  breadth, topwidth, ManningsN, total_length, &
      lowerZ, depth, channel_geometry, parabolaValue, leftSlope, rightSlope)
@@ -557,7 +694,7 @@
         perimeter = breadth + depth * (sqrt(oneR + leftSlope**twoR ) &
                     + sqrt(oneR + rightSlope**twoR))
                     
-    case(lTriangle)
+    case(lTriangular)
         area = onehalfR * (leftSlope + rightSlope) * depth ** twoR
         topwidth = (leftSlope + rightSlope) * depth
         hDepth = onehalfR * depth
@@ -572,18 +709,68 @@
  upperZ = lowerZ + slope * total_length
 
 
-! print *, area
-! print *, perimeter
-! print *, rh
-! print *, velocity
-! print *, flowrate
-! print *, slope
-! print *, upperZ, lowerZ
-! print *, total_length
-! print *, slope*total_length
+! print *,'-----------------'
+! print *, area, 'area'
+! print *, hDepth, 'hDepth'
+! print *, perimeter, 'perimeter'
+! print *, rh, 'rh'
+! print *, velocity, 'velocity'
+! print *, flowrate, 'flowrate'
+! print *, slope, 'slope'
+! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+! print *, total_length, 'total_length'
+! print *, slope*total_length, 'slope*total_length'
+! print *,'-----------------'
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine froude_driven_setup
+!
+!==========================================================================
+!==========================================================================
+!
+ subroutine weir_setup &
+    (upperZ, area, flowrate, velocity, sideslope, Froude,  breadth, &
+     ManningsN, total_length, lowerZ, depth)
+
+ character(64) :: subroutine_name = 'weir_setup'
+
+ real,  intent(out)    :: area, flowrate, velocity, upperZ
+ real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
+ real,  intent(in)     :: depth, sideslope
+
+ real :: perimeter, rh, slope
+
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+! These needed to be changed when the weir is surcharged
+ area        = sideslope* depth ** twoR
+ perimeter   = twoR * depth * sqrt(1 + sideslope ** 2)
+ !rh          = area / perimeter
+ !velocity    = (setting%Weir%WeirDischargeCoeff * setting%Weir%WeirSideSlope * depth ** 2.5) / area
+ !flowrate    = area * velocity
+ !Hard coading this to run the weir without any water
+ rh          = 0.0
+ velocity    = 0.0
+ flowrate    = 0.0
+ slope       = zeroR
+ upperZ      = lowerZ 
+
+! print *,'-----------------'
+! print *, area, 'area'
+! print *, perimeter, 'perimeter'
+! print *, rh, 'rh'
+! print *, velocity, 'velocity'
+! print *, flowrate, 'flowrate'
+! print *, slope, 'slope'
+! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+! print *, total_length, 'total_length'
+! print *, slope*total_length, 'slope*total_length'
+! print *,'-----------------'
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine weir_setup
 !
 !==========================================================================
 !==========================================================================

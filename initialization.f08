@@ -51,13 +51,17 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
  ! initialize the indexes for temp arrays
- e2r_Temp(1) = e2r_temp1
- e2r_Temp(2) = e2r_temp2
- e2r_Temp(3) = e2r_temp3
- e2r_Temp(4) = e2r_temp4
- e2r_Temp(5) = e2r_temp5
- e2r_Temp(6) = e2r_temp6
- if (e2r_n_temp > 6) then
+ e2r_Temp(1)  = e2r_temp1
+ e2r_Temp(2)  = e2r_temp2
+ e2r_Temp(3)  = e2r_temp3
+ e2r_Temp(4)  = e2r_temp4
+ e2r_Temp(5)  = e2r_temp5
+ e2r_Temp(6)  = e2r_temp6
+ e2r_Temp(7)  = e2r_temp7
+ e2r_Temp(8)  = e2r_temp8
+ e2r_Temp(9)  = e2r_temp9
+ e2r_Temp(10) = e2r_temp10
+ if (e2r_n_temp > 10) then
     print *, 'error need to update initialization of e2r_Temp in ',subroutine_name
     stop
  endif
@@ -98,7 +102,12 @@
  fr_Temp(2) = fr_temp2
  fr_Temp(3) = fr_temp3
  fr_Temp(4) = fr_temp4
- if (fr_n_temp > 4) then
+ fr_Temp(5) = fr_temp5
+ fr_Temp(6) = fr_temp6
+ fr_Temp(7) = fr_temp7
+ fr_Temp(8) = fr_temp8
+ fr_Temp(9) = fr_temp9
+ if (fr_n_temp > 9) then
     print *, 'error need to update initialization of fr_Temp in ',subroutine_name
     stop
  endif

@@ -22,7 +22,7 @@
 
     private
 
-    public :: time_marching
+    public  :: time_marching
 
     integer :: debuglevel = 0
 
@@ -34,10 +34,10 @@
 !==========================================================================
 !
  subroutine time_marching &
-    (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
-     bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile, &
-     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-     Breadth, widthDepthData, cellType)
+    (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN,   &
+     faceYN, bcdataDn, bcdataUp, linkI, debugfile, diagnostic,         &
+     threadedfile, ID, numberPairs, ManningsN, Length, zBottom,        &
+     xDistance, Breadth, widthDepthData, cellType)
 !
 ! top-level iteration for continuity and momentum solution
 !
@@ -75,7 +75,6 @@
  real,    intent(in out)    :: Breadth(:)
  real,    intent(in out)    :: widthDepthData(:,:,:)
  type(string), intent(in out)   :: cellType(:)
-
 
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -117,7 +116,7 @@
         if (mod(thisstep,setting%Debugout%DisplayInterval) == 0) then
             print *, '--------------------------------------'
             print *, thisstep,'=current step; ', &
-                     diagnostic_CFL(elem2R, e2r_Timescale_u, e2r_Timescale_d),'=CFL max' &
+                     diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d),'=CFL max' & !Im putting the timescale for Q here. Might needed to be changed later
                      ,maxval(abs(elem2R(2:size(elem2R,1)-1,e2r_Velocity))),'=max velocity'
             !print *, thisstep,'=current step; ', &
             !         maxval(elem2R(2:size(elem2R,1)-1,e2r_Flowrate))
@@ -137,9 +136,8 @@
     !% Runge-Kutta 2nd-order advance
     call rk2 &
         (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
-         bcdataDn, bcdataUp, thistime, dt, &
-         ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-         Breadth, widthDepthData, cellType)
+         bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
+         zBottom, xDistance, Breadth, widthDepthData, cellType)
 
     !% compute the element froude number (diagnostic only)
     call diagnostic_froude_number (elem2R, elem2I, elemMR, elemMI)

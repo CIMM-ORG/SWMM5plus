@@ -35,14 +35,17 @@ SOURCESF="  dll_mod.f08\
         read_width_depth.f08\
         case_waller_creek.f08\
         case_simple_channel.f08\
+        case_simple_weir.f08\
         case_y_channel.f08\
         checking.f08\
         debug.f08\
         diagnostic.f08\
         junction.f08\
+        face_values.f08\
+        weir.f08\
+        orifice.f08\
         element_dynamics.f08\
         element_geometry.f08\
-        face_values.f08\
         explicit_euler.f08\
         friction_model.f08\
         initial_condition.f08\

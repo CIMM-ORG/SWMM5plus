@@ -12,7 +12,7 @@
     
     private
 
-    integer :: debuglevel = 1
+    integer :: debuglevel = 0
     
  contains
 !

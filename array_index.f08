@@ -41,14 +41,18 @@
 
 !%  elem2I ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
     integer, parameter :: e2i_idx             = 1    ! unique index of each element
-    integer, parameter :: e2i_elem_type       = 2    ! type of element
-    integer, parameter :: e2i_geometry        = 3    ! type of geometry
-    integer, parameter :: e2i_roughness_type  = 4    ! roughness type
-    integer, parameter :: e2i_link_ID         = 5    ! ID of link in the link/node space
-    integer, parameter :: e2i_link_Pos        = 6    ! position (elem from downstream = 1 to upstream = n) in link
-    integer, parameter :: e2i_Mface_u         = 7    ! map to upstream face
-    integer, parameter :: e2i_Mface_d         = 8    ! map to downstream face
-    integer, parameter :: e2i_idx_base1       = 8    ! number of base data stored
+    integer, parameter :: e2i_meta_elem_type  = 2    ! unique indes of each meta element type
+    integer, parameter :: e2i_elem_type       = 3    ! type of element
+    integer, parameter :: e2i_weir_elem_type  = 4    ! type of weir element
+    integer, parameter :: e2i_orif_elem_type  = 5    ! type of orifice element
+    integer, parameter :: e2i_pump_elem_type  = 6    ! type of pump element
+    integer, parameter :: e2i_geometry        = 7    ! type of geometry
+    integer, parameter :: e2i_roughness_type  = 8    ! roughness type
+    integer, parameter :: e2i_link_ID         = 9    ! ID of link in the link/node space
+    integer, parameter :: e2i_link_Pos        = 10   ! position (elem from downstream = 1 to upstream = n) in link
+    integer, parameter :: e2i_Mface_u         = 11   ! map to upstream face
+    integer, parameter :: e2i_Mface_d         = 12   ! map to downstream face
+    integer, parameter :: e2i_idx_base1       = 13   ! number of base data stored
 
     integer, parameter :: e2i_temp1           = e2i_idx_base1 + 1
     integer, parameter :: e2i_temp2           = e2i_idx_base1 + 2
@@ -62,17 +66,17 @@
 !%  elemMI ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
     ! column index for integer central data on a multi-branch junction
     integer, parameter :: eMi_idx             = 1    ! unique index of each element
-    integer, parameter :: eMi_elem_type       = 2    ! type of element
-    integer, parameter :: eMi_geometry        = 3    ! type of geometry
-    integer, parameter :: eMi_nfaces          = 4    ! number of faces for each element
-    integer, parameter :: eMi_nfaces_u        = 5    ! number of upstream faces for each element
-    integer, parameter :: eMi_nfaces_d        = 6    ! number of downstream faces for each element
-    integer, parameter :: eMi_roughness_type  = 7    ! roughness type
-    integer, parameter :: eMi_node_ID         = 8    ! ID of node in the link/node space
-    integer, parameter :: eMi_temp1           = 9
-    integer, parameter :: eMi_temp2           = 10
-
-    integer, parameter :: eMi_idx_base1       = 10    ! number of base data stored
+    integer, parameter :: eMi_meta_elem_type  = 2    ! type of meta element
+    integer, parameter :: eMi_elem_type       = 3    ! type of element
+    integer, parameter :: eMi_geometry        = 4    ! type of geometry
+    integer, parameter :: eMi_nfaces          = 5    ! number of faces for each element
+    integer, parameter :: eMi_nfaces_u        = 6    ! number of upstream faces for each element
+    integer, parameter :: eMi_nfaces_d        = 7    ! number of downstream faces for each element
+    integer, parameter :: eMi_roughness_type  = 8    ! roughness type
+    integer, parameter :: eMi_node_ID         = 9    ! ID of node in the link/node space
+    integer, parameter :: eMi_temp1           = 10
+    integer, parameter :: eMi_temp2           = 11
+    integer, parameter :: eMi_idx_base1       = 11    ! number of base data stored
 
     integer, parameter :: eMi_n_temp          = 2     ! matching the the number of eMi_tempX arrays
     ! storage for temp array index positions
@@ -93,27 +97,29 @@
     integer, dimension(dnstream_face_per_elemM) :: eMi_MfaceDn = nullvalueI
     integer, dimension(upstream_face_per_elemM + dnstream_face_per_elemM) :: eMi_MfaceAll = nullvalueI
 
-
 !%  faceI ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
     ! column index for integer data in the faceI array
-    integer, parameter :: fi_idx         = 1    ! unique index of each face
-    integer, parameter :: fi_type        = 2    ! unique type for this face
-    integer, parameter :: fi_Melem_u     = 3    ! unique map index of upstream element
-    integer, parameter :: fi_Melem_d     = 4    ! unique map index of downstream element
-    integer, parameter :: fi_etype_u     = 5    ! type of element in nominal upstream direction
-    integer, parameter :: fi_etype_d     = 6    ! type of element in nominal downstream direction
-    integer, parameter :: fi_branch_u    = 7    ! branch # if upstream is a junction
-    integer, parameter :: fi_branch_d    = 8    ! branch # if downstream is a junciton
-    integer, parameter :: fi_jump_type   = 9    ! type of hydraulic jump
-    integer, parameter :: fi_node_ID     = 10    ! ID of node if face corresponds to a node in link/node space
-    integer, parameter :: fi_link_ID     = 11    ! ID of link if face is interior of link
-    integer, parameter :: fi_link_Pos    = 12   ! position of interior face by elem count (up to down) in link
-    integer, parameter :: fi_BC_ID       = 13   ! ID of the BC if a BC face
-    integer, parameter :: fi_temp1       = 14
-    integer, parameter :: fi_temp2       = 15
-    integer, parameter :: fi_idx_max     = 15    !
+    integer, parameter :: fi_idx                = 1    ! unique index of each face
+    integer, parameter :: fi_type               = 2    ! unique type for this face
+    integer, parameter :: fi_Melem_u            = 3    ! unique map index of upstream element
+    integer, parameter :: fi_Melem_d            = 4    ! unique map index of downstream element
+    integer, parameter :: fi_meta_etype_u       = 5    ! type of element in nominal upstream direction
+    integer, parameter :: fi_meta_etype_d       = 6    ! type of element in nominal downstream direction
+    integer, parameter :: fi_etype_u            = 7    ! type of element in nominal upstream direction
+    integer, parameter :: fi_etype_d            = 8    ! type of element in nominal downstream direction
+    integer, parameter :: fi_branch_u           = 9    ! branch # if upstream is a junction
+    integer, parameter :: fi_branch_d           = 10   ! branch # if downstream is a junciton
+    integer, parameter :: fi_jump_type          = 11   ! type of hydraulic jump
+    integer, parameter :: fi_node_ID            = 12   ! ID of node if face corresponds to a node in link/node space
+    integer, parameter :: fi_link_ID            = 13   ! ID of link if face is interior of link
+    integer, parameter :: fi_link_Pos           = 14   ! position of interior face by elem count (up to down) in link
+    integer, parameter :: fi_BC_ID              = 15   ! ID of the BC if a BC face
+    integer, parameter :: fi_temp1              = 16
+    integer, parameter :: fi_temp2              = 17
+    integer, parameter :: fi_idx_max            = 17    
 
-    integer, parameter :: fi_n_temp       = 2
+    integer, parameter :: fi_n_temp             = 2
+
     ! storage for temp array index positions
     integer, dimension(fi_n_temp) :: fi_Temp = nullvalueI
 
@@ -124,38 +130,51 @@
     integer, parameter :: e2r_SmallVolumeRatio   = 3
     integer, parameter :: e2r_Flowrate           = 4
     integer, parameter :: e2r_Velocity           = 5
-    integer, parameter :: e2r_Timescale_u        = 6
-    integer, parameter :: e2r_Timescale_d        = 7
-    integer, parameter :: e2r_Friction           = 8
-    integer, parameter :: e2r_Eta                = 9
-    integer, parameter :: e2r_Head               = 10
-    integer, parameter :: e2r_Area               = 11
-    integer, parameter :: e2r_Topwidth           = 12
-    integer, parameter :: e2r_Perimeter          = 13
-    integer, parameter :: e2r_Depth              = 14
-    integer, parameter :: e2r_HydDepth           = 15
-    integer, parameter :: e2r_HydRadius          = 16
-    integer, parameter :: e2r_X                  = 17
-    integer, parameter :: e2r_Length             = 18
-    integer, parameter :: e2r_Zbottom            = 19
-    integer, parameter :: e2r_BreadthScale       = 20
-    integer, parameter :: e2r_Roughness          = 21
-    integer, parameter :: e2r_VolumeConservation = 22
-    integer, parameter :: e2r_FroudeNumber       = 23
-    integer, parameter :: e2r_LeftSlope          = 24
-    integer, parameter :: e2r_RightSlope         = 25
-    integer, parameter :: e2r_ParabolaValue      = 26
-    integer, parameter :: e2r_idx_base1          = 26
-
+    integer, parameter :: e2r_Timescale_Q_u      = 6
+    integer, parameter :: e2r_Timescale_H_u      = 7
+    integer, parameter :: e2r_Timescale_G_u      = 8
+    integer, parameter :: e2r_Timescale_Q_d      = 9
+    integer, parameter :: e2r_Timescale_H_d      = 10
+    integer, parameter :: e2r_Timescale_G_d      = 11
+    integer, parameter :: e2r_Friction           = 12
+    integer, parameter :: e2r_Eta                = 13
+    integer, parameter :: e2r_Head               = 14
+    integer, parameter :: e2r_Area               = 15
+    integer, parameter :: e2r_Topwidth           = 16
+    integer, parameter :: e2r_Perimeter          = 17
+    integer, parameter :: e2r_Depth              = 18
+    integer, parameter :: e2r_HydDepth           = 19
+    integer, parameter :: e2r_HydRadius          = 20
+    integer, parameter :: e2r_X                  = 21
+    integer, parameter :: e2r_Length             = 22
+    integer, parameter :: e2r_Zbottom            = 23
+    integer, parameter :: e2r_BreadthScale       = 24   ! bttom breadth for trapezoidal and rectangular geometry
+    integer, parameter :: e2r_Roughness          = 25
+    integer, parameter :: e2r_VolumeConservation = 26
+    integer, parameter :: e2r_FroudeNumber       = 27
+    integer, parameter :: e2r_LeftSlope          = 28   ! for specialized geometry
+    integer, parameter :: e2r_RightSlope         = 29   ! for specialized geometry
+    integer, parameter :: e2r_ParabolaValue      = 30   ! for specialized geometry
+    integer, parameter :: e2r_SideSlope          = 31   ! for specialized geometry
+    integer, parameter :: e2r_InletOffset        = 32   ! inlet offset for weir or orifice element
+    integer, parameter :: e2r_DischargeCoeff1    = 33   ! discharge coefficient for triangular weir part or orifice element
+    integer, parameter :: e2r_DischargeCoeff2    = 34   ! discharge coefficient for rectangular weir part
+    integer, parameter :: e2r_FullDepth          = 35   ! vertical opening of pipe, weir, orifice
+    integer, parameter :: e2r_EndContractions    = 36   ! End contractions for rectengular and trapezoidal weir
+    integer, parameter :: e2r_idx_base1          = 36
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
     integer, parameter :: e2r_temp2              = e2r_idx_base1 + 2
     integer, parameter :: e2r_temp3              = e2r_idx_base1 + 3
     integer, parameter :: e2r_temp4              = e2r_idx_base1 + 4
     integer, parameter :: e2r_temp5              = e2r_idx_base1 + 5
     integer, parameter :: e2r_temp6              = e2r_idx_base1 + 6
-
-    integer, parameter :: e2r_n_temp       = 6
+    integer, parameter :: e2r_temp7              = e2r_idx_base1 + 7
+    integer, parameter :: e2r_temp8              = e2r_idx_base1 + 8
+    integer, parameter :: e2r_temp9              = e2r_idx_base1 + 9
+    integer, parameter :: e2r_temp10             = e2r_idx_base1 + 10
+    integer, parameter :: e2r_n_temp       = 10
     integer, parameter :: e2r_idx_max = e2r_idx_base1 + e2r_n_temp
+
     ! storage for temp array index positions
     integer, dimension(e2r_n_temp) :: e2r_Temp = nullvalueI
 
@@ -190,91 +209,75 @@
     ! column indexes for real branch data on a multi-branch junction
     ! note that these indexes must be consecutive by type
     ! always the upstream u1,u2,u3 then the downstream d1, d2, d3
+
     integer, parameter :: eMr_Eta_u1        = eMr_idx_base1 + 1    ! Q in the u1 branch
     integer, parameter :: eMr_Eta_u2        = eMr_idx_base1 + 2
     integer, parameter :: eMr_Eta_u3        = eMr_idx_base1 + 3
     integer, parameter :: eMr_idx_base2     = eMr_idx_base1 + upstream_face_per_elemM
-
     integer, parameter :: eMr_Eta_d1        = eMr_idx_base2 + 1
     integer, parameter :: eMr_Eta_d2        = eMr_idx_base2 + 2
     integer, parameter :: eMr_Eta_d3        = eMr_idx_base2 + 3
     integer, parameter :: eMr_idx_base3     = eMr_idx_base2 + dnstream_face_per_elemM
-
     integer, parameter :: eMr_Flowrate_u1   = eMr_idx_base3 + 1    ! Q in the u1 branch
     integer, parameter :: eMr_Flowrate_u2   = eMr_idx_base3 + 2
     integer, parameter :: eMr_Flowrate_u3   = eMr_idx_base3 + 3
     integer, parameter :: eMr_idx_base4     = eMr_idx_base3 + upstream_face_per_elemM
-
     integer, parameter :: eMr_Flowrate_d1   = eMr_idx_base4 + 1
     integer, parameter :: eMr_Flowrate_d2   = eMr_idx_base4 + 2
     integer, parameter :: eMr_Flowrate_d3   = eMr_idx_base4 + 3
     integer, parameter :: eMr_idx_base5     = eMr_idx_base4 + dnstream_face_per_elemM
-
     integer, parameter :: eMr_Velocity_u1   = eMr_idx_base5 + 1    ! Q in the u1 branch
     integer, parameter :: eMr_Velocity_u2   = eMr_idx_base5 + 2
     integer, parameter :: eMr_Velocity_u3   = eMr_idx_base5 + 3
     integer, parameter :: eMr_idx_base6     = eMr_idx_base5 + upstream_face_per_elemM
-
     integer, parameter :: eMr_Velocity_d1   = eMr_idx_base6 + 1
     integer, parameter :: eMr_Velocity_d2   = eMr_idx_base6 + 2
     integer, parameter :: eMr_Velocity_d3   = eMr_idx_base6 + 3
     integer, parameter :: eMr_idx_base7     = eMr_idx_base6 + dnstream_face_per_elemM
-
     integer, parameter :: eMr_Timescale_u1  = eMr_idx_base7 + 1
     integer, parameter :: eMr_Timescale_u2  = eMr_idx_base7 + 2
     integer, parameter :: eMr_Timescale_u3  = eMr_idx_base7 + 3
     integer, parameter :: eMr_idx_base8     = eMr_idx_base7  + upstream_face_per_elemM
-
     integer, parameter :: eMr_Timescale_d1  = eMr_idx_base8 + 1
     integer, parameter :: eMr_Timescale_d2  = eMr_idx_base8 + 2
     integer, parameter :: eMr_Timescale_d3  = eMr_idx_base8 + 3
     integer, parameter :: eMr_idx_base9     = eMr_idx_base8 + dnstream_face_per_elemM
-
     integer, parameter :: eMr_Area_u1       = eMr_idx_base9 + 1
     integer, parameter :: eMr_Area_u2       = eMr_idx_base9 + 2
     integer, parameter :: eMr_Area_u3       = eMr_idx_base9 + 3
     integer, parameter :: eMr_idx_base10    = eMr_idx_base9 + upstream_face_per_elemM
-
     integer, parameter :: eMr_Area_d1       = eMr_idx_base10 + 1
     integer, parameter :: eMr_Area_d2       = eMr_idx_base10 + 2
     integer, parameter :: eMr_Area_d3       = eMr_idx_base10 + 3
     integer, parameter :: eMr_idx_base11    = eMr_idx_base10 + dnstream_face_per_elemM
-
     integer, parameter :: eMr_Topwidth_u1   = eMr_idx_base11 + 1
     integer, parameter :: eMr_Topwidth_u2   = eMr_idx_base11 + 2
     integer, parameter :: eMr_Topwidth_u3   = eMr_idx_base11 + 3
     integer, parameter :: eMr_idx_base12    = eMr_idx_base11 + upstream_face_per_elemM
-
     integer, parameter :: eMr_Topwidth_d1   = eMr_idx_base12 + 1
     integer, parameter :: eMr_Topwidth_d2   = eMr_idx_base12 + 2
     integer, parameter :: eMr_Topwidth_d3   = eMr_idx_base12 + 3
     integer, parameter :: eMr_idx_base13    = eMr_idx_base12 + dnstream_face_per_elemM
-
     integer, parameter :: eMr_HydDepth_u1   = eMr_idx_base13 + 1
     integer, parameter :: eMr_HydDepth_u2   = eMr_idx_base13 + 2
     integer, parameter :: eMr_HydDepth_u3   = eMr_idx_base13 + 3
     integer, parameter :: eMr_idx_base14    = eMr_idx_base13 + upstream_face_per_elemM
-
     integer, parameter :: eMr_HydDepth_d1   = eMr_idx_base14 + 1
     integer, parameter :: eMr_HydDepth_d2   = eMr_idx_base14 + 2
     integer, parameter :: eMr_HydDepth_d3   = eMr_idx_base14 + 3
     integer, parameter :: eMr_idx_base15    = eMr_idx_base14 + dnstream_face_per_elemM
-
     integer, parameter :: eMr_Length_u1     = eMr_idx_base15 + 1
     integer, parameter :: eMr_Length_u2     = eMr_idx_base15 + 2
     integer, parameter :: eMr_Length_u3     = eMr_idx_base15 + 3
     integer, parameter :: eMr_idx_base16    = eMr_idx_base15 + upstream_face_per_elemM
-
     integer, parameter :: eMr_Length_d1     = eMr_idx_base16 + 1
     integer, parameter :: eMr_Length_d2     = eMr_idx_base16 + 2
     integer, parameter :: eMr_Length_d3     = eMr_idx_base16 + 3
     integer, parameter :: eMr_idx_base17    = eMr_idx_base16 + dnstream_face_per_elemM
-
     integer, parameter :: eMr_Zbottom_u1    = eMr_idx_base17 + 1
     integer, parameter :: eMr_Zbottom_u2    = eMr_idx_base17 + 2
     integer, parameter :: eMr_Zbottom_u3    = eMr_idx_base17 + 3
     integer, parameter :: eMr_idx_base18    = eMr_idx_base17 + upstream_face_per_elemM
-
     integer, parameter :: eMr_Zbottom_d1    = eMr_idx_base18 + 1
     integer, parameter :: eMr_Zbottom_d2    = eMr_idx_base18 + 2
     integer, parameter :: eMr_Zbottom_d3    = eMr_idx_base18 + 3
@@ -296,10 +299,10 @@
     integer, parameter :: eMr_temp4              = eMr_idx_base21 + 4
     integer, parameter :: eMr_temp5              = eMr_idx_base21 + 5
     integer, parameter :: eMr_temp6              = eMr_idx_base21 + 6
-
     integer, parameter :: eMr_n_temp       = 6
     integer, parameter :: eMr_idx_base22   = eMr_idx_base21 + eMr_n_temp
     integer, parameter :: eMr_idx_max      = eMr_idx_base22
+
     ! storage for temp array index positions
     integer, dimension(eMr_n_temp) :: eMr_Temp = nullvalueI
 
@@ -314,7 +317,6 @@
     integer, dimension(upstream_face_per_elemM) :: eMr_LengthUp         = nullvalueI
     integer, dimension(upstream_face_per_elemM) :: eMr_ZbottomUp        = nullvalueI
     integer, dimension(upstream_face_per_elemM) :: eMr_BreadthScaleUp   = nullvalueI
-
     ! storage arrays for all the column indexes on downstream branches
     integer, dimension(dnstream_face_per_elemM) :: eMr_EtaDn            = nullvalueI
     integer, dimension(dnstream_face_per_elemM) :: eMr_FlowrateDn       = nullvalueI
@@ -326,7 +328,6 @@
     integer, dimension(dnstream_face_per_elemM) :: eMr_LengthDn         = nullvalueI
     integer, dimension(dnstream_face_per_elemM) :: eMr_ZbottomDn        = nullvalueI
     integer, dimension(upstream_face_per_elemM) :: eMr_BreadthScaleDn   = nullvalueI
-
     ! storage arrays for all the column indexes of all branches
     integer, dimension(face_per_elemM) :: eMr_EtaAll        = nullvalueI
     integer, dimension(face_per_elemM) :: eMr_FlowrateAll   = nullvalueI
@@ -357,21 +358,27 @@
     integer, parameter :: fr_temp2       = 14
     integer, parameter :: fr_temp3       = 15
     integer, parameter :: fr_temp4       = 16
-    integer, parameter :: fr_idx_max     = 16
+    integer, parameter :: fr_temp5       = 17
+    integer, parameter :: fr_temp6       = 18
+    integer, parameter :: fr_temp7       = 19
+    integer, parameter :: fr_temp8       = 20
+    integer, parameter :: fr_temp9       = 21
+    integer, parameter :: fr_idx_max     = 21
 
-    integer, parameter :: fr_n_temp       = 4
+    integer, parameter :: fr_n_temp       = 9
     ! storage for temp array index positions
     integer, dimension(fr_n_temp) :: fr_Temp = nullvalueI
 
-!%  elem2YN COLUMN INDEXES FOR LOGICAL DATA ON CHANNEL ELEMENT ---------------
+!%  elem2YN COLUMN INDEXES FOR LOGICAL DATA ON 2 FACE ELEMENT ----------------
     ! column index for logical data in elem2YN array
-    integer, parameter :: e2YN_IsSmallVolume   = 1
-    integer, parameter :: e2YN_IsAdhocFlowrate = 2
-    integer, parameter :: e2YN_temp1           = 3
-    integer, parameter :: e2YN_temp2           = 4
-    integer, parameter :: e2YN_temp3           = 5
-    integer, parameter :: e2YN_temp4           = 6
-    integer, parameter :: e2YN_idx_max         = 6
+    integer, parameter :: e2YN_IsSmallVolume    = 1
+    integer, parameter :: e2YN_IsAdhocFlowrate  = 2
+    integer, parameter :: e2YN_CanSurcharge     = 3    ! weir surcharge
+    integer, parameter :: e2YN_temp1            = 4
+    integer, parameter :: e2YN_temp2            = 5
+    integer, parameter :: e2YN_temp3            = 6
+    integer, parameter :: e2YN_temp4            = 7
+    integer, parameter :: e2YN_idx_max          = 7
 
     integer, parameter :: e2YN_n_temp = 4
     ! storage for temp array index positions
@@ -393,9 +400,15 @@
 
 !%  faceYN COLUMN INDEXES FOR LOGICAL DATA ON FACE
     ! column index for logical data in elemYN array
-    integer, parameter :: fYN_temp1           = 1
-    integer, parameter :: fYN_temp2           = 2
-    integer, parameter :: fYN_idx_max         = 2
+    integer, parameter :: fYN_IsHQ2up            = 1
+    integer, parameter :: fYN_IsHQ2dn            = 2
+    integer, parameter :: fYN_IsHup              = 3
+    integer, parameter :: fYN_IsHdn              = 4
+    integer, parameter :: fYN_IsQup              = 5
+    integer, parameter :: fYN_IsQdn              = 6
+    integer, parameter :: fYN_temp1              = 7
+    integer, parameter :: fYN_temp2              = 8
+    integer, parameter :: fYN_idx_max            = 8
 
     integer, parameter :: fYN_n_temp = 2
     ! storage for temp array index positions
@@ -405,19 +418,22 @@
     ! column index for integer data in linkI array
     integer, parameter :: li_idx              = 1
     integer, parameter :: li_link_type        = 2
-    integer, parameter :: li_geometry         = 3
-    integer, parameter :: li_roughness_type   = 4
-    integer, parameter :: li_N_element        = 5 ! Number of elements in this link
-    integer, parameter :: li_Mnode_u          = 6 ! map to upstream node connecting to link
-    integer, parameter :: li_Mnode_d          = 7 ! map to downstram node connecting to link
-    integer, parameter :: li_Melem_u          = 8 ! element ID of upstream element of link
-    integer, parameter :: li_Melem_d          = 9 ! element ID of downstream element of link
-    integer, parameter :: li_Mface_u          =10 ! face ID of upstream face of link
-    integer, parameter :: li_Mface_d          =11 ! face ID of downstream face of link
-    integer, parameter :: li_assigned         =12 ! given 1 when link is assigned
-    integer, parameter :: li_InitialDepthType =13 ! 1=uniform, 2= lineary change, 3=exponential decay
-    integer, parameter :: li_temp1            =14
-    integer, parameter :: li_idx_max          =14
+    integer, parameter :: li_weir_type        = 3  ! type of weir link
+    integer, parameter :: li_orif_type        = 4  ! type of orifice link
+    integer, parameter :: li_pump_type        = 5  ! type of pump link
+    integer, parameter :: li_geometry         = 6
+    integer, parameter :: li_roughness_type   = 7
+    integer, parameter :: li_N_element        = 8  ! Number of elements in this link
+    integer, parameter :: li_Mnode_u          = 9  ! map to upstream node connecting to link
+    integer, parameter :: li_Mnode_d          = 10 ! map to downstram node connecting to link
+    integer, parameter :: li_Melem_u          = 11 ! element ID of upstream element of link
+    integer, parameter :: li_Melem_d          = 12 ! element ID of downstream element of link
+    integer, parameter :: li_Mface_u          = 13 ! face ID of upstream face of link
+    integer, parameter :: li_Mface_d          = 14 ! face ID of downstream face of link
+    integer, parameter :: li_assigned         = 15 ! given 1 when link is assigned
+    integer, parameter :: li_InitialDepthType = 16 ! 1=uniform, 2= lineary change, 3=exponential decay
+    integer, parameter :: li_temp1            = 17
+    integer, parameter :: li_idx_max          = 17
 
 !%  nodeI COLUMN INDEXES FOR INTEGER DATA OF NODES IN LINK/NODE SYSTEM -------
     ! column index for integer data in nodeI array
@@ -460,8 +476,14 @@
     integer, parameter :: lr_InitialUpstreamDepth   = 11
     integer, parameter :: lr_InitialDnstreamDepth   = 12
     integer, parameter :: lr_ParabolaValue          = 13
-    integer, parameter :: lr_temp1                  = 14
-    integer, parameter :: lr_idx_max                = 14
+    integer, parameter :: lr_SideSlope              = 14   ! for weirs only
+    integer, parameter :: lr_InletOffset            = 15   ! inlet offset for weir or orifice element
+    integer, parameter :: lr_DischargeCoeff1        = 16   ! discharge coefficient for triangular weir part or orifice element
+    integer, parameter :: lr_DischargeCoeff2        = 17   ! discharge coefficient for rectangular weir part
+    integer, parameter :: lr_FullDepth              = 18   ! vertical opening of pipe, weir, orifice
+    integer, parameter :: lr_EndContractions        = 19
+    integer, parameter :: lr_temp1                  = 20
+    integer, parameter :: lr_idx_max                = 20
 
 !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array
@@ -508,7 +530,7 @@
     integer, parameter :: wd_area_difference         = 12
     integer, parameter :: wd_local_difference        = 13
     integer, parameter :: wd_idx_max                 = 13
-
+    
 !==========================================================================
 ! END OF MODULE array_index
 !==========================================================================

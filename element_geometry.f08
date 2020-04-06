@@ -250,6 +250,16 @@
      ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
      Breadth, widthDepthData, cellType)
 
+!%  geometry for weir elements
+ call channel_or_junction &
+    (elem2R, elem2I, &
+     e2i_geometry, e2i_elem_type, eWeir,  &
+     e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
+     e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new,    &
+     e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue, &
+     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+     Breadth, widthDepthData, cellType)
+
 !% upstream branches
 !% note the fr_Eta_d is used for the upstream face, whose downstream eta is
 !% seen by the upstream junction branch -- so the d is correct while other
@@ -396,7 +406,7 @@
                      + sqrt(oneR + rightSlope**twoR))
     hydradius   = area / perimeter
     
- elsewhere ( (elemI(:,ei_geometry)  == eTriangle) .and. &
+ elsewhere ( (elemI(:,ei_geometry)  == eTriangular) .and. &
          (elemI(:,ei_elem_type) == elem_type_value    )         )
     area        = volume / length
     depth       = sqrt(abs(area/(onehalfR*(leftSlope + rightSlope))))

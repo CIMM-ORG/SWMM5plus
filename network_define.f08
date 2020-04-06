@@ -23,7 +23,7 @@
     
     public :: network_initiation
     
-    integer:: debuglevel = 0
+    integer:: debuglevel = 1
     
  contains
 !
@@ -81,14 +81,17 @@
 
 !%   assign links to nodes
  call network_node_assignment (nodeI, linkI) 
- 
+
 !%   confirm that the link-node network is valid   
  call network_check_node_link_match (linkI, nodeI)
 
 !%   check that sufficient BC locations have been identified 
  call network_check_BC (nodeI, N_node)
-     
-!%   get the slope of each link given the node Z values
+
+!%   check the geometry of weir and orifice elements
+ call network_check_geometry (linkI, N_link)
+
+ !%   get the slope of each link given the node Z values
  call network_get_link_slope (linkR, nodeR, linkI, nodeI)
 
 ! HACK - need a check here to look for non-monotonic zbottom in the link/node
@@ -107,7 +110,6 @@
     (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
      elem2Name, elemMname, faceName)
  
-
 !%   ensure elemMR (junction) array has zero values in the multiple geometry storage
  call initialize_array_zerovalues (elemMR) 
  call initialize_dummy_values &
@@ -122,10 +124,9 @@
 
 !%   setup the geometric relationships between the junction branches and the main values
  call junction_geometry_setup (elemMR, elemMI) 
- 
+
 !%   assign branch mappings for faces 
  call junction_branch_assigned_to_faces (faceI, elemMI)
-  
 
 !% Debug output
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
@@ -160,18 +161,18 @@
     do ii=first_elem2_index, first_elem2_index+N_elem2-1
         print *, ii, elem2R(ii,e2r_Length), elem2R(ii,e2r_Topwidth), elem2R(ii,e2r_Zbottom)
     enddo
-    
+
     print *
     print *, '------------- faces -----------------expecting ',N_face
     print *
-    print *, 'h)       ii,         idx,     Melem_u,    Melem_d,    etype_u,    etype_d'
+    print *, 'g)       ii,         idx,     Melem_u,    Melem_d,    etype_u,    etype_d,       ftype'
     do ii=first_face_index, first_face_index+N_face-1
         print *, ii, faceI(ii,fi_idx), faceI(ii,fi_Melem_u), faceI(ii,fi_Melem_d), &
-                     faceI(ii,fi_etype_u), faceI(ii,fi_etype_d)
+                     faceI(ii,fi_etype_u), faceI(ii,fi_etype_d), faceI(ii,fi_type)
     enddo
     
     print * 
-    print *, 'i)       ii,         Zbottom,     Topwidth'
+    print *, 'h)       ii,         Zbottom,     Topwidth'
     do ii=first_face_index, first_face_index+N_face-1
         print *, ii, faceR(ii,fr_Zbottom), faceR(ii,fr_Topwidth)
     enddo
@@ -497,6 +498,76 @@
 !==========================================================================
 !==========================================================================
 !
+!
+ subroutine network_check_geometry &
+    (linkI, N_link)
+!    
+! check that BC nodes have correct upstream and downstream links
+!
+    character(64) :: subroutine_name = 'network_check_geometry'
+    integer, intent(in)     :: N_link
+    integer, intent(in)     :: linkI(:,:)
+    
+    integer :: ii
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    
+ do ii = 1,N_link
+    if ( linkI(ii,li_link_type) == eWeir ) then
+        if ( (linkI(ii,li_weir_type) == eSideFlowWeir) .and. &
+             (linkI(ii,li_geometry) /= eRectangular) ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular sideflow weir shape ',subroutine_name
+            stop
+        endif
+        
+        if ( (linkI(ii,li_weir_type) == eTransverseWeir) .and. &
+             (linkI(ii,li_geometry) /= eRectangular)   ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular transverse weir shape ',subroutine_name
+            stop
+        endif
+        
+        if ( (linkI(ii,li_weir_type) == eRoadWayWeir ) .and. &
+             (linkI(ii,li_geometry) /= eRectangular) ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular road way weir shape ',subroutine_name
+            stop
+        endif
+
+        if ( (linkI(ii,li_weir_type) == eVnotchWeir  ) .and. &
+             (linkI(ii,li_geometry) /= eTriangular ) ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular v-notch weir shape ',subroutine_name
+            stop
+        endif
+
+        if ( (linkI(ii,li_weir_type) == eTrapezoidalWeir  ) .and. &
+             (linkI(ii,li_geometry) /= eTrapezoidal )     ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular trapezoidal weir shape ',subroutine_name
+            stop
+        endif
+       
+    endif
+    
+    if ( linkI(ii,li_link_type) == eOrifice ) then
+        if ( (linkI(ii,li_geometry) /= eCircular)     .and. &
+             (linkI(ii,li_geometry) /= eRectangular) ) then
+            print *, 'Link = ',ii
+            print *, 'error: Irregular orifice shape ',subroutine_name
+            stop
+        endif
+       
+    endif
+ enddo
+    
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name   
+ end subroutine network_check_geometry
+!
+!==========================================================================
+!==========================================================================
+!
  subroutine network_get_link_slope &
     (linkR, nodeR, linkI, nodeI)
 !
@@ -780,22 +851,33 @@
     linkI(thisLink,li_assigned) = setAssigned(thisLink, li_assigned, lUnassigned, lAssigned, linkI)
 
     !% Assign the ghost element - use values for upstream link
-    elem2I(thisElem2,e2i_idx)            = thisElem2
-    elem2I(thisElem2,e2i_elem_type)      = eBCdn
-    elem2I(thisElem2,e2i_geometry)       = linkI(thisLink,li_geometry)
-    elem2I(thisElem2,e2i_roughness_type) = linkI(thisLink,li_roughness_type)
-    elem2I(thisElem2,e2i_link_ID)        = thisLink
-    elem2I(thisElem2,e2i_link_Pos)       = nullvalueI
-    elem2I(thisElem2,e2i_Mface_u)        = thisFace
-    elem2I(thisElem2,e2i_Mface_d)        = nullvalueI
+    elem2I(thisElem2,e2i_idx)               = thisElem2
+    elem2I(thisElem2,e2i_elem_type)         = eBCdn
+    elem2I(thisElem2,e2i_weir_elem_type)    = linkI(thisLink,li_weir_type)
+    elem2I(thisElem2,e2i_orif_elem_type)    = linkI(thisLink,li_orif_type)
+    elem2I(thisElem2,e2i_pump_elem_type)    = linkI(thisLink,li_pump_type)
+    elem2I(thisElem2,e2i_geometry)          = linkI(thisLink,li_geometry)
+    elem2I(thisElem2,e2i_roughness_type)    = linkI(thisLink,li_roughness_type)
+    elem2I(thisElem2,e2i_link_ID)           = thisLink
+    elem2I(thisElem2,e2i_link_Pos)          = nullvalueI
+    elem2I(thisElem2,e2i_Mface_u)           = thisFace
+    elem2I(thisElem2,e2i_Mface_d)           = nullvalueI
     
-    elem2R(thisElem2,e2r_Length)         = linkR(thislink,lr_ElementLength)
+    elem2R(thisElem2,e2r_Length)            = linkR(thislink,lr_ElementLength)
+    elem2R(thisElem2,e2r_InletOffset)       = linkR(thisLink,lr_InletOffset)
+    elem2R(thisElem2,e2r_DischargeCoeff1)   = linkR(thisLink,lr_DischargeCoeff1)
+    elem2R(thisElem2,e2r_DischargeCoeff2)   = linkR(thisLink,lr_DischargeCoeff2)
+    elem2R(thisElem2,e2r_LeftSlope)         = linkR(thisLink,lr_LeftSlope)
+    elem2R(thisElem2,e2r_RightSlope)        = linkR(thisLink,lr_RightSlope)
+    elem2R(thisElem2,e2r_SideSlope)         = linkR(thisLink,lr_SideSlope)
+    elem2R(thisElem2,e2r_FullDepth)         = linkR(thisLink,lr_FullDepth)
+    elem2R(thisElem2,e2r_EndContractions)   = linkR(thisLink,lr_EndContractions)
     
     !% note the following has a minus as we are going downstream for the ghost
-    elem2R(thisElem2,e2r_Zbottom)        = nodeR(thisNode,nr_Zbottom)          &
+    elem2R(thisElem2,e2r_Zbottom)           = nodeR(thisNode,nr_Zbottom)       &
                                             - 0.5 * linkR(thisLink,lr_Slope)   &
-                                            * linkR(thislink,lr_ElementLength)
-    
+                                            * linkR(thislink,lr_ElementLength)    
+
     select case (linkI(thisLink,li_geometry))
         case (lRectangular)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
@@ -807,10 +889,10 @@
                 * sqrt(linkR(thisLink,lr_InitialDepth)/linkR(thisLink,lr_ParabolaValue))
         case (lTrapezoidal)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-            elem2R(thisElem2,e2r_Topwidth) = linkR(thisLink,lr_BreadthScale)   &
-                    + linkR(thisLink,lr_InitialDepth)                          &
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)   &
+                    + linkR(thisLink,lr_InitialDepth)                              &
                     * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
-        case (lTriangle)
+        case (lTriangular)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
                     * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
@@ -818,11 +900,13 @@
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
             faceR(thisFace,fr_Topwidth)        = linkR(thisLink,lr_Topwidth)
+        case (lCircular)
+            print*, 'in development'
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
     end select
- 
+    
     ! use the node name for the ghost element
     elem2Name(thisElem2) = nodeName(thisNode)
  
@@ -936,6 +1020,9 @@
     ! store the ghost element
     elem2I(thisElem2,e2i_idx)            = thisElem2
     elem2I(thisElem2,e2i_elem_type)      = eBCup
+    elem2I(thisElem2,e2i_weir_elem_type) = linkI(thisLink,li_weir_type)
+    elem2I(thisElem2,e2i_orif_elem_type) = linkI(thisLink,li_orif_type)
+    elem2I(thisElem2,e2i_pump_elem_type) = linkI(thisLink,li_pump_type)
     elem2I(thisElem2,e2i_geometry)       = elem2I(lastElem2,e2i_geometry)
     elem2I(thisElem2,e2i_roughness_type) = elem2I(lastElem2,e2i_roughness_type)
     elem2I(thisElem2,e2i_link_ID)        = dLink
@@ -961,7 +1048,7 @@
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
             faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
-        case (eTriangle)
+        case (eTriangular)
             elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
             faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
@@ -1095,8 +1182,8 @@
     lastElemM = thisElemM
     thisElemM = thisElemM+1
     elemMI(jElem,eMi_idx)             = jElem
-    elemMI(jElem,eMi_elem_type)       = eJunctionChannel ! HACK - PIPE NOT HANDLED
-    elemMI(jElem,eMi_geometry)        = eRectangular ! HACK - NEED AN APPROACH TO ASSIGN
+    elemMI(jElem,eMi_elem_type)       = eJunctionChannel    ! HACK - PIPE NOT HANDLED
+    elemMI(jElem,eMi_geometry)        = eRectangular        ! HACK - NEED AN APPROACH TO ASSIGN
     elemMI(jElem,eMi_nfaces)          = nodeI(thisNode,ni_N_link_u) + nodeI(thisNode,ni_N_link_d)
     elemMI(jElem,eMi_nfaces_d)        = nodeI(thisNode,ni_N_link_d)
     elemMI(jElem,eMi_nfaces_u)        = nodeI(thisNode,ni_N_link_u)
@@ -1292,16 +1379,28 @@
  
  do mm = 1,linkI(thisLink,li_N_element)
     !%  store the elem info
-    elem2I(thisElem2,e2i_idx)              = thisElem2
-    elem2I(thisElem2,e2i_elem_type)        = linkI(thisLink,li_link_type)
-    elem2I(thisElem2,e2i_geometry)         = linkI(thislink,li_geometry)
-    elem2I(thisElem2,e2i_roughness_type)   = linkI(thisLink,li_roughness_type)
-    elem2I(thisElem2,e2i_link_ID)          = thisLink
-    elem2I(thisElem2,e2i_link_Pos)         = mm
-    elem2I(thisElem2,e2i_Mface_d)          = lastFace
-    elem2I(thisElem2,e2i_Mface_u)          = thisFace
+    elem2I(thisElem2,e2i_idx)               = thisElem2
+    elem2I(thisElem2,e2i_elem_type)         = linkI(thisLink,li_link_type)
+    elem2I(thisElem2,e2i_weir_elem_type)    = linkI(thisLink,li_weir_type)
+    elem2I(thisElem2,e2i_orif_elem_type)    = linkI(thisLink,li_orif_type)
+    elem2I(thisElem2,e2i_pump_elem_type)    = linkI(thisLink,li_pump_type)
+    elem2I(thisElem2,e2i_geometry)          = linkI(thislink,li_geometry)
+    elem2I(thisElem2,e2i_roughness_type)    = linkI(thisLink,li_roughness_type) 
+    elem2I(thisElem2,e2i_link_ID)           = thisLink
+    elem2I(thisElem2,e2i_link_Pos)          = mm
+    elem2I(thisElem2,e2i_Mface_d)           = lastFace
+    elem2I(thisElem2,e2i_Mface_u)           = thisFace
     
-    elem2R(thisElem2,e2r_Length)           = linkR(thislink,lr_ElementLength)
+    elem2R(thisElem2,e2r_Length)            = linkR(thislink,lr_ElementLength)
+    elem2R(thisElem2,e2r_Zbottom)           = zcenter
+    elem2R(thisElem2,e2r_InletOffset)       = linkR(thisLink,lr_InletOffset)
+    elem2R(thisElem2,e2r_DischargeCoeff1)   = linkR(thisLink,lr_DischargeCoeff1)
+    elem2R(thisElem2,e2r_DischargeCoeff2)   = linkR(thisLink,lr_DischargeCoeff2)
+    elem2R(thisElem2,e2r_LeftSlope)         = linkR(thisLink,lr_LeftSlope)
+    elem2R(thisElem2,e2r_RightSlope)        = linkR(thisLink,lr_RightSlope)
+    elem2R(thisElem2,e2r_SideSlope)         = linkR(thisLink,lr_SideSlope)
+    elem2R(thisElem2,e2r_EndContractions)   = linkR(thisLink,lr_EndContractions)
+    elem2R(thisElem2,e2r_FullDepth)         = linkR(thisLink,lr_FullDepth)
     
     zcenter = zcenter + linkR(thislink,lr_Slope) * linkR(thislink,lr_ElementLength)
     zface   = zface   + linkR(thislink,lr_Slope) * linkR(thislink,lr_ElementLength)
@@ -1319,10 +1418,10 @@
                 * sqrt(linkR(thisLink,lr_InitialDepth)/linkR(thisLink,lr_ParabolaValue))
         case (lTrapezoidal)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-            elem2R(thisElem2,e2r_Topwidth) = linkR(thisLink,lr_BreadthScale)   &
-                    + linkR(thisLink,lr_InitialDepth)                          &
+            elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_BreadthScale)   &
+                    + linkR(thisLink,lr_InitialDepth)                              &
                     * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
-        case (lTriangle)
+        case (lTriangular)
             elem2R(thisElem2,e2r_BreadthScale) = zeroR
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_InitialDepth) &
                     * (linkR(thisLink,lr_LeftSlope) + linkR(thisLink,lr_RightSlope))
@@ -1424,6 +1523,10 @@
         f_result = fBCup
     elseif (dn_elem_type == eBCdn) then
         f_result = fBCdn
+    elseif (dn_elem_type == eWeir) then
+        f_result = fWeir
+    elseif (up_elem_type == eWeir) then
+        f_result = fWeir
     else
         f_result = fMultiple
     endif
@@ -1432,6 +1535,8 @@
         f_result = fChannel
     elseif (up_elem_type == fPipe) then
         f_result = fPipe 
+    elseif (up_elem_type == fWeir) then
+        f_result = fWeir
     else
         print *, 'upstream element: ',up_elem_type
         print *, 'dnstream element: ',dn_elem_type

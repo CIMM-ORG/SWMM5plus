@@ -147,7 +147,7 @@
 
  call bc_face_othervalues (faceR, faceI, elem2R, bcdataDn)
  call bc_face_othervalues (faceR, faceI, elem2R, bcdataUp)
- 
+
  call  bc_ghost_othervalues &
     (elem2R, elem2I, faceR, faceI, bcdataUp, e2i_Mface_u, e2r_Velocity_new,  &
      fr_Area_d, fr_Velocity_d, fr_HydDepth_d, fr_Eta_d)
@@ -247,8 +247,13 @@
 
  do ii=1,size(bcdata)
     eID => bcdata(ii)%ElemGhostID
-    elem2R(eID,e2r_Timescale_u) = setting%Limiter%Timescale%Maximum
-    elem2R(eID,e2r_Timescale_d) = setting%Limiter%Timescale%Maximum
+    ! All the timescales for boundary are Maximum. So here using the value for timescale flowrate
+    elem2R(eID,e2r_Timescale_Q_u) = setting%Limiter%Timescale%Maximum !Fixing Timescale for new element implementation
+    elem2R(eID,e2r_Timescale_Q_d) = setting%Limiter%Timescale%Maximum
+    elem2R(eID,e2r_Timescale_H_u) = setting%Limiter%Timescale%Maximum !Fixing Timescale for new element implementation
+    elem2R(eID,e2r_Timescale_H_d) = setting%Limiter%Timescale%Maximum
+    elem2R(eID,e2r_Timescale_G_u) = setting%Limiter%Timescale%Maximum !Fixing Timescale for new element implementation
+    elem2R(eID,e2r_Timescale_G_d) = setting%Limiter%Timescale%Maximum
  end do
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
@@ -569,7 +574,6 @@
  integer    :: ii
 !--------------------------------------------------------------------------
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
  do ii=1,size(bcdata)
     bcdata%thisValue = utility_linear_interpolate_within_indexlist &
                         (thisTime, bcdata(ii)%TimeArray, bcdata(ii)%ValueArray )
