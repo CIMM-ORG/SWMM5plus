@@ -548,6 +548,41 @@
  end subroutine rectangular_junction_leg
 !
 !==========================================================================
+!==========================================================================
+!
+ pure function table_lookup &
+    (normalizedInput, table, nItems) result(normalizedOutput)
+!
+! Computes thebarotropic + advection CFL from the timescales up and down
+!
+ real,      intent(in)      :: table(:)
+ real,      intent(in)      :: normalizedInput
+ integer,   intent(in)      :: nItems
+    
+ real     :: normalizedOutput
+ real     :: delta, startPos, endPos
+ integer  :: ii
+  
+!-------------------------------------------------------------------------- 
+!% find which segment of table contains x
+ delta = oneR / (nItems - oneR)
+
+ ii = int(normalizedInput / delta)
+
+ if     ( ii .GE. (nItems - oneI) ) then 
+    normalizedOutput = table(nItems - 1)
+ elseif ( ii .LE. zeroR) then
+    normalizedOutput = zeroR
+ else
+    startPos = ii * delta
+    endPos   = (ii + oneI) * delta
+    normalizedOutput = table(ii) + (normalizedInput - startPos) * &
+                (table(ii + oneI) - table(ii)) / delta
+ endif
+               
+ end function table_lookup
+!
+!==========================================================================
 ! END OF MODULE element_geometry
 !==========================================================================
  end module element_geometry

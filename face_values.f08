@@ -693,6 +693,7 @@ call interp_channel_onetype &
  endwhere
 
  where (faceI(:,fi_etype_d) == fWeir)
+    !%!% do this as meta element type so, orifice is also added, qOnly
     ! for weir the weight of interpolation is timescale max.
     ! the interpolation gives the eta of the element upstream.
     etaDn = elem2R(faceI(:,fi_Melem_u),e2r_Eta)
