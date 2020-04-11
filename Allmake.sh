@@ -24,6 +24,7 @@ echo Find all source files, create a list of corresponding object files ...
 SOURCESF="  type_definitions.f08\
         setting_definition.f08\
         globals.f08\
+        xsect_tables.f08\
         array_index.f08\
         data_keys.f08\
         utility.f08\
