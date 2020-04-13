@@ -112,57 +112,6 @@
 
  !setting%OutputThreadedLink%SuppressAllFiles = .true.
 
-   !%  elemM# are the values for elements that have more than 2 faces
-   real,       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
-   integer,    dimension(:,:), allocatable, target    :: elemMI       ! integer data for elements with multi faces
-   logical,    dimension(:,:), allocatable, target    :: elemMYN      ! logical data for elements with multi faces
-
-   type(string), dimension(:), allocatable, target    :: elemMName    ! array of character strings
-
-   !%  face# are the values for faces (always bounded by 2 elements)
-   real,       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
-   integer,    dimension(:,:), allocatable, target    :: faceI       ! integer data for faces
-   logical,    dimension(:,:), allocatable, target    :: faceYN      ! logical data for face
-
-   type(string), dimension(:), allocatable, target    :: faceName    ! array of character strings
-
-   !%  links are the building blocks from SWMM link-node formulation
-   real,       dimension(:,:), allocatable, target    :: linkR       ! real data for links
-   integer,    dimension(:,:), allocatable, target    :: linkI       ! integer data for links
-   logical,    dimension(:,:), allocatable, target    :: linkYN      ! logical data for links
-
-   type(string), dimension(:), allocatable, target    :: linkName    ! array of character strings
-
-   !%  nodes are the building blocks from teh SWMM link-node formulation
-   real,       dimension(:,:), allocatable, target    :: nodeR       ! real data for nodes
-   integer,    dimension(:,:), allocatable, target    :: nodeI       ! integer data for nodes
-   logical,    dimension(:,:), allocatable, target    :: nodeYN      ! logical data for nodes
-
-   type(string), dimension(:), allocatable, target    :: nodeName   ! array of character strings
-
-   !%  bcdata are structures containing boundary condition data
-   type(bcType), dimension(:), allocatable :: bcdataUp, bcdataDn
-
-   !%  debug output file information
-   type(debugfileType),  dimension(:),   allocatable :: debugfile
-
-   !%  diagnostic information
-   type(diagnosticType), allocatable, dimension(:)   :: diagnostic
-
-   !% threaded output files
-   type(threadedfileType), allocatable, dimension(:) :: threadedfile
-
-   integer, dimension(:),      allocatable :: wdID
-   integer, dimension(:),      allocatable :: wdNumberPairs
-   real,    dimension(:),      allocatable :: wdManningsN
-   real,    dimension(:),      allocatable :: wdLength
-   real,    dimension(:),      allocatable :: wdZBottom
-   real,    dimension(:),      allocatable :: wdXDistance
-   real,    dimension(:),      allocatable :: wdBreadth
-   real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
-   type(string), dimension(:), allocatable :: wdCellType(:)
-
-   integer :: hahaha
    !--------------------------------------------------------------------------
    print *, ''
    print *, '====================================================='
