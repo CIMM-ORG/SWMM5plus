@@ -19,6 +19,7 @@
     use junction
     use setting_definition
     use utility
+    use weir
     
     implicit none
     
@@ -35,9 +36,9 @@
 !
  subroutine initial_condition_setup &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, thisTime, &
-     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-     Breadth, widthDepthData, cellType)
+     linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, thisTime, ID,           &
+     numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,            &
+     widthDepthData, cellType)
  
  character(64) :: subroutine_name = 'initial_condition_setup'
  
@@ -51,14 +52,15 @@
  
  type(bcType),        intent(in out)      :: bcdataDn(:), bcdataUp(:)  
  
- integer, intent(in out)    :: ID(:)
- integer, intent(in out)    :: numberPairs(:)
- real,    intent(in out)    :: ManningsN(:)
- real,    intent(in out)    :: Length(:)
- real,    intent(in out)    :: zBottom(:)
- real,    intent(in out)    :: xDistance(:)
- real,    intent(in out)    :: Breadth(:)
- real,    intent(in out)    :: widthDepthData(:,:,:)
+ integer, intent(inout)    :: ID(:)
+ integer, intent(inout)    :: numberPairs(:)
+ real,    intent(inout)    :: ManningsN(:)
+ real,    intent(inout)    :: Length(:)
+ real,    intent(inout)    :: zBottom(:)
+ real,    intent(inout)    :: xDistance(:)
+ real,    intent(inout)    :: Breadth(:)
+ real,    intent(inout)    :: widthDepthData(:,:,:)
+
  type(string), intent(in out)   :: cellType(:)
  
  integer :: idx
@@ -69,9 +71,9 @@
  !% get data that can be extracted from links
  call initial_conditions_from_linkdata &
     (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
-   
+
  call initial_junction_conditions &
-    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)    
+    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
 
  !% set the bc elements (outside of face) to null values
  call bc_nullify_ghost_elem (elem2R, bcdataDn)
@@ -84,16 +86,31 @@
      faceR, faceI, bcdataDn, bcdataUp, thisTime, 0, &
      ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
      Breadth, widthDepthData, cellType)
+
+ call meta_element_assign &
+    (elem2I, e2i_elem_type, e2i_meta_elem_type) 
+
+ call meta_element_assign &
+    (elemMI, eMi_elem_type, eMi_meta_elem_type) 
  
  call element_dynamics_update &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
-     e2r_Volume, eMr_Volume, thisTime)          
-      
+     e2r_Volume, eMr_Volume, thisTime)   
+    
+ call face_meta_element_assign &
+    (faceI, elem2I, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
+     fi_meta_etype_d, e2i_Meta_elem_type)      
+
  call face_update &
     (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity,  &
      e2r_Volume, eMr_Volume, thisTime, 0)
+
+!% set the new Eta for weir elements
+ where      ( (elem2I(:,e2i_elem_type) == eWeir) )
+            elem2R(:,e2r_Eta) = max(faceR(elem2I(:,e2i_Mface_u),fr_Eta_d), faceR(elem2I(:,e2i_Mface_d),fr_Eta_u))
+ endwhere
 
  !% set the element-specific smallvolume value
  !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
@@ -102,11 +119,13 @@
     elemMR(:,eMr_SmallVolume) = 0.01
 !     elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length) 
 !     elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length)
+    where (elem2I(:,e2i_geometry) == eTriangular)
+            elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_Topwidth) * elem2R(:,e2r_Length)
+    endwhere     
  else
     elem2R(:,e2r_SmallVolume) = zeroR
     elemMR(:,eMr_SmallVolume) = zeroR
  endif
-
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine initial_condition_setup
@@ -146,6 +165,7 @@
     !% up and downstream depths on this link
     dup => linkR(ii,lr_InitialUpstreamDepth)
     ddn => linkR(ii,lr_InitialDnstreamDepth)
+
             
     select case (LdepthType)
     
@@ -162,7 +182,6 @@
                     elem2R(:,e2r_Depth) = 0.5*(dup + ddn)
                 endwhere
             endif
-        
         case (2)        
             !% if the link has linearly-varying depth 
             !% depth at the downstream element (link position =1)
@@ -222,9 +241,8 @@
                 endif
                             
             end do
-
         end select
-    
+
         !%  handle all the initial conditions that don't depend on geometry type
         !%
         where (elem2I(:,e2i_link_ID) == Lindx)
@@ -238,7 +256,6 @@
 
         if (linkI(ii,li_geometry) == lRectangular ) then
             !% handle rectangular elements
-            
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)  = eRectangular
                 elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
@@ -330,12 +347,12 @@
                     + sqrt(oneR + elem2R(:,e2r_RightSlope)**twoR))
             endwhere
             
-        elseif (linkI(ii,li_geometry) == lTriangle ) then
+        elseif (linkI(ii,li_geometry) == lTriangular ) then
             !% handle triangle elements
             ! Input: Left Slope, Right Slope, InitialDepth
             where (elem2I(:,e2i_link_ID) == Lindx)
-                elem2I(:,e2i_geometry)  = eTriangle
-                
+                elem2I(:,e2i_geometry)  = eTriangular
+
                 elem2R(:,e2r_HydDepth) = onehalfR * elem2R(:,e2r_Depth)
                 
                 elem2R(:,e2r_BreadthScale) = zeroR
@@ -365,11 +382,11 @@
             !% handle width-depth elements
             
             where (elem2I(:,e2i_link_ID) == Lindx)
+
                 elem2I(:,e2i_geometry)  = eWidthDepth
                 elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
                 elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
                 elem2R(:,e2r_Topwidth)  = linkR(ii,lr_TopWidth)
-                
                 elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Area)      = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_HydDepth)
                 elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
@@ -380,22 +397,14 @@
             print *, 'error: initialization for non-defined elements needed in ',subroutine_name
             stop
         end if
-        
+
         !%  Update velocity
         where (  (elem2I(:,e2i_link_ID) == Lindx) .and. (elem2R(:,e2r_Area) > zeroR) )
             elem2R(:,e2r_Velocity)  = elem2R(:,e2r_Flowrate) / elem2R(:,e2r_Area)
         endwhere
-        
-        !print *, elem2R(:,e2r_HydDepth)
-        !stop
-
+    
  enddo
- 
- !print *, elem2R(:,e2r_Flowrate)
- !print *, trim(subroutine_name)
- !stop
 
- 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine initial_conditions_from_linkdata
 !
@@ -471,6 +480,75 @@
 !
 !========================================================================== 
 !==========================================================================
+!
+ subroutine meta_element_assign (elemI, ei_elem_type, ei_meta_elem_type)
+!
+! Assign meta element type to elements
+!
+
+ character(64) :: subroutine_name = 'meta_element_assign'
+ 
+ integer,   target,     intent(inout)    :: elemI(:,:)
+ integer,               intent(in)       :: ei_elem_type         
+
+ integer,               intent(in)       :: ei_meta_elem_type
+
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+    
+ where ( (elemI(:,ei_elem_type) == eChannel)             .or. &
+         (elemI(:,ei_elem_type) == ePipe)                .or. &
+         (elemI(:,ei_elem_type) == eJunctionChannel)     .or. &
+         (elemI(:,ei_elem_type) == eJunctionPipe)  )
+        elemI(:,ei_meta_elem_type) = eHQ
+
+ elsewhere ( (elemI(:,ei_elem_type) == eWeir)            .or. &
+             (elemI(:,ei_elem_type) == eorifice)         .or. &
+             (elemI(:,ei_elem_type) == ePump)  )   
+        elemI(:,ei_meta_elem_type) = eQonly
+
+ elsewhere ( (elemI(:,ei_elem_type) == eStorage) )
+        elemI(:,ei_meta_elem_type) = eHonly
+        
+ elsewhere ( (elemI(:,ei_elem_type) == eBCup)            .or. &
+             (elemI(:,ei_elem_type) == eBCdn)  )
+        ! Assigning nonHQ meta elem type to boundary conditions. Confirm this!
+        elemI(:,ei_meta_elem_type) = eNonHQ
+ end where
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine meta_element_assign 
+!
+!========================================================================== 
+!==========================================================================
+ subroutine face_meta_element_assign &
+    (faceI, elemI, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
+     fi_meta_etype_d, ei_Meta_elem_type)
+
+ character(64) :: subroutine_name = 'interp_with_junction_upstream'
+ 
+ integer,      target,     intent(in out)  :: faceI(:,:), elemI(:,:)
+ integer,                  intent(in)      :: N_face, fi_Melem_u, fi_Melem_d
+ integer,                  intent(in)      :: fi_meta_etype_u, fi_meta_etype_d
+ integer,                  intent(in)      :: ei_Meta_elem_type 
+
+ integer :: ii
+ 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ do ii=1, N_face
+    faceI(ii,fi_meta_etype_u) = elemI(faceI(ii,fi_Melem_u), ei_Meta_elem_type)
+    faceI(ii,fi_meta_etype_d) = elemI(faceI(ii,fi_Melem_d), ei_Meta_elem_type)
+ end do
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine face_meta_element_assign
+!
+!========================================================================== 
+!==========================================================================
+!
 !
 ! subroutine initial_condition_setupOLD &
 !    (elem2R, elemMR, elem2I, elemMI, elem2YN, elemMYN, &

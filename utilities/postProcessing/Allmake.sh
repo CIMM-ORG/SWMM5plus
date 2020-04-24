@@ -1,17 +1,18 @@
 #!/bin/bash
 
-echo Compiling BIPquick ...
+echo Compiling Plot ...
 
 # Compiler/Linker settings
 FC=gfortran
 OPTFLAGS=-g
 FFLAGS=-02
-PROGRAM=BIPquick
+PROGRAM=Plot
 PRG_OBJ=$PROGRAM.o
 
 # Find all source files, create a list of corresponding object files
-SOURCESF="  BIPquick.f08
-    "
+SOURCESF="  postProcessing.f08
+			main.f08
+    	"
 
 # Linker
 echo Compiling ...

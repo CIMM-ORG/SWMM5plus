@@ -15,17 +15,19 @@ FFLAGS=-02
 PROGRAM=SWMM
 PRG_OBJ=$PROGRAM.o
 
-echo Choosing $FC as a compiler ...
+echo Compiling with $FC ...
 
 # Find all source files, create a list of corresponding object files
 echo Find all source files, create a list of corresponding object files ...
 
 # Find all source files, create a list of corresponding object files
-SOURCESF="  type_definitions.f08\
+SOURCESF="  dll_mod.f08\
+        type_definitions.f08\
         setting_definition.f08\
         globals.f08\
         array_index.f08\
         data_keys.f08\
+        interface.f08\
         utility.f08\
         adjustments.f08\
         allocate_storage.f08\
@@ -33,14 +35,17 @@ SOURCESF="  type_definitions.f08\
         read_width_depth.f08\
         case_waller_creek.f08\
         case_simple_channel.f08\
+        case_simple_weir.f08\
         case_y_channel.f08\
         checking.f08\
         debug.f08\
         diagnostic.f08\
         junction.f08\
+        face_values.f08\
+        weir.f08\
+        orifice.f08\
         element_dynamics.f08\
         element_geometry.f08\
-        face_values.f08\
         explicit_euler.f08\
         friction_model.f08\
         initial_condition.f08\
@@ -57,10 +62,10 @@ SOURCESF="  type_definitions.f08\
 
 # Linker
 echo Compiling ...
-$FC -o $PROGRAM $SOURCESF
+$FC $SOURCESF -ldl -o $PROGRAM
 
 $clean:
     echo Clean Object files...
-    #rm -rf *.o *.mod
-    
+    rm -rf *.o *.mod
+
 echo Complete!

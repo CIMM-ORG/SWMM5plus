@@ -312,7 +312,7 @@
 
     thisdata = nullvalueR
     thisX    = nullvalueR
-
+    ! print*, ii
     ! get the data of the element (or BC) downstream of link
     select case (ftypDn)
         case (fChannel)
@@ -331,6 +331,19 @@
         case (fPipe)
             print *, 'error: pipe output not handled'
             stop
+        case (fWeir)
+            ! downstream last element from previous link - upstream face
+            thisdata(1) = faceR(elem2I(edn,e2i_Mface_d),FaceCol_u)
+            thisX(1)    = -elem2R(edn,e2r_Length)
+            ! downstream last element from previous linke - center
+            thisdata(2) =  elem2R(edn,elemCol)
+            thisX(2)    = -onehalfR * elem2R(edn,e2r_Length)
+            ! face downstream at link connection (node)
+            thisdata(3) = faceR(fdn,FaceCol_d)
+            thisX(3)    = -oneeighthR * elem2R(edn,e2r_Length)
+            ! face upstream at link connection (node)
+            thisdata(4) = faceR(fdn,FaceCol_u)
+            thisX(4)    = zeroR
         case (fMultiple)
             bdn => faceI(fdn,fi_branch_d)
             ! downstram junction center
@@ -443,6 +456,12 @@
         case (fPipe)
             print *, 'error: pipe not handled yet in ',trim(subroutine_name)
             stop
+        case (fWeir)
+            !%  First element of the next upstream link
+            thisdata(eLast+1) = elem2R(eup,ElemCol)
+            thisX(eLast+1)    = thisX(eLast) + onehalfR * elem2R(eup,e2r_Length)
+            thisdata(eLast+2) = faceR(elem2I(eup,e2i_Mface_u),FaceCol_d)
+            thisX(eLast+2)    = thisX(eLast) + elem2R(eup,e2r_Length)
         case (fMultiple)
             !% an upstream junction
             bup => faceI(fup,fi_branch_u)
@@ -475,8 +494,6 @@
     end select
     ndata = eLast + 2
 
-
-
 !    do mm=1,ndata
 !        print *, mm, thisX(mm), thisdata(mm)
 !    end do
@@ -490,8 +507,6 @@
 
 
  end do
-
-
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine output_one_threaded_data_by_link

@@ -17,6 +17,8 @@
     use globals
     use setting_definition
     use utility
+    use weir
+    use orifice
 
     implicit none
 
@@ -31,10 +33,9 @@
 !==========================================================================
 !
  subroutine rk2 &
-    (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
-     bcdataDn, bcdataUp, thistime, dt, &
-     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-     Breadth, widthDepthData, cellType)
+    (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN,       &
+     faceYN, bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, &
+     Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
 !
 ! runge-kutta time advance for a single time step
 !
@@ -53,7 +54,7 @@
  real    :: thiscoef(2), steptime
 
  integer :: ilink
- 
+
  integer, intent(in out)    :: ID(:)
  integer, intent(in out)    :: numberPairs(:)
  real,    intent(in out)    :: ManningsN(:)
@@ -85,8 +86,9 @@
  elem2R(:,e2r_Velocity_new)  = zeroR
  elemMR(:,eMr_Volume_new)    = zeroR
  elemMR(:,eMr_Velocity_new)  = zeroR
-    
+ 
  if (  count(elem2I(:,e2i_elem_type) == eChannel) &
+     + count(elem2I(:,e2i_elem_type) == eWeir) & 
      + count(elemMI(:,eMi_elem_type) == eJunctionChannel) > zeroI) then
 
     !%  coefficients for the rk2 steps
@@ -104,19 +106,30 @@
              e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
              elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
              thiscoef(ii))
-             
- 
+
+        if ( count(elem2I(:,e2i_elem_type) == eWeir)  > zeroI) then
+        ! call weir step if weirs exist in the system
+            call weir_step &
+                (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
+                e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
+                faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
+        endif
+
+        if ( count(elem2I(:,e2i_elem_type) == eOrifice)  > zeroI) then
+        ! call orifice step if orifices exist in the system
+            call orifice_step &
+                (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
+                e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
+                faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
+        endif
+              
         call rk2_update_auxiliary_variables &
             (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new, &
-             elem2R, elem2I, elem2YN, &
-             elemMR, elemMI, elemMYN, &
-             faceR,  faceI,  faceYN,  &
-             bcdataDn, bcdataUp, steptime, ii, &
-             ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-             Breadth, widthDepthData, cellType)
-             
-  
-    
+             elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  faceI,    &
+             faceYN,  bcdataDn, bcdataUp, steptime, ii, ID, numberPairs,         &
+             ManningsN, Length, zBottom, xDistance,  Breadth, widthDepthData,    &
+             cellType)
+
         if (ii==1) then
             !% store the net face fluxes that are used for volume advance.
             call diagnostic_element_volume_conservation_fluxes &
@@ -134,6 +147,10 @@
     call overwrite_old_values &
         (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
          e2r_Volume, e2r_Volume_new, e2i_elem_type, eChannel, .true.)
+
+    call overwrite_old_values &
+        (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
+         e2r_Volume, e2r_Volume_new, e2i_elem_type, eWeir, .true.)
 
     call overwrite_old_values &
         (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
@@ -310,7 +327,7 @@ endif
  call adjust_negative_volume_reset (volume2new)
  call adjust_negative_volume_reset (volumeMnew)
 
-!%  VELOCITY - divide out the volume to get the actual velocity
+!%  VELOCITY - divide out the volume to get the ae2r_Tempctual velocity
  where (elem2I(:,e2i_elem_type) == eChannel)
     velocity2new = velocity2new / volume2new
  endwhere
@@ -338,12 +355,10 @@ endif
 !
  subroutine rk2_update_auxiliary_variables &
     (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new, &
-     elem2R, elem2I, elem2YN, &
-     elemMR, elemMI, elemMYN, &
-     faceR,  faceI,  faceYN,  &
-     bcdataDn, bcdataUp, steptime, rkiteration, &
-     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-     Breadth, widthDepthData, cellType)
+     elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  faceI,    &
+     faceYN, bcdataDn, bcdataUp, steptime, rkiteration, ID, numberPairs, &
+     ManningsN, Length, zBottom, xDistance, Breadth, widthDepthData,     &
+     cellType)
 
  character(64) :: subroutine_name = 'rk2_update_auxiliary_variables'
 
@@ -372,11 +387,10 @@ endif
     
 !%  advance all geometry and dynamics
  call element_geometry_update &
-    (elem2R, elem2I, elem2YN, e2r_Volume_new, &
-     elemMR, elemMI, elemMYN, eMr_Volume_new, &
-     faceR, faceI, bcdataDn, bcdataUp, steptime, 1, &
-     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-     Breadth, widthDepthData, cellType)
+    (elem2R, elem2I, elem2YN, e2r_Volume_new, elemMR, elemMI, elemMYN,  &
+     eMr_Volume_new, faceR, faceI, bcdataDn, bcdataUp, steptime, 1, ID, &
+     numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,       &
+     widthDepthData, cellType)    
     
 !%  at this point, the channels and the junction main sections have the correct
 !%  geometry, but the junction branches have provisional geometry that is

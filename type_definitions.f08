@@ -33,7 +33,7 @@
         real     :: ConservationThisStep ! + is artificial source, - is sink
         real     :: ConservationTotal
     end type diagnosticVolumeType
-    
+
     type diagnosticType
         type(diagnosticVolumeType)  :: Volume
     end type diagnosticType

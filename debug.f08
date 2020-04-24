@@ -128,9 +128,17 @@
     ii=ii+1
     call debug_singlefile_open (debugfile(ii), 'elem2R','Velocity',e2r_Velocity)
     ii=ii+1
-    call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_u', e2r_Timescale_u)
+    call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_Q_u', e2r_Timescale_Q_u)
     ii=ii+1
-    call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_d', e2r_Timescale_d)
+    call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_Q_d', e2r_Timescale_Q_d)
+    ii=ii+1
+    call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_H_u', e2r_Timescale_H_u)
+    ii=ii+1
+    call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_H_d', e2r_Timescale_H_d)
+    ii=ii+1
+    call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_G_u', e2r_Timescale_G_u)
+    ii=ii+1
+    call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_G_d', e2r_Timescale_G_d)
     ii=ii+1
     call debug_singlefile_open (debugfile(ii), 'elem2R','Friction', e2r_Friction)
     ii=ii+1
@@ -166,6 +174,8 @@
 
  if (setting%Debugout%elem2I) then
     call debug_singlefile_open (debugfile(ii), 'elem2I','idx', e2i_idx)
+    ii=ii+1
+    call debug_singlefile_open (debugfile(ii), 'elem2I','elem_type', e2i_meta_elem_type)
     ii=ii+1
     call debug_singlefile_open (debugfile(ii), 'elem2I','elem_type', e2i_elem_type)
     ii=ii+1
@@ -244,6 +254,8 @@
     call debug_singlefile_open (debugfile(ii), 'elemMR','Timescale_u2', eMr_Timescale_u2)
     ii=ii+1
     call debug_singlefile_open (debugfile(ii), 'elemMR','Timescale_d1', eMr_Timescale_d1)
+    ii=ii+1
+    call debug_singlefile_open (debugfile(ii), 'elemMR','Timescale_d2', eMr_Timescale_d2)
     ii=ii+1
     call debug_singlefile_open (debugfile(ii), 'elemMR','Area_u1', eMr_Area_u1)
     ii=ii+1

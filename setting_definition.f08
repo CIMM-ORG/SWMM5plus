@@ -130,6 +130,7 @@
 
     !%  setting%SmallVolume
     type smallvolumeType
+        ! Dont using small volumes for weir case. Needed to be changed later
         logical ::  UseSmallVolumes = .true. ! YN to determine if smallvolume adjustments used
         real    ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
         real    ::  ManningsN        = 0.01
@@ -165,29 +166,40 @@
 
     !%  setting%ZeroValue
     type zerovalueType
-        logical :: UseZeroValues = .false.
+        logical :: UseZeroValues = .true.
         real    :: Area         = 1.0e-7  ! m^2
         real    :: Depth        = 1.0e-4  ! m
         real    :: Flowrate     = 0.0     ! m^3/s
         real    :: Topwidth     = 1.0e-4  ! m
         real    :: Velocity     = 0.0     ! m/s
-        real    :: Volume       = 1.0e-6  ! m^3
+        real    :: Volume       = 1.0e-7  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
     end type zerovalueType
+
+    !%  setting%Weir
+    type WeirType
+        real    :: WeirDischargeCoeff   = 1.4 ! m^3/s
+        real    :: EndContraction       = 0.0    ! Number of End Contraction(0, 1, 2)
+        real    :: WeirHeight           = 1.5  ! Vertical Height of Weir Opening m
+        real    :: WeirWidth            = 3.0
+        real    :: WeirSideSlope        = 1.0
+        real    :: WeirInletOffset      = 1.0
+    end type WeirType
 
 !% FIRST LEVEL TYPE  ----------------------------------------------
     type settingType
         integer :: dummy
-        type(constantType)            :: Constant     ! constants
-        type(debugoutType)            :: DebugOut     ! control of debougout files
-        type(epsilonType)             :: Eps          ! epsilons used to provide bandwidth for comparisons
-        type(limiterType)             :: Limiter      ! maximum and minimum limiters
-        type(methodType)              :: Method       ! controls over simulation methods
-        type(outputThreadedLinkType)  :: OutputThreadedLink ! controls output for threaded link
-        type(smallvolumeType)         :: SmallVolume   ! controls for small volumes
-        type(stepType)                :: Step         ! controls over simulation time stepping
-        type(testcaseType)            :: TestCase     ! custom setup for test cases
-        type(timeType)                :: Time         ! controls of time step
-        type(zerovalueType)           :: ZeroValue    ! finite values to represent small or negative values
+        type(constantType)          :: Constant     ! constants
+        type(debugoutType)          :: DebugOut     ! control of debougout files
+        type(epsilonType)           :: Eps          ! epsilons used to provide bandwidth for comparisons
+        type(limiterType)           :: Limiter      ! maximum and minimum limiters
+        type(methodType)            :: Method       ! controls over simulation methods
+        type(outputThreadedLinkType):: OutputThreadedLink ! controls output for threaded link
+        type(smallvolumeType)       :: SmallVolume   ! controls for small volumes
+        type(stepType)              :: Step         ! controls over simulation time stepping
+        type(testcaseType)          :: TestCase     ! custom setup for test cases
+        type(timeType)              :: Time         ! controls of time step
+        type(zerovalueType)         :: ZeroValue    ! finite values to represent small or negative values
+        type(WeirType)              :: Weir         ! This contains the weir settings (only for initial implimentation purpose)
     end type settingType
 
 

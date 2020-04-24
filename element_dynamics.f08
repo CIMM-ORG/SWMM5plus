@@ -77,7 +77,7 @@
         (elem2R, elem2YN, e2r_Velocity_new, e2r_Volume_new, &
          elemMR, elemMYN, eMr_Velocity_new, eMr_Volume_new)   
  endif
-    
+
 !%  flowrate updated from velocity 
  call element_flowrate_update  &
      (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Velocity_new, eMr_Velocity_new)
@@ -90,7 +90,7 @@
  call element_timescale &
     (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, bcdataDn, bcdataUp, &
      e2r_Velocity_new)
-
+ 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine element_dynamics_update
 !
@@ -134,7 +134,7 @@
  call flowrate_from_velocity &
     ( elemMR, elemMI, &
       eMr_Flowrate, eMr_Area, eMr_Velocity_new, eMi_elem_type, eJunctionChannel)
-
+    
 
 !%  FLOWS AND VELOCITIES IN JUNCTION BRANCHES -----------------
 !%  The total flowrate is distributed among both outflow and inflow branches
@@ -226,7 +226,7 @@
  where (elemI(:,ei_elem_type) == eThisElemType)
     flowrate = area * velocity
  endwhere
- 
+
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine flowrate_from_velocity
 !
@@ -474,6 +474,10 @@
 ! in branch flowrate and velocities have already been updated in place, so
 ! no need to use a eMr..new index
  call timescale_value_junction (elemMR, elemMI, elemMYN)
+
+ call timescale_value_HonlyElement (elem2R, elem2I, elem2YN)
+
+ call timescale_value_QonlyElement (elem2R, elem2I, elem2YN)
  
  call bc_timescale_value (elem2R, bcdataDn)
 
@@ -483,6 +487,98 @@
  end subroutine element_timescale
 !
 !========================================================================== 
+!==========================================================================
+ subroutine timescale_value_HonlyElement &
+    (elem2R, elem2I, elem2YN)
+
+ character(64) :: subroutine_name = 'timescale_value_HonlyElement'
+    
+ real,      target, intent(in out)  :: elem2R(:,:)
+ integer,           intent(in)      :: elem2I(:,:)
+ logical,   target, intent(in out)  :: elem2YN(:,:)
+ 
+ integer    ::  indx(2), maskindx1
+ 
+ real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
+ real,      pointer :: tscale_H_up(:), tscale_H_dn(:), wavespeed(:)
+ real,      pointer :: tscale_G_up(:), tscale_G_dn(:), velocity(:)
+ real,      pointer :: length(:) 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+ tscale_Q_up => elem2R(:,e2r_Timescale_Q_u)
+ tscale_Q_dn => elem2R(:,e2r_Timescale_Q_d)
+ tscale_H_up => elem2R(:,e2r_Timescale_H_u)
+ tscale_H_dn => elem2R(:,e2r_Timescale_H_d)
+ tscale_G_up => elem2R(:,e2r_Timescale_G_u)
+ tscale_G_dn => elem2R(:,e2r_Timescale_G_d)
+
+!For Honly meta elements, the timescale for H is minimum. Timescale for Q and G is maximum
+!TODO:Storage can be multi faced. So fix for multi faces. 
+
+ where ( elem2I(:,e2i_meta_elem_type) == eHonly )
+    tscale_Q_up = setting%Limiter%Timescale%Maximum
+    tscale_Q_dn = setting%Limiter%Timescale%Maximum
+
+    tscale_H_up = setting%Limiter%Timescale%Minimum
+    tscale_H_dn = setting%Limiter%Timescale%Minimum
+    
+    tscale_G_up = setting%Limiter%Timescale%Maximum
+    tscale_G_dn = setting%Limiter%Timescale%Maximum
+ endwhere
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine timescale_value_HonlyElement
+!
+!==========================================================================
+!==========================================================================
+!
+ subroutine timescale_value_QonlyElement &
+    (elem2R, elem2I, elem2YN)
+
+ character(64) :: subroutine_name = 'timescale_value_QonlyElement'
+    
+ real,      target, intent(in out)  :: elem2R(:,:)
+ integer,           intent(in)      :: elem2I(:,:)
+ logical,   target, intent(in out)  :: elem2YN(:,:)
+ 
+ integer    ::  indx(2), maskindx1
+ 
+ real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
+ real,      pointer :: tscale_H_up(:), tscale_H_dn(:), wavespeed(:)
+ real,      pointer :: tscale_G_up(:), tscale_G_dn(:), velocity(:)
+ real,      pointer :: length(:) 
+ logical,   pointer :: maskarray1(:)
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+ tscale_Q_up => elem2R(:,e2r_Timescale_Q_u)
+ tscale_Q_dn => elem2R(:,e2r_Timescale_Q_d)
+ tscale_H_up => elem2R(:,e2r_Timescale_H_u)
+ tscale_H_dn => elem2R(:,e2r_Timescale_H_d)
+ tscale_G_up => elem2R(:,e2r_Timescale_G_u)
+ tscale_G_dn => elem2R(:,e2r_Timescale_G_d)
+
+!For Qonly meta elements, the timescale for Q is minimum. Timescale for H and G is maximum
+
+ where ( (elem2I(:,e2i_meta_elem_type) == eQonly) )
+
+    tscale_Q_up = setting%Limiter%Timescale%Minimum
+    tscale_Q_dn = setting%Limiter%Timescale%Minimum
+
+    tscale_H_up = setting%Limiter%Timescale%Maximum
+    tscale_H_dn = setting%Limiter%Timescale%Maximum
+
+    tscale_G_up = setting%Limiter%Timescale%Maximum
+    tscale_G_dn = setting%Limiter%Timescale%Maximum
+
+
+ endwhere
+
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ end subroutine timescale_value_QonlyElement
+!
+!==========================================================================
 !==========================================================================
 !
  subroutine timescale_value_channel &
@@ -498,8 +594,11 @@
  
  integer    ::  indx(2), maskindx1, maskindx2
  
- real,      pointer :: wavespeed(:), tscale_up(:), tscale_dn(:), velocity(:)
- real,      pointer :: length(:)
+ real,      pointer :: wavespeed(:), velocity(:)
+ real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
+ real,      pointer :: tscale_H_up(:), tscale_H_dn(:)
+ real,      pointer :: tscale_G_up(:), tscale_G_dn(:)
+ real,      pointer :: length(:) 
  logical,   pointer :: maskarray1(:), maskarray2(:)
   
 !-------------------------------------------------------------------------- 
@@ -518,23 +617,44 @@
  
  wavespeed = zeroR
  
- tscale_up => elem2R(:,e2r_Timescale_u)
- tscale_dn => elem2R(:,e2r_Timescale_d)
+ tscale_Q_up => elem2R(:,e2r_Timescale_Q_u)
+ tscale_Q_dn => elem2R(:,e2r_Timescale_Q_d)
+ tscale_H_up => elem2R(:,e2r_Timescale_H_u)
+ tscale_H_dn => elem2R(:,e2r_Timescale_H_d)
+ tscale_G_up => elem2R(:,e2r_Timescale_G_u)
+ tscale_G_dn => elem2R(:,e2r_Timescale_G_d)
+ 
  velocity  => elem2R(:,e2r_Velocity_new)
  length    => elem2R(:,e2r_Length)
-
- maskarray1 = (elem2I(:,e2i_elem_type) == eChannel)
  
 !%  compute timescale 
- where (maskarray1) 
+
+ maskarray1 = ( (elem2I(:,e2i_elem_type) == eChannel) )
+
+where (maskarray1)
     wavespeed = sqrt( grav * elem2R(:,e2r_HydDepth ))
-    tscale_up = - onehalfR * length / (velocity - wavespeed)
-    tscale_dn = + onehalfR * length / (velocity + wavespeed)
+    tscale_Q_up = - onehalfR * length / (velocity - wavespeed)
+    tscale_Q_dn = + onehalfR * length / (velocity + wavespeed)
+    tscale_G_up = tscale_Q_up
+    tscale_G_dn = tscale_Q_dn
+    tscale_H_up = tscale_Q_up
+    tscale_H_dn = tscale_Q_dn
+
  endwhere
  
+! e2r_Timescale_G_u = e2r_Timescale_Q_u
+! e2r_Timescale_G_d = e2r_Timescale_Q_d
+
+ !TODO We have to add the limiter for each type of element base on their physic
+ !TODO we have to add timescale calculation for e2r_Timescale_H_d and e2r_Timescale_H_u
+ !from Hodges and Liu (2019)
+
 !%  limiter for large, negative, and small values
- indx(1) = e2r_Timescale_u
- indx(2) = e2r_Timescale_d
+
+ indx(1) = e2r_Timescale_Q_u
+ indx(2) = e2r_Timescale_Q_d
+
+
  call timescale_limiter &
     (elem2R, elem2I, elem2YN, indx, maskindx1, maskindx2)
  
@@ -696,7 +816,7 @@
 !==========================================================================
 !
  subroutine timescale_limiter &
-    (elemR, elemI, elemYN, indx, maskindx1, maskindx2 )
+    (elemR, elemI, elemYN, indx, maskindx1, maskindx2)
 !
 ! limits the timescales to prevent negatives, small values, or large values
 ! 
