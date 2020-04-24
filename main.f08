@@ -95,7 +95,8 @@
  setting%TestCase%UseTestCase = .true.
  ! setting%TestCase%TestName = 'simple_channel_001'
  ! setting%TestCase%TestName = 'y_channel_002'
- setting%TestCase%TestName = 'simple_weir_003'
+ ! setting%TestCase%TestName = 'simple_weir_003'
+ setting%TestCase%TestName = 'simple_orifice_004'
  ! setting%TestCase%TestName = 'waller_creek'
 
 
@@ -169,7 +170,7 @@
  call diagnostic_initialize &
     (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, &
      bcdataUp, bcdataDn)
-    
+      
 !% setting a zero starting condition is useful for robustness tests
 print *, 'in main setting flowrate and velocity to 0'
 elem2R(:,e2r_Velocity) = 0.0

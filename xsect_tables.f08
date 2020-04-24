@@ -8,12 +8,13 @@
 
     ! use setting_definition
     ! use type_definitions
+    use globals
+    use setting_definition
 
     implicit none
 
     public
 
-    character(len=99) :: casename
 
 !==========================================================================
 ! Circular Shape
@@ -48,7 +49,105 @@
                                        0.9871, 0.9928, 0.9968, 0.9992, 1.0000, 0.9992, 0.9968, 0.9928, 0.9871, 0.9798,       &
                                        0.9708, 0.9600, 0.9474, 0.9330, 0.9165, 0.8980, 0.8773, 0.8542, 0.8285, 0.8000,       &
                                        0.7684, 0.7332, 0.6940, 0.6499, 0.6000, 0.5426, 0.4750, 0.3919, 0.2800, 0.0 /)
+ contains
 
+!
+!==========================================================================
+! functions for table interpolation
+!==========================================================================
+!
+ pure function table_lookup &
+    (normalizedInput, table, nItems) result(normalizedOutput)
+!
+! took up talbe values of circular types of geometry
+!
+ real,      intent(in)      :: table(:)
+ real,      intent(in)      :: normalizedInput
+ integer,   intent(in)      :: nItems
+    
+ real     :: normalizedOutput, normalizedOutput2
+ real     :: delta, startPos, endPos
+ integer  :: ii
+  
+!-------------------------------------------------------------------------- 
+!% find which segment of table contains x
+ delta = oneR / (nItems - oneR)
+
+ ii = int(normalizedInput / delta)
+
+ if     ( ii .GE. (nItems - oneI) ) then 
+
+    normalizedOutput = table(nItems - 1)
+
+ elseif ( ii .LE. zeroI) then
+
+    normalizedOutput = zeroR
+
+ else
+
+    startPos = ii * delta
+    endPos   = (ii + oneI) * delta
+
+    normalizedOutput = table(ii) + (normalizedInput - startPos) * &
+                          (table(ii + oneI) - table(ii)) / delta
+
+    if (ii == oneI) then
+      ! use quadratic interpolation for low x value
+      normalizedOutput2 = normalizedOutput + (normalizedInput - startPos) &
+      * (normalizedInput - endPos) / (delta*delta) * (table(ii)/2.0 - table(ii+1) &
+        + table(ii+2)/2.0)
+
+        if ( normalizedOutput2 > 0.0 ) then
+          normalizedOutput = normalizedOutput2
+        endif
+      
+    endif
+
+ endif
+               
+ end function table_lookup
+!
+!==========================================================================
+!==========================================================================
+!
+ pure function get_theta_of_alpha &
+    (alpha) result(theta)
+!
+! get the angle theta for small value of A/Afull (alpha) for circular geometry
+!
+ real,      intent(in)      :: alpha
+    
+ real     :: theta
+ real     :: theta1, d, ap
+ integer  :: ii
+  
+!--------------------------------------------------------------------------
+!% this code is adapted from SWMM 5.1 source code
+ if     (alpha .GE. 1.0) then
+    theta = 1.0
+ elseif (alpha .LE. 0.0) then
+    theta = 0.0
+ elseif (alpha .LE. 1.0e-5) then
+    theta = 37.6911 / 16.0 * alpha ** (onethirdR) 
+ else
+    theta = 0.031715 - 12.79384 * alpha + 8.28479 * sqrt(alpha)
+    theta1 = theta
+    ap = twoR * pi *alpha
+    do ii = 1,40
+        d = - (ap - theta + sin(theta)) / (1.0 - cos(theta))
+        if (d > 1.0) then
+            d = sign(1.0,d)
+        endif
+        theta = theta - d
+        if ( abs(d) .LE. 0.0001 ) then
+            return
+        endif
+    enddo
+    theta = theta1
+    return
+endif
+               
+end function get_theta_of_alpha
 !==========================================================================
 ! END OF MODULE xsect_tables
 !==========================================================================

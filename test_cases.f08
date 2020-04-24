@@ -10,12 +10,13 @@
     use array_index
     use bc
     use case_simple_channel
+    use case_simple_orifice
+    use case_simple_weir
     use case_y_channel
     use case_waller_creek
-    use read_width_depth
-    use case_simple_weir
     use data_keys
     use globals
+    use read_width_depth
     use setting_definition
     use utility
 
@@ -527,6 +528,133 @@
                  lowerZ, upperZ, ManningsN)
         endif
 
+    case ('simple_orifice_004')
+
+        N_link = 3
+        N_node = 4
+        N_BCupstream = 1
+        N_BCdnstream = 1
+
+        !% create the local variables that must be populated to set up the test case
+        call control_variable_allocation &
+            (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+             velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
+
+        ! step controls
+        display_interval = 100
+        first_step = 1
+        ! last_step  =  6500
+        last_step  =  30000
+
+        ! set up flow and time step for differen subcases
+        ! tests that ran:  Fr = 0.25, 0.5
+
+        ! This is from case_y_channel
+        Froude       = 0.25   ! determines flowrate and slope to get Froude
+        CFL          = 0.25  ! determines dt from subdivide_length
+
+        ! keep these physics fixed
+        idepth_type        = 1  !1 = uniform, 2=linear, 3=exponential decay
+        ManningsN          = 0.03
+        
+        channel_geometry(1) = lRectangular
+        lowerZ(1)          = 1.0 
+        depth_dnstream(1)  = 1.0e-2  
+        depth_upstream(1)  = 1.0e-2 
+        init_depth(1)      = 1.0e-2 
+
+        channel_geometry(2) = lCircular
+        depth_dnstream(2)  = 1.0e-2         !This is the depth in weir 
+        depth_upstream(2)  = 1.0e-2         !This is the depth in weir
+        init_depth(2)      = 1.0e-2         
+        
+        channel_geometry(3) = lRectangular
+        depth_dnstream(3)  = 0.25
+        depth_upstream(3)  = 0.25
+        init_depth(3)      = 0.25
+
+        channel_breadth      = 3.0
+        channel_breadth(2)   = 1.5
+        channel_length       = 1000.0
+        channel_length(2)    = 1        !This is Weir Length
+
+        subdivide_length     = 500.0
+        subdivide_length(2)  = 1        !We are not subdividing weir element. So this value is same as weir length
+        
+        leftSlope             = nullValueR
+        rightSlope            = nullValueR
+        sideSlope             = nullValueR
+        inletOffset           = nullValueR
+        dischargeCoefficient1 = nullValueR
+        dischargeCoefficient2 = nullValueR
+        fullDepth             = nullValueR
+        endContractions       = nullValueR
+
+        ! wier settings
+        inletOffset(2)             = 1.0
+        dischargeCoefficient1(2)   = 0.6
+        fullDepth(2)               = 1.5 
+
+        ! get consistent bottom Z values for the desired Froude number in each link
+        do mm=1,N_link
+            if (mm==1) then
+                ! start with the Z for the inflow link
+                lz = lowerZ(1)
+            end if
+            select case (mm)
+                case (1)
+                    call froude_driven_setup &
+                         (uz, area(mm), flowrate(mm), velocity(mm),                               &
+                         Froude(mm), channel_breadth(mm), channel_topwidth(mm), &
+                         ManningsN(mm), channel_length(mm), &
+                         lz, init_depth(mm), channel_geometry(mm), &
+                         parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
+                    ! the upstream z of the downstream link becomes the lower z of the upstream links
+                    lz = uz
+                    upperZ(1) = uz
+                case (2)
+                    call orifice_setup &
+                         (uz, area(mm), flowrate(mm), velocity(mm), sideslope(mm), Froude(mm), &
+                          channel_breadth(mm), ManningsN(mm), channel_length(mm), lz,           &
+                          depth_upstream(mm) )
+                    lowerZ(mm) = upperZ(1)
+                    upperZ(mm) = uz
+                    lz = uz
+                case (3)
+                    call froude_driven_setup &
+                         (uz, area(mm), flowrate(mm), velocity(mm),                               &
+                          Froude(mm), channel_breadth(mm), channel_topwidth(mm), &
+                          ManningsN(mm), channel_length(mm), &
+                          lz, init_depth(mm), channel_geometry(mm), &
+                          parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
+                    lowerZ(mm) = upperZ(2)
+                    upperZ(mm) = uz     
+            end select
+        end do 
+
+        call this_setting_for_time_and_steps &
+            (CFL, velocity, depth_upstream, subdivide_length, &
+             first_step, last_step, display_interval,2)
+
+        call case_simple_orifice_initialize &
+            (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,    &
+             flowrate, depth_upstream, depth_dnstream, init_depth,                 &
+             sideslope, inletOffset, dischargeCoefficient1, dischargeCoefficient2, &
+             fullDepth, endContractions, ManningsN, lManningsN, idepth_type,       &
+             linkR, nodeR, linkI, nodeI,linkYN, nodeYN, linkName, nodeName,        &
+             bcdataDn, bcdataUp)
+
+        if (.not. setting%Debugout%SuppressAllFiles) then
+            call write_testcase_setup_file &
+                (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                 depth_dnstream, channel_breadth, channel_topwidth, area, &
+                 channel_length, subdivide_length, &
+                 lowerZ, upperZ, ManningsN)
+        endif
+
     case default
         print *, setting%TestCase%TestName
         print *, 'error: no valid test case of ',&
@@ -771,6 +899,50 @@ subroutine froude_driven_setup &
  
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine weir_setup
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine orifice_setup &
+    (upperZ, area, flowrate, velocity, sideslope, Froude,  breadth, &
+     ManningsN, total_length, lowerZ, depth)
+
+ character(64) :: subroutine_name = 'orifice_setup'
+
+ real,  intent(out)    :: area, flowrate, velocity, upperZ
+ real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
+ real,  intent(in)     :: depth, sideslope
+
+ real :: perimeter, rh, slope
+
+!--------------------------------------------------------------------------
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+! These needed to be changed when the weir is surcharged
+ area        = zeroR
+ perimeter   = zeroR
+ !for now testing everything with zero
+ rh          = zeroR
+ velocity    = zeroR
+ flowrate    = zeroR
+ slope       = zeroR
+ upperZ      = lowerZ 
+
+! print *,'-----------------'
+! print *, area, 'area'
+! print *, perimeter, 'perimeter'
+! print *, rh, 'rh'
+! print *, velocity, 'velocity'
+! print *, flowrate, 'flowrate'
+! print *, slope, 'slope'
+! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+! print *, total_length, 'total_length'
+! print *, slope*total_length, 'slope*total_length'
+! print *,'-----------------'
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine orifice_setup
 !
 !==========================================================================
 !==========================================================================

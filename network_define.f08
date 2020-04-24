@@ -901,7 +901,9 @@
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
             faceR(thisFace,fr_Topwidth)        = linkR(thisLink,lr_Topwidth)
         case (lCircular)
-            print*, 'in development'
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = twoR * sqrt(linkR(thisLink,lr_InitialDepth)*&
+                    (linkR(thisLink,lr_FullDepth)-linkR(thisLink,lr_InitialDepth)))
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1120,7 +1122,6 @@
     !faceI(lastFace,fi_link_Pos)     = nullvalueI
 
     faceR(lastface,fr_Zbottom)      = nodeR(thisNode,nr_Zbottom)
-    
     faceI(lastFace,fi_type) = setFaceType &
         (faceI(lastFace,fi_etype_u), faceI(lastFace,fi_etype_d))
         
@@ -1429,6 +1430,10 @@
             elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
             faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
+        case (lCircular)
+            elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            elem2R(thisElem2,e2r_Topwidth)     = twoR * sqrt(linkR(thisLink,lr_InitialDepth)*&
+                    (linkR(thisLink,lr_FullDepth)-linkR(thisLink,lr_InitialDepth)))
         case default
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
@@ -1527,6 +1532,14 @@
         f_result = fWeir
     elseif (up_elem_type == eWeir) then
         f_result = fWeir
+    elseif (dn_elem_type == eOrifice) then
+        f_result = fOrifice
+    elseif (up_elem_type == eOrifice) then
+        f_result = fOrifice
+    elseif (dn_elem_type == ePump) then
+        f_result = fPump
+    elseif (up_elem_type == ePump) then
+        f_result = ePump
     else
         f_result = fMultiple
     endif
@@ -1535,7 +1548,11 @@
         f_result = fChannel
     elseif (up_elem_type == fPipe) then
         f_result = fPipe 
-    elseif (up_elem_type == fWeir) then
+    elseif (up_elem_type == ePump) then
+        f_result = ePump
+    elseif (up_elem_type == eOrifice) then
+        f_result = fOrifice
+    elseif (up_elem_type == eWeir) then
         f_result = fWeir
     else
         print *, 'upstream element: ',up_elem_type

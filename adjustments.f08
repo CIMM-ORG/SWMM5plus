@@ -159,18 +159,17 @@
     volFrac => setting%Limiter%flowrate%FaceVolumeTransport
     eUp => faceI(:,fi_Melem_u)
     eDn => faceI(:,fi_Melem_d)
-if (Ltemp) then
-   print *, trim(subroutine_name)
-   print *, facemask
-   print *, faceR(:,fr_flowrate)
-   print *, eUp
-   print *, volumeUp
-   print *, volumeUp(eUp)
-   print *, eDn
-   print *, volumeDn
-   print *, dt
-   !stop
-endif    
+! if (Ltemp) then
+!    print *, trim(subroutine_name)
+!    print *, facemask
+!    print *, faceR(:,fr_flowrate)
+!    print *, eUp
+!    print *, volumeUp
+!    print *, volumeUp(eUp)
+!    print *, eDn
+!    print *, volumeDn
+!    !stop
+! endif    
     !%   for a downstream flow, limit flux from the upstream volume
     where ((facemask) .and. (faceR(:,fr_flowrate)  > zeroR))
         faceR(:,fr_flowrate) =  min(volFrac * volumeUp(eUp) / dt, faceR(:,fr_flowrate))
@@ -323,7 +322,8 @@ endif
     (elem2R, elem2I, elem2YN, e2r_VolumeColumn, &
      elemMR, elemMI, elemMYN, eMr_VolumeColumn )
     
- call smallvolume_geometry (elem2R, elem2YN, elemMR, elemMYN)    
+ call smallvolume_geometry &
+    (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN)
      
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine adjust_smallvolumes
@@ -508,16 +508,19 @@ endif
      elemtype, thiselemtype)
 
 !%  for weir elements
- smallvolumeratio   => elem2R(:,e2r_SmallvolumeRatio)
- smallvolume        => elem2R(:,e2r_Smallvolume)
- issmallvolume      => elem2YN(:,e2YN_IsSmallVolume) 
- tvolume            => elem2R(:,eTr_Volume2)
- elemtype           => elem2I(:,e2i_elem_type)
  thiselemtype = eWeir
     
  call smallvolume_identification_for_element &
     (tvolume, smallvolumeratio, smallvolume, issmallvolume, &
      elemtype, thiselemtype)
+
+!%  for orifice elements
+ thiselemtype = eOrifice
+    
+ call smallvolume_identification_for_element &
+    (tvolume, smallvolumeratio, smallvolume, issmallvolume, &
+     elemtype, thiselemtype)
+
 
 !%  for junction elements  
  smallvolumeratio   => elemMR(:,eMr_SmallvolumeRatio)
@@ -584,17 +587,19 @@ endif
 !========================================================================== 
 !
  subroutine smallvolume_geometry &
-    (elem2R, elem2YN, &
-     elemMR, elemMYN)
+    (elem2R, elem2I, elem2YN, &
+     elemMR, elemMI, elemMYN)
 !
 ! adjusts geometry that are designated as "smallvolume", which are derived
 ! from the setting%SmallDepth 
 !
  character(64) :: subroutine_name = 'smallvolume_geometry'
 
- real,          intent(in out)  :: elem2R(:,:)
- real,  target, intent(in out)  :: elemMR(:,:)
- logical,       intent(in)      :: elem2YN(:,:), elemMYN(:,:)
+ real,              intent(in out)  :: elem2R(:,:)
+ integer,           intent(in)      :: elem2I(:,:)
+ real,      target, intent(in out)  :: elemMR(:,:)
+ integer,           intent(in)      :: elemMI(:,:)
+ logical,           intent(in)      :: elem2YN(:,:), elemMYN(:,:)
  
  real,  pointer :: area(:), topwidth(:)
  integer :: mm
@@ -606,15 +611,15 @@ endif
  
 !%  channel elements
  call smallvolume_element_geometry_reset &
-    (elem2R, elem2YN, &
+    (elem2R, elem2I, elem2YN, e2i_elem_type, &
      e2r_Area, e2r_Eta, e2r_Perimeter, e2r_Zbottom, e2r_HydDepth, e2r_HydRadius, &
-     e2r_Topwidth, e2YN_IsSmallVolume)
+     e2r_Topwidth, e2YN_IsSmallVolume, eChannel)
 
 !%  junction elements
  call smallvolume_element_geometry_reset &
-    (elemMR, elemMYN, &
+    (elemMR, elemMI, elemMYN, eMi_elem_type, &
      eMr_Area, eMr_Eta, eMr_Perimeter, eMr_Zbottom, eMr_HydDepth, eMr_HydRadius, &
-     eMr_Topwidth, eMYN_IsSmallVolume) 
+     eMr_Topwidth, eMYN_IsSmallVolume, eJunctionChannel) 
 
 !%  junction branches  
  call smallvolume_junctionbranch_reset &
@@ -630,18 +635,20 @@ endif
 !========================================================================== 
 !
  subroutine smallvolume_element_geometry_reset &
-    (elemR, elemYN, &
+    (elemR, elemI, elemYN, ei_elem_type, &
      er_Area, er_Eta, er_Perimeter, er_Zbottom, er_HydDepth, er_HydRadius, &
-     er_Topwidth, eYN_IsSmallVolume)
+     er_Topwidth, eYN_IsSmallVolume, thiselemtype)
 !
 ! for small volumes, reset the geometry to the setting%smallvolume values
 !   
  character(64) :: subroutine_name = 'smallvolume_element_geometry_reset'
  
- real,  target, intent(in out)  :: elemR(:,:)
+ real,      target, intent(in out)  :: elemR(:,:)
+ integer,   target, intent(in)      :: elemI(:,:)
 
  logical,   intent(in)  :: elemYN(:,:)
  
+ integer,   intent(in)  :: ei_elem_type, thiselemtype
  integer,   intent(in)  :: er_Area, er_Eta, er_Perimeter, er_Zbottom
  integer,   intent(in)  :: er_HydDepth, er_HydRadius, er_Topwidth
  integer,   intent(in)  :: eYN_IsSmallVolume
@@ -663,7 +670,7 @@ endif
  eta                => elemR(:,er_Eta)
  zbottom            => elemR(:,er_Zbottom)
  
- where (elemYN(:,eYN_IsSmallVolume))
+ where ((elemYN(:,eYN_IsSmallVolume)) .and. (elemI(:,ei_elem_type) == thiselemtype))
     area        = setting%SmallVolume%MinimumArea
     perimeter   = setting%SmallVolume%MinimumTopwidth
     hyddepth    = setting%SmallVolume%DepthCutoff

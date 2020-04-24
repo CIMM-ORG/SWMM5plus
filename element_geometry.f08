@@ -251,15 +251,6 @@
      numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,         &
      widthDepthData, cellType)
 
-!%  geometry for weir elements
- call channel_or_junction &
-    (elem2R, elem2I, e2i_geometry, e2i_elem_type, eWeir, e2r_Length,      &
-     e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta,      &
-     e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius,               &
-     e2r_FullDepth, e2r_Volume_new, e2r_LeftSlope, e2r_RightSlope,        &
-     e2r_ParabolaValue, e2r_Temp, next_e2r_temparray, e2r_n_temp, ID,     &
-     numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,         &
-     widthDepthData, cellType)
 
 !% upstream branches
 !% note the fr_Eta_d is used for the upstream face, whose downstream eta is
@@ -286,8 +277,8 @@
  subroutine channel_or_junction &
     (elemR, elemI, ei_geometry, ei_elem_type, elem_type_value, er_Length, &
      er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta,           &
-     er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_Volume,        &
-     er_FullDepth, er_LeftSlope, er_RightSlope, er_ParabolaValue,         &
+     er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_FullDepth,     &
+     er_Volume, er_LeftSlope, er_RightSlope, er_ParabolaValue,            &
      er_Temp, next_er_temparray, er_n_temp, wdID, wdnumberPairs,          &
      wdManningsN, wdLength, wdzBottom, wdxDistance, wdBreadth,            &
      widthDepthData, wdcellType)
@@ -482,7 +473,7 @@
         eta(ii)        = zbottom(ii) + hyddepth(ii) 
         hydradius(ii)  = onefourthR * fulldepth (ii) * table_lookup(YoverYfull(ii), RCirc, NRCirc)
         perimeter(ii)  = area(ii) / hydradius(ii)
-        
+
     endif
  enddo
 
@@ -590,85 +581,6 @@
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine rectangular_junction_leg
-!
-!==========================================================================
-!==========================================================================
-!
- pure function table_lookup &
-    (normalizedInput, table, nItems) result(normalizedOutput)
-!
-! took up talbe values
-!
- real,      intent(in)      :: table(:)
- real,      intent(in)      :: normalizedInput
- integer,   intent(in)      :: nItems
-    
- real     :: normalizedOutput
- real     :: delta, startPos, endPos
- integer  :: ii
-  
-!-------------------------------------------------------------------------- 
-!% find which segment of table contains x
- delta = oneR / (nItems - oneR)
-
- ii = int(normalizedInput / delta)
-
- if     ( ii .GE. (nItems - oneI) ) then 
-    normalizedOutput = table(nItems - 1)
- elseif ( ii .LE. zeroR) then
-    normalizedOutput = zeroR
- else
-    startPos = ii * delta
-    endPos   = (ii + oneI) * delta
-    normalizedOutput = table(ii) + (normalizedInput - startPos) * &
-                (table(ii + oneI) - table(ii)) / delta
- endif
-               
- end function table_lookup
-!
-!==========================================================================
-!==========================================================================
-!
- pure function get_theta_of_alpha &
-    (alpha) result(theta)
-!
-! get the angle theta for small value of A/Afull (alpha)
-!
- real,      intent(in)      :: alpha
-    
- real     :: theta
- real     :: theta1, d, ap
- integer  :: ii
-  
-!--------------------------------------------------------------------------
-
- if     (alpha .GE. 1.0) then
-    theta = 1.0
- elseif (alpha .LE. 0.0) then
-    theta = 0.0
- elseif (alpha .LE. 1.0e-5) then
-    theta = 37.6911 / 16.0 * alpha ** (onethirdR) 
- else
-    theta = 0.031715 - 12.79384 * alpha + 8.28479 * sqrt(alpha)
-    theta1 = theta
-    ap = twoR * pi *alpha
-
-    do ii = 1,40
-        d = - (ap - theta + sin(theta)) / (1.0 - cos(theta))
-
-        if (d > 1.0) then
-            d = sign(1.0,d)
-        endif
-        theta = theta - d
-        if ( abs(d) .LE. 0.0001 ) then
-            return
-        endif
-    enddo
-    theta = theta1
-    return
-endif
-               
- end function get_theta_of_alpha
 !
 !==========================================================================
 ! END OF MODULE element_geometry
