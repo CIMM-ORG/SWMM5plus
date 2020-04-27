@@ -20,6 +20,7 @@
     use setting_definition
     use utility
     use weir
+    use xsect_tables
     
     implicit none
     
@@ -346,7 +347,26 @@
                     * (sqrt(oneR + elem2R(:,e2r_LeftSlope)**twoR) &
                     + sqrt(oneR + elem2R(:,e2r_RightSlope)**twoR))
             endwhere
-            
+        elseif (linkI(ii,li_geometry) == lCircular ) then
+            !% handle circular elements
+            ! Input: InitialDepth, Full Depth
+            ! these geometric properties are wron. but they will get correctly updated later.
+            ! Talk with Dr. Hodges about this matter.
+            where (elem2I(:,e2i_link_ID) == Lindx)
+                elem2I(:,e2i_geometry)     = eCircular
+                elem2R(:,e2r_FullDepth)    = linkR(ii,lr_FUllDepth)
+                elem2R(:,e2r_BreadthScale) = linkR(ii,lr_FUllDepth)
+                elem2R(:,e2r_Area)         = onefourthR * pi *                    &
+                    elem2R(:,e2r_FullDepth)  ** twoR
+                elem2R(:,e2r_Topwidth)     = zeroR 
+                elem2R(:,e2r_HydDepth)     = elem2R(:,e2r_Depth)
+                elem2R(:,e2r_Eta)          = elem2R(:,e2r_Zbottom)                &
+                    + elem2R(:,e2r_HydDepth)
+                elem2R(:,e2r_Volume)       = elem2R(:,e2r_Area) &
+                    * elem2R(:,e2r_Length)
+                elem2R(:,e2r_Perimeter)    = pi * elem2R(:,e2r_FullDepth) 
+            endwhere
+   
         elseif (linkI(ii,li_geometry) == lTriangular ) then
             !% handle triangle elements
             ! Input: Left Slope, Right Slope, InitialDepth

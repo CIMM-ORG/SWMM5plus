@@ -18,6 +18,7 @@
     use setting_definition
     use globals
     use utility
+    use xsect_tables
 
     implicit none
 
@@ -232,33 +233,24 @@
 
 !%  rectangular geometry for channels
  call channel_or_junction &
-    (elem2R, elem2I, &
-     e2i_geometry, e2i_elem_type, eChannel,  &
-     e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
-     e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new,    &
-     e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue, &
-     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-     Breadth, widthDepthData, cellType)
+    (elem2R, elem2I, e2i_geometry, e2i_elem_type, eChannel, e2r_Length,   &
+     e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta,      &
+     e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius,               &
+     e2r_FullDepth, e2r_Volume_new, e2r_LeftSlope, e2r_RightSlope,        &
+     e2r_ParabolaValue, e2r_Temp, next_e2r_temparray, e2r_n_temp, ID,     &
+     numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,         &
+     widthDepthData, cellType)
 
 !%  rectangular geomety for junctions
  call channel_or_junction &
-    (elemMR, elemMI, &
-     eMi_geometry, eMi_elem_type, eJunctionChannel,  &
-     eMr_Length, eMr_Zbottom, eMr_BreadthScale, eMr_Topwidth, eMr_Area, eMr_Eta, &
-     eMr_Perimeter, eMr_Depth, eMr_HydDepth, eMr_HydRadius, eMr_Volume_new,    &
-     eMr_LeftSlope, eMr_RightSlope, eMr_ParabolaValue, &
-     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-     Breadth, widthDepthData, cellType)
+    (elemMR, elemMI, eMi_geometry, eMi_elem_type, eJunctionChannel,       &
+     eMr_Length, eMr_Zbottom, eMr_BreadthScale, eMr_Topwidth, eMr_Area,   &
+     eMr_Eta, eMr_Perimeter, eMr_Depth, eMr_HydDepth, eMr_HydRadius,      &
+     eMr_FullDepth, eMr_Volume_new, eMr_LeftSlope, eMr_RightSlope,        &
+     eMr_ParabolaValue, eMr_Temp, next_eMr_temparray, eMr_n_temp, ID,     &
+     numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,         &
+     widthDepthData, cellType)
 
-!%  geometry for weir elements
- call channel_or_junction &
-    (elem2R, elem2I, &
-     e2i_geometry, e2i_elem_type, eWeir,  &
-     e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta, &
-     e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Volume_new,    &
-     e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue, &
-     ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
-     Breadth, widthDepthData, cellType)
 
 !% upstream branches
 !% note the fr_Eta_d is used for the upstream face, whose downstream eta is
@@ -283,13 +275,13 @@
 !==========================================================================
 !
  subroutine channel_or_junction &
-    (elemR, elemI, &
-     ei_geometry, ei_elem_type, elem_type_value,  &
-     er_Length, er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta, &
-     er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_Volume,    &
-     er_LeftSlope, er_RightSlope, er_ParabolaValue, &
-     wdID, wdnumberPairs, wdManningsN, wdLength, wdzBottom, wdxDistance, &
-     wdBreadth, widthDepthData, wdcellType)
+    (elemR, elemI, ei_geometry, ei_elem_type, elem_type_value, er_Length, &
+     er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta,           &
+     er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_FullDepth,     &
+     er_Volume, er_LeftSlope, er_RightSlope, er_ParabolaValue,            &
+     er_Temp, next_er_temparray, er_n_temp, wdID, wdnumberPairs,          &
+     wdManningsN, wdLength, wdzBottom, wdxDistance, wdBreadth,            &
+     widthDepthData, wdcellType)
 !
 ! computes element geometry for a rectangular channel or a channeljunction
 !
@@ -301,9 +293,12 @@
  integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_type_value
  integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale
  integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
- integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_Volume
+ integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius
+ integer,   intent(in)      :: er_Volume, er_FullDepth, er_n_temp
  integer,   intent(in)      :: er_LeftSlope, er_RightSlope, er_ParabolaValue
- 
+ integer,   intent(in)      :: er_Temp(:)
+ integer,   intent(inout)   :: next_er_temparray
+
  integer, target, intent(in out)    :: wdID(:)
  integer, target, intent(in out)    :: wdnumberPairs(:)
  real,    target, intent(in out)    :: wdManningsN(:)
@@ -317,8 +312,9 @@
 
  real, pointer :: volume(:), length(:), zbottom(:), breadth(:)
  real, pointer :: area(:), eta(:), perimeter(:), depth(:), hyddepth(:)
- real, pointer :: hydradius(:), topwidth(:)
+ real, pointer :: hydradius(:), topwidth(:), fulldepth(:)
  real, pointer :: leftSlope(:), rightSlope(:), parabolaValue(:)
+ real, pointer :: AoverAfull(:), YoverYfull(:)
  
  real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
  real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
@@ -336,6 +332,7 @@
  length        => elemR(:,er_Length)
  zbottom       => elemR(:,er_Zbottom)
  breadth       => elemR(:,er_BreadthScale)
+ fulldepth     => elemR(:,er_FullDepth)
  leftSlope     => elemR(:,er_LeftSlope)
  rightSlope    => elemR(:,er_RightSlope)
  parabolaValue => elemR(:,er_ParabolaValue)
@@ -360,6 +357,16 @@
  
  allocate (area_difference(size(widthDepthData,2)))
  allocate (local_difference(size(widthDepthData,2)))
+
+!% temporary array for circular geometry update
+ AoverAfull => elemR(:,er_Temp(next_er_temparray))
+ next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+
+ YoverYfull => elemR(:,er_Temp(next_er_temparray))
+ next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+
+ AoverAfull = nullvalueR
+ YoverYfull = nullvalueR 
 
  where ( (elemI(:,ei_geometry)  == eRectangular) .and. &
          (elemI(:,ei_elem_type) == elem_type_value    )         )
@@ -448,7 +455,35 @@
             perimeter (ii) = perimeterBelowThisLayer(linkIDTemp,ind) + twoR * DD/sin(angle(linkIDTemp,ind))
             hydradius (ii) = area(ii) / perimeter(ii)
     endif
+
+    if ( (elemI(ii,ei_geometry)  == eCircular) .and. &
+         (elemI(ii,ei_elem_type) == elem_type_value    )         ) then 
+
+        area(ii)        = volume(ii) / length(ii)
+        AoverAfull(ii)  = area(ii) / (onefourthR * pi * fulldepth(ii) ** twoR)
+
+        if (AoverAfull(ii) < 0.04) then
+            depth(ii) = fulldepth(ii) * get_theta_of_alpha(AoverAfull(ii))
+        else 
+            depth(ii) = fulldepth(ii) * table_lookup(AoverAfull(ii), YCirc, NYCirc)
+        endif
+        YoverYfull(ii) = depth(ii) / fulldepth(ii)
+        topwidth(ii)   = fulldepth(ii) * table_lookup(YoverYfull(ii), WCirc, NWCirc)
+        hyddepth(ii)   = area(ii) / topwidth(ii)
+        eta(ii)        = zbottom(ii) + hyddepth(ii) 
+        hydradius(ii)  = onefourthR * fulldepth (ii) * table_lookup(YoverYfull(ii), RCirc, NRCirc)
+        perimeter(ii)  = area(ii) / hydradius(ii)
+
+    endif
  enddo
+
+ AoverAfull = nullvalueR
+ YoverYfull = nullvalueR
+
+!% nullify temporary array
+ nullify(AoverAfull, YoverYfull)
+
+ next_er_temparray  = next_er_temparray  - 2
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
  end subroutine channel_or_junction

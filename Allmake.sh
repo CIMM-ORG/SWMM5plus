@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo Compiling the SWMM DLL ...
+cd utilities/swmm_interface
+./make_swmm.sh
+cd ../..
+
 echo Making the debug directory ...
 DIRDebug=debugoutputA
 DIRThreaded=OutputThreaded
@@ -25,6 +30,7 @@ SOURCESF="  dll_mod.f08\
         type_definitions.f08\
         setting_definition.f08\
         globals.f08\
+        xsect_tables.f08\
         array_index.f08\
         data_keys.f08\
         interface.f08\
@@ -36,6 +42,7 @@ SOURCESF="  dll_mod.f08\
         case_waller_creek.f08\
         case_simple_channel.f08\
         case_simple_weir.f08\
+        case_simple_orifice.f08\
         case_y_channel.f08\
         checking.f08\
         debug.f08\

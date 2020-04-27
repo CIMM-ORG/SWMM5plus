@@ -203,8 +203,9 @@
  next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp)
 
 ! find every elements other than multi face
- facemask = ( (faceI(:,fi_etype_u) /= eJunctionChannel) .and. &
-              (faceI(:,fi_etype_d) /= eJunctionChannel) )
+ facemask = ( (faceI(:,fi_type) == fChannel) .or. (faceI(:,fi_type) == fPipe) .or. &
+              (faceI(:,fi_type) == fWeir) .or. (faceI(:,fi_type) == fOrifice) )
+ 
 
  weightUpQ = setting%Limiter%Timescale%Maximum
  weightDnQ = setting%Limiter%Timescale%Maximum
@@ -241,7 +242,7 @@ call interp_channel_onetype &
 call interp_channel_onetype &
     (faceR, facemask, faceI, elem2R, &
      weightUpQ, weightDnQ, valueUp, valueDn, e2rset(3), frset(3))
-    
+
 !%  store the duplicate areas (later adjusted for jumps)
  where (facemask) 
     faceR(:,fr_Area_u) = faceR(:,fr_Area_d)  
@@ -692,17 +693,17 @@ call interp_channel_onetype &
     etaDn = (weightUp * etaDn + weightDn * etaUp) / ( weightUp + weightDn )
  endwhere
 
- where (faceI(:,fi_etype_d) == fWeir)
+ where ((faceI(:,fi_etype_d) == fWeir) .or. (faceI(:,fi_etype_d) == fOrifice))
     ! for weir the weight of interpolation is timescale max.
     ! the interpolation gives the eta of the element upstream.
     etaDn = elem2R(faceI(:,fi_Melem_u),e2r_Eta)
-endwhere
-
-where (faceI(:,fi_etype_u) == fWeir)
-    ! for weir the weight of interpolation is timescale max.
-    ! the interpolation gives the eta of the element downstream.
-     etaUp = elem2R(faceI(:,fi_Melem_d),e2r_Eta)
  endwhere
+
+ ! where ((faceI(:,fi_etype_u) == fWeir) .or. (faceI(:,fi_etype_u) == fOrifice))
+ !    ! for weir the weight of interpolation is timescale max.
+ !    ! the interpolation gives the eta of the element downstream.
+ !     etaUp = elem2R(faceI(:,fi_Melem_d),e2r_Eta)
+ ! endwhere
 
  etaUp = etaDn
 
