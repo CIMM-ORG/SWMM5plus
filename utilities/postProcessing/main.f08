@@ -24,14 +24,13 @@ use postProcessing
     real,    dimension(:)  , allocatable       :: xx,yy
 
 
-open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_eta_20200423_1719.txt', status='OLD')
+open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_depth__20200423_2249.txt', status='OLD')
 specific_link = 1
 call get_specific_link_data &
     (iunit, n_cells, n_links, n_linkItems, max_linkItems, n_timeSteps, &
     time_steps, data_idx, length_idx, link_lengths, link_data, &
     specific_link, specific_linkData, link_long_data, link_long_lengths, &
     z_bottoms)
-
 
 
 plot_type = 3
@@ -64,11 +63,11 @@ elseif (plot_type .eq. 2)  then
     call system('gnuplot -p plot_long.plt')
     close(7,status='delete')
 
-elseif (plot_type .eq. 3)  then !this is hard coded for simple weir case
+elseif (plot_type .eq. 3)  then !this is hard coded for simple weir and orifice case
     do j = 1,n_timeSteps
         xx = link_long_lengths
-        yy = link_long_data(j,:)
-        ! yy = link_long_data(j,:) + z_bottoms !this is only for depth plot
+        ! yy = link_long_data(j,:)
+        yy = link_long_data(j,:) + z_bottoms !this is only for depth plot
         open (unit = 7, action = 'write', file = 'data.txt')
         do i = 1,size(link_long_lengths)
             write(7,*)xx(i), yy(i)

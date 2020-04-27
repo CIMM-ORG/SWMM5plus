@@ -82,7 +82,8 @@ end subroutine get_specific_link_data
 !==========================================================================
 !==========================================================================
 !
-! This function is hard coded to get longitudinal profile of the simple weir test case
+! This function is hard coded to get longitudinal profile of the simple
+! weir and orifice test case. This part is hard coded.
 subroutine get_longitudinal_link_data &
     (iunit, n_cells, max_linkItems, data_idx, n_links,link_long_data, link_long_lengths, z_bottoms)
 

@@ -12,7 +12,7 @@ set title "Time: 0s"
 set yrange [0:6]
 set xrange [0:2000]
 set terminal gif animate delay 8
-set output "test_orif_eta.gif"
+set output "test_orif.gif"
 i = 1
 j = 19
 plot n using 1:2 with lines linecolor rgb "black" linewidth 2
