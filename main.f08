@@ -2,115 +2,83 @@
 !
  program main
 
- use allocate_storage
- use array_index
- use bc
- use checking
- use data_keys
- use debug
- use diagnostic
- use globals
- use initialization
- use initial_condition
- use junction
- use network_define
- use output
- use setting_definition
- use type_definitions 
- use test_cases
- use time_loop
- use utility
+   use allocate_storage
+   use array_index
+   use bc
+   use checking
+   use data_keys
+   use debug
+   use diagnostic
+   use globals
+   use initialization
+   use initial_condition
+   use junction
+   use network_define
+   use output
+   use setting_definition
+   use type_definitions 
+   use test_cases
+   use time_loop
+   use utility
 
- implicit none
+   implicit none
 
-!%  elem2# are the values for elements that have only 2 faces
- real,       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
- integer,    dimension(:,:), allocatable, target    :: elem2I       ! integer data for elements with 2 faces
- logical,    dimension(:,:), allocatable, target    :: elem2YN      ! logical data for elements with 2 faces
+   !%  elem2# are the values for elements that have only 2 faces
+   real,       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
+   integer,    dimension(:,:), allocatable, target    :: elem2I       ! integer data for elements with 2 faces
+   logical,    dimension(:,:), allocatable, target    :: elem2YN      ! logical data for elements with 2 faces
 
- type(string), dimension(:), allocatable, target    :: elem2Name    ! array of character strings
+   type(string), dimension(:), allocatable, target    :: elem2Name    ! array of character strings
 
-!%  elemM# are the values for elements that have more than 2 faces
- real,       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
- integer,    dimension(:,:), allocatable, target    :: elemMI       ! integer data for elements with multi faces
- logical,    dimension(:,:), allocatable, target    :: elemMYN      ! logical data for elements with multi faces
+   !%  elemM# are the values for elements that have more than 2 faces
+   real,       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
+   integer,    dimension(:,:), allocatable, target    :: elemMI       ! integer data for elements with multi faces
+   logical,    dimension(:,:), allocatable, target    :: elemMYN      ! logical data for elements with multi faces
 
- type(string), dimension(:), allocatable, target    :: elemMName    ! array of character strings
+   type(string), dimension(:), allocatable, target    :: elemMName    ! array of character strings
 
-!%  face# are the values for faces (always bounded by 2 elements)
- real,       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
- integer,    dimension(:,:), allocatable, target    :: faceI       ! integer data for faces
- logical,    dimension(:,:), allocatable, target    :: faceYN      ! logical data for face
+   !%  face# are the values for faces (always bounded by 2 elements)
+   real,       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
+   integer,    dimension(:,:), allocatable, target    :: faceI       ! integer data for faces
+   logical,    dimension(:,:), allocatable, target    :: faceYN      ! logical data for face
 
- type(string), dimension(:), allocatable, target    :: faceName    ! array of character strings
+   type(string), dimension(:), allocatable, target    :: faceName    ! array of character strings
 
-!%  links are the building blocks from SWMM link-node formulation
- real,       dimension(:,:), allocatable, target    :: linkR       ! real data for links
- integer,    dimension(:,:), allocatable, target    :: linkI       ! integer data for links
- logical,    dimension(:,:), allocatable, target    :: linkYN      ! logical data for links
+   !%  links are the building blocks from SWMM link-node formulation
+   real,       dimension(:,:), allocatable, target    :: linkR       ! real data for links
+   integer,    dimension(:,:), allocatable, target    :: linkI       ! integer data for links
+   logical,    dimension(:,:), allocatable, target    :: linkYN      ! logical data for links
 
- type(string), dimension(:), allocatable, target    :: linkName    ! array of character strings
+   type(string), dimension(:), allocatable, target    :: linkName    ! array of character strings
 
-!%  nodes are the building blocks from teh SWMM link-node formulation
- real,       dimension(:,:), allocatable, target    :: nodeR       ! real data for nodes
- integer,    dimension(:,:), allocatable, target    :: nodeI       ! integer data for nodes
- logical,    dimension(:,:), allocatable, target    :: nodeYN      ! logical data for nodes
+   !%  nodes are the building blocks from teh SWMM link-node formulation
+   real,       dimension(:,:), allocatable, target    :: nodeR       ! real data for nodes
+   integer,    dimension(:,:), allocatable, target    :: nodeI       ! integer data for nodes
+   logical,    dimension(:,:), allocatable, target    :: nodeYN      ! logical data for nodes
 
- type(string), dimension(:), allocatable, target    :: nodeName   ! array of character strings
+   type(string), dimension(:), allocatable, target    :: nodeName   ! array of character strings
 
-!%  bcdata are structures containing boundary condition data
- type(bcType), dimension(:), allocatable :: bcdataUp, bcdataDn
+   !%  bcdata are structures containing boundary condition data
+   type(bcType), dimension(:), allocatable :: bcdataUp, bcdataDn
 
-!%  debug output file information
- type(debugfileType),  dimension(:),   allocatable :: debugfile
+   !%  debug output file information
+   type(debugfileType),  dimension(:),   allocatable :: debugfile
 
-!%  diagnostic information
- type(diagnosticType), allocatable, dimension(:)   :: diagnostic
+   !%  diagnostic information
+   type(diagnosticType), allocatable, dimension(:)   :: diagnostic
 
-!% threaded output files
- type(threadedfileType), allocatable, dimension(:) :: threadedfile
- 
- integer, dimension(:),      allocatable :: wdID
- integer, dimension(:),      allocatable :: wdNumberPairs
- real,    dimension(:),      allocatable :: wdManningsN
- real,    dimension(:),      allocatable :: wdLength
- real,    dimension(:),      allocatable :: wdZBottom
- real,    dimension(:),      allocatable :: wdXDistance
- real,    dimension(:),      allocatable :: wdBreadth
- real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
- type(string), dimension(:), allocatable :: wdCellType(:)
+   !% threaded output files
+   type(threadedfileType), allocatable, dimension(:) :: threadedfile
 
-!--------------------------------------------------------------------------
- print *, ''
- print *, '====================================================='
- print *, 'starting main program'
- print *, ''
-
-!%  simulation controls
- call setting_default
-
-!===========================================================
-!%  hard-code setting for test cases
-
- setting%TestCase%UseTestCase = .true.
- ! setting%TestCase%TestName = 'simple_channel_001'
- ! setting%TestCase%TestName = 'y_channel_002'
- setting%TestCase%TestName = 'simple_weir_003'
- ! setting%TestCase%TestName = 'waller_creek'
-
-
-!%  hard-code for debug output
- setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
-
- setting%Debugout%SuppressTimeStep  = .true. ! use the next 3 to suppress headers
- setting%Debugout%SuppressTimeValue = .true. ! which can make debug files easier
- setting%Debugout%SuppressNdat      = .true. ! to read (but less useful)
-
- setting%Debugout%elem2R = .true.   ! select arrays to have debug output
- setting%Debugout%elemMR = .true.   ! select arrays to have debug output
- setting%Debugout%faceR  = .true.   ! note that not all are implemented
-
- !setting%OutputThreadedLink%SuppressAllFiles = .true.
+   integer, dimension(:),      allocatable :: wdID
+   integer, dimension(:),      allocatable :: wdNumberPairs
+   real,    dimension(:),      allocatable :: wdManningsN
+   real,    dimension(:),      allocatable :: wdLength
+   real,    dimension(:),      allocatable :: wdZBottom
+   real,    dimension(:),      allocatable :: wdXDistance
+   real,    dimension(:),      allocatable :: wdBreadth
+   real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
+   type(string), dimension(:), allocatable :: wdCellType(:)
 
    !--------------------------------------------------------------------------
    print *, ''
@@ -124,9 +92,11 @@
    !===========================================================
    !%  hard-code setting for test cases
 
-   setting%TestCase%UseTestCase = .false.
+   setting%TestCase%UseTestCase = .true.
    ! setting%TestCase%TestName = 'simple_channel_001'
    ! setting%TestCase%TestName = 'y_channel_002'
+   ! setting%TestCase%TestName = 'simple_weir_003'
+   setting%TestCase%TestName = 'simple_orifice_004'
    ! setting%TestCase%TestName = 'waller_creek'
 
    !%  hard-code for debug output

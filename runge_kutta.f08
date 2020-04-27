@@ -99,8 +99,6 @@
     do ii=1,2
         steptime = thistime + thiscoef(ii) * dt
 
-
-
         call sve_rk2_step &
             (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
              e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
@@ -151,6 +149,10 @@
     call overwrite_old_values &
         (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
          e2r_Volume, e2r_Volume_new, e2i_elem_type, eWeir, .true.)
+
+    call overwrite_old_values &
+        (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
+         e2r_Volume, e2r_Volume_new, e2i_elem_type, eOrifice, .true.)
 
     call overwrite_old_values &
         (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &

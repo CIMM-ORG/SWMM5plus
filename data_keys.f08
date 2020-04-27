@@ -56,6 +56,7 @@
     integer, parameter :: fPipe             = ePipe  ! ID for pipe on both sides
     integer, parameter :: fWeir             = eWeir  ! ID for pipe on both sides
     integer, parameter :: fOrifice          = eOrifice
+    integer, parameter :: fPump             = ePump 
     integer, parameter :: fMultiple         = eJunctionChannel  ! ID for moderation by separate up/dn element types
     integer, parameter :: fBCup             = eBCup   ! ID for face upstream BC
     integer, parameter :: fBCdn             = eBCdn   ! ID for face downstream BC    
@@ -94,6 +95,7 @@
     integer, parameter :: lpipe         = ePipe        ! ID for link that is pipe
     integer, parameter :: lweir         = eWeir        ! ID for link that is weir
     integer, parameter :: lOrifice      = eOrifice     ! ID for link that is orifice
+    integer, parameter :: lPump         = ePump        ! ID for link that is pump
 
     ! date types for linkI(:,li_weir_type)
     integer, parameter :: lTransverseWeir  = eTransverseWeir  ! ID for rectangular transverse weir

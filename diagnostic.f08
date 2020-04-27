@@ -86,6 +86,11 @@
  where (elem2I(:,e2i_elem_type) == eWeir)
     elem2R(:,e2r_VolumeConservation) = - dt * (faceR(fup,fr_Flowrate) - faceR(fdn,fr_Flowrate) )
  endwhere 
+
+ ! This needed to be fixed for orifice element
+ where (elem2I(:,e2i_elem_type) == eOrifice)
+    elem2R(:,e2r_VolumeConservation) = - dt * (faceR(fup,fr_Flowrate) - faceR(fdn,fr_Flowrate) )
+ endwhere 
  
  where ( elemMR(:,eMi_elem_type) == eJunctionChannel )
     elemMR(:,eMr_VolumeConservation) = zeroR
@@ -139,7 +144,13 @@
  where (elem2I(:,e2i_elem_type) == eWeir)
     elem2R(:,e2r_VolumeConservation) = elem2R(:,e2r_VolumeConservation) &
          + (elem2R(:,e2r_Volume_new) - elem2R(:,e2r_Volume))
- endwhere       
+ endwhere
+
+ ! This needed to be fixed for orifice element
+ where (elem2I(:,e2i_elem_type) == eOrifice)
+    elem2R(:,e2r_VolumeConservation) = elem2R(:,e2r_VolumeConservation) &
+         + (elem2R(:,e2r_Volume_new) - elem2R(:,e2r_Volume))
+ endwhere        
     
 
  where (elemMI(:,eMi_elem_type) == eJunctionChannel)
@@ -174,6 +185,10 @@
 !diagnostic_froude_number_one needed to be adapted for weir element
  call diagnostic_froude_number_one &
     (elem2R, elem2I, e2r_FroudeNumber, e2r_Velocity, e2r_HydDepth, e2i_elem_type, eWeir)
+
+!diagnostic_froude_number_one needed to be adapted for Orifice element
+ call diagnostic_froude_number_one &
+    (elem2R, elem2I, e2r_FroudeNumber, e2r_Velocity, e2r_HydDepth, e2i_elem_type, eOrifice)
     
  call diagnostic_froude_number_one &
     (elemMR, elemMI, eMr_FroudeNumber, eMr_Velocity, eMr_HydDepth, eMi_elem_type, eJunctionChannel)    
@@ -252,7 +267,7 @@
  integer,               intent(in)      :: diagnosticTask
     
  integer,   pointer :: etype2(:), etypeM(:)
- real               :: channelVolume, junctionVolume, weirVolume, totalVolume
+ real               :: channelVolume, junctionVolume, weirVolume, orificevolume, totalVolume
  real               :: inflowRate, outflowRate
  
  integer :: ii
@@ -270,9 +285,10 @@
  
  channelVolume  = sum(elem2R(:,e2r_Volume),1,etype2 == eChannel)
  weirVolume     = sum(elem2R(:,e2r_Volume),1,etype2 == eWeir)
+ orificevolume  = sum(elem2R(:,e2r_Volume),1,etype2 == eOrifice)
  junctionVolume = sum(elemMR(:,eMr_Volume),1,etypeM == eJunctionChannel) 
  
- totalVolume = channelVolume + junctionVolume + weirVolume
+ totalVolume = channelVolume + junctionVolume + weirVolume + orificevolume
   
  select case (diagnosticTask)
     case (0)
