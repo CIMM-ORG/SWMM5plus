@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo Compiling the SWMM DLL ...
+cd utilities/swmm_interface
+./make_swmm.sh
+cd ../..
+
 echo Making the debug directory ...
 DIRDebug=debugoutputA
 DIRThreaded=OutputThreaded
