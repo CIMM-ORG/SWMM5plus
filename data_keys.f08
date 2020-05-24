@@ -15,10 +15,11 @@
     implicit none
 
     ! data types for elemI(:,ei_meta_elem_type).
-    integer, parameter :: eHQ                = 1   ! ID for a HQ meta-element
-    integer, parameter :: eQonly             = 2   ! ID for a Q only meta-element
-    integer, parameter :: eHonly             = 3   ! ID for a H only meta-element 
-    integer, parameter :: eNonHQ             = 4   ! ID for a non HQ meta-element
+    integer, parameter :: eHQ2                = 1   ! ID for 2 face HQ meta-element
+    integer, parameter :: eHQm                = 2   ! ID for multi-face HQ meta-element
+    integer, parameter :: eQonly              = 3   ! ID for a Q only meta-element
+    integer, parameter :: eHonly              = 4   ! ID for a H only meta-element 
+    integer, parameter :: eNonHQ              = 5   ! ID for a non HQ meta-element
 
     ! data types for elemI(:,ei_elem_type). faceI(:,e_type_u), faceI(:,e_type_d)
     integer, parameter :: eChannel          = 1   ! ID for an open channel element
@@ -81,8 +82,9 @@
     ! data types for nodeI(:,ni_node_type)
     integer, parameter :: nJ2            = 1     ! ID for junction with 2 links
     integer, parameter :: nJm            = 2     ! ID for junction with multiple links
-    integer, parameter :: nBCdn          = 3     ! ID for downstream BC 
-    integer, parameter :: nBCup          = 4     ! iD for upstream BC 
+    integer, parameter :: nStorage       = 3     ! ID for stroage units
+    integer, parameter :: nBCdn          = 4     ! ID for downstream BC 
+    integer, parameter :: nBCup          = 5     ! iD for upstream BC 
     
     ! data types for nodeI(:,ni_assigned) for assignment to faces and links
     integer, parameter :: nUnassigned   = nullvalueI

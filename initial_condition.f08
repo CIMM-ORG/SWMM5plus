@@ -98,10 +98,8 @@
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
      bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
      e2r_Volume, eMr_Volume, thisTime)   
-    
- call face_meta_element_assign &
-    (faceI, elem2I, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
-     fi_meta_etype_d, e2i_Meta_elem_type)      
+
+ call face_meta_element_assign (faceI, elem2I, N_face)     
 
  call face_update &
     (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
@@ -518,17 +516,23 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
     
  where ( (elemI(:,ei_elem_type) == eChannel)             .or. &
-         (elemI(:,ei_elem_type) == ePipe)                .or. &
-         (elemI(:,ei_elem_type) == eJunctionChannel)     .or. &
-         (elemI(:,ei_elem_type) == eJunctionPipe)  )
-        elemI(:,ei_meta_elem_type) = eHQ
+         (elemI(:,ei_elem_type) == ePipe) )
+
+        elemI(:,ei_meta_elem_type) = eHQ2
+
+ elsewhere ( (elemI(:,ei_elem_type) == eJunctionChannel)     .or. &
+           (elemI(:,ei_elem_type) == eJunctionPipe)  )
+
+        elemI(:,ei_meta_elem_type) = eHQM
 
  elsewhere ( (elemI(:,ei_elem_type) == eWeir)            .or. &
              (elemI(:,ei_elem_type) == eorifice)         .or. &
-             (elemI(:,ei_elem_type) == ePump)  )   
+             (elemI(:,ei_elem_type) == ePump)  )
+
         elemI(:,ei_meta_elem_type) = eQonly
 
  elsewhere ( (elemI(:,ei_elem_type) == eStorage) )
+
         elemI(:,ei_meta_elem_type) = eHonly
         
  elsewhere ( (elemI(:,ei_elem_type) == eBCup)            .or. &
@@ -542,16 +546,12 @@
 !
 !========================================================================== 
 !==========================================================================
- subroutine face_meta_element_assign &
-    (faceI, elemI, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
-     fi_meta_etype_d, ei_Meta_elem_type)
+ subroutine face_meta_element_assign (faceI, elemI, N_face)
 
  character(64) :: subroutine_name = 'interp_with_junction_upstream'
  
  integer,      target,     intent(in out)  :: faceI(:,:), elemI(:,:)
- integer,                  intent(in)      :: N_face, fi_Melem_u, fi_Melem_d
- integer,                  intent(in)      :: fi_meta_etype_u, fi_meta_etype_d
- integer,                  intent(in)      :: ei_Meta_elem_type 
+ integer,                  intent(in)      :: N_face
 
  integer :: ii
  
@@ -559,8 +559,67 @@
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
  
  do ii=1, N_face
-    faceI(ii,fi_meta_etype_u) = elemI(faceI(ii,fi_Melem_u), ei_Meta_elem_type)
-    faceI(ii,fi_meta_etype_d) = elemI(faceI(ii,fi_Melem_d), ei_Meta_elem_type)
+    if ( (faceI(ii,fi_etype_u) == eChannel) .or. &
+         (faceI(ii,fi_etype_u) == ePipe) ) then
+
+        faceI(ii,fi_meta_etype_u) = eHQ2
+
+    elseif ( (faceI(ii,fi_etype_u) == eJunctionChannel) .or. &
+             (faceI(ii,fi_etype_u) == eJunctionPipe) ) then
+
+        faceI(ii,fi_meta_etype_u) = eHQm
+
+    elseif ( (faceI(ii,fi_etype_u) == eWeir)    .or. &
+             (faceI(ii,fi_etype_u) == eorifice) .or. &
+             (faceI(ii,fi_etype_u) == ePump) ) then
+
+        faceI(ii,fi_meta_etype_u) = eQonly
+
+    elseif ( (faceI(ii,fi_etype_u) == eStorage) ) then
+
+        faceI(ii,fi_meta_etype_u) = eHonly
+
+    elseif ( (faceI(ii,fi_etype_u) == eBCdn)    .or. &
+             (faceI(ii,fi_etype_u) == eBCup) ) then
+
+        faceI(ii,fi_meta_etype_u) = eNonHQ
+
+    else
+        print*, 'undefined element type upstream of face', ii
+        stop
+    endif
+ end do
+
+ do ii=1, N_face
+    if ( (faceI(ii,fi_etype_d) == eChannel) .or. &
+         (faceI(ii,fi_etype_d) == ePipe) ) then
+
+        faceI(ii,fi_meta_etype_d) = eHQ2
+
+    elseif ( (faceI(ii,fi_etype_d) == eJunctionChannel) .or. &
+             (faceI(ii,fi_etype_d) == eJunctionPipe) ) then
+
+        faceI(ii,fi_meta_etype_d) = eHQm
+
+    elseif ( (faceI(ii,fi_etype_d) == eWeir)    .or. &
+             (faceI(ii,fi_etype_d) == eorifice) .or. &
+             (faceI(ii,fi_etype_d) == ePump) ) then
+
+        faceI(ii,fi_meta_etype_d) = eQonly
+
+    elseif ( (faceI(ii,fi_etype_d) == eStorage) ) then
+        
+        faceI(ii,fi_meta_etype_d) = eHonly
+
+    elseif ( (faceI(ii,fi_etype_d) == eBCdn)    .or. &
+             (faceI(ii,fi_etype_d) == eBCup) ) then
+
+        faceI(ii,fi_meta_etype_d) = eNonHQ
+
+    else
+        print*, 'undefined element type downstream of face', ii
+        stop
+    endif
  end do
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

@@ -13,6 +13,7 @@
     use case_simple_orifice
     use case_simple_weir
     use case_y_channel
+    use case_y_storage_channel
     use case_waller_creek
     use data_keys
     use globals
@@ -655,6 +656,109 @@
                  lowerZ, upperZ, ManningsN)
         endif
 
+    case ('y_storage_channel_005')
+
+        N_link = 3
+        N_node = 4
+        N_BCupstream = 2
+        N_BCdnstream = 1
+
+        call control_variable_allocation &
+            (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+             channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+             velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+             leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+             dischargeCoefficient2, fullDepth, endContractions)
+
+        ! step controls
+        display_interval = 1000
+        first_step = 1
+        last_step  = 10000! note 1000 is good enough to show blow up or not, 10000 is smooth
+
+        ! set up flow and time step for differen subcases
+        ! tests that ran:  Fr = 0.25, 0.5
+        Froude(1)       = 0.8   ! determines flowrate and slope to get Froude
+        Froude(2)       = 0.8  ! determines flowrate and slope to get Froude
+        Froude(3)       = 0.8   ! determines flowrate and slope to get Froude
+
+        CFL          = 0.6  ! determines dt from subdivide_length
+
+        init_depth(1:3)    = 1.0
+        depth_dnstream(1)  = 1.0
+        depth_upstream(1)  = 1.0 ! junction
+
+        depth_dnstream(2:3) = depth_upstream(1) ! junction should be consistent
+
+        depth_upstream(2)  = 1.0 ! upstream bc right
+        depth_upstream(3)  = 1.0 ! upstream bc left
+        idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
+        ManningsN       = 0.03
+
+        channel_breadth(1)   = 3.0
+        channel_breadth(2)   = 3.0
+        channel_breadth(3)   = 3.0
+        
+        ! assign geometry type for links
+        do ii=1,N_link
+            channel_geometry(ii) = lRectangular
+        end do
+
+        channel_length(1)    = 1000.0
+        channel_length(2)    = 1000.0
+        channel_length(3)    = 1000.0
+
+        lowerZ(1)           = 1.0
+        subdivide_length(1) = 100.0
+        subdivide_length(2) = 100.0
+        subdivide_length(3) = 100.0
+        
+        ! rectangular geometry
+        parabolaValue = zeroR
+        leftSlope     = zeroR
+        rightSlope    = zeroR
+
+
+        ! get consistent bottom Z values for the desired Froude number in each link
+        do mm=1,N_link
+            if (mm==1) then
+                ! start with the Z for the inflow link
+                lz = lowerZ(1)
+            end if
+            call froude_driven_setup &
+                 (uz, area(mm), flowrate(mm), velocity(mm), Froude(mm),         &
+                  channel_breadth(mm), channel_topwidth(mm), ManningsN(mm),     &
+                  channel_length(mm), lz, init_depth(mm), channel_geometry(mm), &
+                  parabolaValue(mm), leftSlope(mm), rightSlope(mm) )
+            select case (mm)
+                case (1)
+                    ! the upstream z of the downstream link becomes the lower z of the upstream links
+                    lz = uz
+                    upperZ(1) = uz
+                case (2,3)
+                    lowerZ(mm) = upperZ(1)
+                    upperZ(mm) = uz
+                    lz = upperZ(1)
+            end select
+        end do
+
+        call this_setting_for_time_and_steps &
+            (CFL, velocity, init_depth, subdivide_length, first_step, last_step, &
+             display_interval, 2)
+
+        call case_y_storage_channel_initialize &
+            (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
+             lowerZ, upperZ, flowrate, init_depth, depth_upstream, depth_dnstream,       &
+             ManningsN, lManningsN, idepth_type,                             &
+             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
+             bcdataDn, bcdataUp)
+
+        if (.not. setting%Debugout%SuppressAllFiles) then
+            call write_testcase_setup_file &
+                (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                 depth_dnstream, channel_breadth, channel_topwidth, area, &
+                 channel_length, subdivide_length, &
+                 lowerZ, upperZ, ManningsN)
+        endif
     case default
         print *, setting%TestCase%TestName
         print *, 'error: no valid test case of ',&

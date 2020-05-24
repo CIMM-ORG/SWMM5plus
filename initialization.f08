@@ -801,6 +801,7 @@ end do
  end subroutine initialize_array_zerovalues
 !
 !==========================================================================
+!==========================================================================
 !
  subroutine initialize_dummy_values &
     (elem2R, elem2I, elem2YN, &
@@ -844,7 +845,10 @@ end do
 
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine initialize_dummy_values
-
+!
+!==========================================================================
+!==========================================================================
+!
  subroutine initialize_linknode_arrays(linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
 
    integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
@@ -933,7 +937,7 @@ end do
  end subroutine initialize_linknode_arrays
 !
 !==========================================================================
-!==========================================================================
 ! END OF MODULE initialization
 !==========================================================================
+!
  end module initialization

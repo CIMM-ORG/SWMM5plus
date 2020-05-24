@@ -74,9 +74,10 @@
     integer, parameter :: eMi_nfaces_d        = 7    ! number of downstream faces for each element
     integer, parameter :: eMi_roughness_type  = 8    ! roughness type
     integer, parameter :: eMi_node_ID         = 9    ! ID of node in the link/node space
-    integer, parameter :: eMi_temp1           = 10
-    integer, parameter :: eMi_temp2           = 11
-    integer, parameter :: eMi_idx_base1       = 11    ! number of base data stored
+    integer, parameter :: eMi_storage_curve   = 10   ! ID for storage surface area curve 
+    integer, parameter :: eMi_temp1           = 11
+    integer, parameter :: eMi_temp2           = 12
+    integer, parameter :: eMi_idx_base1       = 12    ! number of base data stored
 
     integer, parameter :: eMi_n_temp          = 2     ! matching the the number of eMi_tempX arrays
     ! storage for temp array index positions
@@ -205,7 +206,12 @@
     integer, parameter :: eMr_RightSlope         = 23
     integer, parameter :: eMr_ParabolaValue      = 24
     integer, parameter :: eMr_FullDepth          = 25
-    integer, parameter :: eMr_idx_base1          = 25
+    integer, parameter :: eMr_StorageConstant    = 26     ! Storage Constant for surface area
+    integer, parameter :: eMr_StorageCoeff       = 27     ! Storage Coefficient for surface area
+    integer, parameter :: eMr_StorageExponent    = 28     ! Storafe Exponent for surface area
+    integer, parameter :: eMr_PondedArea         = 29     ! Storage Ponded Area
+    integer, parameter :: eMr_SurchargeDepth     = 30     ! Surcharge Depth 
+    integer, parameter :: eMr_idx_base1          = 30
 
     ! column indexes for real branch data on a multi-branch junction
     ! note that these indexes must be consecutive by type
@@ -438,13 +444,14 @@
 
 !%  nodeI COLUMN INDEXES FOR INTEGER DATA OF NODES IN LINK/NODE SYSTEM -------
     ! column index for integer data in nodeI array
-    integer, parameter :: ni_idx        = 1
-    integer, parameter :: ni_node_type  = 2
-    integer, parameter :: ni_N_link_u   = 3 ! number of upstream links at this node
-    integer, parameter :: ni_N_link_d   = 4 ! number of downstram links at this node
-    integer, parameter :: ni_assigned   = 5 ! given 1 when node has been assigned to face/elem,
-    integer, parameter :: ni_temp1      = 6
-    integer, parameter :: ni_idx_base1  = 6
+    integer, parameter :: ni_idx              = 1
+    integer, parameter :: ni_node_type        = 2
+    integer, parameter :: ni_N_link_u         = 3 ! number of upstream links at this node
+    integer, parameter :: ni_N_link_d         = 4 ! number of downstram links at this node
+    integer, parameter :: ni_storage_curve    = 5   ! ID for storage surface area curve 
+    integer, parameter :: ni_assigned         = 6 ! given 1 when node has been assigned to face/elem,
+    integer, parameter :: ni_temp1            = 7
+    integer, parameter :: ni_idx_base1        = 7
 
     ! column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
@@ -488,9 +495,16 @@
 
 !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array
-    integer, parameter :: nr_Zbottom          = 1
-    integer, parameter :: nr_temp1            = 2
-    integer, parameter :: nr_idx_base1        = 2
+    integer, parameter :: nr_Zbottom                = 1
+    integer, parameter :: nr_InitialDepth           = 2    
+    integer, parameter :: nr_FullDepth              = 3
+    integer, parameter :: nr_StorageConstant        = 4
+    integer, parameter :: nr_StorageCoeff           = 5
+    integer, parameter :: nr_StorageExponent        = 6
+    integer, parameter :: nr_PondedArea             = 7
+    integer, parameter :: nr_SurchargeDepth         = 8
+    integer, parameter :: nr_temp1                  = 9
+    integer, parameter :: nr_idx_base1              = 9
 
     ! column index for real data on multiple branches of a node
     integer, parameter :: nr_ElementLength_u1 = nr_idx_base1 + 1 ! used for subdividing junctions

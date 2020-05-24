@@ -178,7 +178,7 @@
     enddo
     
     print *
-    print *, '------------- junctions ---------------------'
+    print *, '------------- junctions/storages ---------------------'
     print *
     print *, 'j)       ii  , face maps u1, u2, d1 '
     do ii= first_elemM_index, first_elemM_index+N_elemM-1
@@ -712,7 +712,8 @@
  integer, intent(in)   :: linkI(:,:)
  integer, intent(in)   :: nodeI(:,:)      
 
- integer :: ii, NupstreamBC, NdownstreamJ, NdnstreamBC
+ integer :: ii, mm, NupstreamBC, NdnstreamBC, NstorageUnit
+ integer :: NdownstreamJ, NdownstreamS
 
 !-------------------------------------------------------------------------- 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -727,7 +728,9 @@
          N_elemM = N_elemM +1
     endif
  enddo
- 
+!% count the number of storage nodes
+ NstorageUnit = count(nodeI(:,ni_node_type) == nStorage)
+
 !% count the number of upstream BC nodes
  NupstreamBC = count(nodeI(:,ni_node_type) == nBCup)
  
@@ -735,14 +738,20 @@
  NdnstreamBC = count(nodeI(:,ni_node_type) == nBCdn)
  
 !% Add ghost elements outside of BC
- N_elem2 = N_elem2 + NupstreamBC + NdnstreamBC  
+ N_elem2 = N_elem2 + NupstreamBC + NdnstreamBC 
+
+!% Add storage nodes as multiface elements
+ N_elemM = N_elemM + NstorageUnit
 
 !% count the numer of downstream faces at junction elements
  NdownstreamJ = sum(nodeI(:,ni_N_link_d), MASK = (nodeI(:,ni_node_type) == nJm))
 
-!% Faces are between elem2, upstream BC, and all downstreamJ.
+!% count the numer of downstream faces at storage elements
+ NdownstreamS = sum(nodeI(:,ni_N_link_d), MASK = (nodeI(:,ni_node_type) == nStorage))
+
+!% Faces are between elem2, upstream BC, all downstream junction and all downstream storage.
 !% Note the NdnstreamBC are already counted in the initial link count.
- N_face = sum(linkI(:,li_N_element)) + NupstreamBC + NdownstreamJ
+ N_face = sum(linkI(:,li_N_element)) + NupstreamBC + NdownstreamJ + NdownstreamS
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
     !%  debugging output
@@ -902,6 +911,7 @@
             faceR(thisFace,fr_Topwidth)        = linkR(thisLink,lr_Topwidth)
         case (lCircular)
             elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
+            !% check this again
             elem2R(thisElem2,e2r_Topwidth)     = twoR * sqrt(linkR(thisLink,lr_InitialDepth)*&
                     (linkR(thisLink,lr_FullDepth)-linkR(thisLink,lr_InitialDepth)))
         case default
@@ -988,7 +998,7 @@
  type(string),  intent(in out)  :: elem2Name(:), elemMName(:), faceName(:)
  type(string),  intent(in)      :: linkName(:), nodeName(:)
 
- integer ::  ii, mm, jElem
+ integer ::  ii, mm, jElem, sElem
  
  integer, pointer :: dlink
  
@@ -1012,7 +1022,7 @@
         print *, 'error: only 1 downstream link allowed on an upstream BC node in ',subroutine_name
         stop
     endif
- 
+    
     ! get the downstream link - note there can only be one at an upstream BC
     dlink => nodeI(thisNode,ni_Mlink_d1) 
     
@@ -1065,9 +1075,10 @@
     
     ! use the node name for the ghost element
     elem2Name(thisElem2) = nodeName(thisNode)
-    
-    faceR(thisFace,fr_Zbottom)      = nodeR(thisNode,nr_Zbottom)
-            
+    print*, '==== this passes through ===='
+    print*,'thisFace', thisFace  
+    faceR(thisFace,fr_Zbottom)      = nodeR(thisNode,nr_Zbottom) 
+
     faceI(thisFace,fi_idx)          = thisFace
     faceI(thisFace,fi_type)         = fBCup
     faceI(thisFace,fi_Melem_u)      = thisElem2           
@@ -1089,7 +1100,7 @@
     lastElem2 = nullvalueI
     
     ! increment counters
-    thisFace = thisFace+1
+    thisFace = thisFace + 1
     thisElem2 = thisElem2 + 1
      
  elseif (nodeI(thisNode,ni_node_type) == nBCdn) then  
@@ -1175,8 +1186,8 @@
     endif   
 
     print *, 'Junction with downstream of thisLink ',thisLink
-    !print *, 'linkSet ',linkSet(:)
-    !print *, 'linkAss ',linkI(linkSet(1),li_assigned),linkI(linkSet(2),li_assigned)
+    print *, 'linkSet ',linkSet(:)
+    print *, 'linkAss ',linkI(linkSet(1),li_assigned),linkI(linkSet(2),li_assigned)
     
     !%  Create the junction element we will use here and increment for the next(recursion)
     jElem = thisElemM
@@ -1327,6 +1338,155 @@
                      elem2I, elemMI, faceI, linkI, nodeI, elem2R, elemMR, faceR, linkR, nodeR, &
                      elem2Name, elemMName, faceName, linkName, nodeName)     
             endif
+
+        endif
+    enddo
+
+!% handels storage elements, prototype in development, sazzad sharior 05212020
+ elseif (nodeI(thisNode,ni_node_type) == nStorage) then
+
+    if ((debuglevel > 0) .or. (debuglevelall > 0)) then
+        print *
+        print *, subroutine_name,'----------------------------------------'
+        print *, 'this node is nStorage ', thisnode !, nodeI(thisNode,ni_N_link_u)
+    endif
+
+    linkSet(:) = nullvalueI
+    
+    !%  assign the link ID for the links connected to the node
+    linkSet(1) = nodeI(thisNode,ni_Mlink_u1)
+    do ii=2,3
+        if (upstream_face_per_elemM > ii-1) then
+            if (nodeI(thisNode,ni_N_link_u) > ii-1) then
+                linkSet(ii) = nodeI(thisNode,ni_MlinkUp(ii))
+            endif
+        endif  
+    enddo
+    if (upstream_face_per_elemM  > 3) then
+        print *, 'error: code not designed for upstream_face_per_elem > 3 in ',subroutine_name
+        STOP
+    endif            
+    if (nodeI(thisNode,ni_N_link_u) > 3) then
+        print *, 'error: attempt to use more than 3 upstream links in ',subroutine_name
+        STOP
+    endif   
+
+    print *, 'Storage unit with downstream of thisLink ',thisLink
+    print *, 'linkSet ',linkSet(:)
+    print *, 'linkAss ',linkI(linkSet(1),li_assigned),linkI(linkSet(2),li_assigned)
+    
+    !%  Create the junction element we will use here and increment for the next(recursion)
+    sElem = thisElemM
+    lastElemM = thisElemM
+    thisElemM = thisElemM+1
+    elemMI(sElem,eMi_idx)             = sElem
+    elemMI(sElem,eMi_elem_type)       = eStorage
+    elemMI(sElem,eMi_geometry)        = nullvalueI   
+    elemMI(sElem,eMi_nfaces)          = nodeI(thisNode,ni_N_link_u) + nodeI(thisNode,ni_N_link_d)
+    elemMI(sElem,eMi_nfaces_d)        = nodeI(thisNode,ni_N_link_d)
+    elemMI(sElem,eMi_nfaces_u)        = nodeI(thisNode,ni_N_link_u)
+    elemMI(sElem,eMi_roughness_type)  = nullvalueI            
+    elemMI(sElem,eMi_node_ID)         = thisNode
+    !elemMI(sElem,eMi_link_Pos)        = nullvalueI 
+    
+    !%  the following assumes the topwidth and length are functions of branches
+    elemMR(sElem,eMr_Topwidth)        = zeroR ! do not use nullvalueR with geometry
+    elemMR(sElem,eMr_BreadthScale)    = zeroR ! do not use nullvalueR with geometry
+    elemMR(sElem,eMr_Length)          = zeroR ! do not use nullvalueR with geometry  
+    elemMR(sElem,eMr_Zbottom)         = nodeR(thisNode,nr_Zbottom)
+    
+    !%  Check for downstream elements that have been assigned and store mappings
+    do mm=1,nodeI(thisNode,ni_N_link_d)
+        dlink => nodeI(thisNode,ni_MlinkDn(mm))
+        if (linkI(dlink,li_assigned) == lAssigned) then
+            !print *, dlink
+            elemMI(sElem,eMi_MfaceDn(mm)) = linkI(dlink,li_Mface_u)
+            faceI(linkI(dlink,li_Mface_u), fi_Melem_u) = sElem
+            faceI(linkI(dlink,li_Mface_u), fi_etype_u) = elemMI(sElem,eMi_elem_type)
+            faceI(linkI(dlink,li_Mface_u), fi_type) = setFaceType &
+                 (faceI(linkI(dlink,li_Mface_u),fi_etype_u), &
+                  faceI(linkI(dlink,li_Mface_u),fi_etype_d) )
+        endif
+    enddo
+    nullify(dlink)
+
+    !%  remove already-assigned links from the set to be cycled
+    do mm=1,upstream_face_per_elemM
+        if (linkSet(mm) > 0) then
+            if (linkI(linkSet(mm),li_assigned) == lAssigned) then
+                linkSet(mm) = 0
+            endif
+        endif
+    enddo
+
+    !%  assign the faces around the junction for upstream faces
+    do mm=1,upstream_face_per_elemM
+        dlink => nodeI(thisNode,ni_MlinkUp(mm))
+        if (linkSet(mm) > 0) then   
+            elemMI(sElem,eMi_MfaceUp(mm))   = thisFace
+            faceI(thisFace,fi_idx)          = thisFace
+            faceI(thisFace,fi_type)         = nullvalueI ! assigned later
+            faceI(thisFace,fi_Melem_u)      = nullvalueI ! upstream element assigned later, before subdivide_link
+            faceI(thisFace,fi_Melem_d)      = sElem 
+            faceI(thisFace,fi_etype_u)      = linkI(linkSet(mm),li_link_type)
+            faceI(thisFace,fi_etype_d)      = eStorage
+            faceI(thisFace,fi_jump_type)    = nullvalueI
+            faceI(thisFace,fi_node_ID)      = thisNode
+            faceI(thisFace,fi_link_ID)      = linkSet(mm)
+            faceI(thisFace,fi_link_Pos)     = nullvalueI
+            
+            !% the zbottom calculation for faces needed to be fixed
+            !% hypothesis: storage unit doesn't have any branches
+            !% so, the zbottom of the faces should be the zbottom of the node
+            !% this need further check
+
+            faceR(thisFace,fr_Zbottom) = nodeR(thisNode,nr_Zbottom) 
+                                        
+            faceName(thisFace) = nodeName(thisNode)                            
+                
+            lastFace = thisFace
+            thisFace = thisFace+1
+        endif
+    enddo
+    nullify(dlink)
+
+    !%  cycle through the links and subdivide
+    do mm = 1,upstream_face_per_elemM
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, 'cycle through linkSet ', mm
+        if (linkSet(mm) > 0) then
+            if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, 'linkSet(mm) found ',mm
+            
+            lastElemM = sElem ! back to the element we created (otherise lastElemM has recursion)
+            lastFace = elemMI(sElem,eMi_MfaceUp(mm))
+            faceI(lastFace,fi_Melem_u) = thisElem2
+            
+            faceI(lastFace,fi_type) = setFaceType &
+                (faceI(lastFace,fi_etype_u), faceI(lastFace,fi_etype_d))
+
+            zDownstream = faceR(lastFace,fr_Zbottom)
+            
+            call subdivide_link_going_upstream &
+                (lastElem2, thisElem2, lastFace, thisFace, linkSet(mm),   &
+                 elem2I, faceI, linkI, elem2R, faceR, linkR, nodeR, zDownstream) 
+
+            ! choose the next node to analyze
+            thisNode = linkI(linkSet(mm),li_Mnode_u)
+            
+            ! note that the prior link has been assigned elements
+            linkI(linkSet(mm),li_assigned) = setAssigned &
+                (linkSet(mm), li_assigned, lUnassigned, lAssigned, linkI)
+                
+            linkSet(mm) = 0
+
+            if (thisNode > 0) then
+                if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, 'Recursion: handle_thisnode ', thisNode
+
+                call handle_thisnode &
+                    (lastElem2, thisElem2, lastElemM, thisElemM,          &
+                     lastFace,  thisFace,  thisNode,  thisLink,           &
+                     elem2I, elemMI, faceI, linkI, nodeI, elem2R, elemMR, faceR, linkR, nodeR, &
+                     elem2Name, elemMName, faceName, linkName, nodeName) 
+                endif
 
         endif
     enddo
