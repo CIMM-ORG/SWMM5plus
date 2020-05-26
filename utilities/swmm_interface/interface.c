@@ -51,6 +51,14 @@ double DLLEXPORT api_get_node_attribute (void* f_api, int k, int attr)
             if (Node[k].extInflow)
                 return Node[k].extInflow->baseline;
             return -1;
+        case node_depth:
+            return Node[k].newDepth;
+        case node_inflow:
+            return Node[k].inflow;
+        case node_volume:
+            return Node[k].newVolume;
+        case node_overflow:
+            return Node[k].overflow;
         default:
             return nullvalue;
     }
@@ -93,6 +101,16 @@ double DLLEXPORT api_get_link_attribute (void* f_api, int k, int attr)
                 return Conduit[Link[k].subIndex].length;
             else
                 return 0;
+        case link_flow:
+            return Link[k].newFlow;
+        case link_depth:
+            return Link[k].newDepth;
+        case link_volume:
+            return Link[k].newVolume;
+        case link_froude:
+            return Link[k].froude;
+        case link_setting:
+            return Link[k].setting;
         default:
             return nullvalue;
     }

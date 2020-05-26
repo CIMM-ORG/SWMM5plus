@@ -26,7 +26,11 @@ enum api_node_attributes {
   node_initDepth,
   node_extInflow_tSeries,
   node_extInflow_basePat,
-  node_extInflow_baseline
+  node_extInflow_baseline,
+  node_depth,
+  node_inflow,
+  node_volume,
+  node_overflow
 };
 
 enum api_link_attributes {
@@ -41,7 +45,12 @@ enum api_link_attributes {
   link_q0,
   link_geometry,
   conduit_roughness,
-  conduit_length
+  conduit_length,
+  link_flow,
+  link_depth,
+  link_volume,
+  link_froude,
+  link_setting
 };
 
 typedef struct {

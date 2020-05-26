@@ -72,7 +72,11 @@ module interface
     integer, parameter :: node_extInflow_tSeries = 5
     integer, parameter :: node_extInflow_basePat = 6
     integer, parameter :: node_extInflow_baseline = 7
-    integer, parameter :: num_node_attributes = 8
+    integer, parameter :: node_depth = 8
+    integer, parameter :: node_inflow = 9
+    integer, parameter :: node_volume = 10
+    integer, parameter :: node_overflow = 11
+    integer, parameter :: num_node_attributes = 11
 
     ! api_link_attributes
     integer, parameter :: link_ID = 1
@@ -87,7 +91,12 @@ module interface
     integer, parameter :: link_geometry = 10
     integer, parameter :: conduit_roughness = 11
     integer, parameter :: conduit_length = 12
-    integer, parameter :: num_link_attributes = 13
+    integer, parameter :: link_flow = 13
+    integer, parameter :: link_depth = 14
+    integer, parameter :: link_volume = 15
+    integer, parameter :: link_froude = 16
+    integer, parameter :: link_setting = 17
+    integer, parameter :: num_link_attributes = 17
 
     procedure(api_initialize), pointer, private :: ptr_api_initialize
     procedure(api_finalize), pointer, private :: ptr_api_finalize
@@ -216,7 +225,7 @@ module interface
 
             if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
             print *, node_idx, attr
-            if ((attr >= num_node_attributes) .or. (attr < 1)) then
+            if ((attr > num_node_attributes) .or. (attr < 1)) then
                 print *, "error: unexpected node attribute value"
                 stop
             end if
@@ -246,7 +255,7 @@ module interface
 
             if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
 
-            if ((attr >= num_link_attributes) .or. (attr < 1)) then
+            if ((attr > num_link_attributes) .or. (attr < 1)) then
                 print *, "error: unexpected link attribute value"
                 stop
             end if
