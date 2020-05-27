@@ -1,6 +1,6 @@
 !==========================================================================
 !
- program main
+program main
 
    use allocate_storage
    use array_index
@@ -16,7 +16,7 @@
    use network_define
    use output
    use setting_definition
-   use type_definitions 
+   use type_definitions
    use test_cases
    use time_loop
    use utility
