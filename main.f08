@@ -16,7 +16,7 @@
    use network_define
    use output
    use setting_definition
-   use type_definitions 
+   use type_definitions
    use test_cases
    use time_loop
    use utility
@@ -92,11 +92,11 @@
    !===========================================================
    !%  hard-code setting for test cases
 
-   setting%TestCase%UseTestCase = .true.
+   setting%TestCase%UseTestCase = .false.
    ! setting%TestCase%TestName = 'simple_channel_001'
    ! setting%TestCase%TestName = 'y_channel_002'
    ! setting%TestCase%TestName = 'simple_weir_003'
-   setting%TestCase%TestName = 'simple_orifice_004'
+   ! setting%TestCase%TestName = 'simple_orifice_004'
    ! setting%TestCase%TestName = 'waller_creek'
 
    !%  hard-code for debug output

@@ -59,7 +59,7 @@ module interface
 
     character(len = 1024), private :: errmsg
     integer, private :: errstat
-    integer, private :: debuglevel = 1
+    integer, private :: debuglevel = 0
     type(dll_type), private :: dll
     type(os_type) :: os
     type(c_ptr) :: api
@@ -224,7 +224,6 @@ module interface
             subroutine_name = 'get_node_attr'
 
             if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-            print *, node_idx, attr
             if ((attr > num_node_attributes) .or. (attr < 1)) then
                 print *, "error: unexpected node attribute value"
                 stop

@@ -847,12 +847,16 @@ end do
 
  subroutine initialize_linknode_arrays(linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
 
+
    integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
    integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
+
    real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
    real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+
    logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
    logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
+
    type(string), dimension(:), allocatable, target, intent(out)   :: linkName
    type(string), dimension(:), allocatable, target, intent(out)   :: nodeName
 
@@ -878,11 +882,11 @@ end do
 
    do i = 1, N_link
       linkI(i,li_idx) = i
-      linkI(i,li_link_type) = get_link_xsect_attrs(i, link_type)
-      linkI(i,li_geometry) = get_link_xsect_attrs(i, link_geometry)
+      linkI(i,li_link_type) = int(get_link_xsect_attrs(i, link_type))
+      linkI(i,li_geometry) = int(get_link_xsect_attrs(i, link_geometry))
       linkI(i,li_roughness_type) = 1 ! TODO - get from params file
-      linkI(i,li_Mnode_u) = get_link_attr(i, link_node1) + 1 ! node1 in C starts from 0
-      linkI(i,li_Mnode_d) = get_link_attr(i, link_node2) + 1 ! node2 in C starts from 0
+      linkI(i,li_Mnode_u) = int(get_link_attr(i, link_node1)) + 1 ! node1 in C starts from 0
+      linkI(i,li_Mnode_d) = int(get_link_attr(i, link_node2)) + 1 ! node2 in C starts from 0
 
       nodeI(linkI(i,li_Mnode_u), ni_N_link_u) = nodeI(linkI(i,li_Mnode_u), ni_N_link_u) + 1
       nodeI(linkI(i,li_Mnode_u), ni_idx_base1 + nodeI(linkI(i,li_Mnode_u), ni_N_link_u)) = i
@@ -890,7 +894,7 @@ end do
       nodeI(linkI(i,li_Mnode_d), ni_idx_base2 + nodeI(linkI(i,li_Mnode_d), ni_N_link_d)) = i
 
       linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
-      linkR(i,lr_Length) = get_link_xsect_attrs(i, conduit_length)
+      linkR(i,lr_Length) = get_link_attr(i, conduit_length)
       linkR(i,lr_BreadthScale) = get_link_xsect_attrs(i, link_xsect_wMax)
       ! linkR(i,lr_TopWidth)
       linkR(i,lr_Slope) = get_link_slope(i, linkI(i,li_Mnode_u), linkI(i,li_Mnode_u))
@@ -902,11 +906,10 @@ end do
       linkR(i,lr_InitialDnstreamDepth) = get_node_attr(linkI(i,li_Mnode_d), node_initDepth)
       linkR(i,lr_InitialDepth) = abs(linkR(i,lr_InitialDnstreamDepth) - linkR(i,lr_InitialUpstreamDepth)) / 2
       ! linkR(i,lr_ParabolaValue)
-
    end do
 
    do i = 1, N_node
-      total_n_links = nodeR(i,ni_N_link_u) + nodeR(i,ni_N_link_d)
+      total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
       if ((get_node_attr(i, node_extInflow_tSeries) /= -1) .or. &
           (get_node_attr(i, node_extInflow_basePat) /= -1) .or. &
           (get_node_attr(i, node_extInflow_baseline) > 0)) then
