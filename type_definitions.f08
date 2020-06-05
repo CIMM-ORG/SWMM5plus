@@ -10,7 +10,7 @@
 ! be confined to the module in which they are defined.
 !
 !==========================================================================
- module type_definitions
+module type_definitions
 
     implicit none
 
@@ -79,7 +79,7 @@
     end type threadedfileType
 
 
-!==========================================================================
-! END OF MODULE type_definitions
-!==========================================================================
- end module type_definitions
+    !==========================================================================
+    ! END OF MODULE type_definitions
+    !==========================================================================
+end module type_definitions

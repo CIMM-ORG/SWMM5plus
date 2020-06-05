@@ -1,11 +1,11 @@
 !
 ! 2019-10 @EhsanMadadi added keys for widt-depth cases.
 !==========================================================================
- module setting_definition
-!
-! defines the setting%.... structure that contains the controls for the
-! simulation
-!
+module setting_definition
+    !
+    ! defines the setting%.... structure that contains the controls for the
+    ! simulation
+    !
 
     use type_definitions
 
@@ -13,14 +13,14 @@
 
     public
 
-!% THIRD LEVEL TYPES ----------------------------------------------
+    !% THIRD LEVEL TYPES ----------------------------------------------
 
     !% setting%Method%AdjustVshapedFlowrate
     type adjustVshapedFlowrateType
         logical ::  Apply = .true.
         real    ::  Coef  = 0.1
     end type adjustVshapedFlowrateType
-    
+
     !% setting%Method%AdjustWidthDepth
     type adjustWidthDepthType
         logical :: Apply               = .true.
@@ -59,7 +59,7 @@
         real    :: Maximum      = 20 ! m/s
     endtype velocityType
 
-!% SECOND LEVEL TYPES ----------------------------------------------
+    !% SECOND LEVEL TYPES ----------------------------------------------
 
     !%  setting%Constant
     type constantType
@@ -185,7 +185,7 @@
         real    :: WeirInletOffset      = 1.0
     end type WeirType
 
-!% FIRST LEVEL TYPE  ----------------------------------------------
+    !% FIRST LEVEL TYPE  ----------------------------------------------
     type settingType
         integer :: dummy
         type(constantType)          :: Constant     ! constants
@@ -209,31 +209,31 @@
 
     integer, private :: debuglevel = 0
 
- contains
-!==========================================================================
-!==========================================================================
- subroutine setting_default
-!
-!   This subroutine can be used in conjunction with the test_case to setup
-!   a simulation or set of simulations
-!
-!--------------------------------------------------------------------------
+contains
+    !==========================================================================
+    !==========================================================================
+    subroutine setting_default
+        !
+        !   This subroutine can be used in conjunction with the test_case to setup
+        !   a simulation or set of simulations
+        !
+        !--------------------------------------------------------------------------
 
- setting%Debugout%DisplayInterval = 1000
+        setting%Debugout%DisplayInterval = 1000
 
- setting%Time%dt = 50.0
- setting%Step%First = 1
- setting%Step%Final = 40000
- setting%Step%Current = 1
- setting%Step%FromRestart = 1
+        setting%Time%dt = 50.0
+        setting%Step%First = 1
+        setting%Step%Final = 40000
+        setting%Step%Current = 1
+        setting%Step%FromRestart = 1
 
- setting%Time%StartTime = 0.0
- setting%Time%EndTime = setting%Time%StartTime  &
-    + setting%Time%dt * (setting%Step%Final - setting%Step%First + 1)
+        setting%Time%StartTime = 0.0
+        setting%Time%EndTime = setting%Time%StartTime  &
+            + setting%Time%dt * (setting%Step%Final - setting%Step%First + 1)
 
- end subroutine setting_default
-!
-!==========================================================================
-! END OF MODULE
-!==========================================================================
- end module setting_definition
+    end subroutine setting_default
+    !
+    !==========================================================================
+    ! END OF MODULE
+    !==========================================================================
+end module setting_definition
