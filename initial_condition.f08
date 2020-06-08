@@ -18,6 +18,7 @@
     use globals
     use junction
     use setting_definition
+    use storage
     use utility
     use weir
     use xsect_tables
@@ -75,7 +76,17 @@
 
  call initial_junction_conditions &
     (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
-
+ 
+ call initial_storage_conditions &
+    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
+ print*, elemMR(:,eMr_Eta), '<= Eta'
+ print*, elemMr(:,eMr_Area), '<= Area'
+ print*, elemMR(:,eMr_Topwidth), '<= Topwidth'
+ print*, elemMR(:,eMr_Perimeter), '<= Perimeter'
+ print*, elemMR(:,eMr_HydDepth), '<= Depth'
+ print*, elemMR(:,eMr_Volume), '<= Volume'
+ print*, elemMR(:,eMr_SurfArea), '<= Surface Area'
+ stop
  !% set the bc elements (outside of face) to null values
  call bc_nullify_ghost_elem (elem2R, bcdataDn)
  call bc_nullify_ghost_elem (elem2R, bcdataUp)
@@ -348,7 +359,7 @@
         elseif (linkI(ii,li_geometry) == lCircular ) then
             !% handle circular elements
             ! Input: InitialDepth, Full Depth
-            ! these geometric properties are wron. but they will get correctly updated later.
+            ! these geometric properties are wrong. but they will get correctly updated later.
             ! Talk with Dr. Hodges about this matter.
             where (elem2I(:,e2i_link_ID) == Lindx)
                 elem2I(:,e2i_geometry)     = eCircular
@@ -499,6 +510,53 @@
 !========================================================================== 
 !==========================================================================
 !
+ subroutine initial_storage_conditions &
+    (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
+ 
+ character(64) :: subroutine_name = 'initial_storage_conditions'
+ 
+ real,              intent(in out)  :: elemMR(:,:)
+ real,      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
+ integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:), nodeI(:,:), faceI(:,:)
+ 
+ integer,   pointer :: tface, telem
+ 
+ real   :: upvalue(upstream_face_per_elemM), dnvalue(dnstream_face_per_elemM)
+
+ integer,   dimension(4)    :: e2rset, eMrset
+  
+ integer :: ii, mm 
+!-------------------------------------------------------------------------- 
+ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+ 
+ if (N_elemM > 0) then
+
+    e2rset = (/e2r_Eta, e2r_Topwidth,   e2r_Area,  e2r_Perimeter/)
+    eMrset = (/eMr_Eta, eMr_Topwidth,   eMr_Area,  eMr_Perimeter/)
+
+    do mm=1,size(e2rset)
+
+        !% initialize the the average of the adjacent elements
+        call storage_adjacent_element_average &
+            (elem2R, elemMR, elemMI, faceI, e2rset(mm), eMrset(mm))
+
+    end do
+
+    call storage_depth_volume (elemMR, elemMI)
+
+    where (elemMI(:,eMi_elem_type) == eStorage)
+        !% setting the flowrae in Storafe unit as almost zero. Talk with Dr. Hodges about this matter
+        elemMR(:,eMr_Flowrate) = 1.0e-7 
+    endwhere
+
+ end if
+ 
+ if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+ end subroutine initial_storage_conditions
+!
+!========================================================================== 
+!==========================================================================
+!
  subroutine meta_element_assign (elemI, ei_elem_type, ei_meta_elem_type)
 !
 ! Assign meta element type to elements
@@ -546,9 +604,10 @@
 !
 !========================================================================== 
 !==========================================================================
+!
  subroutine face_meta_element_assign (faceI, elemI, N_face)
 
- character(64) :: subroutine_name = 'interp_with_junction_upstream'
+ character(64) :: subroutine_name = 'face_meta_element_assign'
  
  integer,      target,     intent(in out)  :: faceI(:,:), elemI(:,:)
  integer,                  intent(in)      :: N_face

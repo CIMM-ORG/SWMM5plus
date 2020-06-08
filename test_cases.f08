@@ -316,7 +316,7 @@
         ! set up flow and time step for differen subcases
         ! tests that ran:  Fr = 0.25, 0.5
         Froude(1)       = 0.8   ! determines flowrate and slope to get Froude
-        Froude(2)       = 0.8  ! determines flowrate and slope to get Froude
+        Froude(2)       = 0.8   ! determines flowrate and slope to get Froude
         Froude(3)       = 0.8   ! determines flowrate and slope to get Froude
 
         CFL          = 0.6  ! determines dt from subdivide_length

@@ -227,6 +227,7 @@ do mm = 1,N_link
     linkR(mm,lr_LeftSlope)              = side_slope(mm)
     linkR(mm,lr_RightSlope)             = side_slope(mm)
     linkR(mm,lr_InletOffset)            = inlet_offset(mm)
+    linkR(mm,lr_OutletOffset)           = inlet_offset(mm)
     linkR(mm,lr_DischargeCoeff1)        = discharge_coefficient1(mm)
     linkR(mm,lr_DischargeCoeff2)        = discharge_coefficient2(mm)
     linkR(mm,lr_FullDepth)              = full_depth(mm)
@@ -244,6 +245,8 @@ end do
     print *, linkI(:,li_Mnode_d) , ' downstream node'
     print *, linkR(:,lr_InitialDnstreamDepth), 'downstream depth'
     print *, linkR(:,lr_InitialUpstreamDepth), 'upstream depth'
+    print *, linkR(:,lr_InletOffset), ' inletOffset'
+    print *, linkR(:,lr_OutletOffset), ' outletOffset'
 
     print *, 'node info'
     print *, nodeI(:,ni_idx), ' idx'
@@ -254,7 +257,7 @@ end do
     ! print *, nodeI(:,ni_N_link_u), 'number of upstream links'
     ! print *, nodeI(:,ni_Mlink_u1), 'upstream1 link'
  endif
- 
+ stop
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine case_simple_weir_and_nodes
 !

@@ -165,7 +165,7 @@
       wdBreadth, wdWidthDepthData, wdCellType)
    !% check consistency of the smallvolume setup
    call checking_smallvolume_consistency (elem2R, elemMR)
-
+   stop
    ! initialize the diagnostics
    call diagnostic_initialize &
       (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, &

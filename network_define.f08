@@ -577,11 +577,11 @@
  
  integer,   target,         intent(in)      :: linkI(:,:)
  integer,   target,         intent(in)      :: nodeI(:,:)
- real,                      intent(in out)  :: linkR(:,:)    
+ real,      target,         intent(in out)  :: linkR(:,:)    
  real,      target,         intent(in)      :: nodeR(:,:)
 
  integer,   pointer :: nUp, nDn
- real,      pointer :: zUp, zDn
+ real,      pointer :: zUp, zDn, oUp, oDn
  integer :: mm
   
 !-------------------------------------------------------------------------- 
@@ -595,11 +595,35 @@
     zDn => nodeR(nDn,nr_Zbottom)
     linkR(mm,lr_Slope) = (zUp - zDn) / linkR(mm,lr_Length)
  end do
+
+!% to be consistent with SWMM5, each links needs inlet and outlet offset valuse.
+!% these values indicate the offset from upstream and downstream nodes
+!% so, the z values for links will be the offset + node zbottom 
+!% this offset is only used in specialized elements i.e. weir, orifice, storage
+!% this need to be further discussed
+ ! do mm = 1,N_link
+ !    if (linkR(mm, lr_InletOffset) == nullvalueR) then
+ !        !% if offset value are not assigned/sepcified, offset will be set to zero
+ !        linkR(mm,lr_InletOffset) = zeroR
+ !        linkR(mm,lr_OutletOffset) = zeroR
+ !    endif
+
+ !    oUp => linkR(mm,lr_InletOffset)
+ !    oDn => linkR(mm,lr_OutletOffset)
+
+ !    nUp => linkI(mm,li_Mnode_u)
+ !    nDn => linkI(mm,li_Mnode_d)
+
+ !    zUp => nodeR(nUp,nr_Zbottom)
+ !    zDn => nodeR(nDn,nr_Zbottom)
+
+ !    linkR(mm,lr_Slope) = ((zUp + oUp) - (zDn + oDn ))/ linkR(mm,lr_Length)
+ ! end do
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) then
     !% provide output for debugging
     print *, subroutine_name,'--------------------------------'
-    print *, 'link ID,  Slope, length'
+    print *, 'link ID,  Slope,  length'
     do mm=1,N_link
         print *, mm, linkR(mm,lr_Slope), linkR(mm,lr_Length)
     end do 
@@ -943,7 +967,7 @@
     
     lastElem2 = thisElem2
     thisElem2 = thisElem2+1
-    
+
     !% subdivide the first link upstream of the downstream BC (only one link allowed)
     Zdownstream => nodeR(thisNode,nr_Zbottom)
     call subdivide_link_going_upstream &
@@ -1387,6 +1411,7 @@
     elemMI(sElem,eMi_nfaces_u)        = nodeI(thisNode,ni_N_link_u)
     elemMI(sElem,eMi_roughness_type)  = nullvalueI            
     elemMI(sElem,eMi_node_ID)         = thisNode
+    elemMI(sElem,eMi_curve_type)      = nodeI(thisNode,ni_curve_type)
     !elemMI(sElem,eMi_link_Pos)        = nullvalueI 
     
     !%  the following assumes the topwidth and length are functions of branches
@@ -1394,6 +1419,11 @@
     elemMR(sElem,eMr_BreadthScale)    = zeroR ! do not use nullvalueR with geometry
     elemMR(sElem,eMr_Length)          = zeroR ! do not use nullvalueR with geometry  
     elemMR(sElem,eMr_Zbottom)         = nodeR(thisNode,nr_Zbottom)
+    elemMR(sElem,eMr_FullDepth)       = nodeR(thisNode,nr_FullDepth)
+    elemMR(sElem,eMr_Depth)           = nodeR(thisNode,nr_InitialDepth)
+    elemMR(sElem,eMr_StorageConstant) = nodeR(thisnode,nr_StorageConstant)
+    elemMR(sElem,eMr_StorageCoeff)    = nodeR(thisnode,nr_StorageCoeff) 
+    elemMR(sElem,eMr_StorageExponent) = nodeR(thisnode,nr_StorageExponent)
     
     !%  Check for downstream elements that have been assigned and store mappings
     do mm=1,nodeI(thisNode,ni_N_link_d)
@@ -1419,7 +1449,7 @@
         endif
     enddo
 
-    !%  assign the faces around the junction for upstream faces
+    !%  assign the faces around the storage for upstream faces
     do mm=1,upstream_face_per_elemM
         dlink => nodeI(thisNode,ni_MlinkUp(mm))
         if (linkSet(mm) > 0) then   
@@ -1437,10 +1467,11 @@
             
             !% the zbottom calculation for faces needed to be fixed
             !% hypothesis: storage unit doesn't have any branches
-            !% so, the zbottom of the faces should be the zbottom of the node
-            !% this need further check
+            !% so, the zbottom of the faces should be the zbottom of the node + 
+            !% link offset. Link offset will only be used in storage nodes
 
-            faceR(thisFace,fr_Zbottom) = nodeR(thisNode,nr_Zbottom) 
+            ! faceR(thisFace,fr_Zbottom) = linkR(dlink,lr_OutletOffset) + nodeR(thisNode,nr_Zbottom)
+            faceR(thisFace,fr_Zbottom) = nodeR(thisNode,nr_Zbottom)  
                                         
             faceName(thisFace) = nodeName(thisNode)                            
                 
@@ -1537,7 +1568,7 @@
 !%  reference elevations at cell center and cell face
  zcenter = zDownstream - 0.5 * linkR(thislink,lr_ElementLength) * linkR(thislink,lr_Slope)
  zface   = zDownstream
- 
+ print*, zface, ' zface at first'
  do mm = 1,linkI(thisLink,li_N_element)
     !%  store the elem info
     elem2I(thisElem2,e2i_idx)               = thisElem2
@@ -1562,7 +1593,7 @@
     elem2R(thisElem2,e2r_SideSlope)         = linkR(thisLink,lr_SideSlope)
     elem2R(thisElem2,e2r_EndContractions)   = linkR(thisLink,lr_EndContractions)
     elem2R(thisElem2,e2r_FullDepth)         = linkR(thisLink,lr_FullDepth)
-    
+
     zcenter = zcenter + linkR(thislink,lr_Slope) * linkR(thislink,lr_ElementLength)
     zface   = zface   + linkR(thislink,lr_Slope) * linkR(thislink,lr_ElementLength)
     
@@ -1598,7 +1629,7 @@
             print *, 'error: case statement is incomplete in ',subroutine_name
             stop
     end select
-        
+
     !%  store the face info on upstream face
     faceI(thisFace,fi_idx)          = thisFace
     faceI(thisFace,fi_Melem_u)      = thisElem2+1           
