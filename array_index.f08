@@ -13,21 +13,21 @@
 ! 20181105
 !
 !==========================================================================
- module array_index
+module array_index
 
     use globals
 
     implicit none
 
-!%  FIRST INDEXES (DO NOT CHANGE) --------------------------------------------
+    !%  FIRST INDEXES (DO NOT CHANGE) --------------------------------------------
     ! In theory, we can use different first index values for the arrays.
     ! This was initially used in debugging, but it seemed the gfortran compiler
     ! had some behaviors with non-unity starting points that I couldn't figure out.
     integer, parameter :: first_face_index  = 1
     integer, parameter :: first_elemM_index = 1
     integer, parameter :: first_elem2_index = 1
- 
-!%  SIZES FOR MULTI_FACE ELEMENTS --------------------------------------------
+
+    !%  SIZES FOR MULTI_FACE ELEMENTS --------------------------------------------
     ! design of array depends on faces per element and elements per face
     ! CODE NOTE: face_per_elemM must equal sum of upstream and downstream
     integer, parameter :: face_per_elemM          = 6  !maximum number of faces per elemM 6,3 and 3
@@ -35,11 +35,11 @@
     integer, parameter :: dnstream_face_per_elemM = 3
     integer, parameter :: links_per_node = face_per_elemM
 
-!%  SIZE FOR elem2 (DO NOT CHANGE) -------------------------------------------
+    !%  SIZE FOR elem2 (DO NOT CHANGE) -------------------------------------------
     !CODE NOTE: require elem_per_face = 2 unless code is restructured!
     integer, parameter :: elem_per_face           = 2  !maximum number of elements connected to face
 
-!%  elem2I ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
+    !%  elem2I ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
     integer, parameter :: e2i_idx             = 1    ! unique index of each element
     integer, parameter :: e2i_meta_elem_type  = 2    ! unique indes of each meta element type
     integer, parameter :: e2i_elem_type       = 3    ! type of element
@@ -63,7 +63,7 @@
     ! storage for temp array index positions
     integer, dimension(e2i_n_temp) :: e2i_Temp = nullvalueI
 
-!%  elemMI ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
+    !%  elemMI ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
     ! column index for integer central data on a multi-branch junction
     integer, parameter :: eMi_idx             = 1    ! unique index of each element
     integer, parameter :: eMi_meta_elem_type  = 2    ! type of meta element
@@ -97,7 +97,7 @@
     integer, dimension(dnstream_face_per_elemM) :: eMi_MfaceDn = nullvalueI
     integer, dimension(upstream_face_per_elemM + dnstream_face_per_elemM) :: eMi_MfaceAll = nullvalueI
 
-!%  faceI ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
+    !%  faceI ARRAY COLUMN INDEXES FOR INTEGER DATA -----------------------------
     ! column index for integer data in the faceI array
     integer, parameter :: fi_idx                = 1    ! unique index of each face
     integer, parameter :: fi_type               = 2    ! unique type for this face
@@ -116,14 +116,14 @@
     integer, parameter :: fi_BC_ID              = 15   ! ID of the BC if a BC face
     integer, parameter :: fi_temp1              = 16
     integer, parameter :: fi_temp2              = 17
-    integer, parameter :: fi_idx_max            = 17    
+    integer, parameter :: fi_idx_max            = 17
 
     integer, parameter :: fi_n_temp             = 2
 
     ! storage for temp array index positions
     integer, dimension(fi_n_temp) :: fi_Temp = nullvalueI
 
-!%  elem2R ARRAY COLUMN INDEXES FOR REAL DATA ----------------------------------
+    !%  elem2R ARRAY COLUMN INDEXES FOR REAL DATA ----------------------------------
     ! column index for real data in the elem2R array
     integer, parameter :: e2r_Volume             = 1
     integer, parameter :: e2r_SmallVolume        = 2
@@ -178,7 +178,7 @@
     ! storage for temp array index positions
     integer, dimension(e2r_n_temp) :: e2r_Temp = nullvalueI
 
-!%  elemMR ARRAY COLUMN INDEXES FOR REAL DATA --------------------------------
+    !%  elemMR ARRAY COLUMN INDEXES FOR REAL DATA --------------------------------
     ! column index for real central data on a multi-branch junction
     integer, parameter :: eMr_Volume             = 1
     integer, parameter :: eMr_SmallVolume        = 2
@@ -341,7 +341,7 @@
     integer, dimension(face_per_elemM) :: eMr_ZbottomAll    = nullvalueI
     integer, dimension(face_per_elemM) :: eMr_BreadthScaleAll    = nullvalueI
 
-!%  faceR COLUMN INDEXES FOR REAL DATA ON FACE -------------------------------
+    !%  faceR COLUMN INDEXES FOR REAL DATA ON FACE -------------------------------
     ! column index for real faceR array
     integer, parameter :: fr_Area_d       = 1 ! area on downstream side of face (AreaP in SvePy)
     integer, parameter :: fr_Area_u       = 2 ! area on upstream side of face (AreaM in SvePy)
@@ -370,7 +370,7 @@
     ! storage for temp array index positions
     integer, dimension(fr_n_temp) :: fr_Temp = nullvalueI
 
-!%  elem2YN COLUMN INDEXES FOR LOGICAL DATA ON 2 FACE ELEMENT ----------------
+    !%  elem2YN COLUMN INDEXES FOR LOGICAL DATA ON 2 FACE ELEMENT ----------------
     ! column index for logical data in elem2YN array
     integer, parameter :: e2YN_IsSmallVolume    = 1
     integer, parameter :: e2YN_IsAdhocFlowrate  = 2
@@ -385,7 +385,7 @@
     ! storage for temp array index positions
     integer, dimension(e2YN_n_temp) :: e2YN_Temp = nullvalueI
 
-!%  elemMYN COLUMN INDEXES FOR LOGICAL DATA ON MULTI-BRANCH JUNCTION ---------
+    !%  elemMYN COLUMN INDEXES FOR LOGICAL DATA ON MULTI-BRANCH JUNCTION ---------
     ! column index for logical data in elemMYN array
     integer, parameter :: eMYN_IsSmallVolume   = 1
     integer, parameter :: eMYN_IsAdhocFlowrate = 2
@@ -399,7 +399,7 @@
     ! storage for temp array index positions
     integer, dimension(eMYN_n_temp) :: eMYN_Temp = nullvalueI
 
-!%  faceYN COLUMN INDEXES FOR LOGICAL DATA ON FACE
+    !%  faceYN COLUMN INDEXES FOR LOGICAL DATA ON FACE
     ! column index for logical data in elemYN array
     integer, parameter :: fYN_IsHQ2up            = 1
     integer, parameter :: fYN_IsHQ2dn            = 2
@@ -415,7 +415,7 @@
     ! storage for temp array index positions
     integer, dimension(fYN_n_temp) :: fYN_Temp = nullvalueI
 
-!%  linkI COLUMN INDEXES FOR INTEGER DATA OF LINKS IN LINK/NODE SYSTEM -------
+    !%  linkI COLUMN INDEXES FOR INTEGER DATA OF LINKS IN LINK/NODE SYSTEM -------
     ! column index for integer data in linkI array
     integer, parameter :: li_idx              = 1
     integer, parameter :: li_link_type        = 2
@@ -436,7 +436,7 @@
     integer, parameter :: li_temp1            = 17
     integer, parameter :: li_idx_max          = 17
 
-!%  nodeI COLUMN INDEXES FOR INTEGER DATA OF NODES IN LINK/NODE SYSTEM -------
+    !%  nodeI COLUMN INDEXES FOR INTEGER DATA OF NODES IN LINK/NODE SYSTEM -------
     ! column index for integer data in nodeI array
     integer, parameter :: ni_idx        = 1
     integer, parameter :: ni_node_type  = 2
@@ -462,7 +462,7 @@
     integer, dimension(upstream_face_per_elemM) :: ni_MlinkUp = nullvalueI
     integer, dimension(dnstream_face_per_elemM) :: ni_MlinkDn = nullvalueI
 
-!%  linkR COLUMN INDEXES FOR REAL DATA OF LINKS IN LINK/NODE SYSTEM  --------
+    !%  linkR COLUMN INDEXES FOR REAL DATA OF LINKS IN LINK/NODE SYSTEM  --------
     ! column index for real data in the linkR array
     integer, parameter :: lr_Length                 = 1
     integer, parameter :: lr_BreadthScale           = 2
@@ -486,7 +486,7 @@
     integer, parameter :: lr_temp1                  = 20
     integer, parameter :: lr_idx_max                = 20
 
-!%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
+    !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array
     integer, parameter :: nr_Zbottom          = 1
     integer, parameter :: nr_temp1            = 2
@@ -506,17 +506,17 @@
     integer, dimension(upstream_face_per_elemM) :: nr_ElementLengthUp = nullvalueI
     integer, dimension(dnstream_face_per_elemM) :: nr_ElementLengthDn = nullvalueI
 
-!%  nodeYN COLUMN INDEXES FOR LOGICAL DATA ON NODES --------------------------
+    !%  nodeYN COLUMN INDEXES FOR LOGICAL DATA ON NODES --------------------------
     ! column index for logical data in nodeYN array
     integer, parameter :: nYN_temp1     = 1
     integer, parameter :: nYN_idx_max   = 1
 
-!%  linkYN COLUMN INDEXES FOR LOGICAL DATA ON LINKS ---------------------------
+    !%  linkYN COLUMN INDEXES FOR LOGICAL DATA ON LINKS ---------------------------
     ! column index for logical data in linkYN array
     integer, parameter :: lYN_temp1     = 1
     integer, parameter :: lYN_idx_max   = 1
-    
- !% widthDepth COLUMN INDEXES
+
+    !% widthDepth COLUMN INDEXES
     integer, parameter :: wd_widthAtLayerTop         = 1
     integer, parameter :: wd_depthAtLayerTop         = 2
     integer, parameter :: wd_areaThisLayer           = 3
@@ -531,8 +531,8 @@
     integer, parameter :: wd_area_difference         = 12
     integer, parameter :: wd_local_difference        = 13
     integer, parameter :: wd_idx_max                 = 13
-    
-!==========================================================================
-! END OF MODULE array_index
-!==========================================================================
- end module array_index
+
+    !==========================================================================
+    ! END OF MODULE array_index
+    !==========================================================================
+end module array_index
