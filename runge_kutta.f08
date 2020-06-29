@@ -17,6 +17,7 @@
     use globals
     use setting_definition
     use utility
+    use storage
     use weir
     use orifice
 
@@ -106,7 +107,7 @@
              thiscoef(ii))
 
         if ( count(elem2I(:,e2i_elem_type) == eWeir)  > zeroI) then
-        ! call weir step if weirs exist in the system
+        ! call weir step if weirs exist in the network  
             call weir_step &
                 (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
                 e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
@@ -114,13 +115,20 @@
         endif
 
         if ( count(elem2I(:,e2i_elem_type) == eOrifice)  > zeroI) then
-        ! call orifice step if orifices exist in the system
+        ! call orifice step if orifices exist in the network  
             call orifice_step &
                 (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
                 e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
                 faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
         endif
-              
+
+        if ( count(elemMI(:,eMi_elem_type) == eStorage) > zeroI) then
+        ! call storage step if storage unit exists in the network    
+            call storage_step &
+                (eMr_Volume, eMr_Velocity, eMr_Volume_new, eMr_Velocity_new,  &
+                elemMR, faceR, elemMI, elemMYN, thiscoef(ii))
+        endif
+          
         call rk2_update_auxiliary_variables &
             (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new, &
              elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  faceI,    &
@@ -157,6 +165,10 @@
     call overwrite_old_values &
         (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
          eMr_Volume, eMr_Volume_new, eMi_elem_type, eJunctionChannel, .false.)
+
+    call overwrite_old_values &
+        (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
+         eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)
 
 endif
 

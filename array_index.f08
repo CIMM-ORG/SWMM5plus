@@ -206,13 +206,14 @@
     integer, parameter :: eMr_LeftSlope          = 23
     integer, parameter :: eMr_RightSlope         = 24
     integer, parameter :: eMr_ParabolaValue      = 25
-    integer, parameter :: eMr_FullDepth          = 26
-    integer, parameter :: eMr_StorageConstant    = 27     ! Storage Constant for surface area
-    integer, parameter :: eMr_StorageCoeff       = 28     ! Storage Coefficient for surface area
-    integer, parameter :: eMr_StorageExponent    = 29     ! Storafe Exponent for surface area
-    integer, parameter :: eMr_SurfaceArea        = 30     ! Storage Surface Area
-    integer, parameter :: eMr_SurchargeDepth     = 31     ! Surcharge Depth 
-    integer, parameter :: eMr_idx_base1          = 31
+    integer, parameter :: eMr_FullDepth          = 26     ! Storage full depth 
+    integer, parameter :: eMr_FullVolume         = 27     ! Storage full volume
+    integer, parameter :: eMr_StorageConstant    = 28     ! Storage Constant for surface area
+    integer, parameter :: eMr_StorageCoeff       = 29     ! Storage Coefficient for surface area
+    integer, parameter :: eMr_StorageExponent    = 30     ! Storafe Exponent for surface area
+    integer, parameter :: eMr_SurfaceArea        = 31     ! Storage Surface Area
+    integer, parameter :: eMr_SurchargeDepth     = 32     ! Surcharge Depth 
+    integer, parameter :: eMr_idx_base1          = 32
 
     ! column indexes for real branch data on a multi-branch junction
     ! note that these indexes must be consecutive by type

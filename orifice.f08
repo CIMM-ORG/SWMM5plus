@@ -290,7 +290,7 @@ subroutine orifice_initialize &
         crest   = inletoffset + zbottom
         crown   = crest + fulldepth
         ! find the effective orifice length
-        length  = min(twoR * thiscoef * sqrt(grav * fulldepth), 200.0)
+        length  = min(twoR * dt * sqrt(grav * fulldepth), 200.0)
         ! set the free surface elevation at orifice element
         eta     = max(faceEtaDn(upFace), faceEtaup(dnFace)) 
         dir     = int(sign(oneR, (faceEtaDn(upFace) - faceEtaup(dnFace))))
@@ -617,14 +617,14 @@ subroutine orifice_geometry &
         flow         = dir * coeffWeir * submerganceCorrection * &
                        submergenceFactor ** 1.5
         velocity2new = flow / area
-        volume2new   = flow * thiscoef
+        volume2new   = flow * dt
 
  elsewhere (elem2I(:,e2i_elem_type) == eOrifice )
 
         flow         = dir * coeffOrif * submerganceCorrection * &
                        sqrt(abs(effectiveHead))
         velocity2new = flow / area 
-        volume2new   = flow * thiscoef
+        volume2new   = flow * dt
  endwhere
  
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

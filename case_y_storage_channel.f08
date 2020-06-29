@@ -181,9 +181,9 @@
 ! storage unit properties
  nodeR(2,nr_InitialDepth)      = 1.0
  nodeR(2,nr_FullDepth)         = 10.0
- nodeR(2,nr_StorageConstant)   = 10.0
- nodeR(2,nr_StorageCoeff)      = 3.0  
- nodeR(2,nr_StorageExponent)   = 1.5
+ nodeR(2,nr_StorageConstant)   = 1.0e6
+ nodeR(2,nr_StorageCoeff)      = 0.0  
+ nodeR(2,nr_StorageExponent)   = 0.0
 
 
  !% Storage test: the zbottom is below the offset of links

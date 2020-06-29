@@ -267,7 +267,8 @@
  integer,               intent(in)      :: diagnosticTask
     
  integer,   pointer :: etype2(:), etypeM(:)
- real               :: channelVolume, junctionVolume, weirVolume, orificevolume, totalVolume
+ real               :: channelVolume, weirVolume, orificevolume, totalVolume
+ real               :: junctionVolume, storageVolume
  real               :: inflowRate, outflowRate
  
  integer :: ii
@@ -286,9 +287,10 @@
  channelVolume  = sum(elem2R(:,e2r_Volume),1,etype2 == eChannel)
  weirVolume     = sum(elem2R(:,e2r_Volume),1,etype2 == eWeir)
  orificevolume  = sum(elem2R(:,e2r_Volume),1,etype2 == eOrifice)
- junctionVolume = sum(elemMR(:,eMr_Volume),1,etypeM == eJunctionChannel) 
+ junctionVolume = sum(elemMR(:,eMr_Volume),1,etypeM == eJunctionChannel)
+ storageVolume  = sum(elemMR(:,eMr_Volume),1,etypeM == eStorage)
  
- totalVolume = channelVolume + junctionVolume + weirVolume + orificevolume
+ totalVolume = channelVolume + junctionVolume + weirVolume + orificevolume + storageVolume
   
  select case (diagnosticTask)
     case (0)

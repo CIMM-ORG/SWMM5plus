@@ -257,7 +257,7 @@ end do
     ! print *, nodeI(:,ni_N_link_u), 'number of upstream links'
     ! print *, nodeI(:,ni_Mlink_u1), 'upstream1 link'
  endif
- stop
+
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine case_simple_weir_and_nodes
 !

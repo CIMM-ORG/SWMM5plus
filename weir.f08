@@ -157,8 +157,8 @@
 
 
 ! !% set all weir element geometry values ~ zero values
- call weir_provisional_geometry &
-    (elem2R, elemMR, faceR, elem2I, elemMI)
+ ! call weir_provisional_geometry &
+ !    (elem2R, elemMR, faceR, elem2I, elemMI)
 
 !% set necessary weir setting and find eta on weir element    
 call weir_initialize &
@@ -205,7 +205,7 @@ call weir_geometry &
 !% calculate weir flow
  call weir_flow &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2new, &
-     velocity2new, volumeMnew, velocityMnew, wFlow, wArea, wSideSlope,    &
+     velocity2new, volume2old, velocity2old, wFlow, wArea, wSideSlope,    &
      cTriangular, cRectangular, dir, hEffective, lEffective, subFactor1,  &
      subFactor2, thiscoef)
 
@@ -269,7 +269,7 @@ subroutine weir_initialize &
         crest   =  inletoffset + zbottom
         crown   =  crest + fullDepth
         ! find the weir length
-        length  = min(twoR*thiscoef*sqrt(grav*fullDepth), 200.0)
+        length  = min(twoR*dt*sqrt(grav*fullDepth), 200.0)
         ! set the free surface elevation at weir element
         eta = max(faceEtaDn(upFace), faceEtaUp(dnFace)) 
         dir  = int(sign(oneR, ( faceEtaDn(upFace) - faceEtaUp(dnFace))))
@@ -597,7 +597,7 @@ subroutine weir_effective_crest_length &
  real,  pointer   ::  submergenceFactor1(:), submergenceFactor2(:)
  real,  pointer   ::  effectivehead(:), crestlength(:)
 
- integer, pointer :: dir(:)    
+ integer, pointer ::  dir(:)    
 
  integer :: mm
 !--------------------------------------------------------------------------
@@ -614,7 +614,7 @@ subroutine weir_effective_crest_length &
     velocity2new = flow / area
 
     ! Volume = Q * dt
-    volume2new   = thiscoef * flow 
+    volume2new   = dt * flow 
 
  elsewhere ( elem2I(:,e2i_weir_elem_type) == eTrapezoidalWeir )          
     ! Trapezoidal weir
@@ -626,7 +626,7 @@ subroutine weir_effective_crest_length &
     velocity2new = flow / area
 
     ! Volume = Q * dt
-    volume2new   = thiscoef * flow 
+    volume2new   = dt * flow 
 
  elsewhere ( elem2I(:,e2i_weir_elem_type) == eTransverseWeir )        
     ! Transverse weir
@@ -637,7 +637,7 @@ subroutine weir_effective_crest_length &
     velocity2new = flow / area
 
     ! Volume = Q * dt
-    volume2new   = thiscoef * flow 
+    volume2new   = dt * flow 
 
  elsewhere ( (elem2I(:,e2i_weir_elem_type) == eSideFlowWeir )  .and. &
              (dir .LE. zeroR) )    
@@ -649,7 +649,7 @@ subroutine weir_effective_crest_length &
     velocity2new = flow / area
 
     ! Volume = Q * dt
-    volume2new   = thiscoef * flow 
+    volume2new   = dt * flow 
 
  elsewhere ( (elem2I(:,e2i_weir_elem_type) == eSideFlowWeir )  .and. &
              (dir .GT. zeroR) )    
@@ -660,7 +660,7 @@ subroutine weir_effective_crest_length &
     velocity2new = flow / area
 
     ! Volume = Q * dt
-    volume2new   = thiscoef * flow 
+    volume2new   = dt * flow 
  endwhere
 
  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -672,7 +672,7 @@ subroutine weir_effective_crest_length &
 !
  subroutine weir_surcharge_flow &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2new, &
-     velocity2new, volumeMnew, velocityMnew, crest, crown, eta, flow,     &
+     velocity2new, volume2old, velocity2old, crest, crown, eta, flow,     &
      area, cOrif, effectivehead, faceEtaup, faceEtadn, upFace, dnFace,    &
      dir, thiscoef, maskarray_surcharge)
 !
@@ -686,7 +686,7 @@ subroutine weir_effective_crest_length &
  real,              intent(in)      :: thiscoef
 
  
- real,    pointer ::  volume2new(:), velocity2new(:), volumeMnew(:), velocityMnew(:)
+ real,    pointer ::  volume2new(:), velocity2new(:), volume2old(:), velocity2old(:)
  real,    pointer ::  crest(:), crown(:), eta(:), flow(:), area(:), cOrif(:)
  real,    pointer ::  effectivehead(:), faceEtaup(:), faceEtadn(:)
 
@@ -703,10 +703,11 @@ subroutine weir_effective_crest_length &
                           dir*(faceEtadn(upFace) - faceEtaup(dnFace)) )
 
     flow         = dir * cOrif * sqrt(abs(effectivehead))
-
+    ! blend new velocity with old velocity -- needs further checking
     velocity2new  = flow / area
-    ! Volume is weir flow equation * dt (this case dt = thiscoef)
-    volume2new    = flow * thiscoef
+    ! Volume is weir flow equation * dt
+    ! blend new volume with old volume -- needs further checking
+    volume2new    =  dt * flow
 
  endwhere
 
