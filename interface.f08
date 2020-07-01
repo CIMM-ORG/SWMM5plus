@@ -316,6 +316,16 @@ module interface
                 else
                     get_link_xsect_attrs = nullvalueR
                 end if
+            else if (xsect_type == 6) then ! TRIANGULAR
+                if (xsect_attr == link_geometry) then
+                    get_link_xsect_attrs = lTriangular
+                else if (xsect_attr == link_type) then
+                    get_link_xsect_attrs = lchannel
+                else if (xsect_attr == link_xsect_wMax) then
+                    get_link_xsect_attrs = get_link_attr(link_idx, link_xsect_wMax)
+                else
+                    get_link_xsect_attrs = nullvalueR
+                end if
             else if (xsect_type == 7) then ! PARABOLIC
                 if (xsect_attr == link_geometry) then
                     get_link_xsect_attrs = lParabolic
