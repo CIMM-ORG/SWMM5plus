@@ -59,7 +59,7 @@ module interface
 
     character(len = 1024), private :: errmsg
     integer, private :: errstat
-    integer, private :: debuglevel = 1
+    integer, private :: debuglevel = 0
     type(dll_type), private :: dll
     type(os_type) :: os
     type(c_ptr) :: api
@@ -344,30 +344,4 @@ contains
 
     end function get_link_xsect_attrs
 
-    function get_link_slope(link_idx, node1, node2)
-        integer :: link_idx, ltype, node1, node2
-        real :: get_link_slope, h, sign_h, x, c_length, oneR
-        character(64) :: subroutine_name
-
-        subroutine_name = 'get_link_slope'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-
-        ltype = get_link_attr(link_idx, link_type)
-        oneR = 1.0
-
-        if (ltype == 0) then ! CONDUIT
-            c_length = get_link_attr(link_idx, conduit_length)
-            h = get_node_attr(node1, node_invertElev) - get_node_attr(node2, node_invertElev)
-            sign_h = sign(oneR, h)
-            h = abs(h)
-            x = sqrt(c_length**2 - h**2)
-            get_link_slope = sign_h * h / x
-        else
-            get_link_slope = 0
-        end if
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
-
-    end function get_link_slope
 end module interface
