@@ -890,9 +890,9 @@ contains
            nodeI(linkI(i,li_Mnode_d), ni_idx_base2 + nodeI(linkI(i,li_Mnode_d), ni_N_link_d)) = i
 
            linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
-           linkR(i,lr_Length) = get_link_xsect_attrs(i, conduit_length)
+           linkR(i,lr_Length) = get_link_attr(i, conduit_length)
            linkR(i,lr_BreadthScale) = get_link_xsect_attrs(i, link_xsect_wMax)
-           linkR(i,lr_Slope) = get_link_slope(i, linkI(i,li_Mnode_u), linkI(i,li_Mnode_u))
+           linkR(i,lr_Slope) = get_link_slope(i, linkI(i,li_Mnode_u), linkI(i,li_Mnode_d))
            linkR(i,lr_LeftSlope) = get_link_attr(i, link_left_slope)
            linkR(i,lr_RightSlope) = get_link_attr(i, link_right_slope)
            linkR(i,lr_Roughness) = get_link_attr(i, conduit_roughness)
