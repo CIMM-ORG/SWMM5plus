@@ -896,10 +896,7 @@ end do
       linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
       linkR(i,lr_Length) = get_link_attr(i, conduit_length)
       linkR(i,lr_BreadthScale) = get_link_xsect_attrs(i, link_xsect_wMax)
-      ! linkR(i,lr_TopWidth)
-      linkR(i,lr_Slope) = get_link_slope(i, linkI(i,li_Mnode_u), linkI(i,li_Mnode_u))
-      ! linkR(i,lr_LeftSlope)
-      ! linkR(i,lr_RightSlope)
+      linkR(i,lr_Slope) = get_link_slope(i, linkI(i,li_Mnode_u), linkI(i,li_Mnode_d))
       linkR(i,lr_Roughness) = get_link_attr(i, conduit_roughness)
       linkR(i,lr_InitialFlowrate) = get_link_attr(i, link_q0)
       linkR(i,lr_InitialUpstreamDepth) = get_node_attr(linkI(i,li_Mnode_u), node_initDepth)
@@ -909,15 +906,9 @@ end do
    end do
 
    do i = 1, N_node
+
       total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
-      if ((get_node_attr(i, node_extInflow_tSeries) /= -1) .or. &
-          (get_node_attr(i, node_extInflow_basePat) /= -1) .or. &
-          (get_node_attr(i, node_extInflow_baseline) > 0)) then
-
-            nodeI(i, ni_node_type) = nBCup
-
-      end if
-
+      nodeI(i, ni_idx) = i
       if (get_node_attr(i, node_type) == 1) then ! OUTFALL
          nodeI(i, ni_node_type) = nBCdn
       else if (total_n_links == 2) then
@@ -925,7 +916,7 @@ end do
       else if (total_n_links > 2) then
          nodeI(i, ni_node_type) = nJm
       else
-         nodeI(i, ni_node_type) = nullvalueI
+         nodeI(i, ni_node_type) = nBCup
       end if
 
       nodeR(i,nr_Zbottom) = get_node_attr(i, node_invertElev)

@@ -350,7 +350,7 @@ module interface
                 sign_h = sign(oneR, h)
                 h = abs(h)
                 x = sqrt(c_length**2 - h**2)
-                get_link_slope = h / x
+                get_link_slope = sign_h * h / x
             else
                 get_link_slope = 0
             end if
