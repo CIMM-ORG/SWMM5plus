@@ -897,6 +897,8 @@ end do
       linkR(i,lr_Length) = get_link_attr(i, conduit_length)
       linkR(i,lr_BreadthScale) = get_link_xsect_attrs(i, link_xsect_wMax)
       linkR(i,lr_Slope) = get_link_slope(i, linkI(i,li_Mnode_u), linkI(i,li_Mnode_d))
+      linkR(i,lr_LeftSlope) = get_link_attr(i, link_left_slope)
+      linkR(i,lr_RightSlope) = get_link_attr(i, link_right_slope)
       linkR(i,lr_Roughness) = get_link_attr(i, conduit_roughness)
       linkR(i,lr_InitialFlowrate) = get_link_attr(i, link_q0)
       linkR(i,lr_InitialUpstreamDepth) = get_node_attr(linkI(i,li_Mnode_u), node_initDepth)

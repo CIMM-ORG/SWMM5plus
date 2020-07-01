@@ -96,7 +96,9 @@ module interface
     integer, parameter :: link_volume = 15
     integer, parameter :: link_froude = 16
     integer, parameter :: link_setting = 17
-    integer, parameter :: num_link_attributes = 17
+    integer, parameter :: link_left_slope = 18
+    integer, parameter :: link_right_slope = 19
+    integer, parameter :: num_link_attributes = 19
 
     procedure(api_initialize), pointer, private :: ptr_api_initialize
     procedure(api_finalize), pointer, private :: ptr_api_finalize
