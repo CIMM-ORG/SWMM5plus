@@ -59,7 +59,7 @@ module interface
 
     character(len = 1024), private :: errmsg
     integer, private :: errstat
-    integer, private :: debuglevel = 0
+    integer, private :: debuglevel = 1
     type(dll_type), private :: dll
     type(os_type) :: os
     type(c_ptr) :: api
@@ -226,13 +226,13 @@ contains
         subroutine_name = 'get_node_attr'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-        if ((attr >= num_node_attributes) .or. (attr < 1)) then
-            print *, "error: unexpected node attribute value"
+        if ((attr > num_node_attributes) .or. (attr < 1)) then
+            print *, "error: unexpected node attribute value", attr
             stop
         end if
 
         if ((node_idx > N_node) .or. (node_idx < 1)) then
-            print *, "error: unexpected node index value"
+            print *, "error: unexpected node index value", node_idx
             stop
         end if
 
@@ -256,13 +256,13 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
 
-        if ((attr >= num_link_attributes) .or. (attr < 1)) then
-            print *, "error: unexpected link attribute value"
+        if ((attr > num_link_attributes) .or. (attr < 1)) then
+            print *, "error: unexpected link attribute value", attr
             stop
         end if
 
         if ((link_idx > N_link) .or. (link_idx < 1)) then
-            print *, "error: unexpected link index value"
+            print *, "error: unexpected link index value", link_idx
             stop
         end if
 
