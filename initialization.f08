@@ -8,10 +8,10 @@
 !
 !==========================================================================
 !
- module initialization
-!
-! general initialization of data structures (not including network)
-!
+module initialization
+    !
+    ! general initialization of data structures (not including network)
+    !
     use allocate_storage
     use array_index
     use data_keys

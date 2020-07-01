@@ -7,7 +7,7 @@
 ! The globals for setting are found in module setting_definition
 !
 !==========================================================================
- module globals
+module globals
 
     use setting_definition
     use type_definitions
@@ -79,7 +79,7 @@
 
     integer :: idummyarray(1)
 
-!==========================================================================
-! END OF MODULE globals
-!==========================================================================
- end module globals
+    !==========================================================================
+    ! END OF MODULE globals
+    !==========================================================================
+end module globals
