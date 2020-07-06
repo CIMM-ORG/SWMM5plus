@@ -59,7 +59,7 @@ module interface
 
     character(len = 1024), private :: errmsg
     integer, private :: errstat
-    integer, private :: debuglevel = 1
+    integer, private :: debuglevel = 0
     type(dll_type), private :: dll
     type(os_type) :: os
     type(c_ptr) :: api
@@ -72,7 +72,11 @@ module interface
     integer, parameter :: node_extInflow_tSeries = 5
     integer, parameter :: node_extInflow_basePat = 6
     integer, parameter :: node_extInflow_baseline = 7
-    integer, parameter :: num_node_attributes = 8
+    integer, parameter :: node_depth = 8
+    integer, parameter :: node_inflow = 9
+    integer, parameter :: node_volume = 10
+    integer, parameter :: node_overflow = 11
+    integer, parameter :: num_node_attributes = 11
 
     ! api_link_attributes
     integer, parameter :: link_ID = 1
@@ -87,7 +91,14 @@ module interface
     integer, parameter :: link_geometry = 10
     integer, parameter :: conduit_roughness = 11
     integer, parameter :: conduit_length = 12
-    integer, parameter :: num_link_attributes = 13
+    integer, parameter :: link_flow = 13
+    integer, parameter :: link_depth = 14
+    integer, parameter :: link_volume = 15
+    integer, parameter :: link_froude = 16
+    integer, parameter :: link_setting = 17
+    integer, parameter :: link_left_slope = 18
+    integer, parameter :: link_right_slope = 19
+    integer, parameter :: num_link_attributes = 19
 
     procedure(api_initialize), pointer, private :: ptr_api_initialize
     procedure(api_finalize), pointer, private :: ptr_api_finalize
@@ -215,14 +226,13 @@ contains
         subroutine_name = 'get_node_attr'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-        print *, node_idx, attr
-        if ((attr >= num_node_attributes) .or. (attr < 1)) then
-            print *, "error: unexpected node attribute value"
+        if ((attr > num_node_attributes) .or. (attr < 1)) then
+            print *, "error: unexpected node attribute value", attr
             stop
         end if
 
         if ((node_idx > N_node) .or. (node_idx < 1)) then
-            print *, "error: unexpected node index value"
+            print *, "error: unexpected node index value", node_idx
             stop
         end if
 
@@ -246,13 +256,13 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
 
-        if ((attr >= num_link_attributes) .or. (attr < 1)) then
-            print *, "error: unexpected link attribute value"
+        if ((attr > num_link_attributes) .or. (attr < 1)) then
+            print *, "error: unexpected link attribute value", attr
             stop
         end if
 
         if ((link_idx > N_link) .or. (link_idx < 1)) then
-            print *, "error: unexpected link index value"
+            print *, "error: unexpected link index value", link_idx
             stop
         end if
 
@@ -306,6 +316,16 @@ contains
             else
                 get_link_xsect_attrs = nullvalueR
             end if
+        else if (xsect_type == 6) then ! TRIANGULAR
+            if (xsect_attr == link_geometry) then
+                get_link_xsect_attrs = lTriangular
+            else if (xsect_attr == link_type) then
+                get_link_xsect_attrs = lchannel
+            else if (xsect_attr == link_xsect_wMax) then
+                get_link_xsect_attrs = get_link_attr(link_idx, link_xsect_wMax)
+            else
+                get_link_xsect_attrs = nullvalueR
+            end if
         else if (xsect_type == 7) then ! PARABOLIC
             if (xsect_attr == link_geometry) then
                 get_link_xsect_attrs = lParabolic
@@ -324,30 +344,4 @@ contains
 
     end function get_link_xsect_attrs
 
-    function get_link_slope(link_idx, node1, node2)
-        integer :: link_idx, ltype, node1, node2
-        real :: get_link_slope, h, sign_h, x, c_length, oneR
-        character(64) :: subroutine_name
-
-        subroutine_name = 'get_link_slope'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-
-        ltype = get_link_attr(link_idx, link_type)
-        oneR = 1.0
-
-        if (ltype == 0) then ! CONDUIT
-            c_length = get_link_attr(link_idx, conduit_length)
-            h = get_node_attr(node1, node_invertElev) - get_node_attr(node2, node_invertElev)
-            sign_h = sign(oneR, h)
-            h = abs(h)
-            x = sqrt(c_length**2 - h**2)
-            get_link_slope = h / x
-        else
-            get_link_slope = 0
-        end if
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
-
-    end function get_link_slope
 end module interface
