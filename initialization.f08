@@ -26,7 +26,7 @@ module initialization
     public :: initialize_array_zerovalues ! sets some elemMR values to zero
     public :: initialize_dummy_values
     public :: initialize_linknode_arrays ! Retrieves data from SWMM C interface and populates link and node tables
-
+    public :: initialize_tables
     integer, private :: debuglevel = 1
 
 contains
@@ -954,6 +954,33 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
+
+    subroutine initialize_tables
+        integer :: ntseries, ncurves, i
+        double precision :: entries(4)
+        integer :: success = 1
+        character(64) :: subroutine_name = 'initialize_tables (initialization.f08)'
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+
+        call initialize_api()
+
+        ntseries = get_num_time_series()
+        ncurves = get_num_curves()
+
+        if (ntseries > 0) then
+            allocate(TSeries(ntseries))
+            do i = 0, ntseries-1
+                do while (success == 1)
+                    success = get_table_entries(i, entries)
+                    call TSeries(i+1)%data%append(entries(1), entries(2))
+                    print *, 'entries: ', TSeries(i+1)%data%head%x, TSeries(i+1)%data%head%y
+                enddo
+            enddo
+        endif
+
+        call finalize_api()
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    end subroutine initialize_tables
     !
     !==========================================================================
     !==========================================================================

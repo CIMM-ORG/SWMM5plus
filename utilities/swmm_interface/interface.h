@@ -84,8 +84,12 @@ double DLLEXPORT api_get_node_attribute (void* f_api, int k, int attr);
 double DLLEXPORT api_get_link_attribute (void* f_api, int k, int attr);
 int DLLEXPORT api_num_links ();
 int DLLEXPORT api_num_nodes ();
+int DLLEXPORT api_num_time_series ();
+int DLLEXPORT api_num_curves ();
+int DLLEXPORT api_get_next_tseries_entry(void* f_api, int k, double* entries);
+int DLLEXPORT api_get_next_curve_entry(void* f_api, int k, double* x1, double* y1, double* x2, double* y2);
 int api_load_vars (void* f_api);
-int  getTokens(char *s);
+int getTokens(char *s);
 
 #ifdef __cplusplus
 }   // matches the linkage specification from above */

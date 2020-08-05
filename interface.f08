@@ -3,7 +3,8 @@ module interface
     use dll_mod
     use data_keys
     use globals
-
+    use objects
+    use array_index
     implicit none
 
     public
@@ -41,20 +42,38 @@ module interface
             real(c_double) :: api_get_link_attribute
         end function api_get_link_attribute
 
-        function api_num_links(api)
+        function api_num_links()
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
             integer(c_int) :: api_num_links
         end function api_num_links
 
-        function api_num_nodes(api)
+        function api_num_nodes()
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
             integer(c_int) :: api_num_nodes
         end function api_num_nodes
 
+        function api_num_time_series()
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int) :: api_num_time_series
+        end function api_num_time_series
+
+        function api_num_curves()
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int) :: api_num_curves
+        end function api_num_curves
+
+        function api_get_next_tseries_entry(api, k, entries)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr), value, intent(in) :: api
+            integer(c_int), value :: k
+            real(c_double) :: entries(4)
+            integer(c_int) :: api_get_next_tseries_entry
+        end function api_get_next_tseries_entry
     end interface
 
     character(len = 1024), private :: errmsg
@@ -104,8 +123,11 @@ module interface
     procedure(api_finalize), pointer, private :: ptr_api_finalize
     procedure(api_num_links), pointer, private :: ptr_api_num_links
     procedure(api_num_nodes), pointer, private :: ptr_api_num_nodes
+    procedure(api_num_time_series), pointer, private :: ptr_api_num_time_series
+    procedure(api_num_curves), pointer, private :: ptr_api_num_curves
     procedure(api_get_node_attribute), pointer, private :: ptr_api_get_node_attribute
     procedure(api_get_link_attribute), pointer, private :: ptr_api_get_link_attribute
+    procedure(api_get_next_tseries_entry), pointer, private :: ptr_api_get_next_tseries_entry
 
 contains
     subroutine initialize_api()
@@ -194,7 +216,7 @@ contains
         call load_dll(os, dll, errstat, errmsg)
         call print_error(errstat, 'error: loading api_num_links')
         call c_f_procpointer(dll%procaddr, ptr_api_num_links)
-        get_num_links = ptr_api_num_links(api)
+        get_num_links = ptr_api_num_links()
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
 
     end function get_num_links
@@ -212,10 +234,48 @@ contains
         call load_dll(os, dll, errstat, errmsg )
         call print_error(errstat, 'error: loading api_num_nodes')
         call c_f_procpointer(dll%procaddr, ptr_api_num_nodes)
-        get_num_nodes = ptr_api_num_nodes(api)
+        get_num_nodes = ptr_api_num_nodes()
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
 
     end function get_num_nodes
+
+    function get_num_time_series()
+
+        integer :: get_num_time_series
+        character(64) :: subroutine_name
+
+        subroutine_name = 'get_num_time_series'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+
+        dll%procname = "api_num_time_series"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_num_time_series')
+        call c_f_procpointer(dll%procaddr, ptr_api_num_time_series)
+        get_num_time_series = ptr_api_num_time_series()
+        nobjects(num_tseries) = get_num_time_series
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+
+    end function get_num_time_series
+
+    function get_num_curves()
+
+        integer :: get_num_curves
+        character(64) :: subroutine_name
+
+        subroutine_name = 'get_num_curves'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+
+        dll%procname = "api_num_curves"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_num_curves')
+        call c_f_procpointer(dll%procaddr, ptr_api_num_curves)
+        get_num_curves = ptr_api_num_curves()
+        nobjects(num_curves) = get_num_curves
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+
+    end function get_num_curves
 
     function get_node_attr(node_idx, attr)
 
@@ -343,5 +403,20 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
 
     end function get_link_xsect_attrs
+
+    function get_table_entries(k, entries)
+        use iso_c_binding
+        integer, intent(in):: k
+        integer :: get_table_entries
+        double precision, target :: entries(4) ! [x1, y1, x2, y2]
+        character(64) :: subroutine_name = "get_table_entries (interface.f08)"
+
+        dll%procname = "api_get_next_tseries_entry"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_get_next_tseries_entry')
+        call c_f_procpointer(dll%procaddr, ptr_api_get_next_tseries_entry)
+        get_table_entries = ptr_api_get_next_tseries_entry(api, k, entries)
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    end function get_table_entries
 
 end module interface

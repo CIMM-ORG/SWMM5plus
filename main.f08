@@ -1,7 +1,6 @@
 !==========================================================================
 !
 program main
-
     use allocate_storage
     use array_index
     use bc
@@ -140,6 +139,7 @@ program main
     else
         call initialize_linknode_arrays &
             (linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
+        call initialize_tables()
         print *, 'error - code only designed for use with test cases'
         stop
     end if

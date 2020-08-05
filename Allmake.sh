@@ -30,9 +30,12 @@ SOURCESF="  dll_mod.f08\
         type_definitions.f08\
         setting_definition.f08\
         globals.f08\
-        xsect_tables.f08\
+        linked_list.f08\
         array_index.f08\
+        xsect_tables.f08\
         data_keys.f08\
+        tables.f08\
+        objects.f08\
         interface.f08\
         utility.f08\
         adjustments.f08\

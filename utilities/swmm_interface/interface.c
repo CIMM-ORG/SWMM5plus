@@ -37,7 +37,7 @@ void DLLEXPORT api_finalize(void* f_api)
 
 double DLLEXPORT api_get_node_attribute (void* f_api, int k, int attr)
 {
-    Interface * api = (void*) f_api;
+    Interface * api = (Interface*) f_api;
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( !api->IsInitialized )
     {
@@ -80,7 +80,7 @@ double DLLEXPORT api_get_node_attribute (void* f_api, int k, int attr)
 
 double DLLEXPORT api_get_link_attribute (void* f_api, int k, int attr)
 {
-    Interface * api = (void*) f_api;
+    Interface * api = (Interface*) f_api;
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( !api->IsInitialized )
     {
@@ -145,9 +145,19 @@ int DLLEXPORT api_num_nodes ()
     return Nobjects[NODE];
 }
 
+int DLLEXPORT api_num_time_series ()
+{
+    return Nobjects[TSERIES];
+}
+
+int DLLEXPORT api_num_curves ()
+{
+    return Nobjects[CURVE];
+}
+
 int api_load_vars (void * f_api)
 {
-    Interface * api = (void*) f_api;
+    Interface * api = (Interface*) f_api;
     char  line[MAXLINE+1];        // line from input data file
     char  wLine[MAXLINE+1];       // working copy of input line
     int sect, i, j, k;
@@ -257,4 +267,40 @@ int  getTokens(char *s)
         len -= m+1;                         // update length of s
     }
     return(n);
+}
+
+int DLLEXPORT api_get_next_tseries_entry(void* f_api, int k, double* entries)
+{
+    // k : index of Tseries
+    Interface * api = (Interface*) f_api;
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( !api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+    
+    entries[0] = Tseries[k].thisEntry->x;
+    entries[1] = Tseries[k].thisEntry->y;
+
+    return table_getNextEntry(&Tseries[k], &entries[2], &entries[3]);
+}
+
+int DLLEXPORT api_get_next_curve_entry(void* f_api, int k, double* x1, double* y1, double* x2, double* y2)
+{
+    // k : index of Curves
+    Interface * api = (Interface*) f_api;
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( !api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    *x1 = Curve[k].thisEntry->x;
+    *y1 = Curve[k].thisEntry->y;
+
+    return table_getNextEntry(&Curve[k], x2, y2);
 }

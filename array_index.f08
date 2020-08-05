@@ -532,6 +532,9 @@ module array_index
     integer, parameter :: wd_local_difference        = 13
     integer, parameter :: wd_idx_max                 = 13
 
+    !% nobjects INDEXES
+    integer, parameter :: num_tseries                = 1
+    integer, parameter :: num_curves                 = 2
     !==========================================================================
     ! END OF MODULE array_index
     !==========================================================================
