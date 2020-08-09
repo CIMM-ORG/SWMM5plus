@@ -111,7 +111,27 @@
         elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) + dt * faceR(fdn,fr_flowrate)
     endwhere
  enddo 
+
+ where ( elemMR(:,eMi_elem_type) == eStorage )
+    elemMR(:,eMr_VolumeConservation) = zeroR
+ endwhere
  
+ do mm=1,upstream_face_per_elemM
+    fup => elemMI(:,eMi_MfaceUp(mm))
+    where ( (elemMR(:,eMi_elem_type) == eStorage) .and. &
+            (elemMR(:,eMi_nfaces_u) >= mm) )
+        elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) - dt * faceR(fup,fr_flowrate)
+    endwhere
+ enddo
+ 
+ do mm=1,dnstream_face_per_elemM
+    fdn => elemMI(:,eMi_MfaceDn(mm))
+    where ( (elemMR(:,eMi_elem_type) == eStorage) .and. &
+            (elemMR(:,eMi_nfaces_d) >= mm) )
+        elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) + dt * faceR(fdn,fr_flowrate)
+    endwhere
+ enddo 
+
  if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
  end subroutine diagnostic_element_volume_conservation_fluxes
 !

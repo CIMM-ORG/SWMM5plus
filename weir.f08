@@ -18,7 +18,6 @@
     implicit none
 
     public :: weir_step
-    public :: weir_provisional_geometry
 
     private
 
@@ -154,12 +153,6 @@
  maskarrayUpSubmerge  = nullvalueL
  maskarraySurcharge   = nullvalueL
 
-
-
-! !% set all weir element geometry values ~ zero values
- ! call weir_provisional_geometry &
- !    (elem2R, elemMR, faceR, elem2I, elemMI)
-
 !% set necessary weir setting and find eta on weir element    
 call weir_initialize &
     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,     &
@@ -237,6 +230,7 @@ call weir_geometry &
  end subroutine weir_step
 !
 !==========================================================================
+! PRIVATE BELOW
 !==========================================================================
 !
 subroutine weir_initialize &
@@ -716,39 +710,7 @@ subroutine weir_effective_crest_length &
  end subroutine weir_surcharge_flow
 !
 !==========================================================================
-!==========================================================================
-!
-subroutine weir_provisional_geometry &
-    (elem2R, elemMR, faceR, elem2I, elemMI)
-! this subroutine sets the weir geometry to zero.
- character(64) :: subroutine_name = 'weir_provisional_geometry'
-
-
- real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
- real,      target, intent(in)      :: faceR(:,:)
- integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
-
- integer :: mm
-!--------------------------------------------------------------------------
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-
- where      ( (elem2I(:,e2i_elem_type) == eWeir) )
-
-            elem2R(:,e2r_Area)        = 1.0e-7 
-            elem2R(:,e2r_Eta)         = 1.0e-7 
-            elem2R(:,e2r_Perimeter)   = 1.0e-7 
-            elem2R(:,e2r_HydDepth)    = 1.0e-7 
-            elem2R(:,e2r_HydRadius)   = 1.0e-7 
-            elem2R(:,e2r_Topwidth)    = 1.0e-7 
-            elem2R(:,e2r_Depth)       = 1.0e-7 
- endwhere
- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-
- end subroutine weir_provisional_geometry
-!
-!==========================================================================
+! END OF MODULE weir
 !==========================================================================
 !
  end module weir
