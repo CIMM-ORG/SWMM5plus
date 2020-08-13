@@ -136,8 +136,9 @@ contains
             if( .not. c_associated(dll%fileaddrx) ) then
                 errstat = errid_fatal
                 write(errmsg,'(i2)') bits_in_addr
-                errmsg = 'the dynamic library '//trim(dll%filename)//' could not be loaded. check that the file '// &
-                    'exists in the specified location and that it is compiled for '//trim(errmsg)//'-bit systems.'
+                errmsg ='the dynamic library'//trim(dll%filename)//'could not be loaded. check that the file'// &
+                    'exists in the specified location and that it is compiled for'&
+                    //trim(errmsg)//'-bit systems.'
                 return
             end if
 
@@ -146,7 +147,8 @@ contains
             dll%procaddr = dlsym( dll%fileaddrx, trim(dll%procname)//c_null_char )
             if(.not. c_associated(dll%procaddr)) then
                 errstat = errid_fatal
-                errmsg = 'the procedure '//trim(dll%procname)//' in file '//trim(dll%filename)//' could not be loaded.'
+                errmsg = 'the procedure '//trim(dll%procname)//' in file ' &
+                    //trim(dll%filename)//' could not be loaded.'
                 return
             end if
 

@@ -27,7 +27,7 @@ module initialization
     public :: initialize_dummy_values
     public :: initialize_linknode_arrays ! Retrieves data from SWMM C interface and populates link and node tables
 
-    integer, private :: debuglevel = 0
+    integer, private :: debuglevel = 1
 
 contains
     !
@@ -894,31 +894,23 @@ contains
             nodeI(linkI(i,li_Mnode_d), ni_idx_base2 + nodeI(linkI(i,li_Mnode_d), ni_N_link_d)) = i
 
             linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
-            linkR(i,lr_Length) = get_link_xsect_attrs(i, conduit_length)
+            linkR(i,lr_Length) = get_link_attr(i, conduit_length)
+            ! linkR(i,lr_TopWidth): defined in network_define.f08
             linkR(i,lr_BreadthScale) = get_link_xsect_attrs(i, link_xsect_wMax)
-            ! linkR(i,lr_TopWidth)
-            linkR(i,lr_Slope) = get_link_slope(i, linkI(i,li_Mnode_u), linkI(i,li_Mnode_u))
-            ! linkR(i,lr_LeftSlope)
-            ! linkR(i,lr_RightSlope)
+            ! linkR(i,lr_Slope): defined in network_define.f08
+            linkR(i,lr_LeftSlope) = get_link_attr(i, link_left_slope)
+            linkR(i,lr_RightSlope) = get_link_attr(i, link_right_slope)
             linkR(i,lr_Roughness) = get_link_attr(i, conduit_roughness)
             linkR(i,lr_InitialFlowrate) = get_link_attr(i, link_q0)
             linkR(i,lr_InitialUpstreamDepth) = get_node_attr(linkI(i,li_Mnode_u), node_initDepth)
             linkR(i,lr_InitialDnstreamDepth) = get_node_attr(linkI(i,li_Mnode_d), node_initDepth)
             linkR(i,lr_InitialDepth) = abs(linkR(i,lr_InitialDnstreamDepth) - linkR(i,lr_InitialUpstreamDepth)) / 2
-            ! linkR(i,lr_ParabolaValue)
 
         end do
 
         do i = 1, N_node
-            total_n_links = nodeR(i,ni_N_link_u) + nodeR(i,ni_N_link_d)
-            if ((get_node_attr(i, node_extInflow_tSeries) /= -1) .or. &
-                (get_node_attr(i, node_extInflow_basePat) /= -1) .or. &
-                (get_node_attr(i, node_extInflow_baseline) > 0)) then
-
-                nodeI(i, ni_node_type) = nBCup
-
-            end if
-
+            total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
+            nodeI(i, ni_idx) = i
             if (get_node_attr(i, node_type) == 1) then ! OUTFALL
                 nodeI(i, ni_node_type) = nBCdn
             else if (total_n_links == 2) then
@@ -926,13 +918,44 @@ contains
             else if (total_n_links > 2) then
                 nodeI(i, ni_node_type) = nJm
             else
-                nodeI(i, ni_node_type) = nullvalueI
+                nodeI(i, ni_node_type) = nBCup
             end if
 
             nodeR(i,nr_Zbottom) = get_node_attr(i, node_invertElev)
         end do
         ! --- Close C API
         call finalize_api()
+
+        if ((debuglevel > 0) .or. (debuglevel > 0)) then
+            print*, "li_idx, ", "li_link_type, ", "li_weir_type, ", "li_orif_type, ", "li_pump_type, ",&
+                    "li_geometry, ", "li_roughness_type, ", "li_N_element, ", "li_Mnode_u, ", "li_Mnode_d, ", &
+                     "li_Melem_u, ", "li_Melem_d, ", "li_Mface_u, ", "li_Mface_d, ", "li_assigned, ", &
+                     "li_InitialDepthType, ", "li_temp1"
+            do i = 1, N_link
+                print *, linkI(i,:)
+            end do
+            print *, "lr_Length, ", "lr_BreadthScale, ", "lr_TopWidth, ", "lr_ElementLength, ", "lr_Slope, ",&
+                     "lr_LeftSlope, ", "lr_RightSlope, ", "lr_Roughness, ", "lr_InitialFlowrate, ", &
+                     "lr_InitialDepth, ", "lr_InitialUpstreamDepth, ", "lr_InitialDnstreamDepth, ", &
+                     "lr_ParabolaValue, ", "lr_SideSlope, ", "lr_InletOffset, ", "lr_DischargeCoeff1, ",&
+                     "lr_DischargeCoeff2, ", "lr_FullDepth, ", "lr_EndContractions, ", "lr_temp1"
+            do i = 1, N_link
+                print *, linkR(i,:)
+            end do
+            print *, "ni_idx, ", "ni_node_type, ", "ni_N_link_u, ", "ni_N_link_d, ", "ni_assigned, ", &
+                     "ni_temp1, ", "ni_Mlink_u1, ", "ni_Mlink_u2, ", "ni_Mlink_u3, ", "ni_Mlink_d1, ",&
+                     "ni_Mlink_d2, ", "ni_Mlink_d3"
+            do i = 1, N_node
+                print *, nodeI(i,:)
+            end do
+            print *, "nr_Zbottom, ", "nr_temp1, ", "nr_ElementLength_u1, ", "nr_ElementLength_u2, ", &
+                     "nr_ElementLength_u3, ", "nr_ElementLength_d1, ", "nr_ElementLength_d2, ", &
+                     "nr_ElementLength_d3"
+            do i = 1, N_node
+                print *, nodeR(i,:)
+            end do
+        end if
+
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
     !
@@ -941,3 +964,4 @@ contains
     !==========================================================================
     !
 end module initialization
+

@@ -363,20 +363,29 @@ contains
                 !% handle circular elements
                 ! Input: InitialDepth, Full Depth
                 ! these geometric properties are wrong. but they will get correctly updated later.
+
                 ! Talk with Dr. Hodges about this matter.
                 where (elem2I(:,e2i_link_ID) == Lindx)
                     elem2I(:,e2i_geometry)     = eCircular
+
                     elem2R(:,e2r_FullDepth)    = linkR(ii,lr_FUllDepth)
+
                     elem2R(:,e2r_BreadthScale) = linkR(ii,lr_FUllDepth)
+
                     elem2R(:,e2r_Area)         = onefourthR * pi *                    &
                         elem2R(:,e2r_FullDepth)  ** twoR
+
                     elem2R(:,e2r_HydDepth)     = elem2R(:,e2r_Depth)
+
                     elem2R(:,e2r_Topwidth)     = twoR * sqrt(elem2R(:,e2r_HydDepth) * &
                         (elem2R(:,e2r_FullDepth) - elem2R(:,e2r_HydDepth)))
+
                     elem2R(:,e2r_Eta)          = elem2R(:,e2r_Zbottom)                &
                         + elem2R(:,e2r_HydDepth)
+
                     elem2R(:,e2r_Volume)       = elem2R(:,e2r_Area) &
                         * elem2R(:,e2r_Length)
+
                     elem2R(:,e2r_Perimeter)    = pi * elem2R(:,e2r_FullDepth)
                 endwhere
 
@@ -390,7 +399,6 @@ contains
 
                     elem2R(:,e2r_BreadthScale) = elem2R(:,e2r_FullDepth)              &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
-
                     ! (averageSlope * hydraulicDepth)*hydraulicDepth
                     elem2R(:,e2r_Area) = onehalfR &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
@@ -595,6 +603,7 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         where ( (elemI(:,ei_elem_type) == eChannel)             .or. &
+
             (elemI(:,ei_elem_type) == ePipe) )
 
             elemI(:,ei_meta_elem_type) = eHQ2

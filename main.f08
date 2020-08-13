@@ -92,8 +92,8 @@ program main
     !===========================================================
     !%  hard-code setting for test cases
 
-    setting%TestCase%UseTestCase = .true.
-    setting%TestCase%TestName = 'simple_channel_001'
+    setting%TestCase%UseTestCase = .false.
+    ! setting%TestCase%TestName = 'simple_channel_001'
     ! setting%TestCase%TestName = 'y_channel_002'
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
@@ -142,7 +142,7 @@ program main
         call initialize_linknode_arrays &
             (linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
         print *, 'error - code only designed for use with test cases'
-
+        stop
     end if
 
     !% create the network of elements from link and node data
@@ -163,6 +163,7 @@ program main
         linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
+        
     !% check consistency of the smallvolume setup
     call checking_smallvolume_consistency (elem2R, elemMR)
 

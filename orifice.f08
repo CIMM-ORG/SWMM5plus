@@ -230,7 +230,6 @@ contains
         !
         character(64) :: subroutine_name = 'orifice_initialize'
 
-
         real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         real,      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
@@ -257,7 +256,6 @@ contains
             ! set the free surface elevation at orifice element
             eta     = max(faceEtaDn(upFace), faceEtaup(dnFace))
             dir     = int(sign(oneR, (faceEtaDn(upFace) - faceEtaup(dnFace))))
-
         endwhere
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -358,7 +356,6 @@ contains
         !
         character(64) :: subroutine_name = 'orifice_effective_head'
 
-
         real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         real,      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
@@ -370,6 +367,7 @@ contains
         logical, pointer :: maskarray_dn_submergence(:), maskarray_up_submergence(:)
 
         integer, pointer :: upFace(:), dnFace(:), dir(:)
+
 
         integer :: mm
         !--------------------------------------------------------------------------

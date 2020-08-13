@@ -300,10 +300,10 @@ contains
             !%  this link
             Lidx => linkI(ii,li_idx)
             !%  start and end elements on this link
-            eStart = minloc(elem2I(:,e2i_link_Pos),1,(  (elem2I(:,e2i_link_ID) == Lidx) .and. &
-                           (elem2I(:,e2i_link_Pos) /= nullvalueI) ) )
-            eEnd   = maxloc(elem2I(:,e2i_link_Pos),1,(  (elem2I(:,e2i_link_ID) == Lidx) .and. &
-                           (elem2I(:,e2i_link_Pos) /= nullvalueI) ) )
+            eStart = minloc(elem2I(:,e2i_link_Pos),1,(  (elem2I(:,e2i_link_ID) == Lidx) &
+                .and. (elem2I(:,e2i_link_Pos) /= nullvalueI) ) )
+            eEnd   = maxloc(elem2I(:,e2i_link_Pos),1,(  (elem2I(:,e2i_link_ID) == Lidx) &
+                .and. (elem2I(:,e2i_link_Pos) /= nullvalueI) ) )
             nelem = eEnd - eStart + 1
 
             !%  the downstream element beyond this link

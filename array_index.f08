@@ -495,7 +495,7 @@ module array_index
     integer, parameter :: lr_EndContractions        = 20
     integer, parameter :: lr_temp1                  = 21
     integer, parameter :: lr_idx_max                = 21
-
+    
     !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array
     integer, parameter :: nr_Zbottom                = 1

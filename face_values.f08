@@ -73,7 +73,6 @@ contains
 
             call face_interp_for_downstream_elem2_upstream_storage &
                 (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
-
         endif
 
         call face_hydraulic_jump (elem2R, elemMR, faceR, faceI, e2r_Velocity_new, eMr_Velocity_new)
@@ -361,8 +360,6 @@ contains
         end do
 
         !%  use timescale for interpolation for Topwidth, Area, Flowrate
-        !% QUESTION: should below three subroutine calls be inside the do loop above??
-
         call interp_with_junction_downstream &
             (faceR, facemask, faceI, elem2R, elemMR, &
             weightUp, weightDn, valueUp, valueDn, &
@@ -461,8 +458,6 @@ contains
                 weightUp = elemMR(faceI(:,fi_Melem_u),eMr_TimescaleDn(mm)) !tscale acting dnstream
             endwhere
         end do
-
-        !% QUESTION: should below three subroutine calls be inside the do loop above??
 
         !%  use timescale for interpolation for Topwidth, Area, Flowrate
         call interp_with_junction_upstream &

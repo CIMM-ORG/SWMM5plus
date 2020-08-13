@@ -247,7 +247,6 @@ contains
             print *, linkR(:,lr_InitialUpstreamDepth), 'upstream depth'
             print *, linkR(:,lr_InletOffset), ' inletOffset'
             print *, linkR(:,lr_OutletOffset), ' outletOffset'
-
             print *, 'node info'
             print *, nodeI(:,ni_idx), ' idx'
             print *, nodeI(:,ni_node_type), ' type'

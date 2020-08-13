@@ -56,10 +56,10 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        eStart = minloc(elem2I(:,e2i_link_Pos),1,(  (elem2I(:,e2i_link_ID) == ilink) .and. &
-                       (elem2I(:,e2i_link_Pos) /= nullvalueI) ) )
-        eEnd   = maxloc(elem2I(:,e2i_link_Pos),1,(  (elem2I(:,e2i_link_ID) == ilink) .and. &
-                       (elem2I(:,e2i_link_Pos) /= nullvalueI) ) )
+        eStart = minloc(elem2I(:,e2i_link_Pos),1,(  (elem2I(:,e2i_link_ID) == ilink) &
+            .and. (elem2I(:,e2i_link_Pos) /= nullvalueI) ) )
+        eEnd   = maxloc(elem2I(:,e2i_link_Pos),1,(  (elem2I(:,e2i_link_ID) == ilink) &
+            .and. (elem2I(:,e2i_link_Pos) /= nullvalueI) ) )
 
         print *, ilink,'=link'
 
@@ -253,7 +253,8 @@ contains
 
         else
             !% error condition - the index appears to be outside of the index array
-            print *, 'error: interpolation index (thisIndex) is outside the array bounds (IndexArray) in ',subroutine_name
+            print *, 'error: interpolation index (thisIndex) is outside the array bounds (IndexArray) in ' &
+                , subroutine_name
             stop
         endif
 

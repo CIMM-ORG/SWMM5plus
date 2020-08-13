@@ -157,7 +157,7 @@ contains
             call overwrite_old_values &
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eJunctionChannel, .false.)
-
+                
             call overwrite_old_values &
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)

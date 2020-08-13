@@ -604,9 +604,7 @@ contains
             ! Q = d*fs*(Cw1SH^2.5)
             flow        = dir * submergenceFactor1 * cTrig * sideslope * &
                 effectivehead ** 2.5
-
             velocity2new = flow / area
-
             ! Volume = Q * dt
             volume2new   = dt * flow
 
@@ -616,9 +614,7 @@ contains
             flow        = dir * submergenceFactor1 * (cTrig * sideslope *    &
                 effectivehead ** 2.5) + dir * submergenceFactor2 * (cRect *  &
                 crestlength * effectivehead ** 1.5)
-
             velocity2new = flow / area
-
             ! Volume = Q * dt
             volume2new   = dt * flow
 
@@ -627,9 +623,7 @@ contains
             ! Q = d*fs2*(Cw2LH^1.5)
             flow        = dir * submergenceFactor1 * cRect * &
                 crestlength * effectivehead ** 1.5
-
             velocity2new = flow / area
-
             ! Volume = Q * dt
             volume2new   = dt * flow
 
@@ -639,9 +633,7 @@ contains
             ! Q = d*fs2*(Cw2LH^1.5)
             flow        = dir * submergenceFactor1 * cRect * &
                 crestlength * effectivehead ** 1.5
-
             velocity2new = flow / area
-
             ! Volume = Q * dt
             volume2new   = dt * flow
 
@@ -650,9 +642,7 @@ contains
             ! Corrected formula (see Metcalf & Eddy, Inc., Wastewater Engineering, McGraw-Hill, 1972 p. 164).
             flow        = dir * submergenceFactor1 * cRect * &
                 (crestlength ** 0.83) * (effectivehead ** 1.67)
-
             velocity2new = flow / area
-
             ! Volume = Q * dt
             volume2new   = dt * flow
         endwhere

@@ -153,7 +153,8 @@ contains
             print *
             print *, 'd)       ii  ,e2i_Mface_u, e2i_Mface_d,  e2i_link_ID, e2i_link_Pos'
             do ii=first_elem2_index, first_elem2_index+N_elem2-1
-                print *, ii, elem2I(ii,e2i_Mface_u), elem2I(ii,e2i_Mface_d), elem2I(ii,e2i_link_ID), elem2I(ii,e2i_link_Pos)
+                print *, ii, elem2I(ii,e2i_Mface_u), elem2I(ii,e2i_Mface_d), &
+                    elem2I(ii,e2i_link_ID), elem2I(ii,e2i_link_Pos)
             enddo
 
             print *
@@ -188,20 +189,22 @@ contains
             print *
             print *, 'k)       ii  , Length, u1,  u2, d1, '
             do ii= first_elemM_index, first_elemM_index+N_elemM-1
-                print *, ii, elemMR(ii,eMr_Length), elemMR(ii,eMr_Length_u1), elemMR(ii,eMr_Length_u2), elemMR(ii,eMr_Length_d1)
+                print *, ii, elemMR(ii,eMr_Length), elemMR(ii,eMr_Length_u1), &
+                    elemMR(ii,eMr_Length_u2), elemMR(ii,eMr_Length_d1)
             enddo
 
             print *
             print *, 'l)       ii  , Topwidth, u1, u2, d1 '
             do ii= first_elemM_index, first_elemM_index+N_elemM-1
-                print *, ii, elemMR(ii,eMr_Topwidth), elemMR(ii,eMr_Topwidth_u1), elemMR(ii,eMr_Topwidth_u2), &
-                         elemMR(ii,eMr_Topwidth_d1)
+                print *, ii, elemMR(ii,eMr_Topwidth), elemMR(ii,eMr_Topwidth_u1), &
+                    elemMR(ii,eMr_Topwidth_u2), elemMR(ii,eMr_Topwidth_d1)
             enddo
 
             print *
             print *, 'm)       ii  , Zbottom, u1, u2, d1 '
             do ii= first_elemM_index, first_elemM_index+N_elemM-1
-                print *, ii, elemMR(ii,eMr_Zbottom), elemMR(ii,eMr_Zbottom_u1), elemMR(ii,eMr_Zbottom_u2), elemMR(ii,eMr_Zbottom_d1)
+                print *, ii, elemMR(ii,eMr_Zbottom), elemMR(ii,eMr_Zbottom_u1), &
+                    elemMR(ii,eMr_Zbottom_u2), elemMR(ii,eMr_Zbottom_d1)
             enddo
         endif
 
@@ -596,7 +599,6 @@ contains
             zDn => nodeR(nDn,nr_Zbottom)
             linkR(mm,lr_Slope) = (zUp - zDn) / linkR(mm,lr_Length)
         end do
-
         !% to be consistent with SWMM5, each links needs inlet and outlet offset valuse.
         !% these values indicate the offset from upstream and downstream nodes
         !% so, the z values for links will be the offset + node zbottom
@@ -739,7 +741,6 @@ contains
 
         integer :: ii, mm, NupstreamBC, NdnstreamBC, NstorageUnit
         integer :: NdownstreamJ, NdownstreamS
-
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -753,6 +754,7 @@ contains
                 N_elemM = N_elemM +1
             endif
         enddo
+
         !% count the number of storage nodes
         NstorageUnit = count(nodeI(:,ni_node_type) == nStorage)
 
@@ -879,7 +881,8 @@ contains
             !% set the upstream link (one only) of the downstream BC node
             thisLink = nodeI(thisNode,ni_Mlink_u1)
             if (linkI(thisLink,li_assigned) == lAssigned) then
-                print *, 'error: it is not clear how the node was not assigned but the link is assigned in ',subroutine_name
+                print *, 'error: it is not clear how the node was not assigned but the link is assigned in ' &
+                    ,subroutine_name
                 stop
             endif
             linkI(thisLink,li_assigned) = setAssigned(thisLink, li_assigned, lUnassigned, lAssigned, linkI)
@@ -1100,8 +1103,6 @@ contains
 
             ! use the node name for the ghost element
             elem2Name(thisElem2) = nodeName(thisNode)
-            print*, '==== this passes through ===='
-            print*,'thisFace', thisFace
             faceR(thisFace,fr_Zbottom)      = nodeR(thisNode,nr_Zbottom)
 
             faceI(thisFace,fi_idx)          = thisFace
@@ -1175,10 +1176,10 @@ contains
                 if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, 'Recursion: handle_thisnode ', thisNode
 
                 call handle_thisnode &
-                    (lastElem2, thisElem2, lastElemM, thisElemM,          &
-                    lastFace,  thisFace,  thisNode,  thisLink,           &
-                    elem2I, elemMI, faceI, linkI, nodeI, elem2R, elemMR, faceR, linkR, nodeR , &
-                    elem2Name, elemMName, faceName, linkName, nodeName)
+                    (lastElem2, thisElem2, lastElemM, thisElemM, lastFace,  thisFace,  &
+                     thisNode,  thisLink, elem2I, elemMI, faceI, linkI, nodeI, elem2R, &
+                     elemMR, faceR, linkR, nodeR , elem2Name, elemMName, faceName,     &
+                     linkName, nodeName)
             endif
 
 
@@ -1490,6 +1491,7 @@ contains
 
                     lastElemM = sElem ! back to the element we created (otherise lastElemM has recursion)
                     lastFace = elemMI(sElem,eMi_MfaceUp(mm))
+
                     faceI(lastFace,fi_Melem_u) = thisElem2
 
                     faceI(lastFace,fi_type) = setFaceType &
@@ -1511,13 +1513,13 @@ contains
                     linkSet(mm) = 0
 
                     if (thisNode > 0) then
+
                         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, 'Recursion: handle_thisnode ', thisNode
 
                         call handle_thisnode &
-                            (lastElem2, thisElem2, lastElemM, thisElemM,          &
-                            lastFace,  thisFace,  thisNode,  thisLink,           &
-                            elem2I, elemMI, faceI, linkI, nodeI, elem2R, elemMR, faceR, linkR, nodeR, &
-                            elem2Name, elemMName, faceName, linkName, nodeName)
+                            (lastElem2, thisElem2, lastElemM, thisElemM, lastFace,  thisFace,  thisNode,  &
+                             thisLink, elem2I, elemMI, faceI, linkI, nodeI, elem2R, elemMR, faceR, linkR, &
+                             nodeR, elem2Name, elemMName, faceName, linkName, nodeName)
                     endif
 
                 endif
@@ -1569,7 +1571,7 @@ contains
         !%  reference elevations at cell center and cell face
         zcenter = zDownstream - 0.5 * linkR(thislink,lr_ElementLength) * linkR(thislink,lr_Slope)
         zface   = zDownstream
-        print*, zface, ' zface at first'
+        
         do mm = 1,linkI(thisLink,li_N_element)
             !%  store the elem info
             elem2I(thisElem2,e2i_idx)               = thisElem2
