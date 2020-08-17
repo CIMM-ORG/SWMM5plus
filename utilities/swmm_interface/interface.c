@@ -280,14 +280,14 @@ int DLLEXPORT api_get_next_tseries_entry(void* f_api, int k, double* entries)
         report_writeErrorMsg(ERR_NOT_OPEN, "");
         return error_getCode(ErrorCode);
     }
-    
+
     entries[0] = Tseries[k].thisEntry->x;
     entries[1] = Tseries[k].thisEntry->y;
 
     return table_getNextEntry(&Tseries[k], &entries[2], &entries[3]);
 }
 
-int DLLEXPORT api_get_next_curve_entry(void* f_api, int k, double* x1, double* y1, double* x2, double* y2)
+int DLLEXPORT api_get_next_curve_entry(void* f_api, int k, double* entries)
 {
     // k : index of Curves
     Interface * api = (Interface*) f_api;
@@ -299,8 +299,8 @@ int DLLEXPORT api_get_next_curve_entry(void* f_api, int k, double* x1, double* y
         return error_getCode(ErrorCode);
     }
 
-    *x1 = Curve[k].thisEntry->x;
-    *y1 = Curve[k].thisEntry->y;
+    entries[0] = Curve[k].thisEntry->x;
+    entries[1] = Curve[k].thisEntry->y;
 
-    return table_getNextEntry(&Curve[k], x2, y2);
+    return table_getNextEntry(&Curve[k], entries[2], entries[4]);
 }
