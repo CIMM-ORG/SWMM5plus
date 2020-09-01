@@ -154,10 +154,6 @@ contains
         maskarrayDnSubmerge  = nullvalueL
         maskarrayUpSubmerge  = nullvalueL
 
-        ! !% sets all orifice element geometry values ~ zero values
-        !  call orifice_provisional_geometry &
-        !     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN)
-
         !% sets necessary orifice setting and find eta on orifice element
         call orifice_initialize &
             (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,    &
@@ -224,40 +220,7 @@ contains
     end subroutine orifice_step
     !
     !==========================================================================
-    !==========================================================================
-    !
-    subroutine orifice_provisional_geometry &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN)
-        ! this subroutine sets the orifice geometry to zero.
-        character(64) :: subroutine_name = 'orifice_provisional_geometry'
-
-
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
-        integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
-        logical,           intent(in)      :: elem2YN(:,:), elemMYN(:,:)
-
-        integer :: mm
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-
-        where      ( (elem2I(:,e2i_elem_type) == eOrifice) )
-
-            elem2R(:,e2r_Area)        = 1.0e-7
-            elem2R(:,e2r_Eta)         = 1.0e-7
-            elem2R(:,e2r_Perimeter)   = 1.0e-7
-            elem2R(:,e2r_HydDepth)    = 1.0e-7
-            elem2R(:,e2r_HydRadius)   = 1.0e-7
-            elem2R(:,e2r_Topwidth)    = 1.0e-7
-            elem2R(:,e2r_Depth)       = 1.0e-7
-        endwhere
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-
-    end subroutine orifice_provisional_geometry
-    !
-    !==========================================================================
+    ! PRIVATE BELOW
     !==========================================================================
     !
     subroutine orifice_initialize &
@@ -266,7 +229,6 @@ contains
         faceEtaDn, faceEtaUp, upFace, dnFace, dir, thiscoef)
         !
         character(64) :: subroutine_name = 'orifice_initialize'
-
 
         real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         real,      target, intent(in)      :: faceR(:,:)
@@ -290,11 +252,10 @@ contains
             crest   = inletoffset + zbottom
             crown   = crest + fulldepth
             ! find the effective orifice length
-            length  = min(twoR * thiscoef * sqrt(grav * fulldepth), 200.0)
+            length  = min(twoR * dt * sqrt(grav * fulldepth), 200.0)
             ! set the free surface elevation at orifice element
             eta     = max(faceEtaDn(upFace), faceEtaup(dnFace))
             dir     = int(sign(oneR, (faceEtaDn(upFace) - faceEtaup(dnFace))))
-
         endwhere
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -395,7 +356,6 @@ contains
         !
         character(64) :: subroutine_name = 'orifice_effective_head'
 
-
         real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         real,      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
@@ -407,6 +367,7 @@ contains
         logical, pointer :: maskarray_dn_submergence(:), maskarray_up_submergence(:)
 
         integer, pointer :: upFace(:), dnFace(:), dir(:)
+
 
         integer :: mm
         !--------------------------------------------------------------------------
@@ -617,20 +578,21 @@ contains
             flow         = dir * coeffWeir * submerganceCorrection * &
                 submergenceFactor ** 1.5
             velocity2new = flow / area
-            volume2new   = flow * thiscoef
+            volume2new   = flow * dt
 
         elsewhere (elem2I(:,e2i_elem_type) == eOrifice )
 
             flow         = dir * coeffOrif * submerganceCorrection * &
                 sqrt(abs(effectiveHead))
             velocity2new = flow / area
-            volume2new   = flow * thiscoef
+            volume2new   = flow * dt
         endwhere
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine orifice_flow
     !
     !==========================================================================
+    ! END OF MODULE orifice
     !==========================================================================
     !
 end module orifice

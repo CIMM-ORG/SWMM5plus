@@ -97,6 +97,7 @@ program main
     ! setting%TestCase%TestName = 'y_channel_002'
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
+    ! setting%TestCase%TestName = 'y_storage_channel_005'
     ! setting%TestCase%TestName = 'waller_creek'
 
     !%  hard-code for debug output
@@ -152,7 +153,7 @@ program main
         elemMR, elemMI, elemMYN, elemMName, &
         faceR,  faceI,  faceYN,  faceName)
     !print *, 'in main'
-    !stop
+
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
 
@@ -162,7 +163,7 @@ program main
         linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
-
+        
     !% check consistency of the smallvolume setup
     call checking_smallvolume_consistency (elem2R, elemMR)
 
