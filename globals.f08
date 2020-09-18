@@ -42,6 +42,7 @@ module globals
     integer, parameter :: zeroI      = 0
     integer, parameter :: oneI       = 1
     integer, parameter :: twoI       = 2
+    integer, parameter :: threeI     = 3
 
     integer :: N_link
     integer :: N_node

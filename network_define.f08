@@ -939,9 +939,7 @@ contains
                 faceR(thisFace,fr_Topwidth)        = linkR(thisLink,lr_Topwidth)
               case (lCircular)
                 elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-                !% check this again
-                elem2R(thisElem2,e2r_Topwidth)     = twoR * sqrt(linkR(thisLink,lr_InitialDepth)*&
-                    (linkR(thisLink,lr_FullDepth)-linkR(thisLink,lr_InitialDepth)))
+                elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
               case default
                 print *, 'error: case statement is incomplete in ',subroutine_name
                 stop
@@ -1083,19 +1081,23 @@ contains
               case (eParabolic)
                 elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
               case (eTrapezoidal)
                 elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
               case (eTriangular)
                 elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
               case (eWidthDepth)
                 elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+              case (eCircular)
+                elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+                elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
               case default
                 print *, 'error: case statement is incomplete in ',subroutine_name
                 stop
@@ -1623,11 +1625,10 @@ contains
               case (lWidthDepth)
                 elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
               case (lCircular)
                 elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-                elem2R(thisElem2,e2r_Topwidth)     = twoR * sqrt(linkR(thisLink,lr_InitialDepth)*&
-                    (linkR(thisLink,lr_FullDepth)-linkR(thisLink,lr_InitialDepth)))
+                elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
               case default
                 print *, 'error: case statement is incomplete in ',subroutine_name
                 stop

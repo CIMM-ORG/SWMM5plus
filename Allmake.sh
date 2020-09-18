@@ -30,11 +30,11 @@ SOURCESF="  dll_mod.f08\
         type_definitions.f08\
         setting_definition.f08\
         globals.f08\
-        xsect_tables.f08\
         array_index.f08\
         data_keys.f08\
         interface.f08\
         utility.f08\
+        xsect_tables.f08\
         adjustments.f08\
         allocate_storage.f08\
         bc.f08\
@@ -45,6 +45,7 @@ SOURCESF="  dll_mod.f08\
         case_simple_orifice.f08\
         case_y_channel.f08\
         case_y_storage_channel.f08\
+        case_simple_pipe.f08\
         checking.f08\
         debug.f08\
         diagnostic.f08\

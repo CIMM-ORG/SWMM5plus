@@ -92,12 +92,13 @@ program main
     !===========================================================
     !%  hard-code setting for test cases
 
-    setting%TestCase%UseTestCase = .false.
+    setting%TestCase%UseTestCase = .true.
     ! setting%TestCase%TestName = 'simple_channel_001'
     ! setting%TestCase%TestName = 'y_channel_002'
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
+    setting%TestCase%TestName = 'simple_pipe_006'
     ! setting%TestCase%TestName = 'waller_creek'
 
     !%  hard-code for debug output
@@ -163,7 +164,18 @@ program main
         linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
-        
+
+    !stop to check if the initial conditions are setup correctly
+    !check the geometry values
+    print*, 'Area ==>'
+    call utility_print_values_by_link &
+        (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+        fr_Area_d, fr_Area_u, e2r_Area, eMr_Area, eMr_AreaDn, eMr_AreaUp)
+    print*, 'Depth ==>'
+    call utility_print_values_by_link &
+        (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+        fr_HydDepth_d, fr_HydDepth_u, e2r_Depth, eMr_Depth, eMr_AreaDn, eMr_AreaDn)
+    stop  
     !% check consistency of the smallvolume setup
     call checking_smallvolume_consistency (elem2R, elemMR)
 

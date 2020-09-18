@@ -15,11 +15,13 @@ module test_cases
     use case_y_channel
     use case_y_storage_channel
     use case_waller_creek
+    use case_simple_pipe
     use data_keys
     use globals
     use read_width_depth
     use setting_definition
     use utility
+    use xsect_tables
 
     implicit none
 
@@ -761,6 +763,82 @@ contains
                     channel_length, subdivide_length, &
                     lowerZ, upperZ, ManningsN)
             endif
+
+        !% Write a new case statement for each unique test case
+          case ('simple_pipe_006')
+
+            N_link = 1
+            N_node = 1
+            N_BCupstream = 1
+            N_BCdnstream = 1
+
+            !% create the local variables that must be populated to set up the test case
+            call control_variable_allocation &
+                (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+                channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+                velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                dischargeCoefficient2, fullDepth, endContractions)
+
+            ! step controls
+            display_interval = 1000
+            first_step = 1
+            last_step  =  10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+
+            ! set up flow and time step for differen subcases
+            ! tests that ran:  Fr = 0.25, 0.5
+            Froude       = 0.25   ! determines flowrate and slope to get Froude
+            CFL          = 0.25  ! determines dt from subdivide_length
+
+            ! keep these physics fixed
+            channel_breadth = 3.0
+
+            ! assign geometry type for links
+            do ii=1,N_link
+                channel_geometry(ii) = lCircular
+            end do
+
+            depth_upstream  = 1.0
+            depth_dnstream  = 1.0
+            init_depth      = 1.0
+            idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
+            ManningsN       = 0.03
+            channel_length  = 10000.0
+            lowerZ          = 1.0
+            subdivide_length = 5000.0
+            fullDepth       = 2.0    
+
+            ! rectangular geometry
+            parabolaValue = zeroR
+            leftSlope     = zeroR
+            rightSlope    = zeroR
+
+            call froude_driven_pipe_setup&
+                (upperZ(1), area(1), fullDepth(1), flowrate(1), velocity(1),  &
+                Froude(1),  channel_breadth(1), channel_topwidth(1), ManningsN(1), &
+                channel_length(1), lowerZ(1),  init_depth(1))
+
+            call this_setting_for_time_and_steps &
+                (CFL, velocity, init_depth, subdivide_length, &
+                first_step, last_step, display_interval,2)
+
+            call case_simple_pipe_initialize &
+                (channel_length(1), channel_breadth(1), channel_topwidth(1), subdivide_length(1), &
+                lowerZ(1), upperZ(1), flowrate(1), init_depth(1), depth_upstream(1), depth_dnstream(1), &
+                ManningsN(1), lManningsN, idepth_type(1), fullDepth(1),                                   &
+                linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
+                bcdataDn, bcdataUp)
+
+            if (.not. setting%Debugout%SuppressAllFiles) then
+                call write_testcase_setup_file &
+                    (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                    depth_dnstream, channel_breadth, channel_topwidth, area, &
+                    channel_length, subdivide_length, &
+                    lowerZ, upperZ, ManningsN)
+            endif
+
+            !print *, flowrate, depth_dnstream
+            !stop
             
           case default
             print *, setting%TestCase%TestName
@@ -1050,6 +1128,56 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine orifice_setup
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine froude_driven_pipe_setup &
+        (upperZ, area, fulldepth, flowrate, velocity, Froude,  breadth, &
+        topwidth, ManningsN, total_length, lowerZ, depth)
+
+        character(64) :: subroutine_name = 'froude_driven_pipe_setup'
+
+        real,  intent(out)    :: area, topwidth, flowrate, velocity, upperZ
+        real,  intent(in)     :: Froude, breadth, ManningsN, lowerZ, fulldepth
+        real,  intent(in)     :: depth, total_length
+
+        real :: perimeter, rh, slope, AoverAfull, YoverYfull
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+        YoverYfull  = depth / fulldepth
+
+        if (YoverYfull .GT. 1) then
+            print*, 'Warning: Initial water depth is greater than pipe full depth'
+        endif
+
+        area        = (onefourthR * pi * fulldepth ** twoR) * table_lookup(YoverYfull, ACirc, NACirc)
+        topwidth    = fulldepth * table_lookup(YoverYfull, WCirc, NWCirc)
+        rh          = onefourthR * fulldepth * table_lookup(YoverYfull, RCirc, NRCirc)
+        perimeter   = area / rh
+        velocity    = Froude * sqrt(grav * depth)
+        flowrate    = area * velocity
+        slope       = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+        upperZ      = lowerZ + slope * total_length
+
+        print *,'-----------------'
+        print *, area, 'area'
+        print *, topwidth, 'topwidth'
+        print *, perimeter, 'perimeter'
+        print *, rh, 'rh'
+        print *, velocity, 'velocity'
+        print *, flowrate, 'flowrate'
+        print *, slope, 'slope'
+        print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+        print *, total_length, 'total_length'
+        print *, slope*total_length, 'slope*total_length'
+        print *,'-----------------'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+    end subroutine froude_driven_pipe_setup
     !
     !==========================================================================
     !==========================================================================

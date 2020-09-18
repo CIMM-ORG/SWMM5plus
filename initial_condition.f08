@@ -73,7 +73,7 @@ contains
 
         !% get data that can be extracted from links
         call initial_conditions_from_linkdata &
-            (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
+            (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, linkR, linkI)
 
         call initial_junction_conditions &
             (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
@@ -148,7 +148,7 @@ contains
     !==========================================================================
     !
     subroutine initial_conditions_from_linkdata &
-        (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
+        (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, linkR, linkI)
         !
         ! The link data structure can store a variety of geometric data.
         ! This will be expanded in the future
@@ -157,6 +157,7 @@ contains
 
         real,      intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,   intent(in out)  :: elem2I(:,:),  elemMI(:,:)
+        logical,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
         real,      target,   intent(in)      :: linkR(:,:)
         integer,   target,   intent(in)      :: linkI(:,:)
@@ -164,9 +165,9 @@ contains
         real               :: kappa
         real,      pointer :: dup, ddn
         integer,   pointer :: Lindx, LdepthType
-        integer :: ii, ei_max, mm
+        integer :: ii, ei_max, mm, nn
 
-        real :: trapz_tanTheta, CC, BB
+        real :: trapz_tanTheta, CC, BB, AoverAfull, YoverYfull
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -361,33 +362,62 @@ contains
                 endwhere
             elseif (linkI(ii,li_geometry) == lCircular ) then
                 !% handle circular elements
-                ! Input: InitialDepth, Full Depth
-                ! these geometric properties are wrong. but they will get correctly updated later.
+    
+                do nn=1, size(elem2I(:,e2i_link_ID),1)
+                    if (elem2I(nn,e2i_link_ID) == Lindx) then
 
-                ! Talk with Dr. Hodges about this matter.
-                where (elem2I(:,e2i_link_ID) == Lindx)
-                    elem2I(:,e2i_geometry)     = eCircular
+                        elem2I(nn,e2i_geometry)     = eCircular
+                        
+                        elem2R(nn,e2r_BreadthScale) = linkR(ii,lr_FUllDepth)
 
-                    elem2R(:,e2r_FullDepth)    = linkR(ii,lr_FUllDepth)
+                        elem2R(nn,e2r_FullDepth) = linkR(ii,lr_FUllDepth)
+                        
+                        elem2R(nn,e2r_Radius)   = linkR(ii,lr_FUllDepth) / twoR
+                        
+                        elem2R(nn,e2r_Zcrown)   = elem2R(nn,e2r_Zbottom) + elem2R(nn,e2r_FullDepth)
 
-                    elem2R(:,e2r_BreadthScale) = linkR(ii,lr_FUllDepth)
+                        elem2R(nn,e2r_FullArea) = onefourthR * pi * linkR(ii,lr_FUllDepth)  ** twoR
 
-                    elem2R(:,e2r_Area)         = onefourthR * pi *                    &
-                        elem2R(:,e2r_FullDepth)  ** twoR
+                        elem2R(nn,e2r_Eta)      = elem2R(nn,e2r_Zbottom) + elem2R(nn,e2r_Depth)
 
-                    elem2R(:,e2r_HydDepth)     = elem2R(:,e2r_Depth)
+                        ! Set surcharge condition if the pipe is full
+                        if (elem2R(nn,e2r_Eta) .GE. elem2R(nn,e2r_Zcrown)) then
+                            elem2YN(nn,e2YN_IsSurcharged) = .true.
+                            elem2R(nn,e2r_Area) = elem2R(nn,e2r_FullArea)
+                            elem2R(nn,e2r_HydDepth) = zeroR  !this is the modified hydralic depth for pipe
+                            elem2R(nn,e2r_Topwidth) = zeroR
+                            elem2R(nn,e2r_HydRadius) = onefourthR * elem2R(nn,e2r_FullDepth)
+                            YoverYfull = oneR
+                            AoverAfull = oneR
+                        else
+                            elem2YN(nn,e2YN_IsSurcharged) = .false.
+                            YoverYfull = elem2R(nn,e2r_Depth) / elem2R(nn,e2r_FullDepth)
+                            elem2R(nn,e2r_Area)     = elem2R(nn,e2r_FullArea) * table_lookup(YoverYfull, ACirc, NACirc)
+                            elem2R(nn,e2r_Topwidth) = elem2R(nn,e2r_FullDepth)* table_lookup(YoverYfull, WCirc, NWCirc)
+                            elem2R(nn,e2r_HydRadius) = onefourthR * elem2R(nn,e2r_FullDepth) * &
+                                                        table_lookup(YoverYfull, RCirc, NRCirc)
+                            AoverAfull = elem2R(nn,e2r_Area) / elem2R(nn,e2r_FullArea)
+                            if (AoverAfull .GT. onehalfR) then
+                                elem2R(nn,e2r_HydDepth)   = elem2R(nn,e2r_Eta) - elem2R(nn,e2r_Zbottom) + &
+                                                                elem2R(nn,e2r_Radius) * (onefourthR * pi - oneR)
+                            elseif (AoverAfull .LE. onehalfR) then
+                                elem2R(nn,e2r_HydDepth)   = max(elem2R(nn,e2r_Area)/ elem2R(nn,e2r_Topwidth), zeroR)
+                            endif
 
-                    elem2R(:,e2r_Topwidth)     = twoR * sqrt(elem2R(:,e2r_HydDepth) * &
-                        (elem2R(:,e2r_FullDepth) - elem2R(:,e2r_HydDepth)))
+                        endif
 
-                    elem2R(:,e2r_Eta)          = elem2R(:,e2r_Zbottom)                &
-                        + elem2R(:,e2r_HydDepth)
+                        elem2R(nn,e2r_Volume)    = elem2R(nn,e2r_Area) * elem2R(nn,e2r_Length)
+                        elem2R(nn,e2r_Perimeter) = elem2R(nn,e2r_Area) / elem2R(nn,e2r_HydRadius)
 
-                    elem2R(:,e2r_Volume)       = elem2R(:,e2r_Area) &
-                        * elem2R(:,e2r_Length)
-
-                    elem2R(:,e2r_Perimeter)    = pi * elem2R(:,e2r_FullDepth)
-                endwhere
+                        ! selecting appropriate solver for circular pipe
+                        if (YoverYfull .GE. setting%DefaultAC%Switch%Depth) then
+                            elem2I(nn,e2i_solver) = AC
+                        else
+                            elem2I(nn,e2i_solver) = SVE
+                        endif
+                        print*, elem2I(nn,e2i_solver), '<== solver '
+                    endif
+                enddo
 
             elseif (linkI(ii,li_geometry) == lTriangular ) then
                 !% handle triangle elements

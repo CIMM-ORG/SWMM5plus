@@ -59,6 +59,60 @@ module setting_definition
         real    :: Maximum      = 20 ! m/s
     endtype velocityType
 
+    !%  setting%DefaultAC%TimeStencil
+    type timestencilType
+        character(64) :: Backwards3 = 'backwards3'   ! Backwards3 is based on Rogers, Kwak and Kiris papers
+        character(64) :: CN         = 'CN'
+    end type timestencilType
+        
+    !%  setting%DefaultAC%Switch
+    type switchType
+        real    :: Depth        = 0.9 ! switch to AC solver if depth/depthMax >= 0.9
+        real    :: Area         = 0.9 ! switch to AC solver if area/areaMax >= 0.9
+    end type switchType
+
+
+    !%  setting%DefaultAC%Anomaly
+    type anomalyType
+        logical :: DensityCorrection = .false.  ! density anomaly correction to handle residual (or non-convergence) of the AC
+        real    :: DnsityLowcutoff   = 1e-10    ! Note: setting the lowcutoff to zero can cause small truncation error velocities 
+        real    :: DensityHighcutoff = 0.1      ! to cause waves that buildup over time into a sloshing flow. The lowcutoff avoid this
+        real    :: OpenPipFactor     = 1.0      ! fraction of residual that is corrected - generally should be 1.0
+        real    :: FullPipeFactor    = 1.0      ! fraction of residual that is corrected - generally should be 1.0
+    end type anomalyType
+
+    !%  setting%DefaultAC%Iter
+    type iterType
+        integer :: Max         = 100        ! cutoff for AC iterations without convergence
+        integer :: Min         = 3          ! reset by code so that itermin * dtau >= dt
+        integer :: Firststep   = 100        ! allows more iterations in first time step
+    end type itertype
+
+    !%  setting%DefaultAC%CFL
+    type cflType
+        real    :: CFLmax      = 2.0        ! maximum cfl for the AC dtau -- may be higher than 1.0)
+        real    :: CFLsmall    = 0.05       ! small maximum cfl when reset to larger dtau
+    end type cflType
+
+    !%  setting%DefaultAC%Celerity
+    type celerityType
+        real    :: RC          = 1.0        ! celerity ratio of AC wave speed to gravity wave speed (1.0 works)
+    end type celerityType
+
+    !%  setting%DefaultAC%Convergence
+    type convergenceType
+        real    :: Hrelative   = 1e-2       ! AC convergence relative change in L2 norm when cutting off AC
+        real    :: Qrelative   = 1e-2       ! AC convergence relative change in L2 norm when cutting off AC
+        real    :: Habsolute   = 1e-5       ! AC convergence change in absolute L2 norm when cutting off AC
+        real    :: Qabsolute   = 1e-5       ! AC convergence change in absolute L2 norm when cutting off AC
+    end type convergenceType
+
+    !%  setting%DefaultAC%dTauFactor
+    type dtaufactorType
+        real :: dtdtau      = 1.0 / 3.0     ! ratio of dt/dtau (changes with flow)
+        real :: dtdtauMax   = 1.0 / 3.0     ! ensure the minimum number of iterations.
+    end type dtaufactorType
+
     !% SECOND LEVEL TYPES ----------------------------------------------
 
     !%  setting%Constant
@@ -175,15 +229,17 @@ module setting_definition
         real    :: Volume       = 1.0e-7  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
     end type zerovalueType
 
-    !%  setting%Weir
-    type WeirType
-        real    :: WeirDischargeCoeff   = 1.4 ! m^3/s
-        real    :: EndContraction       = 0.0    ! Number of End Contraction(0, 1, 2)
-        real    :: WeirHeight           = 1.5  ! Vertical Height of Weir Opening m
-        real    :: WeirWidth            = 3.0
-        real    :: WeirSideSlope        = 1.0
-        real    :: WeirInletOffset      = 1.0
-    end type WeirType
+    !%  setting%DefaultAC
+    type defaultACType
+        type(dtaufactorType)    :: dTauFactor
+        type(convergenceType)   :: Convergence
+        type(celerityType)      :: Celerity
+        type(cflType)           :: CLF 
+        type(iterType)          :: Iter
+        type(anomalyType)       :: Anomaly
+        type(switchType)        :: Switch  
+        type(timestencilType)   :: TimeStencil
+    end type defaultACType
 
     !% FIRST LEVEL TYPE  ----------------------------------------------
     type settingType
@@ -199,7 +255,7 @@ module setting_definition
         type(testcaseType)          :: TestCase     ! custom setup for test cases
         type(timeType)              :: Time         ! controls of time step
         type(zerovalueType)         :: ZeroValue    ! finite values to represent small or negative values
-        type(WeirType)              :: Weir         ! This contains the weir settings (only for initial implimentation purpose)
+        type(defaultACType)         :: DefaultAC    ! This contains the default settings for atrificial compressibility
     end type settingType
 
 

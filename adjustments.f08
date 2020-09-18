@@ -507,6 +507,12 @@ contains
             (tvolume, smallvolumeratio, smallvolume, issmallvolume, &
             elemtype, thiselemtype)
 
+        thiselemtype = ePipe
+
+        call smallvolume_identification_for_element &
+            (tvolume, smallvolumeratio, smallvolume, issmallvolume, &
+            elemtype, thiselemtype)
+
         !%  for weir elements
         thiselemtype = eWeir
 
@@ -614,6 +620,24 @@ contains
             (elem2R, elem2I, elem2YN, e2i_elem_type, &
             e2r_Area, e2r_Eta, e2r_Perimeter, e2r_Zbottom, e2r_HydDepth, e2r_HydRadius, &
             e2r_Topwidth, e2YN_IsSmallVolume, eChannel)
+
+        !%  pipe elements
+        call smallvolume_element_geometry_reset &
+            (elem2R, elem2I, elem2YN, e2i_elem_type, &
+            e2r_Area, e2r_Eta, e2r_Perimeter, e2r_Zbottom, e2r_HydDepth, e2r_HydRadius, &
+            e2r_Topwidth, e2YN_IsSmallVolume, ePipe)
+
+        !%  weir elements
+        call smallvolume_element_geometry_reset &
+            (elem2R, elem2I, elem2YN, e2i_elem_type, &
+            e2r_Area, e2r_Eta, e2r_Perimeter, e2r_Zbottom, e2r_HydDepth, e2r_HydRadius, &
+            e2r_Topwidth, e2YN_IsSmallVolume, eWeir)
+
+        !%  orifice elements
+        call smallvolume_element_geometry_reset &
+            (elem2R, elem2I, elem2YN, e2i_elem_type, &
+            e2r_Area, e2r_Eta, e2r_Perimeter, e2r_Zbottom, e2r_HydDepth, e2r_HydRadius, &
+            e2r_Topwidth, e2YN_IsSmallVolume, eOrifice)
 
         !%  junction elements
         call smallvolume_element_geometry_reset &

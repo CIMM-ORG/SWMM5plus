@@ -992,9 +992,6 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         where (facemask)
-            !e2r_ThisType calls the values from e2rset = [12 11 4] one by one
-            !Then the valueUp is set as the variable
-            !And these variables are Topwidth, Area and Flowrate
             valueUp  = elem2R(faceI(:,fi_Melem_u),e2r_ThisType)
             valueDn  = elem2R(faceI(:,fi_Melem_d),e2r_ThisType)
         endwhere

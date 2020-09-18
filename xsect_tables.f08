@@ -10,18 +10,23 @@ module xsect_tables
     ! use type_definitions
     use globals
     use setting_definition
+    use utility
 
     implicit none
 
+    
     public
+    
+    private :: table_interpolation
+    private :: debuglevel
 
+    integer :: debuglevel = 0 
 
     !==========================================================================
     ! Circular Shape
     !==========================================================================
     !% Y/Yfull v. A/Afull
     integer, parameter      :: NYCirc = 51
-
     real, dimension(NYCirc) :: YCirc = (/0.0, 0.05236, 0.08369, 0.11025, 0.13423, 0.15643, 0.17755, 0.19772, 0.21704, 0.23581,&
         0.25412, 0.27194, 0.28948, 0.30653, 0.32349, 0.34017, 0.35666, 0.37298, 0.38915,      &
         0.40521, 0.42117, 0.43704, 0.45284, 0.46858, 0.48430, 0.50000, 0.51572, 0.53146,      &
@@ -60,7 +65,7 @@ contains
     pure function table_lookup &
         (normalizedInput, table, nItems) result(normalizedOutput)
         !
-        ! took up talbe values of circular types of geometry
+        ! table lookup function. This function is single operation
         !
         real,      intent(in)      :: table(:)
         real,      intent(in)      :: normalizedInput
@@ -78,7 +83,7 @@ contains
 
         if     ( ii .GE. (nItems - oneI) ) then
 
-            normalizedOutput = table(nItems - 1)
+            normalizedOutput = table(nItems - oneI)
 
         elseif ( ii .LE. zeroI) then
 
@@ -149,6 +154,102 @@ contains
         endif
 
     end function get_theta_of_alpha
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine table_lookup_array &
+        (elemI, elemR, inoutarray, normalizedInput, table, nItems, maskarray, &
+        ei_Temp, next_ei_temparray, ei_n_temp)
+        !
+        ! gets vaule from the lookup table. this subroutine is array operation
+        !
+        character(64) :: subroutine_name = 'table_lookup_array'
+
+        real,      target,  intent(inout)    :: elemR(:,:)
+        integer,   target,  intent(in)       :: elemI(:,:)
+
+        integer,   intent(in)       :: ei_n_temp, nItems
+        integer,   intent(in)       :: ei_Temp(:)
+        real,      intent(in)       :: table(:), normalizedInput(:)
+        logical,   intent(in)       :: maskarray(:)
+        real,      intent(inout)    :: inoutarray(:)
+        integer,   intent(inout)    :: next_ei_temparray 
+        
+        
+        real                        :: delta
+        integer,   pointer          :: position(:)
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !% temporary array for finding the location in the lookout table
+        position    => elemI(:,ei_Temp(next_ei_temparray))
+        next_ei_temparray = utility_advance_temp_array (next_ei_temparray,ei_n_temp)
+
+        delta = oneR / (nItems - oneR)
+
+        ! this finds the position in the table for interpolation
+        where (maskarray)
+            position = int(normalizedInput / delta)
+        endwhere
+
+        call table_interpolation &
+            (inoutarray, normalizedInput, table, nItems, maskarray, delta, position)
+
+        position = nullvalueI
+        nullify(position)
+        next_ei_temparray = next_ei_temparray-1
+
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine table_lookup_array
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine table_interpolation &
+        (inoutarray, normalizedInput, table, nItems, maskarray, delta, position)
+        !
+        ! find the positions of the input in the table
+        !
+        character(64) :: subroutine_name = 'table_interpolation'
+        
+        real,      intent(inout)    :: inoutarray(:)
+        real,      intent(in)       :: normalizedInput(:)
+        real,      intent(in)       :: table(:)
+        real,      intent(in)       :: delta
+        logical,   intent(in)       :: maskarray(:)
+        integer,   intent(in)       :: nItems        
+        integer,   intent(in)       :: position(:)
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        where ( (maskarray) .and. (position .LE. zeroI) )
+            inoutarray = zeroR
+
+        elsewhere ( (maskarray) .and. (position .GT. zeroI) .and. &
+                    (position .LT. (nItems - oneI)) )
+
+            inoutarray = table(position) + (normalizedInput - position * delta) * &
+                    (table(position + oneI) - table(position)) / delta       
+
+        elsewhere ( (maskarray) .and. (position .GE. (nItems - oneI)) )
+            inoutarray = table(nItems - oneI)
+        endwhere
+
+        ! quadratic interpolation for low value
+        where (position == oneI)
+            inoutarray = max(zeroR, (inoutarray + (inoutarray - delta) * &
+                            (inoutarray - twoI * delta) / (delta*delta) * &
+                            (table(oneI)/twoR - table(twoI)  + table(threeI) / twoR)) )
+        endwhere
+    
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine table_interpolation
+    !
     !==========================================================================
     ! END OF MODULE xsect_tables
     !==========================================================================
