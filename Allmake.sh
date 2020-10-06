@@ -64,6 +64,7 @@ SOURCESF="  dll_mod.f08\
         network_define.f08\
         output.f08\
         test_cases.f08\
+        artificial_compressibility.f08\
         runge_kutta.f08\
         time_loop.f08\
         main.f08\

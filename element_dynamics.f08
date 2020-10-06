@@ -29,9 +29,9 @@ contains
     !==========================================================================
     !
     subroutine element_dynamics_update &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-        bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, &
-        e2r_Volume_new, eMr_Volume_new, thisTime)
+        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, bcdataDn, &
+        bcdataUp, e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new,       &
+        eMr_Volume_new, e2r_Flowrate_new, eMr_Flowrate_new,thisTime)
         !
         ! update the flow dynamics on an element given new velocity values stored
         ! in the array given by the column index e#r_Velocity_new
@@ -46,12 +46,18 @@ contains
         real,                  intent(in)      ::  thisTime
         integer,               intent(in)      ::  e2r_Velocity_new, e2r_Volume_new
         integer,               intent(in)      ::  eMr_Velocity_new, eMr_Volume_new
+        integer,               intent(in)      ::  e2r_Flowrate_new, eMr_Flowrate_new
 
         logical,   pointer :: isadhocflowrate(:)
         integer            :: idx
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !%  velocity updated from flowrate for pipe elements
+        call velocity_update_from_AC  &
+            (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Flowrate_new, eMr_Flowrate_new, &
+            e2r_Velocity_new, eMr_Velocity_new)
 
         !% velocity limiter on channels
         call adjust_channel_velocity_limiter &
@@ -62,6 +68,12 @@ contains
         call adjust_channel_velocity_limiter &
             (elemMR, elemMYN, elemMI, &
             eMi_elem_type, eJunctionChannel, eMYN_IsAdhocFlowrate,  eMr_Velocity_new)
+
+        !%  HACK: using the channel velocity limiter for pipe. May be seperate
+        !%  velocity limiter subroutine is need for pipe elements
+        call adjust_channel_velocity_limiter &
+            (elem2R, elem2YN, elem2I, &
+            e2i_elem_type, ePipe, e2YN_IsAdhocFlowrate, e2r_Velocity_new)
 
         !%  For small volumes, compute a velocity that is blended from the update value
         !%  and a Chezy-Manning computed using the free surface slope of the element
@@ -81,7 +93,7 @@ contains
         !%  flowrate updated from velocity
         call element_flowrate_update  &
             (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Velocity_new, eMr_Velocity_new)
-
+        
         !%  apply the boundary conditions on velocity and flowrate
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_inflowrate, e2r_Velocity_new)
@@ -130,6 +142,11 @@ contains
         call flowrate_from_velocity &
             ( elem2R, elem2I, &
             e2r_Flowrate, e2r_Area, e2r_Velocity_new, e2i_elem_type, eChannel)
+
+        !%  update the pipe flow rate with the velocity (if there were any ad-hoc velocities)
+        call flowrate_from_velocity &
+            ( elem2R, elem2I, &
+            e2r_Flowrate, e2r_Area, e2r_Velocity_new, e2i_elem_type, ePipe)
 
         call flowrate_from_velocity &
             ( elemMR, elemMI, &
@@ -200,6 +217,41 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine velocity_update_from_AC &
+        (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Flowrate_new, &
+        eMr_Flowrate_new, e2r_Velocity_new, eMr_Velocity_new)
+        !
+        ! given a flowrate and update areas in elemR, provide updates
+        ! for velocities rate of pipe elements
+        ! velocities are saved in the temp space for consistancy
+        !
+        character(64) :: subroutine_name = 'velocity_update_from_AC'
+
+        real,      target, intent(in out)  ::  elem2R(:,:), elemMR(:,:)
+        real,      target, intent(in)      ::  faceR(:,:)
+        integer,   target, intent(in)      ::  elem2I(:,:), elemMI(:,:)
+        integer,           intent(in)      ::  e2r_Flowrate_new, eMr_Flowrate_new
+        integer,           intent(in)      ::  e2r_Velocity_new, eMr_Velocity_new
+
+
+        integer :: mm
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !%  update the pipe velocity with the flowrate
+        call velocity_from_flowrate &
+            (elem2R, elem2I, e2r_Velocity_New, e2r_Area, e2r_Flowrate, e2r_Flowrate_New, &
+            e2i_elem_type, e2i_solver, ePipe)
+
+        !%  HACK: Need velocity update for junction-pipe elements
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine velocity_update_from_AC
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine flowrate_from_velocity &
         ( elemR, elemI, &
         er_Flowrate, er_Area, er_Velocity, ei_elem_type, eThisElemType)
@@ -229,6 +281,42 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine flowrate_from_velocity
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine velocity_from_flowrate &
+        (elemR, elemI, er_Velocity_New, er_Area, er_Flowrate, er_Flowrate_New, &
+        ei_elem_type, ei_solver, eThisElemType)
+        !
+        ! compute flowrate from velocity and area for eThisElemType and AC solver
+        !
+        character(64) :: subroutine_name = 'velocity_from_flowrate'
+
+        real,  target, intent(in out)  :: elemR(:,:)
+        integer,       intent(in)      :: elemI(:,:)
+
+        integer,       intent(in)  :: er_Flowrate, er_Flowrate_New, er_Area
+        integer,       intent(in)  :: er_Velocity_New, ei_elem_type, ei_solver
+        integer,       intent(in)  :: eThisElemType
+
+        real,  pointer :: flowrateNew(:), area(:), velocityNew(:), flowrate(:)
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        flowrateNew => elemR(:,er_Flowrate_New)
+        flowrate    => elemR(:,er_Flowrate)
+        area        => elemR(:,er_Area)
+        velocityNew => elemR(:,er_Velocity_New)
+
+        where ( (elemI(:,ei_elem_type) == eThisElemType) .and. (elemI(:,ei_solver) == AC) )
+            velocityNew = flowrateNew / area
+            flowrate = flowrateNew
+        endwhere
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine velocity_from_flowrate
     !
     !==========================================================================
     !==========================================================================
@@ -268,6 +356,15 @@ contains
             e2r_Area, e2r_HydRadius, e2r_SmallVolumeRatio, &
             e2YN_IsSmallVolume, e2i_roughness_type, e2r_Roughness, &
             e2i_elem_type, eChannel, e2i_Mface_u, e2i_Mface_d)
+
+        !%  velocity blend for pipe elements
+        call velocity_blend_with_mask &
+            (elem2R, elem2I, elem2YN, faceR, &
+            next_e2r_temparray, e2r_n_temp, e2r_Temp, &
+            e2r_Velocity_new, e2r_Flowrate, e2r_Length,  &
+            e2r_Area, e2r_HydRadius, e2r_SmallVolumeRatio, &
+            e2YN_IsSmallVolume, e2i_roughness_type, e2r_Roughness, &
+            e2i_elem_type, ePipe, e2i_Mface_u, e2i_Mface_d)
 
         !%  velocity blend for junction elements
         !%  HACK - this arbitrarily uses the u1 and d1 for the slope
@@ -468,12 +565,12 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        call timescale_value_channel (elem2R, elem2I, elem2YN, e2r_Velocity_new)
+        call timescale_value_HQ2 (elem2R, elem2I, elem2YN, e2r_Velocity_new)
 
         ! note that timescales are stored on branches only for a junction and the data
         ! in branch flowrate and velocities have already been updated in place, so
         ! no need to use a eMr..new index
-        call timescale_value_junction (elemMR, elemMI, elemMYN)
+        call timescale_value_HQM (elemMR, elemMI, elemMYN)
 
         call timescale_value_HonlyElement (elem2R, elem2I, elem2YN)
 
@@ -581,10 +678,10 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine timescale_value_channel &
+    subroutine timescale_value_HQ2 &
         (elem2R, elem2I, elem2YN, e2r_Velocity_new)
 
-        character(64) :: subroutine_name = 'timescale_value_channel'
+        character(64) :: subroutine_name = 'timescale_value_HQ2'
 
         integer,           intent(in)      :: e2r_Velocity_new
 
@@ -594,11 +691,11 @@ contains
 
         integer    ::  indx(2), maskindx1, maskindx2
 
-        real,      pointer :: wavespeed(:), velocity(:)
+        real,      pointer :: wavespeed(:), velocity(:), zcrown(:)
         real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
         real,      pointer :: tscale_H_up(:), tscale_H_dn(:)
         real,      pointer :: tscale_G_up(:), tscale_G_dn(:)
-        real,      pointer :: length(:)
+        real,      pointer :: length(:), hyddepth(:), eta(:)
         logical,   pointer :: maskarray1(:), maskarray2(:)
 
         !--------------------------------------------------------------------------
@@ -625,29 +722,31 @@ contains
         tscale_G_dn => elem2R(:,e2r_Timescale_G_d)
 
         velocity  => elem2R(:,e2r_Velocity_new)
+        eta       => elem2R(:,e2r_Eta)
+        zcrown    => elem2R(:,e2r_Zcrown)
         length    => elem2R(:,e2r_Length)
+        hyddepth  => elem2R(:,e2r_HydDepth)
 
-        !%  compute timescale
-
-        maskarray1 = ( (elem2I(:,e2i_elem_type) == eChannel) )
+        !%  compute timescale for HQ2 element which includes channel and pipes
+        maskarray1 = ( (elem2I(:,e2i_meta_elem_type) == eHQ2) )
+        !%  when pipe is surcharged, the wavespeed changes. So special condition is needed
+        maskarray2 = ( (elem2I(:,e2i_elem_type) == ePipe) .and. (eta > zcrown) )
 
         where (maskarray1)
-            wavespeed = sqrt( grav * elem2R(:,e2r_HydDepth ))
+            wavespeed = sqrt( grav * hyddepth )
+        elsewhere (maskarray2)
+            ! edge case where pipe is surcharged
+            wavespeed = wavespeed * setting%DefaultAC%Celerity%RC
+        endwhere
+
+        where(maskarray1)
             tscale_Q_up = - onehalfR * length / (velocity - wavespeed)
             tscale_Q_dn = + onehalfR * length / (velocity + wavespeed)
             tscale_G_up = tscale_Q_up
             tscale_G_dn = tscale_Q_dn
             tscale_H_up = tscale_Q_up
             tscale_H_dn = tscale_Q_dn
-
         endwhere
-
-        ! e2r_Timescale_G_u = e2r_Timescale_Q_u
-        ! e2r_Timescale_G_d = e2r_Timescale_Q_d
-
-        !TODO We have to add the limiter for each type of element base on their physic
-        !TODO we have to add timescale calculation for e2r_Timescale_H_d and e2r_Timescale_H_u
-        !from Hodges and Liu (2019)
 
         !%  limiter for large, negative, and small values
 
@@ -666,15 +765,15 @@ contains
         next_e2YN_temparray=next_e2YN_temparray-2
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine timescale_value_channel
+    end subroutine timescale_value_HQ2
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine timescale_value_junction &
+    subroutine timescale_value_HQM &
         (elemMR, elemMI, elemMYN)
 
-        character(64) :: subroutine_name = 'timescale_value_junction'
+        character(64) :: subroutine_name = 'timescale_value_HQM'
 
         real,  target,     intent(in out)  :: elemMR(:,:)
         integer,           intent(in)      :: elemMI(:,:)
@@ -719,7 +818,7 @@ contains
         next_eMr_temparray = next_eMr_temparray-1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine timescale_value_junction
+    end subroutine timescale_value_HQM
     !
     !==========================================================================
     !==========================================================================

@@ -102,7 +102,7 @@ contains
         call element_dynamics_update &
             (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
             bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
-            e2r_Volume, eMr_Volume, thisTime)
+            e2r_Volume, eMr_Volume, e2r_Flowrate, eMr_Flowrate, thisTime)
 
         call face_meta_element_assign (faceI, elem2I, N_face)
 
@@ -263,6 +263,8 @@ contains
                 elem2I(:,e2i_roughness_type) = linkI(ii,li_roughness_type)
                 elem2R(:,e2r_Roughness)      = linkR(ii,lr_Roughness)
                 elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)
+                elem2R(:,e2r_Flowrate_N0)    = elem2R(:,e2r_Flowrate)
+                elem2R(:,e2r_Flowrate_N1)    = elem2R(:,e2r_Flowrate) 
                 elem2R(:,e2r_LeftSlope)      = linkR(ii,lr_LeftSlope)
                 elem2R(:,e2r_RightSlope)     = linkR(ii,lr_RightSlope)
                 elem2R(:,e2r_ParabolaValue)  = linkR(ii,lr_ParabolaValue)
@@ -277,6 +279,8 @@ contains
                     elem2R(:,e2r_Topwidth)  = linkR(ii,lr_BreadthScale)
                     elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
+                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
                 endwhere
@@ -297,6 +301,10 @@ contains
 
                     elem2R(:,e2r_Area)      = twothirdR * elem2R(:,e2r_Depth) &
                         * elem2R(:,e2r_Topwidth)
+
+                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
+
+                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
 
                     elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Topwidth) &
                         *( &
@@ -340,6 +348,10 @@ contains
                         + onehalfR &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                         * elem2R(:,e2r_Depth)) * elem2R(:,e2r_Depth)
+
+                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
+
+                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
 
                     ! Bottom width + (lslope + rslope) * hydraulicDepth
                     elem2R(:,e2r_Topwidth)  = elem2R(:,e2r_BreadthScale)            &
@@ -406,6 +418,8 @@ contains
 
                         endif
 
+                        elem2R(nn,e2r_Area_N0)   = elem2R(nn,e2r_Area)
+                        elem2R(nn,e2r_Area_N1)   = elem2R(nn,e2r_Area)
                         elem2R(nn,e2r_Volume)    = elem2R(nn,e2r_Area) * elem2R(nn,e2r_Length)
                         elem2R(nn,e2r_Perimeter) = elem2R(nn,e2r_Area) / elem2R(nn,e2r_HydRadius)
 
@@ -415,7 +429,6 @@ contains
                         else
                             elem2I(nn,e2i_solver) = SVE
                         endif
-                        print*, elem2I(nn,e2i_solver), '<== solver '
                     endif
                 enddo
 
@@ -433,6 +446,10 @@ contains
                     elem2R(:,e2r_Area) = onehalfR &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                         * elem2R(:,e2r_Depth) * elem2R(:,e2r_Depth)
+
+                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
+
+                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
 
                     ! (lslope + rslope) * hydraulicDepth
                     elem2R(:,e2r_Topwidth) = elem2R(:,e2r_Depth)               &
@@ -461,6 +478,8 @@ contains
                     elem2R(:,e2r_Topwidth)  = linkR(ii,lr_TopWidth)
                     elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
+                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
                     elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth)
                 endwhere
@@ -473,13 +492,15 @@ contains
             !% Setting provisional geometry for weir and orifice element to correctly interpolate to faces
             where      ( (elem2I(:,e2i_elem_type) == eWeir) .or. &
                 (elem2I(:,e2i_elem_type) == eOrifice) )
-                elem2R(:,e2r_HydDepth)     = 1.0e-7
-                elem2R(:,e2r_Topwidth)     = 1.0e-7
-                elem2R(:,e2r_Eta)          = 1.0e-7
-                elem2R(:,e2r_Area)         = 1.0e-7
-                elem2R(:,e2r_Volume)       = 1.0e-7
-                elem2R(:,e2r_Perimeter)    = 1.0e-7
-                elem2R(:,e2r_Depth)        = 1.0e-7
+                elem2R(:,e2r_HydDepth)      = 1.0e-7
+                elem2R(:,e2r_Topwidth)      = 1.0e-7
+                elem2R(:,e2r_Eta)           = 1.0e-7
+                elem2R(:,e2r_Area)          = 1.0e-7
+                elem2R(:,e2r_Area_N0)       = elem2R(:,e2r_Area)
+                elem2R(:,e2r_Area_N1)       = elem2R(:,e2r_Area)
+                elem2R(:,e2r_Volume)        = 1.0e-7
+                elem2R(:,e2r_Perimeter)     = 1.0e-7
+                elem2R(:,e2r_Depth)         = 1.0e-7
             endwhere
 
             !%  Update velocity
@@ -632,19 +653,18 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        where ( (elemI(:,ei_elem_type) == eChannel)             .or. &
-
+        where ( (elemI(:,ei_elem_type) == eChannel)  .or. &
             (elemI(:,ei_elem_type) == ePipe) )
 
             elemI(:,ei_meta_elem_type) = eHQ2
 
-        elsewhere ( (elemI(:,ei_elem_type) == eJunctionChannel)     .or. &
+        elsewhere ( (elemI(:,ei_elem_type) == eJunctionChannel) .or. &
             (elemI(:,ei_elem_type) == eJunctionPipe)  )
 
             elemI(:,ei_meta_elem_type) = eHQM
 
-        elsewhere ( (elemI(:,ei_elem_type) == eWeir)            .or. &
-            (elemI(:,ei_elem_type) == eorifice)         .or. &
+        elsewhere ( (elemI(:,ei_elem_type) == eWeir) .or. &
+            (elemI(:,ei_elem_type) == eorifice)      .or. &
             (elemI(:,ei_elem_type) == ePump)  )
 
             elemI(:,ei_meta_elem_type) = eQonly
@@ -653,7 +673,7 @@ contains
 
             elemI(:,ei_meta_elem_type) = eHonly
 
-        elsewhere ( (elemI(:,ei_elem_type) == eBCup)            .or. &
+        elsewhere ( (elemI(:,ei_elem_type) == eBCup) .or. &
             (elemI(:,ei_elem_type) == eBCdn)  )
             ! Assigning nonHQ meta elem type to boundary conditions. Confirm this!
             elemI(:,ei_meta_elem_type) = eNonHQ

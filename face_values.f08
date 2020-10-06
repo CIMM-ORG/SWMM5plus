@@ -169,7 +169,7 @@ contains
         real,      pointer  :: weightUpH(:), weightDnH(:)
         real,      pointer  :: weightUpG(:), weightDnG(:)
         real,      pointer  :: inoutarray(:)
-        logical,   pointer  :: facemask(:), facemask_channel(:)
+        logical,   pointer  :: facemask(:), facemask_eHQ2(:)
 
         integer :: mm
 
@@ -205,7 +205,7 @@ contains
         facemask    => faceYN(:,fYN_Temp(next_fYN_temparray))
         next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp)
 
-        facemask_channel    => faceYN(:,fYN_Temp(next_fYN_temparray))
+        facemask_eHQ2    => faceYN(:,fYN_Temp(next_fYN_temparray))
         next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp)
 
         ! find every elements other than multi face
@@ -262,13 +262,13 @@ contains
             faceR(:,fr_Eta_d) = elem2R(faceI(:,fi_Melem_d),e2r_Eta)
         endwhere
 
-        facemask_channel = ( (faceI(:,fi_etype_u) == eChannel) .and. &
-            (faceI(:,fi_etype_d) == eChannel) )
+        facemask_eHQ2 = ( (faceI(:,fi_meta_etype_u) == eHQ2) .and. &
+                          (faceI(:,fi_meta_etype_d) == eHQ2) )
 
         !%  set velocities and upstream values on faces (without hydraulic jump)
         call adjust_face_dynamic_limits &
             (faceR, faceI, elem2R(:,e2r_Volume_new), elem2R(:,e2r_Volume_new), &
-            facemask_channel, .false.)
+            facemask_eHQ2, .false.)
 
         !%  Store identical values for fr_XXX_u for the moment
         !%  These are later adjusted for hydraulic jumps
@@ -279,8 +279,8 @@ contains
 
 
         facemask = nullvalueL
-        facemask_channel = nullvalueL
-        nullify(facemask, facemask_channel)
+        facemask_eHQ2 = nullvalueL
+        nullify(facemask, facemask_eHQ2)
 
         valueUp    = nullvalueR
         valueDn    = nullvalueR

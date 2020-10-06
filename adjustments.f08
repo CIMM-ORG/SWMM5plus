@@ -23,6 +23,8 @@ module adjustments
     public :: adjust_face_dynamic_limits
     public :: adjust_for_zero_geometry
     public :: adjust_negative_volume_reset
+    public :: adjust_negative_area_reset
+    public :: adjust_negative_eta_reset
     public :: adjust_smallvolumes
     public :: adjust_Vshaped_flowrate
     public :: adjust_zero_velocity_at_zero_volume
@@ -289,6 +291,70 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine adjust_negative_volume_reset
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine adjust_negative_area_reset &
+        (area)
+        !
+        ! Ensures that any negative volumes are set to  setting%Zerovalue%Area
+        ! This is a limited routine called during time-stepping to ensure that
+        ! we don't have a divide by zero (or small value) prior to the full
+        ! geometry reset.
+        !
+        character(64) :: subroutine_name = 'adjust_negative_area_reset'
+
+        real,  intent(in out)  ::  area(:)
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        if (setting%ZeroValue%UseZeroValues) then
+            where (area < setting%Zerovalue%Area)
+                area = setting%Zerovalue%Area
+            endwhere
+        else
+            where (area < zeroR)
+                area = zeroR
+            endwhere
+        endif
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine adjust_negative_area_reset
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine adjust_negative_eta_reset &
+        (eta, zbottom, maskarray)
+        !
+        ! Ensures that any negative volumes are set to  setting%Zerovalue%Area
+        ! This is a limited routine called during time-stepping to ensure that
+        ! we don't have a divide by zero (or small value) prior to the full
+        ! geometry reset.
+        !
+        character(64) :: subroutine_name = 'adjust_negative_eta_reset'
+
+        real,       intent(in out)  ::  eta(:)
+        real,       intent(in out)  ::  zbottom(:)
+        logical,    intent(in)      ::  maskarray(:)
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        if (setting%ZeroValue%UseZeroValues) then
+            where ( ((eta - zbottom) < setting%Zerovalue%Area) .and. maskarray )
+                eta = setting%Zerovalue%Area
+            endwhere
+        else
+            where ( ((eta - zbottom) < setting%Zerovalue%Area) .and. maskarray )
+                eta = zeroR
+            endwhere
+        endif
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine adjust_negative_eta_reset
     !
     !==========================================================================
     !==========================================================================

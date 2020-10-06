@@ -58,17 +58,12 @@ module setting_definition
         logical :: UseLimitMax  = .true.
         real    :: Maximum      = 20 ! m/s
     endtype velocityType
-
-    !%  setting%DefaultAC%TimeStencil
-    type timestencilType
-        character(64) :: Backwards3 = 'backwards3'   ! Backwards3 is based on Rogers, Kwak and Kiris papers
-        character(64) :: CN         = 'CN'
-    end type timestencilType
         
     !%  setting%DefaultAC%Switch
     type switchType
-        real    :: Depth        = 0.9 ! switch to AC solver if depth/depthMax >= 0.9
-        real    :: Area         = 0.9 ! switch to AC solver if area/areaMax >= 0.9
+        real    :: Depth        = 0.9   ! switch to AC solver if depth/depthMax >= 0.9
+        real    :: Area         = 0.9   ! switch to AC solver if area/areaMax >= 0.9
+        real    :: Buffer       = 0.05  ! 5% buffer for the switch
     end type switchType
 
 
@@ -107,7 +102,7 @@ module setting_definition
         real    :: Qabsolute   = 1e-5       ! AC convergence change in absolute L2 norm when cutting off AC
     end type convergenceType
 
-    !%  setting%DefaultAC%dTauFactor
+    !%  setting%DefaultAC%dtauFactor
     type dtaufactorType
         real :: dtdtau      = 1.0 / 3.0     ! ratio of dt/dtau (changes with flow)
         real :: dtdtauMax   = 1.0 / 3.0     ! ensure the minimum number of iterations.
@@ -231,14 +226,16 @@ module setting_definition
 
     !%  setting%DefaultAC
     type defaultACType
-        type(dtaufactorType)    :: dTauFactor
+        character(len=64)       :: Tsource     = 'T00'   ! 'T10', 'T20'
+        character(len=64)       :: TimeStencil = 'backwards3'   ! 'CN' 
+        real                    :: dtau  
+        type(dtaufactorType)    :: dtauFactor
         type(convergenceType)   :: Convergence
         type(celerityType)      :: Celerity
         type(cflType)           :: CLF 
         type(iterType)          :: Iter
         type(anomalyType)       :: Anomaly
-        type(switchType)        :: Switch  
-        type(timestencilType)   :: TimeStencil
+        type(switchType)        :: Switch
     end type defaultACType
 
     !% FIRST LEVEL TYPE  ----------------------------------------------

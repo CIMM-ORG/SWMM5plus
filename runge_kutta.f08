@@ -8,6 +8,7 @@ module runge_kutta
 
     use adjustments
     use array_index
+    use artificial_compressibility
     use bc
     use data_keys
     use diagnostic
@@ -51,8 +52,10 @@ contains
         integer,   pointer :: fdn(:), fup(:)
 
         integer :: e2r_Volume_new, e2r_Velocity_new,  eMr_Volume_new, eMr_Velocity_new
+        integer :: e2r_Flowrate_new, e2r_Area_new, e2r_Eta_new, fr_Flowrate_net_new
+        integer :: eMr_Flowrate_new, eMr_Area_new, eMr_Eta_new
         integer :: ii
-        real    :: thiscoef(2), steptime
+        real    :: thiscoef(2), steptime, af(3)
 
         integer :: ilink
 
@@ -76,25 +79,66 @@ contains
         e2r_Velocity_new = e2r_Temp(next_e2r_temparray)
         next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
+        e2r_Flowrate_new = e2r_Temp(next_e2r_temparray)
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
+        e2r_Area_new = e2r_Temp(next_e2r_temparray)
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
+        e2r_Eta_new = e2r_Temp(next_e2r_temparray)
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
         eMr_Volume_new = eMr_Temp(next_eMr_temparray)
         next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
 
         eMr_Velocity_new = eMr_Temp(next_eMr_temparray)
         next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
 
+        eMr_Flowrate_new = eMr_Temp(next_eMr_temparray)
+        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
+
+        eMr_Area_new = eMr_Temp(next_eMr_temparray)
+        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
+
+        eMr_Eta_new = eMr_Temp(next_eMr_temparray)
+        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
+
+        fr_Flowrate_net_new = fr_Temp(next_fr_temparray)
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
         !%  zero out the temporary space
         elem2R(:,e2r_Volume_new)    = zeroR
         elem2R(:,e2r_Velocity_new)  = zeroR
+        elem2R(:,e2r_Flowrate_new)  = zeroR
+        elem2R(:,e2r_Area_new)      = zeroR
+        elem2R(:,e2r_Eta_new)       = zeroR
         elemMR(:,eMr_Volume_new)    = zeroR
         elemMR(:,eMr_Velocity_new)  = zeroR
+        elemMR(:,eMr_Flowrate_new)  = zeroR
+        elemMR(:,eMr_Area_new)      = zeroR
+        elemMR(:,eMr_Eta_new)       = zeroR
+        faceR(:,fr_Flowrate_net_new) = zeroR
 
         if (  count(elem2I(:,e2i_elem_type) == eChannel) &
-            + count(elem2I(:,e2i_elem_type) == eWeir) &
+            + count(elem2I(:,e2i_elem_type) == ePipe)    &
+            + count(elem2I(:,e2i_elem_type) == eWeir)    &
+            + count(elem2I(:,e2i_elem_type) == eOrifice) &
+            + count(elemMI(:,eMi_elem_type) == eStorage) &
             + count(elemMI(:,eMi_elem_type) == eJunctionChannel) > zeroI) then
 
             !%  coefficients for the rk2 steps
             thiscoef(1) = onehalfR
             thiscoef(2) = oneR
+            !%  Coefficients for the real time derivatives in AC
+            if (setting%DefaultAC%TimeStencil == 'backwards3') then
+                af = (/1.5, -2.0, 0.5/)
+            elseif (setting%DefaultAC%TimeStencil == 'CN') then
+                af = (/0.5, -0.5, 0.0/)
+            else
+                print*, 'error, unknown value for setting%DefaultAC%TimeStencil'
+                print*, setting%DefaultAC%TimeStencil
+                stop
+            endif
 
             !%  step through the two steps of the RK2
             do ii=1,2
@@ -106,29 +150,37 @@ contains
                     elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
                     thiscoef(ii))
 
-                !  Sets the Qonly element geometry to provisional values
-                call QonlyElement_provisional_geometry &
-                    (elem2R, elemMR, faceR, elem2I, elemMI)
+                call ac_rk2_step &
+                    (e2r_Flowrate, e2r_Area, e2r_Eta, eMr_Flowrate, eMr_Area, eMr_Eta, &
+                    fr_Flowrate_net, e2r_Flowrate_new, e2r_Area_new, e2r_Eta_new,      &
+                    eMr_Flowrate_new, eMr_Area_new, eMr_Eta_new, fr_Flowrate_net_new,  &
+                    elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af,   &
+                    thiscoef(ii))
 
-                if ( count(elemMI(:,eMi_elem_type) == eStorage) > zeroI) then
-                    ! call storage step if storage unit exists in the network
-                    call storage_step &
-                        (eMr_Volume, eMr_Velocity, eMr_Volume_new, eMr_Velocity_new,  &
-                        elemMR, faceR, elemMI, elemMYN, thiscoef(ii))
-                endif
+                ! !  Sets the Qonly element geometry to provisional values
+                ! call QonlyElement_provisional_geometry &
+                !     (elem2R, elemMR, faceR, elem2I, elemMI)
+
+                ! if ( count(elemMI(:,eMi_elem_type) == eStorage) > zeroI) then
+                !     ! call storage step if storage unit exists in the network
+                !     call storage_step &
+                !         (eMr_Volume, eMr_Velocity, eMr_Volume_new, eMr_Velocity_new,  &
+                !         elemMR, faceR, elemMI, elemMYN, thiscoef(ii))
+                ! endif
 
                 call rk2_update_auxiliary_variables &
-                    (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new, &
-                    elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  faceI,    &
-                    faceYN,  bcdataDn, bcdataUp, steptime, ii, ID, numberPairs,         &
-                    ManningsN, Length, zBottom, xDistance,  Breadth, widthDepthData,    &
-                    cellType)
+                    (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new,  &
+                    e2r_Flowrate_new, eMr_Flowrate_new, elem2R, elem2I, elem2YN, elemMR,  &
+                    elemMI, elemMYN, faceR,  faceI, faceYN, bcdataDn, bcdataUp, steptime, &
+                    ii, ID, numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,  &
+                    widthDepthData, cellType)
 
-                !% advane Qonly elemnt
-                call QonlyElement_step &
-                    (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
-                    e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
-                    faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
+
+                ! !% advane Qonly elemnt
+                ! call QonlyElement_step &
+                !     (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
+                !     e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
+                !     faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
 
                 if (ii==1) then
                     !% store the net face fluxes that are used for volume advance.
@@ -145,6 +197,10 @@ contains
             call overwrite_old_values &
                 (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
                 e2r_Volume, e2r_Volume_new, e2i_elem_type, eChannel, .true.)
+
+            call overwrite_old_values &
+                (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
+                e2r_Volume, e2r_Volume_new, e2i_elem_type, ePipe, .true.)
 
             call overwrite_old_values &
                 (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
@@ -167,11 +223,19 @@ contains
         !%  reset temporary data space
         elem2R(:,e2r_Volume_new)    = nullvalueR
         elem2R(:,e2r_Velocity_new)  = nullvalueR
+        elem2R(:,e2r_Flowrate_new)  = nullvalueR
+        elem2R(:,e2r_Area_new)      = nullvalueR
+        elem2R(:,e2r_Eta_new)       = nullvalueR
         elemMR(:,eMr_Volume_new)    = nullvalueR
         elemMR(:,eMr_Velocity_new)  = nullvalueR
+        elemMR(:,eMr_Flowrate_new)  = nullvalueR
+        elemMR(:,eMr_Area_new)      = nullvalueR
+        elemMR(:,eMr_Eta_new)       = nullvalueR
+        faceR(:,fr_Flowrate_net_new) = nullvalueR
 
-        next_e2r_temparray = next_e2r_temparray - 2
-        next_eMr_temparray = next_eMr_temparray - 2
+        next_e2r_temparray = next_e2r_temparray - 5
+        next_eMr_temparray = next_eMr_temparray - 5
+        next_fr_temparray  = next_fr_temparray  - 1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine rk2
@@ -360,11 +424,11 @@ contains
     !==========================================================================
     !
     subroutine rk2_update_auxiliary_variables &
-        (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new, &
-        elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR,  faceI,    &
-        faceYN, bcdataDn, bcdataUp, steptime, rkiteration, ID, numberPairs, &
-        ManningsN, Length, zBottom, xDistance, Breadth, widthDepthData,     &
-        cellType)
+        (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new,  &
+        e2r_Flowrate_new, eMr_Flowrate_new, elem2R, elem2I, elem2YN, elemMR,  &
+        elemMI, elemMYN, faceR,  faceI, faceYN, bcdataDn, bcdataUp, steptime, &
+        rkiteration, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
+        Breadth, widthDepthData, cellType)
 
         character(64) :: subroutine_name = 'rk2_update_auxiliary_variables'
 
@@ -375,6 +439,7 @@ contains
         type(bcType),      intent(in out)  :: bcdataDn(:), bcdataUp(:)
         integer,           intent(in)      :: e2r_Velocity_new, eMr_Velocity_new
         integer,           intent(in)      :: e2r_Volume_new,   eMr_Volume_new
+        integer,           intent(in)      :: e2r_Flowrate_new, eMr_Flowrate_new
         integer,           intent(in)      :: rkiteration
         real,              intent(in)      :: steptime
 
@@ -393,7 +458,7 @@ contains
 
         !%  advance all geometry and dynamics
         call element_geometry_update &
-            (elem2R, elem2I, elem2YN, e2r_Volume_new, elemMR, elemMI, elemMYN,  &
+            (elem2R, elem2I, elem2YN, e2r_Volume_new, elemMR, elemMI, elemMYN, &
             eMr_Volume_new, faceR, faceI, bcdataDn, bcdataUp, steptime, 1, ID, &
             numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,       &
             widthDepthData, cellType)
@@ -402,9 +467,9 @@ contains
         !%  geometry, but the junction branches have provisional geometry that is
         !%  a functoin of the old face free surface elevation
         call element_dynamics_update &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-            bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new,  &
-            e2r_Volume_new, eMr_Volume_new, steptime)
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, bcdataDn, &
+            bcdataUp, e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new,       &
+            eMr_Volume_new, e2r_Flowrate_new, eMr_Flowrate_new, steptime)
 
         !%  Updating the face values by interpolation from neighbor elements
         !%  This uses the estimated values from the branches
