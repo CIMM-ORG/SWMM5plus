@@ -188,7 +188,7 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
 
         rc2  = setting%DefaultAC%Celerity%RC ** 2        ! F^2 in derivation
-        dtau = setting%DefaultAC%dTau
+        dtau = dt * setting%DefaultAC%dtauFactor%dtdtau
 
         !%  pointers for Flowrate, area and eta storage (updating)
         flowrate2    => elem2R(:,e2r_Flowrate_old)
@@ -217,7 +217,7 @@ contains
         rh2         => elem2R(:,e2r_HydRadius)
         mn2         => elem2R(:,e2r_Roughness)
         length2     => elem2R(:,e2r_Length)
-        elN2        => elem2R(:,e2r_length_scale)
+        elN2        => elem2R(:,e2r_elN)
         zcrown2     => elem2R(:,e2r_Zcrown)
         zbottom2    => elem2R(:,e2r_Zbottom)
         dHdA2       => elem2R(:,e2r_dHdA)
@@ -233,7 +233,7 @@ contains
         rhM         => elem2R(:,eMr_HydRadius)
         mnM         => elem2R(:,eMr_Roughness)
         lengthM     => elem2R(:,eMr_Length)
-        elNM        => elem2R(:,eMr_length_scale)
+        elNM        => elem2R(:,eMr_elN)
         dHdAM       => elem2R(:,eMr_dHdA)
         CtestH1M    => elem2R(:,eMr_CtestH1)
         CtestQ1M    => elem2R(:,eMr_CtestH1)
@@ -259,6 +259,14 @@ contains
         !%  temporary pointer to find the full pipes that become open
         maskarray   => elem2YN(:,e2YN_Temp(next_e2YN_temparray))
         next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
+
+        !%  assign nullvalues to temporary pointers
+        kH2 = nullvalueR
+        kQ2 = nullvalueR
+        kHM = nullvalueR
+        kQM = nullvalueR
+        maskPipeAc = nullvalueL
+        maskarray  = nullvalueL
 
         !%  pointers for convenience in notation
         fUdn   => faceR(:,fr_Velocity_d) 
@@ -399,6 +407,10 @@ contains
         elsewhere ( maskPipeAc .and. (isFull .eqv. .true.) )
             eta2new  = eta2  + wrk * dtau * kH2
         endwhere 
+        ! output print for debug
+        ! print*, '**************** AC SOLVER ****************'
+        ! print*, 'area2new     =>',area2new
+        ! print*, 'eta2new      =>',eta2new
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine KvolumePipe
@@ -484,14 +496,14 @@ contains
                 print*,  setting%DefaultAC%Tsource
                 stop
         end select
-
+        
         !%  Other source term calculation
         where (maskPipeAc)
             kQ2 = (1.0 / length2) * kQ2
             !%  adding real time levels to source
             kQ2 = kQ2 - (af(2) * flowrate2n0 + af(3) * flowrate2n1) * invdt
-            !%  gamma term
-            gammaQ = - af(1) * invdt - grav * (mn2**2) / (rh2**(4.0/3.0)) * abs(velocity2)
+            ! !%  gamma term
+            gammaQ = - af(1) * invdt - grav * ((mn2**2) / (rh2**(4.0/3.0))) * abs(velocity2)
             !%  adding gamma to source
             kQ2 = kQ2 + gammaQ * flowrate2
             !%  multiplying by lambda (Note that C = 1 for Q)
@@ -499,7 +511,15 @@ contains
             !%  updated Q
             flowrate2new = flowrate2 + wrk * dtau * kQ2
         endwhere
-
+        ! output print for debug
+        ! print*, 'gammaQ       =>',gammaQ
+        ! print*, 'KQ2          =>',KQ2
+        ! print*, 'flowrate2    =>',flowrate2
+        ! print*, 'flowrate2new =>',flowrate2new
+        ! if (wrk == oneR) then
+        !     stop
+        ! endif
+        
         ! release temporary arrays
         gammaQ = nullvalueR
         nullify(gammaQ)

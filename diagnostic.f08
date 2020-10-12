@@ -82,12 +82,14 @@ contains
             elem2R(:,e2r_VolumeConservation) = - dt * (faceR(fup,fr_Flowrate) - faceR(fdn,fr_Flowrate) )
         endwhere
 
-        ! This needed to be fixed for weir element
+        where (elem2I(:,e2i_elem_type) == ePipe)
+            elem2R(:,e2r_VolumeConservation) = - dt * (faceR(fup,fr_Flowrate) - faceR(fdn,fr_Flowrate) )
+        endwhere
+
         where (elem2I(:,e2i_elem_type) == eWeir)
             elem2R(:,e2r_VolumeConservation) = - dt * (faceR(fup,fr_Flowrate) - faceR(fdn,fr_Flowrate) )
         endwhere
 
-        ! This needed to be fixed for orifice element
         where (elem2I(:,e2i_elem_type) == eOrifice)
             elem2R(:,e2r_VolumeConservation) = - dt * (faceR(fup,fr_Flowrate) - faceR(fdn,fr_Flowrate) )
         endwhere
@@ -107,6 +109,26 @@ contains
         do mm=1,dnstream_face_per_elemM
             fdn => elemMI(:,eMi_MfaceDn(mm))
             where ( (elemMR(:,eMi_elem_type) == eJunctionChannel) .and. &
+                (elemMR(:,eMi_nfaces_d) >= mm) )
+                elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) + dt * faceR(fdn,fr_flowrate)
+            endwhere
+        enddo
+
+         where ( elemMR(:,eMi_elem_type) == eJunctionPipe )
+            elemMR(:,eMr_VolumeConservation) = zeroR
+        endwhere
+
+        do mm=1,upstream_face_per_elemM
+            fup => elemMI(:,eMi_MfaceUp(mm))
+            where ( (elemMR(:,eMi_elem_type) == eJunctionPipe) .and. &
+                (elemMR(:,eMi_nfaces_u) >= mm) )
+                elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) - dt * faceR(fup,fr_flowrate)
+            endwhere
+        enddo
+
+        do mm=1,dnstream_face_per_elemM
+            fdn => elemMI(:,eMi_MfaceDn(mm))
+            where ( (elemMR(:,eMi_elem_type) == eJunctionPipe) .and. &
                 (elemMR(:,eMi_nfaces_d) >= mm) )
                 elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) + dt * faceR(fdn,fr_flowrate)
             endwhere
@@ -160,6 +182,11 @@ contains
                 + (elem2R(:,e2r_Volume_new) - elem2R(:,e2r_Volume))
         endwhere
 
+        where (elem2I(:,e2i_elem_type) == ePipe)
+            elem2R(:,e2r_VolumeConservation) = elem2R(:,e2r_VolumeConservation) &
+                + (elem2R(:,e2r_Volume_new) - elem2R(:,e2r_Volume))
+        endwhere
+
         ! This needed to be fixed for weir element
         where (elem2I(:,e2i_elem_type) == eWeir)
             elem2R(:,e2r_VolumeConservation) = elem2R(:,e2r_VolumeConservation) &
@@ -201,6 +228,9 @@ contains
 
         call diagnostic_froude_number_one &
             (elem2R, elem2I, e2r_FroudeNumber, e2r_Velocity, e2r_HydDepth, e2i_elem_type, eChannel)
+
+        call diagnostic_froude_number_one &
+            (elem2R, elem2I, e2r_FroudeNumber, e2r_Velocity, e2r_HydDepth, e2i_elem_type, ePipe)
 
         !diagnostic_froude_number_one needed to be adapted for weir element
         call diagnostic_froude_number_one &
@@ -287,8 +317,8 @@ contains
         integer,               intent(in)      :: diagnosticTask
 
         integer,   pointer :: etype2(:), etypeM(:)
-        real               :: channelVolume, weirVolume, orificevolume, totalVolume
-        real               :: junctionVolume, storageVolume
+        real               :: channelVolume, pipeVolume, weirVolume, orificevolume, totalVolume
+        real               :: junctionVolume, pipejunctionVolume, storageVolume
         real               :: inflowRate, outflowRate
 
         integer :: ii
@@ -305,12 +335,15 @@ contains
         !  enddo
 
         channelVolume  = sum(elem2R(:,e2r_Volume),1,etype2 == eChannel)
+        pipeVolume     = sum(elem2R(:,e2r_Volume),1,etype2 == ePipe)
         weirVolume     = sum(elem2R(:,e2r_Volume),1,etype2 == eWeir)
         orificevolume  = sum(elem2R(:,e2r_Volume),1,etype2 == eOrifice)
         junctionVolume = sum(elemMR(:,eMr_Volume),1,etypeM == eJunctionChannel)
         storageVolume  = sum(elemMR(:,eMr_Volume),1,etypeM == eStorage)
+        pipejunctionVolume = sum(elemMR(:,eMr_Volume),1,etypeM == eJunctionPipe)
 
-        totalVolume = channelVolume + junctionVolume + weirVolume + orificevolume + storageVolume
+        totalVolume = channelVolume + pipeVolume + junctionVolume + pipejunctionVolume + &
+                      weirVolume + orificevolume + storageVolume
 
         select case (diagnosticTask)
           case (0)

@@ -158,13 +158,13 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine table_lookup_array &
+    subroutine table_lookup_mask &
         (elemI, elemR, inoutarray, normalizedInput, table, nItems, maskarray, &
         ei_Temp, next_ei_temparray, ei_n_temp)
         !
         ! gets vaule from the lookup table. this subroutine is array operation
         !
-        character(64) :: subroutine_name = 'table_lookup_array'
+        character(64) :: subroutine_name = 'table_lookup_mask'
 
         real,      target,  intent(inout)    :: elemR(:,:)
         integer,   target,  intent(in)       :: elemI(:,:)
@@ -203,7 +203,7 @@ contains
 
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine table_lookup_array
+    end subroutine table_lookup_mask
     !
     !==========================================================================
     !==========================================================================

@@ -266,6 +266,7 @@ contains
                           (faceI(:,fi_meta_etype_d) == eHQ2) )
 
         !%  set velocities and upstream values on faces (without hydraulic jump)
+        !%  HACK: This needed to be fixed for Qonly elements
         call adjust_face_dynamic_limits &
             (faceR, faceI, elem2R(:,e2r_Volume_new), elem2R(:,e2r_Volume_new), &
             facemask_eHQ2, .false.)
@@ -295,7 +296,6 @@ contains
             weightUpG, weightDnG)
 
         next_fr_temparray = next_fr_temparray - 8
-
         next_fYN_temparray = next_fYN_temparray - 2
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -742,7 +742,7 @@ contains
         character(64) :: subroutine_name = 'face_hydraulic_jump'
 
         real,      target,     intent(in out)  :: faceR(:,:)
-        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
         integer,   target,     intent(in out)  :: faceI(:,:)
         integer,               intent(in)      :: e2r_Velocity_new, eMr_Velocity_new
 
@@ -752,7 +752,7 @@ contains
 
         integer    :: fr_froudeUp, fr_froudeDn
 
-        real :: feps
+        real :: feps, rc
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -766,6 +766,7 @@ contains
         next_fr_temparray = utility_advance_temp_array (next_fr_temparray,fr_n_temp)
 
         feps = setting%Eps%FroudeJump
+        rc   = setting%DefaultAC%Celerity%RC
 
         mapUp => faceI(:,fi_Melem_u)
         mapDn => faceI(:,fi_Melem_d)
@@ -790,6 +791,24 @@ contains
 
         where (typDn == fChannel)
             froudeDn = elem2R(mapDn,e2r_Velocity_new) / (sqrt(grav * elem2R(mapDn,e2r_HydDepth)))
+        endwhere
+
+        !%  compute the upstream and downstream froude number on each face for pipe faces
+        where ( (typUp == fPipe) .and. (etaUp .LT. elem2R(mapUp,e2r_Zcrown)) )
+              froudeUp = elem2R(mapUp,e2r_Velocity_new) / (sqrt(grav * elem2R(mapUp,e2r_HydDepth)))
+        endwhere
+
+        where ( (typDn == fPipe) .and. (etaDn .LT. elem2R(mapDn,e2r_Zcrown)) )
+              froudeDn = elem2R(mapDn,e2r_Velocity_new) / (sqrt(grav * elem2R(mapDn,e2r_HydDepth)))
+        endwhere
+
+        !%  compute the upstream and downstream froude number on each face for surcharged pipes
+        where ( (typUp == fPipe) .and. (etaUp .GE. elem2R(mapUp,e2r_Zcrown)) )
+              froudeUp = elem2R(mapUp,e2r_Velocity_new) / (rc * sqrt(grav * elem2R(mapUp,e2r_HydDepth)))
+        endwhere
+
+        where ( (typDn == fPipe) .and. (etaDn .GE. elem2R(mapDn,e2r_Zcrown)) )
+              froudeDn = elem2R(mapDn,e2r_Velocity_new) / (rc * sqrt(grav * elem2R(mapDn,e2r_HydDepth)))
         endwhere
 
         !%  HACK - does not consider individual branches - only entire element values
@@ -822,14 +841,25 @@ contains
             jumptype = jump_none
         endwhere
 
+        !%  zero out conditions for dnstream jump when the upstream eta is above crown height for pipes
+        where ( (jumptype == jump_downstream) .and. (typUp == fPipe) .and.  &
+                (etaUp .GE. elem2R(mapUp,e2r_Zcrown)) ) 
+                jumptype = jump_none
+        endwhere
+
+        !%  zero out conditions for upsteam jump when the dnstream eta is above crown height for pipes
+        where ( (jumptype == jump_upstream) .and. (typDn == fPipe) .and.  &
+                (etaDn .GE. elem2R(mapDn,e2r_Zcrown)) ) 
+                jumptype = jump_none
+        endwhere
         !%  Assign areas on either side of jump by extrapolation
         !%  Note that this depends on the fr_Eta_u and fr_Eta_d being initially
         !%  assigned by extrapolation
-        where ( (jumptype /= jump_none) .and. (typUp == fChannel) )
+        where ( (jumptype /= jump_none) .and. ((typUp == fChannel) .or. (typUp == fPipe)) )
             areaUp = elem2R(mapUp,e2r_Area)
         endwhere
 
-        where ( (jumptype /= jump_none) .and. (typDn == fChannel) )
+        where ( (jumptype /= jump_none) .and. ((typDn == fChannel) .or. (typDn == fPipe)) )
             areaDn = elem2R(mapDn,e2r_Area)
         endwhere
 
@@ -891,11 +921,11 @@ contains
         etaDn => faceR(:,fr_Eta_d)
 
         !%  use distance (length) for interpolation for free surface
-        where (faceI(:,fi_etype_d) == fChannel)
+        where ( (faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fPipe) )
             weightDn = onehalfR * elem2R(faceI(:,fi_Melem_d),e2r_Length)
         endwhere
 
-        where (faceI(:,fi_etype_u) == fChannel)
+        where ( (faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fPipe) ) 
             weightUp = onehalfR * elem2R(faceI(:,fi_Melem_u),e2r_Length)
         endwhere
 
@@ -914,11 +944,12 @@ contains
             end do
         endif
 
-
         !%  set the mask for channel and mulitple elements without a hyd jump
-        facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fMultiple)) &
+        facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fPipe) &
+        .or. (faceI(:,fi_etype_d) == fMultiple)) &
         & .and. &
-            ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fMultiple)) &
+            ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fPipe) &
+        .or. (faceI(:,fi_etype_u) == fMultiple)) &
         & .and. &
             (faceI(:,fi_jump_type) == jump_none) )
 
@@ -934,7 +965,7 @@ contains
         endwhere
 
         where (faceI(:,fi_meta_etype_u) == eQonly)
-            ! for Qonly element at upstream end of the face
+            ! for a Qonly element at upstream end of the face
             ! the weight of interpolation is timescale max.
             ! the interpolation gives the eta of the element downstream.
             etaDn = elem2R(faceI(:,fi_Melem_d),e2r_Eta)

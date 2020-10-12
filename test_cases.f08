@@ -781,28 +781,28 @@ contains
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
-            display_interval = 1000
+            display_interval = 10
             first_step = 1
-            last_step  =  10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  = 100 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
             ! tests that ran:  Fr = 0.25, 0.5
-            Froude       = 0.25   ! determines flowrate and slope to get Froude
+            Froude       = 0.25  ! determines flowrate and slope to get Froude
             CFL          = 0.25  ! determines dt from subdivide_length
 
             ! keep these physics fixed
-            channel_breadth = 3.0
+            channel_breadth = 2.0
 
             ! assign geometry type for links
             do ii=1,N_link
                 channel_geometry(ii) = lCircular
             end do
 
-            depth_upstream  = 1.0
-            depth_dnstream  = 1.0
-            init_depth      = 1.0
+            depth_upstream  = 1.75
+            depth_dnstream  = 1.75
+            init_depth      = 1.75
             idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
-            ManningsN       = 0.03
+            ManningsN       = 0.016
             channel_length  = 10000.0
             lowerZ          = 1.0
             subdivide_length = 5000.0
@@ -813,7 +813,7 @@ contains
             leftSlope     = zeroR
             rightSlope    = zeroR
 
-            call froude_driven_pipe_setup&
+            call froude_driven_pipe_setup &
                 (upperZ(1), area(1), fullDepth(1), flowrate(1), velocity(1),  &
                 Froude(1),  channel_breadth(1), channel_topwidth(1), ManningsN(1), &
                 channel_length(1), lowerZ(1),  init_depth(1))

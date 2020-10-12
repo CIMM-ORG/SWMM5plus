@@ -258,7 +258,7 @@ contains
             (elem2R, elem2I, elem2YN, e2i_geometry, e2i_elem_type, ePipe, e2i_solver,   &
             e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area,          &
             e2r_Eta, e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Radius, &
-            e2r_Volume_new, e2r_FullDepth, e2r_FullArea, e2r_Zcrown, e2r_dHdA,          &
+            e2r_Volume_new, e2r_FullDepth, e2r_FullArea, e2r_Zcrown, e2r_dHdA, e2r_elN, &
             e2YN_IsSurcharged, e2r_Temp, next_e2r_temparray, e2r_n_temp, e2i_Temp,      &
             next_e2i_temparray, e2i_n_temp, e2YN_Temp, next_e2YN_temparray, e2YN_n_temp)
 
@@ -510,8 +510,8 @@ contains
         ei_solver, er_Length, er_Zbottom, er_BreadthScale, er_Topwidth,      &
         er_Area, er_Eta, er_Perimeter, er_Depth, er_HydDepth, er_HydRadius,  &
         er_Radius, er_Volume, er_FullDepth, er_FullArea, er_Zcrown, er_dHdA, &
-        eYN_IsSurcharged, er_Temp, next_er_temparray, er_n_temp, ei_Temp,    &
-        next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,          &
+        er_elN, eYN_IsSurcharged, er_Temp, next_er_temparray, er_n_temp,     &
+        ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray, &
         eYN_n_temp)
         !
         !% computes geometry for pipe and junction pipe
@@ -524,7 +524,7 @@ contains
 
         integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_type_value, ei_solver
         integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale, er_Perimeter 
-        integer,   intent(in)      :: er_Topwidth, er_Area, er_Eta, er_dHdA
+        integer,   intent(in)      :: er_Topwidth, er_Area, er_Eta, er_dHdA, er_elN
         integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_Radius
         integer,   intent(in)      :: er_Volume, er_FullDepth, er_FullArea, er_Zcrown
         integer,   intent(in)      :: er_n_temp, ei_n_temp, eYN_n_temp
@@ -534,7 +534,7 @@ contains
         integer,   intent(inout)   :: next_er_temparray, next_ei_temparray, next_eYN_temparray
 
         real,    pointer    :: volume(:), length(:), zbottom(:), breadth(:), hyddepth(:)
-        real,    pointer    :: area(:),  eta(:), perimeter(:), depth(:), dHdA(:)
+        real,    pointer    :: area(:),  eta(:), perimeter(:), depth(:), dHdA(:), elN(:)
         real,    pointer    :: hydradius(:), topwidth(:), fulldepth(:), zcrown(:)
         real,    pointer    :: radius(:), AoverAfull(:), YoverYfull(:), fullarea(:)
         integer, pointer    :: solver(:)
@@ -565,7 +565,8 @@ contains
         hyddepth   => elemR(:,er_HydDepth)
         hydradius  => elemR(:,er_HydRadius)
         topwidth   => elemR(:,er_Topwidth)
-        dHdA       => elemR(:,er_dHdA) 
+        dHdA       => elemR(:,er_dHdA)
+        elN        => elemR(:,er_elN)
         volume     => elemR(:,er_Volume)
 
         !% temporary array for geometry update
@@ -642,7 +643,7 @@ contains
         call circular_pipe_additional_geometric_properties &
             (elemI, elemR, volume, length, zbottom, breadth, fulldepth, fullarea,   &
             zcrown, radius, area, eta, perimeter, depth, hyddepth, hydradius,       &
-            topwidth, dHdA, AoverAfull, YoverYfull, solver, ei_Temp,                &
+            topwidth, dHdA, elN, AoverAfull, YoverYfull, solver, ei_Temp,           &
             next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray, eYN_n_temp, &
             isfull, maskarray) 
               
@@ -774,7 +775,7 @@ contains
         endwhere
 
         ! get the normalized area from lookup table from full to open transitional pipe
-        call table_lookup_array &
+        call table_lookup_mask &
             (elemI, elemR, AoverAfull, YoverYfull, ACirc, NACirc, maskarray_pipe_transition, &
             ei_Temp, next_ei_temparray, ei_n_temp)
 
@@ -846,7 +847,7 @@ contains
         endwhere
 
         ! get normalized depth from the lookup table
-        call table_lookup_array &
+        call table_lookup_mask &
             (elemI, elemR, YoverYfull, AoverAfull, YCirc, NYCirc, maskarray_open_pipe, &
             ei_Temp, next_ei_temparray, ei_n_temp)
 
@@ -875,7 +876,7 @@ contains
     subroutine circular_pipe_additional_geometric_properties &
         (elemI, elemR, volume, length, zbottom, breadth, fulldepth, fullarea, &
         zcrown, radius, area, eta, perimeter, depth, hyddepth, hydradius,     &
-        topwidth, dHdA, AoverAfull, YoverYfull, solver, ei_Temp,              &
+        topwidth, dHdA, elN, AoverAfull, YoverYfull, solver, ei_Temp,         &
         next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,           &
         eYN_n_temp, isfull, maskarray)
         !
@@ -895,7 +896,7 @@ contains
 
         real,      intent(inout)    :: area(:), eta(:), perimeter(:), depth(:)
         real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-        real,      intent(inout)    :: dHdA(:), AoverAfull(:), YoverYfull(:)
+        real,      intent(inout)    :: dHdA(:), elN(:), AoverAfull(:), YoverYfull(:)
         integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
 
         real :: af, bf, cf
@@ -903,11 +904,11 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         ! get normalized topwidth from lookup table
-        call table_lookup_array &
+        call table_lookup_mask &
             (elemI, elemR, topwidth, YoverYfull, WCirc, NWCirc, maskarray, &
             ei_Temp, next_ei_temparray, ei_n_temp)
         ! get normalized hydradius from lookup table
-        call table_lookup_array &
+        call table_lookup_mask &
             (elemI, elemR, hydradius, YoverYfull, RCirc, NRCirc, maskarray, &
             ei_Temp, next_ei_temparray, ei_n_temp)
 
@@ -920,10 +921,15 @@ contains
 
         ! Get modified hydraulic depth from pipeAC Hodges 2020
         where ((maskarray) .and. (AoverAfull .GT. onehalfR))
-            hyddepth   = min((eta - zbottom + radius * (onefourthR * pi - oneR)), &
-                             (fulldepth - zbottom + radius * (onefourthR * pi - oneR)) )
+            hyddepth   = eta - zbottom + radius * (onefourthR * pi - oneR)
+                             
         elsewhere ((maskarray) .and. (AoverAfull .LT. onehalfR))
             hyddepth   = max(area / topwidth, zeroR)
+        endwhere
+
+        ! save the length scale values for circular pipe
+        where(maskarray)
+            elN = hyddepth
         endwhere
 
         ! Get dHdA (pipeAC2020)
@@ -940,7 +946,6 @@ contains
         elsewhere( (maskarray) .and. (AoverAfull .GE. oneR) ) 
             dHdA = zeroR
         endwhere
-
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine circular_pipe_additional_geometric_properties

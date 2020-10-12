@@ -173,7 +173,7 @@ module array_index
     integer, parameter :: e2r_DischargeCoeff1    = 43   ! discharge coefficient for triangular weir part or orifice element
     integer, parameter :: e2r_DischargeCoeff2    = 44   ! discharge coefficient for rectangular weir part
     integer, parameter :: e2r_EndContractions    = 45   ! End contractions for rectengular and trapezoidal weir
-    integer, parameter :: e2r_length_scale       = 46   ! the ell (lower case L)  length scale in AC
+    integer, parameter :: e2r_elN                = 46   ! the ell (lower case L)  length scale in AC
     integer, parameter :: e2r_dHdA               = 47   ! geometric change in elevation with area
     integer, parameter :: e2r_CtestH0            = 48   ! Convergence test storage for AC: d/dtau of eta * A
     integer, parameter :: e2r_CtestQ0            = 49   ! Convergence test storage for AC: d/dtau of Q
@@ -190,7 +190,17 @@ module array_index
     integer, parameter :: e2r_temp8              = e2r_idx_base1 + 8
     integer, parameter :: e2r_temp9              = e2r_idx_base1 + 9
     integer, parameter :: e2r_temp10             = e2r_idx_base1 + 10
-    integer, parameter :: e2r_n_temp       = 10
+    integer, parameter :: e2r_temp11             = e2r_idx_base1 + 11
+    integer, parameter :: e2r_temp12             = e2r_idx_base1 + 12
+    integer, parameter :: e2r_temp13             = e2r_idx_base1 + 13
+    integer, parameter :: e2r_temp14             = e2r_idx_base1 + 14
+    integer, parameter :: e2r_temp15             = e2r_idx_base1 + 15
+    integer, parameter :: e2r_temp16             = e2r_idx_base1 + 16
+    integer, parameter :: e2r_temp17             = e2r_idx_base1 + 17
+    integer, parameter :: e2r_temp18             = e2r_idx_base1 + 18
+    integer, parameter :: e2r_temp19             = e2r_idx_base1 + 19
+    integer, parameter :: e2r_temp20             = e2r_idx_base1 + 20
+    integer, parameter :: e2r_n_temp       = 20
     integer, parameter :: e2r_idx_max = e2r_idx_base1 + e2r_n_temp
 
     ! storage for temp array index positions
@@ -238,7 +248,7 @@ module array_index
     integer, parameter :: eMr_StorageExponent    = 38     ! Storafe Exponent for surface area
     integer, parameter :: eMr_SurfaceArea        = 39     ! Storage Surface Area
     integer, parameter :: eMr_SurchargeDepth     = 40     ! Surcharge Depth
-    integer, parameter :: eMr_length_scale       = 41     ! the ell (lower case L)  length scale in AC
+    integer, parameter :: eMr_elN                = 41     ! the elN (lower case L)  length scale in AC
     integer, parameter :: eMr_dHdA               = 42     ! geometric change in elevation with area
     integer, parameter :: eMr_CtestH0            = 43     ! Convergence test storage for AC: d/dtau of eta * A
     integer, parameter :: eMr_CtestQ0            = 44     ! Convergence test storage for AC: d/dtau of Q
@@ -339,7 +349,11 @@ module array_index
     integer, parameter :: eMr_temp4              = eMr_idx_base21 + 4
     integer, parameter :: eMr_temp5              = eMr_idx_base21 + 5
     integer, parameter :: eMr_temp6              = eMr_idx_base21 + 6
-    integer, parameter :: eMr_n_temp       = 6
+    integer, parameter :: eMr_temp7              = eMr_idx_base21 + 7
+    integer, parameter :: eMr_temp8              = eMr_idx_base21 + 8
+    integer, parameter :: eMr_temp9              = eMr_idx_base21 + 9
+    integer, parameter :: eMr_temp10             = eMr_idx_base21 + 10
+    integer, parameter :: eMr_n_temp       = 10
     integer, parameter :: eMr_idx_base22   = eMr_idx_base21 + eMr_n_temp
     integer, parameter :: eMr_idx_max      = eMr_idx_base22
 

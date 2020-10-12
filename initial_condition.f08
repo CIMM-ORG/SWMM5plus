@@ -114,6 +114,11 @@ contains
         !% set the initial condition for Qonly element
         call QonlyElem_initial_condition_setup &
             (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN)
+
+        !% select the solver based on Depth/Depthfull
+        call initial_solver_select &
+            (elem2R, elemMR, elem2I, elemMI)
+            
         !% set the element-specific smallvolume value
         !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
         !% HACK - OTHER GEOMETRY TYPE NEEDED
@@ -422,13 +427,6 @@ contains
                         elem2R(nn,e2r_Area_N1)   = elem2R(nn,e2r_Area)
                         elem2R(nn,e2r_Volume)    = elem2R(nn,e2r_Area) * elem2R(nn,e2r_Length)
                         elem2R(nn,e2r_Perimeter) = elem2R(nn,e2r_Area) / elem2R(nn,e2r_HydRadius)
-
-                        ! selecting appropriate solver for circular pipe
-                        if (YoverYfull .GE. setting%DefaultAC%Switch%Depth) then
-                            elem2I(nn,e2i_solver) = AC
-                        else
-                            elem2I(nn,e2i_solver) = SVE
-                        endif
                     endif
                 enddo
 
@@ -489,18 +487,18 @@ contains
                 stop
             end if
 
-            !% Setting provisional geometry for weir and orifice element to correctly interpolate to faces
-            where      ( (elem2I(:,e2i_elem_type) == eWeir) .or. &
-                (elem2I(:,e2i_elem_type) == eOrifice) )
+            !%  Setting provisional geometry for weir and orifice element to correctly interpolate to faces
+            !%  Also, setting up 
+            where ( elem2I(:,e2i_meta_elem_type) == eQonly )
                 elem2R(:,e2r_HydDepth)      = 1.0e-7
                 elem2R(:,e2r_Topwidth)      = 1.0e-7
                 elem2R(:,e2r_Eta)           = 1.0e-7
                 elem2R(:,e2r_Area)          = 1.0e-7
-                elem2R(:,e2r_Area_N0)       = elem2R(:,e2r_Area)
-                elem2R(:,e2r_Area_N1)       = elem2R(:,e2r_Area)
                 elem2R(:,e2r_Volume)        = 1.0e-7
                 elem2R(:,e2r_Perimeter)     = 1.0e-7
                 elem2R(:,e2r_Depth)         = 1.0e-7
+                elem2R(:,e2r_Area_N0)       = elem2R(:,e2r_Area)
+                elem2R(:,e2r_Area_N1)       = elem2R(:,e2r_Area)
             endwhere
 
             !%  Update velocity
@@ -865,6 +863,46 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
     end subroutine QonlyElem_initial_condition_setup
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine initial_solver_select &
+        (elem2R, elemMR, elem2I, elemMI)
+
+        character(64) :: subroutine_name = 'initial_solver_select'
+        
+        real,      intent(in)     :: elem2R(:,:), elemMR(:,:)
+        integer,   intent(inout)  :: elem2I(:,:), elemMI(:,:)
+
+        integer :: mm
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
+                (elem2I(:,e2i_elem_type) == ePipe   ) )
+            elem2I(:,e2i_solver) = SVE
+        endwhere
+
+        where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
+                (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
+            elem2I(:,e2i_solver) = SVE
+        endwhere
+
+        where ( (elem2I(:,e2i_elem_type) == ePipe)           .and. &
+                (elem2R(:,e2r_Depth)/elem2R(:,e2r_FullDepth) .GE.  &
+                 setting%DefaultAC%Switch%Depth) )
+            elem2I(:,e2i_solver) = AC
+        endwhere
+
+        where ( (elem2I(:,eMi_elem_type) == eJunctionPipe)   .and. &
+                (elemMR(:,eMr_Depth)/elemMR(:,eMr_FullDepth) .GE.  &
+                 setting%DefaultAC%Switch%Depth) )
+            elemMI(:,eMi_solver) = AC
+        endwhere
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    end subroutine initial_solver_select
     !
     !==========================================================================
     !==========================================================================

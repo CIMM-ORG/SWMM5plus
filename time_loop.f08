@@ -17,6 +17,7 @@ module time_loop
     use output
     use runge_kutta
     use setting_definition
+    use utility
 
     implicit none
 
@@ -120,6 +121,7 @@ contains
                         ,maxval(abs(elem2R(2:size(elem2R,1)-1,e2r_Velocity))),'=max velocity'
                     !print *, thisstep,'=current step; ', &
                     !         maxval(elem2R(2:size(elem2R,1)-1,e2r_Flowrate))
+
                 endif
             endif
 
@@ -151,6 +153,19 @@ contains
                     print *, 'Volume Conservation (this step and total) = ', &
                         diagnostic(restartStep)%Volume%ConservationThisStep,  &
                         diagnostic(restartStep)%Volume%ConservationTotal
+                    print*, 'Flowrate ==>'
+                    call utility_print_values_by_link &
+                        (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+                        fr_Flowrate, 0, e2r_Flowrate, eMr_Flowrate, eMr_AreaDn, eMr_AreaDn)
+                    print*, 'Eta ==>'
+                    call utility_print_values_by_link &
+                        (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+                        fr_Eta_d, fr_Eta_u, e2r_Eta, eMr_Eta, eMr_EtaDn, eMr_EtaUp)
+                    ! print*, 'Area ==>'
+                    ! call utility_print_values_by_link &
+                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+                    !     fr_Area_d, fr_Area_u, e2r_Area, eMr_Area, eMr_AreaDn, eMr_AreaUp)
+                    print*, 'Solver ==>', elem2I(:,e2i_solver)
                 endif
             endif
 

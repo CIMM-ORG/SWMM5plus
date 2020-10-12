@@ -1723,18 +1723,22 @@ contains
                 f_result = fBCup
             elseif (dn_elem_type == eBCdn) then
                 f_result = fBCdn
-            elseif (dn_elem_type == eWeir) then
+            elseif (dn_elem_type == fWeir) then
                 f_result = fWeir
-            elseif (up_elem_type == eWeir) then
+            elseif (up_elem_type == fWeir) then
                 f_result = fWeir
-            elseif (dn_elem_type == eOrifice) then
+            elseif (dn_elem_type == fOrifice) then
                 f_result = fOrifice
-            elseif (up_elem_type == eOrifice) then
+            elseif (up_elem_type == fOrifice) then
                 f_result = fOrifice
-            elseif (dn_elem_type == ePump) then
+            elseif (dn_elem_type == fPump) then
                 f_result = fPump
-            elseif (up_elem_type == ePump) then
+            elseif (up_elem_type == fPump) then
                 f_result = ePump
+            elseif( (up_elem_type == fPipe) .and.  (dn_elem_type == fChannel) ) then
+                f_result = fPipe
+            elseif( (up_elem_type == fChannel) .and.  (dn_elem_type == fPipe) ) then
+                f_result = fPipe
             else
                 f_result = fMultiple
             endif
@@ -1743,11 +1747,11 @@ contains
                 f_result = fChannel
             elseif (up_elem_type == fPipe) then
                 f_result = fPipe
-            elseif (up_elem_type == ePump) then
+            elseif (up_elem_type == fPump) then
                 f_result = ePump
-            elseif (up_elem_type == eOrifice) then
+            elseif (up_elem_type == fOrifice) then
                 f_result = fOrifice
-            elseif (up_elem_type == eWeir) then
+            elseif (up_elem_type == fWeir) then
                 f_result = fWeir
             else
                 print *, 'upstream element: ',up_elem_type
@@ -1756,6 +1760,9 @@ contains
                 STOP
             endif
         endif
+
+        !%  fWeir, fOrifice, fPump is not used anywhere other than output file generation. 
+        !%  still theis is needed to be cleaned up.
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end function setFaceType

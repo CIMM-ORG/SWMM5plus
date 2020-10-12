@@ -144,18 +144,26 @@ contains
             do ii=1,2
                 steptime = thistime + thiscoef(ii) * dt
 
-                call sve_rk2_step &
-                    (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
-                    e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-                    elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-                    thiscoef(ii))
+                if (  count(elem2I(:,e2i_solver) == SVE) &
+                    + count(elemMI(:,eMi_solver) == SVE)> zeroI ) then
 
-                call ac_rk2_step &
-                    (e2r_Flowrate, e2r_Area, e2r_Eta, eMr_Flowrate, eMr_Area, eMr_Eta, &
-                    fr_Flowrate_net, e2r_Flowrate_new, e2r_Area_new, e2r_Eta_new,      &
-                    eMr_Flowrate_new, eMr_Area_new, eMr_Eta_new, fr_Flowrate_net_new,  &
-                    elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af,   &
-                    thiscoef(ii))
+                    call sve_rk2_step &
+                        (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
+                        e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
+                        elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+                        thiscoef(ii))                        
+                endif
+
+                if (  count(elem2I(:,e2i_solver) == AC) &
+                    + count(elemMI(:,eMi_solver) == AC)> zeroI ) then
+
+                    call ac_rk2_step &
+                        (e2r_Flowrate, e2r_Area, e2r_Eta, eMr_Flowrate, eMr_Area, eMr_Eta, &
+                        fr_Flowrate_net, e2r_Flowrate_new, e2r_Area_new, e2r_Eta_new,      &
+                        eMr_Flowrate_new, eMr_Area_new, eMr_Eta_new, fr_Flowrate_net_new,  &
+                        elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af,   &
+                        thiscoef(ii))
+                endif
 
                 ! !  Sets the Qonly element geometry to provisional values
                 ! call QonlyElement_provisional_geometry &
@@ -179,7 +187,7 @@ contains
                 ! !% advane Qonly elemnt
                 ! call QonlyElement_step &
                 !     (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
-                !     e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
+                !     e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR,  &
                 !     faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
 
                 if (ii==1) then
@@ -218,7 +226,31 @@ contains
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)
 
+            call save_previous_values &
+                (elem2R, elemMR, faceR)
+
+            !%  assign the solver for the next RK step depending on depth
+            call assign_solver &
+                (elem2I, elem2R, e2r_Depth, e2r_FullDepth, e2i_elem_type, ePipe,  &
+                e2i_solver, e2r_Temp, e2r_n_temp, next_e2r_temparray)
+
+            !%  HACK: AC solver for Junction Pipe has not derived yet
+            call assign_solver &
+                (elemMI, elemMR, eMr_Depth, eMr_FullDepth, eMi_elem_type, eJunctionPipe, &
+                eMi_solver, eMr_Temp, eMr_n_temp, next_eMr_temparray)
+
         endif
+
+        ! !%  Printing for debug
+        ! print*, 'Area ==>'
+        ! call utility_print_values_by_link &
+        !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+        !     fr_Area_d, fr_Area_u, e2r_Area, eMr_Area, eMr_AreaDn, eMr_AreaUp)
+        ! print*, 'Depth ==>'
+        ! call utility_print_values_by_link &
+        !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+        !     fr_HydDepth_d, fr_HydDepth_u, e2r_Depth, eMr_Depth, eMr_AreaDn, eMr_AreaDn)
+        ! print*, 'steptime',steptime
 
         !%  reset temporary data space
         elem2R(:,e2r_Volume_new)    = nullvalueR
@@ -262,7 +294,7 @@ contains
         real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         real,      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
-        logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+        logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
         real,              intent(in)      :: thiscoef
 
         real,  pointer ::  fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:), fEup(:)
@@ -272,7 +304,8 @@ contains
         real,  pointer ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
         real,  pointer ::  eta2(:), etaM(:), rh2(:), mn2(:), rhM(:), mnM(:)
 
-        integer, pointer       :: iup(:), idn(:)
+        logical, pointer :: maskChannelPipeSVE(:), maskJunctionChannelPipeSVE(:)
+        integer, pointer :: iup(:), idn(:)
 
         integer :: mm
 
@@ -318,12 +351,24 @@ contains
         onesMr=> elemMR(:,eMr_Temp(next_eMr_temparray))
         next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
 
+        !%  temporary pointer for channel/pipe mask solved by SVE
+        maskChannelPipeSVE => elem2YN(:,e2YN_Temp(next_e2YN_temparray))
+        next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
+
+        !%  temporary pointer for JunctionChannel/JunctionPipe mask solved by SVE
+        maskJunctionChannelPipeSVE => elemMYN(:,eMYN_Temp(next_eMYN_temparray))
+        next_eMYN_temparray = utility_advance_temp_array (next_eMYN_temparray,eMYN_n_temp)
+
         !%  zero temporary arrays
         kc2 = zeroR
         ku2 = zeroR
 
         kcM = zeroR
         kuM = zeroR
+
+        !%  null temp array
+        maskChannelPipeSVE = nullvalueL
+        maskJunctionChannelPipeSVE = nullvalueL
 
         !%  initialize ones as 1.0
         ones2r = oneR
@@ -338,6 +383,15 @@ contains
         fEdn   => faceR(:,fr_Eta_d)
         fEup   => faceR(:,fr_Eta_u)
 
+        !%  finding the masks
+        maskChannelPipeSVE = ( ( (elem2I(:,e2i_elem_type) == eChannel) .or.  &
+                                 (elem2I(:,e2i_elem_type) == epipe) )  .and. &
+                                 (elem2I(:,e2i_solver) == SVE) ) 
+
+
+        maskJunctionChannelPipeSVE = ( ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or.  &
+                                         (elemMI(:,eMi_elem_type) == eJunctionPipe) )  .and. &
+                                         (elemMI(:,eMi_solver)    == SVE ) )
         !%  SOURCE TERMS ----------------------------------
 
         !%  Channel elements (one upstream and one downstream face)
@@ -345,7 +399,7 @@ contains
 
         iup => elem2I(:,e2i_Mface_u)
         idn => elem2I(:,e2i_Mface_d)
-        where ( elem2I(:,e2i_elem_type) == eChannel )
+        where (maskChannelPipeSVE)
             kc2 = dt * ( fQ(iup) - fQ(idn) )
             ku2 = dt * ( fQ(iup) * fUdn(iup) - fQ(idn) * fUup(idn) &
                 + grav * fAdn(iup) * (fEdn(iup) - eta2)   &
@@ -356,8 +410,8 @@ contains
         !%  HACK -- needs factor for angle with main channel
         do mm=1,upstream_face_per_elemM
             iup   => elemMI(:,eMi_MfaceUp(mm))
-            where ( (elemMI(:,eMi_elem_type) == eJunctionChannel).and. &
-                (elemMI(:,eMi_nfaces_u) >= mm) )
+            where (maskJunctionChannelPipeSVE     .and. &
+                  (elemMI(:,eMi_nfaces_u) >= mm)  )
                 kcM = kcM + dt * fQ(iup)
                 kuM = kuM + dt * ( fQ(iup) * fUdn(iup) &
                     + grav * fAdn(iup) * (fEdn(iup) - etaM) )
@@ -367,8 +421,8 @@ contains
         !%  Junctions (downstream faces)
         do mm=1,dnstream_face_per_elemM
             idn   => elemMI(:,eMi_MfaceDn(mm))
-            where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
-                (elemMI(:,eMi_nfaces_d) >= mm) )
+            where (maskJunctionChannelPipeSVE     .and. &
+                  (elemMI(:,eMi_nfaces_d) >= mm)  )
                 kcM = kcM - dt * fQ(idn)
                 kuM = kuM - dt * ( fQ(idn) * fUdn(idn) &
                     + grav * fAdn(idn) * (fEdn(idn) - etaM) )
@@ -378,14 +432,14 @@ contains
         !%  UPDATES -----------------------------------------------
 
         !%  Note the velocity2new is actually velocity*volume at this point
-        where (elem2I(:,e2i_elem_type) == eChannel)
+        where (maskChannelPipeSVE)
             volume2new   =  volume2old                + thiscoef * kc2
             velocity2new = (volume2old * velocity2old + thiscoef * ku2)  &
                 / (oneR + thiscoef * dt * grav *  (mn2**2) * velocity2old / (rh2**(4.0/3.0)) )
         endwhere
 
 
-        where (elemMI(:,eMi_elem_type) == eJunctionChannel)
+        where (maskJunctionChannelPipeSVE) 
             volumeMnew   = volumeMold                + thiscoef * kcM
             velocityMnew = (volumeMold * velocityMold + thiscoef * kuM)  &
                 / (oneR + thiscoef * dt * grav *  (mnM**2) * velocityMold / (rhM**(4.0/3.0)) )
@@ -398,11 +452,11 @@ contains
         call adjust_negative_volume_reset (volumeMnew)
 
         !%  VELOCITY - divide out the volume to get the ae2r_Tempctual velocity
-        where (elem2I(:,e2i_elem_type) == eChannel)
+        where (maskChannelPipeSVE)
             velocity2new = velocity2new / volume2new
         endwhere
 
-        where (elemMI(:,eMi_elem_type) == eJunctionChannel)
+        where (maskJunctionChannelPipeSVE)
             velocityMnew = velocityMnew / volumeMnew
         endwhere
 
@@ -413,9 +467,16 @@ contains
         kcM = nullvalueR
         kuM = nullvalueR
         onesMr = nullvalueR
-        nullify(kc2, ku2, ones2r, kcM, kuM, onesMr)
+        maskChannelPipeSVE = nullvalueL
+        maskJunctionChannelPipeSVE = nullvalueL
+
+        nullify(kc2, ku2, ones2r, kcM, kuM, onesMr, maskChannelPipeSVE, &
+                maskJunctionChannelPipeSVE)
+        
         next_e2r_temparray = next_e2r_temparray - 3
         next_eMr_temparray = next_eMr_temparray - 3
+        next_e2YN_temparray = next_e2YN_temparray - 1
+        next_eMYN_temparray = next_eMYN_temparray - 1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine sve_rk2_step
@@ -665,6 +726,104 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine QonlyElement_step
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine assign_solver &
+        (elemI, elemR, er_Depth, er_FullDepth, ei_elem_type, ThisElemType,  &
+        ei_solver, er_Temp, er_n_temp, next_er_temparray)
+        !
+        character(64) :: subroutine_name = 'assign_solver'
+
+        real,      target, intent(inout)  :: elemR(:,:)
+        integer,   target, intent(inout)  :: elemI(:,:)
+
+        integer,   intent(in)      ::  er_Depth, er_FullDepth, er_n_temp
+        integer,   intent(in)      ::  ei_elem_type, ei_solver, ThisElemType
+        integer,   intent(in)      ::  er_Temp(:)
+        integer,   intent(inout)   ::  next_er_temparray
+
+        real,      pointer  :: YoverYfull(:), Depth(:), FullDepth(:)
+        logical,   pointer  :: facemask(:)
+        real                :: switchBufferP, switchBufferM
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+        !%  temporary space for pipe elements
+        YoverYfull => elemR(:,er_Temp(next_er_temparray))
+        next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+
+        Depth     => elemR(:,er_Depth)
+        FullDepth => elemR(:,er_FullDepth)
+
+        !%  values +/- buffer for the solver switch
+        switchBufferP = setting%DefaultAC%Switch%Depth + setting%DefaultAC%Switch%Buffer
+        switchBufferM = setting%DefaultAC%Switch%Depth - setting%DefaultAC%Switch%Buffer
+
+        where ( elemI(:,ei_elem_type) == ThisElemType )
+            YoverYfull = Depth / FullDepth
+        endwhere
+
+        ! selecting appropriate solver for pipe
+        where ( (elemI(:,ei_elem_type) == ThisElemType) .and. &
+                (elemI(:,ei_solver) == SVE)             .and. &
+                (YoverYfull .GE. switchBufferP) )
+
+            elemI(:,ei_solver) = AC
+
+        elsewhere( (elemI(:,ei_elem_type) == ThisElemType) .and. &
+                   (elemI(:,ei_solver) == AC)              .and. &
+                   (YoverYfull .LE. switchBufferM) )
+
+            elemI(:,ei_solver) = SVE
+        endwhere
+
+        YoverYfull = nullvalueR
+        nullify(YoverYfull)
+        next_er_temparray = next_er_temparray - 1
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine assign_solver
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine save_previous_values &
+        (elem2R, elemMR, faceR)
+        !
+        character(64) :: subroutine_name = 'save_previous_values'
+
+        real,   intent(inout)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !%  push the old values down the stack
+        !%  here elN is the ell (length scale) used in AC derivation
+        !%  N values is the present, N0 is the last time step, and N1
+        !%  is the timestep before (needed only for backwards 3rd)
+
+        elem2R(:,e2r_elN)          = elem2R(:,e2r_HydDepth)
+        elem2R(:,e2r_Area_N1)      = elem2R(:,e2r_Area_N0)
+        elem2R(:,e2r_Area_N0)      = elem2R(:,e2r_Area)
+        elem2R(:,e2r_Flowrate_N1)  = elem2R(:,e2r_Flowrate_N0)
+        elem2R(:,e2r_Flowrate_N0)  = elem2R(:,e2r_Flowrate)
+        elem2R(:,e2r_Eta_N0)       = elem2R(:,e2r_Eta)
+
+        elemMR(:,eMr_elN)          = elemMR(:,eMr_HydDepth)
+        elemMR(:,eMr_Area_N1)      = elemMR(:,eMr_Area_N0)
+        elemMR(:,eMr_Area_N0)      = elemMR(:,eMr_Area)
+        elemMR(:,eMr_Flowrate_N1)  = elemMR(:,eMr_Flowrate_N0)
+        elemMR(:,eMr_Flowrate_N0)  = elemMR(:,eMr_Flowrate)
+        elemMR(:,eMr_Eta_N0)       = elemMR(:,eMr_Eta)
+
+        faceR(:,fr_Flowrate_N0)    = faceR(:,fr_Flowrate)
+
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine save_previous_values
+    !
     !==========================================================================
     ! END OF MODULE runge_kutta
     !==========================================================================
