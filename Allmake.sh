@@ -66,6 +66,7 @@ SOURCESF="  dll_mod.f08\
         test_cases.f08\
         artificial_compressibility.f08\
         runge_kutta.f08\
+        ac_convergence_loop.f08\
         time_loop.f08\
         main.f08\
         stub.f08\

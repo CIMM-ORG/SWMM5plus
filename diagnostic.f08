@@ -187,24 +187,32 @@ contains
                 + (elem2R(:,e2r_Volume_new) - elem2R(:,e2r_Volume))
         endwhere
 
-        ! This needed to be fixed for weir element
+        ! HACK: This needed to be fixed for weir element
         where (elem2I(:,e2i_elem_type) == eWeir)
             elem2R(:,e2r_VolumeConservation) = elem2R(:,e2r_VolumeConservation) &
                 + (elem2R(:,e2r_Volume_new) - elem2R(:,e2r_Volume))
         endwhere
 
-        ! This needed to be fixed for orifice element
+        ! HACK: This needed to be fixed for orifice element
         where (elem2I(:,e2i_elem_type) == eOrifice)
             elem2R(:,e2r_VolumeConservation) = elem2R(:,e2r_VolumeConservation) &
                 + (elem2R(:,e2r_Volume_new) - elem2R(:,e2r_Volume))
         endwhere
-
 
         where (elemMI(:,eMi_elem_type) == eJunctionChannel)
             elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) &
                 + (elemMR(:,eMr_Volume_new) - elemMR(:,eMr_Volume))
         endwhere
 
+        where (elemMI(:,eMi_elem_type) == eJunctionPipe)
+            elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) &
+                + (elemMR(:,eMr_Volume_new) - elemMR(:,eMr_Volume))
+        endwhere
+
+        where (elemMI(:,eMi_elem_type) == eStorage)
+            elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) &
+                + (elemMR(:,eMr_Volume_new) - elemMR(:,eMr_Volume))
+        endwhere
         ! print *, trim(subroutine_name)
         ! print *, elem2R(:,e2r_VolumeConservation)
         ! print *, elemMR(:,eMr_VolumeConservation)

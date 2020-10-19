@@ -228,6 +228,7 @@ module setting_definition
     type defaultACType
         character(len=64)       :: Tsource     = 'T00'   ! 'T10', 'T20'
         character(len=64)       :: TimeStencil = 'backwards3'   ! 'CN' 
+        logical                 :: PrintConvergence = .true.
         real                    :: dtau  
         type(dtaufactorType)    :: dtauFactor
         type(convergenceType)   :: Convergence

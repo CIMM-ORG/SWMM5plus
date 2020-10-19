@@ -27,6 +27,8 @@ module runge_kutta
     private
 
     public :: rk2
+    public :: sve_rk2_step
+    public :: overwrite_old_values
 
     integer :: debuglevel = 0
 
@@ -35,9 +37,10 @@ contains
     !==========================================================================
     !
     subroutine rk2 &
-        (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN,       &
+        (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN,      &
         faceYN, bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, &
-        Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
+        Length, zBottom, xDistance, Breadth, widthDepthData, cellType,        &
+        cycleSelect)
         !
         ! runge-kutta time advance for a single time step
         !
@@ -48,6 +51,7 @@ contains
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
         type(bcType),      intent(in out) :: bcdataDn(:),  bcdataUp(:)
         real,              intent(in)     :: thistime, dt
+        logical,           intent(in)     :: cycleSelect(:)
 
         integer,   pointer :: fdn(:), fup(:)
 
@@ -144,8 +148,8 @@ contains
             do ii=1,2
                 steptime = thistime + thiscoef(ii) * dt
 
-                if (  count(elem2I(:,e2i_solver) == SVE) &
-                    + count(elemMI(:,eMi_solver) == SVE)> zeroI ) then
+                if ( (  count(elem2I(:,e2i_solver) == SVE) &
+                      + count(elemMI(:,eMi_solver) == SVE)> zeroI) .and. cycleSelect(ii) ) then
 
                     call sve_rk2_step &
                         (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
@@ -226,18 +230,23 @@ contains
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)
 
-            call save_previous_values &
-                (elem2R, elemMR, faceR)
-
-            !%  assign the solver for the next RK step depending on depth
+            !%  assign the solver for the next RK step depending on area
             call assign_solver &
-                (elem2I, elem2R, e2r_Depth, e2r_FullDepth, e2i_elem_type, ePipe,  &
+                (elem2I, elem2R, e2r_Area, e2r_FullArea, e2i_elem_type, ePipe,  &
                 e2i_solver, e2r_Temp, e2r_n_temp, next_e2r_temparray)
 
-            !%  HACK: AC solver for Junction Pipe has not derived yet
-            call assign_solver &
-                (elemMI, elemMR, eMr_Depth, eMr_FullDepth, eMi_elem_type, eJunctionPipe, &
-                eMi_solver, eMr_Temp, eMr_n_temp, next_eMr_temparray)
+            ! !%  HACK: AC solver for Junction Pipe has not derived yet
+            ! call assign_solver &
+            !     (elemMI, elemMR, eMr_Area, eMr_FullArea, eMi_elem_type, eJunctionPipe, &
+            !     eMi_solver, eMr_Temp, eMr_n_temp, next_eMr_temparray)
+
+            !%  Compute the dimensional change of the AC
+            where (elem2I(:,e2i_solver) == AC)
+                elem2R(:,e2r_CtestH1) = elem2R(:,e2r_Eta) * elem2R(:,e2r_Area) - &
+                                                elem2R(:,e2r_CtestH1)
+                elem2R(:,e2r_CtestQ1) = elem2R(:,e2r_Flowrate) - elem2R(:,e2r_CtestQ1)
+            endwhere
+
 
         endif
 
@@ -435,14 +444,14 @@ contains
         where (maskChannelPipeSVE)
             volume2new   =  volume2old                + thiscoef * kc2
             velocity2new = (volume2old * velocity2old + thiscoef * ku2)  &
-                / (oneR + thiscoef * dt * grav *  (mn2**2) * velocity2old / (rh2**(4.0/3.0)) )
+                / (oneR + thiscoef * dt * grav *  (mn2**2) * abs(velocity2old) / (rh2**(4.0/3.0)) )
         endwhere
 
 
         where (maskJunctionChannelPipeSVE) 
             volumeMnew   = volumeMold                + thiscoef * kcM
             velocityMnew = (volumeMold * velocityMold + thiscoef * kuM)  &
-                / (oneR + thiscoef * dt * grav *  (mnM**2) * velocityMold / (rhM**(4.0/3.0)) )
+                / (oneR + thiscoef * dt * grav *  (mnM**2) * abs(velocityMold) / (rhM**(4.0/3.0)) )
         endwhere
 
         !%  CORRECTIONS ----------------------------------------------------------
@@ -731,7 +740,7 @@ contains
     !==========================================================================
     !
     subroutine assign_solver &
-        (elemI, elemR, er_Depth, er_FullDepth, ei_elem_type, ThisElemType,  &
+        (elemI, elemR, er_Area, er_FullArea, ei_elem_type, ThisElemType,  &
         ei_solver, er_Temp, er_n_temp, next_er_temparray)
         !
         character(64) :: subroutine_name = 'assign_solver'
@@ -739,90 +748,56 @@ contains
         real,      target, intent(inout)  :: elemR(:,:)
         integer,   target, intent(inout)  :: elemI(:,:)
 
-        integer,   intent(in)      ::  er_Depth, er_FullDepth, er_n_temp
+        integer,   intent(in)      ::  er_Area, er_FullArea, er_n_temp
         integer,   intent(in)      ::  ei_elem_type, ei_solver, ThisElemType
         integer,   intent(in)      ::  er_Temp(:)
         integer,   intent(inout)   ::  next_er_temparray
 
-        real,      pointer  :: YoverYfull(:), Depth(:), FullDepth(:)
-        logical,   pointer  :: facemask(:)
+        real,      pointer  :: AoverAfull(:), Area(:), FullArea(:)
         real                :: switchBufferP, switchBufferM
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
 
         !%  temporary space for pipe elements
-        YoverYfull => elemR(:,er_Temp(next_er_temparray))
+        AoverAfull => elemR(:,er_Temp(next_er_temparray))
         next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
 
-        Depth     => elemR(:,er_Depth)
-        FullDepth => elemR(:,er_FullDepth)
+        Area     => elemR(:,er_Area)
+        FullArea => elemR(:,er_FullArea)
 
         !%  values +/- buffer for the solver switch
-        switchBufferP = setting%DefaultAC%Switch%Depth + setting%DefaultAC%Switch%Buffer
-        switchBufferM = setting%DefaultAC%Switch%Depth - setting%DefaultAC%Switch%Buffer
+        switchBufferP = setting%DefaultAC%Switch%Area + setting%DefaultAC%Switch%Buffer
+        switchBufferM = setting%DefaultAC%Switch%Area - setting%DefaultAC%Switch%Buffer
 
         where ( elemI(:,ei_elem_type) == ThisElemType )
-            YoverYfull = Depth / FullDepth
+            AoverAfull = Area / FullArea
         endwhere
 
         ! selecting appropriate solver for pipe
         where ( (elemI(:,ei_elem_type) == ThisElemType) .and. &
                 (elemI(:,ei_solver) == SVE)             .and. &
-                (YoverYfull .GE. switchBufferP) )
+                (AoverAfull .GE. switchBufferP) )
 
             elemI(:,ei_solver) = AC
 
         elsewhere( (elemI(:,ei_elem_type) == ThisElemType) .and. &
                    (elemI(:,ei_solver) == AC)              .and. &
-                   (YoverYfull .LE. switchBufferM) )
+                   (AoverAfull .LE. switchBufferM) )
 
             elemI(:,ei_solver) = SVE
         endwhere
 
-        YoverYfull = nullvalueR
-        nullify(YoverYfull)
+        ! print*, trim(subroutine_name)
+        ! print*, 'AoverAfull', AoverAfull
+        ! print*, 'Selected solver', elemI(:,ei_solver)
+        
+        AoverAfull = nullvalueR
+        nullify(AoverAfull)
         next_er_temparray = next_er_temparray - 1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine assign_solver
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine save_previous_values &
-        (elem2R, elemMR, faceR)
-        !
-        character(64) :: subroutine_name = 'save_previous_values'
-
-        real,   intent(inout)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        !%  push the old values down the stack
-        !%  here elN is the ell (length scale) used in AC derivation
-        !%  N values is the present, N0 is the last time step, and N1
-        !%  is the timestep before (needed only for backwards 3rd)
-
-        elem2R(:,e2r_elN)          = elem2R(:,e2r_HydDepth)
-        elem2R(:,e2r_Area_N1)      = elem2R(:,e2r_Area_N0)
-        elem2R(:,e2r_Area_N0)      = elem2R(:,e2r_Area)
-        elem2R(:,e2r_Flowrate_N1)  = elem2R(:,e2r_Flowrate_N0)
-        elem2R(:,e2r_Flowrate_N0)  = elem2R(:,e2r_Flowrate)
-        elem2R(:,e2r_Eta_N0)       = elem2R(:,e2r_Eta)
-
-        elemMR(:,eMr_elN)          = elemMR(:,eMr_HydDepth)
-        elemMR(:,eMr_Area_N1)      = elemMR(:,eMr_Area_N0)
-        elemMR(:,eMr_Area_N0)      = elemMR(:,eMr_Area)
-        elemMR(:,eMr_Flowrate_N1)  = elemMR(:,eMr_Flowrate_N0)
-        elemMR(:,eMr_Flowrate_N0)  = elemMR(:,eMr_Flowrate)
-        elemMR(:,eMr_Eta_N0)       = elemMR(:,eMr_Eta)
-
-        faceR(:,fr_Flowrate_N0)    = faceR(:,fr_Flowrate)
-
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine save_previous_values
     !
     !==========================================================================
     ! END OF MODULE runge_kutta

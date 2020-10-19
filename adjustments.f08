@@ -154,8 +154,6 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-
-
         ! Ad hoc limit the volume that can be transported out of the upstream cell.
         if (setting%Limiter%Flowrate%UseFaceVolumeTransport) then
             volFrac => setting%Limiter%flowrate%FaceVolumeTransport

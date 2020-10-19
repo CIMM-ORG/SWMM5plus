@@ -6,6 +6,7 @@
 !
 module time_loop
 
+    use ac_convergence_loop
     use array_index
     use bc
     use data_keys
@@ -59,10 +60,14 @@ contains
         real, pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
         real, pointer :: fEdn(:), fEup(:), eE(:)
 
+        real    :: AnormH(3), AnormQ(3), AnormHlast(3), AnormQlast(3)
+        real    :: TnormH(3), TnormQ(3), RTnormH(3), RTnormQ(3), RLnormH(3), RLnormQ(3)
+
         real, pointer :: thistime, nexttime
 
         integer, pointer :: thisStep, restartStep
 
+        logical :: rkCycle(2)
         integer :: ii
 
         character(len=32) :: outdataName
@@ -90,6 +95,30 @@ contains
 
         !% get the upper time
         nexttime = thistime + dt
+
+        !%  initialization of local storage the Lnorms for head and flowrate convergence
+        !%  these ares stored as L1, L2, Linf
+        !%  Note that these are different than the trun. norms that are used
+        !%  for steady-state checking
+        !%  Absolute norms are the dimensional rates of change dpsi/dtau
+        AnormH = zeroR
+        AnormQ = zeroR  
+        AnormHlast = zeroR
+        AnormQlast = zeroR   
+        
+        !%  Total norm is the dimensional rate of change from the N0 values
+        TnormH = zeroR
+        TnormQ = zeroR      
+        
+        !%  Relative norms are the relative rates of change. 
+        !%  The RT norm is the recent norm compared to the norm for total rate 
+        !%  of change since N0
+        RTnormH = zeroR
+        RTnormQ = zeroR     
+                
+        !%  Relative last norm is the recen Anorm compared to AnormLast
+        RLnormH = zeroR
+        RLnormQ = zeroR
 
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thistime, bc_category_inflowrate, e2r_Velocity)
@@ -135,11 +164,30 @@ contains
             elem2YN(:,e2YN_IsAdhocFlowrate) = .false.
             elemMYN(:,eMYN_IsAdhocFlowrate) = .false.
 
+            !%  push the old values down the stack
+            call save_previous_values (elem2R, elemMR, faceR)
+
             !% Runge-Kutta 2nd-order advance
+            !% rkCycle mask ensures both the RK steps are taken for time loop
+            rkCycle(1) = .true.
+            rkCycle(2) = .true.
+
             call rk2 &
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
                 bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
-                zBottom, xDistance, Breadth, widthDepthData, cellType)
+                zBottom, xDistance, Breadth, widthDepthData, cellType, rkCycle)
+
+            if (  count(elem2I(:,e2i_solver) == AC) &
+                + count(elemMI(:,eMi_solver) == AC)> zeroI ) then               
+                !% Artifical compressibility convergence pseudo time marching loop[    
+                call pseudo_time_marching &
+                    (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN,    &
+                    faceYN, bcdataDn, bcdataUp, linkI, thisStep, thisTime, AnormH,      &
+                    AnormQ, AnormHlast, AnormQlast, TnormH, TnormQ, RTnormH, RTnormQ,   &
+                    RLnormH,  RLnormQ, debugfile, diagnostic, threadedfile, ID,         &
+                    numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,        &
+                    widthDepthData, cellType)
+            endif
 
             !% compute the element froude number (diagnostic only)
             call diagnostic_froude_number (elem2R, elem2I, elemMR, elemMI)
@@ -153,19 +201,27 @@ contains
                     print *, 'Volume Conservation (this step and total) = ', &
                         diagnostic(restartStep)%Volume%ConservationThisStep,  &
                         diagnostic(restartStep)%Volume%ConservationTotal
-                    print*, 'Flowrate ==>'
-                    call utility_print_values_by_link &
-                        (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
-                        fr_Flowrate, 0, e2r_Flowrate, eMr_Flowrate, eMr_AreaDn, eMr_AreaDn)
-                    print*, 'Eta ==>'
-                    call utility_print_values_by_link &
-                        (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
-                        fr_Eta_d, fr_Eta_u, e2r_Eta, eMr_Eta, eMr_EtaDn, eMr_EtaUp)
+                    ! print*, 'Flowrate ==>'
+                    ! call utility_print_values_by_link &
+                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+                    !     fr_Flowrate, 0, e2r_Flowrate, eMr_Flowrate, eMr_AreaDn, eMr_AreaDn)
+                    ! print*, 'Eta ==>'
+                    ! call utility_print_values_by_link &
+                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+                    !     fr_Eta_d, fr_Eta_u, e2r_Eta, eMr_Eta, eMr_EtaDn, eMr_EtaUp)
                     ! print*, 'Area ==>'
                     ! call utility_print_values_by_link &
                     !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
                     !     fr_Area_d, fr_Area_u, e2r_Area, eMr_Area, eMr_AreaDn, eMr_AreaUp)
-                    print*, 'Solver ==>', elem2I(:,e2i_solver)
+                    ! print*, 'Depth ==>'
+                    ! call utility_print_values_by_link &
+                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+                    !     fr_HydDepth_d, fr_HydDepth_u, e2r_Depth, eMr_Depth, eMr_AreaDn, eMr_AreaUp)
+                    ! print*, 'TopWidth ==>'
+                    ! call utility_print_values_by_link &
+                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
+                    !     fr_Topwidth, 0, e2r_Topwidth, eMr_Topwidth, eMr_AreaDn, eMr_AreaUp)
+                    ! print*, 'Solver ==>', elem2I(:,e2i_solver)
                 endif
             endif
 
@@ -191,6 +247,42 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine time_marching
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine save_previous_values &
+        (elem2R, elemMR, faceR)
+        !
+        character(64) :: subroutine_name = 'save_previous_values'
+
+        real,   intent(inout)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !%  push the old values down the stack
+        !%  here elN is the ell (length scale) used in AC derivation
+        !%  N values is the present, N0 is the last time step, and N1
+        !%  is the timestep before (needed only for backwards 3rd)
+
+        elem2R(:,e2r_elN)          = elem2R(:,e2r_HydDepth)
+        elem2R(:,e2r_Area_N1)      = elem2R(:,e2r_Area_N0)
+        elem2R(:,e2r_Area_N0)      = elem2R(:,e2r_Area)
+        elem2R(:,e2r_Flowrate_N1)  = elem2R(:,e2r_Flowrate_N0)
+        elem2R(:,e2r_Flowrate_N0)  = elem2R(:,e2r_Flowrate)
+        elem2R(:,e2r_Eta_N0)       = elem2R(:,e2r_Eta)
+
+        elemMR(:,eMr_elN)          = elemMR(:,eMr_HydDepth)
+        elemMR(:,eMr_Area_N1)      = elemMR(:,eMr_Area_N0)
+        elemMR(:,eMr_Area_N0)      = elemMR(:,eMr_Area)
+        elemMR(:,eMr_Flowrate_N1)  = elemMR(:,eMr_Flowrate_N0)
+        elemMR(:,eMr_Flowrate_N0)  = elemMR(:,eMr_Flowrate)
+        elemMR(:,eMr_Eta_N0)       = elemMR(:,eMr_Eta)
+
+        faceR(:,fr_Flowrate_N0)    = faceR(:,fr_Flowrate)
+        
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine save_previous_values
     !
     !==========================================================================
     ! END OF MODULE time_loop

@@ -80,12 +80,8 @@ contains
         call face_surface_elevation_interp (elem2R, elemMR, faceR, faceI, faceYN)
 
         !% compute depth
-        faceR(:,fr_HydDepth_u) = zeroR
-        faceR(:,fr_HydDepth_d) = zeroR
-        where (faceR(:,fr_Topwidth) > zeroR)
-            faceR(:,fr_HydDepth_u) = faceR(:,fr_Area_u) / faceR(:,fr_Topwidth)
-            faceR(:,fr_HydDepth_d) = faceR(:,fr_Area_d) / faceR(:,fr_Topwidth)
-        endwhere
+        call face_hydraulic_depth (elem2R, elemMR, faceR, faceI, faceYN)
+
 
         if (thisIter == 1) then
             !% at end of first step of RK2, the face flow rate is the BC outflow for the step
@@ -991,11 +987,67 @@ contains
         weightDn = nullvalueR
         facemask = nullvalueL
         nullify(weightUp, weightDn, facemask)
-        next_fr_temparray = next_fr_temparray-2
-        next_fYN_temparray = next_fYN_temparray-1
+        next_fr_temparray = next_fr_temparray - 2
+        next_fYN_temparray = next_fYN_temparray - 1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine face_surface_elevation_interp
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine face_hydraulic_depth &
+        (elem2R, elemMR, faceR, faceI, faceYN)
+
+        character(64) :: subroutine_name = 'face_hydraulic_depth'
+
+        real,      target,     intent(in out)  :: faceR(:,:)
+        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        integer,   target,     intent(in)      :: faceI(:,:)
+        logical,   target,     intent(in out)  :: faceYN(:,:)
+
+        integer,   pointer :: mapUp(:), mapDn(:), typUp(:), typDn(:)
+        real,      pointer :: HydUp(:), HydDn(:), AreaUp(:), AreaDn(:)
+        real,      pointer :: fTopwidth(:)
+
+        real    :: ZeroTopWidth, ZeroArea
+        integer :: mm
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        ZeroTopWidth = setting%Zerovalue%Topwidth
+        ZeroArea     = setting%Zerovalue%Area
+
+        mapUp  => faceI(:,fi_Melem_u)
+        mapDn  => faceI(:,fi_Melem_d)
+        typUp  => faceI(:,fi_etype_u)
+        typDn  => faceI(:,fi_etype_d)
+        HydUp  => faceR(:,fr_HydDepth_u)
+        HydDn  => faceR(:,fr_HydDepth_d)
+        AreaUp => faceR(:,fr_Area_u)
+        AreaDn => faceR(:,fr_Area_d)
+        fTopwidth => faceR(:,fr_Topwidth)
+        HydUp = zeroR
+        HydDn = zeroR
+        
+        where (fTopwidth > zeroR)
+            HydUp = AreaUp / fTopwidth
+            HydDn = AreaDn / fTopwidth
+        endwhere
+
+        !%  in case of full pipe, face topwidth is zero. The hyddepth will be the fulldepth 
+        where ( (typUp == fPipe) .and. (fTopwidth .LE. ZeroTopWidth) .and. &
+                (AreaUp .GT. ZeroArea) )
+            HydUp = elem2R(mapUp,e2r_FullDepth)
+        endwhere
+
+        where ( (typDn == fPipe) .and. (fTopwidth .LE. ZeroTopWidth) .and. &
+                (AreaDn .GT. ZeroArea) )
+            HydDn = elem2R(mapDn,e2r_FullDepth)
+        endwhere
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+    end subroutine face_hydraulic_depth
     !
     !==========================================================================
     !==========================================================================

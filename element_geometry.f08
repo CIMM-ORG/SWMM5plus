@@ -99,7 +99,7 @@ contains
             (elem2R, elem2I, elem2YN, e2r_VolumeColumn, elemMR, elemMI, elemMYN,    &
             eMr_VolumeColumn, faceR, eMr_EtaOld, method_EtaM, ID, numberPairs,      &
             ManningsN, Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
-
+            
         !% HACK -- NEED OTHER GEOMETRY TYPES
 
         !% reset the computed geometry values where volumes are small
@@ -591,7 +591,9 @@ contains
         where (maskarray .and. (isfull .eqv. .false.)) 
               eta = zeroR
         endwhere
-
+        ! print*,'----before-----'
+        ! print*, area, 'area'
+        ! print*, fullarea, 'fullarea'
         !% Open circular pipes that become full
         call open_circular_pipe_transition_to_full &
             (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
@@ -606,7 +608,8 @@ contains
             area   = fullarea
             volume = area * length
             depth  = fulldepth
-            AoverAfull = oneR  
+            AoverAfull = oneR
+            YoverYfull = oneR  
         endwhere
 
         !% NOTE: at this point, isfull will consist of those pipes that
@@ -645,13 +648,16 @@ contains
             zcrown, radius, area, eta, perimeter, depth, hyddepth, hydradius,       &
             topwidth, dHdA, elN, AoverAfull, YoverYfull, solver, ei_Temp,           &
             next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray, eYN_n_temp, &
-            isfull, maskarray) 
-              
+            isfull, maskarray)  
         !% release temporary arrays
         AoverAfull = nullvalueR
         YoverYfull = nullvalueR
         maskarray  = nullvalueL
-
+        ! print*, '-----after------'
+        ! print*, volume, 'volume'
+        ! print*, area, 'area'
+        ! print*, depth, 'depth'
+        ! print*, hyddepth, 'hyddepth'
         !% nullify temporary array
         nullify(AoverAfull, YoverYfull, maskarray)
         next_er_temparray  = next_er_temparray  - 2
@@ -711,6 +717,7 @@ contains
             eta  = zcrown + (area - fullarea)/(twoR * radius)
             area = fullarea
             AoverAfull = oneR
+            YoverYfull = oneR
             volume = area * length
             isfull = .true.
         endwhere
@@ -845,7 +852,7 @@ contains
         where (maskarray_open_pipe)
             AoverAfull = area / fullarea
         endwhere
-
+        
         ! get normalized depth from the lookup table
         call table_lookup_mask &
             (elemI, elemR, YoverYfull, AoverAfull, YCirc, NYCirc, maskarray_open_pipe, &
@@ -912,10 +919,14 @@ contains
             (elemI, elemR, hydradius, YoverYfull, RCirc, NRCirc, maskarray, &
             ei_Temp, next_ei_temparray, ei_n_temp)
 
-        where (maskarray)
+        where ( (maskarray) .and. (isfull .eqv. .false.) )
             ! get the depth by multiplying the normalized depth with fulldepth
             topwidth  = fulldepth * topwidth
             hydradius = onefourthR * fulldepth * hydradius
+            perimeter = area / hydradius
+        elsewhere ((maskarray) .and. (isfull) )
+            topwidth  = zeroR
+            hydradius = onefourthR * fulldepth 
             perimeter = area / hydradius
         endwhere 
 
