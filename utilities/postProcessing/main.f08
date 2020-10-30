@@ -24,7 +24,7 @@ use postProcessing
     real,    dimension(:)  , allocatable       :: xx,yy
 
 
-open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_depth__20200423_2249.txt', status='OLD')
+open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_depth__20200623_1431.txt', status='OLD')
 specific_link = 1
 call get_specific_link_data &
     (iunit, n_cells, n_links, n_linkItems, max_linkItems, n_timeSteps, &
@@ -66,8 +66,8 @@ elseif (plot_type .eq. 2)  then
 elseif (plot_type .eq. 3)  then !this is hard coded for simple weir and orifice case
     do j = 1,n_timeSteps
         xx = link_long_lengths
-        ! yy = link_long_data(j,:)
-        yy = link_long_data(j,:) + z_bottoms !this is only for depth plot
+        yy = link_long_data(j,:)
+        ! yy = link_long_data(j,:) + z_bottoms !this is only for depth plot
         open (unit = 7, action = 'write', file = 'data.txt')
         do i = 1,size(link_long_lengths)
             write(7,*)xx(i), yy(i)

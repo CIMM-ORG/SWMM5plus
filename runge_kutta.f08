@@ -17,6 +17,7 @@ module runge_kutta
     use globals
     use setting_definition
     use utility
+    use storage
     use weir
     use orifice
 
@@ -105,20 +106,15 @@ contains
                     elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
                     thiscoef(ii))
 
-                if ( count(elem2I(:,e2i_elem_type) == eWeir)  > zeroI) then
-                    ! call weir step if weirs exist in the system
-                    call weir_step &
-                        (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
-                        e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
-                        faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
-                endif
+                !  Sets the Qonly element geometry to provisional values
+                call QonlyElement_provisional_geometry &
+                    (elem2R, elemMR, faceR, elem2I, elemMI)
 
-                if ( count(elem2I(:,e2i_elem_type) == eOrifice)  > zeroI) then
-                    ! call orifice step if orifices exist in the system
-                    call orifice_step &
-                        (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
-                        e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
-                        faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
+                if ( count(elemMI(:,eMi_elem_type) == eStorage) > zeroI) then
+                    ! call storage step if storage unit exists in the network
+                    call storage_step &
+                        (eMr_Volume, eMr_Velocity, eMr_Volume_new, eMr_Velocity_new,  &
+                        elemMR, faceR, elemMI, elemMYN, thiscoef(ii))
                 endif
 
                 call rk2_update_auxiliary_variables &
@@ -128,14 +124,18 @@ contains
                     ManningsN, Length, zBottom, xDistance,  Breadth, widthDepthData,    &
                     cellType)
 
+                !% advane Qonly elemnt
+                call QonlyElement_step &
+                    (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
+                    e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
+                    faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
+
                 if (ii==1) then
                     !% store the net face fluxes that are used for volume advance.
                     call diagnostic_element_volume_conservation_fluxes &
                         (elem2R, elem2I, elemMR, elemMI, faceR)
                 endif
             end do
-
-
 
             !% compute local element-based volume conservation
             call diagnostic_element_volume_conservation &
@@ -157,6 +157,10 @@ contains
             call overwrite_old_values &
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eJunctionChannel, .false.)
+                
+            call overwrite_old_values &
+                (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
+                eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)
 
         endif
 
@@ -465,6 +469,137 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine overwrite_old_values
     !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine QonlyElement_provisional_geometry &
+        (elem2R, elemMR, faceR, elem2I, elemMI)
+        ! this subroutine sets the Qonly element geometry to zero.
+        character(64) :: subroutine_name = 'QonlyElement_provisional_geometry'
+
+
+        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real,      target, intent(in)      :: faceR(:,:)
+        integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+
+        integer :: mm
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+        where      ( (elem2I(:,e2i_meta_elem_type) == eQonly) )
+
+            elem2R(:,e2r_Area)        = 1.0e-7
+            elem2R(:,e2r_Eta)         = 1.0e-7
+            elem2R(:,e2r_Perimeter)   = 1.0e-7
+            elem2R(:,e2r_HydDepth)    = 1.0e-7
+            elem2R(:,e2r_HydRadius)   = 1.0e-7
+            elem2R(:,e2r_Topwidth)    = 1.0e-7
+            elem2R(:,e2r_Depth)       = 1.0e-7
+            elem2R(:,e2r_Volume)      = 1.0e-7
+            elem2R(:,e2r_Velocity)    = 1.0e-7
+        endwhere
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine QonlyElement_provisional_geometry
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine QonlyElement_step &
+        (e2r_Volume_old, e2r_Velocity_old, eMr_Volume_old, eMr_Velocity_old, &
+        e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
+        elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, &
+        elemMYN, thiscoef)
+        !
+        character(64) :: subroutine_name = 'QonlyElement_step'
+
+        ! indexes for old/new volume and velocity storage
+        integer,   intent(in) :: e2r_Volume_old, e2r_Velocity_old
+        integer,   intent(in) :: eMr_Volume_old, eMr_Velocity_old
+        integer,   intent(in) :: e2r_Volume_new, e2r_Velocity_new
+        integer,   intent(in) :: eMr_Volume_new, eMr_Velocity_new
+
+        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        integer,           intent(in out)  :: faceI(:,:)
+        real,      target, intent(in out)  :: faceR(:,:)
+        integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+        logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
+        logical,   target, intent(in out)  :: faceYN(:,:)
+        real,              intent(in)      :: thiscoef
+
+        real,      pointer  :: valueUp(:), valueDn(:)
+        real,      pointer  :: weightUpQ(:), weightDnQ(:)
+        real,      pointer  :: faceQ(:)
+        logical,   pointer  :: facemask(:)
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        valueUp => faceR(:,fr_Temp(next_fr_temparray))
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+        valueDn => faceR(:,fr_Temp(next_fr_temparray))
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+        weightUpQ => faceR(:,fr_Temp(next_fr_temparray))
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+        weightDnQ => faceR(:,fr_Temp(next_fr_temparray))
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+        facemask   => faceYN(:,fYN_Temp(next_fYN_temparray))
+        next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp)
+
+        faceQ => faceR(:,fr_Flowrate)
+
+        !% advance flow, geometry in Qonly elements
+        if ( count(elem2I(:,e2i_elem_type) == eWeir)  > zeroI) then
+            !% call weir step if weirs exist in the network
+            call weir_step &
+                (e2r_Volume_old, e2r_Velocity_old, eMr_Volume_old, eMr_Velocity_old, &
+                e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
+                elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, &
+                elemMYN, thiscoef)
+        endif
+
+        if ( count(elem2I(:,e2i_elem_type) == eOrifice)  > zeroI) then
+            !% call orifice step if orifices exist in the network
+            call orifice_step &
+                (e2r_Volume_old, e2r_Velocity_old, eMr_Volume_old, eMr_Velocity_old, &
+                e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
+                elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, &
+                elemMYN, thiscoef)
+        endif
+
+        !% face reconstruction -- only flow values
+        !% update the flow to their faces
+        facemask = ( (faceI(:,fi_meta_etype_u) == eQonly) .or. &
+            (faceI(:,fi_meta_etype_d) == eQonly) )
+
+        weightUpQ = setting%Limiter%Timescale%Maximum
+        weightDnQ = setting%Limiter%Timescale%Maximum
+
+        where (facemask)
+            weightUpQ = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_d)
+            weightDnQ = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_u)
+            valueUp  = elem2R(faceI(:,fi_Melem_u),e2r_Flowrate)
+            valueDn  = elem2R(faceI(:,fi_Melem_d),e2r_Flowrate)
+            !% linear interpolation
+            faceQ = (weightUpQ * valueDn + weightDnQ * valueUp) /(weightUpQ + weightDnQ)
+        endwhere
+
+        valueUp    = nullvalueR
+        valueDn    = nullvalueR
+        weightUpQ  = nullvalueR
+        weightDnQ  = nullvalueR
+
+        nullify(valueUp, valueDn, weightUpQ, weightDnQ, facemask)
+
+        next_fr_temparray  = next_fr_temparray  - 4
+        next_fYN_temparray = next_fYN_temparray - 1
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine QonlyElement_step
     !==========================================================================
     ! END OF MODULE runge_kutta
     !==========================================================================

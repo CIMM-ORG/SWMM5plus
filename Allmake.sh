@@ -47,11 +47,13 @@ SOURCESF="  dll_mod.f08\
         case_simple_weir.f08\
         case_simple_orifice.f08\
         case_y_channel.f08\
+        case_y_storage_channel.f08\
         checking.f08\
         debug.f08\
         diagnostic.f08\
         junction.f08\
         face_values.f08\
+        storage.f08\
         weir.f08\
         orifice.f08\
         element_dynamics.f08\

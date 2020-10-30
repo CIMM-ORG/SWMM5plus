@@ -18,7 +18,9 @@ module initial_condition
     use globals
     use junction
     use setting_definition
+    use storage
     use utility
+    use orifice
     use weir
     use xsect_tables
 
@@ -64,7 +66,7 @@ contains
 
         type(string), intent(in out)   :: cellType(:)
 
-        integer :: idx
+        integer :: idx,ii
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -74,6 +76,9 @@ contains
             (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
 
         call initial_junction_conditions &
+            (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
+
+        call initial_storage_conditions &
             (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
 
         !% set the bc elements (outside of face) to null values
@@ -99,30 +104,36 @@ contains
             bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
             e2r_Volume, eMr_Volume, thisTime)
 
-        call face_meta_element_assign &
-            (faceI, elem2I, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
-            fi_meta_etype_d, e2i_Meta_elem_type)
+        call face_meta_element_assign (faceI, elem2I, N_face)
 
         call face_update &
             (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
             bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity,  &
             e2r_Volume, eMr_Volume, thisTime, 0)
 
-        !% set the new Eta for weir elements
-        where      ( (elem2I(:,e2i_elem_type) == eWeir) )
-            elem2R(:,e2r_Eta) = max(faceR(elem2I(:,e2i_Mface_u),fr_Eta_d), faceR(elem2I(:,e2i_Mface_d),fr_Eta_u))
-        endwhere
-
+        !% set the initial condition for Qonly element
+        call QonlyElem_initial_condition_setup &
+            (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN)
         !% set the element-specific smallvolume value
         !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
+        !% HACK - OTHER GEOMETRY TYPE NEEDED
         if (setting%SmallVolume%UseSmallVolumes) then
             elem2R(:,e2r_SmallVolume) = 0.01
             elemMR(:,eMr_SmallVolume) = 0.01
-            !     elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * elem2R(:,e2r_Length)
-            !     elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * elemMR(:,eMr_Length)
-            where (elem2I(:,e2i_geometry) == eTriangular)
-                elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_Topwidth) &
-                    * elem2R(:,e2r_Length)
+            where (elem2I(:,e2i_geometry) == eRectangular)
+                elem2R(:,e2r_SmallVolume) = setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * &
+                    elem2R(:,e2r_Length)
+                !% HACK - Current version only allows junction to be rectangular
+            elsewhere (elemMI(:,eMi_geometry) == eRectangular)
+                elemMR(:,eMr_SmallVolume) = setting%SmallVolume%DepthCutoff * elemMR(:,eMr_BreadthScale) * &
+                    elemMR(:,eMr_Length)
+            elsewhere (elem2I(:,e2i_geometry) == eTriangular)
+                elem2R(:,e2r_SmallVolume) = onehalfR * setting%SmallVolume%DepthCutoff * elem2R(:,e2r_BreadthScale) * &
+                    elem2R(:,e2r_Length)
+            elsewhere (elem2I(:,e2i_geometry) == eTrapezoidal)
+                elem2R(:,e2r_SmallVolume) = (elem2R(:,e2r_BreadthScale) + onehalfR * (elem2R(:,e2r_LeftSlope) + &
+                    elem2R(:,e2r_RightSlope)) * setting%SmallVolume%DepthCutoff) * &
+                    setting%SmallVolume%DepthCutoff
             endwhere
         else
             elem2R(:,e2r_SmallVolume) = zeroR
@@ -351,20 +362,30 @@ contains
             elseif (linkI(ii,li_geometry) == lCircular ) then
                 !% handle circular elements
                 ! Input: InitialDepth, Full Depth
-                ! these geometric properties are wron. but they will get correctly updated later.
+                ! these geometric properties are wrong. but they will get correctly updated later.
+
                 ! Talk with Dr. Hodges about this matter.
                 where (elem2I(:,e2i_link_ID) == Lindx)
                     elem2I(:,e2i_geometry)     = eCircular
+
                     elem2R(:,e2r_FullDepth)    = linkR(ii,lr_FUllDepth)
+
                     elem2R(:,e2r_BreadthScale) = linkR(ii,lr_FUllDepth)
+
                     elem2R(:,e2r_Area)         = onefourthR * pi *                    &
                         elem2R(:,e2r_FullDepth)  ** twoR
-                    elem2R(:,e2r_Topwidth)     = zeroR
+
                     elem2R(:,e2r_HydDepth)     = elem2R(:,e2r_Depth)
+
+                    elem2R(:,e2r_Topwidth)     = twoR * sqrt(elem2R(:,e2r_HydDepth) * &
+                        (elem2R(:,e2r_FullDepth) - elem2R(:,e2r_HydDepth)))
+
                     elem2R(:,e2r_Eta)          = elem2R(:,e2r_Zbottom)                &
                         + elem2R(:,e2r_HydDepth)
+
                     elem2R(:,e2r_Volume)       = elem2R(:,e2r_Area) &
                         * elem2R(:,e2r_Length)
+
                     elem2R(:,e2r_Perimeter)    = pi * elem2R(:,e2r_FullDepth)
                 endwhere
 
@@ -376,8 +397,8 @@ contains
 
                     elem2R(:,e2r_HydDepth) = onehalfR * elem2R(:,e2r_Depth)
 
-                    elem2R(:,e2r_BreadthScale) = zeroR
-
+                    elem2R(:,e2r_BreadthScale) = elem2R(:,e2r_FullDepth)              &
+                        * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
                     ! (averageSlope * hydraulicDepth)*hydraulicDepth
                     elem2R(:,e2r_Area) = onehalfR &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
@@ -418,6 +439,18 @@ contains
                 print *, 'error: initialization for non-defined elements needed in ',subroutine_name
                 stop
             end if
+
+            !% Setting provisional geometry for weir and orifice element to correctly interpolate to faces
+            where      ( (elem2I(:,e2i_elem_type) == eWeir) .or. &
+                (elem2I(:,e2i_elem_type) == eOrifice) )
+                elem2R(:,e2r_HydDepth)     = 1.0e-7
+                elem2R(:,e2r_Topwidth)     = 1.0e-7
+                elem2R(:,e2r_Eta)          = 1.0e-7
+                elem2R(:,e2r_Area)         = 1.0e-7
+                elem2R(:,e2r_Volume)       = 1.0e-7
+                elem2R(:,e2r_Perimeter)    = 1.0e-7
+                elem2R(:,e2r_Depth)        = 1.0e-7
+            endwhere
 
             !%  Update velocity
             where (  (elem2I(:,e2i_link_ID) == Lindx) .and. (elem2R(:,e2r_Area) > zeroR) )
@@ -502,6 +535,57 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine initial_storage_conditions &
+        (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
+
+        character(64) :: subroutine_name = 'initial_storage_conditions'
+
+        real,              intent(in out)  :: elemMR(:,:)
+        real,      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
+        integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:), nodeI(:,:), faceI(:,:)
+
+        integer,   pointer :: tface, telem
+
+        real   :: upvalue(upstream_face_per_elemM), dnvalue(dnstream_face_per_elemM)
+
+        integer,   dimension(4)    :: e2rset, eMrset
+
+        integer :: ii, mm
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        if (N_elemM > 0) then
+
+            e2rset = (/e2r_Eta, e2r_Topwidth,   e2r_Area,  e2r_Perimeter/)
+            eMrset = (/eMr_Eta, eMr_Topwidth,   eMr_Area,  eMr_Perimeter/)
+
+            do mm=1,size(e2rset)
+
+                !% initialize the the average of the adjacent elements
+                call storage_adjacent_element_average &
+                    (elem2R, elemMR, elemMI, faceI, e2rset(mm), eMrset(mm))
+
+            end do
+
+            call storage_initialize_depth_volume (elemMR, elemMI)
+
+            where (elemMI(:,eMi_elem_type) == eStorage)
+                !% setting the flowrate in Storafe unit as zero to initialize.
+                !% the flowrate in a storage element does not make any difference.
+                !% because this flowrate will not be interpolated to the faces.
+                !% Talk with Dr. Hodges about this matter
+                elemMR(:,eMr_Flowrate) = 1.0E-7
+                elemMR(:,eMr_Velocity) = 1.0E-7
+            endwhere
+
+        end if
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+    end subroutine initial_storage_conditions
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine meta_element_assign (elemI, ei_elem_type, ei_meta_elem_type)
         !
         ! Assign meta element type to elements
@@ -519,17 +603,24 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         where ( (elemI(:,ei_elem_type) == eChannel)             .or. &
-            (elemI(:,ei_elem_type) == ePipe)                .or. &
-            (elemI(:,ei_elem_type) == eJunctionChannel)     .or. &
+
+            (elemI(:,ei_elem_type) == ePipe) )
+
+            elemI(:,ei_meta_elem_type) = eHQ2
+
+        elsewhere ( (elemI(:,ei_elem_type) == eJunctionChannel)     .or. &
             (elemI(:,ei_elem_type) == eJunctionPipe)  )
-            elemI(:,ei_meta_elem_type) = eHQ
+
+            elemI(:,ei_meta_elem_type) = eHQM
 
         elsewhere ( (elemI(:,ei_elem_type) == eWeir)            .or. &
             (elemI(:,ei_elem_type) == eorifice)         .or. &
             (elemI(:,ei_elem_type) == ePump)  )
+
             elemI(:,ei_meta_elem_type) = eQonly
 
         elsewhere ( (elemI(:,ei_elem_type) == eStorage) )
+
             elemI(:,ei_meta_elem_type) = eHonly
 
         elsewhere ( (elemI(:,ei_elem_type) == eBCup)            .or. &
@@ -543,16 +634,13 @@ contains
     !
     !==========================================================================
     !==========================================================================
-    subroutine face_meta_element_assign &
-        (faceI, elemI, N_face, fi_Melem_u, fi_Melem_d, fi_meta_etype_u, &
-        fi_meta_etype_d, ei_Meta_elem_type)
+    !
+    subroutine face_meta_element_assign (faceI, elemI, N_face)
 
-        character(64) :: subroutine_name = 'interp_with_junction_upstream'
+        character(64) :: subroutine_name = 'face_meta_element_assign'
 
         integer,      target,     intent(in out)  :: faceI(:,:), elemI(:,:)
-        integer,                  intent(in)      :: N_face, fi_Melem_u, fi_Melem_d
-        integer,                  intent(in)      :: fi_meta_etype_u, fi_meta_etype_d
-        integer,                  intent(in)      :: ei_Meta_elem_type
+        integer,                  intent(in)      :: N_face
 
         integer :: ii
 
@@ -560,12 +648,173 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         do ii=1, N_face
-            faceI(ii,fi_meta_etype_u) = elemI(faceI(ii,fi_Melem_u), ei_Meta_elem_type)
-            faceI(ii,fi_meta_etype_d) = elemI(faceI(ii,fi_Melem_d), ei_Meta_elem_type)
+            if ( (faceI(ii,fi_etype_u) == eChannel) .or. &
+                (faceI(ii,fi_etype_u) == ePipe) ) then
+
+                faceI(ii,fi_meta_etype_u) = eHQ2
+
+            elseif ( (faceI(ii,fi_etype_u) == eJunctionChannel) .or. &
+                (faceI(ii,fi_etype_u) == eJunctionPipe) ) then
+
+                faceI(ii,fi_meta_etype_u) = eHQm
+
+            elseif ( (faceI(ii,fi_etype_u) == eWeir)    .or. &
+                (faceI(ii,fi_etype_u) == eorifice) .or. &
+                (faceI(ii,fi_etype_u) == ePump) ) then
+
+                faceI(ii,fi_meta_etype_u) = eQonly
+
+            elseif ( (faceI(ii,fi_etype_u) == eStorage) ) then
+
+                faceI(ii,fi_meta_etype_u) = eHonly
+
+            elseif ( (faceI(ii,fi_etype_u) == eBCdn)    .or. &
+                (faceI(ii,fi_etype_u) == eBCup) ) then
+
+                faceI(ii,fi_meta_etype_u) = eNonHQ
+
+            else
+                print*, 'undefined element type upstream of face', ii
+                stop
+            endif
+        end do
+
+        do ii=1, N_face
+            if ( (faceI(ii,fi_etype_d) == eChannel) .or. &
+                (faceI(ii,fi_etype_d) == ePipe) ) then
+
+                faceI(ii,fi_meta_etype_d) = eHQ2
+
+            elseif ( (faceI(ii,fi_etype_d) == eJunctionChannel) .or. &
+                (faceI(ii,fi_etype_d) == eJunctionPipe) ) then
+
+                faceI(ii,fi_meta_etype_d) = eHQm
+
+            elseif ( (faceI(ii,fi_etype_d) == eWeir)    .or. &
+                (faceI(ii,fi_etype_d) == eorifice) .or. &
+                (faceI(ii,fi_etype_d) == ePump) ) then
+
+                faceI(ii,fi_meta_etype_d) = eQonly
+
+            elseif ( (faceI(ii,fi_etype_d) == eStorage) ) then
+
+                faceI(ii,fi_meta_etype_d) = eHonly
+
+            elseif ( (faceI(ii,fi_etype_d) == eBCdn)    .or. &
+                (faceI(ii,fi_etype_d) == eBCup) ) then
+
+                faceI(ii,fi_meta_etype_d) = eNonHQ
+
+            else
+                print*, 'undefined element type downstream of face', ii
+                stop
+            endif
         end do
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine face_meta_element_assign
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine QonlyElem_initial_condition_setup &
+        (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN)
+        ! this subroutine sets the wier and orifice initial condition.
+        character(64) :: subroutine_name = 'QonlyElem_initial_condition_setup'
+
+
+        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        integer,           intent(in out)  :: faceI(:,:)
+        real,      target, intent(in out)  :: faceR(:,:)
+        integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+        logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
+        logical,   target, intent(in out)  :: faceYN(:,:)
+
+        integer :: e2r_Volume_dummy, e2r_Velocity_dummy, eMr_Volume_dummy, eMr_Velocity_dummy
+
+        real,      pointer  :: valueUp(:), valueDn(:)
+        real,      pointer  :: weightUpQ(:), weightDnQ(:)
+        real,      pointer  :: faceQ(:)
+        logical,   pointer  :: facemask(:)
+
+
+        integer :: mm
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !% dummy pointers to call the wier/orifice step to find the flow through them.
+        e2r_Volume_dummy = e2r_Temp(next_e2r_temparray)
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
+        e2r_Velocity_dummy = e2r_Temp(next_e2r_temparray)
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
+        eMr_Volume_dummy = eMr_Temp(next_eMr_temparray)
+        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
+
+        eMr_Velocity_dummy = eMr_Temp(next_eMr_temparray)
+        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
+
+        valueUp => faceR(:,fr_Temp(next_fr_temparray))
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+        valueDn => faceR(:,fr_Temp(next_fr_temparray))
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+        weightUpQ => faceR(:,fr_Temp(next_fr_temparray))
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+        weightDnQ => faceR(:,fr_Temp(next_fr_temparray))
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
+
+        facemask   => faceYN(:,fYN_Temp(next_fYN_temparray))
+        next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp)
+
+        faceQ => faceR(:,fr_Flowrate)
+
+        !% call weir and orifice step to initialize their geometry and flow
+        call weir_step &
+            (e2r_Volume_dummy, e2r_Velocity_dummy, eMr_Volume_dummy, eMr_Velocity_dummy, e2r_Volume, &
+            e2r_Velocity, eMr_Volume, eMr_Velocity, elem2R, elemMR, &
+            faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, 1.0)
+
+        call orifice_step &
+            (e2r_Volume_dummy, e2r_Velocity_dummy, eMr_Volume_dummy, eMr_Velocity_dummy, e2r_Volume, &
+            e2r_Velocity, eMr_Volume, eMr_Velocity, elem2R, elemMR, &
+            faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, 1.0)
+
+        !% face reconstruction
+        !% update the flow to their faces
+        facemask = ( (faceI(:,fi_meta_etype_u) == eQonly) .or. &
+            (faceI(:,fi_meta_etype_d) == eQonly) )
+
+        weightUpQ = setting%Limiter%Timescale%Maximum
+        weightDnQ = setting%Limiter%Timescale%Maximum
+
+        where (facemask)
+            weightUpQ = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_d)
+            weightDnQ = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_u)
+            valueUp  = elem2R(faceI(:,fi_Melem_u),e2r_Flowrate)
+            valueDn  = elem2R(faceI(:,fi_Melem_d),e2r_Flowrate)
+            !% linear interpolation
+            faceQ = (weightUpQ * valueDn + weightDnQ * valueUp) /(weightUpQ + weightDnQ)
+        endwhere
+
+        valueUp    = nullvalueR
+        valueDn    = nullvalueR
+        weightUpQ  = nullvalueR
+        weightDnQ  = nullvalueR
+
+        nullify(valueUp, valueDn, weightUpQ, weightDnQ, facemask)
+
+        next_e2r_temparray = next_e2r_temparray - 2
+        next_eMr_temparray = next_eMr_temparray - 2
+        next_fr_temparray  = next_fr_temparray  - 4
+        next_fYN_temparray = next_fYN_temparray - 1
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+
+    end subroutine QonlyElem_initial_condition_setup
     !
     !==========================================================================
     !==========================================================================

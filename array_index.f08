@@ -74,9 +74,10 @@ module array_index
     integer, parameter :: eMi_nfaces_d        = 7    ! number of downstream faces for each element
     integer, parameter :: eMi_roughness_type  = 8    ! roughness type
     integer, parameter :: eMi_node_ID         = 9    ! ID of node in the link/node space
-    integer, parameter :: eMi_temp1           = 10
-    integer, parameter :: eMi_temp2           = 11
-    integer, parameter :: eMi_idx_base1       = 11    ! number of base data stored
+    integer, parameter :: eMi_curve_type      = 10   ! ID for storage surface area curve type. 1 for functional and 2 for tabular
+    integer, parameter :: eMi_temp1           = 11
+    integer, parameter :: eMi_temp2           = 12
+    integer, parameter :: eMi_idx_base1       = 12    ! number of base data stored
 
     integer, parameter :: eMi_n_temp          = 2     ! matching the the number of eMi_tempX arrays
     ! storage for temp array index positions
@@ -189,23 +190,30 @@ module array_index
     integer, parameter :: eMr_Eta                = 7
     integer, parameter :: eMr_Head               = 8
     integer, parameter :: eMr_Area               = 9
-    integer, parameter :: eMr_Topwidth           = 10
-    integer, parameter :: eMr_Perimeter          = 11
-    integer, parameter :: eMr_Depth              = 12
-    integer, parameter :: eMr_HydDepth           = 13
-    integer, parameter :: eMr_HydRadius          = 14
-    integer, parameter :: eMr_X                  = 15
-    integer, parameter :: eMr_Length             = 16
-    integer, parameter :: eMr_Zbottom            = 17
-    integer, parameter :: eMr_BreadthScale       = 18
-    integer, parameter :: eMr_Roughness          = 19
-    integer, parameter :: eMr_VolumeConservation = 20
-    integer, parameter :: eMr_FroudeNumber       = 21
-    integer, parameter :: eMr_LeftSlope          = 22
-    integer, parameter :: eMr_RightSlope         = 23
-    integer, parameter :: eMr_ParabolaValue      = 24
-    integer, parameter :: eMr_FullDepth          = 25
-    integer, parameter :: eMr_idx_base1          = 25
+    integer, parameter :: eMr_SurfArea           = 10
+    integer, parameter :: eMr_Topwidth           = 11
+    integer, parameter :: eMr_Perimeter          = 12
+    integer, parameter :: eMr_Depth              = 13
+    integer, parameter :: eMr_HydDepth           = 14
+    integer, parameter :: eMr_HydRadius          = 15
+    integer, parameter :: eMr_X                  = 16
+    integer, parameter :: eMr_Length             = 17
+    integer, parameter :: eMr_Zbottom            = 18
+    integer, parameter :: eMr_BreadthScale       = 19
+    integer, parameter :: eMr_Roughness          = 20
+    integer, parameter :: eMr_VolumeConservation = 21
+    integer, parameter :: eMr_FroudeNumber       = 22
+    integer, parameter :: eMr_LeftSlope          = 23
+    integer, parameter :: eMr_RightSlope         = 24
+    integer, parameter :: eMr_ParabolaValue      = 25
+    integer, parameter :: eMr_FullDepth          = 26     ! Storage full depth
+    integer, parameter :: eMr_FullVolume         = 27     ! Storage full volume
+    integer, parameter :: eMr_StorageConstant    = 28     ! Storage Constant for surface area
+    integer, parameter :: eMr_StorageCoeff       = 29     ! Storage Coefficient for surface area
+    integer, parameter :: eMr_StorageExponent    = 30     ! Storafe Exponent for surface area
+    integer, parameter :: eMr_SurfaceArea        = 31     ! Storage Surface Area
+    integer, parameter :: eMr_SurchargeDepth     = 32     ! Surcharge Depth
+    integer, parameter :: eMr_idx_base1          = 32
 
     ! column indexes for real branch data on a multi-branch junction
     ! note that these indexes must be consecutive by type
@@ -438,13 +446,14 @@ module array_index
 
     !%  nodeI COLUMN INDEXES FOR INTEGER DATA OF NODES IN LINK/NODE SYSTEM -------
     ! column index for integer data in nodeI array
-    integer, parameter :: ni_idx        = 1
-    integer, parameter :: ni_node_type  = 2
-    integer, parameter :: ni_N_link_u   = 3 ! number of upstream links at this node
-    integer, parameter :: ni_N_link_d   = 4 ! number of downstram links at this node
-    integer, parameter :: ni_assigned   = 5 ! given 1 when node has been assigned to face/elem,
-    integer, parameter :: ni_temp1      = 6
-    integer, parameter :: ni_idx_base1  = 6
+    integer, parameter :: ni_idx              = 1
+    integer, parameter :: ni_node_type        = 2
+    integer, parameter :: ni_N_link_u         = 3 ! number of upstream links at this node
+    integer, parameter :: ni_N_link_d         = 4 ! number of downstram links at this node
+    integer, parameter :: ni_curve_type       = 5 ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
+    integer, parameter :: ni_assigned         = 6 ! given 1 when node has been assigned to face/elem,
+    integer, parameter :: ni_temp1            = 7
+    integer, parameter :: ni_idx_base1        = 7
 
     ! column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
@@ -465,32 +474,40 @@ module array_index
     !%  linkR COLUMN INDEXES FOR REAL DATA OF LINKS IN LINK/NODE SYSTEM  --------
     ! column index for real data in the linkR array
     integer, parameter :: lr_Length                 = 1
-    integer, parameter :: lr_BreadthScale           = 2
-    integer, parameter :: lr_TopWidth               = 3
-    integer, parameter :: lr_ElementLength          = 4
-    integer, parameter :: lr_Slope                  = 5
-    integer, parameter :: lr_LeftSlope              = 6
-    integer, parameter :: lr_RightSlope             = 7
-    integer, parameter :: lr_Roughness              = 8
-    integer, parameter :: lr_InitialFlowrate        = 9
-    integer, parameter :: lr_InitialDepth           = 10
-    integer, parameter :: lr_InitialUpstreamDepth   = 11
-    integer, parameter :: lr_InitialDnstreamDepth   = 12
-    integer, parameter :: lr_ParabolaValue          = 13
-    integer, parameter :: lr_SideSlope              = 14   ! for weirs only
-    integer, parameter :: lr_InletOffset            = 15   ! inlet offset for weir or orifice element
-    integer, parameter :: lr_DischargeCoeff1        = 16   ! discharge coefficient for triangular weir part or orifice element
-    integer, parameter :: lr_DischargeCoeff2        = 17   ! discharge coefficient for rectangular weir part
-    integer, parameter :: lr_FullDepth              = 18   ! vertical opening of pipe, weir, orifice
-    integer, parameter :: lr_EndContractions        = 19
-    integer, parameter :: lr_temp1                  = 20
-    integer, parameter :: lr_idx_max                = 20
-
+    integer, parameter :: lr_InletOffset            = 2   ! Every links should have a inlet and oulet offset
+    integer, parameter :: lr_OutletOffset           = 3   ! to make it consistent with SWMM.
+    integer, parameter :: lr_BreadthScale           = 4
+    integer, parameter :: lr_TopWidth               = 5
+    integer, parameter :: lr_ElementLength          = 6
+    integer, parameter :: lr_Slope                  = 7
+    integer, parameter :: lr_LeftSlope              = 8
+    integer, parameter :: lr_RightSlope             = 9
+    integer, parameter :: lr_Roughness              = 10
+    integer, parameter :: lr_InitialFlowrate        = 11
+    integer, parameter :: lr_InitialDepth           = 12
+    integer, parameter :: lr_InitialUpstreamDepth   = 13
+    integer, parameter :: lr_InitialDnstreamDepth   = 14
+    integer, parameter :: lr_ParabolaValue          = 15
+    integer, parameter :: lr_SideSlope              = 16   ! for weirs only
+    integer, parameter :: lr_DischargeCoeff1        = 17   ! discharge coefficient for triangular weir part or orifice element
+    integer, parameter :: lr_DischargeCoeff2        = 18   ! discharge coefficient for rectangular weir part
+    integer, parameter :: lr_FullDepth              = 19   ! vertical opening of pipe, weir, orifice
+    integer, parameter :: lr_EndContractions        = 20
+    integer, parameter :: lr_temp1                  = 21
+    integer, parameter :: lr_idx_max                = 21
+    
     !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array
-    integer, parameter :: nr_Zbottom          = 1
-    integer, parameter :: nr_temp1            = 2
-    integer, parameter :: nr_idx_base1        = 2
+    integer, parameter :: nr_Zbottom                = 1
+    integer, parameter :: nr_InitialDepth           = 2
+    integer, parameter :: nr_FullDepth              = 3
+    integer, parameter :: nr_StorageConstant        = 4
+    integer, parameter :: nr_StorageCoeff           = 5
+    integer, parameter :: nr_StorageExponent        = 6
+    integer, parameter :: nr_PondedArea             = 7
+    integer, parameter :: nr_SurchargeDepth         = 8
+    integer, parameter :: nr_temp1                  = 9
+    integer, parameter :: nr_idx_base1              = 9
 
     ! column index for real data on multiple branches of a node
     integer, parameter :: nr_ElementLength_u1 = nr_idx_base1 + 1 ! used for subdividing junctions

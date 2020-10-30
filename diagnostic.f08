@@ -112,6 +112,26 @@ contains
             endwhere
         enddo
 
+        where ( elemMR(:,eMi_elem_type) == eStorage )
+            elemMR(:,eMr_VolumeConservation) = zeroR
+        endwhere
+
+        do mm=1,upstream_face_per_elemM
+            fup => elemMI(:,eMi_MfaceUp(mm))
+            where ( (elemMR(:,eMi_elem_type) == eStorage) .and. &
+                (elemMR(:,eMi_nfaces_u) >= mm) )
+                elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) - dt * faceR(fup,fr_flowrate)
+            endwhere
+        enddo
+
+        do mm=1,dnstream_face_per_elemM
+            fdn => elemMI(:,eMi_MfaceDn(mm))
+            where ( (elemMR(:,eMi_elem_type) == eStorage) .and. &
+                (elemMR(:,eMi_nfaces_d) >= mm) )
+                elemMR(:,eMr_VolumeConservation) = elemMR(:,eMr_VolumeConservation) + dt * faceR(fdn,fr_flowrate)
+            endwhere
+        enddo
+
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine diagnostic_element_volume_conservation_fluxes
     !
@@ -267,7 +287,8 @@ contains
         integer,               intent(in)      :: diagnosticTask
 
         integer,   pointer :: etype2(:), etypeM(:)
-        real               :: channelVolume, junctionVolume, weirVolume, orificevolume, totalVolume
+        real               :: channelVolume, weirVolume, orificevolume, totalVolume
+        real               :: junctionVolume, storageVolume
         real               :: inflowRate, outflowRate
 
         integer :: ii
@@ -287,8 +308,9 @@ contains
         weirVolume     = sum(elem2R(:,e2r_Volume),1,etype2 == eWeir)
         orificevolume  = sum(elem2R(:,e2r_Volume),1,etype2 == eOrifice)
         junctionVolume = sum(elemMR(:,eMr_Volume),1,etypeM == eJunctionChannel)
+        storageVolume  = sum(elemMR(:,eMr_Volume),1,etypeM == eStorage)
 
-        totalVolume = channelVolume + junctionVolume + weirVolume + orificevolume
+        totalVolume = channelVolume + junctionVolume + weirVolume + orificevolume + storageVolume
 
         select case (diagnosticTask)
           case (0)

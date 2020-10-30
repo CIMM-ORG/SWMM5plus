@@ -286,6 +286,7 @@ contains
         subroutine_name = 'get_node_attr'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+
         if ((attr > num_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
             stop
