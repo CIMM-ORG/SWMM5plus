@@ -164,7 +164,7 @@ contains
         (elem2R, elem2I, elemMR, elemMI, e2r_Volume_new, eMr_Volume_new)
         !
         ! compute local volume conservation (subtracting net change from flux volume)
-        ! this assumes that fluxes have beens tored in VolumeConservation column
+        ! this assumes that fluxes have beens stored in VolumeConservation column
         ! in a prior call to diagnostic_element_volume_conservation_fluxes
         !
         character(64) :: subroutine_name = 'diagnostic_element_volume_conservation'
@@ -236,7 +236,7 @@ contains
 
         call diagnostic_froude_number_one &
             (elem2R, elem2I, e2r_FroudeNumber, e2r_Velocity, e2r_HydDepth, e2i_elem_type, eChannel)
-
+        ! this needed to be fixed for surcharged pipe
         call diagnostic_froude_number_one &
             (elem2R, elem2I, e2r_FroudeNumber, e2r_Velocity, e2r_HydDepth, e2i_elem_type, ePipe)
 

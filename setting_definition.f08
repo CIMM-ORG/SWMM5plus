@@ -56,7 +56,7 @@ module setting_definition
     !%  setting%Limiter%Velocity
     type velocityType
         logical :: UseLimitMax  = .true.
-        real    :: Maximum      = 20 ! m/s
+        real    :: Maximum      = 20.0 ! m/s
     endtype velocityType
         
     !%  setting%DefaultAC%Switch
@@ -78,9 +78,9 @@ module setting_definition
 
     !%  setting%DefaultAC%Iter
     type iterType
-        integer :: Max         = 100        ! cutoff for AC iterations without convergence
-        integer :: Min         = 3          ! reset by code so that itermin * dtau >= dt
-        integer :: Firststep   = 100        ! allows more iterations in first time step
+        integer :: Max         = 100         ! cutoff for AC iterations without convergence
+        integer :: Min         = 3           ! reset by code so that itermin * dtau >= dt
+        integer :: Firststep   = 100         ! allows more iterations in first time step
     end type itertype
 
     !%  setting%DefaultAC%CFL
@@ -216,19 +216,19 @@ module setting_definition
     !%  setting%ZeroValue
     type zerovalueType
         logical :: UseZeroValues = .true.
-        real    :: Area         = 1.0e-7  ! m^2
+        real    :: Area         = 1.0e-6  ! m^2
         real    :: Depth        = 1.0e-4  ! m
         real    :: Flowrate     = 0.0     ! m^3/s
         real    :: Topwidth     = 1.0e-4  ! m
         real    :: Velocity     = 0.0     ! m/s
-        real    :: Volume       = 1.0e-7  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
+        real    :: Volume       = 1.0e-6  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
     end type zerovalueType
 
     !%  setting%DefaultAC
     type defaultACType
-        character(len=64)       :: Tsource     = 'T00'   ! 'T10', 'T20'
+        character(len=64)       :: Tsource     = 'T00' ! 'T10', 'T20'
         character(len=64)       :: TimeStencil = 'backwards3'   ! 'CN' 
-        logical                 :: PrintConvergence = .true.
+        logical                 :: PrintConvergence = .false.
         real                    :: dtau  
         type(dtaufactorType)    :: dtauFactor
         type(convergenceType)   :: Convergence

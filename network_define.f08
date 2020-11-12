@@ -23,7 +23,7 @@ module network_define
 
     public :: network_initiation
 
-    integer:: debuglevel = 1
+    integer:: debuglevel = 0
 
 contains
     !

@@ -196,13 +196,13 @@ contains
             elemMR, elemMI, faceR)
 
 
-        !print *, trim(subroutine_name)
+        ! print *, trim(subroutine_name)
         !print *, elemMR(:,eMr_totalarea)
         !print *, elemMR(:,eMr_Flowrate_u1), elemMR(:,eMr_Velocity_u1 )
         !print *, elemMR(:,eMr_Flowrate_u2), elemMR(:,eMr_Velocity_u2 )
         !print *, elemMR(:,eMr_Flowrate),    elemMR(:,eMr_Velocity_new)
         !print *, elemMR(:,eMr_Flowrate_d1), elemMR(:,eMr_Velocity_d1 )
-
+        ! print  *, elem2R(:,e2r_Flowrate)
         !%  enforce maximum velocities in junction branches
         call adjust_junction_branch_velocity_limit (elemMR, elemMI)
 
@@ -278,6 +278,8 @@ contains
         where (elemI(:,ei_elem_type) == eThisElemType)
             flowrate = area * velocity
         endwhere
+        ! print*,trim(subroutine_name)
+        ! print*,'flowrate', flowrate
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine flowrate_from_velocity
@@ -314,7 +316,9 @@ contains
             velocityNew = flowrateNew / area
             flowrate = flowrateNew
         endwhere
-
+        ! print*, 'debug      ', trim(subroutine_name)
+        ! print*, 'velocityNew',velocityNew
+        ! print*, 'flowrate   ',flowrate
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine velocity_from_flowrate
     !
@@ -487,6 +491,9 @@ contains
             Velocity = sign(min(abs(smallVelocity), abs(Velocity)),smallVelocity)
             Flowrate = Velocity * Area
         endwhere
+        ! print*, 'debug   ', trim(subroutine_name)
+        ! print*, 'velocity', velocity
+        ! print*, 'flowrate', flowrate
 
         Slope          = nullvalueR
         ManningsN      = nullvalueR
@@ -689,14 +696,14 @@ contains
         integer,           intent(in)      :: elem2I(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:)
 
-        integer    ::  indx(2), maskindx1, maskindx2
+        integer    ::  indx(2), maskindx1, maskindx2, maskindx3
 
         real,      pointer :: wavespeed(:), velocity(:), zcrown(:)
         real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
         real,      pointer :: tscale_H_up(:), tscale_H_dn(:)
         real,      pointer :: tscale_G_up(:), tscale_G_dn(:)
         real,      pointer :: length(:), hyddepth(:), eta(:)
-        logical,   pointer :: maskarray1(:), maskarray2(:)
+        logical,   pointer :: maskarray1(:), maskarray2(:), maskarray3(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -707,6 +714,10 @@ contains
 
         maskindx2 = e2YN_Temp(next_e2YN_temparray)
         maskarray2 => elem2YN(:,maskindx2)
+        next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
+
+        maskindx3 = e2YN_Temp(next_e2YN_temparray)
+        maskarray3 => elem2YN(:,maskindx2)
         next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
 
         wavespeed => elem2R(:,e2r_Temp(next_e2r_temparray))
@@ -730,11 +741,11 @@ contains
         !%  compute timescale for HQ2 element which includes channel and pipes
         maskarray1 = ( (elem2I(:,e2i_meta_elem_type) == eHQ2) )
         !%  when pipe is surcharged, the wavespeed changes. So special condition is needed
-        maskarray2 = ( (elem2I(:,e2i_elem_type) == ePipe) .and. (eta > zcrown) )
+        maskarray3 = ( (elem2I(:,e2i_elem_type) == ePipe) .and. (eta > zcrown) )
 
         where (maskarray1)
             wavespeed = sqrt( grav * hyddepth )
-        elsewhere (maskarray2)
+        elsewhere (maskarray3)
             ! edge case where pipe is surcharged
             wavespeed = wavespeed * setting%DefaultAC%Celerity%RC
         endwhere
@@ -753,16 +764,16 @@ contains
         indx(1) = e2r_Timescale_Q_u
         indx(2) = e2r_Timescale_Q_d
 
-
         call timescale_limiter &
             (elem2R, elem2I, elem2YN, indx, maskindx1, maskindx2)
 
         wavespeed = nullvalueR
         maskarray1 = nullvalueL
         maskarray2 = nullvalueL
-        nullify(wavespeed, maskarray1, maskarray2)
+        maskarray3 = nullvalueL
+        nullify(wavespeed, maskarray1, maskarray2, maskarray3)
         next_e2r_temparray = next_e2r_temparray-1
-        next_e2YN_temparray=next_e2YN_temparray-2
+        next_e2YN_temparray=next_e2YN_temparray-3
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine timescale_value_HQ2

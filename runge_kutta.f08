@@ -56,7 +56,8 @@ contains
         integer,   pointer :: fdn(:), fup(:)
 
         integer :: e2r_Volume_new, e2r_Velocity_new,  eMr_Volume_new, eMr_Velocity_new
-        integer :: e2r_Flowrate_new, e2r_Area_new, e2r_Eta_new, fr_Flowrate_net_new
+        integer :: e2r_Flowrate_new, e2r_Flowrate_tmp, e2r_Area_new, e2r_Area_tmp
+        integer :: e2r_Eta_new, e2r_Eta_tmp, fr_Flowrate_net_new
         integer :: eMr_Flowrate_new, eMr_Area_new, eMr_Eta_new
         integer :: ii
         real    :: thiscoef(2), steptime, af(3)
@@ -86,10 +87,19 @@ contains
         e2r_Flowrate_new = e2r_Temp(next_e2r_temparray)
         next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
+        e2r_Flowrate_tmp = e2r_Temp(next_e2r_temparray)
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
         e2r_Area_new = e2r_Temp(next_e2r_temparray)
         next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
+        e2r_Area_tmp = e2r_Temp(next_e2r_temparray)
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
         e2r_Eta_new = e2r_Temp(next_e2r_temparray)
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
+        e2r_Eta_tmp = e2r_Temp(next_e2r_temparray)
         next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
         eMr_Volume_new = eMr_Temp(next_eMr_temparray)
@@ -144,9 +154,26 @@ contains
                 stop
             endif
 
+            ! Convergence test storage for AC 
+            ! checking convergence on d/dtau of eta * A and of Q.
+            where (elem2I(:,e2i_solver) == AC )
+                elem2R(:,e2r_CtestH1) = elem2R(:,e2r_Eta) * elem2R(:,e2r_Area)
+                elem2R(:,e2r_CtestQ1) = elem2R(:,e2r_Flowrate)
+                ! net flowrate on faces - this is the flux used for scalar
+                ! transport (to be added later) and for volume conservation calculations
+                ! fQNetNew = wrk * fQ + fQNet ! <= the mask condition is wrong, correct later
+            endwhere
+
             !%  step through the two steps of the RK2
             do ii=1,2
-                steptime = thistime + thiscoef(ii) * dt
+                if (cycleSelect (1)) then
+                    !%  cycleSelect(1) is only true when the solver is in normal time loop
+                    steptime = thistime + thiscoef(ii) * dt
+                else
+                    !%  when cycleSelect(1) is false, the solver is in psuedo time
+                    !%  so the steptime remains the same
+                    steptime = thistime
+                endif
 
                 if ( (  count(elem2I(:,e2i_solver) == SVE) &
                       + count(elemMI(:,eMi_solver) == SVE)> zeroI) .and. cycleSelect(ii) ) then
@@ -164,9 +191,9 @@ contains
                     call ac_rk2_step &
                         (e2r_Flowrate, e2r_Area, e2r_Eta, eMr_Flowrate, eMr_Area, eMr_Eta, &
                         fr_Flowrate_net, e2r_Flowrate_new, e2r_Area_new, e2r_Eta_new,      &
-                        eMr_Flowrate_new, eMr_Area_new, eMr_Eta_new, fr_Flowrate_net_new,  &
-                        elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af,   &
-                        thiscoef(ii))
+                        e2r_Flowrate_tmp, e2r_Area_tmp, e2r_Eta_tmp, eMr_Flowrate_new,     &
+                        eMr_Area_new, eMr_Eta_new, fr_Flowrate_net_new, elem2R, elemMR,    &
+                        faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af, thiscoef(ii))
                 endif
 
                 ! !  Sets the Qonly element geometry to provisional values
@@ -186,7 +213,6 @@ contains
                     elemMI, elemMYN, faceR,  faceI, faceYN, bcdataDn, bcdataUp, steptime, &
                     ii, ID, numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,  &
                     widthDepthData, cellType)
-
 
                 ! !% advane Qonly elemnt
                 ! call QonlyElement_step &
@@ -231,9 +257,9 @@ contains
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)
 
             !%  assign the solver for the next RK step depending on area
-            call assign_solver &
-                (elem2I, elem2R, e2r_Area, e2r_FullArea, e2i_elem_type, ePipe,  &
-                e2i_solver, e2r_Temp, e2r_n_temp, next_e2r_temparray)
+            ! call assign_solver &
+            !     (elem2I, elem2R, e2r_Area, e2r_FullArea, e2i_elem_type, ePipe,  &
+            !     e2i_solver, e2r_Temp, e2r_n_temp, next_e2r_temparray)
 
             ! !%  HACK: AC solver for Junction Pipe has not derived yet
             ! call assign_solver &
@@ -246,10 +272,8 @@ contains
                                                 elem2R(:,e2r_CtestH1)
                 elem2R(:,e2r_CtestQ1) = elem2R(:,e2r_Flowrate) - elem2R(:,e2r_CtestQ1)
             endwhere
-
-
         endif
-
+        
         ! !%  Printing for debug
         ! print*, 'Area ==>'
         ! call utility_print_values_by_link &
@@ -265,8 +289,11 @@ contains
         elem2R(:,e2r_Volume_new)    = nullvalueR
         elem2R(:,e2r_Velocity_new)  = nullvalueR
         elem2R(:,e2r_Flowrate_new)  = nullvalueR
+        elem2R(:,e2r_Flowrate_tmp)  = nullvalueR
         elem2R(:,e2r_Area_new)      = nullvalueR
+        elem2R(:,e2r_Area_tmp)      = nullvalueR
         elem2R(:,e2r_Eta_new)       = nullvalueR
+        elem2R(:,e2r_Eta_tmp)       = nullvalueR
         elemMR(:,eMr_Volume_new)    = nullvalueR
         elemMR(:,eMr_Velocity_new)  = nullvalueR
         elemMR(:,eMr_Flowrate_new)  = nullvalueR
@@ -274,7 +301,7 @@ contains
         elemMR(:,eMr_Eta_new)       = nullvalueR
         faceR(:,fr_Flowrate_net_new) = nullvalueR
 
-        next_e2r_temparray = next_e2r_temparray - 5
+        next_e2r_temparray = next_e2r_temparray - 8
         next_eMr_temparray = next_eMr_temparray - 5
         next_fr_temparray  = next_fr_temparray  - 1
 

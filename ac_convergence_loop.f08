@@ -100,7 +100,7 @@ contains
         !%  initialization for AC loop
         isConverged = .false.
         tauTime = zeroR
-        dtau = setting%DefaultAC%dtau
+        dtau    = setting%DefaultAC%dtau
         !%  count the number of element in AC loop
         !%  HACK: Check with Dr. Hodges
         NX = count(elem2I(:,e2i_solver) == AC)
@@ -125,12 +125,14 @@ contains
             !%  acCycle mask ensures only the second RK step is take in AC convergence
             acCycle(1) = .false.
             acCycle(2) = .true.
-
+            ! print*,'------------------------------------'
+            ! print*, 'This Iter =>',thisiter
             call rk2 & 
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
                 bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
                 zBottom, xDistance, Breadth, widthDepthData, cellType, acCycle)
-
+            ! print*, 'FLOWRATE     ',elem2R(995:1000,e2r_flowrate)
+                     
             !%  baseline for tau convergence -- change from the first RK full step
             where (elem2I(:,e2i_solver) == AC)
                 elem2R(:,e2r_CtestH0) = elem2R(:,e2r_eta) * elem2R(:,e2r_area) - &
@@ -205,23 +207,25 @@ contains
                     print*, 'AC converged at iteration ',thisiter
                     print*, 'H absolute norms:  ',AnormH(1), AnormH(2), AnormH(3)
                     print*, 'Q absolute norms:  ',AnormQ(1), AnormQ(2), AnormQ(3)
-                    print*, 'H relative Lnorms: ',RLnormH(1), RLnormH(2), RLnormH(3)
-                    print*, 'Q relative Lnorms: ',RLnormQ(1), RLnormQ(2), RLnormQ(3)
+                    ! print*, 'H relative Lnorms: ',RLnormH(1), RLnormH(2), RLnormH(3)
+                    ! print*, 'Q relative Lnorms: ',RLnormQ(1), RLnormQ(2), RLnormQ(3)
                     print*,'------------------------------------'
 
                 else
                     print*,'------------------------------------'
-                    print*, '**** AC residual larger than target'
+                    print*, '**** AC residual larger than target', thisiter
                     print*, 'H absolute norms: ',AnormH(1), AnormH(2), AnormH(3)
                     print*, 'Q absolute norms: ',AnormQ(1), AnormQ(2), AnormQ(3)
-                    print*, 'H relative Lnorms: ',RLnormH(1), RLnormH(2), RLnormH(3)
-                    print*, 'Q relative Lnorms: ',RLnormQ(1), RLnormQ(2), RLnormQ(3)
+                    ! print*, 'H relative Lnorms: ',RLnormH(1), RLnormH(2), RLnormH(3)
+                    ! print*, 'Q relative Lnorms: ',RLnormQ(1), RLnormQ(2), RLnormQ(3)
 
                 endif
             endif
 
             !%  HACK: add density anomay corrections
-
+            ! if (thisiter == 5) then
+            !     stop
+            ! endif
         end do
 
         ! release temporary arrays

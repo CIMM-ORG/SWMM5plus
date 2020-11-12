@@ -180,7 +180,7 @@ contains
         linkI(:,li_link_type) = lPipe
 
         ! assign all as rectangular pipes
-        linkI(:,li_geometry) = lCircular
+        linkI(:,li_geometry) = lRectangular
 
         ! assign the link position and mappings
 

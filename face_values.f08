@@ -204,9 +204,6 @@ contains
         facemask_eHQ2    => faceYN(:,fYN_Temp(next_fYN_temparray))
         next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp)
 
-        ! find every elements other than multi face
-        ! facemask = ( (faceI(:,fi_type) == fChannel) .or. (faceI(:,fi_type) == fPipe) .or. &
-        !              (faceI(:,fi_type) == fWeir) .or. (faceI(:,fi_type) == fOrifice) )
         facemask = ( ((faceI(:,fi_meta_etype_u) == eHQ2) .or. (faceI(:,fi_meta_etype_u) == eQonly)) &
             .and. &
             ((faceI(:,fi_meta_etype_d) == eHQ2) .or. (faceI(:,fi_meta_etype_d) == eQonly)) )
@@ -273,7 +270,10 @@ contains
             faceR(:,fr_Area_u)     = faceR(:,fr_Area_d)
             faceR(:,fr_Velocity_u) = faceR(:,fr_Velocity_d)
         endwhere
-
+        ! print*, trim(subroutine_name)
+        ! print*, 'Topwidth', faceR(:,fr_Topwidth)
+        ! print*, 'Area_d  ', faceR(:,fr_Area_d)
+        ! print*, 'flowrate', faceR(:,fr_Flowrate)
 
         facemask = nullvalueL
         facemask_eHQ2 = nullvalueL
@@ -873,8 +873,14 @@ contains
             velDn  = flowrate / areaDn
         endwhere
 
-        !%  for no jumps, use a linear length interpolation for free surface (elsewhere)
+        ! if (sum(jumptype) .GE. 1)then
+        !     print*, 'thisTime stopped because of jump'
+        !     stop 
+        ! endif
 
+        !%  for no jumps, use a linear length interpolation for free surface (elsewhere)
+        ! print*,trim(subroutine_name)
+        ! print*, 'JumpType', jumptype
         froudeUp = nullvalueR
         froudeDn = nullvalueR
         nullify(froudeUp, froudeDn)
@@ -965,6 +971,7 @@ contains
             ! the weight of interpolation is timescale max.
             ! the interpolation gives the eta of the element downstream.
             etaDn = elem2R(faceI(:,fi_Melem_d),e2r_Eta)
+            ! etaUp = etaDn
         endwhere
 
         where (faceI(:,fi_meta_etype_d) == eHonly)
@@ -982,6 +989,9 @@ contains
         endwhere
 
         etaUp = etaDn
+        
+        ! print*, trim(subroutine_name)
+        ! print*, 'etaDn', etaDn
 
         weightUp = nullvalueR
         weightDn = nullvalueR

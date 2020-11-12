@@ -62,17 +62,17 @@ contains
         !% needed for the long term code.
         ndebug = 0
         if (setting%Debugout%elem2R) then
-            ndebug = ndebug + 22
+            ndebug = ndebug + 26
         endif
         if (setting%Debugout%elem2I) then
-            ndebug = ndebug + 8
+            ndebug = ndebug + 10
         endif
         if (setting%Debugout%elem2YN) then
             ndebug = ndebug + 2
         endif
 
         if (setting%Debugout%elemMR) then
-            ndebug = ndebug + 43
+            ndebug = ndebug + 44
         endif
         if (setting%Debugout%elemMI) then
             ndebug = ndebug + 9
@@ -190,6 +190,8 @@ contains
             call debug_singlefile_open (debugfile(ii), 'elem2I','Mface_u', e2i_Mface_u)
             ii=ii+1
             call debug_singlefile_open (debugfile(ii), 'elem2I','Mface_d', e2i_Mface_d)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'elem2I','solver', e2i_solver)
             ii=ii+1
         endif
 

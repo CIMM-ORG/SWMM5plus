@@ -136,9 +136,9 @@ contains
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
-            display_interval = 1000
+            display_interval = 1
             first_step = 1
-            last_step  =  10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  =  1000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
             ! tests that ran:  Fr = 0.25, 0.5
@@ -158,9 +158,9 @@ contains
             init_depth      = 1.0
             idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
             ManningsN       = 0.03
-            channel_length    = 10000.0
+            channel_length  = 10000.0
             lowerZ          = 1.0
-            subdivide_length = 5000.0
+            subdivide_length = 50.0
 
             ! rectangular geometry
             parabolaValue = zeroR
@@ -199,7 +199,7 @@ contains
           case ('waller_creek')
 
             !open the Waller Creek depth list
-            open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
+            open(newunit=unit, file='UR1_swmm_test.txt', status='OLD')
 
             ! get the number of links and number of pairs per each link from the file
             n_rows_in_file_node = read_number_of_cells(unit)
@@ -783,7 +783,7 @@ contains
             ! step controls
             display_interval = 1
             first_step = 1
-            last_step  = 315 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  = 1000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
             ! tests that ran:  Fr = 0.25, 0.5
@@ -791,22 +791,22 @@ contains
             CFL          = 0.25  ! determines dt from subdivide_length
 
             ! keep these physics fixed
-            channel_breadth = 2.0
+            channel_breadth = 3.0
 
             ! assign geometry type for links
             do ii=1,N_link
-                channel_geometry(ii) = lCircular
+                channel_geometry(ii) = lRectangular
             end do
 
-            depth_upstream  = 1.75
-            depth_dnstream  = 1.75
-            init_depth      = 1.75
+            depth_upstream  = 1.0
+            depth_dnstream  = 1.0
+            init_depth      = 1.0
             idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
-            ManningsN       = 0.016
+            ManningsN       = 0.03
             channel_length  = 10000.0
-            lowerZ          = 1.0
-            subdivide_length = 5000.0
-            fullDepth       = 2.0    
+            lowerZ          = 0.0
+            subdivide_length = 10.0
+            fullDepth       = 3.0    
 
             ! rectangular geometry
             parabolaValue = zeroR
@@ -814,9 +814,9 @@ contains
             rightSlope    = zeroR
 
             call froude_driven_pipe_setup &
-                (upperZ(1), area(1), fullDepth(1), flowrate(1), velocity(1),  &
-                Froude(1),  channel_breadth(1), channel_topwidth(1), ManningsN(1), &
-                channel_length(1), lowerZ(1),  init_depth(1))
+                (upperZ(1), area(1), flowrate(1), velocity(1), Froude(1),  channel_breadth(1), &
+                channel_topwidth(1), fulldepth(1), ManningsN(1), channel_length(1), lowerZ(1), &
+                init_depth(1), channel_geometry(1))
 
             call this_setting_for_time_and_steps &
                 (CFL, velocity, init_depth, subdivide_length, &
@@ -943,7 +943,7 @@ contains
 
 
         setting%Time%dt = utility_round_to_significant_digits(dtmin,dt_significant_digits)
-
+        
         setting%Step%Current = 1
 
         setting%Step%First = first_step
@@ -1133,36 +1133,53 @@ contains
     !==========================================================================
     !
     subroutine froude_driven_pipe_setup &
-        (upperZ, area, fulldepth, flowrate, velocity, Froude,  breadth, &
-        topwidth, ManningsN, total_length, lowerZ, depth)
+        (upperZ, area, flowrate, velocity, Froude,  breadth, topwidth, &
+        fulldepth, ManningsN, total_length, lowerZ, depth, pipe_geometry)
 
         character(64) :: subroutine_name = 'froude_driven_pipe_setup'
 
-        real,  intent(out)    :: area, topwidth, flowrate, velocity, upperZ
-        real,  intent(in)     :: Froude, breadth, ManningsN, lowerZ, fulldepth
-        real,  intent(in)     :: depth, total_length
+        real,    intent(out)    :: area, topwidth, flowrate, velocity, upperZ
+        real,    intent(in)     :: Froude, breadth, ManningsN, lowerZ, fulldepth
+        real,    intent(in)     :: depth, total_length
+
+        integer, intent(in)     :: pipe_geometry
 
         real :: perimeter, rh, slope, AoverAfull, YoverYfull
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
+        select case (pipe_geometry)
+            case(lCircular)
+                YoverYfull  = depth / fulldepth
+                if (YoverYfull .GT. 1) then
+                    print*, 'Warning: Initial water depth is greater than pipe full depth'
+                endif
+                area      = (onefourthR * pi * fulldepth ** twoR) * table_lookup(YoverYfull, ACirc, NACirc)
+                topwidth  = fulldepth * table_lookup(YoverYfull, WCirc, NWCirc)
+                rh        = onefourthR * fulldepth * table_lookup(YoverYfull, RCirc, NRCirc)
+                perimeter = area / rh
+            case(lRectangular)
+                YoverYfull  = depth / fulldepth
+                if (YoverYfull .GT. 1) then
+                    print*, 'Warning: Initial water depth is greater than pipe full depth'
+                    area      = breadth * depth
+                    topwidth  = 0.0
+                    rh        = (breadth * fulldepth) / (2.0 * (breadth + fulldepth))
+                    perimeter = area / rh
+                else
+                    area      = breadth * depth
+                    topwidth  = breadth 
+                    perimeter = 2.0 * depth + breadth
+                    rh        = area / perimeter
+                endif
+            end select
 
-        YoverYfull  = depth / fulldepth
-
-        if (YoverYfull .GT. 1) then
-            print*, 'Warning: Initial water depth is greater than pipe full depth'
-        endif
-
-        area        = (onefourthR * pi * fulldepth ** twoR) * table_lookup(YoverYfull, ACirc, NACirc)
-        topwidth    = fulldepth * table_lookup(YoverYfull, WCirc, NWCirc)
-        rh          = onefourthR * fulldepth * table_lookup(YoverYfull, RCirc, NRCirc)
-        perimeter   = area / rh
-        velocity    = Froude * sqrt(grav * depth)
-        flowrate    = area * velocity
-        slope       = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
-        upperZ      = lowerZ + slope * total_length
-
+            velocity  = Froude * sqrt(grav * depth)
+            flowrate  = area * velocity
+            slope     = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
+            upperZ    = lowerZ + slope * total_length
+            
         print *,'-----------------'
         print *, area, 'area'
         print *, topwidth, 'topwidth'
@@ -1175,7 +1192,7 @@ contains
         print *, total_length, 'total_length'
         print *, slope*total_length, 'slope*total_length'
         print *,'-----------------'
-
+        
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine froude_driven_pipe_setup
     !

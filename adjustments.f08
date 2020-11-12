@@ -68,6 +68,8 @@ contains
 
             endwhere
 
+            ! print*, 'debug   ', trim(subroutine_name)
+            ! print*, 'velocity', velocity
         endif
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -445,7 +447,7 @@ contains
         elemAdjust => elem2R(:, e2r_adjustflow)
 
         !% HACK - at this point only handling channel elements
-        where (elem2I(:,e2i_elem_type) == eChannel)
+        where ( (elem2I(:,e2i_elem_type) == eChannel) .or. (elem2I(:,e2i_elem_type) == ePipe) )
             elemMask = .true.
         endwhere
 

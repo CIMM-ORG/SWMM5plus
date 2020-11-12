@@ -76,7 +76,7 @@ contains
             (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, linkR, linkI)
 
         call initial_junction_conditions &
-            (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
+           (faceR, faceI, elem2R, elem2I, elemMR, elemMYN, elemMI, nodeR, nodeI)
 
         call initial_storage_conditions &
             (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
@@ -115,7 +115,7 @@ contains
         call QonlyElem_initial_condition_setup &
             (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN)
 
-        !% select the solver based on Depth/Depthfull
+        !% select the solver based on Area/AreaFull
         call initial_solver_select &
             (elem2R, elemMR, elem2I, elemMI)
             
@@ -268,8 +268,8 @@ contains
                 elem2I(:,e2i_roughness_type) = linkI(ii,li_roughness_type)
                 elem2R(:,e2r_Roughness)      = linkR(ii,lr_Roughness)
                 elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)
-                elem2R(:,e2r_Flowrate_N0)    = elem2R(:,e2r_Flowrate)
-                elem2R(:,e2r_Flowrate_N1)    = elem2R(:,e2r_Flowrate) 
+                ! elem2R(:,e2r_Flowrate_N0)    = elem2R(:,e2r_Flowrate)
+                ! elem2R(:,e2r_Flowrate_N1)    = elem2R(:,e2r_Flowrate) 
                 elem2R(:,e2r_LeftSlope)      = linkR(ii,lr_LeftSlope)
                 elem2R(:,e2r_RightSlope)     = linkR(ii,lr_RightSlope)
                 elem2R(:,e2r_ParabolaValue)  = linkR(ii,lr_ParabolaValue)
@@ -279,15 +279,18 @@ contains
                 !% handle rectangular elements
                 where (elem2I(:,e2i_link_ID) == Lindx)
                     elem2I(:,e2i_geometry)  = eRectangular
-                    elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_FullDepth) = linkR(ii,lr_FUllDepth)
                     elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
                     elem2R(:,e2r_Topwidth)  = linkR(ii,lr_BreadthScale)
                     elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_FullArea)  = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
                     elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                 endwhere
 
             elseif (linkI(ii,li_geometry) == lParabolic ) then
@@ -295,7 +298,7 @@ contains
                 ! Input Topwidth, InitialDepth
                 where (elem2I(:,e2i_link_ID) == Lindx)
                     elem2I(:,e2i_geometry)  = eParabolic
-
+                    elem2R(:,e2r_FullDepth) = linkR(ii,lr_FUllDepth)
                     ! calculate hyd depth from the depth
                     elem2R(:,e2r_HydDepth) = twothirdR * elem2R(:,e2r_Depth)
 
@@ -306,6 +309,9 @@ contains
 
                     elem2R(:,e2r_Area)      = twothirdR * elem2R(:,e2r_Depth) &
                         * elem2R(:,e2r_Topwidth)
+
+                    elem2R(:,e2r_FullArea)  = twothirdR * elem2R(:,e2r_FullDepth) &
+                        * twoR * sqrt(elem2R(:,e2r_FullDepth)/elem2R(:,e2r_ParabolaValue))
 
                     elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
 
@@ -338,6 +344,8 @@ contains
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) &
                         * elem2R(:,e2r_Length)
 
+                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
+
                 endwhere
 
             elseif (linkI(ii,li_geometry) == lTrapezoidal ) then
@@ -347,12 +355,18 @@ contains
                     elem2I(:,e2i_geometry)  = eTrapezoidal
 
                     elem2R(:,e2r_BreadthScale) = linkR(ii,lr_BreadthScale)
+                    elem2R(:,e2r_FullDepth)    = linkR(ii,lr_FUllDepth)
 
                     ! (Bottom width + averageSlope * hydraulicDepth)*hydraulicDepth
                     elem2R(:,e2r_Area)      = (elem2R(:,e2r_BreadthScale)           &
                         + onehalfR &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                         * elem2R(:,e2r_Depth)) * elem2R(:,e2r_Depth)
+
+                    elem2R(:,e2r_FullArea)  = (elem2R(:,e2r_BreadthScale)           &
+                        + onehalfR &
+                        * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
+                        * elem2R(:,e2r_FullDepth)) * elem2R(:,e2r_FullDepth)
 
                     elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
 
@@ -376,6 +390,8 @@ contains
                         + elem2R(:,e2r_Depth) &
                         * (sqrt(oneR + elem2R(:,e2r_LeftSlope)**twoR) &
                         + sqrt(oneR + elem2R(:,e2r_RightSlope)**twoR))
+
+                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                 endwhere
             elseif (linkI(ii,li_geometry) == lCircular ) then
                 !% handle circular elements
@@ -436,14 +452,18 @@ contains
                 where (elem2I(:,e2i_link_ID) == Lindx)
                     elem2I(:,e2i_geometry)  = eTriangular
 
-                    elem2R(:,e2r_HydDepth) = onehalfR * elem2R(:,e2r_Depth)
-
+                    elem2R(:,e2r_HydDepth)  = onehalfR * elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_FullDepth) = linkR(ii,lr_FUllDepth)
                     elem2R(:,e2r_BreadthScale) = elem2R(:,e2r_FullDepth)              &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
                     ! (averageSlope * hydraulicDepth)*hydraulicDepth
                     elem2R(:,e2r_Area) = onehalfR &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                         * elem2R(:,e2r_Depth) * elem2R(:,e2r_Depth)
+
+                    elem2R(:,e2r_FullArea) = onehalfR &
+                        * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
+                        * elem2R(:,e2r_FullDepth) * elem2R(:,e2r_FullDepth)
 
                     elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
 
@@ -463,6 +483,7 @@ contains
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Depth) &
                         * (sqrt(oneR + elem2R(:,e2r_LeftSlope)**twoR) &
                         + sqrt(oneR + elem2R(:,e2r_RightSlope)**twoR))
+                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                 endwhere
 
             elseif (linkI(ii,li_geometry) == lWidthDepth ) then
@@ -471,21 +492,34 @@ contains
                 where (elem2I(:,e2i_link_ID) == Lindx)
 
                     elem2I(:,e2i_geometry)  = eWidthDepth
-                    elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_FullDepth) = linkR(ii,lr_FUllDepth)
                     elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
                     elem2R(:,e2r_Topwidth)  = linkR(ii,lr_TopWidth)
                     elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_FullArea)  = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_FullDepth)
                     elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
                     elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                 endwhere
             else
                 !% handle elements of other geometry types
                 print *, 'error: initialization for non-defined elements needed in ',subroutine_name
                 stop
             end if
+
+            !%  Find if an element is surcharged. Set topwidth to zero for surcharged condition
+            where ( (elem2I(:,e2i_elem_type) == ePipe) .and. &
+                    (elem2R(:,e2r_Eta) .GE. elem2R(:,e2r_Zcrown)) )
+                elem2YN(:,e2YN_IsSurcharged) = .true.
+                elem2R(:,e2r_Topwidth) = zeroR 
+            elsewhere ((elem2I(:,e2i_elem_type) == ePipe) .and. &
+                       (elem2R(:,e2r_Eta) .LE. elem2R(:,e2r_Zcrown)) )
+                elem2YN(:,e2YN_IsSurcharged) = .false.
+            endwhere
 
             !%  Setting provisional geometry for weir and orifice element to correctly interpolate to faces
             !%  Also, setting up 
@@ -515,11 +549,12 @@ contains
     !==========================================================================
     !
     subroutine initial_junction_conditions &
-        (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
+        (faceR, faceI, elem2R, elem2I, elemMR, elemMYN, elemMI, nodeR, nodeI)
 
         character(64) :: subroutine_name = 'initial_junction_conditions'
 
         real,              intent(in out)  :: elemMR(:,:)
+        logical,           intent(in out)  :: elemMYN(:,:)
         real,      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:), nodeI(:,:), faceI(:,:)
 
@@ -565,6 +600,13 @@ contains
                 elemMR(:,eMr_Volume)    = elemMR(:,eMr_Area)     * elemMR(:,eMr_Length)
                 elemMR(:,eMr_Perimeter) = elemMR(:,eMr_Breadthscale) + twoR * elemMR(:,eMr_HydDepth)
                 elemMR(:,eMr_HydRadius) = elemMR(:,eMr_Area) / elemMR(:,eMr_Perimeter)
+            endwhere
+
+            where (elemMR(:,eMr_Eta) .GE. elem2R(:,eMr_Zcrown))
+                elemMYN(:,eMYN_IsSurcharged) = .true.
+                elemMR(:,eMr_Topwidth) = zeroR 
+            elsewhere (elemMR(:,eMr_Eta) .LE. elem2R(:,eMr_Zcrown))
+                elemMYN(:,eMYN_IsSurcharged) = .false.
             endwhere
 
             !% velocities
@@ -652,18 +694,18 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         where ( (elemI(:,ei_elem_type) == eChannel)  .or. &
-            (elemI(:,ei_elem_type) == ePipe) )
+                (elemI(:,ei_elem_type) == ePipe) )
 
             elemI(:,ei_meta_elem_type) = eHQ2
 
         elsewhere ( (elemI(:,ei_elem_type) == eJunctionChannel) .or. &
-            (elemI(:,ei_elem_type) == eJunctionPipe)  )
+                    (elemI(:,ei_elem_type) == eJunctionPipe)  )
 
             elemI(:,ei_meta_elem_type) = eHQM
 
-        elsewhere ( (elemI(:,ei_elem_type) == eWeir) .or. &
-            (elemI(:,ei_elem_type) == eorifice)      .or. &
-            (elemI(:,ei_elem_type) == ePump)  )
+        elsewhere ( (elemI(:,ei_elem_type) == eWeir)    .or. &
+                    (elemI(:,ei_elem_type) == eorifice) .or. &
+                    (elemI(:,ei_elem_type) == ePump)  )
 
             elemI(:,ei_meta_elem_type) = eQonly
 
@@ -881,25 +923,27 @@ contains
 
         where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
                 (elem2I(:,e2i_elem_type) == ePipe   ) )
-            elem2I(:,e2i_solver) = SVE
+            ! elem2I(:,e2i_solver) = SVE
+            elem2I(:,e2i_solver) = AC
         endwhere
 
         where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
                 (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
-            elem2I(:,e2i_solver) = SVE
-        endwhere
-
-        where ( (elem2I(:,e2i_elem_type) == ePipe)           .and. &
-                (elem2R(:,e2r_Depth)/elem2R(:,e2r_FullDepth) .GE.  &
-                 setting%DefaultAC%Switch%Depth) )
-            elem2I(:,e2i_solver) = AC
-        endwhere
-
-        where ( (elem2I(:,eMi_elem_type) == eJunctionPipe)   .and. &
-                (elemMR(:,eMr_Depth)/elemMR(:,eMr_FullDepth) .GE.  &
-                 setting%DefaultAC%Switch%Depth) )
+            ! elemMI(:,eMi_solver) = SVE
             elemMI(:,eMi_solver) = AC
         endwhere
+
+        ! where ( (elem2I(:,e2i_elem_type) == ePipe)           .and. &
+        !         (elem2R(:,e2r_Area)/elem2R(:,e2r_FullArea) .GE.  &
+        !          setting%DefaultAC%Switch%Area) )
+        !     elem2I(:,e2i_solver) = AC
+        ! endwhere
+
+        ! where ( (elem2I(:,eMi_elem_type) == eJunctionPipe)   .and. &
+        !         (elemMR(:,eMr_Area)/elemMR(:,eMr_FullArea) .GE.  &
+        !          setting%DefaultAC%Switch%Area) )
+        !     elemMI(:,eMi_solver) = AC
+        ! endwhere
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
     end subroutine initial_solver_select

@@ -98,18 +98,18 @@ program main
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
-    setting%TestCase%TestName = 'simple_pipe_006'
-    ! setting%TestCase%TestName = 'waller_creek'
+    ! setting%TestCase%TestName = 'simple_pipe_006'
+    setting%TestCase%TestName = 'waller_creek'
 
     !%  hard-code for debug output
-    setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
+    setting%Debugout%SuppressAllFiles  = .false. ! use this to easily suppress debug files
 
     setting%Debugout%SuppressTimeStep  = .true. ! use the next 3 to suppress headers
     setting%Debugout%SuppressTimeValue = .true. ! which can make debug files easier
     setting%Debugout%SuppressNdat      = .true. ! to read (but less useful)
 
     setting%Debugout%elem2R = .true.   ! select arrays to have debug output
-    setting%Debugout%elemMR = .true.   ! select arrays to have debug output
+    setting%Debugout%elemMR = .false.   ! select arrays to have debug output
     setting%Debugout%faceR  = .true.   ! note that not all are implemented
 
     !setting%OutputThreadedLink%SuppressAllFiles = .true.
@@ -153,8 +153,7 @@ program main
         elem2R, elem2I, elem2YN, elem2Name, &
         elemMR, elemMI, elemMYN, elemMName, &
         faceR,  faceI,  faceYN,  faceName)
-    !print *, 'in main'
-
+    print *, 'in main'
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
 
@@ -200,10 +199,10 @@ program main
         wdBreadth, wdWidthDepthData, wdCellType)
 
     !% uncomment this if you want a final debug output
-    ! call debug_output &
-    !    (debugfile, &
-    !     elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-    !     bcdataUp, bcdataDn)
+    call debug_output &
+       (debugfile, &
+        elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
+        bcdataUp, bcdataDn, setting%Step%Current)
 
     !
     !=========================================================

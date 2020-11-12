@@ -238,7 +238,7 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
             !.................................................
             link_data(ll,:) = link_data_temp
             if (kk .le. n_cells) then
-                kk = kk + 3
+                kk = kk + n_links
                 ll = ll + 1
                 if (kk .gt. n_cells) Then
                     exit

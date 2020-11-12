@@ -119,7 +119,7 @@ contains
         !%  Relative last norm is the recen Anorm compared to AnormLast
         RLnormH = zeroR
         RLnormQ = zeroR
-
+        
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thistime, bc_category_inflowrate, e2r_Velocity)
 
@@ -127,7 +127,7 @@ contains
             (elem2R, bcdataDn, bcdataUp, thistime, bc_category_elevation, idummy)
 
         call bc_applied_onface (faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity, thistime)
-
+          
         call diagnostic_volume_conservation &
             (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, bcdataUp, bcdataDn, restartStep,  1)
 
@@ -172,10 +172,10 @@ contains
             rkCycle(1) = .true.
             rkCycle(2) = .true.
 
-            call rk2 &
-                (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
-                bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
-                zBottom, xDistance, Breadth, widthDepthData, cellType, rkCycle)
+            ! call rk2 &
+            !     (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
+            !     bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
+            !     zBottom, xDistance, Breadth, widthDepthData, cellType, rkCycle)
 
             if (  count(elem2I(:,e2i_solver) == AC) &
                 + count(elemMI(:,eMi_solver) == AC)> zeroI ) then               
@@ -239,6 +239,10 @@ contains
             !         bcdataDn, bcdataUp, thistime, dt)
             !
             ! increment the counters
+            ! print*, 'after pseudo loop'
+            ! print*, 'Flowrate ', elem2R(997:1001,e2r_Flowrate)
+            ! print*, 'Velocity ', elem2R(997:1001,e2r_Velocity)
+            ! print*, 'Eta      ', elem2R(997:1001,e2r_Eta)
             thisstep    = thisstep + 1
             restartStep = restartStep + 1
             thistime    = nexttime
