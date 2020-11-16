@@ -20,7 +20,8 @@
 #endif
 
 #define nullvalue -998877022E8
-#define NUM_API_VARS 2
+#define NUM_API_VARS 3
+#define NUM_API_TABLES 1
 
 enum api_node_attributes {
   node_ID = 1,
@@ -64,11 +65,17 @@ enum api_link_attributes {
 //   discarded or summarized
 enum api_vars {
   api_left_slope,
-  api_right_slope
+  api_right_slope,
+};
+
+enum api_tables {
+  api_time_series
 };
 
 typedef struct {
   int IsInitialized;
+  int DoRunoff;
+  double elapsedTime;
   double* vars[NUM_API_VARS];
 } Interface;
 
@@ -86,10 +93,11 @@ int DLLEXPORT api_num_links ();
 int DLLEXPORT api_num_nodes ();
 int DLLEXPORT api_num_time_series ();
 int DLLEXPORT api_num_curves ();
-int DLLEXPORT api_get_next_tseries_entry(void* f_api, int k, double* entries);
-int DLLEXPORT api_get_next_curve_entry(void* f_api, int k, double* x1, double* y1, double* x2, double* y2);
+int api_get_node_inflow(void * f_api, int j, DateTime * current_time, double * inflow);
+int api_runoff_step(void * f_api);
 int api_load_vars (void* f_api);
 int getTokens(char *s);
+void DLLEXPORT api_print_pattern(void * f_api, int j);
 
 #ifdef __cplusplus
 }   // matches the linkage specification from above */

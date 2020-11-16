@@ -971,6 +971,8 @@ contains
         ntseries = get_num_time_series()
         ncurves = get_num_curves()
 
+        call print_pattern(0)
+
         if (ntseries > 0) then
             allocate(TSeries(ntseries))
             do i = 0, ntseries-1

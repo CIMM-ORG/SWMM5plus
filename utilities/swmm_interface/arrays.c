@@ -18,13 +18,13 @@ void init_api_table(API_Table *a, int dimension)
     a->dim = dimension;
 }
 
-void append_api_table(API_Table *a, ...)
+void append_api_table(API_Table *a, size_t size, ...)
 {
     int i;
     double x;
     va_list valist;
 
-    va_start(valist, a->dim);
+    va_start(valist, size); // size == a->dim
 
     if (a->used == a->size) {
         a->size *= 2;

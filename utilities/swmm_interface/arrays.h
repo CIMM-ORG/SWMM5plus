@@ -11,6 +11,6 @@ typedef struct {
 } API_Table;
 
 void init_api_table(API_Table *a, int dimension);
-void insert_api_table(API_Table *a, double element);
+void append_api_table(API_Table *a, size_t size, ...);
 void trim_api_table(API_Table *a);
 void free_api_table(API_Table *a);

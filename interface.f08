@@ -74,6 +74,13 @@ module interface
             real(c_double) :: entries(4)
             integer(c_int) :: api_get_next_tseries_entry
         end function api_get_next_tseries_entry
+
+        subroutine api_print_pattern(api, j)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr), value, intent(in) :: api
+            integer(c_int), value :: j
+        end subroutine api_print_pattern
     end interface
 
     character(len = 1024), private :: errmsg
@@ -128,6 +135,7 @@ module interface
     procedure(api_get_node_attribute), pointer, private :: ptr_api_get_node_attribute
     procedure(api_get_link_attribute), pointer, private :: ptr_api_get_link_attribute
     procedure(api_get_next_tseries_entry), pointer, private :: ptr_api_get_next_tseries_entry
+    procedure(api_print_pattern), pointer, private :: ptr_api_print_pattern
 
 contains
     subroutine initialize_api()
@@ -420,4 +428,25 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end function get_table_entries
 
+    subroutine print_pattern(k)
+        use iso_c_binding
+        integer, intent(in):: k
+        character(64) :: subroutine_name
+
+        subroutine_name = 'print_pattern'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+
+        dll%procname = "api_print_pattern"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_print_pattern')
+        call c_f_procpointer(dll%procaddr, ptr_api_print_pattern)
+        call ptr_api_print_pattern(api, k)
+        if (errstat /= 0) then
+            call print_error(errstat, dll%procname)
+            stop
+        end if
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+
+    end subroutine print_pattern
 end module interface

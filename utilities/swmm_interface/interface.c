@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "swmm5.h"
 #include "headers.h"
 #include "interface.h"
+#include "arrays.h"
 
 //-----------------------------------------------------------------------------
 //  Shared variables
@@ -18,6 +20,8 @@ void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3)
     swmm_start(0);
     api_load_vars((void*) api);
     api->IsInitialized = TRUE;
+    if ( Nobjects[SUBCATCH] > 0 ) api->DoRunoff = TRUE;
+    else api->DoRunoff = FALSE;
     return (void*) api;
 }
 
@@ -216,6 +220,117 @@ int api_load_vars (void * f_api)
     return 0;
 }
 
+int api_runoff_step(void * f_api)
+{
+    Interface * api = (Interface*) f_api;
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( !api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    if (NewRunoffTime == TotalDuration) return -1;
+    if ( api->DoRunoff && NewRunoffTime < TotalDuration )
+    {
+        runoff_execute();
+        if ( ErrorCode ) return error_getCode(ErrorCode);
+    }
+
+    // --- update elapsed time (days)
+    if ( NewRoutingTime < TotalDuration )
+    {
+        ElapsedTime = NewRoutingTime / MSECperDAY;
+    }
+    // --- otherwise end the simulation
+    else ElapsedTime = 0.0;
+
+    api->elapsedTime = ElapsedTime;
+    return 0;
+}
+
+int api_get_node_inflow(void * f_api, int j, DateTime * current_time, double * inflow)
+{
+    // j : node id
+    int i, k, success;
+    int p_ext;
+    int p_dry[4];
+    int yy, mm, dd, h;
+    double x, y;
+    DateTime next_time = 1e20;
+    Interface * api = (Interface*) f_api;
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( !api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    *current_time *= 86400;
+    *inflow = 0;
+
+    k = Node[j].extInflow->basePat;
+    p_ext = -1;
+    if (k >= 0) p_ext = Pattern[k].type;
+    for (i = 0; i < 4; i++)
+        p_dry[i] = Pattern[Node[j].dwfInflow->patterns[i]].type;
+
+    datetime_decodeDate(*current_time, &yy, &mm, &dd);
+
+    if (p_ext == HOURLY_PATTERN || p_dry[0] == HOURLY_PATTERN || p_dry[1] == HOURLY_PATTERN || p_dry[2] == HOURLY_PATTERN || p_dry[3] == HOURLY_PATTERN)
+        next_time = fmin(next_time, (*current_time + 3600 - fmod(*current_time, 3600)) / 86400);
+    if (p_ext == DAILY_PATTERN || p_dry[0] == DAILY_PATTERN || p_dry[1] == DAILY_PATTERN || p_dry[2] == DAILY_PATTERN || p_dry[3] == DAILY_PATTERN)
+        next_time = fmin(next_time, (*current_time + 86400 - fmod(*current_time, 86400)) / 86400);
+    if (p_ext == MONTHLY_PATTERN || p_dry[0] == MONTHLY_PATTERN || p_dry[1] == MONTHLY_PATTERN || p_dry[2] == MONTHLY_PATTERN || p_dry[3] == MONTHLY_PATTERN)
+    {
+        if (++mm > 12) { mm = 1; yy++; }
+        next_time = fmin(next_time, datetime_encodeDate(yy, mm, dd));
+    }
+    if (p_ext == WEEKEND_PATTERN || p_dry[0] == WEEKEND_PATTERN || p_dry[1] == WEEKEND_PATTERN || p_dry[2] == WEEKEND_PATTERN || p_dry[3] == WEEKEND_PATTERN)
+    {
+        dd = datetime_dayOfYear(*current_time);
+        if (dd == 1 || dd == 7) // Sunday or Saturday
+        {
+            if (dd == 1)
+                next_time = fmin(next_time, floor(datetime_addDays(*current_time, 6)));
+            else if (dd == 7)
+                next_time = fmin(next_time, floor(datetime_addDays(*current_time, 7)));
+        }
+    }
+    // i = Node[j].extInflow->tSeries;
+    // if (i >= 0)
+    // {
+    //     if (*current_time/86400 == StartDateTime)
+    //         success = table_getFirstEntry(&Tseries[i], &x, &y);
+    //     else
+    //         success = table_getNextEntry(&Tseries[i], &x, &y);
+    //     next_time = fmin(next_time, x);
+    // }
+
+    *current_time = next_time; // Update current time
+    *inflow += inflow_getExtInflow(Node[j].extInflow, next_time);
+    datetime_decodeDate(next_time, &yy, &mm, &dd);
+    h = datetime_hourOfDay(next_time);
+    *inflow += inflow_getDwfInflow(Node[j].dwfInflow, mm, dd, h);
+    return 0;
+}
+
+void DLLEXPORT api_print_pattern(void * f_api, int j)
+{
+    DateTime current_time = StartDateTime;
+    double inflow;
+    int yy, mm, dd, h, m, s;
+
+    while (current_time <= EndDateTime)
+    {
+        api_get_node_inflow(f_api, j, &current_time, &inflow);
+        datetime_decodeDate(current_time, &yy, &mm, &dd);
+        datetime_decodeTime(current_time, &h, &m, &s);
+        printf("%d/%d/%d %d:%d:%d %.2f\n", inflow, yy, mm, dd, h, m, s);
+    }
+}
 //-----------------------------------------------------------------------------
 //  External Local Functions
 //-----------------------------------------------------------------------------
@@ -302,5 +417,5 @@ int DLLEXPORT api_get_next_curve_entry(void* f_api, int k, double* entries)
     entries[0] = Curve[k].thisEntry->x;
     entries[1] = Curve[k].thisEntry->y;
 
-    return table_getNextEntry(&Curve[k], entries[2], entries[4]);
+    return table_getNextEntry(&Curve[k], &entries[2], &entries[4]);
 }

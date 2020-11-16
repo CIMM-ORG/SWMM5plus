@@ -10,6 +10,8 @@ rm -r Stormwater*
 
 cp interface.h src/
 cp interface.c src/
+cp arrays.h src/
+cp arrays.c src/
 cp Makefile src/
 cd src
 
