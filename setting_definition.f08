@@ -239,6 +239,18 @@ module setting_definition
         type(switchType)        :: Switch
     end type defaultACType
 
+    !%  setting%BCondition
+    type bconditionType
+        logical                 :: InflowRampup     = .true.
+        real                    :: InflowRampupTime = 100.0
+        real                    :: flowrateIC       = 0.01
+    end type bconditionType 
+
+    !%  settin%HydJump
+    type hydjumpType
+        character(len=64)       :: FaceHydJumpMethod = 'momentum_match' !'extrapolate_surface' ! 'energy_limit', 'momentum_match', 'rectangular', 'simple'
+    end type hydjumpType
+
     !% FIRST LEVEL TYPE  ----------------------------------------------
     type settingType
         integer :: dummy
@@ -249,11 +261,13 @@ module setting_definition
         type(methodType)            :: Method       ! controls over simulation methods
         type(outputThreadedLinkType):: OutputThreadedLink ! controls output for threaded link
         type(smallvolumeType)       :: SmallVolume   ! controls for small volumes
-        type(stepType)              :: Step         ! controls over simulation time stepping
-        type(testcaseType)          :: TestCase     ! custom setup for test cases
-        type(timeType)              :: Time         ! controls of time step
-        type(zerovalueType)         :: ZeroValue    ! finite values to represent small or negative values
-        type(defaultACType)         :: DefaultAC    ! This contains the default settings for atrificial compressibility
+        type(stepType)              :: Step          ! controls over simulation time stepping
+        type(testcaseType)          :: TestCase      ! custom setup for test cases
+        type(timeType)              :: Time          ! controls of time step
+        type(zerovalueType)         :: ZeroValue     ! finite values to represent small or negative values
+        type(defaultACType)         :: DefaultAC     ! This contains the default settings for atrificial compressibility
+        type(bconditionType)        :: BCondition    ! This contains rampup boundary condition
+        type(hydjumpType)           :: HydJump       ! Hydraulic jump method type
     end type settingType
 
 
@@ -273,11 +287,11 @@ contains
         !
         !--------------------------------------------------------------------------
 
-        setting%Debugout%DisplayInterval = 1000
+        setting%Debugout%DisplayInterval = 1
 
-        setting%Time%dt = 50.0
+        setting%Time%dt = 0.005
         setting%Step%First = 1
-        setting%Step%Final = 40000
+        setting%Step%Final = 8000
         setting%Step%Current = 1
         setting%Step%FromRestart = 1
 

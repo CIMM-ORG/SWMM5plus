@@ -461,11 +461,12 @@ contains
                 CC = - area_difference(ind)
                 DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
 
-                hyddepth (ii)  = DD + depthAtLayerTop(linkIDTemp,ind) - dDepth(linkIDTemp,ind)
-                eta (ii)       = zbottom (ii) + hyddepth (ii)
-                depth (ii)     = hyddepth(ii)
+                
                 topwidth (ii)  = widthAtLayerTop(linkIDTemp,ind) - (dDepth(linkIDTemp,ind)-DD) &
                     *dWidth(linkIDTemp,ind)/dDepth(linkIDTemp,ind)
+                hyddepth(ii)   = area(ii)/topwidth(ii) 
+                eta (ii)       = zbottom (ii) + hyddepth (ii)
+                depth (ii)     = hyddepth(ii)
                 perimeter (ii) = perimeterBelowThisLayer(linkIDTemp,ind) + twoR * DD/sin(angle(linkIDTemp,ind))
                 hydradius (ii) = area(ii) / perimeter(ii)
             endif
@@ -928,7 +929,7 @@ contains
 
         ! print*, 'geometry debug for ', trim(subroutine_name)
         ! print*, 'Open pipe  ', maskarray_pipe_geometry
-        ! print*, 'Area       ', area(997:1001)
+        ! print*, 'Area       ', area
         ! print*, 'AoverAfull ', AoverAfull
         ! print*, 'depth      ', depth
         ! print*, 'eta        ', eta
@@ -1066,13 +1067,13 @@ contains
 
         ! print*, 'geometry debug for ', trim(subroutine_name)
         ! print*, 'is full    ', isfull
-        ! print*, 'area        ', area(997:1001)
-        ! print*, 'eta         ', eta(997:1001)
+        ! print*, 'area        ', area
+        ! print*, 'eta         ', eta
         ! print*,'----------------------------------------'
         ! print*, 'topwidth   ', topwidth
         ! print*, 'hydradius  ', hydradius
         ! print*, 'perimeter  ', perimeter
-        ! print*, 'hyddepth   ', hyddepth(997:1001)
+        ! print*, 'hyddepth   ', hyddepth
         ! print*, 'dHdA       ', dHdA
 
         maskarray_pipe_geometry = nullvalueL

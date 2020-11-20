@@ -273,17 +273,6 @@ contains
                 elem2R(:,e2r_CtestQ1) = elem2R(:,e2r_Flowrate) - elem2R(:,e2r_CtestQ1)
             endwhere
         endif
-        
-        ! !%  Printing for debug
-        ! print*, 'Area ==>'
-        ! call utility_print_values_by_link &
-        !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
-        !     fr_Area_d, fr_Area_u, e2r_Area, eMr_Area, eMr_AreaDn, eMr_AreaUp)
-        ! print*, 'Depth ==>'
-        ! call utility_print_values_by_link &
-        !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
-        !     fr_HydDepth_d, fr_HydDepth_u, e2r_Depth, eMr_Depth, eMr_AreaDn, eMr_AreaDn)
-        ! print*, 'steptime',steptime
 
         !%  reset temporary data space
         elem2R(:,e2r_Volume_new)    = nullvalueR

@@ -262,7 +262,7 @@ contains
         !%  HACK: This needed to be fixed for Qonly elements
         call adjust_face_dynamic_limits &
             (faceR, faceI, elem2R(:,e2r_Volume_new), elem2R(:,e2r_Volume_new), &
-            facemask_eHQ2, .false.)
+            facemask, .false.)
 
         !%  Store identical values for fr_XXX_u for the moment
         !%  These are later adjusted for hydraulic jumps
@@ -270,10 +270,6 @@ contains
             faceR(:,fr_Area_u)     = faceR(:,fr_Area_d)
             faceR(:,fr_Velocity_u) = faceR(:,fr_Velocity_d)
         endwhere
-        ! print*, trim(subroutine_name)
-        ! print*, 'Topwidth', faceR(:,fr_Topwidth)
-        ! print*, 'Area_d  ', faceR(:,fr_Area_d)
-        ! print*, 'flowrate', faceR(:,fr_Flowrate)
 
         facemask = nullvalueL
         facemask_eHQ2 = nullvalueL
@@ -781,29 +777,20 @@ contains
 
         !%  compute the upstream and downstream froude number on each face
         !%  note the froude numbers are signed with + being downstream flow.
-        where (typUp == fChannel)
+        where ( (typUp == fChannel) .or. (typUp == fPipe) )
             froudeUp = elem2R(mapUp,e2r_Velocity_new) / (sqrt(grav * elem2R(mapUp,e2r_HydDepth)))
         endwhere
 
-        where (typDn == fChannel)
+        where ( (typDn == fChannel) .or. (typDn == fPipe) )
             froudeDn = elem2R(mapDn,e2r_Velocity_new) / (sqrt(grav * elem2R(mapDn,e2r_HydDepth)))
         endwhere
 
-        !%  compute the upstream and downstream froude number on each face for pipe faces
-        where ( (typUp == fPipe) .and. (etaUp .LT. elem2R(mapUp,e2r_Zcrown)) )
-              froudeUp = elem2R(mapUp,e2r_Velocity_new) / (sqrt(grav * elem2R(mapUp,e2r_HydDepth)))
-        endwhere
-
-        where ( (typDn == fPipe) .and. (etaDn .LT. elem2R(mapDn,e2r_Zcrown)) )
-              froudeDn = elem2R(mapDn,e2r_Velocity_new) / (sqrt(grav * elem2R(mapDn,e2r_HydDepth)))
-        endwhere
-
         !%  compute the upstream and downstream froude number on each face for surcharged pipes
-        where ( (typUp == fPipe) .and. (etaUp .GE. elem2R(mapUp,e2r_Zcrown)) )
+        where ( (typUp == fPipe) .and. (elem2R(mapUp,e2r_Eta) .GE. elem2R(mapUp,e2r_Zcrown)) )
               froudeUp = elem2R(mapUp,e2r_Velocity_new) / (rc * sqrt(grav * elem2R(mapUp,e2r_HydDepth)))
         endwhere
 
-        where ( (typDn == fPipe) .and. (etaDn .GE. elem2R(mapDn,e2r_Zcrown)) )
+        where ( (typDn == fPipe) .and. (elem2R(mapDn,e2r_Eta) .GE. elem2R(mapDn,e2r_Zcrown)) )
               froudeDn = elem2R(mapDn,e2r_Velocity_new) / (rc * sqrt(grav * elem2R(mapDn,e2r_HydDepth)))
         endwhere
 
@@ -873,14 +860,10 @@ contains
             velDn  = flowrate / areaDn
         endwhere
 
-        ! if (sum(jumptype) .GE. 1)then
-        !     print*, 'thisTime stopped because of jump'
-        !     stop 
-        ! endif
-
         !%  for no jumps, use a linear length interpolation for free surface (elsewhere)
         ! print*,trim(subroutine_name)
         ! print*, 'JumpType', jumptype
+        
         froudeUp = nullvalueR
         froudeDn = nullvalueR
         nullify(froudeUp, froudeDn)
@@ -946,7 +929,7 @@ contains
             end do
         endif
 
-        !%  set the mask for channel and mulitple elements without a hyd jump
+        ! %  set the mask for channel and mulitple elements without a hyd jump
         facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fPipe) &
         .or. (faceI(:,fi_etype_d) == fMultiple)) &
         & .and. &
@@ -971,7 +954,6 @@ contains
             ! the weight of interpolation is timescale max.
             ! the interpolation gives the eta of the element downstream.
             etaDn = elem2R(faceI(:,fi_Melem_d),e2r_Eta)
-            ! etaUp = etaDn
         endwhere
 
         where (faceI(:,fi_meta_etype_d) == eHonly)
@@ -987,7 +969,7 @@ contains
             ! the interpolation gives the eta of the element upstream.
             etaDn = elemMR(faceI(:,fi_Melem_u),eMr_Eta)
         endwhere
-
+        
         etaUp = etaDn
         
         ! print*, trim(subroutine_name)

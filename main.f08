@@ -99,7 +99,8 @@ program main
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
     ! setting%TestCase%TestName = 'simple_pipe_006'
-    setting%TestCase%TestName = 'waller_creek'
+    setting%TestCase%TestName = 'swashes_007'
+    ! setting%TestCase%TestName = 'waller_creek'
 
     !%  hard-code for debug output
     setting%Debugout%SuppressAllFiles  = .false. ! use this to easily suppress debug files
@@ -109,7 +110,7 @@ program main
     setting%Debugout%SuppressNdat      = .true. ! to read (but less useful)
 
     setting%Debugout%elem2R = .true.   ! select arrays to have debug output
-    setting%Debugout%elemMR = .false.   ! select arrays to have debug output
+    setting%Debugout%elemMR = .false.  ! select arrays to have debug output
     setting%Debugout%faceR  = .true.   ! note that not all are implemented
 
     !setting%OutputThreadedLink%SuppressAllFiles = .true.

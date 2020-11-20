@@ -16,6 +16,7 @@ module test_cases
     use case_y_storage_channel
     use case_waller_creek
     use case_simple_pipe
+    use case_swashes
     use data_keys
     use globals
     use read_width_depth
@@ -29,7 +30,7 @@ module test_cases
 
     public :: test_case_initiation
 
-    integer :: debuglevel = 0
+    integer :: debuglevel = 1
 
 contains
     !
@@ -56,7 +57,7 @@ contains
         real, dimension(:), allocatable :: depth_dnstream, depth_upstream, init_depth
         real, dimension(:), allocatable :: subdivide_length, channel_length
         real, dimension(:), allocatable :: channel_breadth, channel_topwidth
-        real, dimension(:), allocatable :: lowerZ, upperZ, flowrate
+        real, dimension(:), allocatable :: lowerZ, upperZ, flowrate, zbottom
         real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
         real, dimension(:), allocatable :: fullDepth, inletOffset, sideSlope
         real, dimension(:), allocatable :: parabolaValue, leftSlope, rightSlope
@@ -66,9 +67,10 @@ contains
         integer, dimension(:), allocatable :: idepth_type
         integer, dimension(:), allocatable :: channel_geometry
 
-        real :: CFL
+        real :: CFL, ManningsNBuffer
 
         integer :: first_step, last_step, display_interval, mm
+        integer :: N_Swashes
 
         real :: climit, cvel, uz, lz
 
@@ -97,7 +99,7 @@ contains
 
         real :: inflowBC, heightBC, Waller_Creek_initial_depth
         real :: geometry_downstream_minimum_length
-        real :: Waller_Creek_cellsize_target
+        real :: Waller_Creek_cellsize_target, total_length
 
         logical :: geometry_add_downstream_buffer
 
@@ -214,7 +216,7 @@ contains
             ! subdivide length for checking the length of nonmonotonic elements
             subdivide_length_check = 10.0
 
-            ! dividing nun monotonic elements
+            ! dividing non monotonic elements
             call nonmonotonic_subdivide &
                 (init_ID, init_numberPairs, init_ManningsN, init_Length,          &
                 init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, &
@@ -237,13 +239,13 @@ contains
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
-            display_interval = 1000
+            display_interval = 1
             first_step = 1
-            last_step  =  1000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  =  500 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
-            Froude(:)    = 0.25   ! determines flowrate and slope to get Froude
-            CFL          = 0.6  ! determines dt from subdivide_length
+            Froude(:)    = 0.25  ! determines flowrate and slope to get Froude
+            CFL          = 0.25  ! determines dt from subdivide_length
 
             ! keep these physics fixed
             channel_breadth     = newBreadth
@@ -252,30 +254,34 @@ contains
             do ii=1,N_link
                 channel_geometry(ii) = lWidthDepth
             end do
-
-            depth_upstream(:)   = 0.3
-            depth_dnstream(:)   = 0.3
-            init_depth(:)       = 0.3
-            idepth_type         = 1  !1 = uniform, 2=linear, 3=exponential decay
+            
+            depth_upstream(:)   = 0.262
+            depth_dnstream(:)   = 0.262
+            init_depth(:)       = 0.262
+            idepth_type(:)      = 1  !1 = uniform, 2=linear, 3=exponential decay
             ManningsN           = newManningsN
             channel_length      = newLength
             lowerZ              = newZBottom
-            subdivide_length(:) = 5000.0
-
-            ! rectangular geometry
-            parabolaValue = zeroR
-            leftSlope     = zeroR
-            rightSlope    = zeroR
+            subdivide_length(:) = 10
 
             !calculate the geometry related information from widthDepth information
             !and store it at the same matrix
             call widthdepth_pair_auxiliary (newWidthDepthData, newCellType, newNumberPairs)
-
+            stop
             call Initial_condition_for_width_depth_system &
                 (upperZ, area, flowrate, velocity, Froude,  channel_breadth, &
                 channel_topwidth, ManningsN, channel_length, lowerZ, &
-                init_depth, newWidthDepthData)
-
+                init_depth, newWidthDepthData) ! Setup the initial condition
+            ! Pass  
+            !print *, "area=", area
+            !Hijack the variables for testing purpose
+            flowrate(:) = 0.18
+            ! area(:) = 7.5
+            ! velocity(:) = 2.66666
+            depth_upstream(:)   = 0.262
+            depth_dnstream(:)   = 0.262
+            init_depth(:)       = 0.262
+            !print *, "flowrate", flowrate
             call this_setting_for_time_and_steps &
                 (CFL, velocity, init_depth, subdivide_length, first_step, last_step, &
                 display_interval, 2)
@@ -287,7 +293,9 @@ contains
                 linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
                 bcdataDn, bcdataUp, newID, newNumberPairs, &
                 newXDistance, newWidthDepthData, newCellType)
-
+            print*, "flowrate", flowrate
+            print*, "flowrate", flowrate
+            
             if (.not. setting%Debugout%SuppressAllFiles) then
                 call write_testcase_setup_file &
                     (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
@@ -781,7 +789,7 @@ contains
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
-            display_interval = 1
+            display_interval = 100
             first_step = 1
             last_step  = 1000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
@@ -805,7 +813,7 @@ contains
             ManningsN       = 0.03
             channel_length  = 10000.0
             lowerZ          = 0.0
-            subdivide_length = 10.0
+            subdivide_length = 5000.0
             fullDepth       = 3.0    
 
             ! rectangular geometry
@@ -837,8 +845,91 @@ contains
                     lowerZ, upperZ, ManningsN)
             endif
 
-            !print *, flowrate, depth_dnstream
-            !stop
+            case ('swashes_007')
+
+            ! Swashes element count : N_Swashes
+            N_Swashes = 256
+            total_length = 50.0
+            ! This here is basically element scale. So no further subdivide is necessary
+            ! Because of the Buffer zone N_Swashes is multiplied by two
+            N_link = N_Swashes * 2
+            N_node = N_link + 1
+            N_BCupstream = 1
+            N_BCdnstream = 1
+
+            !% create the local variables that must be populated to set up the test case
+            call control_variable_allocation &
+                (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+                channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+                velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                dischargeCoefficient2, fullDepth, endContractions)
+
+            ! step controls
+            display_interval = 200
+            first_step = 1
+            last_step  =  60000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+
+            ! set up flow and time step for differen subcases
+            ! tests that ran:  Fr = 0.25, 0.5
+            Froude       = 0.25   ! determines flowrate and slope to get Froude
+            CFL          = 0.25   ! determines dt from subdivide_length
+
+            ! keep these physics fixed
+            channel_breadth = 1.0
+
+            ! assign geometry type for links
+            channel_geometry = lRectangular
+
+            flowrate        = 0.18
+            depth_upstream  = 0.262
+            depth_dnstream  = 0.262
+            init_depth      = 0.262
+            idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
+            ManningsN       = 0.0
+            ManningsNBuffer = 0.03
+            channel_length  = total_length / N_link
+            fullDepth       = 300.0
+
+            lowerZ          = 0.0
+            upperZ          = 0.0
+            subdivide_length = channel_length
+
+            ! rectangular geometry
+            parabolaValue = zeroR
+            leftSlope     = zeroR
+            rightSlope    = zeroR
+            allocate(zbottom(N_link))
+
+            call swashes_setup &
+                (upperZ, lowerZ, area, flowrate, velocity, channel_breadth,   &
+                channel_topwidth, ManningsN, ManningsNBuffer, channel_length, &
+                init_depth, zbottom)
+
+            call this_setting_for_time_and_steps &
+                (CFL, velocity, init_depth, subdivide_length, &
+                first_step, last_step, display_interval,2)
+
+            ! call setting_default
+
+            call case_shashes_initialize &
+                (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
+                lowerZ, upperZ, flowrate, init_depth, depth_upstream, depth_dnstream, &
+                ManningsN, lManningsN, idepth_type, fulldepth, N_link, N_node, linkR, &
+                nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, bcdataDn,    &
+                bcdataUp, zbottom)
+
+
+            if (.not. setting%Debugout%SuppressAllFiles) then
+                call write_testcase_setup_file &
+                    (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                    depth_dnstream, channel_breadth, channel_topwidth, area, &
+                    channel_length, subdivide_length, &
+                    lowerZ, upperZ, ManningsN)
+            endif
+
+            ! print *, flowrate, depth_dnstream
+            ! stop
             
           case default
             print *, setting%TestCase%TestName
@@ -1199,6 +1290,94 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine swashes_setup &
+        (upperZ, lowerZ, area, flowrate, velocity, breadth, topwidth, &
+        ManningsN, ManningsNBuffer, link_length, depth, zbottom)
+
+        character(64) :: subroutine_name = 'swashes_setup'
+
+        real,    intent(out)    :: area(:), topwidth(:), velocity(:), zbottom(:)
+        real,    intent(out)    :: upperZ(:), lowerZ(:), ManningsN(:)
+        real,    intent(in)     :: breadth(:), link_length(:), depth(:)
+        real,    intent(in)     :: ManningsNBuffer, flowrate(:)
+
+        real    :: xvalueDn, xvalueUp, xvalue
+        integer :: mm
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        xvalueDn = 0.0
+        xvalueUp = link_length(1)
+        xvalue = link_length(1) / 2.0
+        
+
+        ! print *
+        ! print *, 'a)       ii  ,     xvalueUp  ,    upperz    ,  xvaluedn   ,     lowerZ  ,     xvalue'
+        do mm = 1,N_link
+            
+            topwidth(mm)  = breadth(mm)
+            area(mm)      = depth(mm) * topwidth (mm) 
+
+            if (depth(mm) > 0.0) then
+                velocity(mm) = flowrate(mm) / area(mm)
+            else
+                velocity(mm) = 0.0
+            endif
+
+            ! lowerZ(mm) = max((0.2 - 0.05 * ((xvalueDn - 10.0) ** 2.0)), 0.0)
+            ! upperZ(mm) = max((0.2 - 0.05 * ((xvalueUp - 10.0) ** 2.0)), 0.0)
+            ! zbottom(mm) = max((0.2 - 0.05 * ((xvalue - 10.0) ** 2.0)), 0.0)
+
+            lowerZ(mm) = (0.2 - 0.05 * ((xvalueDn - 10.0) ** 2.0))
+            upperZ(mm) = (0.2 - 0.05 * ((xvalueUp - 10.0) ** 2.0))
+            ! zbottom(mm) = (0.2 - 0.05 * ((xvalue - 10.0) ** 2.0))
+
+            ! if (xvalue < 8.0) then
+            !     zbottom(mm) = 0.0
+            ! endif
+            ! if (xvalue > 12.0) then
+            !     zbottom(mm) = 0.0
+            ! endif
+
+            if (xvalueUp < 8.0) then
+                upperZ(mm) = 0.0
+            elseif (xvalueUp > 12.0) then
+                upperZ(mm) = 0.0
+            endif
+
+            if (xvalueDn < 8.0) then
+                lowerZ(mm) = 0.0
+            elseif (xvaluedn > 12.0) then
+                lowerZ(mm) = 0.0
+            endif
+
+            if (xvalue > 25.0) then
+                ManningsN(mm) = ManningsNBuffer
+            endif
+
+        ! print *,'-----------------'
+        ! print *,  'link ==>', mm
+        ! print *, upperZ(mm), 'upperZ', lowerZ(mm), 'lowerZ'
+        ! print *, flowrate(mm), 'flowrate'
+        ! print *, xvalueUp, 'xvalueUp' ,xvalueDn, 'xvalueDn'
+        ! print *, ManningsN(mm), 'ManningsN'
+        ! print *, velocity(mm), 'Velocity'
+        ! print *,'-----------------'
+        ! print *,mm, xvalueUp,upperZ(mm),xvalueDn, lowerZ(mm), xvalue
+
+        xvalueDn = xvalueDn + link_length(mm)
+        xvalueUp = xvalueUp + link_length(mm)
+        xvalue   = xvalue   + link_length(mm)  
+        enddo
+        ! stop
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+    end subroutine swashes_setup
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine Initial_condition_for_width_depth_system &
         (upperZ, area, flowrate, velocity,  &
         Froude,  breadth, topwidth, ManningsN, total_length, &
@@ -1226,7 +1405,7 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         widthAtLayerTop         => widthDepthData (:,:, wd_widthAtLayerTop)
-        depthAtLayerTop         => widthDepthData (:,:, wd_depthAtLayerTop)
+        depthAtLayerTop         => widthDepthData (:,:, wd_depthAtLayerTop) 
         areaThisLayer           => widthDepthData (:,:, wd_areaThisLayer)
         areaTotalBelowThisLayer => widthDepthData (:,:, wd_areaTotalBelowThisLayer)
         depthTBL                => widthDepthData (:,:, wd_depthTotalBelowThisLayer)
@@ -1264,10 +1443,11 @@ contains
         !     print *, perimeter(ii)
         !     print *, rh(ii)
         !     print *, velocity(ii)
-        !     print *, flowrate(ii)
+        !    print *, "angle = ", angle(ii,2)
+        !     print *,"idx = ", ii, "init flowrate", flowrate(ii)
         !     print *, slope(ii)
         !     print *, upperZ(ii), lowerZ(ii)
-        !     print *, total_length(ii)
+        !     print *,"idx = ", ii, "init length", total_length(ii)
         !     print *, slope(ii)*total_length(ii)
         !  enddo
 

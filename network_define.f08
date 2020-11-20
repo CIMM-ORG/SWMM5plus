@@ -23,7 +23,7 @@ module network_define
 
     public :: network_initiation
 
-    integer:: debuglevel = 0
+    integer:: debuglevel = 1
 
 contains
     !
@@ -158,9 +158,10 @@ contains
             enddo
 
             print *
-            print *, 'e)       ii  ,e2r_Length, e2r_Topwidth, e2r_Zbottom'
+            print *, 'e)       ii  ,e2r_Length,    e2r_Topwidth,    e2r_Zbottom,      x_distance'
             do ii=first_elem2_index, first_elem2_index+N_elem2-1
-                print *, ii, elem2R(ii,e2r_Length), elem2R(ii,e2r_Topwidth), elem2R(ii,e2r_Zbottom)
+                print *, ii, elem2R(ii,e2r_Length), elem2R(ii,e2r_Topwidth), elem2R(ii,e2r_Zbottom), &
+                (N_elem2-ii)*elem2R(ii,e2r_Length)-elem2R(ii,e2r_Length)/2.0
             enddo
 
             print *
@@ -173,9 +174,10 @@ contains
             enddo
 
             print *
-            print *, 'h)       ii,         Zbottom,     Topwidth'
+            print *, 'h)       ii,         Zbottom,     Topwidth,     x_distance'
             do ii=first_face_index, first_face_index+N_face-1
-                print *, ii, faceR(ii,fr_Zbottom), faceR(ii,fr_Topwidth)
+                print *, ii, faceR(ii,fr_Zbottom), faceR(ii,fr_Topwidth), &
+                (N_face-ii)*elem2R(ii,e2r_Length)
             enddo
 
             print *

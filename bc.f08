@@ -351,7 +351,23 @@ contains
 
             elseif (thiscat == bc_category_inflowrate) then
                 !%  direct enforcement of flowrate
-                faceR(thisloc,fr_Flowrate) = thisval
+                ! faceR(thisloc,fr_Flowrate) = thisval
+                
+                ! Inflow rampup condition from PipeAC2020 code
+                if ( (setting%BCondition%InflowRampup) .and. &
+                     (thisTime .LE. setting%BCondition%InflowRampupTime) ) then
+
+                    faceR(thisloc,fr_Flowrate)  = thisval * thisTime / &
+                                                setting%BCondition%InflowRampupTime
+                    if (faceR(thisloc,fr_Flowrate) < setting%BCondition%flowrateIC) then
+                        faceR(thisloc,fr_Flowrate) = setting%BCondition%flowrateIC
+                    endif
+
+                else
+                    faceR(thisloc,fr_Flowrate)  = thisval
+                endif
+
+
             else
                 print *, 'error: unexpected value for bcdata%category of ',thiscat,' in ',subroutine_name
                 stop
@@ -543,8 +559,19 @@ contains
                     !elem2R(thisloc,e2r_Flowrate)       = thisval
                     !elem2R(thisloc,e2r_VelocityColumn) = thisval / elem2R(thisloc,e2r_Area)
 
-                    ! store the same value on the ghost
-                    elem2R(thisghost,e2r_Flowrate)       = thisval
+                    ! Inflow rampup condition from PipeAC2020 code
+                    if ( (setting%BCondition%InflowRampup) .and. &
+                         (thisTime .LE. setting%BCondition%InflowRampupTime) ) then
+
+                        elem2R(thisghost,e2r_Flowrate)  = thisval * thisTime / &
+                                                setting%BCondition%InflowRampupTime
+                        if (elem2R(thisghost,e2r_Flowrate) < setting%BCondition%flowrateIC) then
+                            elem2R(thisghost,e2r_Flowrate) = setting%BCondition%flowrateIC
+                        endif
+                    else
+                        elem2R(thisghost,e2r_Flowrate)  = thisval
+                    endif
+
                     elem2R(thisghost,e2r_VelocityColumn) = thisval / elem2R(thisloc,e2r_Area)
                 else
                     print *, 'error: unexpected value for bcdata%category of ',thiscat,' in ',subroutine_name

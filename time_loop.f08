@@ -172,22 +172,22 @@ contains
             rkCycle(1) = .true.
             rkCycle(2) = .true.
 
-            ! call rk2 &
-            !     (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
-            !     bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
-            !     zBottom, xDistance, Breadth, widthDepthData, cellType, rkCycle)
+            call rk2 &
+                (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
+                bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,    &
+                zBottom, xDistance, Breadth, widthDepthData, cellType, rkCycle)
 
-            if (  count(elem2I(:,e2i_solver) == AC) &
-                + count(elemMI(:,eMi_solver) == AC)> zeroI ) then               
-                !% Artifical compressibility convergence pseudo time marching loop[    
-                call pseudo_time_marching &
-                    (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN,    &
-                    faceYN, bcdataDn, bcdataUp, linkI, thisStep, thisTime, AnormH,      &
-                    AnormQ, AnormHlast, AnormQlast, TnormH, TnormQ, RTnormH, RTnormQ,   &
-                    RLnormH,  RLnormQ, debugfile, diagnostic, threadedfile, ID,         &
-                    numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,        &
-                    widthDepthData, cellType)
-            endif
+            ! if (  count(elem2I(:,e2i_solver) == AC) &
+            !     + count(elemMI(:,eMi_solver) == AC)> zeroI ) then               
+            !     !% Artifical compressibility convergence pseudo time marching loop[    
+            !     call pseudo_time_marching &
+            !         (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN,    &
+            !         faceYN, bcdataDn, bcdataUp, linkI, thisStep, thisTime, AnormH,      &
+            !         AnormQ, AnormHlast, AnormQlast, TnormH, TnormQ, RTnormH, RTnormQ,   &
+            !         RLnormH,  RLnormQ, debugfile, diagnostic, threadedfile, ID,         &
+            !         numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,        &
+            !         widthDepthData, cellType)
+            ! endif
 
             !% compute the element froude number (diagnostic only)
             call diagnostic_froude_number (elem2R, elem2I, elemMR, elemMI)

@@ -923,14 +923,14 @@ contains
 
         where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
                 (elem2I(:,e2i_elem_type) == ePipe   ) )
-            ! elem2I(:,e2i_solver) = SVE
-            elem2I(:,e2i_solver) = AC
+            elem2I(:,e2i_solver) = SVE
+            ! elem2I(:,e2i_solver) = AC
         endwhere
 
         where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
                 (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
-            ! elemMI(:,eMi_solver) = SVE
-            elemMI(:,eMi_solver) = AC
+            elemMI(:,eMi_solver) = SVE
+            ! elemMI(:,eMi_solver) = AC
         endwhere
 
         ! where ( (elem2I(:,e2i_elem_type) == ePipe)           .and. &
