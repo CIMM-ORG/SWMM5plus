@@ -419,3 +419,18 @@ int DLLEXPORT api_get_next_curve_entry(void* f_api, int k, double* entries)
 
     return table_getNextEntry(&Curve[k], &entries[2], &entries[4]);
 }
+
+int DLLEXPORT api_get_number_of_elements()
+{
+    Graph* graph;
+    int i;
+    graph = createGraph(Nobjects[NODE]);
+    for (i = 0; i < Nobjects[LINK]; i++)
+    {
+        addEdge(graph, Link[i].node1, Link[i].node2);
+    }
+
+    
+    DFS(struct graph, int vertex)
+
+}

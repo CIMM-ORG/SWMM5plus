@@ -1571,7 +1571,7 @@ contains
         !%  reference elevations at cell center and cell face
         zcenter = zDownstream - 0.5 * linkR(thislink,lr_ElementLength) * linkR(thislink,lr_Slope)
         zface   = zDownstream
-        
+
         do mm = 1,linkI(thisLink,li_N_element)
             !%  store the elem info
             elem2I(thisElem2,e2i_idx)               = thisElem2
@@ -1820,6 +1820,15 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine link_shortening
+
+    subroutine compute_elements()
+    
+        implicit none
+
+        type1,intent(in) :: arg1
+        type2,intent(out) ::  arg2
+
+    end subroutine compute_elements
     !
     !==========================================================================
     ! END OF MODULE network_define
