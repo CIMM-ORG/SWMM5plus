@@ -19,6 +19,7 @@
     #define DLLEXPORT
 #endif
 
+#include "utils.h"
 #define nullvalue -998877022E8
 #define NUM_API_VARS 3
 #define NUM_API_TABLES 1
@@ -76,6 +77,7 @@ typedef struct {
   int IsInitialized;
   int DoRunoff;
   double elapsedTime;
+  Graph* graph;
   double* vars[NUM_API_VARS];
 } Interface;
 

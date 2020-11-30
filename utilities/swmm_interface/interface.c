@@ -420,17 +420,57 @@ int DLLEXPORT api_get_next_curve_entry(void* f_api, int k, double* entries)
     return table_getNextEntry(&Curve[k], &entries[2], &entries[4]);
 }
 
-int DLLEXPORT api_get_number_of_elements()
+void DLLEXPORT api_create_graph()
 {
-    Graph* graph;
-    int i;
-    graph = createGraph(Nobjects[NODE]);
+    int i, n1, n2;
+
+    Graph* graph = createGraph(Nobjects[NODE]);
     for (i = 0; i < Nobjects[LINK]; i++)
-    {
         addEdge(graph, Link[i].node1, Link[i].node2);
+}
+
+double * DLLEXPORT api_get_cummulated_inflows(Graph* graph)
+{
+    int i;
+    int k = -1;
+    double inflow;
+    double inflows* = calloc(Nobjects[NODE], sizeof(double));
+    g_node* list;
+    Stack* visited = create_stack();
+    Stack* stack = create_stack();
+
+    for (i = 0; i < Nobjects[NODE]; i++)
+    {
+        inflow = api_get_cummulated_inflow(Node[i]);
+        if (inflow > 0)
+        {
+            s_append(stack, i);
+            s_append(graph->visited, i);
+            while( stack->len > 0 )
+            {
+                k = s_pop(stack);
+                inflows[k] += inflow;
+                list = graph->adjList[k];
+                while(list != NULL)
+                {
+                    if (graph->visited[list->vertex] == 0)
+                    {
+                        s_append(stack, list->vertex);
+                        s_append(visited, list->vertex);
+                        graph->visited[i] = 1;
+                    }
+                    list = list->next;
+                }
+            }
+            while ( visited->len > 0)
+            {
+                i = s_pop(visited);
+                graph->visited[i] = 0;
+            }
+        }
     }
 
-    
-    DFS(struct graph, int vertex)
-
+    free(visited);
+    free(stack);
+    return inflows;
 }
