@@ -21,6 +21,7 @@ module globals
     integer, parameter :: nullvalueI = -998877
     real,    parameter :: nullvalueR = -9.98877e16
     logical, parameter :: nullvalueL = .false.
+    real,    parameter :: negoneR    = -1.0
     real,    parameter :: zeroR      = 0.0
     real,    parameter :: oneR       = 1.0
     real,    parameter :: twoR       = 2.0

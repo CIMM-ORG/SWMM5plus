@@ -99,8 +99,7 @@ program main
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
     ! setting%TestCase%TestName = 'simple_pipe_006'
-    setting%TestCase%TestName = 'swashes_007'
-    ! setting%TestCase%TestName = 'waller_creek'
+     setting%TestCase%TestName = 'width_depth'
 
     !%  hard-code for debug output
     setting%Debugout%SuppressAllFiles  = .false. ! use this to easily suppress debug files
@@ -110,7 +109,7 @@ program main
     setting%Debugout%SuppressNdat      = .true. ! to read (but less useful)
 
     setting%Debugout%elem2R = .true.   ! select arrays to have debug output
-    setting%Debugout%elemMR = .false.  ! select arrays to have debug output
+    setting%Debugout%elemMR = .false.   ! select arrays to have debug output
     setting%Debugout%faceR  = .true.   ! note that not all are implemented
 
     !setting%OutputThreadedLink%SuppressAllFiles = .true.
@@ -147,6 +146,7 @@ program main
         stop
     end if
 
+
     !% create the network of elements from link and node data
     call network_initiation &
         (linkI, linkR, linkYN, linkName, &
@@ -154,6 +154,8 @@ program main
         elem2R, elem2I, elem2YN, elem2Name, &
         elemMR, elemMI, elemMYN, elemMName, &
         faceR,  faceI,  faceYN,  faceName)
+    
+
     print *, 'in main'
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
@@ -164,6 +166,8 @@ program main
         linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
+    
+
 
     !stop to check if the initial conditions are setup correctly
     !check the geometry values
@@ -192,6 +196,8 @@ program main
     ! initialize output by threaded link
     call output_threaded_by_link_initialize (threadedfile)
 
+    !print *, "Check Point 1"
+
     !%  time marching of continuity and momentum
     call time_marching &
         (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
@@ -199,11 +205,15 @@ program main
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
 
+    !print *, "Check Point 2"
+
     !% uncomment this if you want a final debug output
     call debug_output &
        (debugfile, &
         elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
         bcdataUp, bcdataDn, setting%Step%Current)
+    
+    !print *, "Check Point 3"
 
     !
     !=========================================================

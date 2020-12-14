@@ -249,6 +249,7 @@ contains
             eMr_ParabolaValue, eMr_Temp, next_eMr_temparray, eMr_n_temp, ID,     &
             numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,         &
             widthDepthData, cellType)
+            
 
         !%   geometry for pipe
         !%   pipe geometry is solved using area and eta. Thus, area and eta are the input
@@ -275,12 +276,14 @@ contains
             eMr_AreaUp, eMr_ZbottomUp, eMr_BreadthScaleUp, &
             eMr_TopwidthUp, eMr_EtaUp, eMr_HydDepthUp, eMr_EtaOld, fr_Eta_d, method_EtaM)
 
+
         !%  downstream branches
         call rectangular_junction_leg &
             (elemMR, elemMI, faceR, dnstream_face_per_elemM, eMi_nfaces_d, eMi_MfaceDn,   &
             eMr_AreaDn, eMr_ZbottomDn, eMr_BreadthScaleDn, &
             eMr_TopwidthDn, eMr_EtaDn, eMr_HydDepthDn, eMr_EtaOld, fr_Eta_u, method_EtaM)
 
+        !print *, "check point 1222"
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine geometry_update
@@ -333,10 +336,13 @@ contains
         real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
         real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
         real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
-        real, dimension(:), allocatable :: area_difference, local_difference
+        !real, dimension(:), allocatable :: area_difference, local_difference
 
-        real :: AA, BB, CC, DD
-        integer :: ii,ind, linkIDTemp
+        real, dimension(:), allocatable :: AA, BB, CC, DD, a_diff 
+        ! w_d_variables are for solving qudratic function for width-depth geometry
+        real, dimension(:), allocatable :: w_d_angle, w_d_widthAtLayerTop, w_d_depthAtLayerTop, w_d_perimeterBelowThisLayer 
+
+        integer :: ii
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -369,8 +375,19 @@ contains
         angle                   => widthDepthData (:,:, wd_angle)
         perimeterBelowThisLayer => widthDepthData (:,:, wd_perimeterBelowThisLayer)
 
-        allocate (area_difference(size(widthDepthData,2)))
-        allocate (local_difference(size(widthDepthData,2)))
+        ! allocate these arrays for W-D geometry computation
+        allocate (a_diff(size(volume,1)), AA(size(volume,1)), &
+            BB(size(volume,1)), CC(size(volume,1)), DD(size(volume,1)), source = zeroR)
+        !initialize the w_d_ array with all zeroR values
+        allocate (w_d_angle(size(volume,1)), w_d_widthAtLayerTop(size(volume,1)), w_d_depthAtLayerTop(size(volume,1)), &
+        w_d_perimeterBelowThisLayer(size(volume,1)), source = zeroR)
+
+
+        call width_depth_quadratic_function(elemI, elemR, ei_geometry, ei_elem_type, elem_type_value, &
+            er_Length, er_Area, er_Volume, widthDepthData, w_d_angle, w_d_widthAtLayerTop, w_d_depthAtLayerTop, &
+            w_d_perimeterBelowThisLayer, a_diff)
+        !compute the coefficients required for width-depth XS before we enter the where statement
+        
 
         !% temporary array for circular geometry update
         AoverAfull => elemR(:,er_Temp(next_er_temparray))
@@ -437,60 +454,84 @@ contains
             perimeter   = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
             hydradius   = area / perimeter
 
+        elsewhere ( elemI(:, ei_geometry) == eWidthDepth .and. &
+            (elemI(:,ei_elem_type) == elem_type_value) )
+            area        = volume / length
+            
+            AA          = oneR / tan( w_d_angle )
+            BB          = w_d_widthAtLayerTop
+            CC          = negoneR * a_diff
+            DD          = ( negoneR * BB + sqrt( BB ** twoR - 4.0 * AA * CC) ) / ( twoR * AA )
+
+            depth       = DD + w_d_depthAtLayerTop
+            topwidth    = w_d_widthAtLayerTop + twoR * AA * DD
+            hyddepth    = area / topwidth
+            eta         = zbottom + depth
+            perimeter   = w_d_perimeterBelowThisLayer + (twoR * DD / sin(w_d_angle))
+            hydradius   = area / perimeter 
+
         endwhere
+            ! do ii=1, size(volume,1)
+            !     linkIDTemp = elemI(ii,e2i_link_ID)
 
-        do ii=1, size(volume,1)
-            if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. &
-                (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
+            !     area_difference  = zeroR
+            !     local_difference = zeroR
 
-                linkIDTemp = elemI(ii,e2i_link_ID)
-
-                area_difference  = zeroR
-                local_difference = zeroR
-                area (ii) = volume(ii) / length(ii)
-                area_difference(:) = area (ii) - areaTotalBelowThisLayer(linkIDTemp,:)
-                local_difference(:) = area_difference(:) - areaThisLayer(linkIDTemp,:)
-                ind = findloc(sign(oneR, area_difference(:)*local_difference(:)), -1.0, DIM=1)
-
-                if (ind == 0) then
-                    ind = size(widthAtLayerTop(linkIDTemp,:),1)
-                endif
-
-                AA = oneR/tan(angle(linkIDTemp,ind))
-                BB = widthAtLayerTop(linkIDTemp,ind) - dWidth(linkIDTemp,ind)
-                CC = - area_difference(ind)
-                DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
-
-                
-                topwidth (ii)  = widthAtLayerTop(linkIDTemp,ind) - (dDepth(linkIDTemp,ind)-DD) &
-                    *dWidth(linkIDTemp,ind)/dDepth(linkIDTemp,ind)
-                hyddepth(ii)   = area(ii)/topwidth(ii) 
-                eta (ii)       = zbottom (ii) + hyddepth (ii)
-                depth (ii)     = hyddepth(ii)
-                perimeter (ii) = perimeterBelowThisLayer(linkIDTemp,ind) + twoR * DD/sin(angle(linkIDTemp,ind))
-                hydradius (ii) = area(ii) / perimeter(ii)
-            endif
-
-            ! if ( (elemI(ii,ei_geometry)  == eCircular) .and. &
-            !     (elemI(ii,ei_elem_type) == elem_type_value    )         ) then
-
-            !     area(ii)        = volume(ii) / length(ii)
-            !     AoverAfull(ii)  = area(ii) / (onefourthR * pi * fulldepth(ii) ** twoR)
-
-            !     if (AoverAfull(ii) < 0.04) then
-            !         depth(ii) = fulldepth(ii) * get_theta_of_alpha(AoverAfull(ii))
+            !     area_difference(:) = area(ii) - areaTotalBelowThisLayer(linkIDTemp,:)
+            !     ind = minloc(abs(area_difference), DIM=1) ! Find the closest area layer
+            !     if ((areaTotalBelowThisLayer(linkIDTemp, ind) - area(ii) ) > 0) then !its between ind and ind-1
+            !         a_diff          = (area(ii) - areaTotalBelowThisLayer(linkIDTemp,ind-1)) 
+            !         ! Since we assume each layer is trapezoidal, we cannot directly use the interpolation to get the depth, width, ...etc.
+            !         ! Solve the trapezoidal equation function f(depth) ((-B + sqrt(B^2 -4AC))/2A) to get the depth.
+            !         ! Could be expensive to recursively run through all elements, maybe use spline is a better method?
+            !         AA              = oneR / tan(angle(linkIDTemp,ind-1))
+            !         BB              = widthAtLayerTop(linkIDTemp, ind-1)
+            !         CC              = -a_diff
+            !         ! Solve the quadratic formula
+            !         DD              = (-BB + sqrt(BB**2 - 4 * AA * CC))/(1 * AA)
+            !         ! DD is the depth between layers
+            !         if (DD < 0) then 
+            !             print *, "Getting negative delta depth solution of quadratic formula calculation at elem=", ii
+            !             !stop
+            !         end if
+            !         depth(ii)       = DD + depthAtLayerTop(linkIDTemp, ind-1) 
+            !         topwidth(ii)    = widthAtLayerTop(linkIDTemp, ind-1) + twoR * AA * DD 
+            !         hyddepth(ii)    = area(ii) / topwidth(ii)
+            !         eta(ii)         = zbottom(ii) + depth(ii)
+            !         perimeter(ii)   = perimeterBelowThisLayer(linkIDTemp, ind-1) + twoR * (1 / sin(angle(linkIDTemp, ind-1))) * DD
+            !         hydradius(ii)   = area(ii) / perimeter(ii)
+            !     else if ((areaTotalBelowThisLayer(linkIDTemp, ind) - area(ii) ) < 0) then !its between ind and ind+1
+            !         a_diff          = (area(ii) - areaTotalBelowThisLayer(linkIDTemp, ind))
+            !         !coefficient of the quadratic formula
+            !         AA              = oneR / tan(angle(linkIDTemp, ind))
+            !         BB              = widthAtLayerTop(linkIDTemp, ind)
+            !         CC              = -a_diff
+            !         ! Solve the quadratic formula
+            !         DD              = (-BB + sqrt(BB**2 - 4 * AA * CC))/(1 * AA)
+            !         ! DD is the depth between layers
+            !         if (DD < 0) then 
+            !             print *, "Getting negative delta depth solution of quadratic formula calculation at elem=", ii
+            !             !stop
+            !         end if
+            !         depth(ii)       = DD + depthAtLayerTop(linkIDTemp, ind)
+            !         topwidth(ii)    = widthAtLayerTop(linkIDTemp, ind) + twoR * AA * DD
+            !         hyddepth(ii)    = area(ii) / width(ii)
+            !         eta(ii)         = zbottom(ii) + depth(ii)
+            !         perimeter(ii)   = perimeterBelowThisLayer(linkIDTemp, ind) + twoR * (1 / sin(angle(linkIDTemp, ind))) * DD
+            !         hydradius(ii)   = area(ii) / perimeter(ii)
+            !     else if ((areaTotalBelowThisLayer(linkIDTemp, ind) - area(ii) ) == 0) then ! exlctly at layer boundary
+            !         depth(ii)       = depthAtLayerTop(linkIDTemp, ind)
+            !         topwidth(ii)    = widthAtLayerTop(linkIDTemp, ind)
+            !         hyddepth(ii)    = area(ii) / topwidth(ii)
+            !         eta(ii)         = zbottom(ii) + depth(ii)
+            !         perimeter(ii)   = perimeterBelowThisLayer(linkIDTemp, ind)
+            !         hydradius(ii)   = area(ii) / perimeter(ii)
             !     else
-            !         depth(ii) = fulldepth(ii) * table_lookup(AoverAfull(ii), YCirc, NYCirc)
-            !     endif
-            !     YoverYfull(ii) = depth(ii) / fulldepth(ii)
-            !     topwidth(ii)   = fulldepth(ii) * table_lookup(YoverYfull(ii), WCirc, NWCirc)
-            !     hyddepth(ii)   = area(ii) / topwidth(ii)
-            !     eta(ii)        = zbottom(ii) + hyddepth(ii)
-            !     hydradius(ii)  = onefourthR * fulldepth (ii) * table_lookup(YoverYfull(ii), RCirc, NRCirc)
-            !     perimeter(ii)  = area(ii) / hydradius(ii)
-
-            ! endif
-        enddo
+            !         print *, "Error in Width-Depth Interpolation in element geometry"
+            !         !stop
+            !     end if
+            ! enddo
+        
 
         AoverAfull = nullvalueR
         YoverYfull = nullvalueR
@@ -929,7 +970,7 @@ contains
 
         ! print*, 'geometry debug for ', trim(subroutine_name)
         ! print*, 'Open pipe  ', maskarray_pipe_geometry
-        ! print*, 'Area       ', area
+        ! print*, 'Area       ', area(997:1001)
         ! print*, 'AoverAfull ', AoverAfull
         ! print*, 'depth      ', depth
         ! print*, 'eta        ', eta
@@ -1067,13 +1108,13 @@ contains
 
         ! print*, 'geometry debug for ', trim(subroutine_name)
         ! print*, 'is full    ', isfull
-        ! print*, 'area        ', area
-        ! print*, 'eta         ', eta
+        ! print*, 'area        ', area(997:1001)
+        ! print*, 'eta         ', eta(997:1001)
         ! print*,'----------------------------------------'
         ! print*, 'topwidth   ', topwidth
         ! print*, 'hydradius  ', hydradius
         ! print*, 'perimeter  ', perimeter
-        ! print*, 'hyddepth   ', hyddepth
+        ! print*, 'hyddepth   ', hyddepth(997:1001)
         ! print*, 'dHdA       ', dHdA
 
         maskarray_pipe_geometry = nullvalueL
@@ -1177,6 +1218,128 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine rectangular_junction_leg
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine width_depth_quadratic_function (elemI, elemR, ei_geometry, ei_elem_type, elem_type_value, &
+        er_Length, er_Area, er_Volume, widthDepthData, w_d_angle, w_d_widthAtLayerTop, w_d_depthAtLayerTop, &
+        w_d_perimeterBelowThisLayer, a_diff)
+        ! This is the subroutine to update the irregular XS (width-depth system)
+        ! Since the irregular XS is not linear, we cannot directly use interpolation to get the right geometry 
+        ! between layers, solve the quadratic function here and get the depth DD
+        
+        character(64) :: subroutine_name = 'width_depth_quadratic_function'
+
+        integer,                intent(in)      :: elemI(:,:)
+        real,       target,     intent(in out)  :: elemR(:,:)
+        real,       target,     intent(in)      :: widthDepthData(:,:,:)
+
+        integer,                intent(in)      :: ei_geometry, ei_elem_type, elem_type_value
+        integer,                intent(in)      :: er_Length
+        integer,                intent(in)      :: er_Area
+        integer,                intent(in)      :: er_Volume
+
+        real,                   intent(in out)  :: w_d_angle(:)
+        real,                   intent(in out)  :: w_d_widthAtLayerTop(:)
+        real,                   intent(in out)  :: w_d_depthAtLayerTop(:)
+        real,                   intent(in out)  :: w_d_perimeterBelowThisLayer(:)
+
+        real,       pointer                     :: volume(:)
+        real,       pointer                     :: area(:)
+        real,       pointer                     :: length(:)
+
+        real,       pointer                     :: areaTotalBelowThisLayer(:,:)
+        real,       pointer                     :: widthAtLayerTop(:,:)
+        real,       pointer                     :: depthAtLayerTop(:,:)
+        real,       pointer                     :: angle(:,:)
+        real,       pointer                     :: perimeterBelowThisLayer(:,:)
+        
+        
+        real,       dimension(:), allocatable   :: area_difference
+
+        real,                   intent(in out)  :: a_diff(:)
+        integer                                 :: ind
+
+        integer                                 :: ii, linkIDTemp
+        real                                    :: local_diff
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        ! inputs
+        volume        => elemR(:,er_Volume)
+        length        => elemR(:,er_Length)
+        area          => elemR(:,er_Area)
+
+        areaTotalBelowThisLayer => widthDepthData (:,:, wd_areaTotalBelowThisLayer)
+        widthAtLayerTop         => widthDepthData (:,:, wd_widthAtLayerTop)
+        depthAtLayerTop         => widthDepthData (:,:, wd_depthAtLayerTop)
+        angle                   => widthDepthData (:,:, wd_angle)
+        perimeterBelowThisLayer => widthDepthData (:,:, wd_perimeterBelowThisLayer)
+
+
+
+        ! area_difference is used for compute the area difference within each layer
+        allocate (area_difference(size(widthDepthData,2)))
+
+
+        !Calculate the area ahead
+        where ( elemI(:, ei_geometry) == eWidthDepth .and. (elemI(:,ei_elem_type) == elem_type_value) )
+            area        = volume / length
+        endwhere
+                
+        !do loop to get the ind array and a_diff array, and use these two arrays to calculate AA, BB, CC, and DD for quadratic function 
+        do ii=1, size(area,1)
+            if ( (elemI(ii,ei_geometry)  == eWidthDepth) .and. (elemI(ii,ei_elem_type) == elem_type_value) ) then
+                    linkIDTemp = elemI(ii,e2i_link_ID)
+
+                    area_difference  = zeroR
+                    area_difference(:) = area(ii) - areaTotalBelowThisLayer(linkIDTemp,:)
+                    
+                    local_diff = (areaTotalBelowThisLayer(linkIDTemp, minloc(abs(area_difference), DIM=1)) - area(ii) )
+
+                     ! Find the closest area layer
+                    if      ( local_diff > 0)   then !its between ind and ind-1
+                        ind                             = minloc(abs(area_difference), DIM=1) -1 ! Since its between i & i-1, use the lower layer (i-1)
+                        a_diff(ii)                      = (area(ii) - areaTotalBelowThisLayer(linkIDTemp,ind))
+                        w_d_angle(ii)                   = angle(linkIDTemp, ind)
+                        w_d_widthAtLayerTop(ii)         = widthAtLayerTop(linkIDTemp, ind)
+                        w_d_depthAtLayerTop(ii)         = depthAtLayerTop(linkIDTemp, ind)
+                        w_d_perimeterBelowThisLayer(ii) = perimeterBelowThisLayer(linkIDTemp, ind)
+                    else if ( local_diff < 0)   then !its between ind and ind+1
+                        ind                             = minloc(abs(area_difference), DIM=1) ! The floor is layer i
+                        a_diff(ii)                      = (area(ii) - areaTotalBelowThisLayer(linkIDTemp, ind))
+                        w_d_angle(ii)                   = angle(linkIDTemp, ind)
+                        w_d_widthAtLayerTop(ii)         = widthAtLayerTop(linkIDTemp, ind)
+                        w_d_depthAtLayerTop(ii)         = depthAtLayerTop(linkIDTemp, ind)
+                        w_d_perimeterBelowThisLayer(ii) = perimeterBelowThisLayer(linkIDTemp, ind)
+                    else if ( local_diff == 0)  then ! exactly at layer boundary
+                        ind                             = minloc(abs(area_difference), DIM=1)
+                        a_diff(ii)                      = 0
+                        w_d_angle(ii)                   = angle(linkIDTemp, ind)
+                        w_d_widthAtLayerTop(ii)         = widthAtLayerTop(linkIDTemp, ind)
+                        w_d_depthAtLayerTop(ii)         = depthAtLayerTop(linkIDTemp, ind)
+                        w_d_perimeterBelowThisLayer(ii) = perimeterBelowThisLayer(linkIDTemp, ind)
+                    else
+                        print *, "Error in Width-Depth Interpolation in element geometry"
+                        print *, "local_diff = ", local_diff
+                        print *, "areadifference = ", area_difference
+                        print *, "=============="
+                        print *, "area = ", area(ii)
+                        print *, "=============="
+                        print *, "areaTotalBelowThisLayer=", areaTotalBelowThisLayer(linkIDTemp,:)
+                        stop
+                
+                    endif
+            else
+                a_diff(ii)  = nullvalueR
+            endif
+        enddo
+            
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine width_depth_quadratic_function
     !
     !==========================================================================
     ! END OF MODULE element_geometry
