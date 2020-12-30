@@ -75,6 +75,10 @@ contains
         call initial_conditions_from_linkdata &
             (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, linkR, linkI)
 
+        !% custom initial condition setup for special test cases
+        call custom_initial_condition &
+            (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, bcdataDn)
+
         call initial_junction_conditions &
            (faceR, faceI, elem2R, elem2I, elemMR, elemMYN, elemMI, nodeR, nodeI)
 
@@ -92,7 +96,7 @@ contains
             faceR, faceI, bcdataDn, bcdataUp, thisTime, 0, &
             ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
             Breadth, widthDepthData, cellType)
-
+                    
         call meta_element_assign &
             (elem2I, e2i_elem_type, e2i_meta_elem_type)
 
@@ -118,7 +122,7 @@ contains
         !% select the solver based on Area/AreaFull
         call initial_solver_select &
             (elem2R, elemMR, elem2I, elemMI)
-            
+
         !% set the element-specific smallvolume value
         !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
         !% HACK - OTHER GEOMETRY TYPE NEEDED
@@ -535,6 +539,10 @@ contains
                 elem2R(:,e2r_Area_N1)       = elem2R(:,e2r_Area)
             endwhere
 
+            if (setting%BCondition%InflowRampup) then
+                elem2R(:,e2r_Flowrate) = setting%BCondition%flowrateIC
+            endif
+
             !%  Update velocity
             where (  (elem2I(:,e2i_link_ID) == Lindx) .and. (elem2R(:,e2r_Area) > zeroR) )
                 elem2R(:,e2r_Velocity)  = elem2R(:,e2r_Flowrate) / elem2R(:,e2r_Area)
@@ -542,8 +550,89 @@ contains
 
         enddo
 
+        
+
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine initial_conditions_from_linkdata
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine custom_initial_condition &
+        (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, bcdataDn)
+    !    
+    ! set up custom initial conditions for special cases like flow over a bump
+    ! hard coded custon initial condition setup
+    !
+    character(64) :: subroutine_name = 'custom_initial_condition'
+
+    real,           intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+    integer,        intent(in out)  :: elem2I(:,:),  elemMI(:,:)
+    logical,        intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+
+    type(bcType),   intent(in)      :: bcdataDn(:)
+    real    :: thisVal
+    integer :: ii
+
+    !--------------------------------------------------------------------------
+    if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        if (setting%CustomIC%UseCustomInitialCondition) then
+
+            select case (setting%TestCase%TestName)
+
+                case ('swashes_007')
+                    !% there are problem with zbottom calculation for elements and reproducing
+                    !% the same zbottom as SvePy.
+                    !% the zbottom is hardcoded to make it consistant with the SvePy
+                    !% find the x value for elements. Later move to a subroutine
+                    !% hard coded for swashes test case
+                    do ii = 2,N_elem2 -1 
+                        elem2R(ii,e2r_X) = sum(elem2R(2:N_elem2 -1,e2r_Length)) - sum(elem2R(2:ii,e2r_Length)) &
+                                              + elem2R(ii,e2r_Length)/2.0
+                                              elem2R(ii,e2r_Zbottom) = (0.2 - 0.05 * ((elem2R(ii,e2r_X) - 10.0) ** 2.0)) 
+                        if (elem2R(ii,e2r_X) < 8.0 ) then
+                            elem2R(ii,e2r_Zbottom) = 0.0
+                        elseif (elem2R(ii,e2r_X) > 12.0 ) then
+                            elem2R(ii,e2r_Zbottom) = 0.0
+                        endif
+                    enddo
+
+                    ! get the boundary eta and set that for every other elements
+                    thisVal = elem2R(1,e2r_eta)
+                    elem2R(:,e2r_Eta)       = thisVal
+                    elem2R(:,e2r_Depth)     = elem2R(:,e2r_Eta) - elem2R(:,e2r_Zbottom)
+                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_FullArea)  = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
+                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
+                    elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
+                    elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area) 
+
+                case ('simple_pipe_006')
+                !% This custom initial contion propagates a wave through the pipe
+                    elem2R(90:101,e2r_Eta) = elem2R(90:101,e2r_Eta) + 5.0
+                    elem2R(:,e2r_Depth)     = elem2R(:,e2r_Eta) - elem2R(:,e2r_Zbottom)
+                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_FullArea)  = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
+                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
+                    elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
+                    elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area)
+                case default
+                print *, 'Warning '
+                print *, setting%TestCase%TestName, ' does not need a custom initial condition'
+            end select
+        endif
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+    end subroutine custom_initial_condition
     !
     !==========================================================================
     !==========================================================================
@@ -923,14 +1012,17 @@ contains
 
         where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
                 (elem2I(:,e2i_elem_type) == ePipe   ) )
-            elem2I(:,e2i_solver) = SVE
+            ! elem2I(:,e2i_solver) = SVE
             ! elem2I(:,e2i_solver) = AC
-        endwhere
 
+            elem2I(:,e2i_solver) = AC
+            ! elem2I(50:101,e2i_solver) = SVE
+        endwhere
+        
         where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
                 (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
-            elemMI(:,eMi_solver) = SVE
-            ! elemMI(:,eMi_solver) = AC
+            ! elemMI(:,eMi_solver) = SVE
+            elemMI(:,eMi_solver) = AC
         endwhere
 
         ! where ( (elem2I(:,e2i_elem_type) == ePipe)           .and. &

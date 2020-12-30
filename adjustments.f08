@@ -19,6 +19,7 @@ module adjustments
     private
 
     public :: adjust_channel_velocity_limiter
+    public :: adjust_pipe_velocity_limiter
     public :: adjust_junction_branch_velocity_limit
     public :: adjust_face_dynamic_limits
     public :: adjust_for_zero_geometry
@@ -27,6 +28,7 @@ module adjustments
     public :: adjust_negative_eta_reset
     public :: adjust_smallvolumes
     public :: adjust_Vshaped_flowrate
+    public :: adjust_pressure_pipe_limiter
     public :: adjust_zero_velocity_at_zero_volume
 
     integer :: debuglevel = 0
@@ -74,6 +76,48 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine adjust_channel_velocity_limiter
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine adjust_pipe_velocity_limiter &
+        (elemR, elemYN, elemI, &
+        ei_elem_type, elemType, eYN_IsAdhocFlowrate, er_Velocity_new )
+        !
+        ! Limits the velocity in pipe elements to setting%Limiter%Velocity%Maximum
+        ! In general, this should only be needed where the volumes start getting small,
+        ! but also could accidentally mask (or delay) an instability.
+        !
+        character(64) :: subroutine_name = 'adjust_pipe_velocity_limiter'
+
+        real,      target, intent(in out)  :: elemR(:,:)
+        logical,           intent(in out)  :: elemYN(:,:)
+        integer,           intent(in)      :: elemI(:,:)
+        integer,           intent(in)      :: ei_elem_type, elemType, eYN_IsAdhocFlowrate
+        integer,           intent(in)      :: er_Velocity_new
+
+        real,  pointer ::  velocity(:)
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        if (setting%Limiter%Velocity%UseLimitMax) then
+            velocity => elemR(:,er_Velocity_new)
+
+            where ( (abs(velocity) > setting%Limiter%Velocity%Maximum) .and. &
+                (elemI(:,ei_elem_type) == elemType) )
+
+                velocity = sign( 0.99 * setting%Limiter%Velocity%Maximum, velocity )
+                elemYN(:,eYN_IsAdhocFlowrate) = .true.
+
+            endwhere
+
+            ! print*, 'debug   ', trim(subroutine_name)
+            ! print*, 'velocity', velocity
+        endif
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine adjust_pipe_velocity_limiter
     !
     !==========================================================================
     !==========================================================================
@@ -444,7 +488,7 @@ contains
         mapUp => elem2I(:,e2i_Mface_u)
         mapDn => elem2I(:,e2i_Mface_d)
 
-        elemAdjust => elem2R(:, e2r_adjustflow)
+        ! elemAdjust => elem2R(:, e2r_adjustflow)
 
         !% HACK - at this point only handling channel elements
         where ( (elem2I(:,e2i_elem_type) == eChannel) .or. (elem2I(:,e2i_elem_type) == ePipe) )
@@ -463,15 +507,15 @@ contains
         !%
         !%  Arguably, this would likely be best using timescales, but we need to test
         !%  this further
-        ! where (elemMask)
-        !    elemAdjust =  (  tscaleUp * faceFlow(mapDn)   &
-        !                   + tscaleDn * faceFlow(mapUp) ) &
-        !                 / ( tscaleUp + tscaleDn )
-        ! endwhere
         where (elemMask)
-            elemAdjust =  (  0.5 * faceFlow(mapDn)   &
-                + 0.5 * faceFlow(mapUp) )
+           elemAdjust =  (  tscaleUp * faceFlow(mapDn)   &
+                          + tscaleDn * faceFlow(mapUp) ) &
+                        / ( tscaleUp + tscaleDn )
         endwhere
+        ! where (elemMask)
+        !     elemAdjust =  (  0.5 * faceFlow(mapDn)   &
+        !         + 0.5 * faceFlow(mapUp) )
+        ! endwhere
 
         !% apply a weighted combination based on the setting coefficient to damp the V
         coef => setting%Method%AdjustVshapedFlowrate%Coef
@@ -494,6 +538,84 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine adjust_Vshaped_flowrate
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine adjust_pressure_pipe_limiter &
+        (elem2R, faceR, elem2I, elem2YN)
+        !
+        !  Ad hoc smoothing of surcharged pressure in pipe on element center
+        !
+        character(64) :: subroutine_name = 'adjust_pressure_pipe_limiter'
+
+        real,      target,     intent(in out)  :: elem2R(:,:)
+        real,      target,     intent(in)      :: faceR(:,:)
+        integer,   target,     intent(in)      :: elem2I(:,:)
+        logical,   target,     intent(in out)  :: elem2YN(:,:)
+
+        real,      pointer     :: elemEta(:), elemAdjust(:), faceEtaUp(:)
+        real,      pointer     :: tscaleUp(:), tscaleDn(:), zCrown(:), faceEtaDn(:)
+        integer,   pointer     :: mapUp(:), mapDn(:), elemType(:)
+        logical,   pointer     :: elemMask(:)
+
+        integer :: e2r_adjustEta, e2YN_mask
+
+        real,      pointer     :: coef
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        e2r_adjustEta = e2r_Temp(next_e2r_temparray)
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
+        e2YN_mask = e2YN_Temp(next_e2YN_temparray)
+        next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
+
+        elemEta    => elem2R(:,e2r_Eta)
+        tscaleUp   => elem2R(:,e2r_Timescale_H_u) 
+        tscaleDn   => elem2R(:,e2r_Timescale_H_d) 
+        elemAdjust => elem2R(:,e2r_adjustEta)
+        zCrown     => elem2R(:,e2r_Zcrown)
+        elemType   => elem2I(:,e2i_elem_type)
+        faceEtaDn  => faceR(:,fr_Eta_d)
+        faceEtaUp  => faceR(:,fr_Eta_u)
+
+        elemMask   => elem2YN(:,e2YN_mask)
+        elemMask   = .false.
+
+        mapUp => elem2I(:,e2i_Mface_u)
+        mapDn => elem2I(:,e2i_Mface_d)
+
+        coef  => setting%Method%AdjustPressure%Coef
+
+        if (setting%Method%AdjustPressure%Apply) then
+            if (setting%Method%AdjustPressure%Type == 'smoothall') then
+                elemMask = ( (elemType == ePipe) .and. (elemEta .GE. zCrown) )
+
+            elseif (setting%Method%AdjustPressure%Type =='vshape') then
+                elemMask = ( ( (utility_sign_with_ones(faceEtaDn(mapUp) - elemEta))          &
+                            *(utility_sign_with_ones(faceEtaUp(mapDn) - elemEta)) > 0) .and. &
+                             (elemType == ePipe) )
+
+            else
+                print*, 'unknown value for setting.method_P_adjust_pipe of:'
+                print*, setting%Method%AdjustPressure%Type
+                stop
+            endif
+        endif
+
+        where (elemMask)
+            elemAdjust =  (  tscaleUp * faceEtaUp(mapDn)   &
+                           + tscaleDn * faceEtaDn(mapUp) ) &
+                           / ( tscaleUp + tscaleDn ) 
+        endwhere
+
+        where (elemMask)
+            elemEta = coef * elemAdjust + (oneR - coef) * elemEta
+        endwhere
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine adjust_pressure_pipe_limiter
     !
     !==========================================================================
     !==========================================================================

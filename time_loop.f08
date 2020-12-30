@@ -177,17 +177,17 @@ contains
                 bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,    &
                 zBottom, xDistance, Breadth, widthDepthData, cellType, rkCycle)
 
-            ! if (  count(elem2I(:,e2i_solver) == AC) &
-            !     + count(elemMI(:,eMi_solver) == AC)> zeroI ) then               
-            !     !% Artifical compressibility convergence pseudo time marching loop[    
-            !     call pseudo_time_marching &
-            !         (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN,    &
-            !         faceYN, bcdataDn, bcdataUp, linkI, thisStep, thisTime, AnormH,      &
-            !         AnormQ, AnormHlast, AnormQlast, TnormH, TnormQ, RTnormH, RTnormQ,   &
-            !         RLnormH,  RLnormQ, debugfile, diagnostic, threadedfile, ID,         &
-            !         numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,        &
-            !         widthDepthData, cellType)
-            ! endif
+            if (  count(elem2I(:,e2i_solver) == AC) &
+                + count(elemMI(:,eMi_solver) == AC)> zeroI ) then               
+                !% Artifical compressibility convergence pseudo time marching loop[    
+                call pseudo_time_marching &
+                    (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN,    &
+                    faceYN, bcdataDn, bcdataUp, linkI, thisStep, thisTime, AnormH,      &
+                    AnormQ, AnormHlast, AnormQlast, TnormH, TnormQ, RTnormH, RTnormQ,   &
+                    RLnormH,  RLnormQ, debugfile, diagnostic, threadedfile, ID,         &
+                    numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,        &
+                    widthDepthData, cellType)
+            endif
 
             !% compute the element froude number (diagnostic only)
             call diagnostic_froude_number (elem2R, elem2I, elemMR, elemMI)
@@ -201,27 +201,6 @@ contains
                     print *, 'Volume Conservation (this step and total) = ', &
                         diagnostic(restartStep)%Volume%ConservationThisStep,  &
                         diagnostic(restartStep)%Volume%ConservationTotal
-                    ! print*, 'Flowrate ==>'
-                    ! call utility_print_values_by_link &
-                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
-                    !     fr_Flowrate, 0, e2r_Flowrate, eMr_Flowrate, eMr_AreaDn, eMr_AreaDn)
-                    ! print*, 'Eta ==>'
-                    ! call utility_print_values_by_link &
-                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
-                    !     fr_Eta_d, fr_Eta_u, e2r_Eta, eMr_Eta, eMr_EtaDn, eMr_EtaUp)
-                    ! print*, 'Area ==>'
-                    ! call utility_print_values_by_link &
-                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
-                    !     fr_Area_d, fr_Area_u, e2r_Area, eMr_Area, eMr_AreaDn, eMr_AreaUp)
-                    ! print*, 'Depth ==>'
-                    ! call utility_print_values_by_link &
-                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
-                    !     fr_HydDepth_d, fr_HydDepth_u, e2r_Depth, eMr_Depth, eMr_AreaDn, eMr_AreaUp)
-                    ! print*, 'TopWidth ==>'
-                    ! call utility_print_values_by_link &
-                    !     (elem2R, elem2I, elemMR, elemMI, faceR, faceI, 1, &
-                    !     fr_Topwidth, 0, e2r_Topwidth, eMr_Topwidth, eMr_AreaDn, eMr_AreaUp)
-                    ! print*, 'Solver ==>', elem2I(:,e2i_solver)
                 endif
             endif
 
@@ -239,10 +218,6 @@ contains
             !         bcdataDn, bcdataUp, thistime, dt)
             !
             ! increment the counters
-            ! print*, 'after pseudo loop'
-            ! print*, 'Flowrate ', elem2R(997:1001,e2r_Flowrate)
-            ! print*, 'Velocity ', elem2R(997:1001,e2r_Velocity)
-            ! print*, 'Eta      ', elem2R(997:1001,e2r_Eta)
             thisstep    = thisstep + 1
             restartStep = restartStep + 1
             thistime    = nexttime
@@ -287,6 +262,33 @@ contains
         
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine save_previous_values
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    ! subroutine dynamic_time_step_size &
+    !     (elem2R, elemMR, faceR)
+    !     ! 
+    !     ! Increases the model time step if the CFL everywhere is low, and 
+    !     ! decreases the model time step if the CFL everywhere is high.
+    !     ! To prevent this from oscillating between increase and decrease on
+    !     ! successive time steps, there is a stepcounter that keeps track of the
+    !     ! number of time steps since the last decrease. There must be a number
+    !     ! of steps (cfl_increase_stepinterval_from_decrease) without a decrease
+    !     ! before the step size can be increased.
+    !     ! 
+    !     character(64) :: subroutine_name = 'dynamic_time_step_size'
+
+    !     real,   intent(inout)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+    !     real                   :: maxcfl
+    !     !--------------------------------------------------------------------------
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+    !     maxcfl = diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d)
+        
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    ! end subroutine dynamic_time_step_size
     !
     !==========================================================================
     ! END OF MODULE time_loop

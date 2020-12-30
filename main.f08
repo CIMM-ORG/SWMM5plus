@@ -98,8 +98,8 @@ program main
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
-    ! setting%TestCase%TestName = 'simple_pipe_006'
-    setting%TestCase%TestName = 'swashes_007'
+    setting%TestCase%TestName = 'simple_pipe_006'
+    ! setting%TestCase%TestName = 'swashes_007'
     ! setting%TestCase%TestName = 'waller_creek'
 
     !%  hard-code for debug output
@@ -112,6 +112,7 @@ program main
     setting%Debugout%elem2R = .true.   ! select arrays to have debug output
     setting%Debugout%elemMR = .false.  ! select arrays to have debug output
     setting%Debugout%faceR  = .true.   ! note that not all are implemented
+    setting%Debugout%faceI  = .true.   ! note that not all are implemented
 
     !setting%OutputThreadedLink%SuppressAllFiles = .true.
 
@@ -176,18 +177,18 @@ program main
         bcdataUp, bcdataDn)
 
     !% setting a zero starting condition is useful for robustness tests
-    print *, 'in main setting flowrate and velocity to 0'
-    elem2R(:,e2r_Velocity) = 0.0
-    elem2R(:,e2r_Flowrate) = 0.0
-    elemMR(:,eMr_Velocity) = 0.0
-    elemMR(:,eMr_Flowrate) = 0.0
-    elemMR(:,eMr_FlowrateUp(:)) = 0.0
-    elemMR(:,eMr_FlowrateDn(:)) = 0.0
-    elemMR(:,eMr_VelocityDn(:)) = 0.0
-    elemMR(:,eMr_VelocityUp(:)) = 0.0
-    faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.0
-    faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.0
-    faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
+    ! print *, 'in main setting flowrate and velocity to 0'
+    ! elem2R(:,e2r_Velocity) = 0.0
+    ! elem2R(:,e2r_Flowrate) = 0.0
+    ! elemMR(:,eMr_Velocity) = 0.0
+    ! elemMR(:,eMr_Flowrate) = 0.0
+    ! elemMR(:,eMr_FlowrateUp(:)) = 0.0
+    ! elemMR(:,eMr_FlowrateDn(:)) = 0.0
+    ! elemMR(:,eMr_VelocityDn(:)) = 0.0
+    ! elemMR(:,eMr_VelocityUp(:)) = 0.0
+    ! faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.0
+    ! faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.0
+    ! faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 
     ! initialize output by threaded link
     call output_threaded_by_link_initialize (threadedfile)

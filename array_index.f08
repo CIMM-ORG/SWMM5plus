@@ -179,7 +179,7 @@ module array_index
     integer, parameter :: e2r_CtestQ0            = 49   ! Convergence test storage for AC: d/dtau of Q
     integer, parameter :: e2r_CtestH1            = 50   ! Convergence test storage for AC: d/dtau of eta * A
     integer, parameter :: e2r_CtestQ1            = 51   ! Convergence test storage for AC: d/dtau of Q
-    integer, parameter :: e2r_idx_base1          = 51
+    integer, parameter :: e2r_idx_base1          = 53
     integer, parameter :: e2r_temp1              = e2r_idx_base1 + 1
     integer, parameter :: e2r_temp2              = e2r_idx_base1 + 2
     integer, parameter :: e2r_temp3              = e2r_idx_base1 + 3
@@ -410,16 +410,17 @@ module array_index
     integer, parameter :: fr_Velocity_u   = 12 ! velocity on upstream side of face (velocityM in SvePy)
     integer, parameter :: fr_Zbottom      = 13
     integer, parameter :: fr_X            = 14
-    integer, parameter :: fr_temp1        = 15
-    integer, parameter :: fr_temp2        = 16
-    integer, parameter :: fr_temp3        = 17
-    integer, parameter :: fr_temp4        = 18
-    integer, parameter :: fr_temp5        = 19
-    integer, parameter :: fr_temp6        = 20
-    integer, parameter :: fr_temp7        = 21
-    integer, parameter :: fr_temp8        = 22
-    integer, parameter :: fr_temp9        = 23
-    integer, parameter :: fr_idx_max      = 23
+    integer, parameter :: fr_cosangle     = 15
+    integer, parameter :: fr_temp1        = 16
+    integer, parameter :: fr_temp2        = 17
+    integer, parameter :: fr_temp3        = 18
+    integer, parameter :: fr_temp4        = 19
+    integer, parameter :: fr_temp5        = 20
+    integer, parameter :: fr_temp6        = 21
+    integer, parameter :: fr_temp7        = 22
+    integer, parameter :: fr_temp8        = 23
+    integer, parameter :: fr_temp9        = 24
+    integer, parameter :: fr_idx_max      = 24
 
     integer, parameter :: fr_n_temp       = 9
     ! storage for temp array index positions

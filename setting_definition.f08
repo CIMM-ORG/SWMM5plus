@@ -18,8 +18,15 @@ module setting_definition
     !% setting%Method%AdjustVshapedFlowrate
     type adjustVshapedFlowrateType
         logical ::  Apply = .true.
-        real    ::  Coef  = 0.1
+        real    ::  Coef  = 1.0
     end type adjustVshapedFlowrateType
+
+    !% setting%Method%AdjustPressure
+    type adjustPressureType
+        character(len=64)   ::  Type  = 'smoothall' !'vshape'
+        logical             ::  Apply = .true.
+        real                ::  Coef  = 0.5
+    end type adjustPressureType
 
     !% setting%Method%AdjustWidthDepth
     type adjustWidthDepthType
@@ -160,6 +167,7 @@ module setting_definition
     type methodType
         type(adjustVshapedFlowrateType) :: AdjustVshapedFlowrate
         type(adjustWidthDepthType)      :: AdjustWidthDepth
+        type(adjustPressureType)        :: AdjustPressure
     end type methodType
 
     !%  setting%OutputThreadedLink
@@ -221,7 +229,7 @@ module setting_definition
         real    :: Flowrate     = 0.0     ! m^3/s
         real    :: Topwidth     = 1.0e-4  ! m
         real    :: Velocity     = 0.0     ! m/s
-        real    :: Volume       = 1.0e-6  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
+        real    :: Volume       = 1.0e-6  ! m^3 
     end type zerovalueType
 
     !%  setting%DefaultAC
@@ -241,15 +249,20 @@ module setting_definition
 
     !%  setting%BCondition
     type bconditionType
-        logical                 :: InflowRampup     = .true.
+        logical                 :: InflowRampup     = .false.
         real                    :: InflowRampupTime = 100.0
         real                    :: flowrateIC       = 0.01
     end type bconditionType 
 
-    !%  settin%HydJump
-    type hydjumpType
-        character(len=64)       :: FaceHydJumpMethod = 'momentum_match' !'extrapolate_surface' ! 'energy_limit', 'momentum_match', 'rectangular', 'simple'
-    end type hydjumpType
+    !%  setting%CustomIC
+    type customICType
+        logical                 :: UseCustomInitialCondition = .true.
+    end type customICType
+
+    !%  setting%FaceCosAngle
+    type facecosangleType
+        logical                 :: UseFaceCosAngle = .false.
+    end type facecosangleType
 
     !% FIRST LEVEL TYPE  ----------------------------------------------
     type settingType
@@ -267,7 +280,8 @@ module setting_definition
         type(zerovalueType)         :: ZeroValue     ! finite values to represent small or negative values
         type(defaultACType)         :: DefaultAC     ! This contains the default settings for atrificial compressibility
         type(bconditionType)        :: BCondition    ! This contains rampup boundary condition
-        type(hydjumpType)           :: HydJump       ! Hydraulic jump method type
+        type(customICType)          :: CustomIC      ! custom initial condition setup for special cases
+        type(facecosangleType)      :: FaceCosAngle
     end type settingType
 
 

@@ -75,6 +75,8 @@ contains
                 (elem2R, elemMR, faceR, faceI, faceYN, e2r_Volume_new, eMr_Volume_new)
         endif
 
+        call face_cosangle (elem2R, elemMR, faceR, faceI, faceYN)
+
         call face_hydraulic_jump (elem2R, elemMR, faceR, faceI, e2r_Velocity_new, eMr_Velocity_new)
 
         call face_surface_elevation_interp (elem2R, elemMR, faceR, faceI, faceYN)
@@ -774,6 +776,7 @@ contains
         flowrate => faceR(:,fr_Flowrate)
 
         jumptype => faceI(:,fi_jump_type)
+        jumptype = zeroI
 
         !%  compute the upstream and downstream froude number on each face
         !%  note the froude numbers are signed with + being downstream flow.
@@ -810,8 +813,8 @@ contains
         !%  an eta transition that is not a step in the correct direction. In such
         !%  a case it is better to just use the time weighting approach (which give
         !%  priority to the upstream side.
-        where ( (froudeDn < oneR - feps) .and. (froudeUp > oneR + feps) .and. &
-            (etaUp < etaDn) )
+        where ( (froudeUp > oneR + feps) .and. (froudeDn < oneR - feps) .and. &
+                (etaUp < etaDn) )
             jumptype = jump_downstream
         endwhere
 
@@ -882,9 +885,9 @@ contains
 
         real,      target,     intent(in out)  :: faceR(:,:)
         real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
-        integer,               intent(in)      :: faceI(:,:)
+        integer,   target,     intent(in)      :: faceI(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
-
+        integer,   pointer :: mapUp(:), mapDn(:)
         real,      pointer :: weightUp(:), weightDn(:), etaUp(:), etaDn(:)
         logical,   pointer :: facemask(:)
 
@@ -904,6 +907,8 @@ contains
 
         etaUp => faceR(:,fr_Eta_u)
         etaDn => faceR(:,fr_Eta_d)
+        mapUp => faceI(:,fi_Melem_u)
+        mapDn => faceI(:,fi_Melem_d)
 
         !%  use distance (length) for interpolation for free surface
         where ( (faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fPipe) )
@@ -931,12 +936,11 @@ contains
 
         ! %  set the mask for channel and mulitple elements without a hyd jump
         facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fPipe) &
-        .or. (faceI(:,fi_etype_d) == fMultiple)) &
-        & .and. &
-            ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fPipe) &
-        .or. (faceI(:,fi_etype_u) == fMultiple)) &
-        & .and. &
-            (faceI(:,fi_jump_type) == jump_none) )
+        .or. (faceI(:,fi_etype_d) == fMultiple))                                            &
+        .and.                                                                               &
+              ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fPipe)        &
+        .or.  (faceI(:,fi_etype_u) == fMultiple))                                           &
+        .and. (faceI(:,fi_jump_type) == jump_none) )
 
         where (facemask)
             etaDn = (weightUp * etaDn + weightDn * etaUp) / ( weightUp + weightDn )
@@ -969,8 +973,13 @@ contains
             ! the interpolation gives the eta of the element upstream.
             etaDn = elemMR(faceI(:,fi_Melem_u),eMr_Eta)
         endwhere
-        
+
         etaUp = etaDn
+
+        where (faceI(:,fi_jump_type) /= jump_none)
+            etaUp = elem2R(mapUp,e2r_Eta)
+            etaDn = elem2R(mapDn,e2r_Eta)
+        endwhere
         
         ! print*, trim(subroutine_name)
         ! print*, 'etaDn', etaDn
@@ -1040,6 +1049,75 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine face_hydraulic_depth
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine face_cosangle &
+        (elem2R, elemMR, faceR, faceI, faceYN)
+
+        character(64) :: subroutine_name = 'face_cosangle'
+
+        real,      target,     intent(in out)  :: faceR(:,:)
+        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        integer,   target,     intent(in)      :: faceI(:,:)
+        logical,   target,     intent(in out)  :: faceYN(:,:)
+
+        integer,   pointer :: mapUp(:), mapDn(:)
+        real,      pointer :: zDist(:), xDist(:), etaUp(:), etaDn(:), cosAngle(:)
+        logical,   pointer :: facemask(:)
+
+        integer    :: fr_zdist, fr_xdist
+
+        real :: feps, rc
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        fr_zdist =  fr_Temp(next_fr_temparray)
+        zDist    => faceR(:,fr_zdist)
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray,fr_n_temp)
+
+        fr_xdist =  fr_Temp(next_fr_temparray)
+        xDist    => faceR(:,fr_xdist)
+        next_fr_temparray = utility_advance_temp_array (next_fr_temparray,fr_n_temp)
+
+        facemask => faceYN(:,fYN_Temp(next_fYN_temparray))
+        next_fYN_temparray = utility_advance_temp_array (next_fYN_temparray,fYN_n_temp)
+
+        mapUp    => faceI(:,fi_Melem_u)
+        mapDn    => faceI(:,fi_Melem_d)
+        etaUp    => faceR(:,fr_Eta_u)
+        etaDn    => faceR(:,fr_Eta_d)
+        cosAngle => faceR(:,fr_cosangle)
+
+        ! %  set the mask for channel and mulitple elements
+        facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fPipe) &
+                .or. (faceI(:,fi_etype_d) == fMultiple)) &
+                & .and. &
+                    ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fPipe) &
+                .or. (faceI(:,fi_etype_u) == fMultiple))  )
+
+        if (setting%FaceCosAngle%UseFaceCosAngle) then
+            where (facemask)
+                zdist = etaDn - etaUp
+                xdist = elem2R(mapUp,e2r_X) - elem2R(mapDn,e2r_X)
+                cosAngle = xDist / (sqrt(zDist**twoR + xDist**twoR))
+            elsewhere
+                cosAngle = oneR
+            endwhere
+        else
+            cosAngle = oneR
+        endif
+        
+        zDist = nullvalueR
+        xDist = nullvalueR
+        nullify(zDist, xDist, facemask)
+        next_fr_temparray = next_fr_temparray - 2
+        next_fYN_temparray = next_fYN_temparray - 1
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+    end subroutine face_cosangle
     !
     !==========================================================================
     !==========================================================================

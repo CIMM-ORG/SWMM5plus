@@ -75,14 +75,14 @@ contains
 
         ! assign values
         ! downstream is default to elevation
-        bcdataDn(1)%NodeID = N_node
+        bcdataDn(1)%NodeID = 1
         bcdataDn(1)%TimeArray(1)     = setting%Time%StartTime
         bcdataDn(1)%TimeArray(2)     = setting%Time%EndTime + 100.0 !s
         bcdataDn(1)%ValueArray(1)    = lowerZ(N_link) +  depth_dnstream(N_link)  ! m
         bcdataDn(1)%ValueArray(2)    = lowerZ(N_link) +  depth_dnstream(N_link)  ! m
 
         ! upstream is default to flowrate
-        bcdataUp(1)%NodeID = 1
+        bcdataUp(1)%NodeID = N_node
         bcdataUp(1)%TimeArray(1)  = setting%Time%StartTime
         bcdataUp(1)%TimeArray(2)  = setting%Time%EndTime + 100.0 !s
         bcdataUp(1)%ValueArray(1) = initial_flowrate(1)  ! m^3/s
@@ -159,36 +159,23 @@ contains
         linkI(:,li_roughness_type)  = roughness_type
         linkR(:,lr_Roughness)       = ManningsN
 
-        
-        ! print *
-        ! print *, 'b)       ii  ,     xvalue  ,    lowerz    ,     upperz  '
-        ! do ii = 1, N_link
-        !     print *, ii, (ii)*channel_length(ii) - channel_length(ii)/2.0, &
-        !     lowerz(ii), upperz(ii)
-        ! enddo
-        ! stop
-
+        ! print*, 'Node,          zbottom,       xval '
         do ii = 2,N_node-1
             nodeI(ii,ni_node_type) = nJ2
-            nodeR(ii,nr_Zbottom)   = lowerZ(ii) 
+            nodeR(ii,nr_Zbottom)   = upperZ(ii) 
+            ! print*, ii, nodeR(ii,nr_Zbottom) , sum(channel_length(1:N_link)) - (ii-1)* channel_length(ii)
         end do
-
+        ! stop
+        
         ! designate the upstream nodes
-        nodeI(1,ni_node_type) = nBCup
-        nodeR(1,nr_Zbottom) = upperZ(1)
-        nodeName(1)%str = 'UpstreamBC'
+        nodeI(1,ni_node_type) = nBCdn
+        nodeR(1,nr_Zbottom) = 0.0
+        nodeName(1)%str = 'DownstreamBC'
 
         ! designate the downstream node
-        nodeI(N_node,ni_node_type) = nBCdn
-        nodeR(N_node,nr_Zbottom) = lowerZ(N_link)
-        nodeName(N_node)%str = 'DownstreamBC'
-
-        ! print *
-        ! print *, 'c)       ii  ,     xvalue  ,    zbottom    '
-        ! do ii = 2, N_node-1
-        !     print *, ii, (ii-1)*channel_length(ii), nodeR(ii,nr_Zbottom)
-        ! enddo
-        ! stop
+        nodeI(N_node,ni_node_type) = nBCup
+        nodeR(N_node,nr_Zbottom) = 0.0
+        nodeName(N_node)%str = 'UpstreamBC'
 
         ! assign the link types
         linkI(:,li_link_type) = lPipe
@@ -198,8 +185,8 @@ contains
 
         ! assign the link position and mappings
         do ii = 1, N_link
-            linkI(ii,li_Mnode_u) = ii ! map to upstream node
-            linkI(ii,li_Mnode_d) = ii + 1 ! map to downstream node
+            linkI(ii,li_Mnode_u) = ii + 1 ! map to upstream node
+            linkI(ii,li_Mnode_d) = ii     ! map to downstream node
 
             linkR(ii,lr_Length)          = channel_length(ii)
             linkR(ii,lr_BreadthScale)    = channel_breadth(ii)
@@ -211,8 +198,9 @@ contains
             linkR(ii,lr_InitialUpstreamDepth)    = depth_upstream(ii)
             linkR(ii,lr_InitialDnstreamDepth)    = depth_dnstream(ii)
             linkI(ii,li_InitialDepthType)        = idepth_type(ii)
-
         enddo
+        
+
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
             print *
             print *, subroutine_name,'-----------------------------------'

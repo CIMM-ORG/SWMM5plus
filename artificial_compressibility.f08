@@ -210,9 +210,9 @@ contains
             fEup, iup, idn, af, wrk, dt, dtau, rc2, maskPipeAc, isFull)
 
         where ( maskPipeAc .and. (isFull .eqv. .false.) )
-            area2 = area2tmp + wrk * dtau * kH2
+            area2new = area2tmp + wrk * dtau * kH2
         elsewhere ( maskPipeAc .and. (isFull .eqv. .true.) )
-            eta2  = eta2tmp  + wrk * dtau * kH2
+            eta2new  = eta2tmp  + wrk * dtau * kH2
         endwhere 
 
         !% HACK: Need derivation for juction-pipe elements
@@ -225,11 +225,19 @@ contains
                     ( eta2new .lt. zcrown2) )
         call adjust_negative_eta_reset (eta2new, zbottom2, maskarray)
 
-        ! !% overwrite old area and eta values
-        ! where (maskPipeAc)
-        !     area2 = area2new
-        !     eta2  = eta2new
-        ! endwhere
+        !% HACK: new area and new eta are needed to be transferred to the
+        !% old value column. Though AC solver continuity is solved for 
+        !% either area or eta, the SVE continuity solves for volume, and
+        !% eta and area are derived variables which is used for face interplation 
+        !% afterwards. To ensure a unified face update subroutine, new area and
+        !% eta are now transferred to the old column. Talk with Dr. Hodges
+        !% wheater this will cause problem.
+
+        !% overwrite old area and eta values
+        where (maskPipeAc)
+            area2 = area2new
+            eta2  = eta2new
+        endwhere
 
         ! release temporary arrays
         kH2 = nullvalueR

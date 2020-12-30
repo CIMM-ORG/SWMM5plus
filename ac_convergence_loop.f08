@@ -116,6 +116,7 @@ contains
         iterMin = setting%DefaultAC%Iter%Min
 
         !%  pseudo time loop
+        ! print*,'Begin AC Convergence loop'
         do while ( (isConverged .eqv. .false.) .and. (thisIter < iterMax) )
             thisIter = thisIter + oneI
             !%  store norms from the last iteration
@@ -125,8 +126,7 @@ contains
             !%  acCycle mask ensures only the second RK step is take in AC convergence
             acCycle(1) = .false.
             acCycle(2) = .true.
-            ! print*,'------------------------------------'
-            ! print*, 'This Iter =>',thisiter
+            
             call rk2 & 
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
                 bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
@@ -171,7 +171,6 @@ contains
                 RLnormQ = abs(1.0 - AnormQ / AnormQlast)
             endwhere
             !%  HACK: need same baseline for tau convergence for junctionpipe element
-
 
             !%  Norm testing for convergence
             !%  Either relative norm (slowing convergence) or the
@@ -223,11 +222,8 @@ contains
             endif
 
             !%  HACK: add density anomay corrections
-            ! if (thisiter == 5) then
-            !     stop
-            ! endif
         end do
-
+        
         ! release temporary arrays
         maskAC  = nullvalueL
         nullify(maskAC)

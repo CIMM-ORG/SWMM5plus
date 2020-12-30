@@ -85,7 +85,8 @@ contains
             ndebug = ndebug + 10
         endif
         if (setting%Debugout%faceI) then
-            ndebug = ndebug + 12
+            ndebug = ndebug + 1
+            ! ndebug = ndebug + 12
         endif
         if (setting%Debugout%faceYN) then
             ndebug = ndebug + 0
@@ -325,30 +326,30 @@ contains
         endif
 
         if (setting%Debugout%faceI) then
-            call debug_singlefile_open (debugfile(ii), 'faceI','idx', fi_idx)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','fi_type', fi_type)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','Melem_u', fi_Melem_u)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','Melem_d', fi_Melem_d)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','etype_u', fi_etype_u)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','etype_d', fi_etype_d)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','branch_u', fi_branch_u)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','branch_d', fi_branch_d)
-            ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','idx', fi_idx)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','fi_type', fi_type)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','Melem_u', fi_Melem_u)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','Melem_d', fi_Melem_d)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','etype_u', fi_etype_u)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','etype_d', fi_etype_d)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','branch_u', fi_branch_u)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','branch_d', fi_branch_d)
+            ! ii=ii+1
             call debug_singlefile_open (debugfile(ii), 'faceI','jump_type', fi_jump_type)
             ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','node_ID', fi_node_ID)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','link_ID', fi_link_ID)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','link_Pos', fi_link_Pos)
-            ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','node_ID', fi_node_ID)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','link_ID', fi_link_ID)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','link_Pos', fi_link_Pos)
+            ! ii=ii+1
         endif
 
         if (setting%Debugout%faceYN) then

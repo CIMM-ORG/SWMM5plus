@@ -163,7 +163,7 @@ contains
                 ! transport (to be added later) and for volume conservation calculations
                 ! fQNetNew = wrk * fQ + fQNet ! <= the mask condition is wrong, correct later
             endwhere
-
+            ! print*, elem2I(48:53,e2i_solver), 'e2i_solver'
             !%  step through the two steps of the RK2
             do ii=1,2
                 if (cycleSelect (1)) then
@@ -176,13 +176,41 @@ contains
                 endif
 
                 if ( (  count(elem2I(:,e2i_solver) == SVE) &
-                      + count(elemMI(:,eMi_solver) == SVE)> zeroI) .and. cycleSelect(ii) ) then
+                      + count(elemMI(:,eMi_solver) == SVE)> zeroI)) then
+                    !% cycleSelect is a logical which is [T T] for time loop and [F T] for 
+                    !% psuedo time loop.
 
-                    call sve_rk2_step &
-                        (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
-                        e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-                        elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-                        thiscoef(ii))                        
+                    !% HACK: In the AC convergence loop, only the 2nd step of SVE RK2 is taken.
+                    !% However, element center values are still needed for face reconstruction.
+                    !% Since, the update algorithm is written in terms of new volume and velocity
+                    !% column, the previously calculated SVE RK2 are transferred to the new value 
+                    !% column for the first RK step in AC convergence loop. This ensures that the 
+                    !% faces are updated properly. 
+
+                    !% transferring old values to new volume and velocity column are very inefficient,
+                    !% because the elegemt geomety and dynamics are calculated again. This indicates we
+                    !% are almost taking the whole RK step. This can be bypassed by seperating the update 
+                    !% routine based on SVE and AC solve. After an effective coupling between SVE and AC
+                    !% solver, seperate update routine should be written.
+
+                    !% HACK: This might not work when the solver switches. Needs further investigation.
+                    
+                    if (cycleSelect(ii)) then
+                        call sve_rk2_step &
+                            (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
+                            e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
+                            elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+                            thiscoef(ii))
+                    else
+                        where (elem2I(:,e2i_solver) == SVE) 
+                            elem2R(:,e2r_Volume_new)   = elem2R(:,e2r_Volume) 
+                            elem2R(:,e2r_Velocity_new) = elem2R(:,e2r_Velocity)
+
+                        elsewhere (elemMI(:,eMi_solver) == SVE) 
+                            elemMR(:,eMr_Volume_new)    = elemMR(:,eMr_Volume)
+                            elemMR(:,eMr_Velocity_new)  = elemMR(:,eMr_Velocity)
+                        endwhere
+                    endif                      
                 endif
 
                 if (  count(elem2I(:,e2i_solver) == AC) &
@@ -193,10 +221,10 @@ contains
                         fr_Flowrate_net, e2r_Flowrate_new, e2r_Area_new, e2r_Eta_new,      &
                         e2r_Flowrate_tmp, e2r_Area_tmp, e2r_Eta_tmp, eMr_Flowrate_new,     &
                         eMr_Area_new, eMr_Eta_new, fr_Flowrate_net_new, elem2R, elemMR,    &
-                        faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af, thiscoef(ii))
+                        faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af, thiscoef(ii)) 
                 endif
 
-                ! !  Sets the Qonly element geometry to provisional values
+                ! !%  Sets the Qonly element geometry to provisional values
                 ! call QonlyElement_provisional_geometry &
                 !     (elem2R, elemMR, faceR, elem2I, elemMI)
 
@@ -237,6 +265,10 @@ contains
                 e2r_Volume, e2r_Volume_new, e2i_elem_type, eChannel, .true.)
 
             call overwrite_old_values &
+                (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
+                eMr_Volume, eMr_Volume_new, eMi_elem_type, eJunctionChannel, .false.)
+
+            call overwrite_old_values &
                 (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
                 e2r_Volume, e2r_Volume_new, e2i_elem_type, ePipe, .true.)
 
@@ -247,10 +279,6 @@ contains
             call overwrite_old_values &
                 (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
                 e2r_Volume, e2r_Volume_new, e2i_elem_type, eOrifice, .true.)
-
-            call overwrite_old_values &
-                (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
-                eMr_Volume, eMr_Volume_new, eMi_elem_type, eJunctionChannel, .false.)
                 
             call overwrite_old_values &
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
@@ -426,9 +454,15 @@ contains
         idn => elem2I(:,e2i_Mface_d)
         where (maskChannelPipeSVE)
             kc2 = dt * ( fQ(iup) - fQ(idn) )
-            ku2 = dt * ( fQ(iup) * fUdn(iup) - fQ(idn) * fUup(idn) &
-                + grav * fAdn(iup) * (fEdn(iup) - eta2)   &
-                - grav * fAup(idn) * (fEup(idn) - eta2) )
+            ! ku2 = dt * ( fQ(iup) * fUdn(iup) - fQ(idn) * fUup(idn) &
+            !     + grav * fAdn(iup) * (fEdn(iup) - eta2)   &
+            !     - grav * fAup(idn) * (fEup(idn) - eta2) )
+
+            !% experimental: matching with SvePy code
+            ku2 = dt * ( fQ(iup) * fUdn(iup) * sign(ones2r,fQ(iup)) &
+                       - fQ(idn) * fUup(idn) * sign(ones2r,fQ(idn))   &
+                       + grav * fAdn(iup) * (fEdn(iup) - eta2)   &
+                       - grav * fAup(idn) * (fEup(idn) - eta2) )
         endwhere
 
         !%  Junctions (upstream faces)
@@ -465,7 +499,7 @@ contains
 
 
         where (maskJunctionChannelPipeSVE) 
-            volumeMnew   = volumeMold                + thiscoef * kcM
+            volumeMnew   = volumeMold                 + thiscoef * kcM
             velocityMnew = (volumeMold * velocityMold + thiscoef * kuM)  &
                 / (oneR + thiscoef * dt * grav *  (mnM**2) * abs(velocityMold) / (rhM**(4.0/3.0)) )
         endwhere
@@ -476,7 +510,7 @@ contains
         call adjust_negative_volume_reset (volume2new)
         call adjust_negative_volume_reset (volumeMnew)
 
-        !%  VELOCITY - divide out the volume to get the ae2r_Tempctual velocity
+        !%  VELOCITY - divide out the volume to get the e2r_Tempctual velocity
         where (maskChannelPipeSVE)
             velocity2new = velocity2new / volume2new
         endwhere

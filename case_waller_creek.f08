@@ -581,8 +581,8 @@ contains
             setting%Method%AdjustWidthDepth%areaMaximum = twoR * maxval(areaTBL(:, eIn1))
         endif
 
-        print *, "dDepth",dDepth(1,:)
-        print *, "dWidth", dWidth(1,:)
+        ! print *, "dDepth",dDepth(1,:)
+        ! print *, "dWidth", dWidth(1,:)
         ! perimeter below this layer
         !perimeterBL(:,1) = width(:,1)
         !perimeterBL(:,2:eIn1) = perimeterBL(:,1:eIn1-1) &
@@ -596,14 +596,14 @@ contains
             enddo
         enddo
 
-        print *, "areaTBL", areaTBL(1,:)
-        rH(:,1) = zeroR
-        rH(:,2:eIn1) = areaTBL(:,2:eIn1)/perimeterBL(:,2:eIn1)
-        print *, "rH", rH(1,:)
-        gammaBTL = areaTBL * rH**twothirdR
-        print *, "gammaBTL", gammaBTL(1,:)
-        area_difference = area - areaTBL
-        local_difference = area_difference - area
+        ! print *, "areaTBL", areaTBL(1,:)
+        ! rH(:,1) = zeroR
+        ! rH(:,2:eIn1) = areaTBL(:,2:eIn1)/perimeterBL(:,2:eIn1)
+        ! print *, "rH", rH(1,:)
+        ! gammaBTL = areaTBL * rH**twothirdR
+        ! print *, "gammaBTL", gammaBTL(1,:)
+        ! area_difference = area - areaTBL
+        ! local_difference = area_difference - area
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine widthdepth_pair_auxiliary

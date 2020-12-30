@@ -30,7 +30,7 @@ module test_cases
 
     public :: test_case_initiation
 
-    integer :: debuglevel = 1
+    integer :: debuglevel = 0
 
 contains
     !
@@ -267,7 +267,7 @@ contains
             !calculate the geometry related information from widthDepth information
             !and store it at the same matrix
             call widthdepth_pair_auxiliary (newWidthDepthData, newCellType, newNumberPairs)
-            stop
+            
             call Initial_condition_for_width_depth_system &
                 (upperZ, area, flowrate, velocity, Froude,  channel_breadth, &
                 channel_topwidth, ManningsN, channel_length, lowerZ, &
@@ -791,12 +791,12 @@ contains
             ! step controls
             display_interval = 100
             first_step = 1
-            last_step  = 1000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  = 1000! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
             ! tests that ran:  Fr = 0.25, 0.5
             Froude       = 0.25  ! determines flowrate and slope to get Froude
-            CFL          = 0.25  ! determines dt from subdivide_length
+            CFL          = 0.5  ! determines dt from subdivide_length
 
             ! keep these physics fixed
             channel_breadth = 3.0
@@ -813,8 +813,8 @@ contains
             ManningsN       = 0.03
             channel_length  = 10000.0
             lowerZ          = 0.0
-            subdivide_length = 5000.0
-            fullDepth       = 3.0    
+            subdivide_length = 100.0
+            fullDepth       = 30000.0    
 
             ! rectangular geometry
             parabolaValue = zeroR
@@ -848,11 +848,11 @@ contains
             case ('swashes_007')
 
             ! Swashes element count : N_Swashes
-            N_Swashes = 256
-            total_length = 50.0
+            N_Swashes = 64
+            total_length = 25
             ! This here is basically element scale. So no further subdivide is necessary
             ! Because of the Buffer zone N_Swashes is multiplied by two
-            N_link = N_Swashes * 2
+            N_link = N_Swashes * 2 
             N_node = N_link + 1
             N_BCupstream = 1
             N_BCdnstream = 1
@@ -866,14 +866,14 @@ contains
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
-            display_interval = 200
+            display_interval = 500
             first_step = 1
-            last_step  =  60000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  =  20000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
             ! tests that ran:  Fr = 0.25, 0.5
-            Froude       = 0.25   ! determines flowrate and slope to get Froude
-            CFL          = 0.25   ! determines dt from subdivide_length
+            Froude       = 0.5   ! determines flowrate and slope to get Froude
+            CFL          = 0.5   ! determines dt from subdivide_length
 
             ! keep these physics fixed
             channel_breadth = 1.0
@@ -882,9 +882,9 @@ contains
             channel_geometry = lRectangular
 
             flowrate        = 0.18
-            depth_upstream  = 0.262
-            depth_dnstream  = 0.262
-            init_depth      = 0.262
+            depth_upstream  = 0.33
+            depth_dnstream  = 0.33
+            init_depth      = 0.33
             idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
             ManningsN       = 0.0
             ManningsNBuffer = 0.03
@@ -904,7 +904,7 @@ contains
             call swashes_setup &
                 (upperZ, lowerZ, area, flowrate, velocity, channel_breadth,   &
                 channel_topwidth, ManningsN, ManningsNBuffer, channel_length, &
-                init_depth, zbottom)
+                subdivide_length, init_depth, zbottom, total_length)
 
             call this_setting_for_time_and_steps &
                 (CFL, velocity, init_depth, subdivide_length, &
@@ -1271,18 +1271,18 @@ contains
             slope     = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
             upperZ    = lowerZ + slope * total_length
             
-        print *,'-----------------'
-        print *, area, 'area'
-        print *, topwidth, 'topwidth'
-        print *, perimeter, 'perimeter'
-        print *, rh, 'rh'
-        print *, velocity, 'velocity'
-        print *, flowrate, 'flowrate'
-        print *, slope, 'slope'
-        print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
-        print *, total_length, 'total_length'
-        print *, slope*total_length, 'slope*total_length'
-        print *,'-----------------'
+        ! print *,'-----------------'
+        ! print *, area, 'area'
+        ! print *, topwidth, 'topwidth'
+        ! print *, perimeter, 'perimeter'
+        ! print *, rh, 'rh'
+        ! print *, velocity, 'velocity'
+        ! print *, flowrate, 'flowrate'
+        ! print *, slope, 'slope'
+        ! print *, upperZ, 'upperZ', lowerZ, 'lowerZ'
+        ! print *, total_length, 'total_length'
+        ! print *, slope*total_length, 'slope*total_length'
+        ! print *,'-----------------'
         
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine froude_driven_pipe_setup
@@ -1292,29 +1292,39 @@ contains
     !
     subroutine swashes_setup &
         (upperZ, lowerZ, area, flowrate, velocity, breadth, topwidth, &
-        ManningsN, ManningsNBuffer, link_length, depth, zbottom)
+        ManningsN, ManningsNBuffer, link_length, subdivide_length,    &
+        depth, zbottom, total_length)
 
         character(64) :: subroutine_name = 'swashes_setup'
 
-        real,    intent(out)    :: area(:), topwidth(:), velocity(:), zbottom(:)
-        real,    intent(out)    :: upperZ(:), lowerZ(:), ManningsN(:)
-        real,    intent(in)     :: breadth(:), link_length(:), depth(:)
-        real,    intent(in)     :: ManningsNBuffer, flowrate(:)
+        real,    intent(out)    :: area(:), topwidth(:), velocity(:), zbottom(:), link_length(:)
+        real,    intent(out)    :: upperZ(:), lowerZ(:), ManningsN(:), subdivide_length(:)
+        real,    intent(in)     :: breadth(:), depth(:)
+        real,    intent(in)     :: ManningsNBuffer, flowrate(:), total_length
 
-        real    :: xvalueDn, xvalueUp, xvalue
+        real    :: xvalueDn, xvalueUp, xvalue, length_change, new_link_length
+        real    :: xvaluedn_new, xvalueUp_new, new_subdivide_length
         integer :: mm
+        logical :: apex_pass1, apex_pass2, divide_apex
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        xvalueDn = 0.0
-        xvalueUp = link_length(1)
-        xvalue = link_length(1) / 2.0
+        ! initialize swashes setup
+        apex_pass1 = .false.
+        apex_pass2 = .false.
+        divide_apex = .false.
+        xvalueDn = total_length - link_length(N_link)
+        xvalueUp = total_length
+        xvalue = total_length - link_length(N_link) / 2.0
         
-
-        ! print *
-        ! print *, 'a)       ii  ,     xvalueUp  ,    upperz    ,  xvaluedn   ,     lowerZ  ,     xvalue'
         do mm = 1,N_link
+
+            !% add the changed length back to the system
+            if (mm == N_link-2) then
+                link_length(mm) = link_length(mm) + length_change
+                subdivide_length(mm) = subdivide_length(mm) + length_change
+            endif
             
             topwidth(mm)  = breadth(mm)
             area(mm)      = depth(mm) * topwidth (mm) 
@@ -1325,53 +1335,73 @@ contains
                 velocity(mm) = 0.0
             endif
 
-            ! lowerZ(mm) = max((0.2 - 0.05 * ((xvalueDn - 10.0) ** 2.0)), 0.0)
-            ! upperZ(mm) = max((0.2 - 0.05 * ((xvalueUp - 10.0) ** 2.0)), 0.0)
-            ! zbottom(mm) = max((0.2 - 0.05 * ((xvalue - 10.0) ** 2.0)), 0.0)
+            zbottom(mm) =  (0.2 - 0.05 * ((xvalue - 10.0) ** 2.0))  
 
-            lowerZ(mm) = (0.2 - 0.05 * ((xvalueDn - 10.0) ** 2.0))
-            upperZ(mm) = (0.2 - 0.05 * ((xvalueUp - 10.0) ** 2.0))
-            ! zbottom(mm) = (0.2 - 0.05 * ((xvalue - 10.0) ** 2.0))
-
-            ! if (xvalue < 8.0) then
-            !     zbottom(mm) = 0.0
-            ! endif
-            ! if (xvalue > 12.0) then
-            !     zbottom(mm) = 0.0
-            ! endif
-
-            if (xvalueUp < 8.0) then
-                upperZ(mm) = 0.0
-            elseif (xvalueUp > 12.0) then
-                upperZ(mm) = 0.0
-            endif
-
-            if (xvalueDn < 8.0) then
-                lowerZ(mm) = 0.0
-            elseif (xvaluedn > 12.0) then
-                lowerZ(mm) = 0.0
+            if (xvalue < 8.0) then
+                zbottom(mm) = 0.0
+            elseif (xvalue  > 12.0) then
+                zbottom(mm) = 0.0
             endif
 
             if (xvalue > 25.0) then
                 ManningsN(mm) = ManningsNBuffer
             endif
 
-        ! print *,'-----------------'
-        ! print *,  'link ==>', mm
-        ! print *, upperZ(mm), 'upperZ', lowerZ(mm), 'lowerZ'
-        ! print *, flowrate(mm), 'flowrate'
-        ! print *, xvalueUp, 'xvalueUp' ,xvalueDn, 'xvalueDn'
-        ! print *, ManningsN(mm), 'ManningsN'
-        ! print *, velocity(mm), 'Velocity'
-        ! print *,'-----------------'
-        ! print *,mm, xvalueUp,upperZ(mm),xvalueDn, lowerZ(mm), xvalue
+            if (mm == 1) then
+                upperZ(mm) = 0.0
+            elseif (mm>1) then
+                upperZ(mm) = ( zbottom(mm-1) * link_length(mm)    &
+                            +  zbottom(mm)   * link_length(mm-1)) &
+                            / (link_length(mm) + link_length(mm-1))
+                
+            endif
 
-        xvalueDn = xvalueDn + link_length(mm)
-        xvalueUp = xvalueUp + link_length(mm)
-        xvalue   = xvalue   + link_length(mm)  
-        enddo
-        ! stop
+            ! print *,'-----------------'
+            ! print *,  mm, 'xval', xvalue, 'zbottom', zbottom(mm), 'uz', upperz(mm), 'lz', lowerZ(mm)
 
+            xvalueUp = xvalueDn
+            xvalueDn = xvalueDn - link_length(mm+1)
+            xvalue   = xvalue   - link_length(mm+1) 
+
+            if ( (xvalueDn .LE. 10)         .and. &
+                 (apex_pass1 .eqv. .false.) .and. &
+                 (divide_apex .eqv. .true.) ) then
+
+                ! make sure the apex of the bump is handled properly
+                ! set the xvalup as 10.0 so that we have a node at the apex of the bump
+                 xvalueDn_new = 10.0
+
+                 new_subdivide_length =  xvalueDn_new - xvalueDn
+                 length_change        = link_length(mm+1) - new_subdivide_length
+
+                 link_length(mm+1)      = new_subdivide_length
+                 subdivide_length(mm+1) = new_subdivide_length
+
+                 xvalueDn = xvalueDn_new
+                 xvalue   = xvalueDn_new + link_length(mm+1)/2.0
+
+                 apex_pass1 = .true.
+
+            elseif ((xvalueUp .LE. 10.0)         .and. &
+                    (apex_pass2 .eqv. .false.)   .and. &
+                    (divide_apex .eqv. .true.) ) then
+
+                xvalueUp_new = 10.0
+                xvalueDn_new = xvalueUp_new - new_subdivide_length
+
+                length_change = length_change + link_length(mm+1) - new_subdivide_length
+
+                link_length(mm+1)      = new_subdivide_length
+                subdivide_length(mm+1) = new_subdivide_length
+
+                xvaluedn = xvalueDn_new
+                xvalueUp = xvalueUp_new
+                xvalue   = xvalueDn_new + link_length(mm+1)/2.0
+
+                apex_pass2 = .true.
+            endif   
+            
+        enddo  
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine swashes_setup
     !
