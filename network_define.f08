@@ -699,7 +699,7 @@ contains
         do ii = 1,N_link
 
             linkNelem(ii) = floor(linkLength(ii)/element_nominal_length(ii))
-
+            !print *, "LinkID = ", ii, "linkNelem=", linkNelem(ii)
             if (linkNelem(ii) > 0) then
                 delta = ( linkLength(ii) - element_nominal_length(ii) * linkNelem(ii)) &
                     / linkNelem(ii)

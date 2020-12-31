@@ -34,11 +34,11 @@ contains
     !
     subroutine case_waller_creek_initialize &
         (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
-        lowerZ, upperZ, initial_flowrate, init_depth, depth_upstream, &
+        lowerZ, initial_flowrate, init_depth, depth_upstream, &
         depth_dnstream, ManningsN, roughness_type, idepth_type,             &
         linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
         bcdataDn, bcdataUp, &
-        wdID, wdnumberPairs, wdxDistance, widthDepthData, wdcellType)
+        wdID, widthDepthData)
         !
         ! initialize the link-node system and boundary conditions for a simple channel
         !
@@ -46,17 +46,17 @@ contains
 
         real,  intent(in)  :: channel_length(:), channel_breadth(:)
         real,  intent(in)  :: channel_topwidth(:), subdivide_length(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
+        real,  intent(in)  :: lowerZ(:), initial_flowrate(:)
         real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
         real,  intent(in)  :: ManningsN(:)
 
         integer, intent(in):: roughness_type, idepth_type(:)
 
         integer, target, intent(in out)    :: wdID(:)
-        integer, target, intent(in out)    :: wdnumberPairs(:)
-        real,    target, intent(in out)    :: wdxDistance(:)
         real,    target, intent(in out)    :: widthDepthData(:,:,:)
-        type(string), target, intent(in out)   :: wdcellType(:)
+        !integer, target, intent(in out)    :: wdnumberPairs(:)
+        !real,    target, intent(in out)    :: wdxDistance(:)
+        !type(string), target, intent(in out)   :: wdcellType(:)
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
@@ -92,22 +92,26 @@ contains
         bcdataUp(1)%NodeID = 1
         bcdataUp(1)%TimeArray(1)  = setting%Time%StartTime
         bcdataUp(1)%TimeArray(2)  = setting%Time%EndTime + 1000.0 !s
-        bcdataUp(1)%ValueArray(1) = 20.0 !initial_flowrate(1)  ! m^3/s
-        bcdataUp(1)%ValueArray(2) = 20.0 !initial_flowrate(1)  ! m^3/s
+        bcdataUp(1)%ValueArray(1) = initial_flowrate(1)  ! m^3/s
+        bcdataUp(1)%ValueArray(2) = initial_flowrate(1)  ! m^3/s
 
         ! downstream is default to elevation
-        bcdataDn(1)%NodeID = 102
+        bcdataDn(1)%NodeID = 567
         bcdataDn(1)%TimeArray(1)     = setting%Time%StartTime
         bcdataDn(1)%TimeArray(2)     = setting%Time%EndTime + 1000.0 !s
-        bcdataDn(1)%ValueArray(1)    = 0 + depth_dnstream(size(depth_dnstream)) !lowerZ(size(lowerZ)) +  depth_dnstream(size(depth_dnstream)) ! m
-        bcdataDn(1)%ValueArray(2)    = 0 + depth_dnstream(size(depth_dnstream)) !lowerZ(size(lowerZ)) +  depth_dnstream(size(depth_dnstream)) ! m
+        bcdataDn(1)%ValueArray(1)    = lowerZ(size(lowerZ)) +  depth_dnstream(size(depth_dnstream)) ! m
+        bcdataDn(1)%ValueArray(2)    = lowerZ(size(lowerZ)) +  depth_dnstream(size(depth_dnstream)) ! m
+
+        print *, "lowerZ = ", lowerZ(size(lowerZ))
+        !call test_case_initial_condition_setup (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
+        !    bcdataUp, bcdataDn, channel_length, channel_breadth)
 
         call case_waller_creek_links_and_nodes &
             (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
-            lowerZ, upperZ, initial_flowrate, init_depth, depth_upstream, &
+            lowerZ, initial_flowrate, depth_upstream, &
             depth_dnstream, ManningsN, roughness_type,  idepth_type, &
             linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-            wdID, wdnumberPairs, wdxDistance, widthDepthData, wdcellType)
+            wdID, widthDepthData, bcdataUp, bcdataDn)
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine case_waller_creek_initialize
@@ -120,27 +124,25 @@ contains
     !
     subroutine case_waller_creek_links_and_nodes &
         (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
-        lowerZ, upperZ, initial_flowrate, init_depth, depth_upstream, &
+        lowerZ, initial_flowrate, depth_upstream, &
         depth_dnstream, ManningsN, roughness_type, idepth_type, &
         linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-        wdID, wdnumberPairs, wdxDistance, widthDepthData, wdcellType)
-        !
-        ! creates a simple rectangular channel with 1 link and 2 nodes
-        !
+        wdID, widthDepthData, bcdataUp, bcdataDn)
+
         character(64) :: subroutine_name = 'case_waller_creek_links_and_nodes'
 
         real,  intent(in)  :: channel_length(:), channel_breadth(:)
         real,  intent(in)  :: channel_topwidth(:), subdivide_length(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:), ManningsN(:), initial_flowrate(:)
-        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
+        real,  intent(in)  :: lowerZ(:), ManningsN(:), initial_flowrate(:)
+        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:)!, init_depth(:)
 
         integer, intent(in):: roughness_type, idepth_type(:)
 
         integer, target, intent(in out)    :: wdID(:)
-        integer, target, intent(in out)    :: wdnumberPairs(:)
-        real,    target, intent(in out)    :: wdxDistance(:)
         real,    target, intent(in out)    :: widthDepthData(:,:,:)
-        type(string), target, intent(in out)   :: wdcellType(:)
+        !integer, target, intent(in out)    :: wdnumberPairs(:)
+        !real,    target, intent(in out)    :: wdxDistance(:)
+        !type(string), target, intent(in out)   :: wdcellType(:)
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
@@ -153,7 +155,8 @@ contains
 
         type(string), dimension(:), allocatable, target, intent(out)   :: linkName
         type(string), dimension(:), allocatable, target, intent(out)   :: nodeName
-
+        
+        type(bcType), intent(in out) :: bcdataUp(:), bcdataDn(:) !for setting up the depth at each link
         integer :: mm, ii
 
 
@@ -169,13 +172,13 @@ contains
         ! assign the indexes
         linkI(:,li_idx) = (/ (ii, ii=1,N_link) /)
         nodeI(:,ni_idx) = (/ (ii, ii=1,N_node) /)
-        !print *, "linkId = ", linkI(:,li_idx)
-        !print *, "nodeId = ", nodeI(:,ni_idx)
+        
         ! assign names for links
         do ii=1,N_link
             linkName(ii)%str = 'widthdepth_pair'
         end do
 
+        ! Justin: Define the connectivity here. Need to modify it and move it to somewhere else
         ! assign zeros for accumulators
         nodeI(:,ni_N_link_d) = 0
         nodeI(:,ni_N_link_u) = 0
@@ -183,29 +186,26 @@ contains
         ! assign uniform physical data
         linkI(:,li_roughness_type)  = roughness_type
         linkR(:,lr_Roughness)       = ManningsN
-
-        ! designate the downstream node
-        ! designate the upstream nodes
-        nodeI(1,ni_node_type) = nBCup!nBCdn
+        
+        
+        nodeI(1,ni_node_type) = nBCup
 
         nodeR(1,nr_Zbottom) = lowerZ(1) + (lowerZ(1) - lowerZ(2))
 
-        nodeName(1)%str = 'UpstreamBC'!'DownstreamBC'
+        nodeName(1)%str = 'UpstreamBC'
 
         do ii=2,N_node
             nodeI(ii,ni_node_type) = nJ2
 
-            nodeR(ii,nr_Zbottom) = lowerZ(ii-1)!upperZ(ii-1)
+            nodeR(ii,nr_Zbottom) = lowerZ(ii-1)
 
             nodeName(ii)%str = 'Junction'
         end do
 
         ! designate the downstream node
-        nodeI(N_node,ni_node_type) = nBCdn!nBCup
+        nodeI(N_node,ni_node_type) = nBCdn
 
-        !nodeR(N_node,nr_Zbottom) = upperZ(1)
-
-        nodeName(N_node)%str = 'DownstreamBC'!'UpstreamBC'
+        nodeName(N_node)%str = 'DownstreamBC'
 
         ! assign the link types
         linkI(:,li_link_type) = lChannel
@@ -220,7 +220,6 @@ contains
             linkI(ii,li_Mnode_d) = ii +1
         end do
 
-
         do mm=1,N_link
             linkR(mm,lr_Length)          = channel_length(mm)
             linkR(mm,lr_BreadthScale)    = channel_breadth(mm)
@@ -229,35 +228,101 @@ contains
             linkR(mm,lr_InitialFlowrate) = initial_flowrate(mm)
             linkI(mm,li_InitialDepthType)= idepth_type(mm)
         enddo
-        !print *,"linkR(mm,li_InitialDepthType) = ", linkI(:,li_InitialDepthType)
-        !print *,"linkR(mm,lr_ElementLength) = ", linkR(:,lr_ElementLength)
-        linkR(:  ,lr_InitialDepth)         = init_depth(:)
-        linkR(:  ,lr_InitialDnstreamDepth) = depth_dnstream(:)
-        linkR(:  ,lr_InitialUpstreamDepth) = depth_upstream(:)
+        
+        call test_case_initial_depth_setup(wdID, linkR, nodeR, linkI, nodeI, linkName, nodeName, &
+            bcdataUp, bcdataDn, ManningsN, widthDepthData)
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) then
-            print *
-            print *, subroutine_name,'-----------------------------------'
-            !print *, 'link info'
-            !print *, linkI(:,li_idx), ' idx'
-            !print *, linkI(:,li_link_type), ' type'
-            !print *, ''
-            !print *, linkI(:,li_Mnode_u) , ' upstream node'
-            !print *, ''
-            !print *, linkI(:,li_Mnode_d) , ' downstream node'
-            !print *, ''
-            !print *, 'node info'
-            !print *, nodeI(:,ni_idx), ' idx'
-            !print *, ''
-            !print *, nodeI(:,ni_node_type), ' type' ! ni_node_type = 5 (upstreamBC); ni_node_type = 4 (downstreamBC)
-            !print *, nodeI(:,ni_N_link_d), 'number of downstream links'
-            !print *, nodeI(:,ni_Mlink_d1), 'downstream1 link'
-            !print *, nodeI(:,ni_N_link_u), 'number of upstream links\n'
-            !print *, nodeI(:,ni_Mlink_u1), 'upstream1 link\n'
-        endif
+        !linkR(:  ,lr_InitialDepth)         = init_depth(:)
+        !linkR(:  ,lr_InitialDnstreamDepth) = depth_dnstream(:) !Justin: Need to change
+        !linkR(:  ,lr_InitialUpstreamDepth) = depth_upstream(:) !Justin: Need to change
+
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine case_waller_creek_links_and_nodes
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine test_case_initial_depth_setup &
+        (wdID, linkR, nodeR, linkI, nodeI, linkName, nodeName, &
+        bcdataUp, bcdataDn, ManningsN, widthDepthData)
+        character(64) :: subroutine_name = 'test_case_initial_depth_setup'
+        
+        integer, intent(in)    :: wdID(:)   
+        integer,   target, intent(in out)    :: linkI(:,:)
+        integer,   target, intent(in out)    :: nodeI(:,:)
+
+        real,      target, intent(in out)    :: linkR(:,:)
+        real,      target, intent(in out)    :: nodeR(:,:)
+
+        real,  intent(in)  :: ManningsN(:)
+
+        type(string), target, intent(out)   :: linkName(:)
+        type(string), target, intent(out)   :: nodeName(:)
+
+        real,    target, intent(in out)    :: widthDepthData(:,:,:)
+        type(bcType), intent(in out) :: bcdataUp(:), bcdataDn(:)
+
+        real, pointer :: areaTotalBelowThisLayer(:,:)
+        real, pointer :: perimeterBelowThisLayer(:,:)
+        real, pointer :: depthTBL(:,:)
+        real, dimension(:), allocatable    :: temp !temp array to store A**(5/3)/P**(2/3)
+
+        integer :: mm, idx 
+        real    :: flowrate, temp_manning, temp_slope
+        real    :: ME_RHS !Manning's eq RHS
+        
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+        
+        !Note: This is just for single channel, we need better a subroutine to describe the cumulative flowrate from upstream to downstream 
+        N_link = size(wdID,1)
+
+        if (size(bcdataUp%NodeID,1) == 1) then
+            flowrate = bcdataUp(1)%ValueArray(1) !Use the first timestep flowrate to solve the initial condition
+        else
+            print *, "For the time being, the initial condition computation for link only supports single channel test case."
+        endif
+
+        ! Use that flowrate at upstream BC to estimate the initial depth
+        ! Roughly estimation by using Manning's equation
+
+        areaTotalBelowThisLayer => widthDepthData (:,:, wd_areaTotalBelowThisLayer)
+        depthTBL                => widthDepthData (:,:, wd_depthTotalBelowThisLayer)
+        perimeterBelowThisLayer => widthDepthData (:,:, wd_perimeterBelowThisLayer)
+        !rule: widthDepthData(link_ID, Layers, Variable)
+
+        ! In this loop, find the layer (A**(5/3))/(P**(2/3)) closest to (n*Q)/(S**0.5), and use the corresponding depth at the layer as the initial depth
+
+        allocate(temp(size(areaTotalBelowThisLayer,2)), source=nullvalueR) !initialize the temp array with nullvalueR (-998877)
+
+        do mm=1,N_link-1
+
+            temp_manning    = linkR(mm,lr_Roughness) !Local roughness at the link
+            temp_slope      = (nodeR(mm,nr_Zbottom) - nodeR(mm+1,nr_Zbottom)) / linkR(mm,lr_Length)
+
+            if ( temp_slope <=0 )  print *, "Link=", mm, " Local slope is adverse, ", temp_slope
+            
+            ME_RHS          = temp_manning * flowrate / temp_slope**0.5
+            temp            = (areaTotalBelowThisLayer(mm,:)**(5.0/3.0)) / (perimeterBelowThisLayer(mm,:)**(2.0/3.0))
+            idx             = minloc(abs(temp - ME_RHS), DIM=1)
+            ! find the index of the closest layer 
+
+            linkR(mm  ,lr_InitialDepth)         = depthTBL(mm, idx) 
+            linkR(mm  ,lr_InitialDnstreamDepth) = depthTBL(mm, idx)
+            linkR(mm  ,lr_InitialUpstreamDepth) = depthTBL(mm, idx)
+            !print *, "Link = ", mm, "Initial Depth = ", linkR(mm, lr_InitialDepth)
+        enddo
+
+        !linkR(mm  ,lr_InitialDepth)         = bcdataDn(1)%ValueArray(1)
+        !linkR(mm  ,lr_InitialDnstreamDepth) = bcdataDn(1)%ValueArray(1)
+        !linkR(mm  ,lr_InitialUpstreamDepth) = bcdataDn(1)%ValueArray(1)
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+
+    end subroutine test_case_initial_depth_setup
+
+
     !
     !==========================================================================
     !==========================================================================
@@ -268,9 +333,7 @@ contains
         newID, newNumberPairs, newManningsN, newLength, newZBottom,              &
         newXDistance, newBreadth, newWidthDepthData, newCellType,                &
         subdivide_length_check)
-        !
-        ! initialize the link-node system and boundary conditions for a simple channel
-        !
+        
         character(64) :: subroutine_name = 'nonmonotonic_subdivide'
 
 
@@ -320,8 +383,6 @@ contains
 
         ! find the z at the faces
         call face_zbottom(faceZbottom, zbottom, Length, NX)
-
-        print *, "checking for nonmonotonic elements"
 
         ! determine number of non-monotonic zbottom product of signs is negative
         allocate(temp1(NX))
@@ -374,6 +435,7 @@ contains
         allocate(newCellType(newNX), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation (allocation_status, emsg)
 
+        ! print('Checking for non-monotonic zbottom, 1=found')
         jj = 1
         do ii = 1, NX
             if (isnonmonotonic(ii) /= 0) then
@@ -387,21 +449,32 @@ contains
                 newManningsN   (jj)   = ManningsN   (ii)
                 newManningsN   (jj+1) = ManningsN   (ii)
                 newManningsN   (jj+2) = ManningsN   (ii)
-                newLength      (jj)   = onehalfR*Length (ii)                           &
-                    - onehalfR * subdivide_length_check
-                newLength      (jj+1) = subdivide_length_check
-                newLength      (jj+2) = onehalfR*Length (ii)                           &
-                    - onehalfR * subdivide_length_check
-                newZBottom     (jj)   = faceZbottom (ii)                               &
-                    - onehalfR * (faceZbottom (ii) - zBottom (ii))
+                if (Length(ii) <= threeR * subdivide_length_check) then ! modify here, the original way to subdivide can cause negative length value
+                    newLength   (jj)     =  Length(ii) / threeR
+                    newLength   (jj+1)   =  Length(ii) / threeR
+                    newLength   (jj+2)   =  Length(ii) / threeR
+
+                    newXDistance(jj)     = xDistance(ii) - twoR * Length(ii) / threeR
+                    newXDistance(jj+1)   = xDistance(ii) - oneR * Length(ii) / threeR
+                    newXDistance(jj+2)   = xDistance(ii)
+                    
+                else    ! length is longer than 3 sub
+                    newLength      (jj)   = subdivide_length_check
+                    newLength      (jj+1) = Length(ii) - twoR * subdivide_length_check
+                    newLength      (jj+2) = subdivide_length_check
+                
+                    newXDistance   (jj)   = xDistance(ii) - Length(ii) + oneR * subdivide_length_check
+                    newXDistance   (jj+1) = xDistance(ii) - oneR * subdivide_length_check
+                    newXDistance   (jj+2) = xDistance(ii)
+                endif
+                newZBottom     (jj)   = faceZbottom (ii)    - onehalfR * (faceZbottom (ii) - zBottom (ii))
                 newZBottom     (jj+1) = zBottom     (ii)
-                newZBottom     (jj+2) = zBottom (ii)                                   &
-                    - onehalfR * (zBottom (ii) - faceZbottom (ii))
-                newXDistance   (jj)   = onehalfR*xDistance (ii)                        &
-                    - onehalfR*Length (ii) - onehalfR * subdivide_length_check
-                newXDistance   (jj+1) = newXDistance   (jj) + subdivide_length_check
-                newXDistance   (jj+2) = newXDistance   (jj+1)                          &
-                    + onehalfR*Length (ii) - onehalfR * subdivide_length_check
+                newZBottom     (jj+2) = zBottom     (ii)    - onehalfR * (zBottom (ii) - faceZbottom (ii))
+                
+                !newXDistance   (jj)   = onehalfR * xDistance (ii) - onehalfR * Length (ii)      - onehalfR * subdivide_length_check
+                !newXDistance   (jj+1) = newXDistance   (jj)     + subdivide_length_check
+                !newXDistance   (jj+2) = newXDistance   (jj+1)   + onehalfR * Length (ii)      - onehalfR * subdivide_length_check
+                
                 newBreadth     (jj)   = Breadth     (ii)
                 newBreadth     (jj+1) = Breadth     (ii)
                 newBreadth     (jj+2) = Breadth     (ii)
@@ -427,9 +500,9 @@ contains
         enddo
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
-            print *, "NEW)        ID,         LENGTH,        Z,        XDistance,        Breadth"
+            print *, "NEW)  ID,    LENGTH,    Z,    XDistance"
             do mm = 1, NX
-                print *,  newID(mm), newLength(mm), newZBottom(mm), newXDistance(mm),  Breadth(mm)
+                print *,  newID(mm), newLength(mm), newZBottom(mm), newXDistance(mm)
             enddo
         endif
 
@@ -461,16 +534,10 @@ contains
         faceZbottom (1)  = zBottom(1)
         faceZbottom (NX+1) = zBottom(NX)
 
-        ! if ((debuglevel > 0) .or. (debuglevelall > 0)) then
-        !    print *, "DEBUG FACEBOTTOM faceZbottom "
-        !    do ii=1,NX+1
-        !        print *, faceZbottom(ii),' faceZbottom'
-        !    enddo
-        !    ! print *, "DEBUG LENGTH length "
-        !    ! do ii=1,NX
-        !    !     print *, Length(ii)
-        !    ! enddo
-        ! endif
+        print *, "zBottom", "      faceZbottom"
+        do ii=1,NX
+            print *, zBottom(ii), faceZbottom(ii)
+        enddo
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine face_zbottom
@@ -544,7 +611,7 @@ contains
         elsewhere
             ! a near-90 degree angle will have an infinite tangent.
             ! we handle this case by setting all these angles to pi/2 - small value
-            angle = pi/twoR - setting%Method%AdjustWidthDepth%angleMinimum  !Justin: I'm not sure if this is ok.... poor assumption
+            angle = pi/twoR - setting%Method%AdjustWidthDepth%angleMinimum  
         endwhere
 
         ! accumulated area of the trapezoids to the ii width-depth level
@@ -581,8 +648,9 @@ contains
             setting%Method%AdjustWidthDepth%areaMaximum = twoR * maxval(areaTBL(:, eIn1))
         endif
 
-        ! print *, "dDepth",dDepth(1,:)
-        ! print *, "dWidth", dWidth(1,:)
+
+        !print *, "dDepth",dDepth(1,:)
+        !print *, "dWidth", dWidth(1,:)
         ! perimeter below this layer
         !perimeterBL(:,1) = width(:,1)
         !perimeterBL(:,2:eIn1) = perimeterBL(:,1:eIn1-1) &
@@ -596,14 +664,14 @@ contains
             enddo
         enddo
 
-        ! print *, "areaTBL", areaTBL(1,:)
-        ! rH(:,1) = zeroR
-        ! rH(:,2:eIn1) = areaTBL(:,2:eIn1)/perimeterBL(:,2:eIn1)
-        ! print *, "rH", rH(1,:)
-        ! gammaBTL = areaTBL * rH**twothirdR
-        ! print *, "gammaBTL", gammaBTL(1,:)
-        ! area_difference = area - areaTBL
-        ! local_difference = area_difference - area
+        !print *, "areaTBL", areaTBL(1,:)
+        rH(:,1) = zeroR
+        rH(:,2:eIn1) = areaTBL(:,2:eIn1)/perimeterBL(:,2:eIn1)
+        !print *, "rH", rH(1,:)
+        gammaBTL = areaTBL * rH**twothirdR
+        !print *, "gammaBTL", gammaBTL(1,:)
+        area_difference = area - areaTBL
+        local_difference = area_difference - area
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine widthdepth_pair_auxiliary

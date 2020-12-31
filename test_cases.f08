@@ -67,7 +67,7 @@ contains
         integer, dimension(:), allocatable :: idepth_type
         integer, dimension(:), allocatable :: channel_geometry
 
-        real :: CFL, ManningsNBuffer
+        real :: CFL, ManningsNBuffer, total_length
 
         integer :: first_step, last_step, display_interval, mm
         integer :: N_Swashes
@@ -82,6 +82,9 @@ contains
         real,    dimension(:), allocatable :: init_zBottom
         real,    dimension(:), allocatable :: init_xDistance
         real,    dimension(:), allocatable :: init_Breadth
+        integer, dimension(:), allocatable :: init_upNode ! We need these to describe connectivity
+        integer, dimension(:), allocatable :: init_dnNode ! We need these to describe connectivity
+        real,    dimension(:), allocatable :: init_flowrate !initial flowrate 
         real,    dimension(:,:,:),  allocatable :: init_widthDepthData
         type(string), dimension(:), allocatable :: init_cellType
         real, dimension(:),         allocatable :: faceZBottom
@@ -99,7 +102,7 @@ contains
 
         real :: inflowBC, heightBC, Waller_Creek_initial_depth
         real :: geometry_downstream_minimum_length
-        real :: Waller_Creek_cellsize_target, total_length
+        real :: Waller_Creek_cellsize_target
 
         logical :: geometry_add_downstream_buffer
 
@@ -162,7 +165,7 @@ contains
             ManningsN       = 0.03
             channel_length  = 10000.0
             lowerZ          = 1.0
-            subdivide_length = 50.0
+            subdivide_length = 5000.0
 
             ! rectangular geometry
             parabolaValue = zeroR
@@ -198,53 +201,53 @@ contains
             !stop
 
             !% Write a new case statement for each unique test case
-          case ('waller_creek')
+          case ('width_depth')
 
             !open the Waller Creek depth list
-            open(newunit=unit, file='UR1_swmm_test.txt', status='OLD')
-
+            open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
             ! get the number of links and number of pairs per each link from the file
             n_rows_in_file_node = read_number_of_cells(unit)
             max_number_of_pairs = read_max_number_of_pairs(unit)
 
             ! read the entire data from the width-depth list
             call read_widthdepth_pairs &
-                (unit, init_ID, init_numberPairs, init_ManningsN, init_Length,    &
-                init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, &
-                init_cellType)
+                (unit, init_ID, init_upNode, init_dnNode, init_numberPairs, init_ManningsN, init_Length, &
+                init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, init_cellType)
 
             ! subdivide length for checking the length of nonmonotonic elements
             subdivide_length_check = 10.0
 
-            ! dividing non monotonic elements
+            ! dividing nun monotonic elements
             call nonmonotonic_subdivide &
-                (init_ID, init_numberPairs, init_ManningsN, init_Length,          &
+                (init_ID, init_numberPairs, init_ManningsN, init_Length,         &
                 init_zBottom, init_xDistance, init_Breadth, init_widthDepthData, &
                 init_cellType, n_rows_in_file_node, faceZBottom,                 &
                 max_number_of_pairs, newID, newNumberPairs, newManningsN,        &
                 newLength, newZBottom, newXDistance, newBreadth,                 &
                 newWidthDepthData, newCellType, subdivide_length_check)
 
-            N_link = newID(size(newID))
+            N_link = size(newID)
             N_node = N_link + 1
             N_BCupstream = 1
             N_BCdnstream = 1
 
             !% create the local variables that must be populated to set up the test case
             call control_variable_allocation &
-                (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+                (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length,&
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
                 leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
                 dischargeCoefficient2, fullDepth, endContractions)
-
+            
+            allocate(init_flowrate(N_Link))
+            
             ! step controls
-            display_interval = 1
+            display_interval = 1000
             first_step = 1
-            last_step  =  500 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  =  5000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
-            Froude(:)    = 0.25  ! determines flowrate and slope to get Froude
+            Froude(:)    = 0.8   ! determines flowrate and slope to get Froude
             CFL          = 0.25  ! determines dt from subdivide_length
 
             ! keep these physics fixed
@@ -254,47 +257,46 @@ contains
             do ii=1,N_link
                 channel_geometry(ii) = lWidthDepth
             end do
-            
-            depth_upstream(:)   = 0.262
-            depth_dnstream(:)   = 0.262
-            init_depth(:)       = 0.262
+
+            depth_upstream(:)   = 0.75
+            depth_dnstream(:)   = 0.748409
+            init_depth(:)       = 0.5
+            init_flowrate(:)    = 1.0
             idepth_type(:)      = 1  !1 = uniform, 2=linear, 3=exponential decay
             ManningsN           = newManningsN
             channel_length      = newLength
             lowerZ              = newZBottom
-            subdivide_length(:) = 10
+            subdivide_length(:) = 10.0
 
             !calculate the geometry related information from widthDepth information
             !and store it at the same matrix
             call widthdepth_pair_auxiliary (newWidthDepthData, newCellType, newNumberPairs)
+
+            ! call Initial_condition_for_width_depth_system &
+            !     (area, flowrate, velocity, Froude,  channel_breadth, &
+            !     channel_topwidth, ManningsN, channel_length, lowerZ, &
+            !     init_depth, newWidthDepthData) ! Setup the initial condition
+            ! Pass
             
-            call Initial_condition_for_width_depth_system &
-                (upperZ, area, flowrate, velocity, Froude,  channel_breadth, &
-                channel_topwidth, ManningsN, channel_length, lowerZ, &
-                init_depth, newWidthDepthData) ! Setup the initial condition
-            ! Pass  
-            !print *, "area=", area
             !Hijack the variables for testing purpose
-            flowrate(:) = 0.18
-            ! area(:) = 7.5
-            ! velocity(:) = 2.66666
-            depth_upstream(:)   = 0.262
-            depth_dnstream(:)   = 0.262
-            init_depth(:)       = 0.262
-            !print *, "flowrate", flowrate
-            call this_setting_for_time_and_steps &
-                (CFL, velocity, init_depth, subdivide_length, first_step, last_step, &
-                display_interval, 2)
+            !area(:) = 7.5
+            !(:) = 2.66666
+            !init_depth(:) = 0.75
+            ! call this_setting_for_time_and_steps &
+            !     (CFL, velocity, init_depth, subdivide_length, first_step, last_step, &
+            !     display_interval, 2)
 
             call case_waller_creek_initialize &
                 (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
-                lowerZ, upperZ, flowrate, init_depth, depth_upstream, depth_dnstream, &
+                lowerZ, init_flowrate, init_depth, depth_upstream, depth_dnstream, &
                 ManningsN, lManningsN, idepth_type,                                   &
                 linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
-                bcdataDn, bcdataUp, newID, newNumberPairs, &
-                newXDistance, newWidthDepthData, newCellType)
-            print*, "flowrate", flowrate
-            print*, "flowrate", flowrate
+                bcdataDn, bcdataUp, newID, newWidthDepthData)
+
+            call this_setting_for_time_and_steps &
+                (CFL, velocity, init_depth, subdivide_length, first_step, last_step, &
+                display_interval, 2)
+            
             
             if (.not. setting%Debugout%SuppressAllFiles) then
                 call write_testcase_setup_file &
@@ -791,7 +793,7 @@ contains
             ! step controls
             display_interval = 100
             first_step = 1
-            last_step  = 1000! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  = 3000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
             ! tests that ran:  Fr = 0.25, 0.5
@@ -959,7 +961,7 @@ contains
         real, dimension(:), allocatable, intent(out) :: depth_dnstream, depth_upstream, init_depth
         real, dimension(:), allocatable, intent(out) :: subdivide_length, channel_length
         real, dimension(:), allocatable, intent(out) :: channel_breadth, channel_topwidth
-        real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate
+        real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate !initial_flowrate
         real, dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
         real, dimension(:), allocatable, intent(out) :: parabolaValue, leftSlope, rightSlope
         real, dimension(:), allocatable, intent(out) :: inletOffset, sideSlope
@@ -1409,13 +1411,13 @@ contains
     !==========================================================================
     !
     subroutine Initial_condition_for_width_depth_system &
-        (upperZ, area, flowrate, velocity,  &
+        (area, flowrate, velocity,  &
         Froude,  breadth, topwidth, ManningsN, total_length, &
         lowerZ, depth, widthDepthData)
 
         character(64) :: subroutine_name = 'Initial_condition_for_width_depth_system'
 
-        real,  intent(out)    :: area(:), flowrate(:), velocity(:), upperZ(:), topwidth(:)
+        real,  intent(out)    :: area(:), flowrate(:), velocity(:), topwidth(:)
         real,  intent(in)     :: Froude(:),  breadth(:), ManningsN(:), lowerZ(:), total_length(:)
         real,  intent(in)     :: depth(:)
         !
@@ -1465,7 +1467,6 @@ contains
         velocity = Froude * sqrt(grav * hDepth)
         flowrate = area * velocity
         slope = (velocity * ManningsN / (rh**(2.0/3.0)) )**2
-        upperZ = lowerZ + slope * total_length
 
         !  do ii= 1, N_link
         !     print *, "elelment No. =", ii
@@ -1483,6 +1484,69 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine Initial_condition_for_width_depth_system
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine Initial_condition_for_width_depth_system_new &
+        (area, flowrate, velocity,  &
+        Froude,  breadth, topwidth, ManningsN, total_length, &
+        lowerZ, depth, widthDepthData)
+
+        character(64) :: subroutine_name = 'Initial_condition_for_width_depth_system_new'
+
+        real,  intent(out)    :: area(:), flowrate(:), velocity(:), topwidth(:)
+        real,  intent(in)     :: Froude(:),  breadth(:), ManningsN(:), lowerZ(:), total_length(:)
+        real,  intent(in)     :: depth(:)
+        !
+        real,    target, intent(in out)    :: widthDepthData(:,:,:)
+
+        real :: perimeter(size(depth,1)), rh(size(depth,1)), slope(size(depth,1))
+        real :: AA, BB, CC, DD
+        integer :: ind, ii
+        real :: temp1(size(depth,1)), hDepth(size(depth,1))
+
+        real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+        real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+        real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+        real, pointer :: area_difference(:,:), local_difference(:,:), depthTBL(:,:)
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        widthAtLayerTop         => widthDepthData (:,:, wd_widthAtLayerTop)
+        depthAtLayerTop         => widthDepthData (:,:, wd_depthAtLayerTop)
+        areaThisLayer           => widthDepthData (:,:, wd_areaThisLayer)
+        areaTotalBelowThisLayer => widthDepthData (:,:, wd_areaTotalBelowThisLayer)
+        depthTBL                => widthDepthData (:,:, wd_depthTotalBelowThisLayer)
+        dWidth                  => widthDepthData (:,:, wd_Dwidth)
+        dDepth                  => widthDepthData (:,:, wd_Ddepth)
+        angle                   => widthDepthData (:,:, wd_angle)
+        perimeterBelowThisLayer => widthDepthData (:,:, wd_perimeterBelowThisLayer)
+        area_difference         => widthDepthData (:,:, wd_area_difference)
+        local_difference        => widthDepthData (:,:, wd_local_difference)
+
+        do ii= 1, N_link
+            temp1(:) = depthTBL(ii,:)-depth(ii)
+            ind = minloc(abs(temp1(:)), DIM=1)
+
+            area (ii) =  areaTotalBelowThisLayer(ii, ind)
+            AA = oneR/tan(angle(ii,ind))
+            BB = widthAtLayerTop(ii,ind) - dWidth(ii,ind)
+            CC = - area_difference(ii,ind)
+            DD = (-BB + sqrt(BB**twoR - fourR*AA*CC))/(twoR*AA)
+
+            hdepth(ii) = DD + depthAtLayerTop(ii,ind) - dDepth(ii,ind)
+            topwidth(ii) = widthAtLayerTop(ii,ind) - (dDepth(ii,ind)-DD) &
+                *dWidth(ii,ind)/dDepth(ii,ind)
+            perimeter(ii) = perimeterBelowThisLayer(ii,ind) + twoR * DD/sin(angle(ii,ind))
+        enddo
+        rh = area / perimeter
+        velocity = Froude * sqrt(grav * hDepth)
+        flowrate = area * velocity
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+    end subroutine Initial_condition_for_width_depth_system_new
     !
     !==========================================================================
     !==========================================================================
@@ -1526,7 +1590,7 @@ contains
             trim(thisFileName) // &
             trim(setting%Time%DateTimeStamp) //&
             '.txt'
-
+        print *, thisFileWriteName
         ! print *, trim(setting%TestCase%TestName)
         ! print *, trim(setting%DebugOut%FolderPath)
         ! print *, trim(setting%Debugout%FolderName)

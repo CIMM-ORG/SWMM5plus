@@ -120,23 +120,30 @@ contains
         RLnormH = zeroR
         RLnormQ = zeroR
         
+
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thistime, bc_category_inflowrate, e2r_Velocity)
+
 
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thistime, bc_category_elevation, idummy)
 
+
+
         call bc_applied_onface (faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity, thistime)
-          
+                  
+
         call diagnostic_volume_conservation &
             (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, bcdataUp, bcdataDn, restartStep,  1)
+            
 
         restartStep = restartStep + 1   ! HACK required for diagnostics so end of first step is index 2
 
         call  output_all_threaded_data_by_link &
             (threadedfile, elem2R, elem2I, elemMR, elemMI, faceR, faceI, linkI, &
             bcdataUp, bcdataDn, 0)
-
+            
+        
         !% Iterate for a fixed number of steps
         !% HACK - need to develop better time and iteration controls
         do while (thisstep <= setting%step%final)
@@ -153,10 +160,12 @@ contains
 
                 endif
             endif
+            
 
             call debug_output &
                 (debugfile, elem2R, elem2I, elem2YN, elemMR,  &
                 elemMI, elemMYN, faceR, faceI, faceYN,bcdataUp, bcdataDn, thisstep)
+                
 
             !%  Reset the flowrate adhoc detection before flowrates are updated.
             !%  Note that we do not reset the small volume detection here - that is done
@@ -166,17 +175,17 @@ contains
 
             !%  push the old values down the stack
             call save_previous_values (elem2R, elemMR, faceR)
-
             !% Runge-Kutta 2nd-order advance
             !% rkCycle mask ensures both the RK steps are taken for time loop
             rkCycle(1) = .true.
             rkCycle(2) = .true.
+            !print *, "Check Point 1_1"
 
             call rk2 &
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
-                bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,    &
+                bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
                 zBottom, xDistance, Breadth, widthDepthData, cellType, rkCycle)
-
+                
             if (  count(elem2I(:,e2i_solver) == AC) &
                 + count(elemMI(:,eMi_solver) == AC)> zeroI ) then               
                 !% Artifical compressibility convergence pseudo time marching loop[    
@@ -195,6 +204,7 @@ contains
             !% compute the volume conservation
             call diagnostic_volume_conservation &
                 (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, bcdataUp, bcdataDn, restartStep, 2)
+                
 
             if (setting%Debugout%DisplayInterval > 0) then
                 if (mod(thisstep,setting%Debugout%DisplayInterval) == 0) then

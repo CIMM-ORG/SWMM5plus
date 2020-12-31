@@ -85,10 +85,11 @@ contains
         call initial_storage_conditions &
             (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
 
+
         !% set the bc elements (outside of face) to null values
         call bc_nullify_ghost_elem (elem2R, bcdataDn)
         call bc_nullify_ghost_elem (elem2R, bcdataUp)
-
+ 
         !% update the geometry
         call element_geometry_update &
             (elem2R, elem2I, elem2YN, e2r_Volume, &
@@ -192,7 +193,7 @@ contains
 
             select case (LdepthType)
 
-              case (1)
+              case (1) !uniform initial depth
 
                 !%  Initial depth --------------------------------------------------
                 if (linkR(ii,lr_InitialDepth) /= nullvalueR) then
@@ -205,7 +206,7 @@ contains
                         elem2R(:,e2r_Depth) = 0.5*(dup + ddn)
                     endwhere
                 endif
-              case (2)
+              case (2) 
                 !% if the link has linearly-varying depth
                 !% depth at the downstream element (link position =1)
                 where ( (elem2I(:,e2i_link_Pos) == 1) .and. (elem2I(:,e2i_link_ID) == Lindx) )
@@ -496,17 +497,17 @@ contains
                 where (elem2I(:,e2i_link_ID) == Lindx)
 
                     elem2I(:,e2i_geometry)  = eWidthDepth
-                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
                     elem2R(:,e2r_FullDepth) = linkR(ii,lr_FUllDepth)
                     elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
                     elem2R(:,e2r_Topwidth)  = linkR(ii,lr_TopWidth)
+                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth) ! hydDepth should be the area/topwidth
                     elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_FullArea)  = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_FullDepth)
                     elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
-                    elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth) + twoR * elem2R(:,e2r_HydDepth)!onehalfR * elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                 endwhere
             else
@@ -1012,8 +1013,6 @@ contains
 
         where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
                 (elem2I(:,e2i_elem_type) == ePipe   ) )
-            ! elem2I(:,e2i_solver) = SVE
-            ! elem2I(:,e2i_solver) = AC
 
             elem2I(:,e2i_solver) = AC
             ! elem2I(50:101,e2i_solver) = SVE
@@ -1021,7 +1020,7 @@ contains
         
         where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
                 (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
-            ! elemMI(:,eMi_solver) = SVE
+        
             elemMI(:,eMi_solver) = AC
         endwhere
 
