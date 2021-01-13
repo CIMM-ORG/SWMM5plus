@@ -27,7 +27,6 @@ module artificial_compressibility
     private
 
     public :: ac_rk2_step
-    ! public :: ac_rk2
 
     integer :: debuglevel = 0
 
@@ -37,24 +36,21 @@ contains
     !==========================================================================
     !
     subroutine ac_rk2_step &
-        (e2r_Flowrate_old, e2r_Area_old, e2r_Eta_old, eMr_Flowrate_old,   &
-        eMr_Area_old, eMr_Eta_old, fr_Flowrate_net_old, e2r_Flowrate_new, &
-        e2r_Area_new, e2r_Eta_new, e2r_Flowrate_tmp, e2r_Area_tmp,        &
-        e2r_Eta_tmp, eMr_Flowrate_new, eMr_Area_new, eMr_Eta_new,         &
-        fr_Flowrate_net_new, elem2R, elemMR, faceR, elem2I, elemMI,       &
-        elem2YN, elemMYN, dt, af, wrk)
+        (e2r_Volume_old, e2r_Velocity_old, e2r_Eta_old, eMr_Volume_old,  &
+        eMr_Velocity_old, eMr_Eta_old, e2r_Volume_new, e2r_Velocity_new, &
+        e2r_Eta_new, eMr_Volume_new, eMr_Velocity_new, eMr_Eta_new,      &
+        elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af, &
+        wrk)
         !
         ! A complete RK2 step of the AC method
         !
         character(64) :: subroutine_name = 'ac_rk2_step'
 
         ! indexes for old/new volume and velocity storage
-        integer,    intent(in) :: e2r_Flowrate_old, e2r_Area_old, e2r_Eta_old
-        integer,    intent(in) :: eMr_Flowrate_old, eMr_Area_old, eMr_Eta_old
-        integer,    intent(in) :: e2r_Flowrate_new, e2r_Area_new, e2r_Eta_new
-        integer,    intent(in) :: e2r_Flowrate_tmp, e2r_Area_tmp, e2r_Eta_tmp
-        integer,    intent(in) :: eMr_Flowrate_new, eMr_Area_new, eMr_Eta_new
-        integer,    intent(in) :: fr_Flowrate_net_old, fr_Flowrate_net_new
+        integer,   intent(in) :: e2r_Volume_old, e2r_Velocity_old, e2r_Eta_old 
+        integer,   intent(in) :: eMr_Volume_old, eMr_Velocity_old, eMr_Eta_old
+        integer,   intent(in) :: e2r_Volume_new, e2r_Velocity_new, e2r_Eta_new
+        integer,   intent(in) :: eMr_Volume_new, eMr_Velocity_new, eMr_Eta_new
 
         real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         real,      target, intent(in out)  :: faceR(:,:)
@@ -62,111 +58,72 @@ contains
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
         real,              intent(in)      :: dt, wrk, af(:)
         
-        real,       pointer ::  flowrate2(:), flowrate2new(:), area2(:), area2new(:)
-        real,       pointer ::  flowrateM(:), flowrateMnew(:), areaM(:), areaMnew(:)
-        real,       pointer ::  eta2(:), eta2new(:), etaM(:), etaMnew(:), fQNet(:), fQNetNew(:)
-        real,       pointer ::  area2n0(:), area2n1(:), flowrate2n0(:), flowrate2n1(:), velocity2(:) 
-        real,       pointer ::  zcrown2(:), zbottom2(:), rh2(:), mn2(:), length2(:), elN2(:), dHdA2(:)
-        real,       pointer ::  areaMn0(:), areaMn1(:), flowrateMn0(:), flowrateMn1(:), velocityM(:)
-        real,       pointer ::  rhM(:), mnM(:), lengthM(:), elNM(:), dhDAM(:)
-        real,       pointer ::  CtestH12(:), CtestQ12(:), CtestH1M(:), CtestQ1M(:)
-        real,       pointer ::  kH2(:), kQ2(:), kHM(:), kQM(:)
-        real,       pointer ::  fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:), fEup(:)
-        real,       pointer ::  area2tmp(:), eta2tmp(:), flowrate2tmp(:)
+        real,  pointer ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
+        real,  pointer ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
+        real,  pointer ::  eta2old(:), eta2new(:), etaMold(:), etaMnew(:)
+        real,  pointer ::  volume2n0(:), volume2n1(:), flowrate2n0(:), flowrate2n1(:)
+        real,  pointer ::  VolumeMn0(:), VolumeMn1(:), flowrateMn0(:), flowrateMn1(:)
+        real,  pointer ::  dHdV2(:), zcrown2(:), zbottom2(:), rh2(:), mn2(:)
+        real,  pointer ::  fullVolume2(:), fullVolumeM(:), dHdVM(:), rhM(:), mnM(:)
+        real,  pointer ::  length2(:), elN2(:) , breadth2(:), lengthM(:), elNM(:)
+        real,  pointer ::  fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:), fEup(:)
+        real,  pointer ::  kc2(:), ku2(:), kcM(:), kuM(:)
 
-        integer,    pointer ::  iup(:), idn(:)
-        logical,    pointer ::  maskPipeAc(:), isFull(:), maskarray(:)
+        integer,  pointer ::  iup(:), idn(:)
+        logical,  pointer ::  isFull(:), maskFullPipe(:)
+        logical,  pointer ::  maskChannelPipeAC(:), maskJunctionAC(:)
 
-        real                :: dtau, rc2
-
+        real              :: dtau, rc2
         integer :: mm
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
 
-        rc2  = setting%DefaultAC%Celerity%RC ** 2        ! F^2 in derivation
+        !% F^2 from derivation
+        rc2  = setting%DefaultAC%Celerity%RC ** twoR        
         dtau = dt * setting%DefaultAC%dtauFactor%dtdtau
 
-        !%  pointers for Flowrate, area and eta storage (updating)
-        flowrate2    => elem2R(:,e2r_Flowrate_old)
-        flowrate2new => elem2R(:,e2r_Flowrate_new)
-        flowrate2tmp => elem2R(:,e2r_Flowrate_tmp)
-        area2        => elem2R(:,e2r_Area_old)
-        area2new     => elem2R(:,e2r_Area_new)
-        area2tmp     => elem2R(:,e2r_Area_tmp)
-        eta2         => elem2R(:,e2r_Eta_old)
+        !%  pointers for old/new volume, velocity and eta storage
+        volume2old   => elem2R(:,e2r_Volume_old)
+        volume2new   => elem2R(:,e2r_Volume_new)
+        velocity2old => elem2R(:,e2r_Velocity_old)
+        velocity2new => elem2R(:,e2r_Velocity_new)
+        eta2old      => elem2R(:,e2r_Eta_old)
         eta2new      => elem2R(:,e2r_Eta_new)
-        eta2tmp      => elem2R(:,e2r_Eta_tmp)
 
-        flowrateM    => elem2R(:,eMr_Flowrate_old)
-        flowrateMnew => elem2R(:,eMr_Flowrate_new)
-        areaM        => elem2R(:,eMr_Area_old)
-        areaMnew     => elem2R(:,eMr_Area_new)
-        etaM         => elem2R(:,eMr_Eta_old)
+        volumeMold   => elem2R(:,eMr_Volume_old)
+        volumeMnew   => elem2R(:,eMr_Volume_new)
+        velocityMold => elem2R(:,eMr_Velocity_old)
+        velocityMnew => elem2R(:,eMr_Velocity_new)
+        etaMold      => elem2R(:,eMr_Eta_old)
         etaMnew      => elem2R(:,eMr_Eta_new)
 
-        fQNet        => faceR(:,fr_Flowrate_net_old)
-        fQNetNew     => faceR(:,fr_Flowrate_net_new)
-
-        !%  pointer required for Flowrate, area and eta calculation of pipe elements
-        area2n0     => elem2R(:,e2r_Area_N0)
-        area2n1     => elem2R(:,e2r_Area_N1)
+        !%  pointer required for volume, velocity and eta calculation of elem2
+        volume2n0   => elem2R(:,e2r_Volume_N0)
+        volume2n1   => elem2R(:,e2r_Volume_N1)
         flowrate2n0 => elem2R(:,e2r_Flowrate_N0)
         flowrate2n1 => elem2R(:,e2r_Flowrate_N1)
-        velocity2   => elem2R(:,e2r_Velocity)
         rh2         => elem2R(:,e2r_HydRadius)
         mn2         => elem2R(:,e2r_Roughness)
         length2     => elem2R(:,e2r_Length)
         elN2        => elem2R(:,e2r_elN)
         zcrown2     => elem2R(:,e2r_Zcrown)
         zbottom2    => elem2R(:,e2r_Zbottom)
-        dHdA2       => elem2R(:,e2r_dHdA)
-        CtestH12    => elem2R(:,e2r_CtestH1)
-        CtestQ12    => elem2R(:,e2r_CtestQ1)
+        dHdV2       => elem2R(:,e2r_dHdV)
+        fullVolume2 => elem2R(:,e2r_FullVolume)
+        breadth2    => elem2R(:,e2r_BreadthScale)
 
-        !%  pointer required for Flowrate, area and eta calculation of junction-pipe elements
-        areaMn0     => elemMR(:,eMr_Area_N0)
-        areaMn1     => elemMR(:,eMr_Area_N1)
+        !%  pointer required for volume, velocity and eta calculation of elemM
+        volumeMn0   => elemMR(:,eMr_Volume_N0)
+        volumeMn1   => elemMR(:,eMr_Volume_N1)
         flowrateMn0 => elemMR(:,eMr_Flowrate_N0)
         flowrateMn1 => elemMR(:,eMr_Flowrate_N1)
-        velocityM   => elemMR(:,eMr_Velocity)
         rhM         => elemMR(:,eMr_HydRadius)
         mnM         => elemMR(:,eMr_Roughness)
         lengthM     => elemMR(:,eMr_Length)
         elNM        => elemMR(:,eMr_elN)
-        dHdAM       => elemMR(:,eMr_dHdA)
-        CtestH1M    => elemMR(:,eMr_CtestH1)
-        CtestQ1M    => elemMR(:,eMr_CtestH1)
-
-        !%  temporary space for pipe elements
-        kH2 => elem2R(:,e2r_Temp(next_e2r_temparray))
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        kQ2 => elem2R(:,e2r_Temp(next_e2r_temparray))
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        !%  temporary space for juctions-pipe elements
-        kHM => elemMR(:,eMr_Temp(next_eMr_temparray))
-        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
-
-        kQM => elemMR(:,eMr_Temp(next_eMr_temparray))
-        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
-
-        !%  temporary pointer for pipe mask solving by AC
-        maskPipeAc  => elem2YN(:,e2YN_Temp(next_e2YN_temparray))
-        next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
-
-        !%  temporary pointer to find the full pipes that become open
-        maskarray   => elem2YN(:,e2YN_Temp(next_e2YN_temparray))
-        next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
-
-        !%  assign nullvalues to temporary pointers
-        kH2 = nullvalueR
-        kQ2 = nullvalueR
-        kHM = nullvalueR
-        kQM = nullvalueR
-        maskPipeAc = nullvalueL
-        maskarray  = nullvalueL
+        dHdVM       => elemMR(:,eMr_dHdV)
+        fullVolumeM => elem2R(:,eMr_FullVolume)
 
         !%  pointers for convenience in notation
         fUdn   => faceR(:,fr_Velocity_d) 
@@ -184,72 +141,132 @@ contains
         !%  pointer for identifying full pipe
         isFull => elem2YN(:,e2YN_IsSurcharged)
 
-        maskPipeAc = ( (elem2I(:,e2i_elem_type) == ePipe) .and. (elem2I(:,e2i_solver) == AC) )
-        ! store the original area, eta and flowrate going into RK2 steps
-        ! these original values will be used to march the variables forward
+        !%  temporary space for pipe elements
+        kc2 => elem2R(:,e2r_Temp(next_e2r_temparray))
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
+        ku2 => elem2R(:,e2r_Temp(next_e2r_temparray))
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
+
+        !%  temporary space for juctions-pipe elements
+        kcM => elemMR(:,eMr_Temp(next_eMr_temparray))
+        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
+
+        kuM => elemMR(:,eMr_Temp(next_eMr_temparray))
+        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
+
+        !%  temporary pointer for channel/pipe mask solved by AC
+        maskChannelPipeAC   => elem2YN(:,e2YN_Temp(next_e2YN_temparray))
+        next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
+
+        !%  temporary mask to find the full pipes that become open
+        maskFullPipe        => elem2YN(:,e2YN_Temp(next_e2YN_temparray))
+        next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
+
+        !%  temporary pointer for JunctionChannel/JunctionPipe mask solved by AC
+        maskJunctionAC      => elemMYN(:,eMYN_Temp(next_eMYN_temparray))
+        next_eMYN_temparray = utility_advance_temp_array (next_eMYN_temparray,eMYN_n_temp)
+
+
+        !%  assign nullvalues to temporary pointers
+        kc2 = nullvalueR
+        ku2 = nullvalueR
+        kcM = nullvalueR
+        kuM = nullvalueR
+        maskChannelPipeAC = nullvalueL
+        maskJunctionAC    = nullvalueL
+        maskFullPipe      = nullvalueL
+
+        !%  find mask for AC solvers
+        maskChannelPipeAC = ( ( (elem2I(:,e2i_elem_type) == eChannel) .or.  &
+                                (elem2I(:,e2i_elem_type) == epipe) )  .and. &
+                                (elem2I(:,e2i_solver) == AC) ) 
+
+        maskJunctionAC    = ( ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or.  &
+                                (elemMI(:,eMi_elem_type) == eJunctionPipe) )  .and. &
+                                (elemMI(:,eMi_solver)    == AC ) )
+
+        if ( count(maskJunctionAC) > zeroI ) then
+            print*, 'error: junctions are not handeled in AC solver yet'
+            stop
+        endif
+
+        !% initialize the old volume/velocity/eta to new temporary column at the begining
+        !% an rk step. this is necessary because C denominator in the kVolume uses 
+        !% the updated volume/eta at the 2nd rk step. 
         if (wrk == onehalfR) then
-            where (maskPipeAc)
-                area2tmp = area2
-                eta2tmp = eta2
-                flowrate2tmp = flowrate2
+            where (maskChannelPipeAC)
+                volume2new   = volume2old
+                velocity2new = velocity2old
+                eta2new      = eta2old
             endwhere
         endif
 
-        !%  AC RK4 volume (area) term
-        call KvolumePipe &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, kH2, &
-            length2, area2new, area2tmp, area2, area2n0, area2n1, eta2new, &
-            eta2tmp, eta2, elN2, dHdA2, fQ, iup, idn, af, wrk, dt, dtau,   &
-            rc2, maskPipeAc, isFull)
+        !%  AC RK2 volume term for elem2
+        call Kvolume2AC &
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,  kc2,   &
+            volume2old, volume2new, eta2old, eta2new, volume2n0, volume2n1,   &
+            length2, elN2, dHdV2, fQ, iup, idn, af, wrk, dt, dtau, rc2,       &
+            maskChannelPipeAC, isFull)
 
-        !%  AC RK4 flowrate term
-        call Kmomentum3Pipe &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, kQ2, eta2, &
-            length2, flowrate2new, flowrate2tmp, flowrate2, flowrate2n0,         &
-            flowrate2n1, mn2, rh2, velocity2, fQ, fUdn, fUup, fAdn, fAup, fEdn,  &
-            fEup, iup, idn, af, wrk, dt, dtau, rc2, maskPipeAc, isFull)
+        !%  AC RK2 velocity term for elem2
+        call Kmomentum2AC &
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, ku2,     &
+            velocity2old, velocity2new, eta2old, eta2new, volume2old, length2, &
+            flowrate2n0, flowrate2n1, mn2, rh2, fQ, fUdn, fUup, fAdn, fAup,    &
+            fEdn, fEup, iup, idn, af, wrk, dt, dtau, rc2, maskChannelPipeAC,   &
+            isFull)
 
-        where ( maskPipeAc .and. (isFull .eqv. .false.) )
-            area2new = area2tmp + wrk * dtau * kH2
-        elsewhere ( maskPipeAc .and. (isFull .eqv. .true.) )
-            eta2new  = eta2tmp  + wrk * dtau * kH2
+        where ( maskChannelPipeAC .and. (isFull .eqv. .false.) )
+            volume2new = volume2old + wrk * dtau * kc2
+        elsewhere ( maskChannelPipeAC .and. (isFull .eqv. .true.) )
+            eta2new = eta2old + wrk * dtau * kc2
         endwhere 
 
-        !% HACK: Need derivation for juction-pipe elements
+        !%  HACK: Need derivation for juction-pipe elements
 
         !%  CORRECTIONS ----------------------------------------------------------
-        !%  remove negative area
-        call adjust_negative_area_reset (area2new)
+        !%  remove negative volumes to prevent problems in velocity computation
+        call adjust_negative_volume_reset (volume2new)
+
         !% find the full pipes that become open to adjust negative eta2new
-        maskarray = ( maskPipeAc .and. (isFull .eqv. .true.) .and. &
-                    ( eta2new .lt. zcrown2) )
-        call adjust_negative_eta_reset (eta2new, zbottom2, maskarray)
+        maskFullPipe = ( (elem2I(:,e2i_elem_type) == ePipe)             .and. &
+                         ( isFull .eqv. .true.) .and. ( eta2new .lt. zcrown2) )
+        call adjust_negative_eta_reset (eta2new, zbottom2, maskFullPipe)
 
-        !% HACK: new area and new eta are needed to be transferred to the
-        !% old value column. Though AC solver continuity is solved for 
-        !% either area or eta, the SVE continuity solves for volume, and
-        !% eta and area are derived variables which is used for face interplation 
-        !% afterwards. To ensure a unified face update subroutine, new area and
-        !% eta are now transferred to the old column. Talk with Dr. Hodges
-        !% wheater this will cause problem.
+        !%  All the full pipe basic geometry handling should be here
+        call get_volume_from_eta &
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, eta2new, &
+            volume2new, length2, fullVolume2, breadth2, zbottom2, zcrown2,     &
+            isFull)
 
-        !% overwrite old area and eta values
-        where (maskPipeAc)
-            area2 = area2new
-            eta2  = eta2new
+        !% we still need to think carefully about how to handle eta2new.
+        !% currently the code is set up in a way that cannot handle eta2new
+        !% in get_volume_from_eta subroutine eta2new values can be overwritten
+        !% to eta2old. however, it creates problem in Kvolume calculation since,
+        !% eta2old is needed in kc2 calculation.
+
+        !%  VELOCITY - divide out the volume to get the e2r_Tempctual velocity
+        where (maskChannelPipeAC)
+            velocity2new = velocity2new / volume2new
         endwhere
 
         ! release temporary arrays
-        kH2 = nullvalueR
-        kQ2 = nullvalueR
-        kHM = nullvalueR
-        kQM = nullvalueR
-        maskPipeAc = nullvalueL
-        maskarray  = nullvalueL
-        nullify(kH2, kQ2, kHM, kQM, maskPipeAc, maskarray)
+        kc2 = nullvalueR
+        ku2 = nullvalueR
+        kcM = nullvalueR
+        kuM = nullvalueR
+        maskChannelPipeAC = nullvalueL
+        maskJunctionAC    = nullvalueL
+        maskFullPipe      = nullvalueL
+
+        nullify(kc2, ku2, kcM, kuM, maskChannelPipeAC, maskJunctionAC, &
+                maskFullPipe)
+
         next_e2r_temparray = next_e2r_temparray - 2
         next_eMr_temparray = next_eMr_temparray - 2
         next_e2YN_temparray = next_e2YN_temparray - 2
+        next_eMYN_temparray = next_eMYN_temparray - 1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine ac_rk2_step
@@ -257,134 +274,126 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine KvolumePipe &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, kH2, &
-        length2, area2new, area2old, area2, area2n0, area2n1, eta2new, &
-        eta2old, eta2, elN2, dHdA2, fQ, iup, idn, af, wrk, dt, dtau,   &
-        rc2, maskPipeAc, isFull)
+    subroutine Kvolume2AC &
+        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,  kc2,   &
+        volume2old, volume2new, eta2old, eta2new, volume2n0, volume2n1,   &
+        length2, elN2, dHdV2, fQ, iup, idn, af, wrk, dt, dtau, rc2,       &
+        maskChannelPipeAC, isFull)
         !%
         !%  The RHS of continuity for an AC RK2 step looped over the domain
         !%
-        character(64) :: subroutine_name = 'KvolumePipe'
+        character(64) :: subroutine_name = 'Kvolume2AC'
 
         real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         real,      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
-        real,       intent(inout)  :: kH2(:), area2new(:), eta2new(:), eta2old(:)
-        real,       intent(in)     :: area2(:), area2old(:), area2n0(:), area2n1(:)
-        real,       intent(in)     :: eta2(:), length2(:), elN2(:)
-        real,       intent(in)     :: dHdA2(:), af(:), fQ(:)
+        real,       intent(inout)  :: kc2(:)
+        real,       intent(in)     :: volume2new(:), eta2new(:), volume2old(:)
+        real,       intent(in)     :: eta2old(:), volume2n0(:), volume2n1(:)
+        real,       intent(in)     :: length2(:), elN2(:),dHdV2(:), af(:), fQ(:)
         real,       intent(in)     :: dt, dtau, rc2, wrk
         integer,    intent(in)     :: iup(:), idn(:)
-        logical,    intent(in)     :: maskPipeAc(:), isFull(:)
+        logical,    intent(in)     :: maskChannelPipeAC(:), isFull(:)
 
-        real                    :: invdt, gammaA, gammaH, lambdaA, lambdaH
+        real                       :: invdt, gammaV, gammaH, lambdaV, lambdaH
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         invdt   = oneR / dt
-        gammaA  = - af(1) * invdt
+        gammaV  = - af(1) * invdt
         gammaH  = zeroR 
-        lambdaA = oneR / (oneR - dtau * gammaA)
+        lambdaV = oneR / (oneR - wrk * dtau * gammaV)
         lambdaH = oneR
 
         !%  continuity source calculation
-        where ( maskPipeAc )
+        where ( maskChannelPipeAC )
             !%  baseline continuity source 
-            kH2 = ( fQ(iup) - fQ(idn) ) / length2
+            kc2 = fQ(iup) - fQ(idn)
         endwhere
 
         !%  additional source terms
-        where ( maskPipeAc .and. (isFull .eqv. .false.) )
+        where ( maskChannelPipeAC .and. (isFull .eqv. .false.) )
             !%  additional terms for open pipe continuity source
-            kH2 = kH2 - invdt * af(2) * area2n0 - invdt * af(3) * area2n1
+            kc2 = kc2 - invdt * af(2) * volume2n0 - invdt * af(3) * volume2n1
             !%  combine interior gamma and lambda (irrelevant in H)
-            kH2 = lambdaA * (kH2 + gammaA * area2)
-        elsewhere ( maskPipeAc .and. (isFull .eqv. .true.) )
+            kc2 = lambdaV * (kc2 + gammaV * volume2old)
+        elsewhere ( maskChannelPipeAC .and. (isFull .eqv. .true.) )
             !%  combine interior gamma and lambda (irrelevant in H)
-            kH2 = lambdaH * (kH2 + gammaH * eta2)
+            kc2 = lambdaH * (kc2 + gammaH * eta2old)
         endwhere
-
-        !% C term numerator calculation
-        where ( maskPipeAc )
+        
+        !%  C term numerator calculation
+        where ( maskChannelPipeAC )
             !%  baseline C term numerator
-            kH2 = kH2 * elN2 * rc2
+            kc2 = kc2 * elN2 * rc2
         endwhere
 
-        ! additional C term numerator calculation
-        where ( maskPipeAc .and. (isFull .eqv. .false.) )
+        !%  additional C term numerator calculation
+        where ( maskChannelPipeAC .and. (isFull .eqv. .false.) )
             !%  C denominator for open pipe (G)
-            kH2 = kH2 / (area2 * dHdA2 + eta2)
-        elsewhere ( maskPipeAc .and. (isFull .eqv. .true.) )
-            !%  C denominator for closed pipe (A) 
-            kH2 = kH2 / area2
+            kc2 = kc2 / (volume2new * dHdV2 + eta2new)
+        elsewhere ( maskChannelPipeAC .and. (isFull .eqv. .true.) )
+            !%  C denominator for closed pipe (V) 
+            kc2 = kc2 / volume2new
         endwhere
-
-        ! Update area and eta from volume solution (done after momentum!)
-        
-        ! output print for debug
-        ! print*, '**************** AC SOLVER ****************'
-        ! print*, trim(subroutine_name)
-        ! print*, 'KH2         ',KH2(995:1000)
-        
-        ! print*, 'area    ',area2
-        ! print*, 'area2new',area2new
-        ! print*, 'eta2new ',eta2new
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine KvolumePipe
+    end subroutine Kvolume2AC
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine Kmomentum3Pipe &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, kQ2, eta2, &
-        length2, flowrate2new, flowrate2old, flowrate2, flowrate2n0,         &
-        flowrate2n1, mn2, rh2, velocity2, fQ, fUdn, fUup, fAdn, fAup, fEdn,  &
-        fEup, iup, idn, af, wrk, dt, dtau, rc2, maskPipeAc, isFull)
+    subroutine Kmomentum2AC &
+        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, ku2,     &
+        velocity2old, velocity2new, eta2old, eta2new, volume2old, length2, &
+        flowrate2n0, flowrate2n1, mn2, rh2, fQ, fUdn, fUup, fAdn, fAup,    &
+        fEdn, fEup, iup, idn, af, wrk, dt, dtau, rc2, maskChannelPipeAC,   &
+        isFull)
         !
         !%  Momentum with baseline T(0,0) approach to pressure term and both the
         !%  d/dtau and friction handled with time m+1 stencil.
         !
-        character(64) :: subroutine_name = 'Kmomentum3Pipe'
+        character(64) :: subroutine_name = 'Kmomentum2AC'
 
         real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         real,      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
-        real,       intent(inout) :: kQ2(:),  flowrate2new(:), flowrate2old(:)
-        real,       intent(in)    :: flowrate2n0(:),flowrate2n1(:),flowrate2(:)
-        real,       intent(in)    :: mn2(:), rh2(:), velocity2(:), length2(:)
-        real,       intent(in)    :: eta2(:), fQ(:), fUdn(:), fUup(:)
-        real,       intent(in)    :: fAdn(:), fAup(:), fEdn(:), fEup(:), af(:)
+        real,       intent(inout) :: ku2(:), velocity2new(:)
+        real,       intent(in)    :: velocity2old(:), eta2new(:),eta2old(:)
+        real,       intent(in)    :: volume2old(:), length2(:), flowrate2n0(:)
+        real,       intent(in)    :: flowrate2n1(:), mn2(:), rh2(:), fQ(:)
+        real,       intent(in)    :: fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:)
+        real,       intent(in)    :: fEup(:), af(:)
         real,       intent(in)    :: wrk, dt, dtau, rc2
         integer,    intent(in)    :: iup(:), idn(:)
-        logical,    intent(in)    :: maskPipeAc(:), isFull(:)
+        logical,    intent(in)    :: maskChannelPipeAC(:), isFull(:)
 
-        real,       pointer    :: gammaQ(:)     
+        real,       pointer    :: gammaUV(:)     
         real                   :: invdt, tDelta
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        invdt = 1.0 / dt
+        !%  1/dt
+        invdt = oneR / dt
 
         !%  temporary space for gammaQ elements
-        gammaQ => elem2R(:,e2r_Temp(next_e2r_temparray))
+        gammaUV => elem2R(:,e2r_Temp(next_e2r_temparray))
         next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
         !%  tDelta setection
         if (setting%DefaultAC%Tsource == 'T00') then
             !%  T(0,0) method
-            tDelta = 0.0
+            tDelta = zeroR
         elseif (setting%DefaultAC%Tsource == 'T10') then
             !%  T(1,0) method
-            tDelta = 0.5
+            tDelta = onehalfR
         elseif (setting%DefaultAC%Tsource == 'T20') then
             !%  T(2,0) method
-            tDelta = 1.0 / 6.0
+            tDelta = oneR / sixR
         else
             print*, 'error, unknown value for setting%DefaultAC%Tsource of '
             print*,  setting%DefaultAC%Tsource
@@ -392,146 +401,128 @@ contains
         endif
 
         !%  baseline source term calculation
-        where (maskPipeAc)
-            kQ2 = fQ(iup) * fUdn(iup) - fQ(idn) * fUup(idn) + grav * fAdn(iup) * fEdn(iup) * &
-                    (1.0 - tDelta) - grav * fAup(idn) * fEup(idn) * (1.0 - tDelta)
+        where (maskChannelPipeAC)
+            ku2 = fQ(iup) * fUdn(iup) - fQ(idn) * fUup(idn) + grav * fAdn(iup) * fEdn(iup) * &
+                    (oneR - tDelta) - grav * fAup(idn) * fEup(idn) * (oneR - tDelta)
         endwhere
-        ! print*, 'iup         ', iup(997:1001)
-        ! print*, 'idn         ', idn(997:1001)
-        ! print*, 'fQ          ', fQ(997:1001)
-        ! print*, 'fUdn        ', fUdn(997:1001)
-        ! print*, 'fUup        ', fUup(997:1001)
-        ! print*, 'fAdn        ', fAdn(997:1001)
-        ! print*, 'fAup        ', fAup(997:1001)
-        ! print*, 'fEdn        ', fEdn(997:1001)
-        ! print*, 'fEup        ', fEup(997:1001)
-        ! print*, 'KQ2 base    ', KQ2(997:1001)
-        ! print*, 'eta2        ', eta2(997:1001)
+
         !%  Tsource term calculation
         select case (setting%DefaultAC%Tsource)
             case ('T00')
-                where (maskPipeAc)
-                    kQ2 = kQ2 + grav * (fAup(idn) - fAdn(iup)) * eta2
+                where (maskChannelPipeAC)
+                    ku2 = ku2 + grav * (fAup(idn) - fAdn(iup)) * eta2new
                 endwhere
             case ('T10')
-                where (maskPipeAc)
-                    kQ2 = kQ2 + grav * tDelta * (fAup(idn) * fEdn(iup) - fAdn(iup) * fEup(idn)) 
+                where (maskChannelPipeAC)
+                    ku2 = ku2 + grav * tDelta * (fAup(idn) * fEdn(iup) - fAdn(iup) * fEup(idn)) 
                 endwhere
             case ('T20')
-                where (maskPipeAc)
-                    kQ2 = kQ2 + grav * tDelta * (fAup(idn) * (fEdn(iup) + 4.0 * eta2) - fAdn(iup) &
-                        * (fEup(idn) + 4.0 * eta2))
+                where (maskChannelPipeAC)
+                    ku2 = ku2 + grav * tDelta * (fAup(idn) * (fEdn(iup) + fourR * eta2new) - fAdn(iup) &
+                        * (fEup(idn) + fourR * eta2new))
                 endwhere
             case default
                 print*, 'error, unknown value for setting%DefaultAC%Tsource of '
                 print*,  setting%DefaultAC%Tsource
                 stop
-        end select
-        ! print*, 'KQ2 T00      ',KQ2(997:1001)
+        end select      
+
         !%  Other source term calculation
-        where (maskPipeAc)
-            kQ2 = (1.0 / length2) * kQ2
+        where (maskChannelPipeAC)
             !%  adding real time levels to source
-            kQ2 = kQ2 - (af(2) * flowrate2n0 + af(3) * flowrate2n1) * invdt
-            ! ! !%  gamma term
-            gammaQ = - af(1) * invdt - grav * ((mn2**2) / (rh2**(4.0/3.0))) * abs(velocity2)
-            ! !%  adding gamma to source
-            kQ2 = kQ2 + gammaQ * flowrate2
-            ! !%  multiplying by lambda (Note that C = 1 for Q)
-            kQ2 = kQ2 / (1.0 - dtau * gammaQ)
-            ! !%  updated Q
-            flowrate2new = flowrate2old + wrk * dtau * kQ2
+            ku2 = ku2 - (af(2) * flowrate2n0 + af(3) * flowrate2n1) * invdt * length2
+            ! !%  gamma term
+            gammaUV = - af(1) * invdt - grav * ((mn2**twoR) / (rh2**(fourR/threeR))) * abs(velocity2new)
+            !%  adding gamma to source
+            ku2 = ku2 + gammaUV * velocity2old * volume2old
+            !%  multiplying by lambda (Note that C = 1 for Q)
+            ku2 = ku2 / (oneR - wrk * dtau * gammaUV)
+            !%  updated U (here U = velocity2new*volume2new)
+            velocity2new = volume2old * velocity2old  + wrk * dtau * ku2
         endwhere
-        ! output print for debug
-        ! print*, trim(subroutine_name)
-        ! print*, 'gammaQ      ',gammaQ
-        ! print*, 'KQ2         ',KQ2(997:1001)
-        ! print*, 'flowrate2   ',flowrate2
-        ! print*, 'flowrate2new',flowrate2new(997:1001)
-        ! print*, 'flowrate2old',flowrate2old
-        ! if (wrk == oneR) then
-        ! endif
-        
+       
         ! release temporary arrays
-        gammaQ = nullvalueR
-        nullify(gammaQ)
+        gammaUV = nullvalueR
+        nullify(gammaUV)
         next_e2r_temparray = next_e2r_temparray - 1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine Kmomentum3Pipe
+    end subroutine Kmomentum2AC
     !
     !==========================================================================
     !==========================================================================
     !
+    subroutine get_volume_from_eta &
+        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, eta2new, &
+        volume2new, length2, fullVolume2, breadth2, zbottom2, zcrown2,     &
+        isFull)
+        !
+        !% Find the new volume and surcharge status if solved for eta
+        !
+        character(64) :: subroutine_name = 'Kmomentum2AC'
 
+        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real,      target, intent(in out)  :: faceR(:,:)
+        integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+        logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+
+        real,       intent(inout) :: eta2new(:), volume2new(:)
+        real,       intent(in)    :: length2(:), fullVolume2(:),breadth2(:)
+        real,       intent(in)    :: zbottom2(:), zcrown2(:)
+        logical,    intent(inout) :: isFull(:)
+
+        real,       pointer       :: fullVolume(:)
+        logical,    pointer       :: maskPipe(:)
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !% pointer allocation
+        
+
+        !% temporary array for geometry update
+        maskPipe  => elemYN(:,eYN_Temp(next_eYN_temparray))
+        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+
+        maskPipe  = nullvalueL
+
+        maskPipe = ( elem2I(:,e2i_elem_type) == ePipe )
+
+        !% OPEN PIPES TRANSITION TO FULL
+        !% Detect transition from open to full pipe
+        where ( (maskPipe) .and. (isfull .eqv. .false.) .and. (volume2new .GE. fullVolume) )
+            eta2new    = zcrown2 + (volume2new - fullVolume2) / (breadth2 * length2)
+            volume2new = fullVolume2
+            isfull     = .true.
+        endwhere
+
+        !% FULL PIPES
+        !% Set the full pipe volume2new
+        !% These cells already have eta2new directly updated from the time-stepping.
+        where ( (maskPipe) .and. (isfull .eqv. .true.) )
+            volume2new = fullVolume2
+        endwhere
+    
+        !% FULL PIPES TRANSITION TO OPEN 
+        !% These have eta2new and need volume2new computed
+        !% Note that these are not re-designated as open until after all
+        !% the eta and volume computations are complete
+        !% Detect full pipe that have become open
+
+        !% this only works for rectangular pipe secton for now
+        where ( maskPipe .and. (isfull .eqv. .true.) & .and. (eta2 < zcrown2) &
+                .and. (elem2I(:,e2i_Geometry) == eRectangular))
+
+            volume2new = (eta - zbottom2) * breadth2 * length2
+            isfull = .false.
+        endwhere
+            
+        !% nullify temporary array
+        nullify(maskPipe)
+        next_eYN_temparray = next_eYN_temparray - 1
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine open_pipe_transition_to_full
     !
-    !==========================================================================
-    !==========================================================================
-    !
-    ! subroutine ac_rk2_update_auxiliary_variables &
-    !     (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new,  &
-    !     e2r_Flowrate_new, eMr_Flowrate_new, elem2R, elem2I, elem2YN, elemMR,  &
-    !     elemMI, elemMYN, faceR,  faceI, faceYN, bcdataDn, bcdataUp, steptime, &
-    !     rkiteration, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
-    !     Breadth, widthDepthData, cellType)
-
-    !     character(64) :: subroutine_name = 'ac_rk2_update_auxiliary_variables'
-
-    !     real,      target, intent(in out)  :: elemMR(:,:)
-    !     real,              intent(in out)  :: elem2R(:,:), faceR(:,:)
-    !     integer,           intent(in out)  :: elem2I(:,:), elemMI(:,:), faceI(:,:)
-    !     logical,           intent(in out)  :: elem2YN(:,:),elemMYN(:,:),faceYN(:,:)
-    !     type(bcType),      intent(in out)  :: bcdataDn(:), bcdataUp(:)
-    !     integer,           intent(in)      :: e2r_Velocity_new, eMr_Velocity_new
-    !     integer,           intent(in)      :: e2r_Volume_new,   eMr_Volume_new
-    !     integer,           intent(in)      :: e2r_Flowrate_new, eMr_Flowrate_new
-    !     integer,           intent(in)      :: rkiteration
-    !     real,              intent(in)      :: steptime
-
-    !     integer, intent(in out)    :: ID(:)
-    !     integer, intent(in out)    :: numberPairs(:)
-    !     real,    intent(in out)    :: ManningsN(:)
-    !     real,    intent(in out)    :: Length(:)
-    !     real,    intent(in out)    :: zBottom(:)
-    !     real,    intent(in out)    :: xDistance(:)
-    !     real,    intent(in out)    :: Breadth(:)
-    !     real,    intent(in out)    :: widthDepthData(:,:,:)
-    !     type(string), intent(in out)   :: cellType(:)
-    !     !--------------------------------------------------------------------------
-    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-    !     !%  advance all geometry and dynamics
-    !     call element_geometry_update &
-    !         (elem2R, elem2I, elem2YN, e2r_Volume_new, elemMR, elemMI, elemMYN, &
-    !         eMr_Volume_new, faceR, faceI, bcdataDn, bcdataUp, steptime, 1, ID, &
-    !         numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,       &
-    !         widthDepthData, cellType)
-
-    !     !%  at this point, the channels and the junction main sections have the correct
-    !     !%  geometry, but the junction branches have provisional geometry that is
-    !     !%  a functoin of the old face free surface elevation
-    !     call element_dynamics_update &
-    !         (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, bcdataDn, &
-    !         bcdataUp, e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new,       &
-    !         eMr_Volume_new, e2r_Flowrate_new, eMr_Flowrate_new, steptime)
-
-    !     !%  Updating the face values by interpolation from neighbor elements
-    !     !%  This uses the estimated values from the branches
-    !     call face_update &
-    !         (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
-    !         bcdataDn, bcdataUp, e2r_Velocity_new, eMr_Velocity_new, &
-    !         e2r_Volume_new, eMr_Volume_new, steptime, rkiteration)
-
-    !     !% fix the junction branches by interp with face values
-    !     call element_geometry_branch_fix (elemMR, elemMI, faceR, faceI )
-
-    !     !%  Ad hoc adjustment for V-shaped flowrates across a channel element
-    !     ! if (setting%Method%AdjustVshapedFlowrate%Apply) then
-    !     !     call adjust_Vshaped_flowrate (elem2R, faceR, elem2I, elem2YN)
-    !     ! endif
-
-    !     if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
-    ! end subroutine ac_rk2_update_auxiliary_variables
     !==========================================================================
     ! END OF MODULE artificial_compressibility
     !==========================================================================

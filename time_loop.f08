@@ -124,19 +124,14 @@ contains
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thistime, bc_category_inflowrate, e2r_Velocity)
 
-
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thistime, bc_category_elevation, idummy)
 
-
-
         call bc_applied_onface (faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity, thistime)
                   
-
         call diagnostic_volume_conservation &
             (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, bcdataUp, bcdataDn, restartStep,  1)
             
-
         restartStep = restartStep + 1   ! HACK required for diagnostics so end of first step is index 2
 
         call  output_all_threaded_data_by_link &
@@ -218,6 +213,19 @@ contains
                 (threadedfile, elem2R, elem2I, elemMR, elemMI, faceR, faceI, linkI, &
                 bcdataUp, bcdataDn, thisstep)
 
+            !%  change solver based on A/Afull if both SVE and AC solver is used
+            if (setting%Solver%SolverSelect == 'SVE-AC') then
+                !%  assign the solver for the next step depending on area
+                call assign_solver &
+                    (elem2I, elem2R, e2r_Area, e2r_FullArea, e2i_elem_type, ePipe,  &
+                    e2i_solver, e2r_Temp, e2r_n_temp, next_e2r_temparray)
+
+                ! !%  HACK: AC solver for Junction Pipe has not derived yet
+                call assign_solver &
+                    (elemMI, elemMR, eMr_Area, eMr_FullArea, eMi_elem_type, eJunctionPipe, &
+                    eMi_solver, eMr_Temp, eMr_n_temp, next_eMr_temparray)
+            endif
+
             !% TEST ROUTINES
             !    call explicit_euler_advance &
             !        (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
@@ -227,7 +235,7 @@ contains
             !        (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
             !         bcdataDn, bcdataUp, thistime, dt)
             !
-            ! increment the counters
+            !% increment the counters
             thisstep    = thisstep + 1
             restartStep = restartStep + 1
             thistime    = nexttime
@@ -255,6 +263,8 @@ contains
         !%  is the timestep before (needed only for backwards 3rd)
 
         elem2R(:,e2r_elN)          = elem2R(:,e2r_HydDepth)
+        elem2R(:,e2r_Volume_N1)    = elem2R(:,e2r_Volume_N0)
+        elem2R(:,e2r_Volume_N0)    = elem2R(:,e2r_Volume)
         elem2R(:,e2r_Area_N1)      = elem2R(:,e2r_Area_N0)
         elem2R(:,e2r_Area_N0)      = elem2R(:,e2r_Area)
         elem2R(:,e2r_Flowrate_N1)  = elem2R(:,e2r_Flowrate_N0)
@@ -262,6 +272,8 @@ contains
         elem2R(:,e2r_Eta_N0)       = elem2R(:,e2r_Eta)
 
         elemMR(:,eMr_elN)          = elemMR(:,eMr_HydDepth)
+        elemMR(:,eMr_Volume_N1)    = elemMR(:,eMr_Volume_N0)
+        elemMR(:,eMr_Volume_N0)    = elemMR(:,eMr_Volume)
         elemMR(:,eMr_Area_N1)      = elemMR(:,eMr_Area_N0)
         elemMR(:,eMr_Area_N0)      = elemMR(:,eMr_Area)
         elemMR(:,eMr_Flowrate_N1)  = elemMR(:,eMr_Flowrate_N0)
@@ -272,6 +284,69 @@ contains
         
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine save_previous_values
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine assign_solver &
+        (elemI, elemR, er_Area, er_FullArea, ei_elem_type, ThisElemType,  &
+        ei_solver, er_Temp, er_n_temp, next_er_temparray)
+        !
+        character(64) :: subroutine_name = 'assign_solver'
+
+        real,      target, intent(inout)  :: elemR(:,:)
+        integer,   target, intent(inout)  :: elemI(:,:)
+
+        integer,   intent(in)      ::  er_Area, er_FullArea, er_n_temp
+        integer,   intent(in)      ::  ei_elem_type, ei_solver, ThisElemType
+        integer,   intent(in)      ::  er_Temp(:)
+        integer,   intent(inout)   ::  next_er_temparray
+
+        real,      pointer  :: AoverAfull(:), Area(:), FullArea(:)
+        real                :: switchBufferP, switchBufferM
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+        !%  temporary space for pipe elements
+        AoverAfull => elemR(:,er_Temp(next_er_temparray))
+        next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+
+        Area     => elemR(:,er_Area)
+        FullArea => elemR(:,er_FullArea)
+
+        !%  values +/- buffer for the solver switch
+        switchBufferP = setting%DefaultAC%Switch%Area + setting%DefaultAC%Switch%Buffer
+        switchBufferM = setting%DefaultAC%Switch%Area - setting%DefaultAC%Switch%Buffer
+
+        where ( elemI(:,ei_elem_type) == ThisElemType )
+            AoverAfull = Area / FullArea
+        endwhere
+
+        ! selecting appropriate solver for pipe
+        where ( (elemI(:,ei_elem_type) == ThisElemType) .and. &
+                (elemI(:,ei_solver) == SVE)             .and. &
+                (AoverAfull .GE. switchBufferP) )
+
+            elemI(:,ei_solver) = AC
+
+        elsewhere( (elemI(:,ei_elem_type) == ThisElemType) .and. &
+                   (elemI(:,ei_solver) == AC)              .and. &
+                   (AoverAfull .LE. switchBufferM) )
+
+            elemI(:,ei_solver) = SVE
+        endwhere
+
+        ! print*, trim(subroutine_name)
+        ! print*, 'AoverAfull', AoverAfull
+        ! print*, 'Selected solver', elemI(:,ei_solver)
+        
+        AoverAfull = nullvalueR
+        nullify(AoverAfull)
+        next_er_temparray = next_er_temparray - 1
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine assign_solver
     !
     !==========================================================================
     !==========================================================================

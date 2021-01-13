@@ -231,37 +231,47 @@ contains
         !%  basic geometry update for rectangular channels and junctions
 
         !%   geometry for channels
-        call channel_or_junction &
-            (elem2R, elem2I, e2i_geometry, e2i_elem_type, eChannel, e2r_Length,   &
+        call channel_pipe_junction &
+            (elem2R, elem2I, e2i_geometry, e2i_elem_type, eChannel, e2r_Length,  &
             e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta,      &
             e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius,               &
             e2r_FullDepth, e2r_Volume_new, e2r_LeftSlope, e2r_RightSlope,        &
-            e2r_ParabolaValue, e2r_Temp, next_e2r_temparray, e2r_n_temp, ID,     &
-            numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,         &
-            widthDepthData, cellType)
+            e2r_ParabolaValue, e2r_dHdV, e2r_Temp, next_e2r_temparray,           &
+            e2r_n_temp, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
+            Breadth, widthDepthData, cellType)
+
+        !%   geometry for pipes
+        call channel_pipe_junction &
+            (elem2R, elem2I, e2i_geometry, e2i_elem_type, ePipe, e2r_Length,     &
+            e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta,      &
+            e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius,               &
+            e2r_FullDepth, e2r_Volume_new, e2r_LeftSlope, e2r_RightSlope,        &
+            e2r_ParabolaValue, e2r_dHdV, e2r_Temp, next_e2r_temparray,           &
+            e2r_n_temp, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
+            Breadth, widthDepthData, cellType)
 
         !%   geomety for junctions
-        call channel_or_junction &
-            (elemMR, elemMI, eMi_geometry, eMi_elem_type, eJunctionChannel,       &
+        call channel_pipe_junction &
+            (elemMR, elemMI, eMi_geometry, eMi_elem_type, eJunctionChannel,      &
             eMr_Length, eMr_Zbottom, eMr_BreadthScale, eMr_Topwidth, eMr_Area,   &
             eMr_Eta, eMr_Perimeter, eMr_Depth, eMr_HydDepth, eMr_HydRadius,      &
             eMr_FullDepth, eMr_Volume_new, eMr_LeftSlope, eMr_RightSlope,        &
-            eMr_ParabolaValue, eMr_Temp, next_eMr_temparray, eMr_n_temp, ID,     &
-            numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,         &
-            widthDepthData, cellType)
+            eMr_ParabolaValue, eMr_dHdV, eMr_Temp, next_eMr_temparray,           &
+            eMr_n_temp, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
+            Breadth, widthDepthData, cellType)
             
 
         !%   geometry for pipe
         !%   pipe geometry is solved using area and eta. Thus, area and eta are the input
         !%   pipe volume is saved into the volume_new column for the consistancy of the code 
         !%   volume is updated finally after the rk2/ac-rk2 loop
-        call pipe_or_junction &
-            (elem2R, elem2I, elem2YN, e2i_geometry, e2i_elem_type, ePipe, e2i_solver,   &
-            e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area,          &
-            e2r_Eta, e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Radius, &
-            e2r_Volume_new, e2r_FullDepth, e2r_FullArea, e2r_Zcrown, e2r_dHdA, e2r_elN, &
-            e2YN_IsSurcharged, e2r_Temp, next_e2r_temparray, e2r_n_temp, e2i_Temp,      &
-            next_e2i_temparray, e2i_n_temp, e2YN_Temp, next_e2YN_temparray, e2YN_n_temp)
+        ! call pipe_or_junction &
+        !     (elem2R, elem2I, elem2YN, e2i_geometry, e2i_elem_type, ePipe, e2i_solver,   &
+        !     e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area,          &
+        !     e2r_Eta, e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Radius, &
+        !     e2r_Volume_new, e2r_FullDepth, e2r_FullArea, e2r_Zcrown, e2r_dHdA, e2r_elN, &
+        !     e2YN_IsSurcharged, e2r_Temp, next_e2r_temparray, e2r_n_temp, e2i_Temp,      &
+        !     next_e2i_temparray, e2i_n_temp, e2YN_Temp, next_e2YN_temparray, e2YN_n_temp)
 
 
         ! HACK: We need to add junction-pipe element and geometry calculation of it
@@ -291,18 +301,18 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine channel_or_junction &
+    subroutine channel_pipe_junction &
         (elemR, elemI, ei_geometry, ei_elem_type, elem_type_value, er_Length, &
         er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta,           &
         er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_FullDepth,     &
-        er_Volume, er_LeftSlope, er_RightSlope, er_ParabolaValue,            &
+        er_Volume, er_LeftSlope, er_RightSlope, er_ParabolaValue, er_dHdV,   &
         er_Temp, next_er_temparray, er_n_temp, wdID, wdnumberPairs,          &
         wdManningsN, wdLength, wdzBottom, wdxDistance, wdBreadth,            &
         widthDepthData, wdcellType)
         !
         ! computes element geometry for a rectangular channel or a channeljunction
         !
-        character(64) :: subroutine_name = 'channel_or_junction'
+        character(64) :: subroutine_name = 'channel_pipe_junction'
 
         real,      target,     intent(in out)  :: elemR(:,:)
 
@@ -311,7 +321,7 @@ contains
         integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale
         integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
         integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius
-        integer,   intent(in)      :: er_Volume, er_FullDepth, er_n_temp
+        integer,   intent(in)      :: er_Volume, er_FullDepth, er_n_temp, er_dHdV
         integer,   intent(in)      :: er_LeftSlope, er_RightSlope, er_ParabolaValue
         integer,   intent(in)      :: er_Temp(:)
         integer,   intent(inout)   :: next_er_temparray
@@ -331,7 +341,7 @@ contains
         real, pointer :: area(:), eta(:), perimeter(:), depth(:), hyddepth(:)
         real, pointer :: hydradius(:), topwidth(:), fulldepth(:)
         real, pointer :: leftSlope(:), rightSlope(:), parabolaValue(:)
-        real, pointer :: AoverAfull(:), YoverYfull(:)
+        real, pointer :: AoverAfull(:), YoverYfull(:), dHdV(:)
 
         real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
         real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
@@ -365,6 +375,7 @@ contains
         hyddepth   => elemR(:,er_HydDepth)
         hydradius  => elemR(:,er_HydRadius)
         topwidth   => elemR(:,er_Topwidth)
+        dHdV       => elemR(:,er_dHdV)
 
         widthAtLayerTop         => widthDepthData (:,:, wd_widthAtLayerTop)
         depthAtLayerTop         => widthDepthData (:,:, wd_depthAtLayerTop)
@@ -408,6 +419,7 @@ contains
             hyddepth    = area / breadth
             depth       = hyddepth
             hydradius   = area / perimeter
+            dHdV        = hyddepth / volume
 
         elsewhere ( (elemI(:,ei_geometry)  == eParabolic) .and. &
             (elemI(:,ei_elem_type) == elem_type_value    )         )
@@ -428,6 +440,7 @@ contains
                 )  &
                 )
             hydradius   = area / perimeter
+            dHdV        = hyddepth / volume
 
         elsewhere ( (elemI(:,ei_geometry)  == eTrapezoidal) .and. &
             (elemI(:,ei_elem_type) == elem_type_value    )         )
@@ -443,6 +456,7 @@ contains
                 * (sqrt(oneR + leftSlope**twoR ) &
                 + sqrt(oneR + rightSlope**twoR))
             hydradius   = area / perimeter
+            dHdV        = hyddepth / volume
 
         elsewhere ( (elemI(:,ei_geometry)  == eTriangular) .and. &
             (elemI(:,ei_elem_type) == elem_type_value    )         )
@@ -453,6 +467,7 @@ contains
             topwidth    = (leftSlope + rightSlope) * depth
             perimeter   = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
             hydradius   = area / perimeter
+            dHdV        = hyddepth / volume
 
         elsewhere ( elemI(:, ei_geometry) == eWidthDepth .and. &
             (elemI(:,ei_elem_type) == elem_type_value) )
@@ -468,7 +483,8 @@ contains
             hyddepth    = area / topwidth
             eta         = zbottom + depth
             perimeter   = w_d_perimeterBelowThisLayer + (twoR * DD / sin(w_d_angle))
-            hydradius   = area / perimeter 
+            hydradius   = area / perimeter
+            dHdV        = hyddepth / volume 
 
         endwhere
             ! do ii=1, size(volume,1)
@@ -542,588 +558,588 @@ contains
         next_er_temparray  = next_er_temparray  - 2
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine channel_or_junction
+    end subroutine channel_pipe_junction
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine pipe_or_junction &
-        (elemR, elemI, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
-        ei_solver, er_Length, er_Zbottom, er_BreadthScale, er_Topwidth,      &
-        er_Area, er_Eta, er_Perimeter, er_Depth, er_HydDepth, er_HydRadius,  &
-        er_Radius, er_Volume, er_FullDepth, er_FullArea, er_Zcrown, er_dHdA, &
-        er_elN, eYN_IsSurcharged, er_Temp, next_er_temparray, er_n_temp,     &
-        ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray, &
-        eYN_n_temp)
-        !
-        !% computes geometry for pipe and junction pipe
-        !
-        character(64) :: subroutine_name = 'pipe_or_junction'
+    ! subroutine pipe_or_junction &
+    !     (elemR, elemI, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
+    !     ei_solver, er_Length, er_Zbottom, er_BreadthScale, er_Topwidth,      &
+    !     er_Area, er_Eta, er_Perimeter, er_Depth, er_HydDepth, er_HydRadius,  &
+    !     er_Radius, er_Volume, er_FullDepth, er_FullArea, er_Zcrown, er_dHdA, &
+    !     er_elN, eYN_IsSurcharged, er_Temp, next_er_temparray, er_n_temp,     &
+    !     ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray, &
+    !     eYN_n_temp)
+    !     !
+    !     !% computes geometry for pipe and junction pipe
+    !     !
+    !     character(64) :: subroutine_name = 'pipe_or_junction'
 
-        real,      target,     intent(inout)  :: elemR(:,:)
-        logical,   target,     intent(inout)  :: elemYN(:,:)
-        integer,   target,     intent(in)     :: elemI(:,:)
+    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     logical,   target,     intent(inout)  :: elemYN(:,:)
+    !     integer,   target,     intent(in)     :: elemI(:,:)
 
-        integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_type_value, ei_solver
-        integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale, er_Perimeter 
-        integer,   intent(in)      :: er_Topwidth, er_Area, er_Eta, er_dHdA, er_elN
-        integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_Radius
-        integer,   intent(in)      :: er_Volume, er_FullDepth, er_FullArea, er_Zcrown
-        integer,   intent(in)      :: er_n_temp, ei_n_temp, eYN_n_temp
-        integer,   intent(in)      :: eYN_IsSurcharged 
-        integer,   intent(in)      :: er_Temp(:), ei_Temp(:), eYN_Temp(:)
+    !     integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_type_value, ei_solver
+    !     integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale, er_Perimeter 
+    !     integer,   intent(in)      :: er_Topwidth, er_Area, er_Eta, er_dHdA, er_elN
+    !     integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_Radius
+    !     integer,   intent(in)      :: er_Volume, er_FullDepth, er_FullArea, er_Zcrown
+    !     integer,   intent(in)      :: er_n_temp, ei_n_temp, eYN_n_temp
+    !     integer,   intent(in)      :: eYN_IsSurcharged 
+    !     integer,   intent(in)      :: er_Temp(:), ei_Temp(:), eYN_Temp(:)
 
-        integer,   intent(inout)   :: next_er_temparray, next_ei_temparray, next_eYN_temparray
+    !     integer,   intent(inout)   :: next_er_temparray, next_ei_temparray, next_eYN_temparray
 
-        real,    pointer    :: volume(:), length(:), zbottom(:), breadth(:), hyddepth(:)
-        real,    pointer    :: area(:),  eta(:), perimeter(:), depth(:), dHdA(:), elN(:)
-        real,    pointer    :: hydradius(:), topwidth(:), fulldepth(:), zcrown(:)
-        real,    pointer    :: radius(:), AoverAfull(:), YoverYfull(:), fullarea(:)
-        integer, pointer    :: solver(:), geometry(:)
-        logical, pointer    :: isfull(:), maskarray(:)
+    !     real,    pointer    :: volume(:), length(:), zbottom(:), breadth(:), hyddepth(:)
+    !     real,    pointer    :: area(:),  eta(:), perimeter(:), depth(:), dHdA(:), elN(:)
+    !     real,    pointer    :: hydradius(:), topwidth(:), fulldepth(:), zcrown(:)
+    !     real,    pointer    :: radius(:), AoverAfull(:), YoverYfull(:), fullarea(:)
+    !     integer, pointer    :: solver(:), geometry(:)
+    !     logical, pointer    :: isfull(:), maskarray(:)
 
-        integer :: ii
+    !     integer :: ii
 
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    !     !--------------------------------------------------------------------------
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        !% inputs
+    !     !% inputs
         
-        length     => elemR(:,er_Length)
-        zbottom    => elemR(:,er_Zbottom)
-        breadth    => elemR(:,er_BreadthScale)
-        fulldepth  => elemR(:,er_FullDepth)
-        zcrown     => elemR(:,er_Zcrown)
-        fullarea   => elemR(:,er_FullArea)
-        radius     => elemR(:,er_Radius)
-        solver     => elemI(:,ei_solver)
-        geometry   => elemI(:,ei_geometry)
-        isfull     => elemYN(:,eYN_IsSurcharged)
+    !     length     => elemR(:,er_Length)
+    !     zbottom    => elemR(:,er_Zbottom)
+    !     breadth    => elemR(:,er_BreadthScale)
+    !     fulldepth  => elemR(:,er_FullDepth)
+    !     zcrown     => elemR(:,er_Zcrown)
+    !     fullarea   => elemR(:,er_FullArea)
+    !     radius     => elemR(:,er_Radius)
+    !     solver     => elemI(:,ei_solver)
+    !     geometry   => elemI(:,ei_geometry)
+    !     isfull     => elemYN(:,eYN_IsSurcharged)
 
-        !% outputs
-        area       => elemR(:,er_Area)
-        eta        => elemR(:,er_Eta)
-        perimeter  => elemR(:,er_Perimeter)
-        depth      => elemR(:,er_Depth)
-        hyddepth   => elemR(:,er_HydDepth)
-        hydradius  => elemR(:,er_HydRadius)
-        topwidth   => elemR(:,er_Topwidth)
-        dHdA       => elemR(:,er_dHdA)
-        elN        => elemR(:,er_elN)
-        volume     => elemR(:,er_Volume)
+    !     !% outputs
+    !     area       => elemR(:,er_Area)
+    !     eta        => elemR(:,er_Eta)
+    !     perimeter  => elemR(:,er_Perimeter)
+    !     depth      => elemR(:,er_Depth)
+    !     hyddepth   => elemR(:,er_HydDepth)
+    !     hydradius  => elemR(:,er_HydRadius)
+    !     topwidth   => elemR(:,er_Topwidth)
+    !     dHdA       => elemR(:,er_dHdA)
+    !     elN        => elemR(:,er_elN)
+    !     volume     => elemR(:,er_Volume)
 
-        !% temporary array for geometry update
-        AoverAfull => elemR(:,er_Temp(next_er_temparray))
-        next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+    !     !% temporary array for geometry update
+    !     AoverAfull => elemR(:,er_Temp(next_er_temparray))
+    !     next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
 
-        YoverYfull => elemR(:,er_Temp(next_er_temparray))
-        next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+    !     YoverYfull => elemR(:,er_Temp(next_er_temparray))
+    !     next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
 
-        maskarray  => elemYN(:,eYN_Temp(next_eYN_temparray))
-        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+    !     maskarray  => elemYN(:,eYN_Temp(next_eYN_temparray))
+    !     next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
 
-        AoverAfull = nullvalueR
-        YoverYfull = nullvalueR
-        maskarray  = nullvalueL
+    !     AoverAfull = nullvalueR
+    !     YoverYfull = nullvalueR
+    !     maskarray  = nullvalueL
 
-        !% mask for circular pipes/junction pipe
-        maskarray = ( (elemI(:,ei_elem_type) == elem_type_value) )
+    !     !% mask for circular pipes/junction pipe
+    !     maskarray = ( (elemI(:,ei_elem_type) == elem_type_value) )
 
-        !% For open pipe, set eta to zero for later error detection
-        where (maskarray .and. (isfull .eqv. .false.)) 
-              eta = zeroR
-        endwhere
-        ! print*,'----before-----'
-        ! print*, area, 'area'
-        ! print*, fullarea, 'fullarea'
-        !% Open circular pipes that become full
-        call open_pipe_transition_to_full &
-            (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
-            fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
-            hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
-            ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
-            eYN_n_temp, isfull, maskarray)
+    !     !% For open pipe, set eta to zero for later error detection
+    !     where (maskarray .and. (isfull .eqv. .false.)) 
+    !           eta = zeroR
+    !     endwhere
+    !     ! print*,'----before-----'
+    !     ! print*, area, 'area'
+    !     ! print*, fullarea, 'fullarea'
+    !     !% Open circular pipes that become full
+    !     call open_pipe_transition_to_full &
+    !         (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
+    !         fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
+    !         hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
+    !         ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
+    !         eYN_n_temp, isfull, maskarray)
 
-        !% Set the full pipe area
-        !% These cells already have eta directly updated from the time-stepping.
-        where (maskarray .and. (isfull .eqv. .true.)) 
-            area   = fullarea
-            volume = area * length
-            depth  = fulldepth
-            AoverAfull = oneR
-            YoverYfull = oneR  
-        endwhere
+    !     !% Set the full pipe area
+    !     !% These cells already have eta directly updated from the time-stepping.
+    !     where (maskarray .and. (isfull .eqv. .true.)) 
+    !         area   = fullarea
+    !         volume = area * length
+    !         depth  = fulldepth
+    !         AoverAfull = oneR
+    !         YoverYfull = oneR  
+    !     endwhere
 
-        !% NOTE: at this point, isfull will consist of those pipes that
-        !% were designated as "full" coming into this routine and those that
-        !% were detected as becoming full due to the increase in area. However
-        !% the array ALSO is true (incorrectly) for those pipes that dropped
-        !% from full to open during the prior time step. These must be handled
-        !% separately.
+    !     !% NOTE: at this point, isfull will consist of those pipes that
+    !     !% were designated as "full" coming into this routine and those that
+    !     !% were detected as becoming full due to the increase in area. However
+    !     !% the array ALSO is true (incorrectly) for those pipes that dropped
+    !     !% from full to open during the prior time step. These must be handled
+    !     !% separately.
 
-        !% Full pipes that become open
-        call full_pipe_transition_to_open &
-            (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
-            fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
-            hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
-            ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
-            eYN_n_temp, isfull, maskarray)
+    !     !% Full pipes that become open
+    !     call full_pipe_transition_to_open &
+    !         (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
+    !         fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
+    !         hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
+    !         ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
+    !         eYN_n_temp, isfull, maskarray)
 
-        !% Open pipes
-        !% These has areas/volumes updated and needs eta to be computed
-        call open_pipe &
-            (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
-            fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
-            hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
-            ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
-            eYN_n_temp, isfull, maskarray) 
+    !     !% Open pipes
+    !     !% These has areas/volumes updated and needs eta to be computed
+    !     call open_pipe &
+    !         (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
+    !         fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
+    !         hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
+    !         ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
+    !         eYN_n_temp, isfull, maskarray) 
 
-        !% isfull reset
-        !% set formerly full pipes that have become open to open
-        where (maskarray .and. (isfull .eqv. .true.) .and. (eta < zcrown))
-            isfull = .false.
-        endwhere
+    !     !% isfull reset
+    !     !% set formerly full pipes that have become open to open
+    !     where (maskarray .and. (isfull .eqv. .true.) .and. (eta < zcrown))
+    !         isfull = .false.
+    !     endwhere
 
-        ! Now eta and area have been updated for all cases
-        call pipe_additional_geometric_properties &
-            (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
-            fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
-            hydradius, topwidth, dHdA, elN, AoverAfull, YoverYfull, solver,       &
-            geometry, ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp,            &
-            next_eYN_temparray, eYN_n_temp, isfull, maskarray)
-        !% release temporary arrays
-        AoverAfull = nullvalueR
-        YoverYfull = nullvalueR
-        maskarray  = nullvalueL
-        ! print*, '-----after------'
-        ! print*, volume, 'volume'
-        ! print*, area, 'area'
-        ! print*, depth, 'depth'
-        ! print*, hyddepth, 'hyddepth'
-        !% nullify temporary array
-        nullify(AoverAfull, YoverYfull, maskarray)
-        next_er_temparray  = next_er_temparray  - 2
-        next_eYN_temparray = next_eYN_temparray - 1
+    !     ! Now eta and area have been updated for all cases
+    !     call pipe_additional_geometric_properties &
+    !         (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
+    !         fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
+    !         hydradius, topwidth, dHdA, elN, AoverAfull, YoverYfull, solver,       &
+    !         geometry, ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp,            &
+    !         next_eYN_temparray, eYN_n_temp, isfull, maskarray)
+    !     !% release temporary arrays
+    !     AoverAfull = nullvalueR
+    !     YoverYfull = nullvalueR
+    !     maskarray  = nullvalueL
+    !     ! print*, '-----after------'
+    !     ! print*, volume, 'volume'
+    !     ! print*, area, 'area'
+    !     ! print*, depth, 'depth'
+    !     ! print*, hyddepth, 'hyddepth'
+    !     !% nullify temporary array
+    !     nullify(AoverAfull, YoverYfull, maskarray)
+    !     next_er_temparray  = next_er_temparray  - 2
+    !     next_eYN_temparray = next_eYN_temparray - 1
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine pipe_or_junction
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine open_pipe_transition_to_full &
-        (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
-        fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
-        hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
-        ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
-        eYN_n_temp, isfull, maskarray)
-        !
-        ! OPEN PIPES THAT BECOME FULL ============
-        ! Detect transition from open to full pipe
-        ! area is advanced for open pipe. To eta is needed to be calculated here
-        !
-        character(64) :: subroutine_name = 'open_pipe_transition_to_full'
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    ! end subroutine pipe_or_junction
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
+    ! subroutine open_pipe_transition_to_full &
+    !     (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
+    !     fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
+    !     hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
+    !     ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
+    !     eYN_n_temp, isfull, maskarray)
+    !     !
+    !     ! OPEN PIPES THAT BECOME FULL ============
+    !     ! Detect transition from open to full pipe
+    !     ! area is advanced for open pipe. To eta is needed to be calculated here
+    !     !
+    !     character(64) :: subroutine_name = 'open_pipe_transition_to_full'
 
-        real,      target,     intent(inout)  :: elemR(:,:)
-        logical,   target,     intent(inout)  :: elemYN(:,:)
+    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     logical,   target,     intent(inout)  :: elemYN(:,:)
 
-        integer,   intent(in)       :: elemI(:,:)
-        real,      intent(in)       :: length(:), zbottom(:), breadth(:)
-        real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
-        integer,   intent(in)       :: ei_n_temp, eYN_n_temp
-        integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
-        logical,   intent(in)       :: maskarray(:)
+    !     integer,   intent(in)       :: elemI(:,:)
+    !     real,      intent(in)       :: length(:), zbottom(:), breadth(:)
+    !     real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
+    !     integer,   intent(in)       :: ei_n_temp, eYN_n_temp
+    !     integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
+    !     logical,   intent(in)       :: maskarray(:)
 
-        real,      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
-        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-        real,      intent(inout)    :: AoverAfull(:), YoverYfull(:)
-        integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
-        logical,   intent(inout)    :: isfull(:)
+    !     real,      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
+    !     real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+    !     real,      intent(inout)    :: AoverAfull(:), YoverYfull(:)
+    !     integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
+    !     logical,   intent(inout)    :: isfull(:)
 
-        logical,    pointer         :: maskarray_pipe_transition(:)
+    !     logical,    pointer         :: maskarray_pipe_transition(:)
 
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    !     !--------------------------------------------------------------------------
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        !% temporary mask space for finding transiotional pipes
-        maskarray_pipe_transition  => elemYN(:,eYN_Temp(next_eYN_temparray))
-        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+    !     !% temporary mask space for finding transiotional pipes
+    !     maskarray_pipe_transition  => elemYN(:,eYN_Temp(next_eYN_temparray))
+    !     next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
 
-        maskarray_pipe_transition  = nullvalueL
+    !     maskarray_pipe_transition  = nullvalueL
 
-        !% If a pipe become surcharged inbetween an SVE step, the solver will solve for volume
-        !% this makes sure that area is updated beofre finding the transitional pipes. 
-        where (maskarray .and. (isfull .eqv. .false.) .and. (solver == SVE) )
-            area = volume / length
-        endwhere
+    !     !% If a pipe become surcharged inbetween an SVE step, the solver will solve for volume
+    !     !% this makes sure that area is updated beofre finding the transitional pipes. 
+    !     where (maskarray .and. (isfull .eqv. .false.) .and. (solver == SVE) )
+    !         area = volume / length
+    !     endwhere
 
-        maskarray_pipe_transition = (maskarray .and. (isfull .eqv. .false.) &
-                                               .and. (area .GE. fullarea) )
-        where (maskarray_pipe_transition) 
-            ! Set head above the pipe crown based on the excess area in
-            ! from the time advance divided by pipe width
-            eta  = zcrown + (area - fullarea) / breadth
-            area = fullarea
-            AoverAfull = oneR
-            YoverYfull = oneR
-            volume = area * length
-            isfull = .true.
-        endwhere
+    !     maskarray_pipe_transition = (maskarray .and. (isfull .eqv. .false.) &
+    !                                            .and. (area .GE. fullarea) )
+    !     where (maskarray_pipe_transition) 
+    !         ! Set head above the pipe crown based on the excess area in
+    !         ! from the time advance divided by pipe width
+    !         eta  = zcrown + (area - fullarea) / breadth
+    !         area = fullarea
+    !         AoverAfull = oneR
+    !         YoverYfull = oneR
+    !         volume = area * length
+    !         isfull = .true.
+    !     endwhere
 
-        ! print*, 'geometry debug for ', trim(subroutine_name)
-        ! print*, 'is full    ', isfull
-        ! print*, 'Area       ', area
-        ! print*, 'AoverAfull ', AoverAfull
-        ! print*, 'depth      ', depth
-        ! print*, 'eta        ', eta
+    !     ! print*, 'geometry debug for ', trim(subroutine_name)
+    !     ! print*, 'is full    ', isfull
+    !     ! print*, 'Area       ', area
+    !     ! print*, 'AoverAfull ', AoverAfull
+    !     ! print*, 'depth      ', depth
+    !     ! print*, 'eta        ', eta
 
 
-        maskarray_pipe_transition  = nullvalueL
-        !% nullify temporary array
-        nullify(maskarray_pipe_transition)
-        next_eYN_temparray = next_eYN_temparray - 1
+    !     maskarray_pipe_transition  = nullvalueL
+    !     !% nullify temporary array
+    !     nullify(maskarray_pipe_transition)
+    !     next_eYN_temparray = next_eYN_temparray - 1
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine open_pipe_transition_to_full
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine full_pipe_transition_to_open &
-        (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
-        fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
-        hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
-        ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
-        eYN_n_temp, isfull, maskarray)
-        !
-        ! FULL PIPES THAT TRANSITION TO OPEN ==================
-        ! These have eta and need area computed
-        ! Note that these are not re-designated as open until after all
-        ! the eta and are computations are complete
-        ! Detect full pipe that have become open
-        !
-        character(64) :: subroutine_name = 'full_pipe_transition_to_open'
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    ! end subroutine open_pipe_transition_to_full
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
+    ! subroutine full_pipe_transition_to_open &
+    !     (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
+    !     fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
+    !     hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
+    !     ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
+    !     eYN_n_temp, isfull, maskarray)
+    !     !
+    !     ! FULL PIPES THAT TRANSITION TO OPEN ==================
+    !     ! These have eta and need area computed
+    !     ! Note that these are not re-designated as open until after all
+    !     ! the eta and are computations are complete
+    !     ! Detect full pipe that have become open
+    !     !
+    !     character(64) :: subroutine_name = 'full_pipe_transition_to_open'
 
-        real,      target,     intent(inout)  :: elemR(:,:)
-        logical,   target,     intent(inout)  :: elemYN(:,:)
+    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     logical,   target,     intent(inout)  :: elemYN(:,:)
 
-        integer,   intent(in)       :: elemI(:,:)
-        real,      intent(in)       :: length(:), zbottom(:), breadth(:)
-        real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
-        integer,   intent(in)       :: ei_n_temp, eYN_n_temp
-        integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
-        logical,   intent(in)       :: maskarray(:), isfull(:)
+    !     integer,   intent(in)       :: elemI(:,:)
+    !     real,      intent(in)       :: length(:), zbottom(:), breadth(:)
+    !     real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
+    !     integer,   intent(in)       :: ei_n_temp, eYN_n_temp
+    !     integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
+    !     logical,   intent(in)       :: maskarray(:), isfull(:)
 
-        real,      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
-        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-        real,      intent(inout)    :: AoverAfull(:), YoverYfull(:)
-        integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
+    !     real,      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
+    !     real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+    !     real,      intent(inout)    :: AoverAfull(:), YoverYfull(:)
+    !     integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
 
-        logical,    pointer         :: maskarray_pipe_transition(:)
-        logical,    pointer         :: maskarray_pipe_geometry(:)
+    !     logical,    pointer         :: maskarray_pipe_transition(:)
+    !     logical,    pointer         :: maskarray_pipe_geometry(:)
 
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    !     !--------------------------------------------------------------------------
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        !% temporary mask space for finding transiotional pipes
-        maskarray_pipe_transition  => elemYN(:,eYN_Temp(next_eYN_temparray))
-        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+    !     !% temporary mask space for finding transiotional pipes
+    !     maskarray_pipe_transition  => elemYN(:,eYN_Temp(next_eYN_temparray))
+    !     next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
 
-        !% temporary mask space for geometry types that needs table interpolation
-        maskarray_pipe_geometry  => elemYN(:,eYN_Temp(next_eYN_temparray))
-        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+    !     !% temporary mask space for geometry types that needs table interpolation
+    !     maskarray_pipe_geometry  => elemYN(:,eYN_Temp(next_eYN_temparray))
+    !     next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
 
-        maskarray_pipe_transition = nullvalueL
-        maskarray_pipe_geometry   = nullvalueL
+    !     maskarray_pipe_transition = nullvalueL
+    !     maskarray_pipe_geometry   = nullvalueL
 
-        maskarray_pipe_transition = (maskarray .and. (isfull .eqv. .true.) &
-                                               .and. (eta < zcrown) )
-        where (maskarray_pipe_transition) 
-            depth = eta - zbottom
-            YoverYfull = depth / fulldepth
-        endwhere
+    !     maskarray_pipe_transition = (maskarray .and. (isfull .eqv. .true.) &
+    !                                            .and. (eta < zcrown) )
+    !     where (maskarray_pipe_transition) 
+    !         depth = eta - zbottom
+    !         YoverYfull = depth / fulldepth
+    !     endwhere
 
-        !% set up the mask for circular geometry type as an input for table_lookup_mask subroutine
-        maskarray_pipe_geometry = ( (maskarray_pipe_transition) .and. (geometry == eCircular) )
+    !     !% set up the mask for circular geometry type as an input for table_lookup_mask subroutine
+    !     maskarray_pipe_geometry = ( (maskarray_pipe_transition) .and. (geometry == eCircular) )
 
-        !% get the normalized area from lookup table from full to open transitional pipe
-        call table_lookup_mask &
-            (elemI, elemR, AoverAfull, YoverYfull, ACirc, NACirc, maskarray_pipe_geometry, &
-            ei_Temp, next_ei_temparray, ei_n_temp)
+    !     !% get the normalized area from lookup table from full to open transitional pipe
+    !     call table_lookup_mask &
+    !         (elemI, elemR, AoverAfull, YoverYfull, ACirc, NACirc, maskarray_pipe_geometry, &
+    !         ei_Temp, next_ei_temparray, ei_n_temp)
 
-        !% release the temporary maskarray_pipe_geometry for other special geometry types
-        maskarray_pipe_geometry = nullvalueL
+    !     !% release the temporary maskarray_pipe_geometry for other special geometry types
+    !     maskarray_pipe_geometry = nullvalueL
 
-        !% HACK: Other special pipe geometry types are needed
+    !     !% HACK: Other special pipe geometry types are needed
            
-        where ( (maskarray_pipe_transition) .and. (geometry == eCircular) )
-            !% get the pipe area by multiplying the normalized area with full area for circular pipe
-            area   = AoverAfull * fullarea
-            volume = area * length
-        elsewhere ( (maskarray_pipe_transition) .and. (geometry == eRectangular) )
-            area   = depth * breadth
-            volume = area  * length
-            AoverAfull = area / fullarea
-        endwhere
+    !     where ( (maskarray_pipe_transition) .and. (geometry == eCircular) )
+    !         !% get the pipe area by multiplying the normalized area with full area for circular pipe
+    !         area   = AoverAfull * fullarea
+    !         volume = area * length
+    !     elsewhere ( (maskarray_pipe_transition) .and. (geometry == eRectangular) )
+    !         area   = depth * breadth
+    !         volume = area  * length
+    !         AoverAfull = area / fullarea
+    !     endwhere
 
-        ! print*, 'geometry debug for ', trim(subroutine_name)
-        ! print*, 'is full    ', isfull
-        ! print*, 'Area       ', area
-        ! print*, 'AoverAfull ', AoverAfull
-        ! print*, 'depth      ', depth
-        ! print*, 'eta        ', eta
+    !     ! print*, 'geometry debug for ', trim(subroutine_name)
+    !     ! print*, 'is full    ', isfull
+    !     ! print*, 'Area       ', area
+    !     ! print*, 'AoverAfull ', AoverAfull
+    !     ! print*, 'depth      ', depth
+    !     ! print*, 'eta        ', eta
 
-        maskarray_pipe_transition = nullvalueL
-        maskarray_pipe_geometry   = nullvalueL
-        !% nullify temporary array
-        nullify(maskarray_pipe_transition, maskarray_pipe_geometry)
-        next_eYN_temparray = next_eYN_temparray - 2
+    !     maskarray_pipe_transition = nullvalueL
+    !     maskarray_pipe_geometry   = nullvalueL
+    !     !% nullify temporary array
+    !     nullify(maskarray_pipe_transition, maskarray_pipe_geometry)
+    !     next_eYN_temparray = next_eYN_temparray - 2
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine full_pipe_transition_to_open
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine open_pipe &
-        (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
-        fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
-        hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
-        ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
-        eYN_n_temp, isfull, maskarray)   
-        !
-        ! this subroutine gets the value of circular pipe/junction-pipe geometry
-        ! solved using the SVE/AC solver
-        !
-        character(64) :: subroutine_name = 'open_pipe'
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    ! end subroutine full_pipe_transition_to_open
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
+    ! subroutine open_pipe &
+    !     (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
+    !     fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
+    !     hydradius, topwidth, AoverAfull, YoverYfull, solver, geometry,        &
+    !     ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp, next_eYN_temparray,  &
+    !     eYN_n_temp, isfull, maskarray)   
+    !     !
+    !     ! this subroutine gets the value of circular pipe/junction-pipe geometry
+    !     ! solved using the SVE/AC solver
+    !     !
+    !     character(64) :: subroutine_name = 'open_pipe'
 
-        real,      target,     intent(inout)  :: elemR(:,:)
-        logical,   target,     intent(inout)  :: elemYN(:,:)
+    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     logical,   target,     intent(inout)  :: elemYN(:,:)
 
-        integer,   intent(in)       :: elemI(:,:)
-        real,      intent(in)       :: length(:), zbottom(:), breadth(:)
-        real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
-        integer,   intent(in)       :: ei_n_temp, eYN_n_temp
-        integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
-        logical,   intent(in)       :: maskarray(:), isfull(:)
+    !     integer,   intent(in)       :: elemI(:,:)
+    !     real,      intent(in)       :: length(:), zbottom(:), breadth(:)
+    !     real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
+    !     integer,   intent(in)       :: ei_n_temp, eYN_n_temp
+    !     integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
+    !     logical,   intent(in)       :: maskarray(:), isfull(:)
 
-        real,      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
-        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-        real,      intent(inout)    :: AoverAfull(:), YoverYfull(:)
-        integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
+    !     real,      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
+    !     real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+    !     real,      intent(inout)    :: AoverAfull(:), YoverYfull(:)
+    !     integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
 
-        logical,    pointer         :: maskarray_open_pipe(:)
-        logical,    pointer         :: maskarray_pipe_geometry(:)
+    !     logical,    pointer         :: maskarray_open_pipe(:)
+    !     logical,    pointer         :: maskarray_pipe_geometry(:)
 
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    !     !--------------------------------------------------------------------------
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        !% temporary mask space for finding transiotional pipes
-        maskarray_open_pipe  => elemYN(:,eYN_Temp(next_eYN_temparray))
-        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+    !     !% temporary mask space for finding transiotional pipes
+    !     maskarray_open_pipe  => elemYN(:,eYN_Temp(next_eYN_temparray))
+    !     next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
 
-        !% temporary mask space for geometry types that needs table interpolation
-        maskarray_pipe_geometry  => elemYN(:,eYN_Temp(next_eYN_temparray))
-        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+    !     !% temporary mask space for geometry types that needs table interpolation
+    !     maskarray_pipe_geometry  => elemYN(:,eYN_Temp(next_eYN_temparray))
+    !     next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
 
-        maskarray_open_pipe = nullvalueL
-        maskarray_pipe_geometry = nullvalueL
+    !     maskarray_open_pipe = nullvalueL
+    !     maskarray_pipe_geometry = nullvalueL
 
-        maskarray_open_pipe = (maskarray .and. (isfull .eqv. .false.))
+    !     maskarray_open_pipe = (maskarray .and. (isfull .eqv. .false.))
 
-        ! SVE solver solves for volume. Get the area from volume
-        where (maskarray_open_pipe .and. (solver == SVE))
-            area = volume / length
-        endwhere
+    !     ! SVE solver solves for volume. Get the area from volume
+    !     where (maskarray_open_pipe .and. (solver == SVE))
+    !         area = volume / length
+    !     endwhere
 
-        ! get the normalized area to solve for other geometries
-        where (maskarray_open_pipe)
-            AoverAfull = area / fullarea
-        endwhere
+    !     ! get the normalized area to solve for other geometries
+    !     where (maskarray_open_pipe)
+    !         AoverAfull = area / fullarea
+    !     endwhere
         
-        !% set up the mask for circular geometry type as an input for table_lookup_mask subroutine
-        maskarray_pipe_geometry = ( (maskarray_open_pipe) .and. (geometry == eCircular) )
+    !     !% set up the mask for circular geometry type as an input for table_lookup_mask subroutine
+    !     maskarray_pipe_geometry = ( (maskarray_open_pipe) .and. (geometry == eCircular) )
 
-        ! get normalized depth from the lookup table
-        call table_lookup_mask &
-            (elemI, elemR, YoverYfull, AoverAfull, YCirc, NYCirc, maskarray_pipe_geometry, &
-            ei_Temp, next_ei_temparray, ei_n_temp)
+    !     ! get normalized depth from the lookup table
+    !     call table_lookup_mask &
+    !         (elemI, elemR, YoverYfull, AoverAfull, YCirc, NYCirc, maskarray_pipe_geometry, &
+    !         ei_Temp, next_ei_temparray, ei_n_temp)
 
-        !% release the temporary maskarray_pipe_geometry for other special geometry types
-        maskarray_pipe_geometry = nullvalueL
+    !     !% release the temporary maskarray_pipe_geometry for other special geometry types
+    !     maskarray_pipe_geometry = nullvalueL
 
-        !% HACK: Other special pipe geometry types are needed
+    !     !% HACK: Other special pipe geometry types are needed
 
-        where (maskarray_open_pipe .and. (geometry == eCircular))
-            ! get the depth by multiplying the normalized depth with fulldepth
-            depth = fulldepth * YoverYfull
-            eta   = zbottom + depth
-        elsewhere (maskarray_open_pipe .and. (geometry == eRectangular))
-            depth = area / breadth
-            eta   = zBottom + depth
-        endwhere 
+    !     where (maskarray_open_pipe .and. (geometry == eCircular))
+    !         ! get the depth by multiplying the normalized depth with fulldepth
+    !         depth = fulldepth * YoverYfull
+    !         eta   = zbottom + depth
+    !     elsewhere (maskarray_open_pipe .and. (geometry == eRectangular))
+    !         depth = area / breadth
+    !         eta   = zBottom + depth
+    !     endwhere 
 
-        ! AC solver solves for area. Get the volume from area.
-        where (maskarray_open_pipe .and. (solver == AC))
-            volume = area * length
-        endwhere
+    !     ! AC solver solves for area. Get the volume from area.
+    !     where (maskarray_open_pipe .and. (solver == AC))
+    !         volume = area * length
+    !     endwhere
 
-        ! print*, 'geometry debug for ', trim(subroutine_name)
-        ! print*, 'Open pipe  ', maskarray_pipe_geometry
-        ! print*, 'Area       ', area(997:1001)
-        ! print*, 'AoverAfull ', AoverAfull
-        ! print*, 'depth      ', depth
-        ! print*, 'eta        ', eta
+    !     ! print*, 'geometry debug for ', trim(subroutine_name)
+    !     ! print*, 'Open pipe  ', maskarray_pipe_geometry
+    !     ! print*, 'Area       ', area(997:1001)
+    !     ! print*, 'AoverAfull ', AoverAfull
+    !     ! print*, 'depth      ', depth
+    !     ! print*, 'eta        ', eta
 
-        maskarray_open_pipe  = nullvalueL
-        maskarray_pipe_geometry = nullvalueL
-        !% nullify temporary array
-        nullify(maskarray_open_pipe, maskarray_pipe_geometry)
-        next_eYN_temparray = next_eYN_temparray - 2
+    !     maskarray_open_pipe  = nullvalueL
+    !     maskarray_pipe_geometry = nullvalueL
+    !     !% nullify temporary array
+    !     nullify(maskarray_open_pipe, maskarray_pipe_geometry)
+    !     next_eYN_temparray = next_eYN_temparray - 2
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine open_pipe
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    ! end subroutine open_pipe
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine pipe_additional_geometric_properties &
-        (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
-        fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
-        hydradius, topwidth, dHdA, elN, AoverAfull, YoverYfull, solver,       &
-        geometry, ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp,            &
-        next_eYN_temparray, eYN_n_temp, isfull, maskarray)
-        !
-        ! this subroutine gets the additional geometric properties of circular 
-        ! pipe/junction-pipe geometry solved using the SVE/AC solver
-        !
-        character(64) :: subroutine_name = 'pipe_additional_geometric_properties'
+    ! subroutine pipe_additional_geometric_properties &
+    !     (elemI, elemR, elemYN, volume, length, zbottom, breadth, fulldepth,   &
+    !     fullarea, zcrown, radius, area, eta, perimeter, depth, hyddepth,      &
+    !     hydradius, topwidth, dHdA, elN, AoverAfull, YoverYfull, solver,       &
+    !     geometry, ei_Temp, next_ei_temparray, ei_n_temp, eYN_Temp,            &
+    !     next_eYN_temparray, eYN_n_temp, isfull, maskarray)
+    !     !
+    !     ! this subroutine gets the additional geometric properties of circular 
+    !     ! pipe/junction-pipe geometry solved using the SVE/AC solver
+    !     !
+    !     character(64) :: subroutine_name = 'pipe_additional_geometric_properties'
 
-        real,      target,     intent(inout)  :: elemR(:,:)
-        logical,   target,     intent(inout)  :: elemYN(:,:)
+    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     logical,   target,     intent(inout)  :: elemYN(:,:)
 
-        integer,   intent(in)       :: elemI(:,:)
-        real,      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
-        real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
-        integer,   intent(in)       :: ei_n_temp, eYN_n_temp
-        integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
-        logical,   intent(in)       :: maskarray(:), isfull(:)
+    !     integer,   intent(in)       :: elemI(:,:)
+    !     real,      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
+    !     real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
+    !     integer,   intent(in)       :: ei_n_temp, eYN_n_temp
+    !     integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
+    !     logical,   intent(in)       :: maskarray(:), isfull(:)
 
-        real,      intent(inout)    :: area(:), eta(:), perimeter(:), depth(:)
-        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-        real,      intent(inout)    :: dHdA(:), elN(:), AoverAfull(:), YoverYfull(:)
-        integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray
-        logical,   pointer          :: maskarray_pipe_geometry(:) 
+    !     real,      intent(inout)    :: area(:), eta(:), perimeter(:), depth(:)
+    !     real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+    !     real,      intent(inout)    :: dHdA(:), elN(:), AoverAfull(:), YoverYfull(:)
+    !     integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray
+    !     logical,   pointer          :: maskarray_pipe_geometry(:) 
 
-        real :: af, bf, cf
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    !     real :: af, bf, cf
+    !     !--------------------------------------------------------------------------
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        !% temporary mask space for geometry types that needs table interpolation
-        maskarray_pipe_geometry  => elemYN(:,eYN_Temp(next_eYN_temparray))
-        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+    !     !% temporary mask space for geometry types that needs table interpolation
+    !     maskarray_pipe_geometry  => elemYN(:,eYN_Temp(next_eYN_temparray))
+    !     next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
 
-        maskarray_pipe_geometry = nullvalueL
+    !     maskarray_pipe_geometry = nullvalueL
 
-        !% set up the mask for circular geometry type as an input for table_lookup_mask subroutine
-        maskarray_pipe_geometry = ( (maskarray) .and. (geometry == eCircular) )
+    !     !% set up the mask for circular geometry type as an input for table_lookup_mask subroutine
+    !     maskarray_pipe_geometry = ( (maskarray) .and. (geometry == eCircular) )
 
-        ! get normalized topwidth from lookup table for circular pipe
-        call table_lookup_mask &
-            (elemI, elemR, topwidth, YoverYfull, WCirc, NWCirc, maskarray_pipe_geometry, &
-            ei_Temp, next_ei_temparray, ei_n_temp)
-        ! get normalized hydradius from lookup table for circular pipe
-        call table_lookup_mask &
-            (elemI, elemR, hydradius, YoverYfull, RCirc, NRCirc, maskarray_pipe_geometry, &
-            ei_Temp, next_ei_temparray, ei_n_temp)
+    !     ! get normalized topwidth from lookup table for circular pipe
+    !     call table_lookup_mask &
+    !         (elemI, elemR, topwidth, YoverYfull, WCirc, NWCirc, maskarray_pipe_geometry, &
+    !         ei_Temp, next_ei_temparray, ei_n_temp)
+    !     ! get normalized hydradius from lookup table for circular pipe
+    !     call table_lookup_mask &
+    !         (elemI, elemR, hydradius, YoverYfull, RCirc, NRCirc, maskarray_pipe_geometry, &
+    !         ei_Temp, next_ei_temparray, ei_n_temp)
 
-        !% release the temporary maskarray_pipe_geometry for other special geometry types
-        maskarray_pipe_geometry = nullvalueL
+    !     !% release the temporary maskarray_pipe_geometry for other special geometry types
+    !     maskarray_pipe_geometry = nullvalueL
 
-        !% HACK: Other special pipe geometry types are needed
+    !     !% HACK: Other special pipe geometry types are needed
 
-        !%  additional geometric properties for OPEN PIPES
-        where ( (maskarray) .and. (isfull .eqv. .false.) .and. (geometry == eCircular))
-            ! get the depth by multiplying the normalized depth with fulldepth
-            topwidth  = fulldepth * topwidth
-            hydradius = onefourthR * fulldepth * hydradius
-            perimeter = area / hydradius
-        elsewhere ( (maskarray) .and. (isfull .eqv. .false.) .and. (geometry == eRectangular))
-            topwidth  = breadth
-            perimeter = breadth + twoR * depth 
-            hydradius = area / perimeter
-            hyddepth  = area / topwidth
-        endwhere    
+    !     !%  additional geometric properties for OPEN PIPES
+    !     where ( (maskarray) .and. (isfull .eqv. .false.) .and. (geometry == eCircular))
+    !         ! get the depth by multiplying the normalized depth with fulldepth
+    !         topwidth  = fulldepth * topwidth
+    !         hydradius = onefourthR * fulldepth * hydradius
+    !         perimeter = area / hydradius
+    !     elsewhere ( (maskarray) .and. (isfull .eqv. .false.) .and. (geometry == eRectangular))
+    !         topwidth  = breadth
+    !         perimeter = breadth + twoR * depth 
+    !         hydradius = area / perimeter
+    !         hyddepth  = area / topwidth
+    !     endwhere    
 
-        !%  additional geometric properties for FULL PIPES
-        where ((maskarray) .and. (isfull) .and. (geometry == eCircular))
-            topwidth  = zeroR
-            hydradius = onefourthR * fulldepth 
-            perimeter = area / hydradius
-        elsewhere ((maskarray) .and. (isfull) .and. (geometry == eRectangular))
-            topwidth  = zeroR
-            hydradius = (breadth * fulldepth) / (twoR * (breadth + fulldepth))
-            perimeter = twoR * (breadth + fulldepth)
-            hyddepth  = eta - zBottom
-        endwhere 
+    !     !%  additional geometric properties for FULL PIPES
+    !     where ((maskarray) .and. (isfull) .and. (geometry == eCircular))
+    !         topwidth  = zeroR
+    !         hydradius = onefourthR * fulldepth 
+    !         perimeter = area / hydradius
+    !     elsewhere ((maskarray) .and. (isfull) .and. (geometry == eRectangular))
+    !         topwidth  = zeroR
+    !         hydradius = (breadth * fulldepth) / (twoR * (breadth + fulldepth))
+    !         perimeter = twoR * (breadth + fulldepth)
+    !         hyddepth  = eta - zBottom
+    !     endwhere 
 
-        ! Get modified hydraulic depth for circular pipe from pipeAC Hodges 2020
-        where ((maskarray) .and. (geometry == eCircular) .and. (AoverAfull .GT. onehalfR))
-            hyddepth   = eta - zbottom + radius * (onefourthR * pi - oneR)
+    !     ! Get modified hydraulic depth for circular pipe from pipeAC Hodges 2020
+    !     where ((maskarray) .and. (geometry == eCircular) .and. (AoverAfull .GT. onehalfR))
+    !         hyddepth   = eta - zbottom + radius * (onefourthR * pi - oneR)
                              
-        elsewhere ((maskarray) .and. (geometry == eCircular) .and. (AoverAfull .LT. onehalfR))
-            hyddepth   = max(area / topwidth, zeroR)
-        endwhere
+    !     elsewhere ((maskarray) .and. (geometry == eCircular) .and. (AoverAfull .LT. onehalfR))
+    !         hyddepth   = max(area / topwidth, zeroR)
+    !     endwhere
 
-        ! save the length scale values for pipes
-        where(maskarray)
-            elN = hyddepth
-        endwhere
+    !     ! save the length scale values for pipes
+    !     where(maskarray)
+    !         elN = hyddepth
+    !     endwhere
 
-        !% Get dHdA (pipeAC2020)
-        af = 1.29
-        bf = 0.66
-        cf = 0.34
-        !% any kind of full pipes, dHdA = 0 
-        where (maskarray .and. isfull)
-            dHdA = zeroR
-        endwhere
-        !% RECTANGULAR PIPE
-        where(maskarray .and. (geometry == eRectangular) .and. (isfull .eqv. .false.))
-            dHdA = oneR / topwidth
-        endwhere
+    !     !% Get dHdA (pipeAC2020)
+    !     af = 1.29
+    !     bf = 0.66
+    !     cf = 0.34
+    !     !% any kind of full pipes, dHdA = 0 
+    !     where (maskarray .and. isfull)
+    !         dHdA = zeroR
+    !     endwhere
+    !     !% RECTANGULAR PIPE
+    !     where(maskarray .and. (geometry == eRectangular) .and. (isfull .eqv. .false.))
+    !         dHdA = oneR / topwidth
+    !     endwhere
 
-        !% CIRCULAR PIPE
-        where( (maskarray) .and. (geometry == eCircular) .and. &
-               (AoverAfull .LT. onehalfR) ) 
-            dHdA = (af * bf / ( (pi**bf) * (radius**(twoR*bf - oneR)) ) ) & 
-                   * area**(bf - oneR) + cf / (pi * radius)
+    !     !% CIRCULAR PIPE
+    !     where( (maskarray) .and. (geometry == eCircular) .and. &
+    !            (AoverAfull .LT. onehalfR) ) 
+    !         dHdA = (af * bf / ( (pi**bf) * (radius**(twoR*bf - oneR)) ) ) & 
+    !                * area**(bf - oneR) + cf / (pi * radius)
 
-        elsewhere( (maskarray) .and. (geometry == eCircular)   .and. &
-                   (AoverAfull .GT. onehalfR)                  .and. &
-                   (AoverAfull .LT. oneR) )
-            dHdA = (af * bf / ( (pi**bf) * (radius**(twoR*bf - oneR))) ) &
-                   * (pi * (radius**twoR) - area)**(bf - oneR)  + cf / (pi * radius)
-        endwhere
+    !     elsewhere( (maskarray) .and. (geometry == eCircular)   .and. &
+    !                (AoverAfull .GT. onehalfR)                  .and. &
+    !                (AoverAfull .LT. oneR) )
+    !         dHdA = (af * bf / ( (pi**bf) * (radius**(twoR*bf - oneR))) ) &
+    !                * (pi * (radius**twoR) - area)**(bf - oneR)  + cf / (pi * radius)
+    !     endwhere
 
-        ! print*, 'geometry debug for ', trim(subroutine_name)
-        ! print*, 'is full    ', isfull
-        ! print*, 'area        ', area(997:1001)
-        ! print*, 'eta         ', eta(997:1001)
-        ! print*,'----------------------------------------'
-        ! print*, 'topwidth   ', topwidth
-        ! print*, 'hydradius  ', hydradius
-        ! print*, 'perimeter  ', perimeter
-        ! print*, 'hyddepth   ', hyddepth(997:1001)
-        ! print*, 'dHdA       ', dHdA
+    !     ! print*, 'geometry debug for ', trim(subroutine_name)
+    !     ! print*, 'is full    ', isfull
+    !     ! print*, 'area        ', area(997:1001)
+    !     ! print*, 'eta         ', eta(997:1001)
+    !     ! print*,'----------------------------------------'
+    !     ! print*, 'topwidth   ', topwidth
+    !     ! print*, 'hydradius  ', hydradius
+    !     ! print*, 'perimeter  ', perimeter
+    !     ! print*, 'hyddepth   ', hyddepth(997:1001)
+    !     ! print*, 'dHdA       ', dHdA
 
-        maskarray_pipe_geometry = nullvalueL
-        !% nullify temporary array
-        nullify(maskarray_pipe_geometry)
-        next_eYN_temparray = next_eYN_temparray - 1
+    !     maskarray_pipe_geometry = nullvalueL
+    !     !% nullify temporary array
+    !     nullify(maskarray_pipe_geometry)
+    !     next_eYN_temparray = next_eYN_temparray - 1
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine pipe_additional_geometric_properties
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    ! end subroutine pipe_additional_geometric_properties
     !
     !==========================================================================
     !==========================================================================

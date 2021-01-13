@@ -31,7 +31,7 @@ contains
     subroutine element_dynamics_update &
         (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, bcdataDn, &
         bcdataUp, e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new,       &
-        eMr_Volume_new, e2r_Flowrate_new, eMr_Flowrate_new,thisTime)
+        eMr_Volume_new, thisTime)
         !
         ! update the flow dynamics on an element given new velocity values stored
         ! in the array given by the column index e#r_Velocity_new
@@ -46,18 +46,12 @@ contains
         real,                  intent(in)      ::  thisTime
         integer,               intent(in)      ::  e2r_Velocity_new, e2r_Volume_new
         integer,               intent(in)      ::  eMr_Velocity_new, eMr_Volume_new
-        integer,               intent(in)      ::  e2r_Flowrate_new, eMr_Flowrate_new
 
         logical,   pointer :: isadhocflowrate(:)
         integer            :: idx
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        !%  velocity updated from flowrate for pipe elements
-        call velocity_update_from_AC  &
-            (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Flowrate_new, eMr_Flowrate_new, &
-            e2r_Velocity_new, eMr_Velocity_new)
 
         !% velocity limiter on channels
         call adjust_channel_velocity_limiter &
@@ -69,8 +63,7 @@ contains
             (elemMR, elemMYN, elemMI, &
             eMi_elem_type, eJunctionChannel, eMYN_IsAdhocFlowrate,  eMr_Velocity_new)
 
-        !%  HACK: using the channel velocity limiter for pipe. May be seperate
-        !%  velocity limiter subroutine is need for pipe elements
+        !%  HACK: using the channel velocity limiter for pipe. 
         call adjust_channel_velocity_limiter &
             (elem2R, elem2YN, elem2I, &
             e2i_elem_type, ePipe, e2YN_IsAdhocFlowrate, e2r_Velocity_new)
@@ -93,7 +86,7 @@ contains
         !%  flowrate updated from velocity
         call element_flowrate_update  &
             (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Velocity_new, eMr_Velocity_new)
-        
+            
         !%  apply the boundary conditions on velocity and flowrate
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_inflowrate, e2r_Velocity_new)
@@ -142,8 +135,8 @@ contains
         call flowrate_from_velocity &
             ( elem2R, elem2I, &
             e2r_Flowrate, e2r_Area, e2r_Velocity_new, e2i_elem_type, eChannel)
-
-        !%  update the pipe flow rate with the velocity (if there were any ad-hoc velocities)
+            
+        !%  update the pipe flow rate with the velocity (may be from an RK step)
         call flowrate_from_velocity &
             ( elem2R, elem2I, &
             e2r_Flowrate, e2r_Area, e2r_Velocity_new, e2i_elem_type, ePipe)
@@ -213,41 +206,6 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine element_flowrate_update
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine velocity_update_from_AC &
-        (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Flowrate_new, &
-        eMr_Flowrate_new, e2r_Velocity_new, eMr_Velocity_new)
-        !
-        ! given a flowrate and update areas in elemR, provide updates
-        ! for velocities rate of pipe elements
-        ! velocities are saved in the temp space for consistancy
-        !
-        character(64) :: subroutine_name = 'velocity_update_from_AC'
-
-        real,      target, intent(in out)  ::  elem2R(:,:), elemMR(:,:)
-        real,      target, intent(in)      ::  faceR(:,:)
-        integer,   target, intent(in)      ::  elem2I(:,:), elemMI(:,:)
-        integer,           intent(in)      ::  e2r_Flowrate_new, eMr_Flowrate_new
-        integer,           intent(in)      ::  e2r_Velocity_new, eMr_Velocity_new
-
-
-        integer :: mm
-
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        !%  update the pipe velocity with the flowrate
-        call velocity_from_flowrate &
-            (elem2R, elem2I, e2r_Velocity_New, e2r_Area, e2r_Flowrate, e2r_Flowrate_New, &
-            e2i_elem_type, e2i_solver, ePipe)
-
-        !%  HACK: Need velocity update for junction-pipe elements
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine velocity_update_from_AC
     !
     !==========================================================================
     !==========================================================================

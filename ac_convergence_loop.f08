@@ -116,7 +116,6 @@ contains
         iterMin = setting%DefaultAC%Iter%Min
 
         !%  pseudo time loop
-        ! print*,'Begin AC Convergence loop'
         do while ( (isConverged .eqv. .false.) .and. (thisIter < iterMax) )
             thisIter = thisIter + oneI
             !%  store norms from the last iteration
@@ -131,7 +130,6 @@ contains
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
                 bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
                 zBottom, xDistance, Breadth, widthDepthData, cellType, acCycle)
-            ! print*, 'FLOWRATE     ',elem2R(995:1000,e2r_flowrate)
                      
             !%  baseline for tau convergence -- change from the first RK full step
             where (elem2I(:,e2i_solver) == AC)

@@ -141,9 +141,9 @@ contains
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
-            display_interval = 1
+            display_interval = 1000
             first_step = 1
-            last_step  =  1000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  =  10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
             ! tests that ran:  Fr = 0.25, 0.5
@@ -791,9 +791,9 @@ contains
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
-            display_interval = 100
+            display_interval = 500
             first_step = 1
-            last_step  = 3000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
+            last_step  = 10000 ! note 1000 is good enough to show blow up or not, 10000 is smooth
 
             ! set up flow and time step for differen subcases
             ! tests that ran:  Fr = 0.25, 0.5
@@ -850,8 +850,8 @@ contains
             case ('swashes_007')
 
             ! Swashes element count : N_Swashes
-            N_Swashes = 64
-            total_length = 25
+            N_Swashes = 128
+            total_length = 50
             ! This here is basically element scale. So no further subdivide is necessary
             ! Because of the Buffer zone N_Swashes is multiplied by two
             N_link = N_Swashes * 2 
@@ -884,9 +884,9 @@ contains
             channel_geometry = lRectangular
 
             flowrate        = 0.18
-            depth_upstream  = 0.33
-            depth_dnstream  = 0.33
-            init_depth      = 0.33
+            depth_upstream  = 0.262
+            depth_dnstream  = 0.262
+            init_depth      = 0.262
             idepth_type     = 1  !1 = uniform, 2=linear, 3=exponential decay
             ManningsN       = 0.0
             ManningsNBuffer = 0.03

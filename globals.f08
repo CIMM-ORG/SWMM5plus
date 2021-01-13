@@ -27,7 +27,7 @@ module globals
     real,    parameter :: twoR       = 2.0
     real,    parameter :: threeR     = 3.0
     real,    parameter :: fourR      = 4.0
-    real,    parameter :: six        = 6.0
+    real,    parameter :: sixR       = 6.0
     real,    parameter :: eightR     = 8.0
     real,    parameter :: tenR       = 10.0
     real,    parameter :: pi         = 4.d0*datan(1.d0)

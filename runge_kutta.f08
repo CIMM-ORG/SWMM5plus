@@ -55,10 +55,8 @@ contains
 
         integer,   pointer :: fdn(:), fup(:)
 
-        integer :: e2r_Volume_new, e2r_Velocity_new,  eMr_Volume_new, eMr_Velocity_new
-        integer :: e2r_Flowrate_new, e2r_Flowrate_tmp, e2r_Area_new, e2r_Area_tmp
-        integer :: e2r_Eta_new, e2r_Eta_tmp, fr_Flowrate_net_new
-        integer :: eMr_Flowrate_new, eMr_Area_new, eMr_Eta_new
+        integer :: e2r_Volume_new, e2r_Velocity_new, e2r_Eta_new
+        integer :: eMr_Volume_new, eMr_Velocity_new, eMr_Eta_new
         integer :: ii
         real    :: thiscoef(2), steptime, af(3)
 
@@ -84,22 +82,7 @@ contains
         e2r_Velocity_new = e2r_Temp(next_e2r_temparray)
         next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
-        e2r_Flowrate_new = e2r_Temp(next_e2r_temparray)
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        e2r_Flowrate_tmp = e2r_Temp(next_e2r_temparray)
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        e2r_Area_new = e2r_Temp(next_e2r_temparray)
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        e2r_Area_tmp = e2r_Temp(next_e2r_temparray)
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
         e2r_Eta_new = e2r_Temp(next_e2r_temparray)
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        e2r_Eta_tmp = e2r_Temp(next_e2r_temparray)
         next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
         eMr_Volume_new = eMr_Temp(next_eMr_temparray)
@@ -108,30 +91,16 @@ contains
         eMr_Velocity_new = eMr_Temp(next_eMr_temparray)
         next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
 
-        eMr_Flowrate_new = eMr_Temp(next_eMr_temparray)
-        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
-
-        eMr_Area_new = eMr_Temp(next_eMr_temparray)
-        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
-
         eMr_Eta_new = eMr_Temp(next_eMr_temparray)
         next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
-
-        fr_Flowrate_net_new = fr_Temp(next_fr_temparray)
-        next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
 
         !%  zero out the temporary space
         elem2R(:,e2r_Volume_new)    = zeroR
         elem2R(:,e2r_Velocity_new)  = zeroR
-        elem2R(:,e2r_Flowrate_new)  = zeroR
-        elem2R(:,e2r_Area_new)      = zeroR
         elem2R(:,e2r_Eta_new)       = zeroR
         elemMR(:,eMr_Volume_new)    = zeroR
         elemMR(:,eMr_Velocity_new)  = zeroR
-        elemMR(:,eMr_Flowrate_new)  = zeroR
-        elemMR(:,eMr_Area_new)      = zeroR
         elemMR(:,eMr_Eta_new)       = zeroR
-        faceR(:,fr_Flowrate_net_new) = zeroR
 
         if (  count(elem2I(:,e2i_elem_type) == eChannel) &
             + count(elem2I(:,e2i_elem_type) == ePipe)    &
@@ -159,12 +128,8 @@ contains
             where (elem2I(:,e2i_solver) == AC )
                 elem2R(:,e2r_CtestH1) = elem2R(:,e2r_Eta) * elem2R(:,e2r_Area)
                 elem2R(:,e2r_CtestQ1) = elem2R(:,e2r_Flowrate)
-                ! net flowrate on faces - this is the flux used for scalar
-                ! transport (to be added later) and for volume conservation calculations
-                ! fQNetNew = wrk * fQ + fQNet ! <= the mask condition is wrong, correct later
             endwhere
-            ! print*, elem2I(48:53,e2i_solver), 'e2i_solver'
-            !%  step through the two steps of the RK2
+
             do ii=1,2
                 if (cycleSelect (1)) then
                     !%  cycleSelect(1) is only true when the solver is in normal time loop
@@ -173,54 +138,24 @@ contains
                     !%  when cycleSelect(1) is false, the solver is in psuedo time
                     !%  so the steptime remains the same
                     steptime = thistime
-                endif
-
+                endif 
                 if ( (  count(elem2I(:,e2i_solver) == SVE) &
                       + count(elemMI(:,eMi_solver) == SVE)> zeroI)) then
-                    !% cycleSelect is a logical which is [T T] for time loop and [F T] for 
-                    !% psuedo time loop.
-
-                    !% HACK: In the AC convergence loop, only the 2nd step of SVE RK2 is taken.
-                    !% However, element center values are still needed for face reconstruction.
-                    !% Since, the update algorithm is written in terms of new volume and velocity
-                    !% column, the previously calculated SVE RK2 are transferred to the new value 
-                    !% column for the first RK step in AC convergence loop. This ensures that the 
-                    !% faces are updated properly. 
-
-                    !% transferring old values to new volume and velocity column are very inefficient,
-                    !% because the elegemt geomety and dynamics are calculated again. This indicates we
-                    !% are almost taking the whole RK step. This can be bypassed by seperating the update 
-                    !% routine based on SVE and AC solve. After an effective coupling between SVE and AC
-                    !% solver, seperate update routine should be written.
-
-                    !% HACK: This might not work when the solver switches. Needs further investigation.
                     
-                    if (cycleSelect(ii)) then
-                        call sve_rk2_step &
-                            (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
-                            e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-                            elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-                            thiscoef(ii))
-                    else
-                        where (elem2I(:,e2i_solver) == SVE) 
-                            elem2R(:,e2r_Volume_new)   = elem2R(:,e2r_Volume) 
-                            elem2R(:,e2r_Velocity_new) = elem2R(:,e2r_Velocity)
-
-                        elsewhere (elemMI(:,eMi_solver) == SVE) 
-                            elemMR(:,eMr_Volume_new)    = elemMR(:,eMr_Volume)
-                            elemMR(:,eMr_Velocity_new)  = elemMR(:,eMr_Velocity)
-                        endwhere
-                    endif                      
+                    call sve_rk2_step &
+                        (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, &
+                        e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
+                        elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
+                        thiscoef(ii))                    
                 endif
 
                 if (  count(elem2I(:,e2i_solver) == AC) &
                     + count(elemMI(:,eMi_solver) == AC)> zeroI ) then
 
                     call ac_rk2_step &
-                        (e2r_Flowrate, e2r_Area, e2r_Eta, eMr_Flowrate, eMr_Area, eMr_Eta, &
-                        fr_Flowrate_net, e2r_Flowrate_new, e2r_Area_new, e2r_Eta_new,      &
-                        e2r_Flowrate_tmp, e2r_Area_tmp, e2r_Eta_tmp, eMr_Flowrate_new,     &
-                        eMr_Area_new, eMr_Eta_new, fr_Flowrate_net_new, elem2R, elemMR,    &
+                        (e2r_Volume, e2r_Velocity, e2r_Eta, eMr_Volume, eMr_Velocity,  &
+                        eMr_Eta, e2r_Volume_new, e2r_Velocity_new, e2r_Eta_new,        &
+                        eMr_Volume_new, eMr_Velocity_new, eMr_Eta_new, elem2R, elemMR, &
                         faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af, thiscoef(ii)) 
                 endif
 
@@ -237,10 +172,9 @@ contains
 
                 call rk2_update_auxiliary_variables &
                     (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new,  &
-                    e2r_Flowrate_new, eMr_Flowrate_new, elem2R, elem2I, elem2YN, elemMR,  &
-                    elemMI, elemMYN, faceR,  faceI, faceYN, bcdataDn, bcdataUp, steptime, &
-                    ii, ID, numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,  &
-                    widthDepthData, cellType)
+                    elem2R, elem2I, elem2YN, elemMR,  elemMI, elemMYN, faceR,  faceI,     &
+                    faceYN, bcdataDn, bcdataUp, steptime, ii, ID, numberPairs, ManningsN, &
+                    Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
 
                 ! !% advane Qonly elemnt
                 ! call QonlyElement_step &
@@ -253,6 +187,9 @@ contains
                     call diagnostic_element_volume_conservation_fluxes &
                         (elem2R, elem2I, elemMR, elemMI, faceR)
                 endif
+
+                ! print *, 'press return to proceed'
+                ! read(*,*)
             end do
 
             !% compute local element-based volume conservation
@@ -284,16 +221,6 @@ contains
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)
 
-            !%  assign the solver for the next RK step depending on area
-            ! call assign_solver &
-            !     (elem2I, elem2R, e2r_Area, e2r_FullArea, e2i_elem_type, ePipe,  &
-            !     e2i_solver, e2r_Temp, e2r_n_temp, next_e2r_temparray)
-
-            ! !%  HACK: AC solver for Junction Pipe has not derived yet
-            ! call assign_solver &
-            !     (elemMI, elemMR, eMr_Area, eMr_FullArea, eMi_elem_type, eJunctionPipe, &
-            !     eMi_solver, eMr_Temp, eMr_n_temp, next_eMr_temparray)
-
             !%  Compute the dimensional change of the AC
             where (elem2I(:,e2i_solver) == AC)
                 elem2R(:,e2r_CtestH1) = elem2R(:,e2r_Eta) * elem2R(:,e2r_Area) - &
@@ -305,22 +232,13 @@ contains
         !%  reset temporary data space
         elem2R(:,e2r_Volume_new)    = nullvalueR
         elem2R(:,e2r_Velocity_new)  = nullvalueR
-        elem2R(:,e2r_Flowrate_new)  = nullvalueR
-        elem2R(:,e2r_Flowrate_tmp)  = nullvalueR
-        elem2R(:,e2r_Area_new)      = nullvalueR
-        elem2R(:,e2r_Area_tmp)      = nullvalueR
         elem2R(:,e2r_Eta_new)       = nullvalueR
-        elem2R(:,e2r_Eta_tmp)       = nullvalueR
         elemMR(:,eMr_Volume_new)    = nullvalueR
         elemMR(:,eMr_Velocity_new)  = nullvalueR
-        elemMR(:,eMr_Flowrate_new)  = nullvalueR
-        elemMR(:,eMr_Area_new)      = nullvalueR
         elemMR(:,eMr_Eta_new)       = nullvalueR
-        faceR(:,fr_Flowrate_net_new) = nullvalueR
 
-        next_e2r_temparray = next_e2r_temparray - 8
-        next_eMr_temparray = next_eMr_temparray - 5
-        next_fr_temparray  = next_fr_temparray  - 1
+        next_e2r_temparray = next_e2r_temparray - 3
+        next_eMr_temparray = next_eMr_temparray - 3  
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine rk2
@@ -545,10 +463,10 @@ contains
     !
     subroutine rk2_update_auxiliary_variables &
         (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new,  &
-        e2r_Flowrate_new, eMr_Flowrate_new, elem2R, elem2I, elem2YN, elemMR,  &
-        elemMI, elemMYN, faceR,  faceI, faceYN, bcdataDn, bcdataUp, steptime, &
-        rkiteration, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
-        Breadth, widthDepthData, cellType)
+        elem2R, elem2I, elem2YN, elemMR,  elemMI, elemMYN, faceR,  faceI,     &
+        faceYN, bcdataDn, bcdataUp, steptime, rkiteration, ID, numberPairs,   &
+        ManningsN, Length, zBottom, xDistance, Breadth, widthDepthData,       &
+        cellType)
 
         character(64) :: subroutine_name = 'rk2_update_auxiliary_variables'
 
@@ -559,7 +477,6 @@ contains
         type(bcType),      intent(in out)  :: bcdataDn(:), bcdataUp(:)
         integer,           intent(in)      :: e2r_Velocity_new, eMr_Velocity_new
         integer,           intent(in)      :: e2r_Volume_new,   eMr_Volume_new
-        integer,           intent(in)      :: e2r_Flowrate_new, eMr_Flowrate_new
         integer,           intent(in)      :: rkiteration
         real,              intent(in)      :: steptime
 
@@ -589,7 +506,7 @@ contains
         call element_dynamics_update &
             (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, bcdataDn, &
             bcdataUp, e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new,       &
-            eMr_Volume_new, e2r_Flowrate_new, eMr_Flowrate_new, steptime)
+            eMr_Volume_new, steptime)
 
         !%  Updating the face values by interpolation from neighbor elements
         !%  This uses the estimated values from the branches
@@ -785,69 +702,6 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine QonlyElement_step
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine assign_solver &
-        (elemI, elemR, er_Area, er_FullArea, ei_elem_type, ThisElemType,  &
-        ei_solver, er_Temp, er_n_temp, next_er_temparray)
-        !
-        character(64) :: subroutine_name = 'assign_solver'
-
-        real,      target, intent(inout)  :: elemR(:,:)
-        integer,   target, intent(inout)  :: elemI(:,:)
-
-        integer,   intent(in)      ::  er_Area, er_FullArea, er_n_temp
-        integer,   intent(in)      ::  ei_elem_type, ei_solver, ThisElemType
-        integer,   intent(in)      ::  er_Temp(:)
-        integer,   intent(inout)   ::  next_er_temparray
-
-        real,      pointer  :: AoverAfull(:), Area(:), FullArea(:)
-        real                :: switchBufferP, switchBufferM
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-
-        !%  temporary space for pipe elements
-        AoverAfull => elemR(:,er_Temp(next_er_temparray))
-        next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
-
-        Area     => elemR(:,er_Area)
-        FullArea => elemR(:,er_FullArea)
-
-        !%  values +/- buffer for the solver switch
-        switchBufferP = setting%DefaultAC%Switch%Area + setting%DefaultAC%Switch%Buffer
-        switchBufferM = setting%DefaultAC%Switch%Area - setting%DefaultAC%Switch%Buffer
-
-        where ( elemI(:,ei_elem_type) == ThisElemType )
-            AoverAfull = Area / FullArea
-        endwhere
-
-        ! selecting appropriate solver for pipe
-        where ( (elemI(:,ei_elem_type) == ThisElemType) .and. &
-                (elemI(:,ei_solver) == SVE)             .and. &
-                (AoverAfull .GE. switchBufferP) )
-
-            elemI(:,ei_solver) = AC
-
-        elsewhere( (elemI(:,ei_elem_type) == ThisElemType) .and. &
-                   (elemI(:,ei_solver) == AC)              .and. &
-                   (AoverAfull .LE. switchBufferM) )
-
-            elemI(:,ei_solver) = SVE
-        endwhere
-
-        ! print*, trim(subroutine_name)
-        ! print*, 'AoverAfull', AoverAfull
-        ! print*, 'Selected solver', elemI(:,ei_solver)
-        
-        AoverAfull = nullvalueR
-        nullify(AoverAfull)
-        next_er_temparray = next_er_temparray - 1
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine assign_solver
     !
     !==========================================================================
     ! END OF MODULE runge_kutta

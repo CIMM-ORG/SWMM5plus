@@ -107,7 +107,7 @@ contains
         call element_dynamics_update &
             (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
             bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
-            e2r_Volume, eMr_Volume, e2r_Flowrate, eMr_Flowrate, thisTime)
+            e2r_Volume, eMr_Volume, thisTime)
 
         call face_meta_element_assign (faceI, elem2I, N_face)
 
@@ -273,8 +273,6 @@ contains
                 elem2I(:,e2i_roughness_type) = linkI(ii,li_roughness_type)
                 elem2R(:,e2r_Roughness)      = linkR(ii,lr_Roughness)
                 elem2R(:,e2r_Flowrate)       = linkR(ii,lr_InitialFlowrate)
-                ! elem2R(:,e2r_Flowrate_N0)    = elem2R(:,e2r_Flowrate)
-                ! elem2R(:,e2r_Flowrate_N1)    = elem2R(:,e2r_Flowrate) 
                 elem2R(:,e2r_LeftSlope)      = linkR(ii,lr_LeftSlope)
                 elem2R(:,e2r_RightSlope)     = linkR(ii,lr_RightSlope)
                 elem2R(:,e2r_ParabolaValue)  = linkR(ii,lr_ParabolaValue)
@@ -283,19 +281,20 @@ contains
             if (linkI(ii,li_geometry) == lRectangular ) then
                 !% handle rectangular elements
                 where (elem2I(:,e2i_link_ID) == Lindx)
-                    elem2I(:,e2i_geometry)  = eRectangular
-                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
-                    elem2R(:,e2r_FullDepth) = linkR(ii,lr_FUllDepth)
+                    elem2I(:,e2i_geometry)   = eRectangular
+                    elem2R(:,e2r_HydDepth)   = elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_FullDepth)  = linkR(ii,lr_FUllDepth)
                     elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
-                    elem2R(:,e2r_Topwidth)  = linkR(ii,lr_BreadthScale)
-                    elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
-                    elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
-                    elem2R(:,e2r_FullArea)  = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
-                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
-                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
-                    elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
-                    elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
-                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
+                    elem2R(:,e2r_Topwidth)   = linkR(ii,lr_BreadthScale)
+                    elem2R(:,e2r_Eta)        = elem2R(:,e2r_Zbottom)   + elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Area)       = elem2R(:,e2r_HydDepth)  * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_FullArea)   = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_Volume)     = elem2R(:,e2r_Area)      * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Volume_N0)  = elem2R(:,e2r_Volume)
+                    elem2R(:,e2r_Volume_N1)  = elem2R(:,e2r_Volume)
+                    elem2R(:,e2r_Perimeter)  = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Zcrown)     = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                 endwhere
 
             elseif (linkI(ii,li_geometry) == lParabolic ) then
@@ -317,10 +316,6 @@ contains
 
                     elem2R(:,e2r_FullArea)  = twothirdR * elem2R(:,e2r_FullDepth) &
                         * twoR * sqrt(elem2R(:,e2r_FullDepth)/elem2R(:,e2r_ParabolaValue))
-
-                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
-
-                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
 
                     elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Topwidth) &
                         *( &
@@ -349,6 +344,12 @@ contains
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) &
                         * elem2R(:,e2r_Length)
 
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+
+                    elem2R(:,e2r_Volume_N0)  = elem2R(:,e2r_Volume)
+
+                    elem2R(:,e2r_Volume_N1)  = elem2R(:,e2r_Volume)
+
                     elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
 
                 endwhere
@@ -373,10 +374,6 @@ contains
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                         * elem2R(:,e2r_FullDepth)) * elem2R(:,e2r_FullDepth)
 
-                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
-
-                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
-
                     ! Bottom width + (lslope + rslope) * hydraulicDepth
                     elem2R(:,e2r_Topwidth)  = elem2R(:,e2r_BreadthScale)            &
                         + elem2R(:,e2r_Depth)                                   &
@@ -389,6 +386,12 @@ contains
 
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) &
                         * elem2R(:,e2r_Length)
+
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+
+                    elem2R(:,e2r_Volume_N0) = elem2R(:,e2r_Volume)
+
+                    elem2R(:,e2r_Volume_N1) = elem2R(:,e2r_Volume)
 
                     ! Bottom width + hydraulicDepth*lengthSidewall
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) &
@@ -444,9 +447,10 @@ contains
 
                         endif
 
-                        elem2R(nn,e2r_Area_N0)   = elem2R(nn,e2r_Area)
-                        elem2R(nn,e2r_Area_N1)   = elem2R(nn,e2r_Area)
                         elem2R(nn,e2r_Volume)    = elem2R(nn,e2r_Area) * elem2R(nn,e2r_Length)
+                        elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+                        elem2R(:,e2r_Volume_N0)  = elem2R(:,e2r_Volume)
+                        elem2R(:,e2r_Volume_N1)  = elem2R(:,e2r_Volume)
                         elem2R(nn,e2r_Perimeter) = elem2R(nn,e2r_Area) / elem2R(nn,e2r_HydRadius)
                     endif
                 enddo
@@ -470,10 +474,6 @@ contains
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                         * elem2R(:,e2r_FullDepth) * elem2R(:,e2r_FullDepth)
 
-                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
-
-                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
-
                     ! (lslope + rslope) * hydraulicDepth
                     elem2R(:,e2r_Topwidth) = elem2R(:,e2r_Depth)               &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
@@ -483,6 +483,12 @@ contains
 
                     elem2R(:,e2r_Volume) = elem2R(:,e2r_Area) &
                         * elem2R(:,e2r_Length)
+
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+
+                    elem2R(:,e2r_Volume_N0)   = elem2R(:,e2r_Volume)
+
+                    elem2R(:,e2r_Volume_N1)   = elem2R(:,e2r_Volume)
 
                     ! hydraulicDepth*lengthSidewall
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Depth) &
@@ -504,9 +510,10 @@ contains
                     elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_FullArea)  = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_FullDepth)
-                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
-                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Volume_N0) = elem2R(:,e2r_Volume)
+                    elem2R(:,e2r_Volume_N1) = elem2R(:,e2r_Volume)
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth) + twoR * elem2R(:,e2r_HydDepth)!onehalfR * elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                 endwhere
@@ -521,9 +528,6 @@ contains
                     (elem2R(:,e2r_Eta) .GE. elem2R(:,e2r_Zcrown)) )
                 elem2YN(:,e2YN_IsSurcharged) = .true.
                 elem2R(:,e2r_Topwidth) = zeroR 
-            elsewhere ((elem2I(:,e2i_elem_type) == ePipe) .and. &
-                       (elem2R(:,e2r_Eta) .LE. elem2R(:,e2r_Zcrown)) )
-                elem2YN(:,e2YN_IsSurcharged) = .false.
             endwhere
 
             !%  Setting provisional geometry for weir and orifice element to correctly interpolate to faces
@@ -536,8 +540,8 @@ contains
                 elem2R(:,e2r_Volume)        = 1.0e-7
                 elem2R(:,e2r_Perimeter)     = 1.0e-7
                 elem2R(:,e2r_Depth)         = 1.0e-7
-                elem2R(:,e2r_Area_N0)       = elem2R(:,e2r_Area)
-                elem2R(:,e2r_Area_N1)       = elem2R(:,e2r_Area)
+                elem2R(:,e2r_Volume_N0)     = elem2R(:,e2r_Volume)
+                elem2R(:,e2r_Volume_N1)     = elem2R(:,e2r_Volume)
             endwhere
 
             if (setting%BCondition%InflowRampup) then
@@ -606,9 +610,9 @@ contains
                     elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
                     elem2R(:,e2r_FullArea)  = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
-                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
-                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Volume_N0) = elem2R(:,e2r_Volume)
+                    elem2R(:,e2r_Volume_N1) = elem2R(:,e2r_Volume)
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                     elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area) 
@@ -620,9 +624,9 @@ contains
                     elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
                     elem2R(:,e2r_FullArea)  = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
-                    elem2R(:,e2r_Area_N0)   = elem2R(:,e2r_Area)
-                    elem2R(:,e2r_Area_N1)   = elem2R(:,e2r_Area)
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Volume_N0) = elem2R(:,e2r_Volume)
+                    elem2R(:,e2r_Volume_N1) = elem2R(:,e2r_Volume)
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                     elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area)
@@ -1011,31 +1015,60 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
-                (elem2I(:,e2i_elem_type) == ePipe   ) )
 
-            elem2I(:,e2i_solver) = AC
-            ! elem2I(50:101,e2i_solver) = SVE
-        endwhere
-        
-        where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
-                (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
-        
-            elemMI(:,eMi_solver) = AC
-        endwhere
+        if (setting%Solver%SolverSelect == 'SVE') then
+            where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
+                    (elem2I(:,e2i_elem_type) == ePipe   ) )
+                elem2I(:,e2i_solver) = SVE
+            endwhere
+            
+            where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
+                    (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
+                elemMI(:,eMi_solver) = SVE
+            endwhere
 
-        ! where ( (elem2I(:,e2i_elem_type) == ePipe)           .and. &
-        !         (elem2R(:,e2r_Area)/elem2R(:,e2r_FullArea) .GE.  &
-        !          setting%DefaultAC%Switch%Area) )
-        !     elem2I(:,e2i_solver) = AC
-        ! endwhere
+        elseif (setting%Solver%SolverSelect == 'AC') then
+            where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
+                    (elem2I(:,e2i_elem_type) == ePipe   ) )
+                elem2I(:,e2i_solver) = AC
+            endwhere
+            
+            where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
+                    (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )           
+                elemMI(:,eMi_solver) = AC
+            endwhere
 
-        ! where ( (elem2I(:,eMi_elem_type) == eJunctionPipe)   .and. &
-        !         (elemMR(:,eMr_Area)/elemMR(:,eMr_FullArea) .GE.  &
-        !          setting%DefaultAC%Switch%Area) )
-        !     elemMI(:,eMi_solver) = AC
-        ! endwhere
+        elseif (setting%Solver%SolverSelect == 'SVE-AC') then
 
+            where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
+                    (elem2I(:,e2i_elem_type) == ePipe   ) )
+                elem2I(:,e2i_solver) = SVE
+            endwhere
+            
+            where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
+                    (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
+                elemMI(:,eMi_solver) = SVE
+            endwhere
+
+            where ( (elem2I(:,e2i_elem_type) == ePipe)           .and. &
+                    (elem2R(:,e2r_Area)/elem2R(:,e2r_FullArea)   .GE.  &
+                     setting%DefaultAC%Switch%Area) )
+                elem2I(:,e2i_solver) = AC
+            endwhere
+
+            where ( (elem2I(:,eMi_elem_type) == eJunctionPipe)   .and. &
+                    (elemMR(:,eMr_Area)/elemMR(:,eMr_FullArea)   .GE.  &
+                     setting%DefaultAC%Switch%Area) )
+                elemMI(:,eMi_solver) = AC
+            endwhere
+        else
+            print *, 'error: unexpected value for setting%Solver%SolverSelect ', & 
+                     setting%Solver%SolverSelect,' in ', subroutine_name
+            stop
+        endif
+
+
+        ! elem2I(50:101,e2i_solver) = SVE
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
     end subroutine initial_solver_select
     !

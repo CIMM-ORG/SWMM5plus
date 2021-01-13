@@ -264,14 +264,19 @@ module setting_definition
         logical                 :: UseFaceCosAngle = .false.
     end type facecosangleType
 
+    !%  setting%Solver
+    type solverType
+        character(len=64)       :: SolverSelect =  'AC'! 'SVE-AC', 'SVE'
+    end type solverType 
+
     !% FIRST LEVEL TYPE  ----------------------------------------------
     type settingType
         integer :: dummy
-        type(constantType)          :: Constant     ! constants
-        type(debugoutType)          :: DebugOut     ! control of debougout files
-        type(epsilonType)           :: Eps          ! epsilons used to provide bandwidth for comparisons
-        type(limiterType)           :: Limiter      ! maximum and minimum limiters
-        type(methodType)            :: Method       ! controls over simulation methods
+        type(constantType)          :: Constant      ! constants
+        type(debugoutType)          :: DebugOut      ! control of debougout files
+        type(epsilonType)           :: Eps           ! epsilons used to provide bandwidth for comparisons
+        type(limiterType)           :: Limiter       ! maximum and minimum limiters
+        type(methodType)            :: Method        ! controls over simulation methods
         type(outputThreadedLinkType):: OutputThreadedLink ! controls output for threaded link
         type(smallvolumeType)       :: SmallVolume   ! controls for small volumes
         type(stepType)              :: Step          ! controls over simulation time stepping
@@ -282,6 +287,7 @@ module setting_definition
         type(bconditionType)        :: BCondition    ! This contains rampup boundary condition
         type(customICType)          :: CustomIC      ! custom initial condition setup for special cases
         type(facecosangleType)      :: FaceCosAngle
+        type(solverType)            :: Solver        ! switch for solver   
     end type settingType
 
 
