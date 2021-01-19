@@ -235,10 +235,10 @@ contains
         call adjust_negative_eta_reset (eta2new, zbottom2, maskFullPipe)
 
         !%  All the full pipe basic geometry handling should be here
-        call get_volume_from_eta &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, eta2new, &
-            volume2new, length2, fullVolume2, breadth2, zbottom2, zcrown2,     &
-            isFull)
+        ! call get_volume_from_eta &
+        !     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, eta2new, &
+        !     volume2new, length2, fullVolume2, breadth2, zbottom2, zcrown2,     &
+        !     isFull)
 
         !% we still need to think carefully about how to handle eta2new.
         !% currently the code is set up in a way that cannot handle eta2new
@@ -452,76 +452,76 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine get_volume_from_eta &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, eta2new, &
-        volume2new, length2, fullVolume2, breadth2, zbottom2, zcrown2,     &
-        isFull)
-        !
-        !% Find the new volume and surcharge status if solved for eta
-        !
-        character(64) :: subroutine_name = 'Kmomentum2AC'
+    ! subroutine get_volume_from_eta &
+    !     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, eta2new, &
+    !     volume2new, length2, fullVolume2, breadth2, zbottom2, zcrown2,     &
+    !     isFull)
+    !     !
+    !     !% Find the new volume and surcharge status if solved for eta
+    !     !
+    !     character(64) :: subroutine_name = 'Kmomentum2AC'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in out)  :: faceR(:,:)
-        integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
-        logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+    !     real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+    !     real,      target, intent(in out)  :: faceR(:,:)
+    !     integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+    !     logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
-        real,       intent(inout) :: eta2new(:), volume2new(:)
-        real,       intent(in)    :: length2(:), fullVolume2(:),breadth2(:)
-        real,       intent(in)    :: zbottom2(:), zcrown2(:)
-        logical,    intent(inout) :: isFull(:)
+    !     real,       intent(inout) :: eta2new(:), volume2new(:)
+    !     real,       intent(in)    :: length2(:), fullVolume2(:),breadth2(:)
+    !     real,       intent(in)    :: zbottom2(:), zcrown2(:)
+    !     logical,    intent(inout) :: isFull(:)
 
-        real,       pointer       :: fullVolume(:)
-        logical,    pointer       :: maskPipe(:)
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    !     real,       pointer       :: fullVolume(:)
+    !     logical,    pointer       :: maskPipe(:)
+    !     !--------------------------------------------------------------------------
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        !% pointer allocation
+    !     !% pointer allocation
         
 
-        !% temporary array for geometry update
-        maskPipe  => elemYN(:,eYN_Temp(next_eYN_temparray))
-        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+    !     !% temporary array for geometry update
+    !     maskPipe  => elem2YN(:,e2YN_Temp(next_e2YN_temparray))
+    !     next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
 
-        maskPipe  = nullvalueL
+    !     maskPipe  = nullvalueL
 
-        maskPipe = ( elem2I(:,e2i_elem_type) == ePipe )
+    !     maskPipe = ( elem2I(:,e2i_elem_type) == ePipe )
 
-        !% OPEN PIPES TRANSITION TO FULL
-        !% Detect transition from open to full pipe
-        where ( (maskPipe) .and. (isfull .eqv. .false.) .and. (volume2new .GE. fullVolume) )
-            eta2new    = zcrown2 + (volume2new - fullVolume2) / (breadth2 * length2)
-            volume2new = fullVolume2
-            isfull     = .true.
-        endwhere
+    !     !% OPEN PIPES TRANSITION TO FULL
+    !     !% Detect transition from open to full pipe
+    !     where ( (maskPipe) .and. (isfull .eqv. .false.) .and. (volume2new .GE. fullVolume) )
+    !         eta2new    = zcrown2 + (volume2new - fullVolume2) / (breadth2 * length2)
+    !         volume2new = fullVolume2
+    !         isfull     = .true.
+    !     endwhere
 
-        !% FULL PIPES
-        !% Set the full pipe volume2new
-        !% These cells already have eta2new directly updated from the time-stepping.
-        where ( (maskPipe) .and. (isfull .eqv. .true.) )
-            volume2new = fullVolume2
-        endwhere
+    !     !% FULL PIPES
+    !     !% Set the full pipe volume2new
+    !     !% These cells already have eta2new directly updated from the time-stepping.
+    !     where ( (maskPipe) .and. (isfull .eqv. .true.) )
+    !         volume2new = fullVolume2
+    !     endwhere
     
-        !% FULL PIPES TRANSITION TO OPEN 
-        !% These have eta2new and need volume2new computed
-        !% Note that these are not re-designated as open until after all
-        !% the eta and volume computations are complete
-        !% Detect full pipe that have become open
+    !     !% FULL PIPES TRANSITION TO OPEN 
+    !     !% These have eta2new and need volume2new computed
+    !     !% Note that these are not re-designated as open until after all
+    !     !% the eta and volume computations are complete
+    !     !% Detect full pipe that have become open
 
-        !% this only works for rectangular pipe secton for now
-        where ( maskPipe .and. (isfull .eqv. .true.) & .and. (eta2 < zcrown2) &
-                .and. (elem2I(:,e2i_Geometry) == eRectangular))
+    !     !% this only works for rectangular pipe secton for now
+    !     where ( maskPipe .and. (isfull .eqv. .true.) .and. (eta2new < zcrown2) &
+    !             .and. (elem2I(:,e2i_Geometry) == eRectangular) )
 
-            volume2new = (eta - zbottom2) * breadth2 * length2
-            isfull = .false.
-        endwhere
+    !         volume2new = (eta2new - zbottom2) * breadth2 * length2
+    !         isfull = .false.
+    !     endwhere
             
-        !% nullify temporary array
-        nullify(maskPipe)
-        next_eYN_temparray = next_eYN_temparray - 1
+    !     !% nullify temporary array
+    !     nullify(maskPipe)
+    !     next_e2YN_temparray = next_e2YN_temparray - 1
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine open_pipe_transition_to_full
+    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    ! end subroutine get_volume_from_eta
     !
     !==========================================================================
     ! END OF MODULE artificial_compressibility

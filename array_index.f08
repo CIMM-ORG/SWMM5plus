@@ -216,7 +216,7 @@ module array_index
     integer, parameter :: eMr_Volume_N1          = 3   ! Volume at time N-1
     integer, parameter :: eMr_SmallVolume        = 4
     integer, parameter :: eMr_SmallVolumeRatio   = 5
-    integer, parameter :: e2r_FullVolume         = 6
+    integer, parameter :: eMr_FullVolume         = 6
     integer, parameter :: eMr_Flowrate           = 7
     integer, parameter :: eMr_Flowrate_N0        = 8    ! Flowrate at time N
     integer, parameter :: eMr_Flowrate_N1        = 9    ! Flowrate at time N-1
@@ -248,19 +248,18 @@ module array_index
     integer, parameter :: eMr_LeftSlope          = 35
     integer, parameter :: eMr_RightSlope         = 36
     integer, parameter :: eMr_ParabolaValue      = 37
-    integer, parameter :: eMr_FullVolume         = 38     ! Storage full volume
-    integer, parameter :: eMr_StorageConstant    = 39     ! Storage Constant for surface area
-    integer, parameter :: eMr_StorageCoeff       = 40     ! Storage Coefficient for surface area
-    integer, parameter :: eMr_StorageExponent    = 41     ! Storafe Exponent for surface area
-    integer, parameter :: eMr_SurfaceArea        = 42     ! Storage Surface Area
-    integer, parameter :: eMr_SurchargeDepth     = 43     ! Surcharge Depth
-    integer, parameter :: eMr_elN                = 44     ! the elN (lower case L)  length scale in AC
-    integer, parameter :: eMr_dHdV               = 45     ! geometric change in elevation with volume
-    integer, parameter :: eMr_CtestH0            = 46     ! Convergence test storage for AC: d/dtau of eta * A
-    integer, parameter :: eMr_CtestQ0            = 47     ! Convergence test storage for AC: d/dtau of Q
-    integer, parameter :: eMr_CtestH1            = 48     ! Convergence test storage for AC: d/dtau of eta * A
-    integer, parameter :: eMr_CtestQ1            = 49     ! Convergence test storage for AC: d/dtau of Q
-    integer, parameter :: eMr_idx_base1          = 49
+    integer, parameter :: eMr_StorageConstant    = 38     ! Storage Constant for surface area
+    integer, parameter :: eMr_StorageCoeff       = 39     ! Storage Coefficient for surface area
+    integer, parameter :: eMr_StorageExponent    = 40     ! Storafe Exponent for surface area
+    integer, parameter :: eMr_SurfaceArea        = 41     ! Storage Surface Area
+    integer, parameter :: eMr_SurchargeDepth     = 42     ! Surcharge Depth
+    integer, parameter :: eMr_elN                = 43     ! the elN (lower case L)  length scale in AC
+    integer, parameter :: eMr_dHdV               = 44     ! geometric change in elevation with volume
+    integer, parameter :: eMr_CtestH0            = 45     ! Convergence test storage for AC: d/dtau of eta * A
+    integer, parameter :: eMr_CtestQ0            = 46     ! Convergence test storage for AC: d/dtau of Q
+    integer, parameter :: eMr_CtestH1            = 47     ! Convergence test storage for AC: d/dtau of eta * A
+    integer, parameter :: eMr_CtestQ1            = 48     ! Convergence test storage for AC: d/dtau of Q
+    integer, parameter :: eMr_idx_base1          = 48
 
     ! column indexes for real branch data on a multi-branch junction
     ! note that these indexes must be consecutive by type
