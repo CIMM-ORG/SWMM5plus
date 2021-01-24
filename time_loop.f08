@@ -258,11 +258,8 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         !%  push the old values down the stack
-        !%  here elN is the ell (length scale) used in AC derivation
         !%  N values is the present, N0 is the last time step, and N1
         !%  is the timestep before (needed only for backwards 3rd)
-
-        elem2R(:,e2r_elN)          = elem2R(:,e2r_HydDepth)
         elem2R(:,e2r_Volume_N1)    = elem2R(:,e2r_Volume_N0)
         elem2R(:,e2r_Volume_N0)    = elem2R(:,e2r_Volume)
         elem2R(:,e2r_Area_N1)      = elem2R(:,e2r_Area_N0)
@@ -271,7 +268,6 @@ contains
         elem2R(:,e2r_Flowrate_N0)  = elem2R(:,e2r_Flowrate)
         elem2R(:,e2r_Eta_N0)       = elem2R(:,e2r_Eta)
 
-        elemMR(:,eMr_elN)          = elemMR(:,eMr_HydDepth)
         elemMR(:,eMr_Volume_N1)    = elemMR(:,eMr_Volume_N0)
         elemMR(:,eMr_Volume_N0)    = elemMR(:,eMr_Volume)
         elemMR(:,eMr_Area_N1)      = elemMR(:,eMr_Area_N0)

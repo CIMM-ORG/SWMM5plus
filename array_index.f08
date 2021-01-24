@@ -177,7 +177,7 @@ module array_index
     integer, parameter :: e2r_DischargeCoeff2    = 47   ! discharge coefficient for rectangular weir part
     integer, parameter :: e2r_EndContractions    = 48   ! End contractions for rectengular and trapezoidal weir
     integer, parameter :: e2r_elN                = 49   ! the ell (lower case L)  length scale in AC
-    integer, parameter :: e2r_dHdV               = 50   ! geometric change in elevation with volume
+    integer, parameter :: e2r_dHdA               = 50   ! geometric change in elevation with area
     integer, parameter :: e2r_CtestH0            = 51   ! Convergence test storage for AC: d/dtau of eta * A
     integer, parameter :: e2r_CtestQ0            = 52   ! Convergence test storage for AC: d/dtau of Q
     integer, parameter :: e2r_CtestH1            = 53   ! Convergence test storage for AC: d/dtau of eta * A
@@ -254,7 +254,7 @@ module array_index
     integer, parameter :: eMr_SurfaceArea        = 41     ! Storage Surface Area
     integer, parameter :: eMr_SurchargeDepth     = 42     ! Surcharge Depth
     integer, parameter :: eMr_elN                = 43     ! the elN (lower case L)  length scale in AC
-    integer, parameter :: eMr_dHdV               = 44     ! geometric change in elevation with volume
+    integer, parameter :: eMr_dHdA               = 44     ! geometric change in elevation with area
     integer, parameter :: eMr_CtestH0            = 45     ! Convergence test storage for AC: d/dtau of eta * A
     integer, parameter :: eMr_CtestQ0            = 46     ! Convergence test storage for AC: d/dtau of Q
     integer, parameter :: eMr_CtestH1            = 47     ! Convergence test storage for AC: d/dtau of eta * A
@@ -441,9 +441,10 @@ module array_index
     integer, parameter :: e2YN_temp2            = 6
     integer, parameter :: e2YN_temp3            = 7
     integer, parameter :: e2YN_temp4            = 8
-    integer, parameter :: e2YN_idx_max          = 8
+    integer, parameter :: e2YN_temp5            = 9
+    integer, parameter :: e2YN_idx_max          = 9
 
-    integer, parameter :: e2YN_n_temp = 4
+    integer, parameter :: e2YN_n_temp = 5
     ! storage for temp array index positions
     integer, dimension(e2YN_n_temp) :: e2YN_Temp = nullvalueI
 
@@ -456,9 +457,10 @@ module array_index
     integer, parameter :: eMYN_temp2           = 5
     integer, parameter :: eMYN_temp3           = 6
     integer, parameter :: eMYN_temp4           = 7
-    integer, parameter :: eMYN_idx_max         = 7
+    integer, parameter :: eMYN_temp5           = 8
+    integer, parameter :: eMYN_idx_max         = 8
 
-    integer, parameter :: eMYN_n_temp = 4
+    integer, parameter :: eMYN_n_temp = 5
     ! storage for temp array index positions
     integer, dimension(eMYN_n_temp) :: eMYN_Temp = nullvalueI
 

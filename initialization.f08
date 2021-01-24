@@ -130,7 +130,8 @@ contains
         e2YN_Temp(2) = e2YN_temp2
         e2YN_Temp(3) = e2YN_temp3
         e2YN_Temp(4) = e2YN_temp4
-        if (e2YN_n_temp > 4) then
+        e2YN_Temp(5) = e2YN_temp5
+        if (e2YN_n_temp > 5) then
             print *, 'error need to update initialization of e2YN_Temp in ',subroutine_name
             stop
         endif
@@ -139,7 +140,8 @@ contains
         eMYN_Temp(2) = eMYN_temp2
         eMYN_Temp(3) = eMYN_temp3
         eMYN_Temp(4) = eMYN_temp4
-        if (eMYN_n_temp > 4) then
+        eMYN_Temp(5) = eMYN_temp5
+        if (eMYN_n_temp > 5) then
             print *, 'error need to update initialization of eMYN_Temp in ',subroutine_name
             stop
         endif

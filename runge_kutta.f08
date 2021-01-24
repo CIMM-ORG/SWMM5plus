@@ -523,6 +523,17 @@ contains
             call adjust_Vshaped_flowrate (elem2R, faceR, elem2I, elem2YN)
         endif
 
+        !%  Ad hoc adjustment for pressure across a surcharged pipe element
+        if (setting%Method%AdjustPressure%Apply) then
+            call adjust_pressure_in_pipe (elem2R, faceR, elem2I, elem2YN)
+        endif
+
+        !% HACK: in the original SvePy and PipeAC code, element_dynamics face_dynamics 
+        !% subroutines are called after Vshape flow adjustment, since flowrate is modified. 
+        !% Additinally, face_free_surface subroutine is called in PipeAC after pressure 
+        !% adjustment, since eta is modified. Talk with Dr. Hodges about why dynamics_update,
+        !% and face update is not called here again.
+
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine rk2_update_auxiliary_variables
     !

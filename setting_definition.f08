@@ -23,7 +23,7 @@ module setting_definition
 
     !% setting%Method%AdjustPressure
     type adjustPressureType
-        character(len=64)   ::  Type  = 'smoothall' !'vshape'
+        character(len=64)   ::  Type  = 'vshape'  !'smoothall' 'vshape'
         logical             ::  Apply = .true.
         real                ::  Coef  = 0.5
     end type adjustPressureType
@@ -256,7 +256,7 @@ module setting_definition
 
     !%  setting%CustomIC
     type customICType
-        logical                 :: UseCustomInitialCondition = .true.
+        logical                 :: UseCustomInitialCondition = .false.
     end type customICType
 
     !%  setting%FaceCosAngle
@@ -266,7 +266,7 @@ module setting_definition
 
     !%  setting%Solver
     type solverType
-        character(len=64)       :: SolverSelect =  'AC'! 'SVE-AC', 'SVE'
+        character(len=64)       :: SolverSelect =  'SVE'! 'SVE-AC', 'AC'
     end type solverType 
 
     !% FIRST LEVEL TYPE  ----------------------------------------------

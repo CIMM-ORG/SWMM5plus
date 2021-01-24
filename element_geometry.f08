@@ -232,35 +232,40 @@ contains
 
         !%   geometry for channels
         call channel_pipe_junction &
-            (elem2R, elem2I, e2i_geometry, e2i_elem_type, eChannel, e2r_Length,  &
-            e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta,      &
-            e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius,               &
-            e2r_FullDepth, e2r_Volume_new, e2r_LeftSlope, e2r_RightSlope,        &
-            e2r_ParabolaValue, e2r_dHdV, e2r_Temp, next_e2r_temparray,           &
-            e2r_n_temp, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
-            Breadth, widthDepthData, cellType)
+            (elem2R, elem2I, elem2YN, e2i_geometry, e2i_elem_type, eChannel, &
+            e2r_Volume, e2r_Length, e2r_Zbottom, e2r_BreadthScale,           &
+            e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue, e2r_FullDepth, &
+            e2r_FullArea, e2r_Area, e2r_Eta, e2r_Topwidth, e2r_Perimeter,    &
+            e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_dHdA, e2r_elN,       &
+            e2YN_IsSurcharged, e2i_Temp, next_e2i_temparray, e2i_n_temp,     &
+            e2r_Temp, next_e2r_temparray, e2r_n_temp, e2YN_Temp,             &
+            next_e2YN_temparray, e2YN_n_temp, ID, numberPairs, ManningsN,    &
+            Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
 
         !%   geometry for pipes
         call channel_pipe_junction &
-            (elem2R, elem2I, e2i_geometry, e2i_elem_type, ePipe, e2r_Length,     &
-            e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area, e2r_Eta,      &
-            e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius,               &
-            e2r_FullDepth, e2r_Volume_new, e2r_LeftSlope, e2r_RightSlope,        &
-            e2r_ParabolaValue, e2r_dHdV, e2r_Temp, next_e2r_temparray,           &
-            e2r_n_temp, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
-            Breadth, widthDepthData, cellType)
+            (elem2R, elem2I, elem2YN, e2i_geometry, e2i_elem_type, ePipe,    &
+            e2r_Volume, e2r_Length, e2r_Zbottom, e2r_BreadthScale,           &
+            e2r_LeftSlope, e2r_RightSlope, e2r_ParabolaValue, e2r_FullDepth, &
+            e2r_FullArea, e2r_Area, e2r_Eta, e2r_Topwidth, e2r_Perimeter,    &
+            e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_dHdA, e2r_elN,       &
+            e2YN_IsSurcharged, e2i_Temp, next_e2i_temparray, e2i_n_temp,     &
+            e2r_Temp, next_e2r_temparray, e2r_n_temp, e2YN_Temp,             &
+            next_e2YN_temparray, e2YN_n_temp, ID, numberPairs, ManningsN,    &
+            Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
 
         !%   geomety for junctions
         call channel_pipe_junction &
-            (elemMR, elemMI, eMi_geometry, eMi_elem_type, eJunctionChannel,      &
-            eMr_Length, eMr_Zbottom, eMr_BreadthScale, eMr_Topwidth, eMr_Area,   &
-            eMr_Eta, eMr_Perimeter, eMr_Depth, eMr_HydDepth, eMr_HydRadius,      &
-            eMr_FullDepth, eMr_Volume_new, eMr_LeftSlope, eMr_RightSlope,        &
-            eMr_ParabolaValue, eMr_dHdV, eMr_Temp, next_eMr_temparray,           &
-            eMr_n_temp, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
-            Breadth, widthDepthData, cellType)
+            (elemMR, elemMI, elemMYN, eMi_geometry, eMi_elem_type, eJunctionChannel, &
+            eMr_Volume, eMr_Length, eMr_Zbottom, eMr_BreadthScale,           &
+            eMr_LeftSlope, eMr_RightSlope, eMr_ParabolaValue, eMr_FullDepth, &
+            eMr_FullArea, eMr_Area, eMr_Eta, eMr_Topwidth, eMr_Perimeter,    &
+            eMr_Depth, eMr_HydDepth, eMr_HydRadius, eMr_dHdA, eMr_elN,       &
+            eMYN_IsSurcharged, eMi_Temp, next_eMi_temparray, eMi_n_temp,     &
+            eMr_Temp, next_eMr_temparray, eMr_n_temp, eMYN_Temp,             &
+            next_eMYN_temparray, eMYN_n_temp, ID, numberPairs, ManningsN,    &
+            Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
             
-
         !%   geometry for pipe
         !%   pipe geometry is solved using area and eta. Thus, area and eta are the input
         !%   pipe volume is saved into the volume_new column for the consistancy of the code 
@@ -302,11 +307,13 @@ contains
     !==========================================================================
     !
     subroutine channel_pipe_junction &
-        (elemR, elemI, ei_geometry, ei_elem_type, elem_type_value, er_Length, &
-        er_Zbottom, er_BreadthScale, er_Topwidth, er_Area, er_Eta,           &
-        er_Perimeter, er_Depth, er_HydDepth, er_HydRadius, er_FullDepth,     &
-        er_Volume, er_LeftSlope, er_RightSlope, er_ParabolaValue, er_dHdV,   &
-        er_Temp, next_er_temparray, er_n_temp, wdID, wdnumberPairs,          &
+        (elemR, elemI, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
+        er_Volume, er_Length, er_Zbottom, er_BreadthScale, er_LeftSlope,     &
+        er_RightSlope, er_ParabolaValue, er_FullDepth, er_FullArea, er_Area, &
+        er_Eta, er_Topwidth, er_Perimeter, er_Depth, er_HydDepth,            &
+        er_HydRadius, er_dHdA, er_elN, eYN_IsSurcharged, ei_Temp,            &
+        next_ei_temparray, ei_n_temp, er_Temp, next_er_temparray, er_n_temp, &
+        eYN_Temp, next_eYN_temparray, eYN_n_temp, wdID, wdnumberPairs,       &
         wdManningsN, wdLength, wdzBottom, wdxDistance, wdBreadth,            &
         widthDepthData, wdcellType)
         !
@@ -315,16 +322,21 @@ contains
         character(64) :: subroutine_name = 'channel_pipe_junction'
 
         real,      target,     intent(in out)  :: elemR(:,:)
-
+        logical,   target,     intent(in out)  :: elemYN(:,:)
+        
+        
         integer,   intent(in)      :: elemI(:,:)
         integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_type_value
-        integer,   intent(in)      :: er_Length, er_Zbottom, er_BreadthScale
-        integer,   intent(in)      :: er_Area, er_Eta, er_Perimeter, er_Topwidth
-        integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius
-        integer,   intent(in)      :: er_Volume, er_FullDepth, er_n_temp, er_dHdV
-        integer,   intent(in)      :: er_LeftSlope, er_RightSlope, er_ParabolaValue
-        integer,   intent(in)      :: er_Temp(:)
-        integer,   intent(inout)   :: next_er_temparray
+        integer,   intent(in)      :: er_Volume, er_Length, er_Zbottom
+        integer,   intent(in)      :: er_BreadthScale, er_LeftSlope, er_RightSlope
+        integer,   intent(in)      :: er_ParabolaValue, er_FullDepth, er_FullArea
+        integer,   intent(in)      :: er_Area, er_Eta, er_Topwidth, er_Perimeter
+        integer,   intent(in)      :: er_Depth, er_HydDepth, er_HydRadius, er_dHdA
+        integer,   intent(in)      :: er_elN, eYN_IsSurcharged
+        integer,   intent(in)      :: er_n_temp, ei_n_temp, eYN_n_temp 
+        integer,   intent(in)      :: er_Temp(:), ei_Temp(:), eYN_Temp(:)
+
+        integer,   intent(inout)   :: next_er_temparray, next_ei_temparray, next_eYN_temparray
 
         integer, target, intent(in out)    :: wdID(:)
         integer, target, intent(in out)    :: wdnumberPairs(:)
@@ -337,11 +349,12 @@ contains
         type(string), target, intent(in out)   :: wdcellType(:)
 
 
-        real, pointer :: volume(:), length(:), zbottom(:), breadth(:)
-        real, pointer :: area(:), eta(:), perimeter(:), depth(:), hyddepth(:)
-        real, pointer :: hydradius(:), topwidth(:), fulldepth(:)
-        real, pointer :: leftSlope(:), rightSlope(:), parabolaValue(:)
-        real, pointer :: AoverAfull(:), YoverYfull(:), dHdV(:)
+        real,    pointer :: volume(:), length(:), zbottom(:), breadth(:)
+        real,    pointer :: leftSlope(:), rightSlope(:), parabolaValue(:), fullDepth(:)
+        real,    pointer :: fullArea(:), area(:), eta(:), topwidth(:), perimeter(:)
+        real,    pointer :: depth(:), hyddepth(:), hydradius(:), dHdA(:), elN(:)
+        
+        logical, pointer :: isFull(:)
 
         real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
         real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
@@ -361,21 +374,24 @@ contains
         volume        => elemR(:,er_Volume)
         length        => elemR(:,er_Length)
         zbottom       => elemR(:,er_Zbottom)
-        breadth       => elemR(:,er_BreadthScale)
-        fulldepth     => elemR(:,er_FullDepth)
+        breadth       => elemR(:,er_BreadthScale) 
         leftSlope     => elemR(:,er_LeftSlope)
         rightSlope    => elemR(:,er_RightSlope)
         parabolaValue => elemR(:,er_ParabolaValue)
+        fullDepth     => elemR(:,er_FullDepth)
+        fullArea      => elemR(:,er_FullArea)
+        isFull        => elemYN(:,eYN_IsSurcharged)
 
         ! outputs
         area       => elemR(:,er_Area)
         eta        => elemR(:,er_Eta)
+        topwidth   => elemR(:,er_Topwidth)
         perimeter  => elemR(:,er_Perimeter)
         depth      => elemR(:,er_Depth)
         hyddepth   => elemR(:,er_HydDepth)
         hydradius  => elemR(:,er_HydRadius)
-        topwidth   => elemR(:,er_Topwidth)
-        dHdV       => elemR(:,er_dHdV)
+        dHdA       => elemR(:,er_dHdA)
+        elN        => elemR(:,er_elN)
 
         widthAtLayerTop         => widthDepthData (:,:, wd_widthAtLayerTop)
         depthAtLayerTop         => widthDepthData (:,:, wd_depthAtLayerTop)
@@ -394,24 +410,16 @@ contains
         w_d_perimeterBelowThisLayer(size(volume,1)), source = zeroR)
 
 
+        !% compute the coefficients required for width-depth XS before we enter the where statement
         call width_depth_quadratic_function(elemI, elemR, ei_geometry, ei_elem_type, elem_type_value, &
             er_Length, er_Area, er_Volume, widthDepthData, w_d_angle, w_d_widthAtLayerTop, w_d_depthAtLayerTop, &
             w_d_perimeterBelowThisLayer, a_diff)
-        !compute the coefficients required for width-depth XS before we enter the where statement
-        
 
-        !% temporary array for circular geometry update
-        AoverAfull => elemR(:,er_Temp(next_er_temparray))
-        next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+        !%  basic geometry types
+        where ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                (elemI(:,ei_geometry)  == eRectangular)    .and. &
+                (isFull .eqv. .false.)                           )
 
-        YoverYfull => elemR(:,er_Temp(next_er_temparray))
-        next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
-
-        AoverAfull = nullvalueR
-        YoverYfull = nullvalueR
-
-        where ( (elemI(:,ei_geometry)  == eRectangular) .and. &
-            (elemI(:,ei_elem_type) == elem_type_value    )         )
             area        = volume / length
             eta         = zbottom + (area / breadth)
             topwidth    = breadth
@@ -419,10 +427,12 @@ contains
             hyddepth    = area / breadth
             depth       = hyddepth
             hydradius   = area / perimeter
-            dHdV        = hyddepth / volume
+            dHdA        = oneR / breadth
+            elN         = hyddepth
 
-        elsewhere ( (elemI(:,ei_geometry)  == eParabolic) .and. &
-            (elemI(:,ei_elem_type) == elem_type_value    )         )
+        elsewhere ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                    (elemI(:,ei_geometry)  == eParabolic)      .and. &
+                    (isFull .eqv. .false.)                           )
             area        = volume / length
             eta         = zbottom + parabolaValue ** oneThirdR &
                 * (threefourthR * area) ** twothirdR
@@ -440,10 +450,14 @@ contains
                 )  &
                 )
             hydradius   = area / perimeter
-            dHdV        = hyddepth / volume
+            dHdA        = (parabolaValue ** oneThirdR) * (threefourthR ** twothirdR) &
+                * twothirdR * (area) ** (-oneThirdR)
+            elN         = hyddepth
 
-        elsewhere ( (elemI(:,ei_geometry)  == eTrapezoidal) .and. &
-            (elemI(:,ei_elem_type) == elem_type_value    )         )
+        elsewhere ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                    (elemI(:,ei_geometry)  == eTrapezoidal)    .and. &
+                    (isFull .eqv. .false.)                           )  
+
             area        = volume / length
             depth       = - onehalfR * (breadth/(onehalfR*(leftSlope + rightSlope)) &
                 - sqrt((breadth/(onehalfR*(leftSlope + rightSlope))) ** twoR &
@@ -456,10 +470,13 @@ contains
                 * (sqrt(oneR + leftSlope**twoR ) &
                 + sqrt(oneR + rightSlope**twoR))
             hydradius   = area / perimeter
-            dHdV        = hyddepth / volume
+            dHdA        = oneR / topwidth
+            elN         = hyddepth
 
-        elsewhere ( (elemI(:,ei_geometry)  == eTriangular) .and. &
-            (elemI(:,ei_elem_type) == elem_type_value    )         )
+        elsewhere ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                    (elemI(:,ei_geometry)  == eTriangular)     .and. &
+                    (isFull .eqv. .false.)                           )  
+
             area        = volume / length
             depth       = sqrt(abs(area/(onehalfR*(leftSlope + rightSlope))))
             hyddepth    = onehalfR * depth
@@ -467,98 +484,231 @@ contains
             topwidth    = (leftSlope + rightSlope) * depth
             perimeter   = depth * (sqrt(oneR + leftSlope**twoR) + sqrt(oneR + rightSlope**twoR))
             hydradius   = area / perimeter
-            dHdV        = hyddepth / volume
+            dHdA        = oneR / topwidth
+            elN         = hyddepth
 
-        elsewhere ( elemI(:, ei_geometry) == eWidthDepth .and. &
-            (elemI(:,ei_elem_type) == elem_type_value) )
+        elsewhere ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                    (elemI(:,ei_geometry)  == eWidthDepth)     .and. &
+                    (isFull .eqv. .false.)                           )
+
             area        = volume / length
-            
             AA          = oneR / tan( w_d_angle )
             BB          = w_d_widthAtLayerTop
             CC          = negoneR * a_diff
             DD          = ( negoneR * BB + sqrt( BB ** twoR - 4.0 * AA * CC) ) / ( twoR * AA )
-
             depth       = DD + w_d_depthAtLayerTop
             topwidth    = w_d_widthAtLayerTop + twoR * AA * DD
             hyddepth    = area / topwidth
             eta         = zbottom + depth
             perimeter   = w_d_perimeterBelowThisLayer + (twoR * DD / sin(w_d_angle))
             hydradius   = area / perimeter
-            dHdV        = hyddepth / volume 
+            dHdA        = oneR / topwidth
+            elN         = hyddepth 
 
         endwhere
-            ! do ii=1, size(volume,1)
-            !     linkIDTemp = elemI(ii,e2i_link_ID)
 
-            !     area_difference  = zeroR
-            !     local_difference = zeroR
+        !%  specialized geometry types
+        call circular_geometry &
+            (elemI, elemR, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
+            volume, length, zbottom, breadth, fulldepth, fullarea, area, eta,    &
+            perimeter, depth, hyddepth, hydradius, topwidth, dHdA, elN, ei_Temp, &
+            next_ei_temparray, ei_n_temp, er_Temp, next_er_temparray, er_n_temp, &
+            eYN_Temp, next_eYN_temparray, eYN_n_temp, isFull)
 
-            !     area_difference(:) = area(ii) - areaTotalBelowThisLayer(linkIDTemp,:)
-            !     ind = minloc(abs(area_difference), DIM=1) ! Find the closest area layer
-            !     if ((areaTotalBelowThisLayer(linkIDTemp, ind) - area(ii) ) > 0) then !its between ind and ind-1
-            !         a_diff          = (area(ii) - areaTotalBelowThisLayer(linkIDTemp,ind-1)) 
-            !         ! Since we assume each layer is trapezoidal, we cannot directly use the interpolation to get the depth, width, ...etc.
-            !         ! Solve the trapezoidal equation function f(depth) ((-B + sqrt(B^2 -4AC))/2A) to get the depth.
-            !         ! Could be expensive to recursively run through all elements, maybe use spline is a better method?
-            !         AA              = oneR / tan(angle(linkIDTemp,ind-1))
-            !         BB              = widthAtLayerTop(linkIDTemp, ind-1)
-            !         CC              = -a_diff
-            !         ! Solve the quadratic formula
-            !         DD              = (-BB + sqrt(BB**2 - 4 * AA * CC))/(1 * AA)
-            !         ! DD is the depth between layers
-            !         if (DD < 0) then 
-            !             print *, "Getting negative delta depth solution of quadratic formula calculation at elem=", ii
-            !             !stop
-            !         end if
-            !         depth(ii)       = DD + depthAtLayerTop(linkIDTemp, ind-1) 
-            !         topwidth(ii)    = widthAtLayerTop(linkIDTemp, ind-1) + twoR * AA * DD 
-            !         hyddepth(ii)    = area(ii) / topwidth(ii)
-            !         eta(ii)         = zbottom(ii) + depth(ii)
-            !         perimeter(ii)   = perimeterBelowThisLayer(linkIDTemp, ind-1) + twoR * (1 / sin(angle(linkIDTemp, ind-1))) * DD
-            !         hydradius(ii)   = area(ii) / perimeter(ii)
-            !     else if ((areaTotalBelowThisLayer(linkIDTemp, ind) - area(ii) ) < 0) then !its between ind and ind+1
-            !         a_diff          = (area(ii) - areaTotalBelowThisLayer(linkIDTemp, ind))
-            !         !coefficient of the quadratic formula
-            !         AA              = oneR / tan(angle(linkIDTemp, ind))
-            !         BB              = widthAtLayerTop(linkIDTemp, ind)
-            !         CC              = -a_diff
-            !         ! Solve the quadratic formula
-            !         DD              = (-BB + sqrt(BB**2 - 4 * AA * CC))/(1 * AA)
-            !         ! DD is the depth between layers
-            !         if (DD < 0) then 
-            !             print *, "Getting negative delta depth solution of quadratic formula calculation at elem=", ii
-            !             !stop
-            !         end if
-            !         depth(ii)       = DD + depthAtLayerTop(linkIDTemp, ind)
-            !         topwidth(ii)    = widthAtLayerTop(linkIDTemp, ind) + twoR * AA * DD
-            !         hyddepth(ii)    = area(ii) / width(ii)
-            !         eta(ii)         = zbottom(ii) + depth(ii)
-            !         perimeter(ii)   = perimeterBelowThisLayer(linkIDTemp, ind) + twoR * (1 / sin(angle(linkIDTemp, ind))) * DD
-            !         hydradius(ii)   = area(ii) / perimeter(ii)
-            !     else if ((areaTotalBelowThisLayer(linkIDTemp, ind) - area(ii) ) == 0) then ! exlctly at layer boundary
-            !         depth(ii)       = depthAtLayerTop(linkIDTemp, ind)
-            !         topwidth(ii)    = widthAtLayerTop(linkIDTemp, ind)
-            !         hyddepth(ii)    = area(ii) / topwidth(ii)
-            !         eta(ii)         = zbottom(ii) + depth(ii)
-            !         perimeter(ii)   = perimeterBelowThisLayer(linkIDTemp, ind)
-            !         hydradius(ii)   = area(ii) / perimeter(ii)
-            !     else
-            !         print *, "Error in Width-Depth Interpolation in element geometry"
-            !         !stop
-            !     end if
-            ! enddo
+        !% HACK: other special geometry types are needed
+
+        !% surcharged geomety types
+        call surcharged_element_geometry &
+            (elemI, elemR, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
+            volume, length, zbottom, breadth, fulldepth, fullarea, area, eta,    &
+            perimeter, depth, hyddepth, hydradius, topwidth, dHdA, elN, isFull)
         
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine channel_pipe_junction
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine surcharged_element_geometry &
+        (elemI, elemR, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
+        volume, length, zbottom, breadth, fulldepth, fullarea, area, eta,    &
+        perimeter, depth, hyddepth, hydradius, topwidth, dHdA, elN, isFull)
+        !
+        ! Calculates geometry for surcharged elements
+        ! Surcharged elements has eta updated. Thus, these elements need special 
+        ! Geometry handler.
+        !
+        character(64) :: subroutine_name = 'surcharged_element_geometry'
 
+        real,      target,     intent(inout)  :: elemR(:,:)
+        logical,   target,     intent(inout)  :: elemYN(:,:)
+
+        integer,   intent(in)       :: elemI(:,:)
+        integer,   intent(in)       :: ei_geometry, ei_elem_type, elem_type_value
+        real,      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
+        real,      intent(in)       :: eta(:), fulldepth(:), fullarea(:)
+        logical,   intent(in)       :: isFull(:)
+
+        real,      intent(inout)    :: area(:), perimeter(:), depth(:)
+        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+        real,      intent(inout)    :: dHdA(:), elN(:)
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !% surcharged elements already has eta updated. Only need to update
+        !% other geometry values
+        where ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                (elemI(:,ei_geometry)  == eRectangular)    .and. &
+                (isFull) )
+            area      = fullArea
+            depth     = fullDepth 
+            topwidth  = zeroR
+            hyddepth  = eta - zbottom
+            perimeter = twoR * (breadth + fulldepth)
+            hydradius = area / perimeter
+            dHdA      = zeroR
+            elN       = hyddepth
+
+        elsewhere ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                    (elemI(:,ei_geometry)  == eCircular)       .and. &
+                    (isFull) )
+            area      = fullArea
+            depth     = fullDepth 
+            topwidth  = zeroR
+            hyddepth  = eta - zbottom + (onehalfR*fulldepth) * (onefourthR*pi - oneR)
+            perimeter = pi * fulldepth
+            hydradius = onefourthR * fulldepth
+            dHdA      = zeroR 
+            elN       = hyddepth
+
+        endwhere
+        !% HACK: other special geometry types are needed
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine surcharged_element_geometry
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine circular_geometry &
+        (elemI, elemR, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
+        volume, length, zbottom, breadth, fulldepth, fullarea, area, eta,    &
+        perimeter, depth, hyddepth, hydradius, topwidth, dHdA, elN, ei_Temp, &
+        next_ei_temparray, ei_n_temp, er_Temp, next_er_temparray, er_n_temp, &
+        eYN_Temp, next_eYN_temparray, eYN_n_temp, isFull) 
+        !
+        ! Calculate circular geometry 
+        !
+        character(64) :: subroutine_name = 'circular_geometry'
+
+        real,      target,     intent(inout)  :: elemR(:,:)
+        logical,   target,     intent(inout)  :: elemYN(:,:)
+
+        integer,   intent(in)       :: elemI(:,:)
+        integer,   intent(in)       :: ei_geometry, ei_elem_type, elem_type_value
+        real,      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
+        real,      intent(in)       :: fulldepth(:), fullarea(:)
+        integer,   intent(in)       :: ei_n_temp, er_n_temp, eYN_n_temp
+        integer,   intent(in)       :: ei_Temp(:), er_Temp(:), eYN_Temp(:)
+        logical,   intent(in)       :: isFull(:)
+
+        real,      intent(inout)    :: area(:), eta(:), perimeter(:), depth(:)
+        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+        real,      intent(inout)    :: dHdA(:), elN(:)
+        integer,   intent(inout)    :: next_ei_temparray, next_er_temparray, next_eYN_temparray
+
+        real,       pointer         :: AoverAfull(:), YoverYfull(:) 
+        logical,    pointer         :: maskarray(:)
+        real                        :: af, bf, cf
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !% temporary pointer allocation fo circular for geometry update
+        AoverAfull => elemR(:,er_Temp(next_er_temparray))
+        next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+
+        YoverYfull => elemR(:,er_Temp(next_er_temparray))
+        next_er_temparray = utility_advance_temp_array (next_er_temparray,er_n_temp)
+        !% temporary mask to find open circular elements
+        maskarray  => elemYN(:,eYN_Temp(next_eYN_temparray))
+        next_eYN_temparray = utility_advance_temp_array (next_eYN_temparray,eYN_n_temp)
+
+        maskarray  = nullvalueL
         AoverAfull = nullvalueR
         YoverYfull = nullvalueR
 
-        !% nullify temporary array
-        nullify(AoverAfull, YoverYfull)
+        maskarray = ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                      (elemI(:,ei_geometry)  == eCircular)       .and. &
+                      (isFull .eqv. .false.)  )
 
+        !% find Area and A/Afull for circular elements
+        where (maskarray)
+            area = volume / length
+            AoverAfull = area / fullarea
+        endwhere
+
+        !% find normalized depth using A/Afull from lookup tables
+        call table_lookup_mask &
+            (elemI, elemR, YoverYfull, AoverAfull, YCirc, NYCirc, maskarray, &
+            ei_Temp, next_ei_temparray, ei_n_temp)
+
+        !% find normalized topwidth using Y/Yfull from lookup tables
+        !% normalized topwidth (W/Wmax) is saved in the topwidth column
+        call table_lookup_mask &
+            (elemI, elemR, topwidth, YoverYfull, WCirc, NWCirc, maskarray, &
+            ei_Temp, next_ei_temparray, ei_n_temp)
+
+        !% find normalized hydraulic radius using Y/Yfull from lookup tables
+        !% normalized hydraulic radius (R/Rmax) is saved in the hydradius column
+        call table_lookup_mask &
+            (elemI, elemR, hydradius, YoverYfull, RCirc, NRCirc, maskarray, &
+            ei_Temp, next_ei_temparray, ei_n_temp)
+
+        ! find modified hydraulic depth and for circular pipe from pipeAC Hodges 2020
+        where ( (maskarray) .and. (AoverAfull .GT. onehalfR) )
+            hyddepth   = eta - zbottom + (onehalfR*fulldepth) * (onefourthR*pi - oneR)
+
+        elsewhere ( (maskarray) .and. (AoverAfull .LT. onehalfR) )
+            hyddepth   = max(area / topwidth, zeroR)
+        endwhere
+
+        !% find all the circular geometric properties from normalized values
+        where (maskarray)
+           depth      = fulldepth * YoverYfull 
+           eta        = zbottom + depth
+           topwidth   = fulldepth * topwidth
+           hydradius  = onefourthR * fulldepth * hydradius
+           perimeter  = area / hydradius
+           elN        = hyddepth
+        endwhere
+
+        !% constants for circular dHdA (pipeAC2020)
+        af = 1.29
+        bf = 0.66
+        cf = 0.34
+
+        !% dHdA calculation
+        where( (maskarray) .and. (AoverAfull .LT. onehalfR) ) 
+            dHdA = (af * bf / ( (pi**bf) * ((fulldepth/twoR)**(twoR*bf - oneR)) ) ) & 
+                    * area**(bf - oneR) + cf / (pi * (fulldepth/twoR))
+
+        elsewhere( (maskarray) .and. (AoverAfull .GT. onehalfR) .and. &
+                   (AoverAfull .LT. oneR) )
+            dHdA = (af * bf / ( (pi**bf) * ((fulldepth/twoR)**(twoR*bf - oneR))) ) &
+                    * (pi * ((fulldepth/twoR)**twoR) - area)**(bf - oneR)          &
+                    + cf / (pi * (fulldepth/twoR))
+        endwhere
+
+        !% nullify temporary array
+        AoverAfull = nullvalueR
+        YoverYfull = nullvalueR
+
+        nullify(AoverAfull, YoverYfull, maskarray)
         next_er_temparray  = next_er_temparray  - 2
+        next_eYN_temparray = next_eYN_temparray - 1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine channel_pipe_junction
+    end subroutine circular_geometry
     !
     !==========================================================================
     !==========================================================================

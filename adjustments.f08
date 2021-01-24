@@ -28,7 +28,7 @@ module adjustments
     public :: adjust_negative_eta_reset
     public :: adjust_smallvolumes
     public :: adjust_Vshaped_flowrate
-    public :: adjust_pressure_pipe_limiter
+    public :: adjust_pressure_in_pipe
     public :: adjust_zero_velocity_at_zero_volume
 
     integer :: debuglevel = 0
@@ -542,12 +542,12 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine adjust_pressure_pipe_limiter &
+    subroutine adjust_pressure_in_pipe &
         (elem2R, faceR, elem2I, elem2YN)
         !
         !  Ad hoc smoothing of surcharged pressure in pipe on element center
         !
-        character(64) :: subroutine_name = 'adjust_pressure_pipe_limiter'
+        character(64) :: subroutine_name = 'adjust_pressure_in_pipe'
 
         real,      target,     intent(in out)  :: elem2R(:,:)
         real,      target,     intent(in)      :: faceR(:,:)
@@ -588,21 +588,20 @@ contains
 
         coef  => setting%Method%AdjustPressure%Coef
 
-        if (setting%Method%AdjustPressure%Apply) then
-            if (setting%Method%AdjustPressure%Type == 'smoothall') then
-                elemMask = ( (elemType == ePipe) .and. (elemEta .GE. zCrown) )
+        if (setting%Method%AdjustPressure%Type == 'smoothall') then
+            elemMask = ( (elemType == ePipe) .and. (elemEta .GE. zCrown) )
 
-            elseif (setting%Method%AdjustPressure%Type =='vshape') then
-                elemMask = ( ( (utility_sign_with_ones(faceEtaDn(mapUp) - elemEta))          &
-                            *(utility_sign_with_ones(faceEtaUp(mapDn) - elemEta)) > 0) .and. &
-                             (elemType == ePipe) )
+        elseif (setting%Method%AdjustPressure%Type =='vshape') then
+            elemMask = ( ( (utility_sign_with_ones(faceEtaDn(mapUp) - elemEta))          &
+                        *(utility_sign_with_ones(faceEtaUp(mapDn) - elemEta)) > 0) .and. &
+                        (elemType == ePipe) )
 
-            else
-                print*, 'unknown value for setting.method_P_adjust_pipe of:'
-                print*, setting%Method%AdjustPressure%Type
-                stop
-            endif
+        else
+            print*, 'unknown value for setting.method_P_adjust_pipe of:'
+            print*, setting%Method%AdjustPressure%Type
+            stop
         endif
+
 
         where (elemMask)
             elemAdjust =  (  tscaleUp * faceEtaUp(mapDn)   &
@@ -614,8 +613,17 @@ contains
             elemEta = coef * elemAdjust + (oneR - coef) * elemEta
         endwhere
 
+        !%  close up the temp arrays
+        elemAdjust = nullvalueR
+        nullify(elemAdjust)
+        next_e2r_temparray = next_e2r_temparray-1
+        
+        elemMask = nullvalueL
+        nullify(elemMask)
+        next_e2YN_temparray = next_e2YN_temparray-1
+
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine adjust_pressure_pipe_limiter
+    end subroutine adjust_pressure_in_pipe
     !
     !==========================================================================
     !==========================================================================

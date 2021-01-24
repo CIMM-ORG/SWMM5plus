@@ -816,7 +816,7 @@ contains
             channel_length  = 10000.0
             lowerZ          = 0.0
             subdivide_length = 100.0
-            fullDepth       = 30000.0    
+            fullDepth       = 3.0    
 
             ! rectangular geometry
             parabolaValue = zeroR

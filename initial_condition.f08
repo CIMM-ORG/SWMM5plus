@@ -618,8 +618,9 @@ contains
                     elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area) 
 
                 case ('simple_pipe_006')
-                !% This custom initial contion propagates a wave through the pipe
-                    elem2R(90:101,e2r_Eta) = elem2R(90:101,e2r_Eta) + 5.0
+
+                !% This custom initial contion propagates a wave through a rectangular pipe
+                    elem2R(90:101,e2r_Eta) = elem2R(90:101,e2r_Eta) + 1.5
                     elem2R(:,e2r_Depth)     = elem2R(:,e2r_Eta) - elem2R(:,e2r_Zbottom)
                     elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
