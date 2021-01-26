@@ -229,7 +229,6 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         !%  basic geometry update for rectangular channels and junctions
-
         !%   geometry for channels
         call channel_pipe_junction &
             (elem2R, elem2I, elem2YN, e2i_geometry, e2i_elem_type, eChannel, &
@@ -265,18 +264,6 @@ contains
             eMr_Temp, next_eMr_temparray, eMr_n_temp, eMYN_Temp,             &
             next_eMYN_temparray, eMYN_n_temp, ID, numberPairs, ManningsN,    &
             Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
-            
-        !%   geometry for pipe
-        !%   pipe geometry is solved using area and eta. Thus, area and eta are the input
-        !%   pipe volume is saved into the volume_new column for the consistancy of the code 
-        !%   volume is updated finally after the rk2/ac-rk2 loop
-        ! call pipe_or_junction &
-        !     (elem2R, elem2I, elem2YN, e2i_geometry, e2i_elem_type, ePipe, e2i_solver,   &
-        !     e2r_Length, e2r_Zbottom, e2r_BreadthScale, e2r_Topwidth, e2r_Area,          &
-        !     e2r_Eta, e2r_Perimeter, e2r_Depth, e2r_HydDepth, e2r_HydRadius, e2r_Radius, &
-        !     e2r_Volume_new, e2r_FullDepth, e2r_FullArea, e2r_Zcrown, e2r_dHdA, e2r_elN, &
-        !     e2YN_IsSurcharged, e2r_Temp, next_e2r_temparray, e2r_n_temp, e2i_Temp,      &
-        !     next_e2i_temparray, e2i_n_temp, e2YN_Temp, next_e2YN_temparray, e2YN_n_temp)
 
 
         ! HACK: We need to add junction-pipe element and geometry calculation of it
@@ -686,7 +673,6 @@ contains
         af = 1.29
         bf = 0.66
         cf = 0.34
-
         !% dHdA calculation
         where( (maskarray) .and. (AoverAfull .LT. onehalfR) ) 
             dHdA = (af * bf / ( (pi**bf) * ((fulldepth/twoR)**(twoR*bf - oneR)) ) ) & 
