@@ -128,6 +128,15 @@ contains
         !%   assign branch mappings for faces
         call junction_branch_assigned_to_faces (faceI, elemMI)
 
+        !% assign meta-elements type for elem2
+        call meta_element_assign (elem2I, e2i_elem_type, e2i_meta_elem_type)
+
+        !% assign meta-elements type for elemM
+        call meta_element_assign (elemMI, eMi_elem_type, eMi_meta_elem_type)
+
+        !% assign face u/s and d/s meta-element types
+        call face_meta_element_type_assign (faceI, elem2I, N_face)
+
         !% Debug output
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
             print *, subroutine_name,'----------------------------------------'
@@ -1828,6 +1837,136 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine link_shortening
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine meta_element_assign (elemI, ei_elem_type, ei_meta_elem_type)
+        !
+        ! Assign meta element type to elements
+        !
+
+        character(64) :: subroutine_name = 'meta_element_assign'
+
+        integer,   target,     intent(inout)    :: elemI(:,:)
+        integer,               intent(in)       :: ei_elem_type
+
+        integer,               intent(in)       :: ei_meta_elem_type
+
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        where ( (elemI(:,ei_elem_type) == eChannel)  .or. &
+                (elemI(:,ei_elem_type) == ePipe) )
+
+            elemI(:,ei_meta_elem_type) = eHQ2
+
+        elsewhere ( (elemI(:,ei_elem_type) == eJunctionChannel) .or. &
+                    (elemI(:,ei_elem_type) == eJunctionPipe)  )
+
+            elemI(:,ei_meta_elem_type) = eHQM
+
+        elsewhere ( (elemI(:,ei_elem_type) == eWeir)    .or. &
+                    (elemI(:,ei_elem_type) == eorifice) .or. &
+                    (elemI(:,ei_elem_type) == ePump)  )
+
+            elemI(:,ei_meta_elem_type) = eQonly
+
+        elsewhere ( (elemI(:,ei_elem_type) == eStorage) )
+
+            elemI(:,ei_meta_elem_type) = eHonly
+
+        elsewhere ( (elemI(:,ei_elem_type) == eBCup) .or. &
+            (elemI(:,ei_elem_type) == eBCdn)  )
+            ! Assigning nonHQ meta elem type to boundary conditions. Confirm this!
+            elemI(:,ei_meta_elem_type) = eNonHQ
+        end where
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine meta_element_assign
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine face_meta_element_type_assign (faceI, elemI, N_face)
+
+        character(64) :: subroutine_name = 'face_meta_element_type_assign'
+
+        integer,      target,     intent(in out)  :: faceI(:,:), elemI(:,:)
+        integer,                  intent(in)      :: N_face
+
+        integer :: ii
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        do ii=1, N_face
+            if ( (faceI(ii,fi_etype_u) == eChannel) .or. &
+                (faceI(ii,fi_etype_u) == ePipe) ) then
+
+                faceI(ii,fi_meta_etype_u) = eHQ2
+
+            elseif ( (faceI(ii,fi_etype_u) == eJunctionChannel) .or. &
+                (faceI(ii,fi_etype_u) == eJunctionPipe) ) then
+
+                faceI(ii,fi_meta_etype_u) = eHQm
+
+            elseif ( (faceI(ii,fi_etype_u) == eWeir)    .or. &
+                (faceI(ii,fi_etype_u) == eorifice) .or. &
+                (faceI(ii,fi_etype_u) == ePump) ) then
+
+                faceI(ii,fi_meta_etype_u) = eQonly
+
+            elseif ( (faceI(ii,fi_etype_u) == eStorage) ) then
+
+                faceI(ii,fi_meta_etype_u) = eHonly
+
+            elseif ( (faceI(ii,fi_etype_u) == eBCdn)    .or. &
+                (faceI(ii,fi_etype_u) == eBCup) ) then
+
+                faceI(ii,fi_meta_etype_u) = eNonHQ
+
+            else
+                print*, 'undefined element type upstream of face', ii
+                stop
+            endif
+        end do
+
+        do ii=1, N_face
+            if ( (faceI(ii,fi_etype_d) == eChannel) .or. &
+                (faceI(ii,fi_etype_d) == ePipe) ) then
+
+                faceI(ii,fi_meta_etype_d) = eHQ2
+
+            elseif ( (faceI(ii,fi_etype_d) == eJunctionChannel) .or. &
+                (faceI(ii,fi_etype_d) == eJunctionPipe) ) then
+
+                faceI(ii,fi_meta_etype_d) = eHQm
+
+            elseif ( (faceI(ii,fi_etype_d) == eWeir)    .or. &
+                (faceI(ii,fi_etype_d) == eorifice) .or. &
+                (faceI(ii,fi_etype_d) == ePump) ) then
+
+                faceI(ii,fi_meta_etype_d) = eQonly
+
+            elseif ( (faceI(ii,fi_etype_d) == eStorage) ) then
+
+                faceI(ii,fi_meta_etype_d) = eHonly
+
+            elseif ( (faceI(ii,fi_etype_d) == eBCdn)    .or. &
+                (faceI(ii,fi_etype_d) == eBCup) ) then
+
+                faceI(ii,fi_meta_etype_d) = eNonHQ
+
+            else
+                print*, 'undefined element type downstream of face', ii
+                stop
+            endif
+        end do
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine face_meta_element_type_assign
     !
     !==========================================================================
     ! END OF MODULE network_define

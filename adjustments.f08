@@ -586,15 +586,25 @@ contains
         mapUp => elem2I(:,e2i_Mface_u)
         mapDn => elem2I(:,e2i_Mface_d)
 
+        !% handling pipe elements
+        where ( (elem2I(:,e2i_elem_type) == ePipe) )
+            elemMask = .true.
+        endwhere
+
         coef  => setting%Method%AdjustPressure%Coef
 
         if (setting%Method%AdjustPressure%Type == 'smoothall') then
-            elemMask = ( (elemType == ePipe) .and. (elemEta .GE. zCrown) )
+
+            where (elemMask)
+                elemMask = (elemEta .GE. zCrown) 
+            endwhere
 
         elseif (setting%Method%AdjustPressure%Type =='vshape') then
-            elemMask = ( ( (utility_sign_with_ones(faceEtaDn(mapUp) - elemEta))          &
-                        *(utility_sign_with_ones(faceEtaUp(mapDn) - elemEta)) > 0) .and. &
-                        (elemType == ePipe) )
+            where (elemMask)
+                elemMask = ( ( (utility_sign_with_ones(faceEtaDn(mapUp) - elemEta))             &
+                             * (utility_sign_with_ones(faceEtaUp(mapDn) - elemEta)) > 0 ) .and. &
+                             (elemEta .GE. zCrown) )
+            endwhere
 
         else
             print*, 'unknown value for setting.method_P_adjust_pipe of:'

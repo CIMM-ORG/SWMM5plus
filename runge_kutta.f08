@@ -669,10 +669,8 @@ contains
         if ( count(elem2I(:,e2i_elem_type) == eWeir)  > zeroI) then
             !% call weir step if weirs exist in the network
             call weir_step &
-                (e2r_Volume_old, e2r_Velocity_old, eMr_Volume_old, eMr_Velocity_old, &
-                e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-                elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, &
-                elemMYN, thiscoef)
+                (e2r_Volume_new, e2r_Velocity_new, elem2R, elemMR, faceI, faceR, &
+                faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef)
         endif
 
         if ( count(elem2I(:,e2i_elem_type) == eOrifice)  > zeroI) then
