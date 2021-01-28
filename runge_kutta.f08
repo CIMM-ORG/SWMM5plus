@@ -676,16 +676,14 @@ contains
         if ( count(elem2I(:,e2i_elem_type) == eOrifice)  > zeroI) then
             !% call orifice step if orifices exist in the network
             call orifice_step &
-                (e2r_Volume_old, e2r_Velocity_old, eMr_Volume_old, eMr_Velocity_old, &
-                e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-                elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, &
-                elemMYN, thiscoef)
+                (e2r_Volume_new, e2r_Velocity_new, elem2R, elemMR, faceI, faceR, &
+                faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef)
         endif
 
         !% face reconstruction -- only flow values
         !% update the flow to their faces
         facemask = ( (faceI(:,fi_meta_etype_u) == eQonly) .or. &
-            (faceI(:,fi_meta_etype_d) == eQonly) )
+                     (faceI(:,fi_meta_etype_d) == eQonly)      )
 
         weightUpQ = setting%Limiter%Timescale%Maximum
         weightDnQ = setting%Limiter%Timescale%Maximum

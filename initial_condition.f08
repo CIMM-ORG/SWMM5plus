@@ -765,8 +765,6 @@ contains
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
         logical,   target, intent(in out)  :: faceYN(:,:)
 
-        integer :: e2r_Volume_dummy, e2r_Velocity_dummy, eMr_Volume_dummy, eMr_Velocity_dummy
-
         real,      pointer  :: valueUp(:), valueDn(:)
         real,      pointer  :: weightUpQ(:), weightDnQ(:)
         real,      pointer  :: faceQ(:)
@@ -777,19 +775,7 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        !% dummy pointers to call the wier/orifice step to find the flow through them.
-        e2r_Volume_dummy = e2r_Temp(next_e2r_temparray)
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        e2r_Velocity_dummy = e2r_Temp(next_e2r_temparray)
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        eMr_Volume_dummy = eMr_Temp(next_eMr_temparray)
-        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
-
-        eMr_Velocity_dummy = eMr_Temp(next_eMr_temparray)
-        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
-
+        !% temporary pointers to call the wier/orifice step to find the flow through them.
         valueUp => faceR(:,fr_Temp(next_fr_temparray))
         next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
 
@@ -813,9 +799,8 @@ contains
             faceYN, elem2I, elemMI, elem2YN, elemMYN, 1.0)
 
         call orifice_step &
-            (e2r_Volume_dummy, e2r_Velocity_dummy, eMr_Volume_dummy, eMr_Velocity_dummy, e2r_Volume, &
-            e2r_Velocity, eMr_Volume, eMr_Velocity, elem2R, elemMR, &
-            faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, 1.0)
+            (e2r_Volume, e2r_Velocity, elem2R, elemMR, faceI, faceR, &
+            faceYN, elem2I, elemMI, elem2YN, elemMYN, 1.0)
 
         !% face reconstruction
         !% update the flow to their faces
@@ -841,8 +826,6 @@ contains
 
         nullify(valueUp, valueDn, weightUpQ, weightDnQ, facemask)
 
-        next_e2r_temparray = next_e2r_temparray - 2
-        next_eMr_temparray = next_eMr_temparray - 2
         next_fr_temparray  = next_fr_temparray  - 4
         next_fYN_temparray = next_fYN_temparray - 1
 
