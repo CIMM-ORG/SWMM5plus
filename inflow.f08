@@ -5,6 +5,7 @@ module inflow
     use interface
     use dynamic_array
     use array_index
+    use data_keys
 
     implicit none
 
@@ -36,29 +37,29 @@ module inflow
 
 contains
 
-    function get_max_inflow(k)
-        integer, intent(in) :: k
-        integer :: i, j, k
+    function get_max_inflow(node_id, nodeI)
+        integer, intent(in) :: node_id
+        integer, intent(in) :: nodeI(:,:)
+        integer :: j, k
         type(extinflow) :: ext
         type(dwfinflow) :: dwf
         real :: get_max_inflow
 
-        do i = 1, num_nodes
-            j = nodeI(i, ni_extinflow)
-            k = nodeI(i, ni_dwfinflow)
-            if (j == -1 .and. k == -1) then
-                cycle
-            else if (j > -1 .and. k == -1) then
-                ext = ext_inflows(j)
-                get_max_inflow = maxval(ext%t_series%table%y%array * ext%sfactor + ext%baseline)
-            else
-                print *, MSG_FEATURE_NOT_COMPATIBLE
-                stop
-            end if
-        end do
+        j = nodeI(node_id, ni_extinflow)
+        k = nodeI(node_id, ni_dwfinflow)
+        if (j == -1 .and. k == -1) then
+            get_max_inflow = 0
+        else if (j > -1 .and. k == -1) then
+            ext = ext_inflows(j)
+            get_max_inflow = maxval(ext%t_series%table%y%array * ext%sfactor + ext%baseline)
+        else
+            print *, MSG_FEATURE_NOT_COMPATIBLE
+            stop
+        end if
     end function get_max_inflow
 
-    subroutine inflow_populate_inflows()
+    subroutine inflow_populate_inflows(nodeI)
+        integer, intent(inout) :: nodeI(:,:)
         integer :: num_extinflows
         integer :: num_dwfinflows
         integer :: extinflow_tseries

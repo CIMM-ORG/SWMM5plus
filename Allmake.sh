@@ -43,6 +43,7 @@ SOURCESF="  errors.f08\
         tables.f08\
         objects.f08\
         interface.f08\
+        inflow.f08\
         utility.f08\
         adjustments.f08\
         allocate_storage.f08\

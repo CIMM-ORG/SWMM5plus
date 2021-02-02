@@ -157,8 +157,8 @@ program main
         ! --------------------
         ! --- Finalize C API
         ! --------------------
-        print *, 'error - code only designed for use with test cases'
-        stop
+        ! print *, 'error - code only designed for use with test cases'
+        ! stop
     end if
 
     !% create the network of elements from link and node data
@@ -167,9 +167,9 @@ program main
         nodeI, nodeR, nodeYN, nodeName, &
         elem2R, elem2I, elem2YN, elem2Name, &
         elemMR, elemMI, elemMYN, elemMName, &
-        faceR,  faceI,  faceYN,  faceName)
-    !print *, 'in main'
-
+        faceR,  faceI,  faceYN,  faceName, swmm_graph)
+    print *, 'in main'
+    stop
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
 

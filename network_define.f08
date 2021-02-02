@@ -25,7 +25,7 @@ module network_define
 
     public :: network_initiation
 
-    integer:: debuglevel = 0
+    integer:: debuglevel = 1
 
 contains
     !
@@ -37,7 +37,8 @@ contains
         nodeI, nodeR, nodeYN, nodeName, &
         elem2R, elem2I, elem2YN, elem2Name, &
         elemMR, elemMI, elemMYN, elemMName, &
-        faceR,  faceI,  faceYN,  faceName)
+        faceR,  faceI,  faceYN,  faceName, &
+        swmm_graph)
         !
         ! Initializes a element-face network from a link-node network.
         ! Requires network links and nodes before execution (e.g. module test_cases)
@@ -78,6 +79,7 @@ contains
 
         integer :: ii
 
+        type(graph), intent(inout) :: swmm_graph
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -225,17 +227,17 @@ contains
 
     subroutine network_define_num_elements(g, linkR, nodeR, linkI, nodeI)
         type(graph), intent(inout) :: g
-        real, intent(in) :: linkR(:,:)
+        real, intent(inout) :: linkR(:,:)
         real, intent(in) :: nodeR(:,:)
-        integer, intent(in) :: linkI(:,:)
+        integer, intent(inout) :: linkI(:,:)
         integer, intent(in) :: nodeI(:,:)
 
-        integer :: i
+        integer :: i, j
         real :: flow_value
 
         do i = 1, nodes_with_extinflow%len
-            j = nodes_with_extinflow(i)
-            flow_value = get_max_inflow(j)
+            j = nodes_with_extinflow%array(i)
+            flow_value = get_max_inflow(j, nodeI)
             call traverse_graph_flow(g, j, flow_value)
         end do
 

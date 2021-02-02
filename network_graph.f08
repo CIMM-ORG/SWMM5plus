@@ -3,7 +3,11 @@ module network_graph
     use errors
     use interface
     use dynamic_array
+    use globals
+    use array_index
+    use data_keys
     use setting_definition
+    use inflow
 
     implicit none
 
@@ -36,7 +40,7 @@ contains
         integer, intent(in) :: source, destination, link_id
         call dyna_integer_append(g%g(source)%neighbors, destination)
         call dyna_integer_append(g%g(source)%link_id, link_id)
-        call dyna_real_apend(g%g(source)%neighbor_flows, 0)
+        call dyna_real_append(g%g(source)%neighbor_flows, 0.0)
     end subroutine add_graph_link
 
     subroutine free_graph(g)
@@ -82,12 +86,12 @@ contains
 
     subroutine traverse_cfl_condition(g, linkR, nodeR, linkI, nodeI)
         type(graph), intent(inout) :: g
-        real, intent(in) :: linkR(:,:)
+        real, intent(inout) :: linkR(:,:)
         real, intent(in) :: nodeR(:,:)
-        integer, intent(in) :: linkI(:,:)
+        integer, intent(inout) :: linkI(:,:)
         integer, intent(in) :: nodeI(:,:)
         integer :: i, j, link_id
-        real :: Q, N_R, SLP, Y, ML, MR, BT, TOL
+        real :: Q, N_R, SLP, Y, ML, MR, BT, TOL, A, P, F, DDF
         real, allocatable :: velocities(:)
 
         allocate(velocities(num_links))
@@ -109,10 +113,10 @@ contains
                 if (linkI(link_id, li_geometry) == lTrapezoidal) then
                     ML = linkI(link_id, lr_LeftSlope)
                     MR = linkI(link_id, lr_RightSlope)
-                    do while (ABS(TOL) > 10**-6)
+                    do while (ABS(TOL) > 10**(-6))
                         F = (SLP**(1/2)*(Y*BT + Y**2*ML/2 + Y**2*MR/2)**(5/3)) / &
                             (N_R*(BT+(Y**2+(Y*ML)**2)**0.5+(Y**2+(MR*Y)**2)**0.5)**(2/3)) - Q
-                        DDF = 5*SLP**0.5*(BT + ML*Y + MR*Y)*(BT*Y + L*Y**2/2 + R*Y**2/2)**(2/3) / &
+                        DDF = 5*SLP**0.5*(BT + ML*Y + MR*Y)*(BT*Y + ML*Y**2/2 + MR*Y**2/2)**(2/3) / &
                             (3*N_R*(BT + ((ML*Y)**2 + Y**2)**0.5 + ((MR*Y)**2 + Y**2)**0.5)**(2/3)) - &
                             2*SLP**-.5*((2*ML**2*Y+2*Y)/(2*((ML*Y)**2+Y**2)**0.5) + (2*MR**2*Y+2*Y)/(2*((MR*Y)**2+Y**2)**0.5)) &
                             *(BT*Y+ML*Y**2/2+MR*Y**2/2)**(5/3) / (3*N_R*(BT+((ML*Y)**2 + Y**2)**0.5+((MR*Y)**2 + Y**2)**0.5)**(5/3))
@@ -121,9 +125,8 @@ contains
                     end do
                     ! solve V with Manning
                     A = Y*BT + Y**2*ML/2 + Y**2*MR/2
-                    P = B + (Y**2 + (Y*ML)**2)**0.5 + (Y**2 + (Y**MR)**2)**0.5
-                    V = 1/N_R * (A/P)**(2/3) * SLP**0.5
-                    velocities(link_id) = V
+                    P = BT + (Y**2 + (Y*ML)**2)**0.5 + (Y**2 + (Y**MR)**2)**0.5
+                    velocities(link_id) = 1/N_R * (A/P)**(2/3) * SLP**0.5
                 else
                     print *, MSG_FEATURE_NOT_COMPATIBLE
                     stop
