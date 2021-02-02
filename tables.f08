@@ -1,25 +1,54 @@
 module tables
 
-    use linked_list
+    use dynamic_array
+
     implicit none
 
-    !%  diagnostic%Volume
-    type table
-        character(64) :: id
-        integer :: curve_type ! table type
-        integer, dimension(2) :: shape
-        type(list) :: data
-    end type table
+    integer, private :: debuglevel = 0
 
-! contains
+    ! Table types
+    integer, parameter :: tseries_table = 1
+    integer, parameter :: curve_table = 2
 
-!     subroutine add_time_series(id, type, swmm, X, Y, filepath)
-!         character(64) :: id
-!         integer :: type
-!         logical :: swmm
-!         real, dimension(*) :: X
-!         real, dimension(*) :: Y
-!         character(256) :: filepath
+    type real_table_XY
+        integer :: id
+        integer :: table_type
+        integer :: len
+        type(real_array) :: x
+        type(real_array) :: y
+    end type real_table_XY
 
-!     end subroutine add_time_series
+contains
+
+    subroutine tables_add_entry(table, x, y)
+        type(real_table_XY), intent(inout) :: table
+        real, intent(in) :: x
+        real, intent(in) :: y
+        character(64) :: subroutine_name
+
+        subroutine_name = 'tables_add_entry'
+
+        if (debuglevel > 0) print *, '*** enter ', subroutine_name
+
+        call dyna_real_append(table%x, x)
+        call dyna_real_append(table%y, y)
+
+        table%len = table%x%len
+        if (debuglevel > 0)  print *, '*** leave ', subroutine_name
+    end subroutine tables_add_entry
+
+    subroutine free_table(table)
+        type(real_table_XY), intent(inout) :: table
+        character(64) :: subroutine_name
+
+        subroutine_name = 'free_table'
+
+        if (debuglevel > 0) print *, '*** enter ', subroutine_name
+
+        call free_real_array(table%x)
+        call free_real_array(table%y)
+
+        if (debuglevel > 0)  print *, '*** leave ', subroutine_name
+    end subroutine free_table
+
 end module tables

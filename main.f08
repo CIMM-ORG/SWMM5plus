@@ -12,6 +12,8 @@ program main
     use initialization
     use initial_condition
     use junction
+    use interface
+    use network_graph
     use network_define
     use output
     use setting_definition
@@ -78,6 +80,7 @@ program main
     real,    dimension(:),      allocatable :: wdBreadth
     real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
     type(string), dimension(:), allocatable :: wdCellType(:)
+    type(graph) :: swmm_graph
 
     !--------------------------------------------------------------------------
     print *, ''
@@ -138,9 +141,22 @@ program main
             wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
             wdBreadth, wdWidthDepthData, wdCellType)
     else
+        ! --------------------
+        ! --- Initialize C API
+        ! --------------------
+
+        call initialize_api()
+
         call initialize_linknode_arrays &
             (linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
-        call initialize_tables()
+
+        swmm_graph = get_network_graph()
+
+        call finalize_api()
+
+        ! --------------------
+        ! --- Finalize C API
+        ! --------------------
         print *, 'error - code only designed for use with test cases'
         stop
     end if
@@ -163,7 +179,7 @@ program main
         linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
-        
+
     !% check consistency of the smallvolume setup
     call checking_smallvolume_consistency (elem2R, elemMR)
 

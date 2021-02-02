@@ -452,8 +452,10 @@ module array_index
     integer, parameter :: ni_N_link_d         = 4 ! number of downstram links at this node
     integer, parameter :: ni_curve_type       = 5 ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
     integer, parameter :: ni_assigned         = 6 ! given 1 when node has been assigned to face/elem,
-    integer, parameter :: ni_temp1            = 7
-    integer, parameter :: ni_idx_base1        = 7
+    integer, parameter :: ni_extinflow        = 7 ! index to extinflow (-1 if not extinflow)
+    integer, parameter :: ni_dwfinflow        = 8 ! index to dwfinflow (-1 if not dwfinflow)
+    integer, parameter :: ni_temp1            = 9
+    integer, parameter :: ni_idx_base1        = 9
 
     ! column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1

@@ -1,20 +1,27 @@
 module interface
+
+    use errors
     use iso_c_binding
     use dll_mod
-    use data_keys
-    use globals
     use objects
-    use array_index
+
+    use data_keys ! (comment if debugging)
+
     implicit none
 
     public
 
     ! interface to C DLL
     abstract interface
-        function api_initialize(f1, f2, f3)
+
+        ! --- Simulation
+
+        function api_initialize(inp_file, report_file, out_file)
             use, intrinsic :: iso_c_binding
             implicit none
-            character(c_char), dimension(*) :: f1, f2, f3
+            character(c_char), dimension(*) :: inp_file
+            character(c_char), dimension(*) :: report_file
+            character(c_char), dimension(*) :: out_file
             type(c_ptr) :: api_initialize
         end function api_initialize
 
@@ -24,63 +31,72 @@ module interface
             type(c_ptr), value, intent(in) :: api
         end subroutine api_finalize
 
-        function api_get_node_attribute(api, k, attr)
+        ! --- Property-extraction
+
+        ! * After Initialization
+
+        function api_get_node_attribute(api, k, attr, value)
             use, intrinsic :: iso_c_binding
             implicit none
             type(c_ptr), value, intent(in) :: api
             integer(c_int), value :: k
             integer(c_int), value :: attr
-            real(c_double) :: api_get_node_attribute
+            type(c_ptr), value, intent(in) :: value
+            integer(c_int) :: api_get_node_attribute
         end function api_get_node_attribute
 
-        function api_get_link_attribute(api, k, attr)
+        function api_get_link_attribute(api, k, attr, value)
             use, intrinsic :: iso_c_binding
             implicit none
             type(c_ptr), value, intent(in) :: api
             integer(c_int), value :: k
             integer(c_int), value :: attr
-            real(c_double) :: api_get_link_attribute
+            type(c_ptr), value, intent(in) :: value
+            integer(c_int) :: api_get_link_attribute
         end function api_get_link_attribute
 
-        function api_num_links()
-            use, intrinsic :: iso_c_binding
-            implicit none
-            integer(c_int) :: api_num_links
-        end function api_num_links
-
-        function api_num_nodes()
-            use, intrinsic :: iso_c_binding
-            implicit none
-            integer(c_int) :: api_num_nodes
-        end function api_num_nodes
-
-        function api_num_time_series()
-            use, intrinsic :: iso_c_binding
-            implicit none
-            integer(c_int) :: api_num_time_series
-        end function api_num_time_series
-
-        function api_num_curves()
-            use, intrinsic :: iso_c_binding
-            implicit none
-            integer(c_int) :: api_num_curves
-        end function api_num_curves
-
-        function api_get_next_tseries_entry(api, k, entries)
+        function api_get_num_objects(api, obj_type)
             use, intrinsic :: iso_c_binding
             implicit none
             type(c_ptr), value, intent(in) :: api
+            integer(c_int), value :: obj_type
+            integer(c_int) :: api_get_num_objects
+        end function api_get_num_objects
+
+        function api_get_first_table_entry(k, table_type, x, y)
+            use, intrinsic :: iso_c_binding
+            implicit none
             integer(c_int), value :: k
-            real(c_double) :: entries(4)
-            integer(c_int) :: api_get_next_tseries_entry
-        end function api_get_next_tseries_entry
+            integer(c_int), value :: table_type
+            type(c_ptr), value, intent(in) :: x
+            type(c_ptr), value, intent(in) :: y
+            integer(c_int) :: api_get_first_table_entry
+        end function api_get_first_table_entry
 
-        subroutine api_print_pattern(api, j)
+        function api_get_next_table_entry(k, table_type, x, y)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
-            integer(c_int), value :: j
-        end subroutine api_print_pattern
+            integer(c_int), value :: k
+            integer(c_int), value :: table_type
+            type(c_ptr), value, intent(in) :: x
+            type(c_ptr), value, intent(in) :: y
+            integer(c_int) :: api_get_next_table_entry
+        end function api_get_next_table_entry
+
+        function api_get_pattern_factors(k, factors)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value :: k
+            type(c_ptr), intent(inout) :: factors
+            integer(c_int) :: api_get_pattern_factors
+        end function api_get_pattern_factors
+
+        function api_get_pattern_type(k)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value :: k
+            integer(c_int) :: api_get_pattern_type
+        end function api_get_pattern_type
     end interface
 
     character(len = 1024), private :: errmsg
@@ -89,6 +105,40 @@ module interface
     type(dll_type), private :: dll
     type(os_type) :: os
     type(c_ptr) :: api
+    logical :: api_is_initialized = .false.
+
+    ! Error codes - Uncomment if debugging (also defined in globals.f08)
+    ! integer, parameter :: nullvalueI = -998877
+    ! real, parameter :: nullvalueR = -9.98877e16
+
+    ! Number of objects
+    integer :: num_nodes
+    integer :: num_links
+    integer :: num_curves
+    integer :: num_tseries
+
+    ! SWMM objects
+    integer, parameter :: SWMM_NODE = 2
+    integer, parameter :: SWMM_LINK = 3
+    integer, parameter :: SWMM_CURVES = 7
+    integer, parameter :: SWMM_TSERIES = 8
+    integer, parameter :: API_NODES_WITH_EXTINFLOW = 1000
+    integer, parameter :: API_NODES_WITH_DWFINFLOW = 1001
+
+    ! SWMM XSECT_TYPES
+    integer, parameter :: SWMM_RECT_CLOSED = 3
+    integer, parameter :: SWMM_RECT_OPEN = 4
+    integer, parameter :: SWMM_TRAPEZOIDAL = 5
+    integer, parameter :: SWMM_TRIANGULAR = 6
+    integer, parameter :: SWMM_PARABOLIC = 7
+
+    ! SWMM+ XSECT_TYPES - Uncomment if debugging (also defined in data_keys.f08)
+    ! integer, parameter :: lchannel = 1
+    ! integer, parameter :: lpipe = 2
+    ! integer, parameter :: lRectangular = 1
+    ! integer, parameter :: lParabolic = 2
+    ! integer, parameter :: lTrapezoidal = 3
+    ! integer, parameter :: lTriangular = 4
 
     ! api_node_attributes
     integer, parameter :: node_ID = 1
@@ -98,46 +148,57 @@ module interface
     integer, parameter :: node_extInflow_tSeries = 5
     integer, parameter :: node_extInflow_basePat = 6
     integer, parameter :: node_extInflow_baseline = 7
-    integer, parameter :: node_depth = 8
-    integer, parameter :: node_inflow = 9
-    integer, parameter :: node_volume = 10
-    integer, parameter :: node_overflow = 11
-    integer, parameter :: num_node_attributes = 11
+    integer, parameter :: node_extInflow_sFactor = 8
+    integer, parameter :: node_has_extInflow = 9
+    integer, parameter :: node_dwfInflow_monthly_pattern = 10
+    integer, parameter :: node_dwfInflow_daily_pattern = 11
+    integer, parameter :: node_dwfInflow_hourly_pattern = 12
+    integer, parameter :: node_dwfInflow_weekly_pattern = 13
+    integer, parameter :: node_dwfInflow_avgvalue = 14
+    integer, parameter :: node_has_dwfInflow = 15
+    integer, parameter :: node_inflow = 16
+    integer, parameter :: node_volume = 17
+    integer, parameter :: node_overflow = 18
+    integer, parameter :: num_node_attributes = 18
 
     ! api_link_attributes
     integer, parameter :: link_ID = 1
     integer, parameter :: link_subIndex = 2
-    integer, parameter :: link_type = 3
-    integer, parameter :: link_node1 = 4
-    integer, parameter :: link_node2 = 5
-    integer, parameter :: link_xsect_type = 6
-    integer, parameter :: link_xsect_wMax = 7
-    integer, parameter :: link_xsect_yBot = 8
-    integer, parameter :: link_q0 = 9
-    integer, parameter :: link_geometry = 10
-    integer, parameter :: conduit_roughness = 11
-    integer, parameter :: conduit_length = 12
-    integer, parameter :: link_flow = 13
-    integer, parameter :: link_depth = 14
-    integer, parameter :: link_volume = 15
-    integer, parameter :: link_froude = 16
-    integer, parameter :: link_setting = 17
-    integer, parameter :: link_left_slope = 18
-    integer, parameter :: link_right_slope = 19
-    integer, parameter :: num_link_attributes = 19
+    integer, parameter :: link_node1 = 3
+    integer, parameter :: link_node2 = 4
+    integer, parameter :: link_q0 = 5
+    integer, parameter :: link_flow = 6
+    integer, parameter :: link_depth = 7
+    integer, parameter :: link_volume = 8
+    integer, parameter :: link_froude = 9
+    integer, parameter :: link_setting = 10
+    integer, parameter :: link_left_slope = 11
+    integer, parameter :: link_right_slope = 12
+    integer, parameter :: conduit_roughness = 13
+    integer, parameter :: conduit_length = 14
+    integer, parameter :: num_link_attributes = 14
+    ! --- xsect attributes
+    integer, parameter :: link_type = 15
+    integer, parameter :: link_xsect_type = 16
+    integer, parameter :: link_geometry = 17
+    integer, parameter :: link_xsect_wMax = 18
+    integer, parameter :: link_xsect_yBot = 19
+    integer, parameter :: num_link_xsect_attributes = 19 - num_link_attributes
+    integer, parameter :: num_total_link_attributes = num_link_attributes + num_link_xsect_attributes
 
     procedure(api_initialize), pointer, private :: ptr_api_initialize
     procedure(api_finalize), pointer, private :: ptr_api_finalize
-    procedure(api_num_links), pointer, private :: ptr_api_num_links
-    procedure(api_num_nodes), pointer, private :: ptr_api_num_nodes
-    procedure(api_num_time_series), pointer, private :: ptr_api_num_time_series
-    procedure(api_num_curves), pointer, private :: ptr_api_num_curves
     procedure(api_get_node_attribute), pointer, private :: ptr_api_get_node_attribute
     procedure(api_get_link_attribute), pointer, private :: ptr_api_get_link_attribute
-    procedure(api_get_next_tseries_entry), pointer, private :: ptr_api_get_next_tseries_entry
-    procedure(api_print_pattern), pointer, private :: ptr_api_print_pattern
-
+    procedure(api_get_num_objects), pointer, private :: ptr_api_get_num_objects
+    procedure(api_get_first_table_entry), pointer, private :: ptr_api_get_first_table_entry
+    procedure(api_get_next_table_entry), pointer, private :: ptr_api_get_next_table_entry
+    procedure(api_get_pattern_factors), pointer, private :: ptr_api_get_pattern_factors
+    procedure(api_get_pattern_type), pointer, private :: ptr_api_get_pattern_type
 contains
+
+    ! --- Simulation
+
     subroutine initialize_api()
 
         integer :: ppos, num_args
@@ -149,7 +210,7 @@ contains
 
         subroutine_name = 'initialize_api'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+        if (debuglevel > 0) print *, '*** enter ', subroutine_name
 
         ! Initialize C API
         api = c_null_ptr
@@ -178,8 +239,7 @@ contains
         rpt_file = trim(rpt_file) // c_null_char
         out_file = trim(out_file) // c_null_char
 
-        ! TODO - change relative path
-        dll%filename = trim(cwd) // os%pathsep // "libswmm5.so"
+        dll%filename = "libswmm5.so"
 
         ! Initialize API
         dll%procname = "api_initialize"
@@ -187,8 +247,15 @@ contains
         call print_error(errstat, 'error: loading api_initialize')
         call c_f_procpointer(dll%procaddr, ptr_api_initialize)
         api = ptr_api_initialize(inp_file, rpt_file, out_file)
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
 
+        num_links = get_num_objects(SWMM_LINK)
+        num_nodes = get_num_objects(SWMM_NODE)
+        num_curves = get_num_objects(SWMM_CURVES)
+        num_tseries = get_num_objects(SWMM_TSERIES)
+
+        if (debuglevel > 0)  print *, '*** leave ', subroutine_name
+
+        api_is_initialized = .true.
     end subroutine initialize_api
 
     subroutine finalize_api()
@@ -196,7 +263,7 @@ contains
 
         subroutine_name = 'finalize_api'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+        if (debuglevel > 0) print *, '*** enter ', subroutine_name
 
         dll%procname = "api_finalize"
         call load_dll(os, dll, errstat, errmsg )
@@ -207,100 +274,34 @@ contains
             call print_error(errstat, dll%procname)
             stop
         end if
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        if (debuglevel > 0)  print *, '*** leave ', subroutine_name
 
     end subroutine finalize_api
 
-    function get_num_links()
+    ! --- Property-extraction
 
-        integer :: get_num_links
+    ! * After Initialization
+
+    function get_node_attribute(node_idx, attr)
+
+        integer :: node_idx, attr, error
+        real :: get_node_attribute
         character(64) :: subroutine_name
+        type(c_ptr) :: cptr_value
+        real (c_double), target :: node_value
 
-        subroutine_name = 'get_num_links'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-
-        dll%procname = "api_num_links"
-        call load_dll(os, dll, errstat, errmsg)
-        call print_error(errstat, 'error: loading api_num_links')
-        call c_f_procpointer(dll%procaddr, ptr_api_num_links)
-        get_num_links = ptr_api_num_links()
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
-
-    end function get_num_links
-
-    function get_num_nodes()
-
-        integer :: get_num_nodes
-        character(64) :: subroutine_name
-
-        subroutine_name = 'get_num_nodes'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-
-        dll%procname = "api_num_nodes"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_num_nodes')
-        call c_f_procpointer(dll%procaddr, ptr_api_num_nodes)
-        get_num_nodes = ptr_api_num_nodes()
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
-
-    end function get_num_nodes
-
-    function get_num_time_series()
-
-        integer :: get_num_time_series
-        character(64) :: subroutine_name
-
-        subroutine_name = 'get_num_time_series'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-
-        dll%procname = "api_num_time_series"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_num_time_series')
-        call c_f_procpointer(dll%procaddr, ptr_api_num_time_series)
-        get_num_time_series = ptr_api_num_time_series()
-        nobjects(num_tseries) = get_num_time_series
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
-
-    end function get_num_time_series
-
-    function get_num_curves()
-
-        integer :: get_num_curves
-        character(64) :: subroutine_name
-
-        subroutine_name = 'get_num_curves'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-
-        dll%procname = "api_num_curves"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_num_curves')
-        call c_f_procpointer(dll%procaddr, ptr_api_num_curves)
-        get_num_curves = ptr_api_num_curves()
-        nobjects(num_curves) = get_num_curves
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
-
-    end function get_num_curves
-
-    function get_node_attr(node_idx, attr)
-
-        integer :: node_idx, attr
-        real :: get_node_attr
-        character(64) :: subroutine_name
+        cptr_value = c_loc(node_value)
 
         subroutine_name = 'get_node_attr'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+        if (debuglevel > 0) print *, '*** enter ', subroutine_name
 
         if ((attr > num_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
             stop
         end if
 
-        if ((node_idx > N_node) .or. (node_idx < 1)) then
+        if ((node_idx > num_nodes) .or. (node_idx < 1)) then
             print *, "error: unexpected node index value", node_idx
             stop
         end if
@@ -310,27 +311,37 @@ contains
         call print_error(errstat, 'error: loading api_get_node_attribute')
         call c_f_procpointer(dll%procaddr, ptr_api_get_node_attribute)
         ! Fortran index starts in 1, whereas in C starts in 0
-        get_node_attr = ptr_api_get_node_attribute(api, node_idx-1, attr)
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        error = ptr_api_get_node_attribute(api, node_idx-1, attr, cptr_value)
+        call print_swmm_error_code(error)
 
-    end function get_node_attr
+        get_node_attribute = node_value
 
-    function get_link_attr(link_idx, attr)
+        if (debuglevel > 0)  then
+            print *, '*** leave ', subroutine_name
+            ! print *, "NODE", node_value, attr
+        end if
+    end function get_node_attribute
 
-        integer :: link_idx, attr
-        real :: get_link_attr
+    function get_link_attribute(link_idx, attr)
+
+        integer :: link_idx, attr, error
+        real :: get_link_attribute
         character(64) :: subroutine_name
+        type(c_ptr) :: cptr_value
+        real (c_double), target :: link_value
 
-        subroutine_name = 'get_link_attr'
+        cptr_value = c_loc(link_value)
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+        subroutine_name = 'get_link_attribute'
 
-        if ((attr > num_link_attributes) .or. (attr < 1)) then
+        if (debuglevel > 0) print *, '*** enter ', subroutine_name
+
+        if ((attr > num_total_link_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
             stop
         end if
 
-        if ((link_idx > N_link) .or. (link_idx < 1)) then
+        if ((link_idx > num_links) .or. (link_idx < 1)) then
             print *, "error: unexpected link index value", link_idx
             stop
         end if
@@ -339,114 +350,206 @@ contains
         call load_dll(os, dll, errstat, errmsg )
         call print_error(errstat, 'error: loading api_get_link_attribute')
         call c_f_procpointer(dll%procaddr, ptr_api_get_link_attribute)
-        ! Fortran index starts in 1, whereas in C starts in 0
-        get_link_attr = ptr_api_get_link_attribute(api, link_idx-1, attr)
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
 
-    end function get_link_attr
-
-    function get_link_xsect_attrs(link_idx, xsect_attr)
-        real :: get_link_xsect_attrs
-        integer :: link_idx, xsect_attr, xsect_type
-        character(64) :: subroutine_name
-
-        subroutine_name = 'get_link_xsect_attrs'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
-
-        xsect_type = get_link_attr(link_idx, link_xsect_type)
-        if (xsect_type == 3) then ! RECT_CLOSED
-            if (xsect_attr == link_geometry) then
-                get_link_xsect_attrs = lRectangular
-            else if (xsect_attr == link_type) then
-                get_link_xsect_attrs = lpipe
-            else if (xsect_attr == link_xsect_wMax) then
-                get_link_xsect_attrs = get_link_attr(link_idx, link_xsect_wMax)
-            else
-                get_link_xsect_attrs = nullvalueR
-            end if
-        else if (xsect_type == 4) then ! RECT_OPEN
-            if (xsect_attr == link_geometry) then
-                get_link_xsect_attrs = lRectangular
-            else if (xsect_attr == link_type) then
-                get_link_xsect_attrs = lchannel
-            else if (xsect_attr == link_xsect_wMax) then
-                get_link_xsect_attrs = get_link_attr(link_idx, link_xsect_wMax)
-            else
-                get_link_xsect_attrs = nullvalueR
-            end if
-        else if (xsect_type == 5) then ! TRAPEZOIDAL
-            if (xsect_attr == link_geometry) then
-                get_link_xsect_attrs = lTrapezoidal
-            else if (xsect_attr == link_type) then
-                get_link_xsect_attrs = lchannel
-            else if (xsect_attr == link_xsect_wMax) then
-                get_link_xsect_attrs = get_link_attr(link_idx, link_xsect_yBot)
-            else
-                get_link_xsect_attrs = nullvalueR
-            end if
-        else if (xsect_type == 6) then ! TRIANGULAR
-            if (xsect_attr == link_geometry) then
-                get_link_xsect_attrs = lTriangular
-            else if (xsect_attr == link_type) then
-                get_link_xsect_attrs = lchannel
-            else if (xsect_attr == link_xsect_wMax) then
-                get_link_xsect_attrs = get_link_attr(link_idx, link_xsect_wMax)
-            else
-                get_link_xsect_attrs = nullvalueR
-            end if
-        else if (xsect_type == 7) then ! PARABOLIC
-            if (xsect_attr == link_geometry) then
-                get_link_xsect_attrs = lParabolic
-            else if (xsect_attr == link_type) then
-                get_link_xsect_attrs = lchannel
-            else if (xsect_attr == link_xsect_wMax) then
-                get_link_xsect_attrs = get_link_attr(link_idx, link_xsect_wMax)
-            else
-                get_link_xsect_attrs = nullvalueR
-            end if
+        if (attr <= num_link_attributes) then
+            ! Fortran index starts in 1, whereas in C starts in 0
+            error = ptr_api_get_link_attribute(api, link_idx-1, attr, cptr_value)
+            call print_swmm_error_code(error)
+            get_link_attribute = link_value
         else
-            get_link_xsect_attrs = nullvalueR
+            error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_type, cptr_value)
+            call print_swmm_error_code(error)
+            get_link_attribute = link_value
+            if (link_value == SWMM_RECT_CLOSED) then
+                if (attr == link_geometry) then
+                    get_link_attribute = lRectangular
+                else if (attr == link_type) then
+                    get_link_attribute = lpipe
+                else if (attr == link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
+                    call print_swmm_error_code(error)
+                    get_link_attribute = link_value
+                else
+                    get_link_attribute = nullvalueR
+                end if
+            else if (link_value == SWMM_RECT_OPEN) then
+                if (attr == link_geometry) then
+                    get_link_attribute = lRectangular
+                else if (attr == link_type) then
+                    get_link_attribute = lchannel
+                else if (attr == link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
+                    call print_swmm_error_code(error)
+                    get_link_attribute = link_value
+                else
+                    get_link_attribute = nullvalueR
+                end if
+            else if (link_value == SWMM_TRAPEZOIDAL) then
+                if (attr == link_geometry) then
+                    get_link_attribute = lTrapezoidal
+                else if (attr == link_type) then
+                    get_link_attribute = lchannel
+                else if (attr == link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_yBot, cptr_value)
+                    call print_swmm_error_code(error)
+                    get_link_attribute = link_value
+                else
+                    get_link_attribute = nullvalueR
+                end if
+            else if (link_value == SWMM_TRIANGULAR) then
+                if (attr == link_geometry) then
+                    get_link_attribute = lTriangular
+                else if (attr == link_type) then
+                    get_link_attribute = lchannel
+                else if (attr == link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
+                    call print_swmm_error_code(error)
+                    get_link_attribute = link_value
+                else
+                    get_link_attribute = nullvalueR
+                end if
+            else if (link_value == SWMM_PARABOLIC) then
+                if (attr == link_geometry) then
+                    get_link_attribute = lParabolic
+                else if (attr == link_type) then
+                    get_link_attribute = lchannel
+                else if (attr == link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
+                    call print_swmm_error_code(error)
+                    get_link_attribute = link_value
+                else
+                    get_link_attribute = nullvalueR
+                end if
+            else
+                get_link_attribute = nullvalueR
+            end if
         end if
+        if (debuglevel > 0)  then
+            print *, '*** leave ', subroutine_name
+            ! print *, "LINK", link_value, attr
+        end if
+    end function get_link_attribute
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    function get_num_objects(obj_type)
 
-    end function get_link_xsect_attrs
-
-    function get_table_entries(k, entries)
-        use iso_c_binding
-        integer, intent(in):: k
-        integer :: get_table_entries
-        double precision, target :: entries(4) ! [x1, y1, x2, y2]
-        character(64) :: subroutine_name = "get_table_entries (interface.f08)"
-
-        dll%procname = "api_get_next_tseries_entry"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_get_next_tseries_entry')
-        call c_f_procpointer(dll%procaddr, ptr_api_get_next_tseries_entry)
-        get_table_entries = ptr_api_get_next_tseries_entry(api, k, entries)
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
-    end function get_table_entries
-
-    subroutine print_pattern(k)
-        use iso_c_binding
-        integer, intent(in):: k
+        integer :: obj_type
+        integer :: get_num_objects
         character(64) :: subroutine_name
 
-        subroutine_name = 'print_pattern'
+        subroutine_name = 'get_num_objects'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+        if (debuglevel > 0) print *, '*** enter ', subroutine_name
 
-        dll%procname = "api_print_pattern"
+        dll%procname = "api_get_num_objects"
         call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_print_pattern')
-        call c_f_procpointer(dll%procaddr, ptr_api_print_pattern)
-        call ptr_api_print_pattern(api, k)
-        if (errstat /= 0) then
-            call print_error(errstat, dll%procname)
+        call print_error(errstat, 'error: loading api_get_num_objects')
+        call c_f_procpointer(dll%procaddr, ptr_api_get_num_objects)
+        get_num_objects = ptr_api_get_num_objects(api, obj_type)
+        if (debuglevel > 0)  print *, '*** leave ', subroutine_name
+
+    end function get_num_objects
+
+    function get_first_table_entry(k, table_type, entries)
+        integer, intent(in) :: k ! table id
+        integer, intent(in) :: table_type
+        real, dimension(2), intent(inout) :: entries
+        integer :: get_first_table_entry
+        type(c_ptr) :: cptr_x, cptr_y
+        real (c_double), target :: x, y
+
+        cptr_x = c_loc(x)
+        cptr_y = c_loc(y)
+
+        dll%procname = "api_get_first_table_entry"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_get_first_table_entry')
+        call c_f_procpointer(dll%procaddr, ptr_api_get_first_table_entry)
+        get_first_table_entry = ptr_api_get_first_table_entry(k, table_type, cptr_x, cptr_y)
+        print *, x, y
+    end function get_first_table_entry
+
+    function get_next_table_entry(k, table_type, entries)
+        integer, intent(in) :: k ! table id
+        integer, intent(in) :: table_type
+        real, dimension(2), intent(inout) :: entries
+        integer :: get_next_table_entry
+        type(c_ptr) :: cptr_x, cptr_y
+        real (c_double), target :: x, y
+
+        cptr_x = c_loc(x)
+        cptr_y = c_loc(y)
+
+        dll%procname = "api_get_next_table_entry"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_get_next_table_entry')
+        call c_f_procpointer(dll%procaddr, ptr_api_get_next_table_entry)
+        get_next_table_entry = ptr_api_get_next_table_entry(k, table_type, cptr_x, cptr_y)
+
+        entries(1) = x
+        entries(2) = y
+    end function get_next_table_entry
+
+    function get_inflow_tseries(k)
+        integer, intent(in) :: k
+        type(tseries) :: get_inflow_tseries
+
+        integer :: success
+        real, dimension(2) :: entries
+
+        success = get_first_table_entry(k, SWMM_TSERIES, entries)
+        call tables_add_entry(get_inflow_tseries%table, entries(1), entries(2))
+        do while (.true.)
+            success = get_next_table_entry(k, SWMM_TSERIES, entries)
+            if (success == 0) exit
+            call tables_add_entry(get_inflow_tseries%table, entries(1), entries(2))
+        end do
+    end function get_inflow_tseries
+
+    function get_pattern_factors(k)
+        integer, intent(in) :: k
+        type(pattern) :: pfactors
+        type(pattern) :: get_pattern_factors
+        integer :: i, count
+        real(c_double), dimension(24), target :: factors
+        type(c_ptr) :: cptr_factors
+
+        cptr_factors = c_loc(factors)
+
+        if (k .ne. -1) then
+            dll%procname = "api_get_pattern_factors"
+            call load_dll(os, dll, errstat, errmsg )
+            call print_error(errstat, 'error: loading api_get_pattern_factors')
+            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factors)
+            count = ptr_api_get_pattern_factors(k, cptr_factors)
+
+            dll%procname = "api_get_pattern_factors"
+            call load_dll(os, dll, errstat, errmsg )
+            call print_error(errstat, 'error: loading api_get_pattern_factors')
+            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factors)
+            get_pattern_factors%count = ptr_api_get_pattern_factors(k, cptr_factors)
+            get_pattern_factors%type = get_pattern_type(k)
+            get_pattern_factors%factor = factors
+        end if
+    end function get_pattern_factors
+
+    function get_pattern_type(k)
+        integer, intent(in) :: k
+        integer :: get_pattern_type
+
+        dll%procname = "api_get_pattern_type"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_get_pattern_type')
+        call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_type)
+        get_pattern_type = ptr_api_get_pattern_type(k)
+    end function get_pattern_type
+
+    ! --- Utils
+    subroutine print_swmm_error_code(error)
+        integer, intent(in) :: error
+        if (error .ne. 0) then
+            print *, "SWMM Error Code: " , error
             stop
         end if
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    end subroutine print_swmm_error_code
 
-    end subroutine print_pattern
 end module interface

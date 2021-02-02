@@ -16,6 +16,8 @@ module network_define
     use data_keys
     use globals
     use junction
+    use interface
+    use network_graph
 
     implicit none
 
@@ -23,7 +25,7 @@ module network_define
 
     public :: network_initiation
 
-    integer:: debuglevel = 1
+    integer:: debuglevel = 0
 
 contains
     !
@@ -98,6 +100,8 @@ contains
         ! system. Where found the system needs to be subdivided into monotonic links.
         ! Typically this should only be an issue where the links are representing a
         ! high-resolution natural channel.
+
+        call network_define_num_elements(swmm_graph, linkR, nodeR, linkI, nodeI)
 
         !%   add sections of links to the nodes to create junctions
         call network_adjust_link_length (linkR, nodeR, linkI, nodeI)
@@ -218,6 +222,26 @@ contains
     !
     !==========================================================================
     !
+
+    subroutine network_define_num_elements(g, linkR, nodeR, linkI, nodeI)
+        type(graph), intent(inout) :: g
+        real, intent(in) :: linkR(:,:)
+        real, intent(in) :: nodeR(:,:)
+        integer, intent(in) :: linkI(:,:)
+        integer, intent(in) :: nodeI(:,:)
+
+        integer :: i
+        real :: flow_value
+
+        do i = 1, nodes_with_extinflow%len
+            j = nodes_with_extinflow(i)
+            flow_value = get_max_inflow(j)
+            call traverse_graph_flow(g, j, flow_value)
+        end do
+
+        call traverse_cfl_condition(g, linkR, nodeR, linkI, nodeI)
+    end subroutine network_define_num_elements
+
     subroutine network_node_assignment &
         (nodeI, linkI)
         !
@@ -1820,17 +1844,4 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine link_shortening
-
-    subroutine compute_elements()
-    
-        implicit none
-
-        type1,intent(in) :: arg1
-        type2,intent(out) ::  arg2
-
-    end subroutine compute_elements
-    !
-    !==========================================================================
-    ! END OF MODULE network_define
-    !==========================================================================
 end module network_define
