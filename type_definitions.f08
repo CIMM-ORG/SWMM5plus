@@ -20,6 +20,27 @@ module type_definitions
         character(len=:), allocatable :: str
     end type string
 
+    !%  control data
+    type controlType
+        integer :: Idx
+        integer :: LinkId
+        integer :: ElemId
+        real, dimension(:), allocatable :: TimeArray
+        real, dimension(:), allocatable :: HeightArray
+        real, dimension(:), allocatable :: AreaArray
+        real    :: HeightStart
+        real    :: HeightNow
+        real    :: AreaNow
+        real    :: AreaPrior
+        real    :: GateTimeChange1
+        real    :: GateTimeChange2
+        real    :: GateHeightChange1
+        real    :: GateHeightChange2
+        real    :: HeightMinimum
+        real    :: GateSpeed
+        logical :: CanMove
+        logical :: MovedThisStep     
+    end type controlType
 
     !%  diagnostic%Volume
     type diagnosticVolumeType

@@ -117,6 +117,8 @@ contains
 
         !%  pseudo time loop
         do while ( (isConverged .eqv. .false.) .and. (thisIter < iterMax) )
+            print*, '----------------------------------------------'
+            print*, 'ac iter', thisIter, ' at step ', thisStep
             thisIter = thisIter + oneI
             !%  store norms from the last iteration
             AnormHlast = AnormH

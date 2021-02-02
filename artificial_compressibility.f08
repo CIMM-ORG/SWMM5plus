@@ -224,10 +224,10 @@ contains
         elsewhere ( maskChannelPipeAC .and. (isFull .eqv. .true.) )
             eta2new = eta2old + wrk * dtau * kc2
         endwhere 
-
+        print*, volume2old, 'volume2old'
+        print*, volume2new, 'volume2new'
+        print*, '...... ............... ...........'
         !%  HACK: Need derivation for juction-pipe elements
-
-        
 
         !% find the full pipes that become open to adjust negative eta2new
         fullPipeOpen = ( (elem2I(:,e2i_elem_type) == ePipe) .and. &
@@ -311,6 +311,7 @@ contains
             !%  baseline continuity source 
             kc2 = fQ(iup) - fQ(idn)
         endwhere
+        print*, kc2, 'continuity source calculation'
 
         !%  additional source terms
         where ( maskChannelPipeAC .and. (isFull .eqv. .false.) )
@@ -322,12 +323,16 @@ contains
             !%  combine interior gamma and lambda (irrelevant in H)
             kc2 = lambdaH * (kc2 + gammaH * eta2old)
         endwhere
+        print*,kc2, 'additional source terms'
         
         !%  C term numerator calculation
         where ( maskChannelPipeAC )
             !%  baseline C term numerator
             kc2 = kc2 * elN2 * rc2
         endwhere
+        print*, elN2
+        print*
+        print*, kc2, 'baseline C term numerator'
 
         !%  additional C term numerator calculation
         where ( maskChannelPipeAC .and. (isFull .eqv. .false.) )
@@ -337,6 +342,7 @@ contains
             !%  C denominator for closed pipe (V) 
             kc2 = kc2 / volume2new
         endwhere
+        print*, kc2, 'additional C term numerator calculation'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine Kvolume2AC
@@ -499,6 +505,17 @@ contains
             volume2new = fullVolume2
             isfull     = .true.
         endwhere
+        if (count(isfull) >0) then
+            print*, fullVolume2, 'fullVolume2'
+            print*
+            print*, volume2new, 'volume2new'
+            print*
+            print*, eta2new, 'eta2new'
+            print*
+            print*, 'full pipe deteted'
+            print*, 'press return to continue'
+            read(*,*)
+        endif
         !===========================================================================
         !% FULL PIPES
         !% Set the full pipe volume2new

@@ -12,6 +12,7 @@ module initial_condition
     use array_index
     use bc
     use data_keys
+    use control
     use element_geometry
     use element_dynamics
     use face_values
@@ -39,8 +40,8 @@ contains
     !
     subroutine initial_condition_setup &
         (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, thisTime, ID,           &
-        numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,            &
+        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, gateSetting, thisTime,   &
+        ID, numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,         &
         widthDepthData, cellType)
 
         character(64) :: subroutine_name = 'initial_condition_setup'
@@ -54,6 +55,7 @@ contains
         real,                intent(in)      :: thisTime
 
         type(bcType),        intent(in out)      :: bcdataDn(:), bcdataUp(:)
+        type(controlType),   intent(in out)      :: gateSetting(:)
 
         integer, intent(inout)    :: ID(:)
         integer, intent(inout)    :: numberPairs(:)
@@ -85,6 +87,13 @@ contains
         call initial_storage_conditions &
             (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
 
+        !% set elements to cotrol structure
+        call control_assign &
+            (elem2I, gateSetting, N_Gates)
+
+        !% set initial control conditions
+        call control_evaluate &
+            (elem2I, elem2R, gateSetting, N_Gates, thistime)
 
         !% set the bc elements (outside of face) to null values
         call bc_nullify_ghost_elem (elem2R, bcdataDn)

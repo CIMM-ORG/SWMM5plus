@@ -61,6 +61,9 @@ program main
     !%  bcdata are structures containing boundary condition data
     type(bcType), dimension(:), allocatable :: bcdataUp, bcdataDn
 
+    !%  control data are structures containinng gate settings
+    type(controlType), dimension(:), allocatable :: gateSetting 
+
     !%  debug output file information
     type(debugfileType),  dimension(:),   allocatable :: debugfile
 
@@ -98,9 +101,11 @@ program main
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
-    setting%TestCase%TestName = 'simple_pipe_006'
+    ! setting%TestCase%TestName = 'simple_pipe_006'
     ! setting%TestCase%TestName = 'swashes_007'
     ! setting%TestCase%TestName = 'width_depth'
+    setting%TestCase%TestName = 'trajkovic_case_a1'
+
 
 
     !%  hard-code for debug output
@@ -139,7 +144,7 @@ program main
     if (setting%TestCase%UseTestCase) then
         call test_case_initiation &
             (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-            bcdataDn, bcdataUp, &
+            bcdataDn, bcdataUp, gateSetting, &
             wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
             wdBreadth, wdWidthDepthData, wdCellType)
     else
@@ -158,7 +163,6 @@ program main
         elemMR, elemMI, elemMYN, elemMName, &
         faceR,  faceI,  faceYN,  faceName)
     
-
     print *, 'in main'
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
@@ -166,11 +170,9 @@ program main
     !% set the initial conditions throughout
     call initial_condition_setup &
         (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
-        wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
-        wdBreadth, wdWidthDepthData, wdCellType)
-    
-
+        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, gateSetting,             &
+        setting%Time%StartTime, wdID, wdNumberPairs, wdManningsN, wdLength,      &
+        wdZBottom, wdXDistance, wdBreadth, wdWidthDepthData, wdCellType)
 
     !stop to check if the initial conditions are setup correctly
     !check the geometry values
@@ -204,7 +206,7 @@ program main
     !%  time marching of continuity and momentum
     call time_marching &
         (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
-        bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile, &
+        bcdataDn, bcdataUp, gateSetting, linkI, debugfile, diagnostic, threadedfile, &
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
 

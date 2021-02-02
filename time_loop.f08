@@ -9,6 +9,7 @@ module time_loop
     use ac_convergence_loop
     use array_index
     use bc
+    use control
     use data_keys
     use debug
     use diagnostic
@@ -36,10 +37,10 @@ contains
     !==========================================================================
     !
     subroutine time_marching &
-        (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN,   &
-        faceYN, bcdataDn, bcdataUp, linkI, debugfile, diagnostic,         &
-        threadedfile, ID, numberPairs, ManningsN, Length, zBottom,        &
-        xDistance, Breadth, widthDepthData, cellType)
+        (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN,       &
+        faceYN, bcdataDn, bcdataUp, gateSetting, linkI, debugfile, diagnostic, &
+        threadedfile, ID, numberPairs, ManningsN, Length, zBottom, xDistance,  &
+        Breadth, widthDepthData, cellType)
         !
         ! top-level iteration for continuity and momentum solution
         !
@@ -50,6 +51,7 @@ contains
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
         type(bcType),                  intent(in out) :: bcdataDn(:), bcdataUp(:)
+        type(controlType),             intent(in out) :: gateSetting(:)
         type(debugfileType),  target,  intent(in)     :: debugfile(:)
         type(diagnosticType), target,  intent(in out) :: diagnostic(:)
         type(threadedfileType),        intent(in)     :: threadedfile(:)
@@ -156,7 +158,6 @@ contains
                 endif
             endif
             
-
             call debug_output &
                 (debugfile, elem2R, elem2I, elem2YN, elemMR,  &
                 elemMI, elemMYN, faceR, faceI, faceYN,bcdataUp, bcdataDn, thisstep)
@@ -174,7 +175,9 @@ contains
             !% rkCycle mask ensures both the RK steps are taken for time loop
             rkCycle(1) = .true.
             rkCycle(2) = .true.
-            !print *, "Check Point 1_1"
+
+            call control_evaluate &
+                (elem2I, elem2R, gateSetting, N_Gates, thistime)
 
             call rk2 &
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &

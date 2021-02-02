@@ -80,7 +80,6 @@ contains
         fEdn               => faceR(:,fr_Eta_d)
         fEup               => faceR(:,fr_Eta_u)
 
-
         !%  output
         oFlow              => elem2R(:,e2r_Flowrate)
         oEta               => elem2R(:,e2r_eta)
@@ -198,7 +197,6 @@ contains
         next_e2YN_temparray = next_e2YN_temparray - 2
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-
     end subroutine orifice_step
     !
     !==========================================================================
@@ -206,7 +204,7 @@ contains
     !==========================================================================
     !
     subroutine orifice_initialize &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,    &
+        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,   &
         inletoffset, zbottom, fulldepth, length, eta, crown, crest, &
         faceEtaDn, faceEtaUp, upFace, dnFace, dir)
         !
@@ -239,7 +237,6 @@ contains
         endwhere
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-
     end subroutine orifice_initialize
     !
     !==========================================================================
@@ -381,8 +378,7 @@ contains
 
         !% find degree of submergence for side orifice
         where ( (elem2I(:,e2i_orif_elem_type) == eSideOrifice) .and. &
-                (eta .LT. Crown                              ) .and. &
-                (crown .GT. crest                            )       )
+                (eta .LT. Crown                              )       )
 
             submergenceFactor = (eta - crest) / (crown - crest)
 
@@ -416,6 +412,9 @@ contains
             effectiveHead = min((eta - (crest + crown) / twoR), &
                 dir * (faceEtaDn(upFace) - faceEtaUp(dnFace)))
         endwhere
+
+        print*, 'head', effectiveHead
+        print*
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine orifice_effective_head
@@ -607,6 +606,14 @@ contains
             velocity2 = flow / area
             volume2   = flow * dt * thiscoef
         endwhere
+
+        print*, 'flow', flow
+        print*
+        print*, 'velocity2', velocity2
+        print*
+        print*, 'volume2', volume2
+        print*
+
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine orifice_flow

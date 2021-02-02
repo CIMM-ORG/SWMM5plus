@@ -21,6 +21,7 @@ module test_cases
     use globals
     use read_width_depth
     use setting_definition
+    use trajkovic_cases
     use utility
     use xsect_tables
 
@@ -38,9 +39,10 @@ contains
     !==========================================================================
     !
     subroutine test_case_initiation &
-        (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
-        bcdataDn, bcdataUp, newID, newNumberPairs, newManningsN, newLength, &
-        newZBottom, newXDistance, newBreadth, newWidthDepthData, newCellType)
+        (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,      &
+        bcdataDn, bcdataUp, gateSetting, newID, newNumberPairs, newManningsN, &
+        newLength, newZBottom, newXDistance, newBreadth, newWidthDepthData,   &
+        newCellType)
 
         character(64) :: subroutine_name = 'test_case_initiation'
 
@@ -53,6 +55,7 @@ contains
         type(string), dimension(:),   allocatable, intent(out) :: linkName
         type(string), dimension(:),   allocatable, intent(out) :: nodeName
         type(bcType), dimension(:),   allocatable, intent(out) :: bcdataUp, bcdataDn
+        type(controlType), dimension(:),   allocatable, intent(out) :: gateSetting
 
         real, dimension(:), allocatable :: depth_dnstream, depth_upstream, init_depth
         real, dimension(:), allocatable :: subdivide_length, channel_length
@@ -930,8 +933,55 @@ contains
                     lowerZ, upperZ, ManningsN)
             endif
 
-            ! print *, flowrate, depth_dnstream
-            ! stop
+
+          case ('trajkovic_case_a1')
+        
+          !%  this test case is to debug ac solver
+          N_node = 7
+          N_link = 6
+          N_BCupstream = 1
+          N_BCdnstream = 1
+
+          !% step controls (fixed later)
+          display_interval = 1
+          first_step       = 1
+          last_step        = 1000
+
+          CFL          = 0.5   ! determines dt from subdivide_length
+
+          !% create the local variables that must be populated to set up the test case
+            call control_variable_allocation &
+                (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+                channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+                velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                dischargeCoefficient2, fullDepth, endContractions)
+
+          call trajkovic_cases_setup &
+                (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+                channel_breadth, subdivide_length, flowrate, area, velocity, Froude,         &
+                ManningsN, idepth_type, channel_geometry, inletOffset, fullDepth,            &
+                dischargeCoefficient1)
+
+          call trajkovic_cases_initialize &
+                (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
+                flowrate, depth_upstream, depth_dnstream, init_depth,  inletOffset, &
+                dischargeCoefficient1, fullDepth, ManningsN, idepth_type, linkR,    &
+                nodeR, linkI, nodeI,linkYN, nodeYN, linkName, nodeName, bcdataDn,   &
+                bcdataUp, gateSetting)
+
+          call this_setting_for_time_and_steps &
+                (CFL, velocity, init_depth, subdivide_length, &
+                first_step, last_step, display_interval,2)
+                
+          if (.not. setting%Debugout%SuppressAllFiles) then
+                call write_testcase_setup_file &
+                    (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                    depth_dnstream, channel_breadth, channel_topwidth, area, &
+                    channel_length, subdivide_length, &
+                    lowerZ, upperZ, ManningsN)
+            endif
+
             
           case default
             print *, setting%TestCase%TestName

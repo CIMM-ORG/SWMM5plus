@@ -25,7 +25,7 @@ module setting_definition
     type adjustPressureType
         character(len=64)   ::  Type  = 'vshape'  !'smoothall' 'vshape'
         logical             ::  Apply = .true.
-        real                ::  Coef  = 0.5
+        real                ::  Coef  = 1.0
     end type adjustPressureType
 
     !% setting%Method%AdjustWidthDepth
@@ -266,7 +266,7 @@ module setting_definition
 
     !%  setting%Solver
     type solverType
-        character(len=64)       :: SolverSelect =  'SVE'! 'SVE-AC', 'AC'
+        character(len=64)       :: SolverSelect =  'AC'! 'SVE-AC', 'SVE'
     end type solverType 
 
     !% FIRST LEVEL TYPE  ----------------------------------------------

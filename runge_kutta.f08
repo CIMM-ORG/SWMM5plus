@@ -159,9 +159,9 @@ contains
                         faceR, elem2I, elemMI, elem2YN, elemMYN, dt, af, thiscoef(ii)) 
                 endif
 
-                ! !%  Sets the Qonly element geometry to provisional values
-                ! call QonlyElement_provisional_geometry &
-                !     (elem2R, elemMR, faceR, elem2I, elemMI)
+                !%  Sets the Qonly element geometry to provisional values
+                call QonlyElement_provisional_geometry &
+                    (elem2R, elemMR, faceR, elem2I, elemMI)
 
                 ! if ( count(elemMI(:,eMi_elem_type) == eStorage) > zeroI) then
                 !     ! call storage step if storage unit exists in the network
@@ -176,11 +176,10 @@ contains
                     faceYN, bcdataDn, bcdataUp, steptime, ii, ID, numberPairs, ManningsN, &
                     Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
 
-                ! !% advane Qonly elemnt
-                ! call QonlyElement_step &
-                !     (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
-                !     e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR,  &
-                !     faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
+                !% advane Qonly elemnt
+                call QonlyElement_step &
+                    (e2r_Volume_new, e2r_Velocity_new, elem2R, elemMR,  faceI, faceR, faceYN, &
+                    elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
 
                 if (ii==1) then
                     !% store the net face fluxes that are used for volume advance.
@@ -620,18 +619,13 @@ contains
     !==========================================================================
     !
     subroutine QonlyElement_step &
-        (e2r_Volume_old, e2r_Velocity_old, eMr_Volume_old, eMr_Velocity_old, &
-        e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-        elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, &
-        elemMYN, thiscoef)
+        (e2r_Volume_new, e2r_Velocity_new, elem2R, elemMR, faceI, faceR, &
+        faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef)
         !
         character(64) :: subroutine_name = 'QonlyElement_step'
 
-        ! indexes for old/new volume and velocity storage
-        integer,   intent(in) :: e2r_Volume_old, e2r_Velocity_old
-        integer,   intent(in) :: eMr_Volume_old, eMr_Velocity_old
+        ! indexes for new volume and velocity storage
         integer,   intent(in) :: e2r_Volume_new, e2r_Velocity_new
-        integer,   intent(in) :: eMr_Volume_new, eMr_Velocity_new
 
         real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,           intent(in out)  :: faceI(:,:)
@@ -679,7 +673,7 @@ contains
                 (e2r_Volume_new, e2r_Velocity_new, elem2R, elemMR, faceI, faceR, &
                 faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef)
         endif
-
+        
         !% face reconstruction -- only flow values
         !% update the flow to their faces
         facemask = ( (faceI(:,fi_meta_etype_u) == eQonly) .or. &

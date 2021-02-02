@@ -36,7 +36,7 @@ contains
         roughness_type, idepth_type, linkR, nodeR, linkI, nodeI,linkYN,     &
         nodeYN, linkName, nodeName, bcdataDn, bcdataUp)
         !
-        ! initialize the link-node system and boundary conditions for a simple channel
+        ! initialize the link-node system and boundary conditions for a simple orifice
         !
         character(64) :: subroutine_name = 'case_simple_orifice_initialize'
 
@@ -64,8 +64,6 @@ contains
         type(bcType), dimension(:), allocatable, intent(out) :: bcdataUp, bcdataDn
 
         integer    :: ntimepoint, ndnstreamBC, nupstreamBC
-
-
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 

@@ -52,6 +52,7 @@ module globals
     integer :: N_face
     integer :: N_BCupstream
     integer :: N_BCdnstream
+    integer :: N_Gates
     integer :: dummy_face_index
     integer :: dummy_elem2_index
     integer :: dummy_elemM_index

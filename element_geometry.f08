@@ -569,6 +569,19 @@ contains
             elN       = hyddepth
 
         endwhere
+
+        if (count(isfull)>0) then
+            print*, eta, 'eta'
+            print*
+            print*, area , 'area'
+            print*
+            print*, depth, 'depth'
+            print*
+            print*, topwidth, 'topwidth'
+            print*
+            print*, 'element geom: press return to continue'
+            read(*,*)
+        endif
         !% HACK: other special geometry types are needed
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -651,14 +664,6 @@ contains
             (elemI, elemR, hydradius, YoverYfull, RCirc, NRCirc, maskarray, &
             ei_Temp, next_ei_temparray, ei_n_temp)
 
-        ! find modified hydraulic depth and for circular pipe from pipeAC Hodges 2020
-        where ( (maskarray) .and. (AoverAfull .GT. onehalfR) )
-            hyddepth   = eta - zbottom + (onehalfR*fulldepth) * (onefourthR*pi - oneR)
-
-        elsewhere ( (maskarray) .and. (AoverAfull .LT. onehalfR) )
-            hyddepth   = max(area / topwidth, zeroR)
-        endwhere
-
         !% find all the circular geometric properties from normalized values
         where (maskarray)
            depth      = fulldepth * YoverYfull 
@@ -666,8 +671,24 @@ contains
            topwidth   = fulldepth * topwidth
            hydradius  = onefourthR * fulldepth * hydradius
            perimeter  = area / hydradius
-           elN        = hyddepth
         endwhere
+
+        ! find modified hydraulic depth and for circular pipe from pipeAC Hodges 2020
+        where ( (maskarray) .and. (AoverAfull .GT. onehalfR) )
+            hyddepth   = eta - zbottom + (onehalfR*fulldepth) * (onefourthR*pi - oneR)
+            elN        = hyddepth
+        elsewhere ( (maskarray) .and. (AoverAfull .LE. onehalfR) .and. (AoverAfull .GT. zeroR) )
+            hyddepth   = max(area / topwidth, zeroR)
+            elN        = hyddepth
+        endwhere
+        print*,'..............................................'
+        print*, topwidth, 'topwidth'
+        print*
+        print*, area, 'area'
+        print*
+        print*, elN, '<================== eln at elem geom'
+        print*
+        print*,'...............................................'
 
         !% constants for circular dHdA (pipeAC2020)
         af = 1.29

@@ -199,6 +199,11 @@ contains
         call table_interpolation &
             (inoutarray, normalizedInput, table, nItems, maskarray, delta, position)
 
+            if (any(inoutarray == zeroR)) then
+                print*, 'error: zero inoutarray'
+                stop
+            endif
+
         position = nullvalueI
         nullify(position)
         next_ei_temparray = next_ei_temparray-1
