@@ -914,6 +914,7 @@ contains
             elem2R(thisElem2,e2r_Zbottom)           = nodeR(thisNode,nr_Zbottom)       &
                 - 0.5 * linkR(thisLink,lr_Slope)   &
                 * linkR(thislink,lr_ElementLength)
+            print*, elem2R(thisElem2,e2r_Zbottom)
 
             select case (linkI(thisLink,li_geometry))
               case (lRectangular)

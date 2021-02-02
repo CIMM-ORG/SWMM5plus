@@ -92,9 +92,9 @@ program main
     !===========================================================
     !%  hard-code setting for test cases
 
-    setting%TestCase%UseTestCase = .false.
+    setting%TestCase%UseTestCase = .true.
     ! setting%TestCase%TestName = 'simple_channel_001'
-    ! setting%TestCase%TestName = 'y_channel_002'
+    setting%TestCase%TestName = 'y_channel_002'
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
@@ -192,9 +192,9 @@ program main
     !%  time marching of continuity and momentum
     call time_marching &
         (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
-        bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile, &
-        wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
-        wdBreadth, wdWidthDepthData, wdCellType)
+        bcdataDn, bcdataUp, linkI, nodeI, linkR, nodeR, debugfile, diagnostic,   &
+        threadedfile, wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom,     &
+        wdXDistance, wdBreadth, wdWidthDepthData, wdCellType)
 
     !% uncomment this if you want a final debug output
     ! call debug_output &

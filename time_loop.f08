@@ -35,9 +35,9 @@ contains
     !
     subroutine time_marching &
         (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN,   &
-        faceYN, bcdataDn, bcdataUp, linkI, debugfile, diagnostic,         &
-        threadedfile, ID, numberPairs, ManningsN, Length, zBottom,        &
-        xDistance, Breadth, widthDepthData, cellType)
+        faceYN, bcdataDn, bcdataUp, linkI, nodeI, linkR, nodeR, debugfile, &
+        diagnostic, threadedfile, ID, numberPairs, ManningsN, Length,      &
+        zBottom, xDistance, Breadth, widthDepthData, cellType)
         !
         ! top-level iteration for continuity and momentum solution
         !
@@ -52,7 +52,8 @@ contains
         type(diagnosticType), target,  intent(in out) :: diagnostic(:)
         type(threadedfileType),        intent(in)     :: threadedfile(:)
 
-        integer,                       intent(in)     :: linkI(:,:)
+        integer,                       intent(in)     :: linkI(:,:), nodeI(:,:)
+        real,                          intent(in out) :: linkR(:,:), nodeR(:,:)
 
         real, pointer :: rkVol(:), rkU(:)
         real, pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
@@ -154,9 +155,14 @@ contains
                 endif
             endif
 
+            call output_translation_from_elements_to_link_node &
+                (elem2I, elem2R, elem2YN, elemMI, elemMR, elemMYN, faceI, faceR, &
+                linkI, linkR, nodeI, nodeR, bcdataUp, bcdataDn, thisstep)
+
             call  output_all_threaded_data_by_link &
                 (threadedfile, elem2R, elem2I, elemMR, elemMI, faceR, faceI, linkI, &
                 bcdataUp, bcdataDn, thisstep)
+
 
             !% TEST ROUTINES
             !    call explicit_euler_advance &
