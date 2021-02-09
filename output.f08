@@ -570,6 +570,7 @@ contains
         elemMask             => elem2YN(:,e2YN_Temp(next_e2YN_temparray) )
         next_e2YN_temparray  = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
 
+        !% translation from element data to link data
         do ii=1,N_link
             !% set null value to temporary mask
             elemMask = nullvalueL
@@ -595,7 +596,6 @@ contains
 
             linkR(Lindx,lr_Depth)     = onehalfR * (linkR(Lindx,lr_DepthUp) + linkR(Lindx,lr_DepthDn))
 
-
             linkR(Lindx,lr_Velocity)  = (linkR(Lindx,lr_Flowrate) * sum(elem2R(:,e2r_Length),elemMask)) &
                     / linkR(Lindx,lr_Volume) 
 
@@ -603,6 +603,7 @@ contains
             linkR(Lindx,lr_Capacity)  = nullvalueR
         end do
 
+        !% translation of element data to node data
         !% upstream boundary condition nodes
         do ii=1,N_BCupstream
             upBC_Nindx => bcdataUp(ii)%NodeID
@@ -657,10 +658,36 @@ contains
                 !% HACK: discuss with dr. hodges today and fix it
                 nodeR(Nindx,nr_LateralInflow) = nullvalueR
                 nodeR(Nindx,nr_TotalInflow)   = nullvalueR
+
+            elseif (nodeI(Nindx,ni_node_type) == nStorage) then
+                print*, 'error: stroage node is not handeled yet'
+                stop
             endif
         enddo
+        
+        ! print*,'------------------------------------------------'
+        ! print*, 'printing linkR'
+        ! print*, linkR(:,lr_Volume), 'lr_Volume'
+        ! print*
+        ! print*, linkR(:,lr_Flowrate), 'lr_Flowrate'
+        ! print*
+        ! print*, linkR(:,lr_Velocity), 'lr_Velocity'
+        ! print*
+        ! print*, linkR(:,lr_Depth), 'lr_Depth'
+        ! print*
 
-        !% release temporary arrays
+        ! print*, 'printing nodeR'
+        ! print*, nodeR(:,nr_Volume), 'nr_Volume'
+        ! print*
+        ! print*, nodeR(:,nr_TotalInflow), 'nr_TotalInflow'
+        ! print*
+        ! print*, nodeR(:,nr_Depth), 'nr_Depth'
+        ! print*
+        ! print*, nodeR(:,nr_Eta), 'nr_Eta'
+        ! print*,'------------------------------------------------'
+        ! stop
+
+        ! release temporary arrays
         elemMask = nullvalueL
 
         nullify(elemMask)
