@@ -493,8 +493,15 @@ module array_index
     integer, parameter :: lr_DischargeCoeff2        = 18   ! discharge coefficient for rectangular weir part
     integer, parameter :: lr_FullDepth              = 19   ! vertical opening of pipe, weir, orifice
     integer, parameter :: lr_EndContractions        = 20
-    integer, parameter :: lr_temp1                  = 21
-    integer, parameter :: lr_idx_max                = 21
+    integer, parameter :: lr_Flowrate               = 21
+    integer, parameter :: lr_Depth                  = 22
+    integer, parameter :: lr_DepthUp                = 23
+    integer, parameter :: lr_DepthDn                = 24
+    integer, parameter :: lr_Volume                 = 25
+    integer, parameter :: lr_Velocity               = 26
+    integer, parameter :: lr_Capacity               = 27
+    integer, parameter :: lr_temp1                  = 28
+    integer, parameter :: lr_idx_max                = 28
     
     !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
     ! column index for real data in the nodeR array
@@ -506,8 +513,14 @@ module array_index
     integer, parameter :: nr_StorageExponent        = 6
     integer, parameter :: nr_PondedArea             = 7
     integer, parameter :: nr_SurchargeDepth         = 8
-    integer, parameter :: nr_temp1                  = 9
-    integer, parameter :: nr_idx_base1              = 9
+    integer, parameter :: nr_Eta                    = 9
+    integer, parameter :: nr_Depth                  = 10
+    integer, parameter :: nr_Volume                 = 11
+    integer, parameter :: nr_LateralInflow          = 12
+    integer, parameter :: nr_TotalInflow            = 13
+    integer, parameter :: nr_Flooding               = 14
+    integer, parameter :: nr_temp1                  = 15
+    integer, parameter :: nr_idx_base1              = 15
 
     ! column index for real data on multiple branches of a node
     integer, parameter :: nr_ElementLength_u1 = nr_idx_base1 + 1 ! used for subdividing junctions

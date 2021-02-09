@@ -72,7 +72,7 @@ contains
         endif
 
         if (setting%Debugout%elemMR) then
-            ndebug = ndebug + 43
+            ndebug = ndebug + 44
         endif
         if (setting%Debugout%elemMI) then
             ndebug = ndebug + 9
@@ -92,7 +92,7 @@ contains
         endif
 
         if (setting%Debugout%nodeR) then
-            ndebug = ndebug + nr_idx_max
+            ndebug = ndebug + 6
         endif
         if (setting%Debugout%nodeI) then
             ndebug = ndebug + 5
@@ -102,7 +102,7 @@ contains
         endif
 
         if (setting%Debugout%linkR) then
-            ndebug = ndebug + 4
+            ndebug = ndebug + 5
         endif
         if (setting%Debugout%linkI) then
             ndebug = ndebug + 12
@@ -131,14 +131,6 @@ contains
             call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_Q_u', e2r_Timescale_Q_u)
             ii=ii+1
             call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_Q_d', e2r_Timescale_Q_d)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_H_u', e2r_Timescale_H_u)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_H_d', e2r_Timescale_H_d)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_G_u', e2r_Timescale_G_u)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'elem2R','Timescale_G_d', e2r_Timescale_G_d)
             ii=ii+1
             call debug_singlefile_open (debugfile(ii), 'elem2R','Friction', e2r_Friction)
             ii=ii+1
@@ -355,8 +347,18 @@ contains
         endif
 
         if (setting%Debugout%nodeR) then
-            print *, 'error: code for debug output of nodeR not completed in ',subroutine_name
-            stop
+            call debug_singlefile_open (debugfile(ii), 'nodeR','Eta', nr_Eta)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'nodeR','Depth', nr_Depth)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'nodeR','Volume', nr_Volume)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'nodeR','LateralInflow', nr_LateralInflow)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'nodeR','TotalInflow', nr_TotalInflow)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'nodeR','Flooding', nr_Flooding)
+            ii=ii+1
         endif
 
         if (setting%Debugout%nodeI) then
@@ -370,8 +372,16 @@ contains
         endif
 
         if (setting%Debugout%linkR) then
-            print *, 'error: code for debug output of linkR not completed in ',subroutine_name
-            stop
+            call debug_singlefile_open (debugfile(ii), 'linkR','Flowrate', lr_Flowrate)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'linkR','Depth', lr_Depth)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'linkR','Volume', lr_Volume)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'linkR','Velocity', lr_Velocity)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'linkR','Capacity', lr_Capacity)
+            ii=ii+1
         endif
 
         if (setting%Debugout%linkI) then
@@ -396,18 +406,19 @@ contains
     !==========================================================================
     !
     subroutine debug_output &
-        (debugfile, &
-        elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-        bcdataUp, bcdataDn, thisstep)
+        (debugfile, nodeR, linkR, elem2R, elem2I, elem2YN, elemMR, elemMI, &
+        elemMYN, faceR, faceI, faceYN, bcdataUp, bcdataDn, thisstep)
         !
         !   writes the output to debug files
         !   call this subroutine anytime you want debug output
         !
         character(len=64) :: subroutine_name = 'debug_output'
 
+        real,      target,     intent(in) :: nodeR(:,:),   linkR(:,:)
         real,      target,     intent(in) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         integer,   target,     intent(in) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
         logical,   target,     intent(in) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
+
 
         type(bcType),  intent(in)  :: bcdataUp(:), bcdataDn(:)
 
@@ -446,7 +457,6 @@ contains
             ArrayName  => debugfile(mm)%ArrayName
             CI         => debugfile(mm)%ColumnIndex
 
-
             select case (ArrayName)
               case ('elem2R')
                 thisdataR => elem2R(:,CI)
@@ -475,6 +485,12 @@ contains
               case ('faceYN')
                 print *, 'error: case not handled for ArrayName of ', ArrayName,' in ',subroutine_name
                 stop
+              case ('nodeR')
+                thisdataR => nodeR(:,CI)
+                arrayContains = dataR
+              case ('linkR')
+                thisdataR => linkR(:,CI)
+                arrayContains = dataR
               case default
                 print *, 'error: unknown case for ArrayName of ',ArrayName,' in ',subroutine_name
                 stop
