@@ -124,9 +124,6 @@ contains
                 endif
             endif
 
-            call debug_output &
-                (debugfile, elem2R, elem2I, elem2YN, elemMR,  &
-                elemMI, elemMYN, faceR, faceI, faceYN,bcdataUp, bcdataDn, thisstep)
 
             !%  Reset the flowrate adhoc detection before flowrates are updated.
             !%  Note that we do not reset the small volume detection here - that is done
@@ -158,6 +155,10 @@ contains
             call output_translation_from_elements_to_link_node &
                 (elem2I, elem2R, elem2YN, elemMI, elemMR, elemMYN, faceI, faceR, &
                 linkI, linkR, nodeI, nodeR, bcdataUp, bcdataDn, thisstep)
+                
+            call debug_output &
+                (debugfile, nodeR, linkR, elem2R, elem2I, elem2YN, elemMR,  &
+                elemMI, elemMYN, faceR, faceI, faceYN,bcdataUp, bcdataDn, thisstep)
 
             call  output_all_threaded_data_by_link &
                 (threadedfile, elem2R, elem2I, elemMR, elemMI, faceR, faceI, linkI, &

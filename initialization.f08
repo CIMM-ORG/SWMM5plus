@@ -27,7 +27,7 @@ module initialization
     public :: initialize_dummy_values
     public :: initialize_linknode_arrays ! Retrieves data from SWMM C interface and populates link and node tables
 
-    integer, private :: debuglevel = 1
+    integer, private :: debuglevel = 0
 
 contains
     !

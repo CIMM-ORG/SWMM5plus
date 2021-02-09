@@ -101,7 +101,7 @@ program main
     ! setting%TestCase%TestName = 'waller_creek'
 
     !%  hard-code for debug output
-    setting%Debugout%SuppressAllFiles  = .true. ! use this to easily suppress debug files
+    setting%Debugout%SuppressAllFiles  = .false. ! use this to easily suppress debug files
 
     setting%Debugout%SuppressTimeStep  = .true. ! use the next 3 to suppress headers
     setting%Debugout%SuppressTimeValue = .true. ! which can make debug files easier
@@ -110,6 +110,8 @@ program main
     setting%Debugout%elem2R = .true.   ! select arrays to have debug output
     setting%Debugout%elemMR = .true.   ! select arrays to have debug output
     setting%Debugout%faceR  = .true.   ! note that not all are implemented
+    setting%Debugout%linkR  = .true.
+    setting%Debugout%nodeR  = .true.
 
     !setting%OutputThreadedLink%SuppressAllFiles = .true.
 

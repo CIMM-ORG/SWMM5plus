@@ -587,7 +587,7 @@ contains
 
             linkR(Lindx,lr_Volume)    = sum(elem2R(:,e2r_Volume),elemMask)
 
-            linkR(Lindx,lr_Flowrate)   = (sum(elem2R(:,e2r_Volume)*elem2R(:,e2r_Flowrate),&
+            linkR(Lindx,lr_Flowrate)  = (sum(elem2R(:,e2r_Volume)*elem2R(:,e2r_Flowrate),&
                     elemMask)) / linkR(Lindx,lr_Volume) 
 
             linkR(Lindx,lr_DepthUp)   = faceR(UpFace, fr_Eta_d) - faceR(UpFace, fr_Zbottom) 
@@ -685,7 +685,6 @@ contains
         ! print*
         ! print*, nodeR(:,nr_Eta), 'nr_Eta'
         ! print*,'------------------------------------------------'
-        ! stop
 
         ! release temporary arrays
         elemMask = nullvalueL
