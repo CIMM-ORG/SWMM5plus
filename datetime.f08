@@ -6,10 +6,17 @@ module datetime
         reshape((/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, & ! normal years
         31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/), (/2,12/)) ! leap years
 
-    integer :: datedelta = 693594
-    integer :: secsperday = 86400
+    integer, parameter :: datedelta = 693594
+    integer, parameter :: secsperday = 86400
 
     contains
+
+    function secs_to_days(date_in_secs, start_date_in_days)
+        real(8), intent(in) :: date_in_secs
+        real(8), intent(in) :: start_date_in_days
+        real(8) :: secs_to_days
+        secs_to_days = date_in_secs/dble(secsperday) + start_date_in_days
+    end function
 
     function isleapyear(year)
         integer, intent(in) :: year
@@ -37,7 +44,7 @@ module datetime
     function datetime_encodedate(year, month, day)
         integer, intent(in) :: year, month, day
         integer :: i, j, dday
-        real(4) :: datetime_encodedate
+        real(8) :: datetime_encodedate
 
         i = isleapyear(year)
         dday = day
@@ -48,22 +55,24 @@ module datetime
             enddo
             i = year
             datetime_encodedate = i*365 + i/4 - i/100 + i/400 + dday - datedelta
+            return
         endif
         datetime_encodedate = -datedelta
     end function datetime_encodedate
 
     function datetime_encodetime(hour, minute, second)
         integer, intent(in) :: hour, minute, second
-        real(4) :: datetime_encodetime, s
+        real(8) :: datetime_encodetime, s
         if ((hour >= 0) .and. (minute >= 0) .and. (second >= 0)) then
             s = (hour * 3600 + minute * 60 + second)
             datetime_encodetime = s/secsperday
+            return
         endif
         datetime_encodetime = 0
     end function datetime_encodetime
 
-    subroutine datetime_decodedate(date, year, month, day)
-        real(4), intent(in) :: date
+    subroutine datetime_decodedate(date_in_days, year, month, day)
+        real(8), intent(in) :: date_in_days
         integer, intent(inout) :: year, month, day
         integer :: d1, d4, d100, d400
         integer :: y, m, d, i, k, t
@@ -73,7 +82,7 @@ module datetime
         d100 = d4 * 25 - 1
         d400 = d100 * 4 + 1
 
-        t = int(floor(date)) + datedelta
+        t = int(floor(date_in_days)) + datedelta
         if (t <= 0) then
             year = 0
             month = 1
@@ -113,13 +122,13 @@ module datetime
         endif
     end subroutine
 
-    subroutine datetime_decodetime(time, h, m, s)
-        real(4), intent(in) :: time
+    subroutine datetime_decodetime(time_in_days, h, m, s)
+        real(8), intent(in) :: time_in_days
         integer, intent(inout) :: h, m, s
         integer :: secs, mins
-        real(4) :: fracday
+        real(8) :: fracday
 
-        fracday = (time - floor(time)) * secsperday
+        fracday = (time_in_days - floor(time_in_days)) * secsperday
         secs = int(floor(fracday + 0.5))
         if (secs >= secsperday) secs = 86399
         call divmod(secs, 60, mins, s)
@@ -127,52 +136,54 @@ module datetime
         if (h > 23) h = 0
     end subroutine datetime_decodetime
 
-    function datetime_dayofweek(date)
-        real(4), intent(in) :: date
+    function datetime_dayofweek(date_in_days)
+        real(8), intent(in) :: date_in_days
         integer :: t, datetime_dayofweek
-        t = int(floor(date)) + datedelta
+        t = int(floor(date_in_days)) + datedelta
         datetime_dayofweek = mod(t, 7) + 1
     end function
 
-    function datetime_get_next_month(date1)
-        real(4), intent(in) :: date1
-        real(4) :: datetime_get_next_month
-        real(4) :: days_til_next_day, days_til_next_month
+    function datetime_get_next_month(date_in_days)
+        real(8), intent(in) :: date_in_days
+        real(8) :: datetime_get_next_month
+        real(8) :: days_til_next_day, days_til_next_month
         integer :: yy, mm, dd, i
 
-        call datetime_decodedate(date1, yy, mm, dd)
+        call datetime_decodedate(date_in_days, yy, mm, dd)
         i = isleapyear(yy)
-        days_til_next_day = 1 - floor(date1)
-        days_til_next_month = dayspermonth(i, mm) - dd + days_til_next_day
+        days_til_next_day = dble(1) - dble(floor(date_in_days))
+        days_til_next_month = dble(dayspermonth(i, mm)) - dble(dd) + days_til_next_day
 
-        datetime_get_next_month = date1 + days_til_next_month
+        datetime_get_next_month = date_in_days + days_til_next_month
     end function datetime_get_next_month
 
-    function datetime_get_next_day(date1)
-        real(4), intent(in) :: date1
-        real(4) :: datetime_get_next_day
-        datetime_get_next_day = ceiling(date1)
+    function datetime_get_next_day(date_in_days)
+        real(8), intent(in) :: date_in_days
+        real(8) :: datetime_get_next_day
+        datetime_get_next_day = dble(ceiling(date_in_days))
     end function datetime_get_next_day
 
-    function datetime_get_next_hour(date1)
-        real(4), intent(in) :: date1
-        real(4) :: datetime_get_next_hour
-        datetime_get_next_hour = ceiling(date1 * 24) / 24
+    function datetime_get_next_hour(date_in_days)
+        real(8), intent(in) :: date_in_days
+        real(8) :: datetime_get_next_hour
+        real(8) :: n24 = 24.0
+        real(8) :: n1 = 1.0
+        datetime_get_next_hour = (int(date_in_days*n24) + n1) / n24
     end function datetime_get_next_hour
 
-    recursive function datetime_get_next_weekendday_hour(date1) result(next)
+    recursive function datetime_get_next_weekendday_hour(date_in_days) result(next)
         ! sun = 1, ..., sat = 7
-        real(4), intent(in) :: date1
-        real(4) :: next
-        real(4) :: days_til_weekendday, d1
+        real(8), intent(in) :: date_in_days
+        real(8) :: next
+        real(8) :: days_til_weekendday, d1
         integer :: dayofweek
 
-        dayofweek = datetime_dayofweek(date1)
+        dayofweek = datetime_dayofweek(date_in_days)
         if ((dayofweek > 1) .and. (dayofweek < 7)) then
-            days_til_weekendday = 7 - dayofweek - floor(date1)
-            next = date1 + days_til_weekendday
+            days_til_weekendday = dble(7) - dble(dayofweek) - dble(floor(date_in_days))
+            next = date_in_days + days_til_weekendday
         else
-            d1 = datetime_get_next_hour(date1)
+            d1 = datetime_get_next_hour(date_in_days)
             dayofweek = datetime_dayofweek(d1)
             if ((dayofweek .ne. 1) .and. (dayofweek .ne. 7)) then
                 next = datetime_get_next_weekendday_hour(d1)
