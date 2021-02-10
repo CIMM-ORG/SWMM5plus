@@ -12,13 +12,14 @@ program main
     use initialization
     use initial_condition
     use junction
+    use inflow
     use interface
     use network_graph
     use network_define
     use output
     use setting_definition
     use type_definitions
-    use test_cases
+    ! use test_cases
     use time_loop
     use utility
 
@@ -80,7 +81,10 @@ program main
     real,    dimension(:),      allocatable :: wdBreadth
     real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
     type(string), dimension(:), allocatable :: wdCellType(:)
+
     type(graph) :: swmm_graph
+    type(tseries) :: ts_ups
+    integer :: ii, jj
 
     !--------------------------------------------------------------------------
     print *, ''
@@ -113,7 +117,7 @@ program main
     setting%Debugout%elemMR = .true.   ! select arrays to have debug output
     setting%Debugout%faceR  = .true.   ! note that not all are implemented
 
-    !setting%OutputThreadedLink%SuppressAllFiles = .true.
+    setting%OutputThreadedLink%SuppressAllFiles = .true.
 
     setting%OutputThreadedLink%UseThisOutput = .true.
     setting%OutputThreadedLink%area = .true.
@@ -135,11 +139,12 @@ program main
 
     !% custom setup for hard-code test cases
     if (setting%TestCase%UseTestCase) then
-        call test_case_initiation &
-            (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-            bcdataDn, bcdataUp, &
-            wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
-            wdBreadth, wdWidthDepthData, wdCellType)
+        stop
+        ! call test_case_initiation &
+        !     (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
+        !     bcdataDn, bcdataUp, &
+        !     wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
+        !     wdBreadth, wdWidthDepthData, wdCellType)
     else
         ! --------------------
         ! --- Initialize C API
@@ -147,13 +152,44 @@ program main
 
         call initialize_api()
 
+        ! Retrieve system properties from SWMM C
         call initialize_linknode_arrays &
             (linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
 
+        ! Load inflows from SWMM C
+        call inflow_load_inflows(nodeI, nodeR)
+
+        ! Create system graph
         swmm_graph = get_network_graph()
 
-        call finalize_api()
+        ! call finalize_api()
 
+        ! Allocate boundary conditions
+        nodeI(1:N_BCdnstream, ni_temp1) = pack(nodeI(:,ni_idx),nodeI(:,ni_node_type) == nBCdn)
+        N_BCdnstream = count(nodeI(:,ni_node_type) == nBCdn)
+        N_BCupstream = count(nodeI(:,ni_node_type) == nBCup)
+
+        call bc_allocate(bcdataDn, bcdataUp)
+
+        print *, "Setting up BC upstream"
+        do ii = 1, N_BCupstream
+            print *, "BC upstream", ii, '/', N_BCupstream
+            jj = nodes_with_extinflow%array(ii)
+            ts_ups = all_tseries(ext_inflows(ii)%t_series)
+            bcdataUp(ii)%NodeID = jj
+            bcdataUp(ii)%TimeArray = ts_ups%table%data(1)%array(1:ts_ups%table%tsize(1))
+            bcdataUp(ii)%ValueArray = ts_ups%table%data(2)%array(1:ts_ups%table%tsize(2))
+        enddo
+
+        print *, "Setting up BC downstream"
+        do ii = 1, N_BCdnstream
+            print *, "BC dnstream", ii, '/', N_BCdnstream
+            bcdataDn(ii)%NodeID = nodeI(ii, ni_temp1)
+            allocate(bcdataDn(ii)%TimeArray(2))
+            allocate(bcdataDn(ii)%ValueArray(2))
+            bcdataDn(ii)%TimeArray = (/0.0, real((setting%time%endtime - setting%time%starttime)*dble(secsperday))/)
+            bcdataDn(ii)%ValueArray = nr_Zbottom
+        enddo
         ! --------------------
         ! --- Finalize C API
         ! --------------------
@@ -169,14 +205,20 @@ program main
         elemMR, elemMI, elemMYN, elemMName, &
         faceR,  faceI,  faceYN,  faceName, swmm_graph)
     print *, 'in main'
-    stop
+
+
+    print *, "Start Time", setting%time%starttime
+    print *, "End Time", setting%time%endtime
+    print *, "Time step", setting%time%dt
+    print *, "Number of elements", sum(linkI(:, li_N_element))
+
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
 
     !% set the initial conditions throughout
     call initial_condition_setup &
         (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
+        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, real(setting%Time%StartTime), &
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
 

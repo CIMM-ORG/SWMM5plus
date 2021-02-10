@@ -1,81 +1,62 @@
 module objects
 
     use errors
-    use tables
+    use dynamic_array
 
     implicit none
 
     public
 
+    ! TABLE OBJECT
+    type real_table
+        integer :: table_type
+        integer :: dim
+        integer, allocatable :: tsize(:)
+        type(real_array), allocatable :: data(:)
+    end type real_table
+
+    ! TIME SERIES OBJECT
     type tseries
-        type(real_table_XY) :: table
+        integer :: current = 1
+        type(real_table) :: table
     end type tseries
 
+    ! PATTERN OBJECT
     type pattern
-        integer :: type
+        integer :: ptype
         integer :: count
         real, dimension(24) :: factor
     end type pattern
 
+    ! EXTERNAL INFLOW OBJECT
+    ! t_series*sfactor + base_pat*baseline
+    type extInflow
+        integer :: node_id ! index to element thar receives inflow
+        integer :: t_series ! time_series
+        integer :: base_pat ! pattern
+        real :: baseline ! constant baseline value
+        real :: sfactor ! time series scaling factor
+        real :: max_inflow
+    end type
+
+    ! DRY INFLOW OBJECT
+    type dwfInflow
+        integer :: node_id ! index to element thar receives inflow
+        real :: avgValue ! average inflow value
+        integer :: monthly_pattern
+        integer :: daily_pattern
+        integer :: hourly_pattern
+        integer :: weekly_pattern
+        real :: max_inflow
+    end type
+
     integer, private :: debuglevel = 0
-contains
 
-    function find_time_tseries(val, t)
-        real, intent(in) :: val
-        type(tseries), intent(in) :: t
-        integer :: n, find_time_tseries
-        real :: tmp
-        character(64) :: subroutine_name
-
-        subroutine_name = 'find_time_tseries'
-
-        if (debuglevel > 0) print *, '*** enter ', subroutine_name
-
-        n = t%table%len / 2
-
-        ! performs binary search in tseries
-
-        do while (.true.)
-            tmp = t%table%x%array(n)
-            if (val < tmp) then
-                if (n/2 > 0) then
-                    n = n / 2
-                else
-                    if (n == 0) then
-                        find_time_tseries = n
-                        exit
-                    else
-                        if (abs(t%table%x%array(n) - val) < abs(t%table%x%array(n-1) - val)) then
-                            find_time_tseries = n
-                            exit
-                        else
-                            find_time_tseries = n-1
-                            exit
-                        end if
-                    end if
-                end if
-            else
-                if (n/2 > 0) then
-                    n = n + (n/2)
-                else
-                    if (n == t%table%len) then
-                        find_time_tseries = n
-                        exit
-                    else
-                        if (abs(t%table%x%array(n) - val) < abs(t%table%x%array(n+1) - val)) then
-                            find_time_tseries = n
-                            exit
-                        else
-                            find_time_tseries = n+1
-                            exit
-                        end if
-                    end if
-                end if
-            end if
-        end do
-
-        if (debuglevel > 0)  print *, '*** leave ', subroutine_name
-
-    end function find_time_tseries
+    type(tseries), allocatable :: all_tseries(:)
+    type(pattern), allocatable :: all_patterns(:)
+    type(real_table), allocatable :: total_inflows(:)
+    ! ----------------------------------------------
+    type(extInflow), allocatable :: ext_inflows(:)
+    type(dwfInflow), allocatable :: dwf_inflows(:)
 
 end module objects

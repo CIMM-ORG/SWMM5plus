@@ -58,7 +58,7 @@ contains
         real, pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
         real, pointer :: fEdn(:), fEup(:), eE(:)
 
-        real, pointer :: thistime, nexttime
+        real(8), pointer :: thistime, nexttime
 
         integer, pointer :: thisStep, restartStep
 
@@ -91,12 +91,12 @@ contains
         nexttime = thistime + dt
 
         call bc_applied_onelement &
-            (elem2R, bcdataDn, bcdataUp, thistime, bc_category_inflowrate, e2r_Velocity)
+            (elem2R, bcdataDn, bcdataUp, real(thistime), bc_category_inflowrate, e2r_Velocity)
 
         call bc_applied_onelement &
-            (elem2R, bcdataDn, bcdataUp, thistime, bc_category_elevation, idummy)
+            (elem2R, bcdataDn, bcdataUp, real(thistime), bc_category_elevation, idummy)
 
-        call bc_applied_onface (faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity, thistime)
+        call bc_applied_onface (faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity, real(thistime))
 
         call diagnostic_volume_conservation &
             (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, bcdataUp, bcdataDn, restartStep,  1)
@@ -109,6 +109,7 @@ contains
 
         !% Iterate for a fixed number of steps
         !% HACK - need to develop better time and iteration controls
+        print *, setting%step%final, "final step"
         do while (thisstep <= setting%step%final)
 
             !% display to the screen
@@ -136,7 +137,7 @@ contains
             !% Runge-Kutta 2nd-order advance
             call rk2 &
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
-                bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
+                bcdataDn, bcdataUp, real(thistime), real(dt), ID, numberPairs, ManningsN, Length,   &
                 zBottom, xDistance, Breadth, widthDepthData, cellType)
 
             !% compute the element froude number (diagnostic only)

@@ -131,7 +131,7 @@ module setting_definition
     !%  setting%SmallVolume
     type smallvolumeType
         ! Dont using small volumes for weir case. Needed to be changed later
-        logical ::  UseSmallVolumes = .true. ! YN to determine if smallvolume adjustments used
+        logical ::  UseSmallVolumes = .false. ! YN to determine if smallvolume adjustments used
         real    ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
         real    ::  ManningsN        = 0.01
         real    ::  MinimumTopwidth  = 0.5   ! m   Minimum value used for smallvolume reset
@@ -157,11 +157,11 @@ module setting_definition
     !%  setting%Time
     type timeType
         character(14)   ::  DateTimeStamp
-        real :: Dt  ! s
-        real :: StartTime = 0.0
-        real :: EndTime   = 0.0
-        real :: ThisTime
-        real :: NextTime
+        real(8) :: Dt  ! s
+        real(8) :: StartTime = 0.0
+        real(8) :: EndTime   = 0.0
+        real(8) :: ThisTime
+        real(8) :: NextTime
     end type timeType
 
     !%  setting%ZeroValue

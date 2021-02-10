@@ -232,16 +232,20 @@ contains
         integer, intent(inout) :: linkI(:,:)
         integer, intent(in) :: nodeI(:,:)
 
+        character(64) :: subroutine_name = 'network_define_num_elements'
         integer :: i, j
         real :: flow_value
 
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
         do i = 1, nodes_with_extinflow%len
             j = nodes_with_extinflow%array(i)
-            flow_value = get_max_inflow(j, nodeI)
+            flow_value = nodeR(j, nr_maxinflow)
             call traverse_graph_flow(g, j, flow_value)
         end do
 
         call traverse_cfl_condition(g, linkR, nodeR, linkI, nodeI)
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine network_define_num_elements
 
     subroutine network_node_assignment &
@@ -747,7 +751,6 @@ contains
             enddo
         endif
 
-
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine network_adjust_link_length
     !
@@ -868,6 +871,8 @@ contains
 
         nodesDownstream => nodeI(:,ni_temp1)
         N_BCnodes_d = count(nodeYNmask)
+
+        print *, nodeYNmask
 
         if (N_BCnodes_d == 0) then
             print *, 'No downstream channel boundary nodes found - code development incomplete for dowstream pipe'
@@ -1239,7 +1244,8 @@ contains
 
             print *, 'Junction with downstream of thisLink ',thisLink
             print *, 'linkSet ',linkSet(:)
-            print *, 'linkAss ',linkI(linkSet(1),li_assigned),linkI(linkSet(2),li_assigned)
+            print *, linkSet(:)
+            ! print *, 'linkAss ',linkI(linkSet(1),li_assigned),linkI(linkSet(2),li_assigned)
 
             !%  Create the junction element we will use here and increment for the next(recursion)
             jElem = thisElemM

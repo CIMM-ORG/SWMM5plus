@@ -784,6 +784,7 @@ contains
 
         !%  compute the upstream and downstream froude number on each face
         !%  note the froude numbers are signed with + being downstream flow.
+
         where (typUp == fChannel)
             froudeUp = elem2R(mapUp,e2r_Velocity_new) / (sqrt(grav * elem2R(mapUp,e2r_HydDepth)))
         endwhere
@@ -800,7 +801,6 @@ contains
         where (typDn == fMultiple)
             froudeDn = elemMR(mapDn,eMr_Velocity_new) / (sqrt(grav * elemMR(mapDn,eMr_HydDepth)))
         endwhere
-
 
         !%  Define whether the jump is upstream or downstream or none
         !%  Note the mask for water surface level is required because with a coarse

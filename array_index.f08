@@ -508,8 +508,9 @@ module array_index
     integer, parameter :: nr_StorageExponent        = 6
     integer, parameter :: nr_PondedArea             = 7
     integer, parameter :: nr_SurchargeDepth         = 8
-    integer, parameter :: nr_temp1                  = 9
-    integer, parameter :: nr_idx_base1              = 9
+    integer, parameter :: nr_MaxInflow              = 9
+    integer, parameter :: nr_temp1                  = 10
+    integer, parameter :: nr_idx_base1              = 10
 
     ! column index for real data on multiple branches of a node
     integer, parameter :: nr_ElementLength_u1 = nr_idx_base1 + 1 ! used for subdividing junctions
@@ -550,10 +551,6 @@ module array_index
     integer, parameter :: wd_area_difference         = 12
     integer, parameter :: wd_local_difference        = 13
     integer, parameter :: wd_idx_max                 = 13
-
-    !% nobjects INDEXES
-    integer, parameter :: num_tseries                = 1
-    integer, parameter :: num_curves                 = 2
     !==========================================================================
     ! END OF MODULE array_index
     !==========================================================================

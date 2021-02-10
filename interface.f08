@@ -4,7 +4,9 @@ module interface
     use iso_c_binding
     use dll_mod
     use objects
-
+    use setting_definition
+    use tables
+    use datetime
     use data_keys ! (comment if debugging)
 
     implicit none
@@ -83,13 +85,19 @@ module interface
             integer(c_int) :: api_get_next_table_entry
         end function api_get_next_table_entry
 
-        function api_get_pattern_factors(k, factors)
+        function api_get_pattern_count(k)
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value :: k
-            type(c_ptr), intent(inout) :: factors
-            integer(c_int) :: api_get_pattern_factors
-        end function api_get_pattern_factors
+            integer(c_int) :: api_get_pattern_count
+        end function api_get_pattern_count
+
+        function api_get_pattern_factor(k, j)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value :: k, j
+            real(c_double) :: api_get_pattern_factor
+        end function api_get_pattern_factor
 
         function api_get_pattern_type(k)
             use, intrinsic :: iso_c_binding
@@ -97,6 +105,18 @@ module interface
             integer(c_int), value :: k
             integer(c_int) :: api_get_pattern_type
         end function api_get_pattern_type
+
+        function api_get_start_datetime()
+            use, intrinsic :: iso_c_binding
+            implicit none
+            real(c_double) :: api_get_start_datetime
+        end function api_get_start_datetime
+
+        function api_get_end_datetime()
+            use, intrinsic :: iso_c_binding
+            implicit none
+            real(c_double) :: api_get_end_datetime
+        end function api_get_end_datetime
     end interface
 
     character(len = 1024), private :: errmsg
@@ -111,15 +131,21 @@ module interface
     ! integer, parameter :: nullvalueI = -998877
     ! real, parameter :: nullvalueR = -9.98877e16
 
+    ! Time constants
+    real(8) :: swmm_start_time ! in days
+    real(8) :: swmm_end_time ! in days
+
     ! Number of objects
     integer :: num_nodes
     integer :: num_links
     integer :: num_curves
     integer :: num_tseries
+    integer :: num_patterns
 
     ! SWMM objects
     integer, parameter :: SWMM_NODE = 2
     integer, parameter :: SWMM_LINK = 3
+    integer, parameter :: SWMM_TIMEPATTERN = 6
     integer, parameter :: SWMM_CURVES = 7
     integer, parameter :: SWMM_TSERIES = 8
     integer, parameter :: API_NODES_WITH_EXTINFLOW = 1000
@@ -131,6 +157,12 @@ module interface
     integer, parameter :: SWMM_TRAPEZOIDAL = 5
     integer, parameter :: SWMM_TRIANGULAR = 6
     integer, parameter :: SWMM_PARABOLIC = 7
+
+    ! SWMM PATTERN TYPES
+    integer, parameter :: SWMM_MONTHLY_PATTERN = 0
+    integer, parameter :: SWMM_DAILY_PATTERN = 1
+    integer, parameter :: SWMM_HOURLY_PATTERN = 2
+    integer, parameter :: SWMM_WEEKEND_PATTERN = 3
 
     ! SWMM+ XSECT_TYPES - Uncomment if debugging (also defined in data_keys.f08)
     ! integer, parameter :: lchannel = 1
@@ -193,8 +225,11 @@ module interface
     procedure(api_get_num_objects), pointer, private :: ptr_api_get_num_objects
     procedure(api_get_first_table_entry), pointer, private :: ptr_api_get_first_table_entry
     procedure(api_get_next_table_entry), pointer, private :: ptr_api_get_next_table_entry
-    procedure(api_get_pattern_factors), pointer, private :: ptr_api_get_pattern_factors
+    procedure(api_get_pattern_count), pointer, private :: ptr_api_get_pattern_count
+    procedure(api_get_pattern_factor), pointer, private :: ptr_api_get_pattern_factor
     procedure(api_get_pattern_type), pointer, private :: ptr_api_get_pattern_type
+    procedure(api_get_start_datetime), pointer, private :: ptr_api_get_start_datetime
+    procedure(api_get_end_datetime), pointer, private :: ptr_api_get_end_datetime
 contains
 
     ! --- Simulation
@@ -210,7 +245,7 @@ contains
 
         subroutine_name = 'initialize_api'
 
-        if (debuglevel > 0) print *, '*** enter ', subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         ! Initialize C API
         api = c_null_ptr
@@ -252,18 +287,27 @@ contains
         num_nodes = get_num_objects(SWMM_NODE)
         num_curves = get_num_objects(SWMM_CURVES)
         num_tseries = get_num_objects(SWMM_TSERIES)
+        num_patterns = get_num_objects(SWMM_TIMEPATTERN)
 
-        if (debuglevel > 0)  print *, '*** leave ', subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
 
         api_is_initialized = .true.
+
+        swmm_start_time = get_start_datetime()
+        swmm_end_time = get_end_datetime()
+
+        setting%time%starttime = 0
+        setting%time%endtime = (swmm_end_time - swmm_start_time) * dble(secsperday)
+
+        if (num_tseries > 0) call load_all_tseries()
+        if (num_patterns > 0) call load_all_patterns()
+
     end subroutine initialize_api
 
     subroutine finalize_api()
-        character(64) :: subroutine_name
+        character(64) :: subroutine_name = 'finalize_api'
 
-        subroutine_name = 'finalize_api'
-
-        if (debuglevel > 0) print *, '*** enter ', subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_finalize"
         call load_dll(os, dll, errstat, errmsg )
@@ -274,7 +318,7 @@ contains
             call print_error(errstat, dll%procname)
             stop
         end if
-        if (debuglevel > 0)  print *, '*** leave ', subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
 
     end subroutine finalize_api
 
@@ -282,19 +326,90 @@ contains
 
     ! * After Initialization
 
+    function get_start_datetime()
+        real :: get_start_datetime
+        character(64) :: subroutine_name = 'get_start_datetime'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+
+        dll%procname = "api_get_start_datetime"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_get_start_datetime')
+        call c_f_procpointer(dll%procaddr, ptr_api_get_start_datetime)
+        get_start_datetime = ptr_api_get_start_datetime()
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    end function get_start_datetime
+
+    function get_end_datetime()
+        real :: get_end_datetime
+        character(64) :: subroutine_name
+
+        subroutine_name = 'get_end_datetime'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+
+        dll%procname = "api_get_end_datetime"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_get_end_datetime')
+        call c_f_procpointer(dll%procaddr, ptr_api_get_end_datetime)
+        get_end_datetime = ptr_api_get_end_datetime()
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    end function get_end_datetime
+
+    subroutine load_all_tseries()
+        integer :: i
+        integer :: success
+        real, dimension(2) :: entries
+        character(64) :: subroutine_name = 'load_all_tseries'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+
+        if (num_tseries == 0) return
+
+        allocate(all_tseries(num_tseries))
+        do i = 1, num_tseries
+            all_tseries(i)%table = new_real_table(SWMM_TSERIES, 2)
+            success = get_first_table_entry(i, SWMM_TSERIES, entries)
+            if (success == 0) then
+                print *, MSG_API_TSERIES_HANDLING_ERROR
+            endif
+            call tables_add_entry(all_tseries(i)%table, entries)
+            do while (.true.)
+                success = get_next_table_entry(i, SWMM_TSERIES, entries)
+                if (success == 0) exit
+                if (entries(1) < swmm_start_time) cycle
+                if (entries(1) > swmm_end_time) exit
+                call tables_add_entry(all_tseries(i)%table, entries)
+            end do
+        end do
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    end subroutine load_all_tseries
+
+    subroutine load_all_patterns()
+        integer :: i = 1
+        integer :: success
+        real, dimension(2) :: entries
+
+        if (num_patterns == 0) return
+
+        allocate(all_patterns(num_patterns))
+        do i = 1, num_patterns
+            all_patterns(i) = get_pattern(i)
+        end do
+    end subroutine load_all_patterns
+
     function get_node_attribute(node_idx, attr)
 
         integer :: node_idx, attr, error
         real :: get_node_attribute
-        character(64) :: subroutine_name
         type(c_ptr) :: cptr_value
         real (c_double), target :: node_value
+        character(64) :: subroutine_name = 'get_node_attr'
 
         cptr_value = c_loc(node_value)
 
-        subroutine_name = 'get_node_attr'
 
-        if (debuglevel > 0) print *, '*** enter ', subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         if ((attr > num_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
@@ -316,6 +431,11 @@ contains
 
         get_node_attribute = node_value
 
+        ! Fortran index correction
+        if ((attr == node_extInflow_tSeries) .or. (attr == node_extInflow_basePat)) then
+            if (node_value /= -1) get_node_attribute = get_node_attribute + 1
+        endif
+
         if (debuglevel > 0)  then
             print *, '*** leave ', subroutine_name
             ! print *, "NODE", node_value, attr
@@ -334,7 +454,7 @@ contains
 
         subroutine_name = 'get_link_attribute'
 
-        if (debuglevel > 0) print *, '*** enter ', subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         if ((attr > num_total_link_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
@@ -438,14 +558,14 @@ contains
 
         subroutine_name = 'get_num_objects'
 
-        if (debuglevel > 0) print *, '*** enter ', subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_get_num_objects"
         call load_dll(os, dll, errstat, errmsg )
         call print_error(errstat, 'error: loading api_get_num_objects')
         call c_f_procpointer(dll%procaddr, ptr_api_get_num_objects)
         get_num_objects = ptr_api_get_num_objects(api, obj_type)
-        if (debuglevel > 0)  print *, '*** leave ', subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
 
     end function get_num_objects
 
@@ -464,8 +584,10 @@ contains
         call load_dll(os, dll, errstat, errmsg )
         call print_error(errstat, 'error: loading api_get_first_table_entry')
         call c_f_procpointer(dll%procaddr, ptr_api_get_first_table_entry)
-        get_first_table_entry = ptr_api_get_first_table_entry(k, table_type, cptr_x, cptr_y)
-        print *, x, y
+        get_first_table_entry = ptr_api_get_first_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
+
+        entries(1) = x
+        entries(2) = y
     end function get_first_table_entry
 
     function get_next_table_entry(k, table_type, entries)
@@ -483,65 +605,40 @@ contains
         call load_dll(os, dll, errstat, errmsg )
         call print_error(errstat, 'error: loading api_get_next_table_entry')
         call c_f_procpointer(dll%procaddr, ptr_api_get_next_table_entry)
-        get_next_table_entry = ptr_api_get_next_table_entry(k, table_type, cptr_x, cptr_y)
+        get_next_table_entry = ptr_api_get_next_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
 
         entries(1) = x
         entries(2) = y
     end function get_next_table_entry
 
-    function get_inflow_tseries(k)
-        integer, intent(in) :: k
-        type(tseries) :: get_inflow_tseries
-
-        integer :: success
-        real, dimension(2) :: entries
-
-        success = get_first_table_entry(k, SWMM_TSERIES, entries)
-        call tables_add_entry(get_inflow_tseries%table, entries(1), entries(2))
-        do while (.true.)
-            success = get_next_table_entry(k, SWMM_TSERIES, entries)
-            if (success == 0) exit
-            call tables_add_entry(get_inflow_tseries%table, entries(1), entries(2))
-        end do
-    end function get_inflow_tseries
-
-    function get_pattern_factors(k)
+    function get_pattern(k)
         integer, intent(in) :: k
         type(pattern) :: pfactors
-        type(pattern) :: get_pattern_factors
+        type(pattern) :: get_pattern
         integer :: i, count
-        real(c_double), dimension(24), target :: factors
-        type(c_ptr) :: cptr_factors
-
-        cptr_factors = c_loc(factors)
 
         if (k .ne. -1) then
-            dll%procname = "api_get_pattern_factors"
+            dll%procname = "api_get_pattern_count"
             call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'error: loading api_get_pattern_factors')
-            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factors)
-            count = ptr_api_get_pattern_factors(k, cptr_factors)
+            call print_error(errstat, 'error: loading api_get_pattern_count')
+            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_count)
+            get_pattern%count = ptr_api_get_pattern_count(k-1)
 
-            dll%procname = "api_get_pattern_factors"
+            dll%procname = "api_get_pattern_factor"
             call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'error: loading api_get_pattern_factors')
-            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factors)
-            get_pattern_factors%count = ptr_api_get_pattern_factors(k, cptr_factors)
-            get_pattern_factors%type = get_pattern_type(k)
-            get_pattern_factors%factor = factors
+            call print_error(errstat, 'error: loading api_get_pattern_factor')
+            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factor)
+            do i = 1, 24
+                get_pattern%factor(i) = ptr_api_get_pattern_factor(k-1, i-1) ! index starts at 0 in C
+            end do
+
+            dll%procname = "api_get_pattern_type"
+            call load_dll(os, dll, errstat, errmsg )
+            call print_error(errstat, 'error: loading api_get_pattern_type')
+            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_type) ! index starts at 0 in C
+            get_pattern%ptype = ptr_api_get_pattern_type(k-1)
         end if
-    end function get_pattern_factors
-
-    function get_pattern_type(k)
-        integer, intent(in) :: k
-        integer :: get_pattern_type
-
-        dll%procname = "api_get_pattern_type"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_get_pattern_type')
-        call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_type)
-        get_pattern_type = ptr_api_get_pattern_type(k)
-    end function get_pattern_type
+    end function get_pattern
 
     ! --- Utils
     subroutine print_swmm_error_code(error)

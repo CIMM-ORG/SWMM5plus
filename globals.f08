@@ -70,7 +70,7 @@ module globals
     integer :: outputfile_next_unitnumber = 10 ! used for fileopening
 
     ! useful shortcuts
-    real, pointer :: dt   => setting%time%dt
+    real(8), pointer :: dt   => setting%time%dt
     real, pointer :: grav => setting%constant%gravity
 
     integer :: debugcounter = 0

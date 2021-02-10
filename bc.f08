@@ -38,7 +38,7 @@ contains
     !==========================================================================
     !
     subroutine bc_allocate &
-        (bcdataDn, bcdataUp, ndnstreamBC, nupstreamBC, ntimepoint)
+        (bcdataDn, bcdataUp)
         !
         ! allocate storage for boundary conditions.
         ! HACK - possibly move this to allocation_storage module
@@ -46,8 +46,6 @@ contains
         character(64) :: subroutine_name = 'bc_allocate'
 
         type(bcType), dimension(:),   allocatable,    intent(out) :: bcdataDn, bcdataUp
-
-        integer,   intent(in)  :: ndnstreamBC, nupstreamBC, ntimepoint
 
         integer    :: ii
 
@@ -58,25 +56,18 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         !% the Upstream and Downstream bc structure
-        allocate( bcdataUp(nupstreamBC), stat=allocation_status, errmsg=emsg)
+        allocate( bcdataUp(N_BCupstream), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation (allocation_status, emsg)
 
-        allocate( bcdataDn(ndnstreamBC), stat=allocation_status, errmsg=emsg)
+        allocate( bcdataDn(N_BCdnstream), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation (allocation_status, emsg)
 
+        print *, N_BCdnstream, N_BCupstream
         !% the downstream arrays - HACK default downstream is elevation
-
-        do ii=1,ndnstreamBC
+        do ii=1,N_BCdnstream
             bcdataDn(ii)%idx = ii
             bcdataDn(ii)%Updn          = bc_updn_downstream
             bcdataDn(ii)%Category      = bc_category_elevation
-
-            allocate( bcdataDn(ii)%TimeArray(ntimepoint), stat=allocation_status, errmsg=emsg)
-            call utility_check_allocation (allocation_status, emsg)
-
-            allocate( bcdataDn(ii)%ValueArray(ntimepoint), stat=allocation_status, errmsg=emsg)
-            call utility_check_allocation (allocation_status, emsg)
-
             bcdataDn(ii)%NodeID         = nullvalueI
             bcdataDn(ii)%FaceID         = nullvalueI
             bcdataDn(ii)%ElemGhostID    = nullvalueI
@@ -84,25 +75,14 @@ contains
             bcdataDn(ii)%ThisValue      = nullvalueR
             bcdataDn(ii)%ThisTime       = nullvalueR
             bcdataDn(ii)%ThisFlowrate   = nullvalueR
-            bcdataDn(ii)%TimeArray      = nullvalueR
-            bcdataDn(ii)%ValueArray     = nullvalueR
         end do
 
 
         !% the upstream arrays = HACK default upstream is flowrate
-
-
-        do ii=1,nupstreamBC
+        do ii=1,N_BCupstream
             bcdataUp(ii)%idx = ii
             bcdataUp(ii)%Updn       = bc_updn_upstream
             bcdataUp(ii)%category   = bc_category_inflowrate
-
-            allocate( bcdataUp(ii)%TimeArray(ntimepoint), stat=allocation_status, errmsg=emsg)
-            call utility_check_allocation (allocation_status, emsg)
-
-            allocate( bcdataUp(ii)%ValueArray(ntimepoint), stat=allocation_status, errmsg=emsg)
-            call utility_check_allocation (allocation_status, emsg)
-
             bcdataUp(ii)%NodeID         = nullvalueI
             bcdataUp(ii)%FaceID         = nullvalueI
             bcdataUp(ii)%ElemGhostID    = nullvalueI
@@ -110,8 +90,6 @@ contains
             bcdataUp(ii)%ThisValue      = nullvalueR
             bcdataUp(ii)%ThisTime       = nullvalueR
             bcdataUp(ii)%ThisFlowrate   = nullvalueR
-            bcdataUp(ii)%TimeArray      = nullvalueR
-            bcdataUp(ii)%ValueArray     = nullvalueR
         end do
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -333,7 +311,7 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        call bc_updatevalue (bcdata, thisTime)
+        call bc_updatevalue (bcdata, dble(thisTime))
 
         do ii=1,size(bcdata)
             thisloc => bcdata(ii)%faceID
@@ -525,7 +503,8 @@ contains
         !print *, trim(subroutine_name)
         !print *, elem2R(:,e2r_flowrate)
 
-        call bc_updatevalue (bcdata, thisTime)
+        print *, thisTime
+        call bc_updatevalue (bcdata, dble(thisTime))
 
         do ii=1,size(bcdata)
             thisghost => bcdata(ii)%ElemGhostID
@@ -569,7 +548,7 @@ contains
 
         type(bcType), intent(in out) :: bcdata(:)
 
-        real,  intent(in)  :: thisTime
+        real(8),  intent(in)  :: thisTime
 
         integer    :: ii
         !--------------------------------------------------------------------------
@@ -661,7 +640,6 @@ contains
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
         do ii=1,size(bcdata)
             !%  known
             nID      => bcdata(ii)%NodeID  ! already assigned
@@ -671,7 +649,6 @@ contains
             fID      => bcdata(ii)%FaceID
             insideID => bcdata(ii)%ElemInsideID
             ghostID  => bcdata(ii)%ElemGhostID
-
 
             !%  location where the face nodeID is the same as the bc nodeID
             fID  = minloc(abs(faceI(:,fi_node_ID) - nID),1)

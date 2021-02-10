@@ -222,7 +222,7 @@ contains
         character(64) :: subroutine_name = 'utility_linear_interpolate_within_indexlist'
 
         real,      intent(in)  :: IndexArray(:), ValueArray(:)
-        real,      intent(in)  :: thisIndex
+        real(8),      intent(in)  :: thisIndex
 
         real ::  thisValue
 
@@ -234,18 +234,18 @@ contains
         closeloc = minloc(abs(thisIndex - IndexArray),1)
 
         !% get the value if the location is exactly on an index
-        if (thisIndex - IndexArray(closeloc) == 0) then
+        if (thisIndex == IndexArray(closeloc)) then
             thisValue = ValueArray(closeloc)
 
             !% if the close location index is below the target
-        elseif ((thisIndex - IndexArray(closeloc) > 0) .and. &
+        elseif ((thisIndex > IndexArray(closeloc)) .and. &
             (closeloc < size(IndexArray,1)) ) then
             thisValue = ( ValueArray(closeloc)   * ( IndexArray(closeloc + 1) - thisIndex)    &
                 +ValueArray(closeloc+1) * ( thisIndex - IndexArray(closeloc)    ) )  &
                 / ( IndexArray(closeloc+1) - IndexArray(closeloc) )
 
             !% if the close location is above the target
-        elseif ((thisIndex - IndexArray(closeloc) < 0) .and. &
+        elseif ((thisIndex < IndexArray(closeloc)) .and. &
             (closeloc > 1) ) then
             thisValue = ( ValueArray(closeloc)   * ( IndexArray(closeloc) - thisIndex   )    &
                 +ValueArray(closeloc-1) * ( thisIndex - IndexArray(closeloc-1) )  ) &

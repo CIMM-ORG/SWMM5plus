@@ -24,34 +24,46 @@ module network_graph
         integer, allocatable, dimension(:) :: in_degree ! list with in-degrees of node
     end type graph
 
+    integer, private, parameter :: debuglevel = 0
 contains
 
     function new_graph(num_vertices)
         integer, intent(in) :: num_vertices
         type(graph) :: new_graph
+        character(64) :: subroutine_name  = 'new_graph'
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
         new_graph%num_vertices = num_vertices
         allocate(new_graph%g(num_vertices))
         allocate(new_graph%in_degree(num_vertices))
         new_graph%in_degree(:) = 0
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end function
 
     subroutine add_graph_link(g, source, destination, link_id)
         type(graph), intent(inout) :: g
         integer, intent(in) :: source, destination, link_id
+        character(64) :: subroutine_name  = 'add_graph_link'
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
         call dyna_integer_append(g%g(source)%neighbors, destination)
         call dyna_integer_append(g%g(source)%link_id, link_id)
         call dyna_real_append(g%g(source)%neighbor_flows, 0.0)
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine add_graph_link
 
     subroutine free_graph(g)
         type(graph), intent(inout) :: g
+        character(64) :: subroutine_name  = 'free_graph'
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
         deallocate(g%g)
         deallocate(g%in_degree)
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine free_graph
 
     function get_network_graph()
         type(graph) :: get_network_graph
         integer :: i, src, dest
+        character(64) :: subroutine_name  = 'get_network_graph'
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         if (.not. api_is_initialized) then
             print *, MSG_API_NOT_INITIALIZED
@@ -66,6 +78,7 @@ contains
             get_network_graph%in_degree(dest) = get_network_graph%in_degree(dest) + 1
             call add_graph_link(get_network_graph, src, dest, i)
         end do
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end function get_network_graph
 
     subroutine traverse_graph_flow(g, i, flow)
@@ -75,13 +88,17 @@ contains
 
         type(integer_array) :: n_nodes ! stack of nodes that haven't been traversed
         integer :: k
+        character(64) :: subroutine_name  = 'traverse_graph_flow'
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         call dyna_integer_append(n_nodes, i)
         do while (n_nodes%len > 0)
             k = dyna_integer_pop(n_nodes)
+            if (g%g(k)%neighbor_flows%len == 0) cycle
             g%g(k)%neighbor_flows%array = g%g(k)%neighbor_flows%array + flow
             call dyna_integer_extend(n_nodes, g%g(k)%neighbors)
         end do
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine traverse_graph_flow
 
     subroutine traverse_cfl_condition(g, linkR, nodeR, linkI, nodeI)
@@ -93,6 +110,8 @@ contains
         integer :: i, j, link_id
         real :: Q, N_R, SLP, Y, ML, MR, BT, TOL, A, P, F, DDF
         real, allocatable :: velocities(:)
+        character(64) :: subroutine_name  = 'traverse_cfl_condition'
+        if ((debuglevel > -1) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         allocate(velocities(num_links))
         velocities(:) = 0
@@ -142,8 +161,19 @@ contains
         end do
 
         setting%time%dt = minval(velocities) ! minimum dt
-        linkR(:, li_N_element) = ceiling(velocities/setting%time%dt)
+        setting%step%final = int(setting%time%endtime / setting%time%dt)
+
+        linkI(:, li_N_element) = ceiling(velocities/setting%time%dt)
+        linkR(:, lr_ElementLength) = linkR(:, lr_Length) / linkI(:, li_N_element)
         deallocate(velocities)
 
+        print *, "Start Time", setting%time%starttime
+        print *, "End Time", setting%time%endtime
+        print *, "Time step", setting%time%dt
+        print *, "Number of elements", sum(linkI(:, li_N_element))
+        print *, "Minmax number of elements", minval(linkI(:, li_N_element)), maxval(linkI(:, li_N_element))
+        print *, "Minmax inflows", minval(nodeR(:, nr_maxinflow)), maxval(nodeR(:, nr_maxinflow))
+
+        if ((debuglevel > -1) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine traverse_cfl_condition
 end module network_graph
