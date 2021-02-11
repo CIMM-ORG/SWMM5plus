@@ -11,6 +11,14 @@ module datetime
 
     contains
 
+
+    function days_to_secs(date_in_days, start_date_in_days)
+        real(8), intent(in) :: date_in_days
+        real(8), intent(in) :: start_date_in_days
+        real(8) :: days_to_secs
+        days_to_secs = (date_in_days - start_date_in_days) * dble(secsperday)
+    end function
+
     function secs_to_days(date_in_secs, start_date_in_days)
         real(8), intent(in) :: date_in_secs
         real(8), intent(in) :: start_date_in_days
