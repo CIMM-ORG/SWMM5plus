@@ -1,4 +1,4 @@
-! module type defintions
+! module type_definitions
 !
 ! These are derived type definitions that are used in globals, setting, and
 ! elsewhere.
@@ -14,12 +14,9 @@ module type_definitions
 
     implicit none
 
-    public
-
     type string
         character(len=:), allocatable :: str
     end type string
-
 
     !%  diagnostic%Volume
     type diagnosticVolumeType
@@ -77,6 +74,74 @@ module type_definitions
         type (outputfileType) :: FileInfo
         character(32)         :: DataName
     end type threadedfileType
+
+    type real_array
+        integer :: max_size = 0
+        integer :: len = 0
+        real, allocatable :: array(:)
+    end type real_array
+
+    type integer_array
+        integer :: max_size = 0
+        integer :: len = 0
+        integer, allocatable :: array(:)
+    end type integer_array
+
+    ! TABLE OBJECT
+    type real_table
+        integer :: table_type
+        integer :: dim
+        integer, allocatable :: tsize(:)
+        type(real_array), allocatable :: data(:)
+    end type real_table
+
+    ! TIME SERIES OBJECT
+    type tseries
+        integer :: current = 1
+        type(real_table) :: table
+    end type tseries
+
+    ! PATTERN OBJECT
+    type pattern
+        integer :: ptype
+        integer :: count
+        real, dimension(24) :: factor
+    end type pattern
+
+    ! EXTERNAL INFLOW OBJECT
+    ! t_series*sfactor + base_pat*baseline
+    type extInflow
+        integer :: node_id ! index to element thar receives inflow
+        integer :: t_series ! time_series
+        integer :: base_pat ! pattern
+        real :: baseline ! constant baseline value
+        real :: sfactor ! time series scaling factor
+        real :: max_inflow
+    end type
+
+    ! DRY INFLOW OBJECT
+    type dwfInflow
+        integer :: node_id ! index to element thar receives inflow
+        real :: avgValue ! average inflow value
+        integer :: monthly_pattern
+        integer :: daily_pattern
+        integer :: hourly_pattern
+        integer :: weekly_pattern
+        real :: max_inflow
+    end type
+
+    type graph_node
+        integer :: node_id
+        type(integer_array) :: neighbors
+        type(integer_array) :: link_id
+        type(real_array) :: neighbor_flows
+    end type graph_node
+
+    type graph
+        integer :: num_vertices
+        type(graph_node), allocatable, dimension(:) :: g ! graph linked lists
+        integer, allocatable, dimension(:) :: in_degree ! list with in-degrees of node
+    end type graph
 
 
     !==========================================================================

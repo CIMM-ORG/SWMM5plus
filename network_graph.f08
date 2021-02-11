@@ -8,21 +8,9 @@ module network_graph
     use data_keys
     use setting_definition
     use inflow
+    use type_definitions
 
     implicit none
-
-    type graph_node
-        integer :: node_id
-        type(integer_array) :: neighbors
-        type(integer_array) :: link_id
-        type(real_array) :: neighbor_flows
-    end type graph_node
-
-    type graph
-        integer :: num_vertices
-        type(graph_node), allocatable, dimension(:) :: g ! graph linked lists
-        integer, allocatable, dimension(:) :: in_degree ! list with in-degrees of node
-    end type graph
 
     integer, private, parameter :: debuglevel = 0
 contains

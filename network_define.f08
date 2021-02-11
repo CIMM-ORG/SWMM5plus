@@ -18,6 +18,7 @@ module network_define
     use junction
     use interface
     use network_graph
+    use objects
 
     implicit none
 
@@ -37,8 +38,7 @@ contains
         nodeI, nodeR, nodeYN, nodeName, &
         elem2R, elem2I, elem2YN, elem2Name, &
         elemMR, elemMI, elemMYN, elemMName, &
-        faceR,  faceI,  faceYN,  faceName, &
-        swmm_graph)
+        faceR,  faceI,  faceYN,  faceName)
         !
         ! Initializes a element-face network from a link-node network.
         ! Requires network links and nodes before execution (e.g. module test_cases)
@@ -79,7 +79,6 @@ contains
 
         integer :: ii
 
-        type(graph), intent(inout) :: swmm_graph
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 

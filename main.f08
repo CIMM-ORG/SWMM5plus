@@ -19,11 +19,15 @@ program main
     use output
     use setting_definition
     use type_definitions
+    use objects
+    use project
     ! use test_cases
     use time_loop
     use utility
 
     implicit none
+
+    integer :: ii, jj
 
     !%  elem2# are the values for elements that have only 2 faces
     real,       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
@@ -71,7 +75,6 @@ program main
 
     !% threaded output files
     type(threadedfileType), allocatable, dimension(:) :: threadedfile
-
     integer, dimension(:),      allocatable :: wdID
     integer, dimension(:),      allocatable :: wdNumberPairs
     real,    dimension(:),      allocatable :: wdManningsN
@@ -82,8 +85,6 @@ program main
     real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
     type(string), dimension(:), allocatable :: wdCellType(:)
 
-    type(tseries) :: ts_ups
-    integer :: ii, jj
 
     !--------------------------------------------------------------------------
     print *, ''
@@ -129,11 +130,8 @@ program main
 
     !% bookkeeping routines
     call utility_get_datetime_stamp (setting%Time%DateTimeStamp)
-
     call debug_initialize (debugfile)
-
     call checking_consistency
-
     call initialize_arrayindex
 
     !% custom setup for hard-code test cases
@@ -145,60 +143,9 @@ program main
         !     wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         !     wdBreadth, wdWidthDepthData, wdCellType)
     else
-        ! --------------------
-        ! --- Initialize C API
-        ! --------------------
-
-        call initialize_api()
-
-        ! Retrieve system properties from SWMM C
-        call initialize_linknode_arrays &
-            (linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
-
-        ! Load inflows from SWMM C
-        call inflow_load_inflows(nodeI, nodeR)
-
-        ! Create system graph
-        swmm_graph = get_network_graph()
-
-        ! call finalize_api()
-
-        ! Allocate boundary conditions
-        nodeI(1:N_BCdnstream, ni_temp1) = pack(nodeI(:,ni_idx),nodeI(:,ni_node_type) == nBCdn)
-        N_BCdnstream = count(nodeI(:,ni_node_type) == nBCdn)
-        N_BCupstream = count(nodeI(:,ni_node_type) == nBCup)
-
-        call bc_allocate(bcdataDn, bcdataUp)
-
-        print *, "Setting up BC upstream"
-        do ii = 1, N_BCupstream
-            print *, "BC upstream", ii, '/', N_BCupstream
-            jj = nodes_with_extinflow%array(ii)
-            ts_ups = all_tseries(ext_inflows(ii)%t_series)
-            bcdataUp(ii)%NodeID = jj
-            bcdataUp(ii)%TimeArray = ts_ups%table%data(1)%array(1:ts_ups%table%tsize(1))
-            bcdataUp(ii)%ValueArray = ts_ups%table%data(2)%array(1:ts_ups%table%tsize(2))
-            ! if (maxval(bcdataUp(ii)%TimeArray) == 0) then
-            !     print *, "THIS CRAP", maxval(bcdataUp(ii)%TimeArray)
-            !     print *, ts_ups%table%data(1)%array(1:ts_ups%table%data(1)%len), ext_inflows(ii)%t_series
-            !     stop
-            ! endif
-        enddo
-
-        print *, "Setting up BC downstream"
-        do ii = 1, N_BCdnstream
-            print *, "BC dnstream", ii, '/', N_BCdnstream
-            bcdataDn(ii)%NodeID = nodeI(ii, ni_temp1)
-            allocate(bcdataDn(ii)%TimeArray(2))
-            allocate(bcdataDn(ii)%ValueArray(2))
-            bcdataDn(ii)%TimeArray = (/0.0, real((setting%time%endtime - setting%time%starttime)*dble(secsperday))/)
-            bcdataDn(ii)%ValueArray = nr_Zbottom
-        enddo
-        ! --------------------
-        ! --- Finalize C API
-        ! --------------------
-        ! print *, 'error - code only designed for use with test cases'
-        ! stop
+       call project_open &
+       (linkI, nodeI, linkR, nodeR, linkYN, &
+       nodeYN, linkName, nodeName, bcdataUp, bcdataDn)
     end if
 
     !% create the network of elements from link and node data
@@ -207,9 +154,9 @@ program main
         nodeI, nodeR, nodeYN, nodeName, &
         elem2R, elem2I, elem2YN, elem2Name, &
         elemMR, elemMI, elemMYN, elemMName, &
-        faceR,  faceI,  faceYN,  faceName, swmm_graph)
-    print *, 'in main'
+        faceR,  faceI,  faceYN,  faceName)
 
+    print *, 'in main'
 
     print *, "Start Time", setting%time%starttime, swmm_start_time
     print *, "End Time", setting%time%endtime, swmm_end_time
@@ -253,10 +200,10 @@ program main
 
     !%  time marching of continuity and momentum
     call time_marching &
-        (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
-        bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile, &
-        wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
-        wdBreadth, wdWidthDepthData, wdCellType)
+    (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
+    bcdataDn, bcdataUp, linkI, debugfile, diagnostic, threadedfile, &
+    wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
+    wdBreadth, wdWidthDepthData, wdCellType)
 
     !% uncomment this if you want a final debug output
     ! call debug_output &

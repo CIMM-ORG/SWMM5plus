@@ -34,9 +34,9 @@ SOURCESF="  errors.f08\
         datetime.f08\
         dll_mod.f08\
         type_definitions.f08\
+        dynamic_array.f08\
         setting_definition.f08\
         globals.f08\
-        dynamic_array.f08\
         selectors.f08\
         linked_list.f08\
         array_index.f08\
@@ -46,6 +46,7 @@ SOURCESF="  errors.f08\
         tables.f08\
         interface.f08\
         inflow.f08\
+        network_graph.f08\
         utility.f08\
         adjustments.f08\
         allocate_storage.f08\
@@ -65,8 +66,8 @@ SOURCESF="  errors.f08\
         friction_model.f08\
         initial_condition.f08\
         initialization.f08\
+        project.f08\
         link_node.f08\
-        network_graph.f08\
         network_define.f08\
         output.f08\
         runge_kutta.f08\

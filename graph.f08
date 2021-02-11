@@ -1,16 +1,8 @@
 module network_graph
 
+    use objects
+
     implicit none
-
-    type graph_node
-        integer :: node_id
-        type(graph_node), pointer :: next_node
-    end type graph_node
-
-    type graph
-        type(graph_node), allocatable, dimension(:) :: g ! graph linked lists
-        integer :: num_vertices
-    end type graph
 
 contains
     function new_graph(num_vertices)

@@ -11,7 +11,6 @@ module globals
 
     use setting_definition
     use type_definitions
-    use network_graph
 
     implicit none
 
