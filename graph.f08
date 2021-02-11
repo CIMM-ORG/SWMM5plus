@@ -31,7 +31,6 @@ contains
 
     subroutine free_graph(g)
         type(graph), intent(inout) :: g
-        integer :: i
         deallocate(g%g)
     end subroutine
 

@@ -11,6 +11,8 @@ module globals
 
     use setting_definition
     use type_definitions
+    use network_graph
+
     implicit none
 
     public
@@ -73,6 +75,7 @@ module globals
     real(8), pointer :: dt   => setting%time%dt
     real, pointer :: grav => setting%constant%gravity
 
+    type(graph) :: swmm_graph
     integer :: debugcounter = 0
 
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls

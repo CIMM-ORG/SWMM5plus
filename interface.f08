@@ -641,6 +641,21 @@ contains
     end function get_pattern
 
     ! --- Utils
+
+    subroutine free_interface()
+        integer :: i
+        if (allocated(all_tseries)) then
+            do i = 1, num_tseries
+                call free_table(all_tseries(i)%table)
+            enddo
+            deallocate(all_tseries)
+        endif
+
+        if (allocated(all_patterns)) then
+            deallocate(all_patterns)
+        endif
+    end subroutine free_interface
+
     subroutine print_swmm_error_code(error)
         integer, intent(in) :: error
         if (error .ne. 0) then

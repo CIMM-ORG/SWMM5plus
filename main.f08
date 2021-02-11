@@ -82,7 +82,6 @@ program main
     real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
     type(string), dimension(:), allocatable :: wdCellType(:)
 
-    type(graph) :: swmm_graph
     type(tseries) :: ts_ups
     integer :: ii, jj
 
@@ -179,6 +178,11 @@ program main
             bcdataUp(ii)%NodeID = jj
             bcdataUp(ii)%TimeArray = ts_ups%table%data(1)%array(1:ts_ups%table%tsize(1))
             bcdataUp(ii)%ValueArray = ts_ups%table%data(2)%array(1:ts_ups%table%tsize(2))
+            ! if (maxval(bcdataUp(ii)%TimeArray) == 0) then
+            !     print *, "THIS CRAP", maxval(bcdataUp(ii)%TimeArray)
+            !     print *, ts_ups%table%data(1)%array(1:ts_ups%table%data(1)%len), ext_inflows(ii)%t_series
+            !     stop
+            ! endif
         enddo
 
         print *, "Setting up BC downstream"
@@ -207,8 +211,8 @@ program main
     print *, 'in main'
 
 
-    print *, "Start Time", setting%time%starttime
-    print *, "End Time", setting%time%endtime
+    print *, "Start Time", setting%time%starttime, swmm_start_time
+    print *, "End Time", setting%time%endtime, swmm_end_time
     print *, "Time step", setting%time%dt
     print *, "Number of elements", sum(linkI(:, li_N_element))
 
