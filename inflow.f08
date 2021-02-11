@@ -179,8 +179,6 @@ contains
                 ext = ext_inflows(j)
                 ts = all_tseries(ext%t_series)
                 size_t = ts%table%tsize(1)
-                ts%table%data(1)%array = (ts%table%data(1)%array(1:size_t) - swmm_start_time) * dble(secsperday)
-                ts%table%data(2)%array(1:size_t) = ts%table%data(2)%array(1:size_t) * ext%sfactor
                 nodeR(node_id, nr_maxinflow) = maxval(ts%table%data(2)%array(1:size_t))
             else
                 print *, MSG_FEATURE_NOT_COMPATIBLE
@@ -251,7 +249,6 @@ contains
         enddo
 
         call inflow_get_maxima(nodeI, nodeR)
-
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
             ! do i = 1, num_tseries

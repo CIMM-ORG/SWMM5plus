@@ -252,6 +252,9 @@ contains
                 / ( IndexArray(closeloc) - IndexArray(closeloc - 1) )
 
         else
+            print *, thisIndex
+            print *, IndexArray
+            print *, closeloc
             !% error condition - the index appears to be outside of the index array
             print *, 'error: interpolation index (thisIndex) is outside the array bounds (IndexArray) in ' &
                 , subroutine_name

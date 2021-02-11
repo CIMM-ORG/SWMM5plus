@@ -29,6 +29,7 @@ module bc
     public :: bc_applied_onelement
     public :: bc_timescale_value
     public :: bc_nullify_ghost_elem
+    public :: free_bc
 
     integer :: debuglevel = 0
 
@@ -778,6 +779,19 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine bc_ghost_othervalues
+
+    subroutine free_bc(bcdataDn, bcdataUp)
+        type(bcType), dimension(:), allocatable, target, intent(out)   :: bcdataUp, bcdataDn
+        integer :: ii
+        do ii = 1, N_BCdnstream
+            deallocate(bcdataDn(ii)%TimeArray)
+            deallocate(bcdataDn(ii)%ValueArray)
+        enddo
+        do ii = 1, N_BCupstream
+            deallocate(bcdataUp(ii)%TimeArray)
+            deallocate(bcdataUp(ii)%ValueArray)
+        enddo
+    end subroutine free_bc
     !
     !==========================================================================
     !==========================================================================

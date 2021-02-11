@@ -221,6 +221,7 @@ program main
     !%  close out the debug files
     call debug_finalize(debugfile)
 
+    call project_close(bcdataDn, bcdataUp)
     print *
     print *, 'finished main program'
     print *, '====================='

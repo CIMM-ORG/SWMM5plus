@@ -60,8 +60,10 @@ contains
             jj = nodes_with_extinflow%array(ii)
             ts_ups = all_tseries(ext_inflows(ii)%t_series)
             bcdataUp(ii)%NodeID = jj
-            bcdataUp(ii)%TimeArray = ts_ups%table%data(1)%array(1:ts_ups%table%tsize(1))
-            bcdataUp(ii)%ValueArray = ts_ups%table%data(2)%array(1:ts_ups%table%tsize(2))
+            allocate(bcdataUp(ii)%TimeArray(2))
+            allocate(bcdataUp(ii)%ValueArray(2))
+            bcdataUp(ii)%TimeArray = (/0.0, real(setting%time%endtime)/)
+            bcdataUp(ii)%ValueArray = 1
         enddo
 
         print *, "Setting up BC downstream"
@@ -70,7 +72,7 @@ contains
             bcdataDn(ii)%NodeID = nodeI(ii, ni_temp1)
             allocate(bcdataDn(ii)%TimeArray(2))
             allocate(bcdataDn(ii)%ValueArray(2))
-            bcdataDn(ii)%TimeArray = (/0.0, real((setting%time%endtime - setting%time%starttime)*dble(secsperday))/)
+            bcdataDn(ii)%TimeArray = (/0.0, real(setting%time%endtime)/)
             bcdataDn(ii)%ValueArray = nr_Zbottom
         enddo
         ! --------------------
@@ -78,9 +80,11 @@ contains
         ! --------------------
     end subroutine project_open
 
-    subroutine project_close()
+    subroutine project_close(bcdataDn, bcdataUp)
+        type(bcType), dimension(:), allocatable, target, intent(out)   :: bcdataUp, bcdataDn
         call free_graph(swmm_graph)
         call free_interface()
+        call free_bc(bcdataDn, bcdataUp)
     end subroutine project_close
 
 
