@@ -781,6 +781,7 @@ contains
         flowrate => faceR(:,fr_Flowrate)
 
         jumptype => faceI(:,fi_jump_type)
+        jumptype = zeroI
 
         !%  compute the upstream and downstream froude number on each face
         !%  note the froude numbers are signed with + being downstream flow.
@@ -924,6 +925,7 @@ contains
 
         where (facemask)
             etaDn = (weightUp * etaDn + weightDn * etaUp) / ( weightUp + weightDn )
+            etaUp = etaDn
         endwhere
 
         where (faceI(:,fi_meta_etype_d) == eQonly)
@@ -931,6 +933,7 @@ contains
             ! the weight of interpolation is timescale max.
             ! the interpolation gives the eta of the element upstream.
             etaDn = elem2R(faceI(:,fi_Melem_u),e2r_Eta)
+            etaUp = etaDn
         endwhere
 
         where (faceI(:,fi_meta_etype_u) == eQonly)
@@ -938,6 +941,7 @@ contains
             ! the weight of interpolation is timescale max.
             ! the interpolation gives the eta of the element downstream.
             etaDn = elem2R(faceI(:,fi_Melem_d),e2r_Eta)
+            etaUp = etaDn
         endwhere
 
         where (faceI(:,fi_meta_etype_d) == eHonly)
@@ -945,6 +949,7 @@ contains
             ! the weight of interpolation is timescale min.
             ! the interpolation gives the eta of the element downstream.
             etaDn = elemMR(faceI(:,fi_Melem_d),eMr_Eta)
+            etaUp = etaDn
         endwhere
 
         where (faceI(:,fi_meta_etype_u) == eHonly)
@@ -952,9 +957,10 @@ contains
             ! the weight of interpolation is timescale min.
             ! the interpolation gives the eta of the element upstream.
             etaDn = elemMR(faceI(:,fi_Melem_u),eMr_Eta)
+            etaUp = etaDn
         endwhere
 
-        etaUp = etaDn
+        
 
         weightUp = nullvalueR
         weightDn = nullvalueR
