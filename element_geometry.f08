@@ -570,7 +570,12 @@ contains
 
         endwhere
 
-        if (count(isfull)>0) then
+        if (count(( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                    (elemI(:,ei_geometry)  == eCircular)       .and. &
+                    (isFull) ))>0) then
+            print*,'.........................................'
+            print*, subroutine_name
+            print*
             print*, eta, 'eta'
             print*
             print*, area , 'area'
@@ -579,7 +584,7 @@ contains
             print*
             print*, topwidth, 'topwidth'
             print*
-            print*, 'element geom: press return to continue'
+            print*, 'pipe surcharged at element geom: press return to continue'
             read(*,*)
         endif
         !% HACK: other special geometry types are needed
@@ -681,14 +686,21 @@ contains
             hyddepth   = max(area / topwidth, zeroR)
             elN        = hyddepth
         endwhere
-        print*,'..............................................'
-        print*, topwidth, 'topwidth'
-        print*
-        print*, area, 'area'
-        print*
-        print*, elN, '<================== eln at elem geom'
-        print*
-        print*,'...............................................'
+        if (count(maskarray)>zeroI) then
+            print*,'..............................................'
+            print*, subroutine_name
+            print*, '..............................................'
+            print*, eta, 'eta'
+            print*
+            print*, depth, 'depth'
+            print*
+            print*, topwidth, 'topwidth'
+            print*
+            print*, area, 'area'
+            print*
+            print*, elN, 'eln'
+            print*,'...............................................'
+        endif
 
         !% constants for circular dHdA (pipeAC2020)
         af = 1.29

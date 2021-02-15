@@ -162,7 +162,7 @@ program main
         elem2R, elem2I, elem2YN, elem2Name, &
         elemMR, elemMI, elemMYN, elemMName, &
         faceR,  faceI,  faceYN,  faceName)
-    
+    stop 
     print *, 'in main'
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
@@ -185,18 +185,18 @@ program main
         bcdataUp, bcdataDn)
 
     !% setting a zero starting condition is useful for robustness tests
-    ! print *, 'in main setting flowrate and velocity to 0'
-    ! elem2R(:,e2r_Velocity) = 0.0
-    ! elem2R(:,e2r_Flowrate) = 0.0
-    ! elemMR(:,eMr_Velocity) = 0.0
-    ! elemMR(:,eMr_Flowrate) = 0.0
-    ! elemMR(:,eMr_FlowrateUp(:)) = 0.0
-    ! elemMR(:,eMr_FlowrateDn(:)) = 0.0
-    ! elemMR(:,eMr_VelocityDn(:)) = 0.0
-    ! elemMR(:,eMr_VelocityUp(:)) = 0.0
-    ! faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.0
-    ! faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.0
-    ! faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
+    print *, 'in main setting flowrate and velocity to 0'
+    elem2R(:,e2r_Velocity) = 0.0
+    elem2R(:,e2r_Flowrate) = 0.0
+    elemMR(:,eMr_Velocity) = 0.0
+    elemMR(:,eMr_Flowrate) = 0.0
+    elemMR(:,eMr_FlowrateUp(:)) = 0.0
+    elemMR(:,eMr_FlowrateDn(:)) = 0.0
+    elemMR(:,eMr_VelocityDn(:)) = 0.0
+    elemMR(:,eMr_VelocityUp(:)) = 0.0
+    faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.0
+    faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.0
+    faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 
     ! initialize output by threaded link
     call output_threaded_by_link_initialize (threadedfile)

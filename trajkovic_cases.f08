@@ -24,7 +24,7 @@ module trajkovic_cases
     public :: trajkovic_cases_setup
     public :: trajkovic_cases_initialize
 
-    integer :: debuglevel = 0
+    integer :: debuglevel = 1
 
 contains
     !
@@ -34,7 +34,8 @@ contains
     subroutine trajkovic_cases_setup &
         (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, link_length, &
         link_breadth, subdivide_length, flowrate, area, velocity, Froude,         &
-        ManningsN, idepth_type, link_geometry, inlet_offset, full_depth, cDis1)
+        ManningsN, idepth_type, link_geometry, inlet_offset, outlet_offset,       &
+        full_depth, cDis1)
 
         character(64) :: subroutine_name = 'trajkovic_cases_setup'
 
@@ -42,7 +43,7 @@ contains
         real, intent(inout) :: lowerZ(:), upperZ(:), link_length(:), link_breadth(:)
         real, intent(inout) :: subdivide_length(:), flowrate(:), area(:), velocity(:)
         real, intent(inout) :: Froude(:), ManningsN(:), full_depth(:), inlet_offset(:)
-        real, intent(inout) :: cDis1(:)
+        real, intent(inout) :: cDis1(:), outlet_offset(:)
 
         integer, intent(inout) :: idepth_type(:)
         integer, intent(inout) :: link_geometry(:)
@@ -59,10 +60,10 @@ contains
         allocate(subdivide_elements(N_link))
 
         !% pipe u/s of gate 1          = 1.5m
-        !% length of gate1             = 0.2m
-        !% pipe from gate1 to gate2    = 8.3m
-        !% length of gate2             = 0.2m
-        !% pipe extension d/s of gate2 = 1.0m
+        !% length of gate1             = 0.02m
+        !% pipe from gate1 to gate2    = 8.26m
+        !% length of gate2             = 0.02m
+        !% pipe extension d/s of gate2 = 1.4m
         !% buffet pipe for dissipation = 5.0m
         total_length = 16.2
 
@@ -82,6 +83,7 @@ contains
         init_depth          = 0.02
         flowrate            = 0.013
         inlet_offset        = 0.0
+        outlet_offset       = 0.0
         full_depth          = 0.1
         cDis1               = 0.0
 
@@ -93,32 +95,31 @@ contains
         subdivide_length(1)   = link_length(1) / subdivide_elements(1)
 
         !% gate 1
-        link_length(2)        = 0.2
+        link_length(2)        = 0.02
         link_type(2)          = lOrifice
         subdivide_elements(2) = 1
         subdivide_length(2)   = link_length(2) / subdivide_elements(2)
-        link_slope(2)         = 0.0
         cDis1(2)              = 0.76
 
         !% pipe in between gate 1 and 2
-        link_length(3)        = 8.3
+        link_length(3)        = 8.26
         link_type(3)          = lPipe
         subdivide_elements(3) = 40
         subdivide_length(3)   = link_length(3) / subdivide_elements(3)
 
         !% gate 2
-        link_length(4)        = 0.2
+        link_length(4)        = 0.02
         link_type(4)          = lOrifice
         subdivide_elements(4) = 1
         subdivide_length(4)   = link_length(4) / subdivide_elements(4)
+        cDis1(4)              = 0.76
 
         !% pipe downstream of gate 2
         link_length(5)        = 1.4
         link_type(5)          = lPipe
         subdivide_elements(5) = 6
         subdivide_length(5)   = link_length(5) / subdivide_elements(5)
-        link_slope(4)         = 0.0
-        cDis1(4)              = 0.76
+        
 
         !% buffer pipe
         link_length(6)        = 5.0
@@ -127,11 +128,14 @@ contains
         subdivide_length(6)   = link_length(6) / subdivide_elements(6)
         link_slope(6)         = 0.0
         ManningsN(6)          = ManningsNBuffer
+        full_depth(6)         = 0.5
+        inlet_offset(6)       = -0.4
+        outlet_offset(6)      = 0.0
  
-        !% setup zbottom from downstream to upstream
+        !% setup zbottom for links from downstream to upstream
         !% buffer pipe
-        lowerZ(6) = 0.0
-        upperZ(6) = 0.0
+        lowerZ(6) = -0.4
+        upperZ(6) = -0.4
 
         !% pipe downstream of gate 2
         lowerZ(5) = 0.0
@@ -139,7 +143,7 @@ contains
 
         !% gate 2
         lowerZ(4) = upperZ(5)
-        upperZ(4) = lowerZ(4)
+        upperZ(4) = lowerZ(4) + link_slope(4) * link_length(4)
 
         !% pipe in between gate 1 and 2
         lowerZ(3) = upperZ(4)
@@ -147,7 +151,7 @@ contains
 
         !% gate 1
         lowerZ(2) = upperZ(3)
-        upperZ(2) = lowerZ(2)
+        upperZ(2) = lowerZ(2) + link_slope(2) * link_length(2)
 
         !% pipe upstream for gate 1
         lowerZ(1) = upperZ(2)
@@ -160,11 +164,11 @@ contains
     !==========================================================================
     !
     subroutine trajkovic_cases_initialize &
-        (link_length, link_breadth, subdivide_length, lowerZ, upperZ,     &
-        initial_flowrate, depth_upstream, depth_dnstream, initial_depth,  &
-        inlet_offset, discharge_coefficient1, full_depth, ManningsN,      &
-        idepth_type, linkR, nodeR, linkI, nodeI,linkYN, nodeYN, linkName, &
-        nodeName, bcdataDn, bcdataUp, gateSetting)
+        (link_length, link_breadth, subdivide_length, lowerZ, upperZ,      &
+        initial_flowrate, depth_upstream, depth_dnstream, initial_depth,   &
+        inlet_offset, outlet_offset, discharge_coefficient1, full_depth,   &
+        ManningsN, idepth_type, linkR, nodeR, linkI, nodeI,linkYN, nodeYN, &
+        linkName, nodeName, bcdataDn, bcdataUp, gateSetting)
         !
         ! initialize the link-node system and boundary conditions for trajkovic_cases
         !
@@ -174,7 +178,7 @@ contains
         real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
         real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
         real,  intent(in)  :: inlet_offset(:), discharge_coefficient1(:)
-        real,  intent(in)  :: full_depth(:), ManningsN(:)
+        real,  intent(in)  :: full_depth(:), ManningsN(:), outlet_offset(:)
 
         integer, intent(in):: idepth_type(:)
 
@@ -210,8 +214,8 @@ contains
         bcdataDn(1)%NodeID = 7
         bcdataDn(1)%TimeArray(1)     = setting%Time%StartTime
         bcdataDn(1)%TimeArray(2)     = setting%Time%EndTime + 100.0 !s
-        bcdataDn(1)%ValueArray(1)    = lowerZ(1) +  0.01   ! m
-        bcdataDn(1)%ValueArray(2)    = lowerZ(1) +  0.01   ! m
+        bcdataDn(1)%ValueArray(1)    = 0.03   ! m !% from pipeAC. needs further investigation
+        bcdataDn(1)%ValueArray(2)    = 0.03   ! m
 
         ! upstream is default to flowrate
         bcdataUp(1)%NodeID = 1
@@ -257,11 +261,11 @@ contains
         gateSetting(2)%MovedThisStep       = .false.
 
         call trajkovic_cases_link_node &
-            (link_length, link_breadth, subdivide_length, lowerZ, upperZ,     &
-            initial_flowrate, depth_upstream, depth_dnstream, initial_depth,  &
-            inlet_offset, discharge_coefficient1, full_depth, ManningsN,      &
-            idepth_type, linkR, nodeR, linkI, nodeI,linkYN, nodeYN, linkName, &
-            nodeName)
+            (link_length, link_breadth, subdivide_length, lowerZ, upperZ,      &
+            initial_flowrate, depth_upstream, depth_dnstream, initial_depth,   &
+            inlet_offset, outlet_offset, discharge_coefficient1, full_depth,   &
+            ManningsN, idepth_type, linkR, nodeR, linkI, nodeI,linkYN, nodeYN, &
+            linkName, nodeName)
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine trajkovic_cases_initialize
@@ -273,11 +277,11 @@ contains
     !==========================================================================
     !
     subroutine trajkovic_cases_link_node &
-        (link_length, link_breadth, subdivide_length, lowerZ, upperZ,     &
-        initial_flowrate, depth_upstream, depth_dnstream, initial_depth,  &
-        inlet_offset, discharge_coefficient1, full_depth, ManningsN,      &
-        idepth_type, linkR, nodeR, linkI, nodeI,linkYN, nodeYN, linkName, &
-        nodeName)
+        (link_length, link_breadth, subdivide_length, lowerZ, upperZ,      &
+        initial_flowrate, depth_upstream, depth_dnstream, initial_depth,   &
+        inlet_offset, outlet_offset, discharge_coefficient1, full_depth,   &
+        ManningsN, idepth_type, linkR, nodeR, linkI, nodeI,linkYN, nodeYN, &
+        linkName, nodeName)
         !
         ! creates the link-node system for trajkovic_cases
         !
@@ -287,7 +291,7 @@ contains
         real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
         real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
         real,  intent(in)  :: inlet_offset(:), discharge_coefficient1(:)
-        real,  intent(in)  :: full_depth(:), ManningsN(:)
+        real,  intent(in)  :: full_depth(:), ManningsN(:), outlet_offset(:)
 
         integer, intent(in):: idepth_type(:)
 
@@ -315,12 +319,12 @@ contains
         nodeI(:,ni_idx) = (/ (ii, ii=1,N_node) /)
 
         ! assign no names for links
-        linkName(1)%str = 'Channel up'
+        linkName(1)%str = 'Pipe up'
         linkName(2)%str = 'Gated Orifice 1'
-        linkName(3)%str = 'Channel middle'
+        linkName(3)%str = 'Pipe middle'
         linkName(4)%str = 'Gated Orifice 2'
-        linkName(5)%str = 'Channel dn'
-        linkName(6)%str = 'Channel buffer'
+        linkName(5)%str = 'Pipe dn'
+        linkName(6)%str = 'Pipe buffer'
 
         ! assign zeros for accumulators
         nodeI(:,ni_N_link_d) = 0
@@ -341,13 +345,13 @@ contains
 
         do ii = 2,N_node-1
             nodeI(ii,ni_node_type) = nJ2
-            nodeR(ii,nr_Zbottom)   = upperZ(ii) 
+            nodeR(ii,nr_Zbottom)   = lowerZ(ii-1) 
             ! print*, ii, nodeR(ii,nr_Zbottom) , sum(channel_length(1:N_link)) - (ii-1)* channel_length(ii)
         end do
 
         ! designate the downstream node
         nodeI(N_node,ni_node_type) = nBCdn
-        nodeR(N_node,nr_Zbottom) = 0.0
+        nodeR(N_node,nr_Zbottom)   = lowerZ(6)
         nodeName(N_node)%str = 'DownstreamBC'
 
         ! assign all as rectangular channels
@@ -368,7 +372,7 @@ contains
             linkR(mm,lr_InitialUpstreamDepth)    = depth_upstream(mm)
             linkR(mm,lr_InitialDnstreamDepth)    = depth_dnstream(mm)
             linkR(mm,lr_InletOffset)             = inlet_offset(mm)
-            linkR(mm,lr_OutletOffset)            = inlet_offset(mm)
+            linkR(mm,lr_OutletOffset)            = outlet_offset(mm)
             linkR(mm,lr_DischargeCoeff1)         = discharge_coefficient1(mm)
             linkR(mm,lr_FullDepth)               = full_depth(mm)
             linkI(mm,li_InitialDepthType)        = idepth_type(mm)

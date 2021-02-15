@@ -85,7 +85,7 @@ contains
 
         if     ( ii .GE. (nItems - oneI) ) then
 
-            normalizedOutput = table(nItems)
+            normalizedOutput = table(nItems - oneI)
 
         elseif ( ii .LE. zeroI) then
 
@@ -199,11 +199,6 @@ contains
         call table_interpolation &
             (inoutarray, normalizedInput, table, nItems, maskarray, delta, position)
 
-            if (any(inoutarray == zeroR)) then
-                print*, 'error: zero inoutarray'
-                stop
-            endif
-
         position = nullvalueI
         nullify(position)
         next_ei_temparray = next_ei_temparray-1
@@ -243,14 +238,15 @@ contains
                     (table(position + oneI) - table(position)) / delta       
 
         elsewhere ( (maskarray) .and. (position .GE. (nItems - oneI)) )
-            inoutarray = table(nItems)
+            inoutarray = table(nItems - oneI)
         endwhere
 
         ! quadratic interpolation for low value
-        where (position == oneI)
-            inoutarray = max(zeroR, (inoutarray + (inoutarray - delta) * &
+        where ( (maskarray) .and. (position .LT. twoI) )
+            inoutarray = max(zeroR, (inoutarray + (inoutarray - delta)  * &
                             (inoutarray - twoI * delta) / (delta*delta) * &
-                            (table(oneI)/twoR - table(twoI)  + table(threeI) / twoR)) )
+                            (table(oneI)/twoR - table(twoI)  +            &
+                            table(threeI) / twoR)) )
         endwhere
     
 

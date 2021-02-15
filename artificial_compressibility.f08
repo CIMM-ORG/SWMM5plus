@@ -224,9 +224,11 @@ contains
         elsewhere ( maskChannelPipeAC .and. (isFull .eqv. .true.) )
             eta2new = eta2old + wrk * dtau * kc2
         endwhere 
-        print*, volume2old, 'volume2old'
-        print*, volume2new, 'volume2new'
-        print*, '...... ............... ...........'
+
+        ! print*, subroutine_name
+        ! print*, '...................................'
+        ! print*, volume2new, 'volume2new'
+        
         !%  HACK: Need derivation for juction-pipe elements
 
         !% find the full pipes that become open to adjust negative eta2new
@@ -249,6 +251,10 @@ contains
         where (maskChannelPipeAC)
             velocity2new = velocity2new / volume2new
         endwhere
+
+        ! print*
+        ! print*, velocity2new, 'velocity2new'
+        ! print*, '...... ............... ...........'
 
         ! release temporary arrays
         kc2 = nullvalueR
@@ -311,7 +317,10 @@ contains
             !%  baseline continuity source 
             kc2 = fQ(iup) - fQ(idn)
         endwhere
-        print*, kc2, 'continuity source calculation'
+        ! print*, subroutine_name
+        ! print*, 'kc2 at continuity source calculation'
+        ! print*, kc2
+        ! print*
 
         !%  additional source terms
         where ( maskChannelPipeAC .and. (isFull .eqv. .false.) )
@@ -323,16 +332,19 @@ contains
             !%  combine interior gamma and lambda (irrelevant in H)
             kc2 = lambdaH * (kc2 + gammaH * eta2old)
         endwhere
-        print*,kc2, 'additional source terms'
-        
+        ! print*, 'kc2 at additional source terms'
+        ! print*,kc2   
+        ! print*
+
         !%  C term numerator calculation
         where ( maskChannelPipeAC )
             !%  baseline C term numerator
             kc2 = kc2 * elN2 * rc2
         endwhere
-        print*, elN2
-        print*
-        print*, kc2, 'baseline C term numerator'
+
+        ! print*, 'kc2 at baseline C term numerator'
+        ! print*, kc2
+        ! print*
 
         !%  additional C term numerator calculation
         where ( maskChannelPipeAC .and. (isFull .eqv. .false.) )
@@ -342,7 +354,9 @@ contains
             !%  C denominator for closed pipe (V) 
             kc2 = kc2 / volume2new
         endwhere
-        print*, kc2, 'additional C term numerator calculation'
+        ! print*, 'kc2 at additional C term numerator calculation'
+        ! print*, kc2
+        ! print*
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine Kvolume2AC
@@ -410,6 +424,9 @@ contains
             ku2 = fQ(iup) * fUdn(iup) - fQ(idn) * fUup(idn) + grav * fAdn(iup) * fEdn(iup) * &
                     (oneR - tDelta) - grav * fAup(idn) * fEup(idn) * (oneR - tDelta)
         endwhere
+        ! print*, 'ku2 at baseline source term calculation'
+        ! print*, ku2
+        ! print*
 
         !%  Tsource term calculation
         select case (setting%DefaultAC%Tsource)
@@ -430,13 +447,16 @@ contains
                 print*, 'error, unknown value for setting%DefaultAC%Tsource of '
                 print*,  setting%DefaultAC%Tsource
                 stop
-        end select      
+        end select  
+        ! print*, 'ku2 at Tsource term calculation'
+        ! print*, ku2
+        ! print*    
 
         !%  Other source term calculation
         where (maskChannelPipeAC)
             !%  adding real time levels to source
             ku2 = ku2 - (af(2) * flowrate2n0 + af(3) * flowrate2n1) * invdt * length2
-            ! !%  gamma term
+            !%  gamma term
             gammaUV = - af(1) * invdt - grav * ((mn2**twoR) / (rh2**(fourR/threeR))) * abs(velocity2new)
             !%  adding gamma to source
             ku2 = ku2 + gammaUV * velocity2old * volume2old
@@ -445,8 +465,11 @@ contains
             !%  updated U (here U = velocity2new*volume2new)
             velocity2new = volume2old * velocity2old  + wrk * dtau * ku2
         endwhere
+        ! print*, 'ku2 at Other source term calculation'
+        ! print*, ku2
+        ! print*
        
-        ! release temporary arrays
+        !% release temporary arrays
         gammaUV = nullvalueR
         nullify(gammaUV)
         next_e2r_temparray = next_e2r_temparray - 1
@@ -506,13 +529,14 @@ contains
             isfull     = .true.
         endwhere
         if (count(isfull) >0) then
+            print*, '------------------------------------'
+            print*, 'full pipe deteted while OPEN PIPES TRANSITION TO FULL ', subroutine_name
+            print*
             print*, fullVolume2, 'fullVolume2'
             print*
             print*, volume2new, 'volume2new'
             print*
             print*, eta2new, 'eta2new'
-            print*
-            print*, 'full pipe deteted'
             print*, 'press return to continue'
             read(*,*)
         endif

@@ -600,37 +600,38 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
+        !% old code without inlet or outlet offsets
+        ! do mm = 1,N_link
+        !     nUp => linkI(mm,li_Mnode_u)
+        !     nDn => linkI(mm,li_Mnode_d)
+        !     zUp => nodeR(nUp,nr_Zbottom)
+        !     zDn => nodeR(nDn,nr_Zbottom)
+        !     linkR(mm,lr_Slope) = (zUp - zDn) / linkR(mm,lr_Length)
+        ! end do
 
-        do mm = 1,N_link
-            nUp => linkI(mm,li_Mnode_u)
-            nDn => linkI(mm,li_Mnode_d)
-            zUp => nodeR(nUp,nr_Zbottom)
-            zDn => nodeR(nDn,nr_Zbottom)
-            linkR(mm,lr_Slope) = (zUp - zDn) / linkR(mm,lr_Length)
-        end do
         !% to be consistent with SWMM5, each links needs inlet and outlet offset valuse.
         !% these values indicate the offset from upstream and downstream nodes
         !% so, the z values for links will be the offset + node zbottom
         !% this offset is only used in specialized elements i.e. weir, orifice, storage
         !% this need to be further discussed
-        ! do mm = 1,N_link
-        !    if (linkR(mm, lr_InletOffset) == nullvalueR) then
-        !        !% if offset value are not assigned/sepcified, offset will be set to zero
-        !        linkR(mm,lr_InletOffset) = zeroR
-        !        linkR(mm,lr_OutletOffset) = zeroR
-        !    endif
+        do mm = 1,N_link
+           if (linkR(mm, lr_InletOffset) == nullvalueR) then
+               !% if offset value are not assigned/sepcified, offset will be set to zero
+               linkR(mm,lr_InletOffset) = zeroR
+               linkR(mm,lr_OutletOffset) = zeroR
+           endif
 
-        !    oUp => linkR(mm,lr_InletOffset)
-        !    oDn => linkR(mm,lr_OutletOffset)
+           oUp => linkR(mm,lr_InletOffset)
+           oDn => linkR(mm,lr_OutletOffset)
 
-        !    nUp => linkI(mm,li_Mnode_u)
-        !    nDn => linkI(mm,li_Mnode_d)
+           nUp => linkI(mm,li_Mnode_u)
+           nDn => linkI(mm,li_Mnode_d)
 
-        !    zUp => nodeR(nUp,nr_Zbottom)
-        !    zDn => nodeR(nDn,nr_Zbottom)
+           zUp => nodeR(nUp,nr_Zbottom)
+           zDn => nodeR(nDn,nr_Zbottom)
 
-        !    linkR(mm,lr_Slope) = ((zUp + oUp) - (zDn + oDn ))/ linkR(mm,lr_Length)
-        ! end do
+           linkR(mm,lr_Slope) = ((zUp + oUp) - (zDn + oDn ))/ linkR(mm,lr_Length)
+        end do
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
             !% provide output for debugging
@@ -969,8 +970,9 @@ contains
             faceI(thisFace,fi_link_Pos)     = nullvalueI
             faceI(thisFace,fi_node_ID)      = thisNode
 
+            !% HACK: if there is a offset elevation between the link and the corresponding
+            !% downstream boundary node, what should be the face Zbottom? 
             faceR(thisFace,fr_Zbottom)      = nodeR(thisNode,nr_Zbottom)
-
             faceName(thisFace)              = nodeName(thisNode)
 
             lastFace = thisFace
@@ -1580,8 +1582,15 @@ contains
         linkI(thisLink,li_Mface_d) = lastFace ! the old face is the 1st
 
         !%  reference elevations at cell center and cell face
-        zcenter = zDownstream - 0.5 * linkR(thislink,lr_ElementLength) * linkR(thislink,lr_Slope)
-        zface   = zDownstream
+        !%  HACK: Dealing with inlet and outlet offset
+        !%  offset elevation is added here. This needs further revision
+        !%  This is a hack code only works with Trajkovic cases test file
+        zcenter = zDownstream + linkR(thislink,lr_OutletOffset) - &
+            0.5 * linkR(thislink,lr_ElementLength) * linkR(thislink,lr_Slope)
+
+        !%  HACK: If a link does not share common zbottom then how the zbottom of face
+        !%  should be handeled? The pipeAC code does not provide a clear answer 
+        zface   = zDownstream + linkR(thislink,lr_OutletOffset)
         
         do mm = 1,linkI(thisLink,li_N_element)
             !%  store the elem info

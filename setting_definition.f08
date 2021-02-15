@@ -234,7 +234,7 @@ module setting_definition
 
     !%  setting%DefaultAC
     type defaultACType
-        character(len=64)       :: Tsource     = 'T00' ! 'T10', 'T20'
+        character(len=64)       :: Tsource     = 'T20' ! 'T10', 'T00'
         character(len=64)       :: TimeStencil = 'backwards3'   ! 'CN' 
         logical                 :: PrintConvergence = .false.
         real                    :: dtau  

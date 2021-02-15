@@ -952,22 +952,24 @@ contains
         endif
 
         !%  set the mask for channel and mulitple elements without a hyd jump
-        facemask = ( ((faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fPipe) &
-        .or. (faceI(:,fi_etype_d) == fMultiple))                                            &
-        .and.                                                                               &
-              ((faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fPipe)        &
-        .or.  (faceI(:,fi_etype_u) == fMultiple))                                           &
-        .and. (faceI(:,fi_jump_type) == jump_none) )
+        facemask = ( ( (faceI(:,fi_etype_d) == fChannel) .or. (faceI(:,fi_etype_d) == fPipe) &
+                .or.   (faceI(:,fi_etype_d) == fMultiple) )                                  &
+                .and.                                                                        &
+                     ( (faceI(:,fi_etype_u) == fChannel) .or. (faceI(:,fi_etype_u) == fPipe) &
+                .or.   (faceI(:,fi_etype_u) == fMultiple) )                                  &
+                .and.  (faceI(:,fi_jump_type) == jump_none) )
 
         where (facemask)
             etaDn = (weightUp * etaDn + weightDn * etaUp) / ( weightUp + weightDn )
+            etaUp = etaDn
         endwhere
 
         where (faceI(:,fi_meta_etype_d) == eQonly)
             ! for Qonly element at donwstream end of the face
             ! the weight of interpolation is timescale max.
             ! the interpolation gives the eta of the element upstream.
-            etaDn = elem2R(faceI(:,fi_Melem_u),e2r_Eta)
+            etaUp = elem2R(faceI(:,fi_Melem_u),e2r_Eta)
+            etaDn = etaUP
         endwhere
 
         where (faceI(:,fi_meta_etype_u) == eQonly)
@@ -975,7 +977,7 @@ contains
             ! the weight of interpolation is timescale max.
             ! the interpolation gives the eta of the element downstream.
             etaDn = elem2R(faceI(:,fi_Melem_d),e2r_Eta)
-            ! etaUp = etaDn
+            etaUp = etaDn
         endwhere
 
         where (faceI(:,fi_meta_etype_d) == eHonly)
@@ -983,25 +985,19 @@ contains
             ! the weight of interpolation is timescale min.
             ! the interpolation gives the eta of the element downstream.
             etaDn = elemMR(faceI(:,fi_Melem_d),eMr_Eta)
+            etaUp = etaDn
         endwhere
 
         where (faceI(:,fi_meta_etype_u) == eHonly)
             ! for Honly element at upstream end of the face
             ! the weight of interpolation is timescale min.
             ! the interpolation gives the eta of the element upstream.
-            etaDn = elemMR(faceI(:,fi_Melem_u),eMr_Eta)
+            etaUp = elemMR(faceI(:,fi_Melem_u),eMr_Eta)
+            etaDn = etaUp
         endwhere
 
-        etaUp = etaDn
-
-        where (faceI(:,fi_jump_type) /= jump_none)
-            etaUp = elem2R(mapUp,e2r_Eta)
-            etaDn = elem2R(mapDn,e2r_Eta)
-        endwhere
+        !% HACK: Does hydraulic jump occur in Q only elements. Talk with Dr. Hodges
         
-        ! print*, trim(subroutine_name)
-        ! print*, 'etaDn', etaDn
-
         weightUp = nullvalueR
         weightDn = nullvalueR
         facemask = nullvalueL

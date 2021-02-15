@@ -62,7 +62,7 @@ contains
         real, dimension(:), allocatable :: channel_breadth, channel_topwidth
         real, dimension(:), allocatable :: lowerZ, upperZ, flowrate, zbottom
         real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
-        real, dimension(:), allocatable :: fullDepth, inletOffset, sideSlope
+        real, dimension(:), allocatable :: fullDepth, inletOffset, outletOffset, sideSlope
         real, dimension(:), allocatable :: parabolaValue, leftSlope, rightSlope
         real, dimension(:), allocatable :: dischargeCoefficient1, dischargeCoefficient2
         real, dimension(:), allocatable :: endContractions
@@ -140,7 +140,7 @@ contains
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
@@ -239,7 +239,7 @@ contains
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length,&
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
                 dischargeCoefficient2, fullDepth, endContractions)
             
             allocate(init_flowrate(N_Link))
@@ -320,7 +320,7 @@ contains
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
@@ -432,7 +432,7 @@ contains
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
@@ -558,7 +558,7 @@ contains
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
@@ -684,7 +684,7 @@ contains
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
@@ -790,7 +790,7 @@ contains
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
@@ -867,7 +867,7 @@ contains
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
@@ -954,20 +954,20 @@ contains
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
                 channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
                 velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-                leftSlope, rightSlope, sideslope, inletOffset, dischargeCoefficient1,       &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
                 dischargeCoefficient2, fullDepth, endContractions)
 
           call trajkovic_cases_setup &
                 (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
                 channel_breadth, subdivide_length, flowrate, area, velocity, Froude,         &
-                ManningsN, idepth_type, channel_geometry, inletOffset, fullDepth,            &
-                dischargeCoefficient1)
+                ManningsN, idepth_type, channel_geometry, inletOffset, outletOffset,         &
+                fullDepth, dischargeCoefficient1)
 
           call trajkovic_cases_initialize &
-                (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
-                flowrate, depth_upstream, depth_dnstream, init_depth,  inletOffset, &
-                dischargeCoefficient1, fullDepth, ManningsN, idepth_type, linkR,    &
-                nodeR, linkI, nodeI,linkYN, nodeYN, linkName, nodeName, bcdataDn,   &
+                (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,      &
+                flowrate, depth_upstream, depth_dnstream, init_depth,  inletOffset,      &
+                outletOffset, dischargeCoefficient1, fullDepth, ManningsN, idepth_type,  &
+                linkR, nodeR, linkI, nodeI,linkYN, nodeYN, linkName, nodeName, bcdataDn, &
                 bcdataUp, gateSetting)
 
           call this_setting_for_time_and_steps &
@@ -1001,10 +1001,10 @@ contains
     !
     subroutine control_variable_allocation &
         (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
-        channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
-        velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
-        leftSlope, rightSlope, sideSlope, inletOffset, dischargeCoefficient1,       &
-        dischargeCoefficient2, fullDepth, endContractions)
+        channel_breadth, channel_topwidth, subdivide_length, flowrate, area,         &
+        velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue,  &
+        leftSlope, rightSlope, sideSlope, inletOffset, outletOffset,                 &
+        dischargeCoefficient1, dischargeCoefficient2, fullDepth, endContractions)
 
         character(64) :: subroutine_name = 'control_variable_allocation'
 
@@ -1014,7 +1014,7 @@ contains
         real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate !initial_flowrate
         real, dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
         real, dimension(:), allocatable, intent(out) :: parabolaValue, leftSlope, rightSlope
-        real, dimension(:), allocatable, intent(out) :: inletOffset, sideSlope
+        real, dimension(:), allocatable, intent(out) :: inletOffset, outletOffset, sideSlope
         real, dimension(:), allocatable, intent(out) :: dischargeCoefficient1, dischargeCoefficient2
         real, dimension(:), allocatable, intent(out) :: fullDepth, endContractions
 
@@ -1045,6 +1045,7 @@ contains
         allocate(rightSlope(N_link))
         allocate(sideSlope(N_link))
         allocate(inletOffset(N_link))
+        allocate(outletOffset(N_link))
         allocate(dischargeCoefficient1(N_link))
         allocate(dischargeCoefficient2(N_link))
         allocate(fullDepth(N_link))

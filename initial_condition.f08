@@ -620,6 +620,33 @@ contains
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                     elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area)
+
+                ! case ('trajkovic_case_a1')
+
+                !     do ii = 1,N_elem2
+                !     if (elem2I(ii,e2i_link_ID) == 1) then
+                !         elem2R(ii,e2r_Eta) = 0.7
+
+                !         !%  Set surcharge condition if the pipe is full
+                !         if (elem2R(ii,e2r_Eta) .GE. elem2R(nn,e2r_Zcrown)) then
+
+                !             elem2YN(nn,e2YN_IsSurcharged) = .true.
+
+                !             elem2R(nn,e2r_Area) = elem2R(nn,e2r_FullArea)
+
+                !             elem2R(nn,e2r_HydDepth) = elem2R(nn,e2r_FullDepth)  !this is the modified hydralic depth for pipe
+                            
+                !             elem2R(nn,e2r_Topwidth) = zeroR
+
+                !             elem2R(nn,e2r_HydRadius) = onefourthR * elem2R(nn,e2r_FullDepth)
+
+                !             YoverYfull = oneR
+
+                !             AoverAfull = oneR
+                !         else
+
+
+
                 case default
                 print *, 'Warning '
                 print *, setting%TestCase%TestName, ' does not need a custom initial condition'
