@@ -51,9 +51,9 @@ contains
 
         do i = 1, n
             call dyna_real_append(table%data(i), entry(i))
+            table%tsize(i) = table%tsize(i) + 1
         end do
 
-        table%tsize(:) = table%tsize(:) + 1
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine tables_add_entry
 
@@ -75,6 +75,62 @@ contains
 
     ! Interpolation
     ! ---------------------------------------------
+
+    function find_next_xy_between(x1, x2, y1, y2, resolution_type) result(xy)
+        ! x1, x2 are in days
+        real(8), intent(in) :: x1, x2, y1, y2
+        integer, intent(in) :: resolution_type
+        real(8), dimension(2) :: xy
+
+        xy(1) = datetime_get_next_time(x1, resolution_type)
+        if (xy(1) >= x2) then
+            xy(1) = x2
+            xy(2) = y2
+        else
+            xy(2) = interpolate(xy(1), x1, x2, y1, y2, INTERPOLATION_LINEAR)
+        endif
+    end function find_next_xy_between
+
+    subroutine table_resample(tablexy, resolution_type)
+        type(real_table), intent(inout) :: tablexy
+        integer, intent(in) :: resolution_type
+        real(8), allocatable :: x(:)
+        real(8), allocatable :: y(:)
+        real(8) :: x1, x2, y1, y2
+        real(8) :: xy(2) = -1
+        integer :: i, tsize
+
+        tsize = tablexy%table%tsize(1)
+
+        tablexy%table%data(1)%len = 0
+        tablexy%table%data(2)%len = 0
+
+        allocate(x(tsize))
+        allocate(y(tsize))
+
+        x(:) = tablexy%table%data(1)%array(1:tsize)
+        y(:) = tablexy%table%data(2)%array(1:tsize)
+
+        do i = 1, size(x)-1
+            x1 = x(i)
+            x2 = x(i+1)
+            y1 = y(i)
+            y2 = y(i+1)
+
+            call tables_add_entry(tablexy%table, x(i), y(i))
+            do while (xy(1) <= x(i+1))
+                xy = find_next_xy_between(x1, x2, y1, y2, resolution_type)
+                if (xy(1) >= x(i+1)) exit
+                x1 = xy(1)
+                y1 = xy(2)
+                call tables_add_entry(tablexy%table, x1, y1)
+            enddo
+        enddo
+
+        call tables_add_entry(tablexy%table, x(size(x)), y(size(y)))
+        deallocate(x)
+        deallocate(y)
+    end subroutine table_resample
 
     function tables_find_time(table, t) result(idx)
         type(real_table), intent(in) :: table

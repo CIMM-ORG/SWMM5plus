@@ -35,6 +35,12 @@ module type_definitions
         type(diagnosticVolumeType)  :: Volume
     end type diagnosticType
 
+    type real_array
+        integer :: max_size = 0
+        integer :: len = 0
+        real, allocatable :: array(:)
+    end type real_array
+
     !% boundary condition data
     type bcType
         integer :: Idx
@@ -44,8 +50,8 @@ module type_definitions
         integer :: ElemInsideID
         integer :: Updn      ! bc_updn_...  (0 = upstream,  1 = downstream)
         integer :: Category  ! bc_category_... (0 = elevation, 1 = inflowrate)
-        real, dimension(:), allocatable :: TimeArray
-        real, dimension(:), allocatable :: ValueArray
+        real, allocatable :: TimeArray
+        real, allocatable :: ValueArray
         real    :: ThisValue
         real    :: ThisTime
         real    :: ThisFlowrate
@@ -75,12 +81,6 @@ module type_definitions
         character(32)         :: DataName
     end type threadedfileType
 
-    type real_array
-        integer :: max_size = 0
-        integer :: len = 0
-        real, allocatable :: array(:)
-    end type real_array
-
     type integer_array
         integer :: max_size = 0
         integer :: len = 0
@@ -109,25 +109,20 @@ module type_definitions
     end type pattern
 
     ! EXTERNAL INFLOW OBJECT
-    ! t_series*sfactor + base_pat*baseline
-    type extInflow
+    type totalInflow
         integer :: node_id ! index to element thar receives inflow
-        integer :: t_series ! time_series
-        integer :: base_pat ! pattern
-        real :: baseline ! constant baseline value
-        real :: sfactor ! time series scaling factor
-        real :: max_inflow
-    end type
-
-    ! DRY INFLOW OBJECT
-    type dwfInflow
-        integer :: node_id ! index to element thar receives inflow
-        real :: avgValue ! average inflow value
-        integer :: monthly_pattern
-        integer :: daily_pattern
-        integer :: hourly_pattern
-        integer :: weekly_pattern
-        real :: max_inflow
+        type(real_array) :: xy(2)
+        ! t_series*sfactor + base_pat*baseline
+        integer :: ext_t_series ! time_series
+        integer :: ext_base_pat ! pattern
+        real :: ext_baseline ! constant baseline value
+        real :: ext_sfactor ! time series scaling factor
+        ! ---------------------------------------------------------
+        real :: dwf_avgValue ! average inflow value
+        integer :: dwf_monthly_pattern
+        integer :: dwf_daily_pattern
+        integer :: dwf_hourly_pattern
+        integer :: dwf_weekly_pattern
     end type
 
     type graph_node
@@ -143,7 +138,14 @@ module type_definitions
         integer, allocatable, dimension(:) :: in_degree ! list with in-degrees of node
     end type graph
 
-
+    ! --- File Handling
+    type steady_state_record
+        character(len=52) :: id_time
+        real(8) :: flowrate
+        real(8) :: wet_area
+        real(8) :: depth
+        real(8) :: froude
+    end type steady_state_record
     !==========================================================================
     ! END OF MODULE type_definitions
     !==========================================================================
