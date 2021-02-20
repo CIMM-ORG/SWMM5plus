@@ -316,6 +316,8 @@ contains
                     nodeR(i, nr_maxinflow) = bcdataUp(ii)%ValueArray(jj)
                 endif
             enddo
+            ! Convert all times to seconds
+            bcdataUp(ii)%TimeArray = (bcdataUp(ii)%TimeArray - swmm_start_time) * dble(secsperday)
             ! all_tseries are deallocated in interface.f08
             call free_table(total_inflows(ii)%xy)
         enddo
