@@ -72,13 +72,13 @@ contains
         integer, dimension(:), allocatable :: ID
         integer, dimension(:), allocatable :: numberPairs
 
-        real(4), dimension(:), allocatable :: ManningsN
-        real(4), dimension(:), allocatable :: Length
-        real(4), dimension(:), allocatable :: zBottom
-        real(4), dimension(:), allocatable :: xDistance
-        real(4), dimension(:), allocatable :: Breadth
+        real(8), dimension(:), allocatable :: ManningsN
+        real(8), dimension(:), allocatable :: Length
+        real(8), dimension(:), allocatable :: zBottom
+        real(8), dimension(:), allocatable :: xDistance
+        real(8), dimension(:), allocatable :: Breadth
 
-        real(4), dimension(:,:,:), allocatable :: widthDepthData
+        real(8), dimension(:,:,:), allocatable :: widthDepthData
 
         type(string), dimension(:), allocatable :: cellType
         !  character(len=:), allocatable :: cellType(:)
@@ -89,7 +89,7 @@ contains
 
         integer :: allocation_status
         character(len=99) :: emsg
-        real(4) :: tmpID
+        real(8) :: tmpID
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name

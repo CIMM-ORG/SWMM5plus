@@ -21,14 +21,14 @@ module type_definitions
     !%  diagnostic%Volume
     type diagnosticVolumeType
         integer  :: Step
-        real(4)    :: Time
-        real(4)    :: Volume
-        real(4)    :: VolumeChange
-        real(4)    :: NetInflowVolume
-        real(4)    :: InflowRate
-        real(4)    :: OutflowRate
-        real(4)    :: ConservationThisStep ! + is artificial source, - is sink
-        real(4)    :: ConservationTotal
+        real(8)    :: Time
+        real(8)    :: Volume
+        real(8)    :: VolumeChange
+        real(8)    :: NetInflowVolume
+        real(8)    :: InflowRate
+        real(8)    :: OutflowRate
+        real(8)    :: ConservationThisStep ! + is artificial source, - is sink
+        real(8)    :: ConservationTotal
     end type diagnosticVolumeType
 
     type diagnosticType
@@ -38,7 +38,7 @@ module type_definitions
     type real_array
         integer :: max_size = 0
         integer :: len = 0
-        real(4), allocatable :: array(:)
+        real(8), allocatable :: array(:)
     end type real_array
 
     !% boundary condition data
@@ -50,11 +50,11 @@ module type_definitions
         integer :: ElemInsideID
         integer :: Updn      ! bc_updn_...  (0 = upstream,  1 = downstream)
         integer :: Category  ! bc_category_... (0 = elevation, 1 = inflowrate)
-        real(4), allocatable :: TimeArray(:)
-        real(4), allocatable :: ValueArray(:)
-        real(4)    :: ThisValue
-        real(4)    :: ThisTime
-        real(4)    :: ThisFlowrate
+        real(8), allocatable :: TimeArray(:)
+        real(8), allocatable :: ValueArray(:)
+        real(8)    :: ThisValue
+        real(8)    :: ThisTime
+        real(8)    :: ThisFlowrate
     end type bcType
 
     !% output file location
@@ -99,7 +99,7 @@ module type_definitions
     type pattern
         integer :: ptype
         integer :: count
-        real(4), dimension(24) :: factor
+        real(8), dimension(24) :: factor
     end type pattern
 
     ! EXTERNAL INFLOW OBJECT
@@ -109,10 +109,10 @@ module type_definitions
         ! t_series*sfactor + base_pat*baseline
         integer :: ext_t_series = -1 ! time_series
         integer :: ext_base_pat = -1 ! pattern
-        real(4) :: ext_baseline = 0! constant baseline value
-        real(4) :: ext_sfactor = 0! time series scaling factor
+        real(8) :: ext_baseline = 0! constant baseline value
+        real(8) :: ext_sfactor = 0! time series scaling factor
         ! ---------------------------------------------------------
-        real(4) :: dwf_avgValue = 0 ! average inflow value
+        real(8) :: dwf_avgValue = 0 ! average inflow value
         integer :: dwf_monthly_pattern = -1
         integer :: dwf_daily_pattern = -1
         integer :: dwf_hourly_pattern = -1
@@ -135,10 +135,10 @@ module type_definitions
     ! --- File Handling
     type steady_state_record
         character(len=52) :: id_time
-        real(4) :: flowrate
-        real(4) :: wet_area
-        real(4) :: depth
-        real(4) :: froude
+        real(8) :: flowrate
+        real(8) :: wet_area
+        real(8) :: depth
+        real(8) :: froude
     end type steady_state_record
     !==========================================================================
     ! END OF MODULE type_definitions

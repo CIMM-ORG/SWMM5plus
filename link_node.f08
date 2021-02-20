@@ -14,8 +14,8 @@ module link_node
     !    integer, parameter ::  n_nodes = 11
     !    integer, parameter ::  n_links = 10
 
-    !    real(4) :: link_map(n_links,3)
-    !    real(4) :: node_map(n_nodes,3)
+    !    real(8) :: link_map(n_links,3)
+    !    real(8) :: node_map(n_nodes,3)
 
 
 end module link_node

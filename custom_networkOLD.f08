@@ -40,8 +40,8 @@ contains
         integer, intent(in out) :: linkI(:,:)
         integer, intent(in out) :: nodeI(:,:)
 
-        real(4), intent(in out)    :: linkR(:,:)
-        real(4), intent(in out)    :: nodeR(:,:)
+        real(8), intent(in out)    :: linkR(:,:)
+        real(8), intent(in out)    :: nodeR(:,:)
 
         type(string), dimension(:), intent(in out)   :: nodeName, linkName
 
@@ -174,8 +174,8 @@ contains
         integer, intent(in out) :: linkI(:,:)
         integer, intent(in out) :: nodeI(:,:)
 
-        real(4), intent(in out)    :: linkR(:,:)
-        real(4), intent(in out)    :: nodeR(:,:)
+        real(8), intent(in out)    :: linkR(:,:)
+        real(8), intent(in out)    :: nodeR(:,:)
 
         type(string), dimension(:), intent(in out)   :: linkName, nodeName
 
@@ -367,8 +367,8 @@ contains
         integer, intent(in out) :: linkI(:,:)
         integer, intent(in out) :: nodeI(:,:)
 
-        real(4), intent(in out)    :: linkR(:,:)
-        real(4), intent(in out)    :: nodeR(:,:)
+        real(8), intent(in out)    :: linkR(:,:)
+        real(8), intent(in out)    :: nodeR(:,:)
 
         type(string), dimension(:), intent(in out)   :: linkName, nodeName
 
@@ -535,8 +535,8 @@ contains
         integer, intent(in out) :: linkI(:,:)
         integer, intent(in out) :: nodeI(:,:)
 
-        real(4), intent(in out)    :: linkR(:,:)
-        real(4), intent(in out)    :: nodeR(:,:)
+        real(8), intent(in out)    :: linkR(:,:)
+        real(8), intent(in out)    :: nodeR(:,:)
 
         type(string), dimension(:), intent(in out)   :: linkName, nodeName
 

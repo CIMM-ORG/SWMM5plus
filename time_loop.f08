@@ -43,7 +43,7 @@ contains
         !
         character(64) :: subroutine_name = 'time_marching'
 
-        real(4),      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+        real(8),      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         integer,   target, intent(in out) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
@@ -54,11 +54,11 @@ contains
 
         integer,                       intent(in)     :: linkI(:,:)
 
-        real(4), pointer :: rkVol(:), rkU(:)
-        real(4), pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
-        real(4), pointer :: fEdn(:), fEup(:), eE(:)
+        real(8), pointer :: rkVol(:), rkU(:)
+        real(8), pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
+        real(8), pointer :: fEdn(:), fEup(:), eE(:)
 
-        real(4), pointer :: thistime, nexttime
+        real(8), pointer :: thistime, nexttime
 
         integer, pointer :: thisStep, restartStep
 
@@ -68,12 +68,12 @@ contains
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real(4),    intent(in out)    :: ManningsN(:)
-        real(4),    intent(in out)    :: Length(:)
-        real(4),    intent(in out)    :: zBottom(:)
-        real(4),    intent(in out)    :: xDistance(:)
-        real(4),    intent(in out)    :: Breadth(:)
-        real(4),    intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    intent(in out)    :: ManningsN(:)
+        real(8),    intent(in out)    :: Length(:)
+        real(8),    intent(in out)    :: zBottom(:)
+        real(8),    intent(in out)    :: xDistance(:)
+        real(8),    intent(in out)    :: Breadth(:)
+        real(8),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
         !--------------------------------------------------------------------------

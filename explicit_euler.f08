@@ -38,7 +38,7 @@ contains
 
         character(64) :: subroutine_name = 'explicit_euler_advance'
 
-        real(4),      target, intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(8),      target, intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
 
         integer,   target, intent(in out) :: elem2I(:,:), elemMI(:,:), faceI(:,:)
 
@@ -46,18 +46,18 @@ contains
 
         type(bcType),  intent(in out)  :: bcdataDn(:), bcdataUp(:)
 
-        real(4), intent(in) :: thistime, dt
+        real(8), intent(in) :: thistime, dt
 
         integer :: e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new
 
-        real(4),  pointer :: newvolume(:), newvelocity(:)
-        real(4),  pointer :: volume(:), velocity(:), eta(:)
-        real(4),  pointer :: depth(:), zbottom(:), perimeter(:), mn(:), rh(:), area(:)
-        real(4),  pointer :: timesUp(:), timesDn(:), breadth(:), length(:), flowrate(:)
-        real(4),  pointer :: Qface(:), Vup(:), Vdn(:), Aup(:), Adn(:), Eup(:), Edn(:)
+        real(8),  pointer :: newvolume(:), newvelocity(:)
+        real(8),  pointer :: volume(:), velocity(:), eta(:)
+        real(8),  pointer :: depth(:), zbottom(:), perimeter(:), mn(:), rh(:), area(:)
+        real(8),  pointer :: timesUp(:), timesDn(:), breadth(:), length(:), flowrate(:)
+        real(8),  pointer :: Qface(:), Vup(:), Vdn(:), Aup(:), Adn(:), Eup(:), Edn(:)
 
         ! TEST 20190102
-        ! real(4),  pointer :: newarea(:), newflowrate(:)
+        ! real(8),  pointer :: newarea(:), newflowrate(:)
 
         integer,   pointer :: fup(:), fdn(:), elemDn(:), elemUp(:), elemUp2(:)
 
@@ -334,13 +334,13 @@ contains
 
         character(64) :: subroutine_name = 'test_face_update'
 
-        real(4),      target,     intent(in out)  :: elem2R(:,:), faceR(:,:)
+        real(8),      target,     intent(in out)  :: elem2R(:,:), faceR(:,:)
         integer,   target,     intent(in out)  :: elem2I(:,:), faceI(:,:)
 
         integer,                  intent(in out)  :: elemUp2(:)
 
         integer,   pointer :: elemUp(:), elemDn(:)
-        real(4),      pointer :: tscaleUp(:), tscaleDn(:), wavespeed(:)
+        real(8),      pointer :: tscaleUp(:), tscaleDn(:), wavespeed(:)
 
         integer    :: e2r_wavespeed
 
@@ -500,7 +500,7 @@ contains
 
         character(64) :: subroutine_name = 'quadratic_face_update'
 
-        real(4),      target,     intent(in out)  :: elem2R(:,:), faceR(:,:)
+        real(8),      target,     intent(in out)  :: elem2R(:,:), faceR(:,:)
         integer,   target,     intent(in out)  :: elem2I(:,:), faceI(:,:)
 
         integer,                  intent(in out)  :: elemUp2(:)
@@ -587,7 +587,7 @@ contains
 
         character(64) :: subroutine_name = 'explicit_euler_advance'
 
-        real(4),      target, intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(8),      target, intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
 
         integer,   target, intent(in out) :: elem2I(:,:), elemMI(:,:), faceI(:,:)
 
@@ -595,14 +595,14 @@ contains
 
         type(bcType),  intent(in out)  :: bcdataDn(:), bcdataUp(:)
 
-        real(4), intent(in) :: thistime, dt
+        real(8), intent(in) :: thistime, dt
 
         integer :: e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new
 
-        real(4),  pointer :: newvolume(:), newvelocity(:), volume(:), velocity(:), eta(:)
-        real(4),  pointer :: depth(:), zbottom(:), perimeter(:), mn(:), rh(:), area(:)
-        real(4),  pointer :: timesUp(:), timesDn(:), breadth(:), length(:), flowrate(:)
-        real(4),  pointer :: Qface(:), Vup(:), Vdn(:), Aup(:), Adn(:), Eup(:), Edn(:)
+        real(8),  pointer :: newvolume(:), newvelocity(:), volume(:), velocity(:), eta(:)
+        real(8),  pointer :: depth(:), zbottom(:), perimeter(:), mn(:), rh(:), area(:)
+        real(8),  pointer :: timesUp(:), timesDn(:), breadth(:), length(:), flowrate(:)
+        real(8),  pointer :: Qface(:), Vup(:), Vdn(:), Aup(:), Adn(:), Eup(:), Edn(:)
 
 
         integer,   pointer :: fup(:), fdn(:), elemDn(:), elemUp(:), elemUp2(:)

@@ -129,11 +129,11 @@ module interface
 
     ! Error codes - Uncomment if debugging (also defined in globals.f08)
     ! integer, parameter :: nullvalueI = -998877
-    ! real(4), parameter :: nullvalueR = -9.98877e16
+    ! real(8), parameter :: nullvalueR = -9.98877e16
 
     ! Time constants
-    real(4) :: swmm_start_time ! in days
-    real(4) :: swmm_end_time ! in days
+    real(8) :: swmm_start_time ! in days
+    real(8) :: swmm_end_time ! in days
 
     ! Number of objects
     integer :: num_nodes
@@ -327,7 +327,7 @@ contains
     ! * After Initialization
 
     function get_start_datetime()
-        real(4) :: get_start_datetime
+        real(8) :: get_start_datetime
         character(64) :: subroutine_name = 'get_start_datetime'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
@@ -341,7 +341,7 @@ contains
     end function get_start_datetime
 
     function get_end_datetime()
-        real(4) :: get_end_datetime
+        real(8) :: get_end_datetime
         character(64) :: subroutine_name
 
         subroutine_name = 'get_end_datetime'
@@ -359,7 +359,7 @@ contains
     subroutine load_all_tseries()
         integer :: i
         integer :: success
-        real(4), dimension(2) :: entries
+        real(8), dimension(2) :: entries
         character(64) :: subroutine_name = 'load_all_tseries'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
@@ -377,8 +377,8 @@ contains
             do while (.true.)
                 success = get_next_table_entry(i, SWMM_TSERIES, entries)
                 if (success == 0) exit
-                if (entries(1) < setting%time%starttime) cycle
-                if (entries(1) > setting%time%endtime) exit
+                if (entries(1) < swmm_start_time) cycle
+                if (entries(1) > swmm_end_time) exit
                 call tables_add_entry(all_tseries(i), entries)
             end do
         end do
@@ -388,7 +388,7 @@ contains
     subroutine load_all_patterns()
         integer :: i = 1
         integer :: success
-        real(4), dimension(2) :: entries
+        real(8), dimension(2) :: entries
 
         if (num_patterns == 0) return
 
@@ -401,7 +401,7 @@ contains
     function get_node_attribute(node_idx, attr)
 
         integer :: node_idx, attr, error
-        real(4) :: get_node_attribute
+        real(8) :: get_node_attribute
         type(c_ptr) :: cptr_value
         real(c_double), target :: node_value
         character(64) :: subroutine_name = 'get_node_attr'
@@ -445,7 +445,7 @@ contains
     function get_link_attribute(link_idx, attr)
 
         integer :: link_idx, attr, error
-        real(4) :: get_link_attribute
+        real(8) :: get_link_attribute
         character(64) :: subroutine_name
         type(c_ptr) :: cptr_value
         real(c_double), target :: link_value
@@ -572,7 +572,7 @@ contains
     function get_first_table_entry(k, table_type, entries)
         integer, intent(in) :: k ! table id
         integer, intent(in) :: table_type
-        real(4), dimension(2), intent(inout) :: entries
+        real(8), dimension(2), intent(inout) :: entries
         integer :: get_first_table_entry
         type(c_ptr) :: cptr_x, cptr_y
         real(c_double), target :: x, y
@@ -593,7 +593,7 @@ contains
     function get_next_table_entry(k, table_type, entries)
         integer, intent(in) :: k ! table id
         integer, intent(in) :: table_type
-        real(4), dimension(2), intent(inout) :: entries
+        real(8), dimension(2), intent(inout) :: entries
         integer :: get_next_table_entry
         type(c_ptr) :: cptr_x, cptr_y
         real(c_double), target :: x, y
@@ -659,6 +659,7 @@ contains
 
     subroutine free_interface()
         integer :: i
+
         if (allocated(all_tseries)) then
             do i = 1, num_tseries
                 call free_table(all_tseries(i))

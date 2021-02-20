@@ -41,12 +41,12 @@ contains
         !
         character(64) :: subroutine_name = 'storage_adjacent_element_average'
 
-        real(4),      target,     intent(in out)  :: elemMR(:,:)
-        real(4),                  intent(in)      :: elem2R(:,:)
+        real(8),      target,     intent(in out)  :: elemMR(:,:)
+        real(8),                  intent(in)      :: elem2R(:,:)
         integer,               intent(in)      :: elemMI(:,:), faceI(:,:)
         integer,               intent(in)      :: e2r_data, eMr_out
 
-        real(4),      pointer :: Uvalue(:), Dvalue(:)
+        real(8),      pointer :: Uvalue(:), Dvalue(:)
         integer :: eMr_tUp, eMr_tDn
 
         !--------------------------------------------------------------------------
@@ -92,12 +92,12 @@ contains
         ! computes the volume and surface area in a storage unit by functional or tabular relationship
         ! this subroutine is only used in initialization of a storage unit
         !
-        real(4),      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
         integer,   target, intent(in)      :: elemMI(:,:)
 
         integer,   pointer :: cindx
-        real(4),      pointer :: volume, depth, fullvolume, fulldepth
-        real(4),      pointer :: surfarea, aConst, aCoeff, aExpon
+        real(8),      pointer :: volume, depth, fullvolume, fulldepth
+        real(8),      pointer :: surfarea, aConst, aCoeff, aExpon
 
         integer :: mm, ii
 
@@ -168,11 +168,11 @@ contains
         integer,   intent(in) :: eMr_Volume_old, eMr_Volume_new
         integer,   intent(in) :: eMr_Velocity_old, eMr_Velocity_new
 
-        real(4),      target, intent(in out)  :: elemMR(:,:)
-        real(4),      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elemMI(:,:)
         logical,           intent(in out)  :: elemMYN(:,:)
-        real(4),              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -206,15 +206,15 @@ contains
         ! THIS SHOULD ONLY BE USED IN SETUP AND INITIAL CONDITION ROUTINES
         !
         integer,           intent(in)      :: eMr_sumvalue
-        real(4),      target, intent(in out)  :: elemMR(:,:)
-        real(4),              intent(in)      :: elem2R(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
+        real(8),              intent(in)      :: elem2R(:,:)
         integer,   target, intent(in)      :: elemMI(:,:), faceI(:,:)
 
         integer,   intent(in)  :: dir_face_per_elemM, eMi_nfaces_dir, eMi_MfaceDir(:)
         integer,   intent(in)  :: fi_Melem_dir, e2r_data
 
         integer,   pointer :: tface, telem
-        real(4)  :: thisvalue(dir_face_per_elemM)
+        real(8)  :: thisvalue(dir_face_per_elemM)
         integer :: mm, ii
 
         !--------------------------------------------------------------------------
@@ -255,14 +255,14 @@ contains
         ! indexes for old/new volume and velocity storage
         integer,   intent(in) :: eMr_Volume_old, eMr_Volume_new
 
-        real(4),      target, intent(in out)  :: elemMR(:,:)
-        real(4),      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elemMI(:,:)
         logical,           intent(in out)  :: elemMYN(:,:)
-        real(4),              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
 
-        real(4),      pointer     :: fQ(:), dV(:), volumeMold(:), volumeMnew(:)
+        real(8),      pointer     :: fQ(:), dV(:), volumeMold(:), volumeMnew(:)
         integer,   pointer     :: iup(:), idn(:)
 
         integer        :: mm
@@ -329,13 +329,13 @@ contains
         ! indexes for old/new volume and velocity storage
         integer,   intent(in) :: eMr_Volume_new
 
-        real(4),      target, intent(in out)  :: elemMR(:,:)
-        real(4),      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elemMI(:,:)
         logical,           intent(in out)  :: elemMYN(:,:)
 
-        real(4),      pointer :: volumeMnew, depth, eta, fulldepth, fullvolume, zbottom
-        real(4),      pointer :: aConst, aCoeff, aExpon
+        real(8),      pointer :: volumeMnew, depth, eta, fulldepth, fullvolume, zbottom
+        real(8),      pointer :: aConst, aCoeff, aExpon
         integer,   pointer :: cindx
 
         integer        :: ii, mm

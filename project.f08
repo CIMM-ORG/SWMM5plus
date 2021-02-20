@@ -18,8 +18,8 @@ contains
     subroutine project_open(linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName, bcdataUp, bcdataDn)
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
-        real(4),      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real(4),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
         type(string), dimension(:), allocatable, target, intent(out)   :: linkName
@@ -39,7 +39,7 @@ contains
             (linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
 
         ! Load inflows from SWMM C
-        ! call inflow_load_inflows(nodeI, nodeR, bcdataDn, bcdataUp)
+        call inflow_load_inflows(nodeI, nodeR, bcdataDn, bcdataUp)
 
         ! Create system graph
         swmm_graph = get_network_graph()
@@ -52,7 +52,7 @@ contains
             bcdataDn(ii)%NodeID = nodeI(ii, ni_temp1)
             allocate(bcdataDn(ii)%TimeArray(2))
             allocate(bcdataDn(ii)%ValueArray(2))
-            bcdataDn(ii)%TimeArray = (/0.0, real(setting%time%endtime)/)
+            bcdataDn(ii)%TimeArray = (/dble(0.0), dble(setting%time%endtime)/)
             bcdataDn(ii)%ValueArray = nr_Zbottom
         enddo
         ! --------------------
@@ -61,7 +61,7 @@ contains
     end subroutine project_open
 
     subroutine project_close(bcdataDn, bcdataUp)
-        type(bcType), dimension(:), allocatable, target, intent(out)   :: bcdataUp, bcdataDn
+        type(bcType), dimension(:), allocatable, target, intent(inout)   :: bcdataUp, bcdataDn
         call free_graph(swmm_graph)
         call free_interface()
         call free_bc(bcdataDn, bcdataUp)
