@@ -18,7 +18,7 @@ module setting_definition
     !% setting%Method%AdjustVshapedFlowrate
     type adjustVshapedFlowrateType
         logical ::  Apply = .true.
-        real(4)   ::  Coef  = 0.1
+        real    ::  Coef  = 1.0
     end type adjustVshapedFlowrateType
 
     !% setting%Method%AdjustWidthDepth
