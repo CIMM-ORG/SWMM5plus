@@ -34,7 +34,7 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
         call dyna_integer_append(g%g(source)%neighbors, destination)
         call dyna_integer_append(g%g(source)%link_id, link_id)
-        call dyna_real_append(g%g(source)%neighbor_flows, 0.0)
+        call dyna_real_append(g%g(source)%neighbor_flows, real(0.0))
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine add_graph_link
 
@@ -72,7 +72,7 @@ contains
     subroutine traverse_graph_flow(g, i, flow)
         type(graph), intent(inout) :: g ! graph
         integer, intent(in) :: i ! root node
-        real, intent(in) :: flow ! flow value
+        real(4), intent(in) :: flow ! flow value
 
         type(integer_array) :: n_nodes ! stack of nodes that haven't been traversed
         integer :: k
@@ -91,13 +91,13 @@ contains
 
     subroutine traverse_cfl_condition(g, linkR, nodeR, linkI, nodeI)
         type(graph), intent(inout) :: g
-        real, intent(inout) :: linkR(:,:)
-        real, intent(in) :: nodeR(:,:)
+        real(4), intent(inout) :: linkR(:,:)
+        real(4), intent(in) :: nodeR(:,:)
         integer, intent(inout) :: linkI(:,:)
         integer, intent(in) :: nodeI(:,:)
         integer :: i, j, link_id
-        real :: Q, N_R, SLP, Y, ML, MR, BT, TOL, A, P, F, DDF
-        real, allocatable :: velocities(:)
+        real(4) :: Q, N_R, SLP, Y, ML, MR, BT, TOL, A, P, F, DDF
+        real(4), allocatable :: velocities(:)
         character(64) :: subroutine_name  = 'traverse_cfl_condition'
         if ((debuglevel > -1) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 

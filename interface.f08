@@ -129,11 +129,11 @@ module interface
 
     ! Error codes - Uncomment if debugging (also defined in globals.f08)
     ! integer, parameter :: nullvalueI = -998877
-    ! real, parameter :: nullvalueR = -9.98877e16
+    ! real(4), parameter :: nullvalueR = -9.98877e16
 
     ! Time constants
-    real(8) :: swmm_start_time ! in days
-    real(8) :: swmm_end_time ! in days
+    real(4) :: swmm_start_time ! in days
+    real(4) :: swmm_end_time ! in days
 
     ! Number of objects
     integer :: num_nodes
@@ -185,7 +185,7 @@ module interface
     integer, parameter :: node_dwfInflow_monthly_pattern = 10
     integer, parameter :: node_dwfInflow_daily_pattern = 11
     integer, parameter :: node_dwfInflow_hourly_pattern = 12
-    integer, parameter :: node_dwfInflow_weekly_pattern = 13
+    integer, parameter :: node_dwfInflow_weekend_pattern = 13
     integer, parameter :: node_dwfInflow_avgvalue = 14
     integer, parameter :: node_has_dwfInflow = 15
     integer, parameter :: node_inflow = 16
@@ -297,7 +297,7 @@ contains
         swmm_end_time = get_end_datetime()
 
         setting%time%starttime = 0
-        setting%time%endtime = (swmm_end_time - swmm_start_time) * dble(secsperday)
+        setting%time%endtime = (swmm_end_time - swmm_start_time) * real(secsperday)
 
         if (num_tseries > 0) call load_all_tseries()
         if (num_patterns > 0) call load_all_patterns()
@@ -327,7 +327,7 @@ contains
     ! * After Initialization
 
     function get_start_datetime()
-        real :: get_start_datetime
+        real(4) :: get_start_datetime
         character(64) :: subroutine_name = 'get_start_datetime'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
@@ -341,7 +341,7 @@ contains
     end function get_start_datetime
 
     function get_end_datetime()
-        real :: get_end_datetime
+        real(4) :: get_end_datetime
         character(64) :: subroutine_name
 
         subroutine_name = 'get_end_datetime'
@@ -359,7 +359,7 @@ contains
     subroutine load_all_tseries()
         integer :: i
         integer :: success
-        real, dimension(2) :: entries
+        real(4), dimension(2) :: entries
         character(64) :: subroutine_name = 'load_all_tseries'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
@@ -368,18 +368,18 @@ contains
 
         allocate(all_tseries(num_tseries))
         do i = 1, num_tseries
-            all_tseries(i)%table = new_real_table(SWMM_TSERIES, 2)
+            all_tseries(i) = new_real_table(SWMM_TSERIES, 2)
             success = get_first_table_entry(i, SWMM_TSERIES, entries)
             if (success == 0) then
                 print *, MSG_API_TSERIES_HANDLING_ERROR
             endif
-            call tables_add_entry(all_tseries(i)%table, entries)
+            call tables_add_entry(all_tseries(i), entries)
             do while (.true.)
                 success = get_next_table_entry(i, SWMM_TSERIES, entries)
                 if (success == 0) exit
-                if (entries(1) < swmm_start_time) cycle
-                if (entries(1) > swmm_end_time) exit
-                call tables_add_entry(all_tseries(i)%table, entries)
+                if (entries(1) < setting%time%starttime) cycle
+                if (entries(1) > setting%time%endtime) exit
+                call tables_add_entry(all_tseries(i), entries)
             end do
         end do
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
@@ -388,7 +388,7 @@ contains
     subroutine load_all_patterns()
         integer :: i = 1
         integer :: success
-        real, dimension(2) :: entries
+        real(4), dimension(2) :: entries
 
         if (num_patterns == 0) return
 
@@ -401,9 +401,9 @@ contains
     function get_node_attribute(node_idx, attr)
 
         integer :: node_idx, attr, error
-        real :: get_node_attribute
+        real(4) :: get_node_attribute
         type(c_ptr) :: cptr_value
-        real (c_double), target :: node_value
+        real(c_double), target :: node_value
         character(64) :: subroutine_name = 'get_node_attr'
 
         cptr_value = c_loc(node_value)
@@ -445,10 +445,10 @@ contains
     function get_link_attribute(link_idx, attr)
 
         integer :: link_idx, attr, error
-        real :: get_link_attribute
+        real(4) :: get_link_attribute
         character(64) :: subroutine_name
         type(c_ptr) :: cptr_value
-        real (c_double), target :: link_value
+        real(c_double), target :: link_value
 
         cptr_value = c_loc(link_value)
 
@@ -572,10 +572,10 @@ contains
     function get_first_table_entry(k, table_type, entries)
         integer, intent(in) :: k ! table id
         integer, intent(in) :: table_type
-        real, dimension(2), intent(inout) :: entries
+        real(4), dimension(2), intent(inout) :: entries
         integer :: get_first_table_entry
         type(c_ptr) :: cptr_x, cptr_y
-        real (c_double), target :: x, y
+        real(c_double), target :: x, y
 
         cptr_x = c_loc(x)
         cptr_y = c_loc(y)
@@ -593,10 +593,10 @@ contains
     function get_next_table_entry(k, table_type, entries)
         integer, intent(in) :: k ! table id
         integer, intent(in) :: table_type
-        real, dimension(2), intent(inout) :: entries
+        real(4), dimension(2), intent(inout) :: entries
         integer :: get_next_table_entry
         type(c_ptr) :: cptr_x, cptr_y
-        real (c_double), target :: x, y
+        real(c_double), target :: x, y
 
         cptr_x = c_loc(x)
         cptr_y = c_loc(y)
@@ -642,11 +642,26 @@ contains
 
     ! --- Utils
 
+    ! subroutine read_steady_state_file(fname)
+    !     type(string) :: fname
+    !     type(real_table) :: data(5) !id, flow, wet area, depth, froude
+    !     type(steady_state_record) :: rec
+    !     open (action='read', file=fname%str, iostat=rc, newunit=fu)
+
+    !     if (rc /= 0) stop
+    !     do while(.true.)
+    !         read (fu, *, iostat=rc) rec
+    !         if (rc /= 0) exit
+    !     end do
+
+    !     close (fu)
+    ! end subroutine read_steady_state_file
+
     subroutine free_interface()
         integer :: i
         if (allocated(all_tseries)) then
             do i = 1, num_tseries
-                call free_table(all_tseries(i)%table)
+                call free_table(all_tseries(i))
             enddo
             deallocate(all_tseries)
         endif

@@ -25,7 +25,4 @@ contains
         type(graph), intent(inout) :: g
         deallocate(g%g)
     end subroutine
-
-
-
 end module network_graph

@@ -40,8 +40,8 @@ contains
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
@@ -98,15 +98,15 @@ contains
         !
         character(64) :: subroutine_name = 'allocate_data_storage'
 
-        real,       dimension(:,:), allocatable, target, intent(out)    :: elem2R       ! real data for elements
+        real(4),       dimension(:,:), allocatable, target, intent(out)    :: elem2R       ! real data for elements
         integer,    dimension(:,:), allocatable, target, intent(out)    :: elem2I       ! integer data for elements
         logical,    dimension(:,:), allocatable, target, intent(out)    :: elem2YN      ! logical data for elements
 
-        real,       dimension(:,:), allocatable, target, intent(out)    :: elemMR       ! real data for elements
+        real(4),       dimension(:,:), allocatable, target, intent(out)    :: elemMR       ! real data for elements
         integer,    dimension(:,:), allocatable, target, intent(out)    :: elemMI       ! integer data for elements
         logical,    dimension(:,:), allocatable, target, intent(out)    :: elemMYN      ! logical data for elements
 
-        real,       dimension(:,:), allocatable, target, intent(out)    :: faceR       ! real data for faces
+        real(4),       dimension(:,:), allocatable, target, intent(out)    :: faceR       ! real data for faces
         integer,    dimension(:,:), allocatable, target, intent(out)    :: faceI       ! integer data for faces
         logical,    dimension(:,:), allocatable, target, intent(out)    :: faceYN      ! logical data for faces
 

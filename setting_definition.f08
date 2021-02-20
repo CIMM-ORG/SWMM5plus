@@ -18,52 +18,52 @@ module setting_definition
     !% setting%Method%AdjustVshapedFlowrate
     type adjustVshapedFlowrateType
         logical ::  Apply = .true.
-        real    ::  Coef  = 0.1
+        real(4)   ::  Coef  = 0.1
     end type adjustVshapedFlowrateType
 
     !% setting%Method%AdjustWidthDepth
     type adjustWidthDepthType
         logical :: Apply               = .true.
         logical :: AddDownstreamBuffer = .false.
-        real    :: AdjustFractionMax   = 0.05
-        real    :: AdjustFraction      = 0.01
-        real    :: SmallWidth          = 1e-8
-        real    :: DownstreamMinLength = 0.0
-        real    :: depthMaxExpected    = 5.0
-        real    :: angleMinimum        = 0.1
-        real    :: areaMaximum         = 2.0
-        real    :: cellSizeTarget      = 10.0
+        real(4)   :: AdjustFractionMax   = 0.05
+        real(4)   :: AdjustFraction      = 0.01
+        real(4)   :: SmallWidth          = 1e-8
+        real(4)   :: DownstreamMinLength = 0.0
+        real(4)   :: depthMaxExpected    = 5.0
+        real(4)   :: angleMinimum        = 0.1
+        real(4)   :: areaMaximum         = 2.0
+        real(4)   :: cellSizeTarget      = 10.0
     endtype adjustWidthDepthType
 
     !% setting%Limiter%BC
     type BClimiterType
         logical :: UseInflowFroudeNumberLimiter = .true.
-        real    :: FroudeInflowMaximum = 1.5 ! max value of Fr at inflow
+        real(4)   :: FroudeInflowMaximum = 1.5 ! max value of Fr at inflow
     endtype BClimiterType
 
     !%  setting%Limiter%flowrate
     type flowrateType
         logical :: UseFaceVolumeTransport = .true.
-        real    :: FaceVolumeTransport = 0.5 ! Fraction of usptream volume that can be transported in on time step
+        real(4)   :: FaceVolumeTransport = 0.5 ! Fraction of usptream volume that can be transported in on time step
     endtype flowrateType
 
     !%  setting%Limiter%Timescale
     type timescaleType
-        real    :: Maximum      = 1e6
-        real    :: Minimum      = 1e-6
+        real(4)   :: Maximum      = 1e6
+        real(4)   :: Minimum      = 1e-6
     endtype timescaleType
 
     !%  setting%Limiter%Velocity
     type velocityType
         logical :: UseLimitMax  = .true.
-        real    :: Maximum      = 20 ! m/s
+        real(4)   :: Maximum      = 20 ! m/s
     endtype velocityType
 
     !% SECOND LEVEL TYPES ----------------------------------------------
 
     !%  setting%Constant
     type constantType
-        real  :: gravity = 9.81  ! m^2/s
+        real(4) :: gravity = 9.81  ! m^2/s
     end type constantType
 
     !%  setting%DebugOut
@@ -95,8 +95,8 @@ module setting_definition
 
     !%  setting%Eps
     type epsilonType
-        real    :: FroudeJump                     = 0.1 ! +- small non-dimensional range for hyd jump discrimination
-        real    :: InflowDepthIncreaseFroudeLimit = 0.1 ! Fractional increase in depth under froude limitation
+        real(4)   :: FroudeJump                     = 0.1 ! +- small non-dimensional range for hyd jump discrimination
+        real(4)   :: InflowDepthIncreaseFroudeLimit = 0.1 ! Fractional increase in depth under froude limitation
     end type epsilonType
 
     !%  setting%Limiter
@@ -132,12 +132,12 @@ module setting_definition
     type smallvolumeType
         ! Dont using small volumes for weir case. Needed to be changed later
         logical ::  UseSmallVolumes = .false. ! YN to determine if smallvolume adjustments used
-        real    ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
-        real    ::  ManningsN        = 0.01
-        real    ::  MinimumTopwidth  = 0.5   ! m   Minimum value used for smallvolume reset
-        real    ::  MinimumArea      = 0.005  ! m^2
-        real    ::  MinimumPerimeter = 0.52  ! m
-        real    ::  MinimumHydRadius = 0.009  ! m
+        real(4)   ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
+        real(4)   ::  ManningsN        = 0.01
+        real(4)   ::  MinimumTopwidth  = 0.5   ! m   Minimum value used for smallvolume reset
+        real(4)   ::  MinimumArea      = 0.005  ! m^2
+        real(4)   ::  MinimumPerimeter = 0.52  ! m
+        real(4)   ::  MinimumHydRadius = 0.009  ! m
     end type smallvolumeType
 
     !%  setting%Step
@@ -157,32 +157,32 @@ module setting_definition
     !%  setting%Time
     type timeType
         character(14)   ::  DateTimeStamp
-        real(8) :: Dt  ! s
-        real(8) :: StartTime = 0.0
-        real(8) :: EndTime   = 0.0
-        real(8) :: ThisTime
-        real(8) :: NextTime
+        real(4) :: Dt  ! s
+        real(4) :: StartTime = 0.0
+        real(4) :: EndTime   = 0.0
+        real(4) :: ThisTime
+        real(4) :: NextTime
     end type timeType
 
     !%  setting%ZeroValue
     type zerovalueType
         logical :: UseZeroValues = .true.
-        real    :: Area         = 1.0e-7  ! m^2
-        real    :: Depth        = 1.0e-4  ! m
-        real    :: Flowrate     = 0.0     ! m^3/s
-        real    :: Topwidth     = 1.0e-4  ! m
-        real    :: Velocity     = 0.0     ! m/s
-        real    :: Volume       = 1.0e-7  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
+        real(4)   :: Area         = 1.0e-7  ! m^2
+        real(4)   :: Depth        = 1.0e-4  ! m
+        real(4)   :: Flowrate     = 0.0     ! m^3/s
+        real(4)   :: Topwidth     = 1.0e-4  ! m
+        real(4)   :: Velocity     = 0.0     ! m/s
+        real(4)   :: Volume       = 1.0e-7  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
     end type zerovalueType
 
     !%  setting%Weir
     type WeirType
-        real    :: WeirDischargeCoeff   = 1.4 ! m^3/s
-        real    :: EndContraction       = 0.0    ! Number of End Contraction(0, 1, 2)
-        real    :: WeirHeight           = 1.5  ! Vertical Height of Weir Opening m
-        real    :: WeirWidth            = 3.0
-        real    :: WeirSideSlope        = 1.0
-        real    :: WeirInletOffset      = 1.0
+        real(4)   :: WeirDischargeCoeff   = 1.4 ! m^3/s
+        real(4)   :: EndContraction       = 0.0    ! Number of End Contraction(0, 1, 2)
+        real(4)   :: WeirHeight           = 1.5  ! Vertical Height of Weir Opening m
+        real(4)   :: WeirWidth            = 3.0
+        real(4)   :: WeirSideSlope        = 1.0
+        real(4)   :: WeirInletOffset      = 1.0
     end type WeirType
 
     !% FIRST LEVEL TYPE  ----------------------------------------------
@@ -219,7 +219,7 @@ contains
         !
         !--------------------------------------------------------------------------
 
-        setting%Debugout%DisplayInterval = 1000
+        setting%Debugout%DisplayInterval = 10
 
         setting%Time%dt = 50.0
         setting%Step%First = 1

@@ -4,6 +4,7 @@ module tables
     use errors
     use objects
     use globals
+    use datetime
 
     implicit none
 
@@ -25,13 +26,13 @@ contains
         type(real_table) :: new_real_table
         new_real_table%table_type = ttype
         allocate(new_real_table%tsize(dim))
-        new_real_table%tsize(:) = 0
+        new_real_table%tsize = 0
         allocate(new_real_table%data(dim))
     end function new_real_table
 
     subroutine tables_add_entry(table, entry, axis)
         type(real_table), intent(inout) :: table
-        real, intent(in) :: entry(:)
+        real(4), intent(in) :: entry(:)
         integer, optional, intent(in) :: axis
 
         integer :: n, i
@@ -51,8 +52,8 @@ contains
 
         do i = 1, n
             call dyna_real_append(table%data(i), entry(i))
-            table%tsize(i) = table%tsize(i) + 1
         end do
+        table%tsize = table%tsize + n
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine tables_add_entry
@@ -65,11 +66,11 @@ contains
         subroutine_name = 'free_table'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
-        deallocate(table%tsize)
+        if (allocated(table%tsize)) deallocate(table%tsize)
         do i = 1, table%dim
             call free_real_array(table%data(i))
         end do
-        deallocate(table%data)
+        if (allocated(table%data)) deallocate(table%data)
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine free_table
 
@@ -78,9 +79,9 @@ contains
 
     function find_next_xy_between(x1, x2, y1, y2, resolution_type) result(xy)
         ! x1, x2 are in days
-        real(8), intent(in) :: x1, x2, y1, y2
+        real(4), intent(in) :: x1, x2, y1, y2
         integer, intent(in) :: resolution_type
-        real(8), dimension(2) :: xy
+        real(4), dimension(2) :: xy
 
         xy(1) = datetime_get_next_time(x1, resolution_type)
         if (xy(1) >= x2) then
@@ -94,22 +95,23 @@ contains
     subroutine table_resample(tablexy, resolution_type)
         type(real_table), intent(inout) :: tablexy
         integer, intent(in) :: resolution_type
-        real(8), allocatable :: x(:)
-        real(8), allocatable :: y(:)
-        real(8) :: x1, x2, y1, y2
-        real(8) :: xy(2) = -1
+        real(4), allocatable :: x(:)
+        real(4), allocatable :: y(:)
+        real(4) :: x1, x2, y1, y2
+        real(4) :: xy(2) = -1
         integer :: i, tsize
 
-        tsize = tablexy%table%tsize(1)
+        tsize = tablexy%tsize(1)
 
-        tablexy%table%data(1)%len = 0
-        tablexy%table%data(2)%len = 0
+        tablexy%tsize = 0
+        tablexy%data(1)%len = 0
+        tablexy%data(2)%len = 0
 
         allocate(x(tsize))
         allocate(y(tsize))
 
-        x(:) = tablexy%table%data(1)%array(1:tsize)
-        y(:) = tablexy%table%data(2)%array(1:tsize)
+        x(:) = tablexy%data(1)%array(1:tsize)
+        y(:) = tablexy%data(2)%array(1:tsize)
 
         do i = 1, size(x)-1
             x1 = x(i)
@@ -117,30 +119,30 @@ contains
             y1 = y(i)
             y2 = y(i+1)
 
-            call tables_add_entry(tablexy%table, x(i), y(i))
+            call tables_add_entry(tablexy, (/x(i), y(i)/))
             do while (xy(1) <= x(i+1))
                 xy = find_next_xy_between(x1, x2, y1, y2, resolution_type)
                 if (xy(1) >= x(i+1)) exit
                 x1 = xy(1)
                 y1 = xy(2)
-                call tables_add_entry(tablexy%table, x1, y1)
+                call tables_add_entry(tablexy, (/x1, y1/))
             enddo
         enddo
 
-        call tables_add_entry(tablexy%table, x(size(x)), y(size(y)))
+        call tables_add_entry(tablexy, (/x(size(x)), y(size(y))/))
         deallocate(x)
         deallocate(y)
     end subroutine table_resample
 
     function tables_find_time(table, t) result(idx)
         type(real_table), intent(in) :: table
-        real(8), intent(in) :: t ! time
+        real(4), intent(in) :: t ! time
 
         integer :: idx
         integer :: n
-        real :: tmp
+        real(4) :: tmp
         character(64) :: subroutine_name
-        real, allocatable :: x(:)
+        real(4), allocatable :: x(:)
 
         subroutine_name = 'tables_find_time'
 
@@ -198,10 +200,10 @@ contains
     end function tables_find_time
 
     function interpolate(x, x1, x2, y1, y2, interpolation_type)
-        real(8), intent(in) :: x, x1, x2, y1, y2
+        real(4), intent(in) :: x, x1, x2, y1, y2
         integer, intent(in) :: interpolation_type
 
-        real :: interpolate
+        real(4) :: interpolate
 
         if (interpolation_type == INTERPOLATION_LINEAR) then
             interpolate = (y2-y1)*(x-x1)/(x2-x1) + y1

@@ -44,25 +44,25 @@ contains
         !
         character(64) :: subroutine_name = 'case_waller_creek_initialize'
 
-        real,  intent(in)  :: channel_length(:), channel_breadth(:)
-        real,  intent(in)  :: channel_topwidth(:), subdivide_length(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
-        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
-        real,  intent(in)  :: ManningsN(:)
+        real(4),  intent(in)  :: channel_length(:), channel_breadth(:)
+        real(4),  intent(in)  :: channel_topwidth(:), subdivide_length(:)
+        real(4),  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
+        real(4),  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
+        real(4),  intent(in)  :: ManningsN(:)
 
         integer, intent(in):: roughness_type, idepth_type(:)
 
         integer, target, intent(in out)    :: wdID(:)
         integer, target, intent(in out)    :: wdnumberPairs(:)
-        real,    target, intent(in out)    :: wdxDistance(:)
-        real,    target, intent(in out)    :: widthDepthData(:,:,:)
+        real(4),    target, intent(in out)    :: wdxDistance(:)
+        real(4),    target, intent(in out)    :: widthDepthData(:,:,:)
         type(string), target, intent(in out)   :: wdcellType(:)
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
@@ -129,24 +129,24 @@ contains
         !
         character(64) :: subroutine_name = 'case_waller_creek_links_and_nodes'
 
-        real,  intent(in)  :: channel_length(:), channel_breadth(:)
-        real,  intent(in)  :: channel_topwidth(:), subdivide_length(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:), ManningsN(:), initial_flowrate(:)
-        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
+        real(4),  intent(in)  :: channel_length(:), channel_breadth(:)
+        real(4),  intent(in)  :: channel_topwidth(:), subdivide_length(:)
+        real(4),  intent(in)  :: lowerZ(:), upperZ(:), ManningsN(:), initial_flowrate(:)
+        real(4),  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
 
         integer, intent(in):: roughness_type, idepth_type(:)
 
         integer, target, intent(in out)    :: wdID(:)
         integer, target, intent(in out)    :: wdnumberPairs(:)
-        real,    target, intent(in out)    :: wdxDistance(:)
-        real,    target, intent(in out)    :: widthDepthData(:,:,:)
+        real(4),    target, intent(in out)    :: wdxDistance(:)
+        real(4),    target, intent(in out)    :: widthDepthData(:,:,:)
         type(string), target, intent(in out)   :: wdcellType(:)
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
@@ -278,29 +278,29 @@ contains
 
         integer, intent(in) :: ID(:)
         integer, intent(in) :: numberPairs(:)
-        real, intent(in)    :: ManningsN(:)
-        real, intent(in)    :: Length(:)
-        real, intent(in)    :: zBottom(:)
-        real, intent(in)    :: xDistance(:)
-        real, intent(in)    :: Breadth(:)
-        real, intent(in)    :: widthDepthData(:,:,:)
+        real(4), intent(in)    :: ManningsN(:)
+        real(4), intent(in)    :: Length(:)
+        real(4), intent(in)    :: zBottom(:)
+        real(4), intent(in)    :: xDistance(:)
+        real(4), intent(in)    :: Breadth(:)
+        real(4), intent(in)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
-        real, intent(in)    :: subdivide_length_check
+        real(4), intent(in)    :: subdivide_length_check
 
-        real,    dimension(:),      allocatable :: faceZBottom
-        real,    dimension(:),      allocatable :: temp1
-        real,    dimension(:),      allocatable :: temp2
+        real(4),    dimension(:),      allocatable :: faceZBottom
+        real(4),    dimension(:),      allocatable :: temp1
+        real(4),    dimension(:),      allocatable :: temp2
         integer, dimension(:),      allocatable :: isnonmonotonic
 
         integer, dimension(:),      allocatable :: newID
         integer, dimension(:),      allocatable :: newNumberPairs
-        real,    dimension(:),      allocatable :: newManningsN
-        real,    dimension(:),      allocatable :: newLength
-        real,    dimension(:),      allocatable :: newZBottom
-        real,    dimension(:),      allocatable :: newXDistance
-        real,    dimension(:),      allocatable :: newBreadth
-        real,    dimension(:,:,:),  allocatable :: newWidthDepthData
+        real(4),    dimension(:),      allocatable :: newManningsN
+        real(4),    dimension(:),      allocatable :: newLength
+        real(4),    dimension(:),      allocatable :: newZBottom
+        real(4),    dimension(:),      allocatable :: newXDistance
+        real(4),    dimension(:),      allocatable :: newBreadth
+        real(4),    dimension(:,:,:),  allocatable :: newWidthDepthData
         type(string), dimension(:), allocatable :: newCellType(:)
 
         !--------------------------------------------------------------------------
@@ -433,9 +433,9 @@ contains
         !
         character(64) :: subroutine_name = 'face_zbottom'
 
-        real, intent(inout) :: faceZbottom(:)
-        real, intent(in)    :: zBottom(:)
-        real, intent(in)    :: Length(:)
+        real(4), intent(inout) :: faceZbottom(:)
+        real(4), intent(in)    :: zBottom(:)
+        real(4), intent(in)    :: Length(:)
         integer, intent(in) :: NX
 
         !--------------------------------------------------------------------------
@@ -461,14 +461,14 @@ contains
 
         integer, intent(inout) :: numberPairs(:)
 
-        real, target, intent(inout) :: widthDepthData(:,:,:)
+        real(4), target, intent(inout) :: widthDepthData(:,:,:)
 
         type(string), intent(in out)   :: cellType(:)
 
-        real, pointer :: width(:,:), depth(:,:), area(:,:), areaTBL(:,:)
-        real, pointer :: dWidth(:,:), dDepth(:,:), angle(:,:), perimeterBL(:,:)
-        real, pointer :: rH(:,:), gammaBTL(:,:), depthTBL(:,:)
-        real, pointer :: area_difference(:,:), local_difference(:,:)
+        real(4), pointer :: width(:,:), depth(:,:), area(:,:), areaTBL(:,:)
+        real(4), pointer :: dWidth(:,:), dDepth(:,:), angle(:,:), perimeterBL(:,:)
+        real(4), pointer :: rH(:,:), gammaBTL(:,:), depthTBL(:,:)
+        real(4), pointer :: area_difference(:,:), local_difference(:,:)
 
         integer :: ii,jj
         integer :: eIn1
@@ -562,10 +562,10 @@ contains
 
         integer, intent(inout) :: numberPairs(:)
 
-        real, target, intent(inout) :: widthDepthData(:,:,:)
+        real(4), target, intent(inout) :: widthDepthData(:,:,:)
 
-        real, dimension(:,:), allocatable :: dWidth
-        real, dimension(:,:), allocatable :: dDepth
+        real(4), dimension(:,:), allocatable :: dWidth
+        real(4), dimension(:,:), allocatable :: dDepth
 
         integer :: ii,jj, nfix
         integer :: width = wd_widthAtLayerTop
@@ -625,10 +625,10 @@ contains
 
         character(64) :: subroutine_name = 'widthdepth_pair_fix'
 
-        real, target, intent(inout) :: widthDepthData(:,:,:)
+        real(4), target, intent(inout) :: widthDepthData(:,:,:)
 
-        real, pointer :: up2W(:,:), up1W(:,:), lowW(:,:)
-        real, pointer :: up2D(:,:), up1D(:,:), lowD(:,:)
+        real(4), pointer :: up2W(:,:), up1W(:,:), lowW(:,:)
+        real(4), pointer :: up2D(:,:), up1D(:,:), lowD(:,:)
 
         integer :: width = wd_widthAtLayerTop
         integer :: depth = wd_depthAtLayerTop

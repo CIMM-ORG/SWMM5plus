@@ -20,23 +20,23 @@ end program test_sign
 !  integer, dimension(:), allocatable :: ID
 !  integer, dimension(:), allocatable :: numberPairs
 !
-!  real, dimension(:), allocatable :: ManningsN
-!  real, dimension(:), allocatable :: Length
-!  real, dimension(:), allocatable :: zBottom
-!  real, dimension(:), allocatable :: xDistance
-!  real, dimension(:), allocatable :: Breadth
-!  real, dimension(:), allocatable :: faceZBottom
+!  real(4), dimension(:), allocatable :: ManningsN
+!  real(4), dimension(:), allocatable :: Length
+!  real(4), dimension(:), allocatable :: zBottom
+!  real(4), dimension(:), allocatable :: xDistance
+!  real(4), dimension(:), allocatable :: Breadth
+!  real(4), dimension(:), allocatable :: faceZBottom
 !
-!  real, dimension(:,:,:), allocatable :: widthDepthData
+!  real(4), dimension(:,:,:), allocatable :: widthDepthData
 !
 !  integer, dimension(:),     allocatable :: newID
 !  integer, dimension(:),     allocatable :: newNumberPairs
-!  real,    dimension(:),     allocatable :: newManningsN
-!  real,    dimension(:),     allocatable :: newLength
-!  real,    dimension(:),     allocatable :: newZBottom
-!  real,    dimension(:),     allocatable :: newXDistance
-!  real,    dimension(:),     allocatable :: newBreadth
-!  real,    dimension(:,:,:), allocatable :: newWidthDepthData
+!  real(4),    dimension(:),     allocatable :: newManningsN
+!  real(4),    dimension(:),     allocatable :: newLength
+!  real(4),    dimension(:),     allocatable :: newZBottom
+!  real(4),    dimension(:),     allocatable :: newXDistance
+!  real(4),    dimension(:),     allocatable :: newBreadth
+!  real(4),    dimension(:,:,:), allocatable :: newWidthDepthData
 !
 !  type(string), dimension(:), allocatable :: cellType
 !
@@ -89,20 +89,20 @@ end program test_sign
 !  integer, dimension(:), allocatable :: ID
 !  integer, dimension(:), allocatable :: numberPairs
 !
-!  real, dimension(:), allocatable :: ManningsN
-!  real, dimension(:), allocatable :: Length
-!  real, dimension(:), allocatable :: zBottom
-!  real, dimension(:), allocatable :: xDistance
-!  real, dimension(:), allocatable :: Breadth
+!  real(4), dimension(:), allocatable :: ManningsN
+!  real(4), dimension(:), allocatable :: Length
+!  real(4), dimension(:), allocatable :: zBottom
+!  real(4), dimension(:), allocatable :: xDistance
+!  real(4), dimension(:), allocatable :: Breadth
 !
-!  real, target, dimension(:,:,:), allocatable :: widthDepthData
+!  real(4), target, dimension(:,:,:), allocatable :: widthDepthData
 !
 !  character(len=:), allocatable :: cellType(:)
 !
-!  real, dimension(:,:), allocatable :: dWidth
-!  real, dimension(:,:), allocatable :: dDepth
+!  real(4), dimension(:,:), allocatable :: dWidth
+!  real(4), dimension(:,:), allocatable :: dDepth
 !
-!  real, pointer :: up2W(:,:)
+!  real(4), pointer :: up2W(:,:)
 !
 !  integer :: nfix,ii,depth,width
 !
@@ -160,17 +160,17 @@ end program test_sign
 ! integer, dimension(:), allocatable :: ID
 !  integer, dimension(:), allocatable :: numberPairs
 !
-!  real, dimension(:), allocatable :: ManningsN
-!  real, dimension(:), allocatable :: Length
-!  real, dimension(:), allocatable :: zBottom
-!  real, dimension(:), allocatable :: xDistance
-!  real, dimension(:), allocatable :: Breadth
+!  real(4), dimension(:), allocatable :: ManningsN
+!  real(4), dimension(:), allocatable :: Length
+!  real(4), dimension(:), allocatable :: zBottom
+!  real(4), dimension(:), allocatable :: xDistance
+!  real(4), dimension(:), allocatable :: Breadth
 !
-!  real, dimension(:,:,:), allocatable :: widthDepthData
+!  real(4), dimension(:,:,:), allocatable :: widthDepthData
 !
 !  character(len=:), allocatable :: cellType(:)
 !
-!  real, dimension(:), allocatable :: aaaa
+!  real(4), dimension(:), allocatable :: aaaa
 ! allocate(aaaa(5))
 !
 ! open(newunit=unit, file='WLR_WidthDepthList.txt', status='OLD')
@@ -215,7 +215,7 @@ end program test_sign
 ! integer :: n_rows_in_file_node = 0
 ! integer :: max_number_of_pairs = 0
 !
-! ! real, dimension(:), allocatable :: pair
+! ! real(4), dimension(:), allocatable :: pair
 ! ! character, parameter :: sep = ' '
 ! ! character(len=256) :: str = "2.216 0.030968"
 !

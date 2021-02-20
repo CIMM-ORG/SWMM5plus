@@ -12,8 +12,8 @@ contains
 
     subroutine dyna_real_append(this, x)
         type(real_array), intent(inout) :: this
-        real, intent(in) :: x
-        real, allocatable :: resized_arr(:)
+        real(4), intent(in) :: x
+        real(4), allocatable :: resized_arr(:)
         character(64) :: subroutine_name = 'dyna_real_append'
 
         if (debuglevel > 0) print *, '*** enter ',subroutine_name
@@ -86,7 +86,7 @@ contains
 
     function dyna_real_pop(this)
         type(real_array), intent(inout) :: this
-        real :: dyna_real_pop
+        real(4) :: dyna_real_pop
         character(64) :: subroutine_name = 'dyna_real_pop'
 
         if (debuglevel > 0) print *, '*** enter ',subroutine_name

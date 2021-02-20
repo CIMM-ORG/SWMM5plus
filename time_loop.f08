@@ -43,7 +43,7 @@ contains
         !
         character(64) :: subroutine_name = 'time_marching'
 
-        real,      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+        real(4),      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         integer,   target, intent(in out) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
@@ -54,11 +54,11 @@ contains
 
         integer,                       intent(in)     :: linkI(:,:)
 
-        real, pointer :: rkVol(:), rkU(:)
-        real, pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
-        real, pointer :: fEdn(:), fEup(:), eE(:)
+        real(4), pointer :: rkVol(:), rkU(:)
+        real(4), pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
+        real(4), pointer :: fEdn(:), fEup(:), eE(:)
 
-        real(8), pointer :: thistime, nexttime
+        real(4), pointer :: thistime, nexttime
 
         integer, pointer :: thisStep, restartStep
 
@@ -68,12 +68,12 @@ contains
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(4),    intent(in out)    :: ManningsN(:)
+        real(4),    intent(in out)    :: Length(:)
+        real(4),    intent(in out)    :: zBottom(:)
+        real(4),    intent(in out)    :: xDistance(:)
+        real(4),    intent(in out)    :: Breadth(:)
+        real(4),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
         !--------------------------------------------------------------------------
@@ -91,12 +91,12 @@ contains
         nexttime = thistime + dt
 
         call bc_applied_onelement &
-            (elem2R, bcdataDn, bcdataUp, real(thistime), bc_category_inflowrate, e2r_Velocity)
+            (elem2R, bcdataDn, bcdataUp, thistime, bc_category_inflowrate, e2r_Velocity)
 
         call bc_applied_onelement &
-            (elem2R, bcdataDn, bcdataUp, real(thistime), bc_category_elevation, idummy)
+            (elem2R, bcdataDn, bcdataUp, thistime, bc_category_elevation, idummy)
 
-        call bc_applied_onface (faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity, real(thistime))
+        call bc_applied_onface (faceR, faceI, elem2R, elem2I, bcdataDn, bcdataUp, e2r_Velocity, thistime)
 
         call diagnostic_volume_conservation &
             (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, bcdataUp, bcdataDn, restartStep,  1)
@@ -137,7 +137,7 @@ contains
             !% Runge-Kutta 2nd-order advance
             call rk2 &
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
-                bcdataDn, bcdataUp, real(thistime), real(dt), ID, numberPairs, ManningsN, Length,   &
+                bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
                 zBottom, xDistance, Breadth, widthDepthData, cellType)
 
             !% compute the element froude number (diagnostic only)

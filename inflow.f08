@@ -10,20 +10,20 @@ module inflow
     use selectors
     use setting_definition
     use datetime
+    use bc
+    use tables
 
     implicit none
 
     integer, private :: debuglevel = 0
-    private :: inflow_get_maxima
 
 contains
 
     function inflow_get_pattern_factor_at(p, date) result(pfactor)
         integer, intent(in) :: p
-        real(8), intent(in) :: date
-        real :: d2, pfactor
+        real(4), intent(in) :: date
+        real(4) :: d2, pfactor
         integer :: dw, yy, mm, dd, d, h, s
-        type(pattern) :: pat
         character(64) :: subroutine_name = 'inflow_get_pattern_factor_at'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -32,171 +32,49 @@ contains
         pfactor = 0
 
         if (p .ne. -1) then
-            pat = all_patterns(p)
-            if (pat%ptype == SWMM_MONTHLY_PATTERN) then
+            if (all_patterns(p)%ptype == SWMM_MONTHLY_PATTERN) then
                 call datetime_decodedate(date, yy, mm, dd)
-                pfactor = pat%factor(mm)
-            else if (pat%ptype == SWMM_DAILY_PATTERN) then
-                pfactor = pat%factor(dw)
-            else if ((pat%ptype == SWMM_HOURLY_PATTERN) .or. &
-                ((pat%ptype == SWMM_WEEKEND_PATTERN) .and. ((dw == 1) .or. (dw == 7)))) then
+                pfactor = all_patterns(p)%factor(mm)
+            else if (all_patterns(p)%ptype == SWMM_DAILY_PATTERN) then
+                pfactor = all_patterns(p)%factor(dw)
+            else if ((all_patterns(p)%ptype == SWMM_HOURLY_PATTERN) .or. &
+                ((all_patterns(p)%ptype == SWMM_WEEKEND_PATTERN) .and. ((dw == 1) .or. (dw == 7)))) then
                 call datetime_decodetime(date, d, h, s)
-                pfactor = pat%factor(h+1)
+                pfactor = all_patterns(p)%factor(h+1)
             endif
         endif
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end function inflow_get_pattern_factor_at
 
-    function inflow_get_extinflow_at(e, date, current) result(flow)
-        integer, intent(in) :: e ! extinflow id
-        real(8), intent(in) :: date
-        integer, optional, intent(in) :: current ! closest to date
-
-        integer :: t, i
-        real :: flow
-        real :: pfactor = 0
-        real :: tfactor = 0
-        real :: t1, t2
-        real :: y1, y2
-        type(extinflow) :: ext
-        type(tseries) :: ts
-        real, allocatable, dimension(:) :: ttime, tvalues
-        character(64) :: subroutine_name = 'inflow_get_extinflow_at'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        if (date < swmm_start_time) then
-            print *, MSG_INCORRECT_PARAMETER, 'date < start time'
-            stop
-        end if
-
-        flow = 0
-        ext = ext_inflows(e)
-        t = ext%t_series
-        ! Update pattern extinflow
-        pfactor = inflow_get_pattern_factor_at(ext%base_pat, date)
-        flow = flow + pfactor*ext%baseline
-
-        if (t .ne. -1) then
-            ts = all_tseries(t)
-            ttime = ts%table%data(1)%array
-            tvalues = ts%table%data(2)%array
-            if (present(current)) then
-                i = current
-            else
-                i = tables_find_time(ts%table, date)
-            endif
-            if (date == ttime(i)) then
-                tfactor = tvalues(i)
-            else ! interpolation is needed
-                if (ttime(i) > date) then
-                    if (i == 1) then
-                        t1 = setting%time%starttime
-                        y1 = tvalues(1)
-                    else
-                        t1 = ttime(i-1)
-                        y1 = tvalues(i-1)
-                    endif
-                    t2 = ttime(i)
-                    y2 = tvalues(i)
-                else
-                    if (i == ts%table%tsize(2)) then
-                        t2 = setting%time%endtime
-                        y2 = tvalues(i)
-                    else
-                        t2 = ttime(i+1)
-                        y2 = tvalues(i+1)
-                    endif
-                    t1 = ttime(i)
-                    y1 = tvalues(i)
-                endif
-                tfactor = interpolate(date, dble(t1), dble(t2), dble(y1), dble(y2), INTERPOLATION_LINEAR)
-            endif
-        endif
-
-        flow = flow + tfactor*ext%sfactor
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
-    end function inflow_get_extinflow_at
-
-    function inflow_get_pattern_next_time_between(p, t1, t2) result(next_time)
-        integer, intent(in) :: p
-        real(8), intent(in) :: t1, t2
-
-        real(8) :: next_time
-        integer :: h1, m1, s1, h2, m2, s2
-        type(pattern) :: pat
-        character(64) :: subroutine_name = 'inflow_get_pattern_next_time_between'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        if (p == -1) then
-            next_time = t2
-            return
-        endif
-
-        pat = all_patterns(p)
-
-        if (pat%ptype == SWMM_MONTHLY_PATTERN) then
-            next_time = datetime_get_next_month(t1)
-        else if (pat%ptype == SWMM_DAILY_PATTERN) then
-            next_time = datetime_get_next_day(t1)
-        else if (pat%ptype == SWMM_HOURLY_PATTERN) then
-            next_time = datetime_get_next_hour(t1)
-        else if (pat%ptype == SWMM_WEEKEND_PATTERN) then
-            next_time = datetime_get_next_weekendday_hour(t1)
-        endif
-
-        if (next_time > t2) then
-            next_time = t2
-        endif
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
-    end function inflow_get_pattern_next_time_between
-
-    subroutine inflow_get_maxima(nodeI, nodeR)
-        ! needs to be executed after (inflow_load_inflows)
-        integer, intent(in) :: nodeI(:,:)
-        real, intent(inout) :: nodeR(:,:)
-        integer :: i, j, k, t, node_id, tt, size_t
-        type(tseries) :: ts
-        type(extinflow) :: ext
-        real(8), allocatable :: ttime(:)
-
-        character(64) :: subroutine_name = 'inflow_get_maxima'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        nodeR(:, nr_maxinflow) = 0
-        do i = 1, nodes_with_inflow%len
-            node_id = nodes_with_inflow%array(i)
-            j = nodeI(node_id, ni_extinflow)
-            k = nodeI(node_id, ni_dwfinflow)
-            if (j == -1 .and. k > 0) then
-                ! TODO - handle dry weather inflows
-                cycle
-            else if (j > 0 .and. k == -1) then
-                ! I am assuming that there's no pattern in the external inflow
-                ext = ext_inflows(j)
-                ts = all_tseries(ext%t_series)
-                size_t = ts%table%tsize(1)
-                nodeR(node_id, nr_maxinflow) = maxval(ts%table%data(2)%array(1:size_t))
-            else
-                print *, MSG_FEATURE_NOT_COMPATIBLE
-                stop
-            end if
-        end do
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
-    end subroutine inflow_get_maxima
-
-    subroutine inflow_load_inflows(nodeI, nodeR)
+    subroutine inflow_load_inflows(nodeI, nodeR, bcdataDn, bcdataUp)
         integer, intent(inout) :: nodeI(:,:)
-        real, intent(inout) :: nodeR(:,:)
-        integer :: i, j
+        real(4), intent(inout) :: nodeR(:,:)
+        type(bctype), allocatable, intent(inout) :: bcdataDn(:)
+        type(bctype), allocatable, intent(inout) :: bcdataUp(:)
+        integer :: i ! node index
+        integer :: j ! loop over nodes with external inflow
+        integer :: k ! loop over nodes with dry inflow inly
+        integer :: ii ! total inflow index
+        integer :: jj ! general purpose index
+        integer :: min_res, tsize, ptype
         logical :: l1, l2
         character(64) :: subroutine_name = 'inflow_load_inflows'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        ! Allocate boundary conditions
+        ! Upstream Boundary conditions are stored in the following order:
+        ! 1st - Nodes with external and with/without dry inflows
+        ! 2nd - Nodes with dry inflows only
+        ! All the nodes are associated to a total_inflow object which is also associated
+        ! with a bctype object in BCUpstream whose total inflow is described by vectors
+        ! TimeArray and ValueArray which add all the inflow types in SWMM as a single one
+
+        nodeI(1:N_BCdnstream, ni_temp1) = pack(nodeI(:,ni_idx),nodeI(:,ni_node_type) == nBCdn)
+        N_BCdnstream = count(nodeI(:,ni_node_type) == nBCdn)
+        N_BCupstream = count(nodeI(:,ni_node_type) == nBCup)
+
+        call bc_allocate(bcdataDn, bcdataUp)
 
         do i = 1, num_nodes
             l1 = get_node_attribute(i, node_has_extInflow) == 1
@@ -212,69 +90,251 @@ contains
             endif
         end do
 
-        allocate(ext_inflows(nodes_with_extinflow%len))
-        allocate(dwf_inflows(nodes_with_dwfinflow%len))
-
-        nodeI(:, ni_extinflow) = -1
-        print *, "Retrieving External Inflows"
-        do j = 1, nodes_with_extinflow%len
-            print *, "Extinflow", j, '/', nodes_with_extinflow%len
-            i = nodes_with_extinflow%array(j)
-            ext_inflows(j)%node_id = i
-            ext_inflows(j)%t_series = get_node_attribute(i, node_extInflow_tSeries)
-            ext_inflows(j)%base_pat = get_node_attribute(i, node_extInflow_basePat)
-            ext_inflows(j)%baseline = get_node_attribute(i, node_extInflow_baseline)
-            ext_inflows(j)%sfactor =  get_node_attribute(i, node_extInflow_sFactor)
-            nodeI(i, ni_extinflow) = j
-        end do
-
-        nodeI(:, ni_dwfinflow) = -1
-        print *, "Retrieving Dry Inflows"
-        do j = 1, nodes_with_dwfinflow%len
-            print *, "Dryinflow", j, '/', nodes_with_dwfinflow%len
-            i = nodes_with_dwfinflow%array(j)
-            dwf_inflows(j)%node_id = i
-            dwf_inflows(j)%avgValue = get_node_attribute(i, node_dwfInflow_avgvalue)
-            dwf_inflows(j)%monthly_pattern = get_node_attribute(i, node_dwfInflow_monthly_pattern)
-            dwf_inflows(j)%daily_pattern = get_node_attribute(i, node_dwfInflow_daily_pattern)
-            dwf_inflows(j)%hourly_pattern = get_node_attribute(i, node_dwfInflow_hourly_pattern)
-            dwf_inflows(j)%weekly_pattern = get_node_attribute(i, node_dwfInflow_weekly_pattern)
-            nodeI(i, ni_dwfinflow) = i
-        end do
-
         allocate(total_inflows(nodes_with_inflow%len))
+        nodeI(:, ni_total_inflow) = -1
+        min_res = 0 ! minimum resolution
+        ii = 1
 
-        do i = 1, nodes_with_inflow%len
-            total_inflows(i) = new_real_table(tinflow, 2)
+        do j = 1, nodes_with_extinflow%len
+            i = nodes_with_extinflow%array(j)
+            l2 = get_node_attribute(i, node_has_dwfInflow) == 1
+            bcdataUp(ii)%NodeID = i
+            nodeI(i, ni_total_inflow) = ii
+            total_inflows(ii)%node_id = i
+            total_inflows(ii)%ext_t_series = get_node_attribute(i, node_extInflow_tSeries)
+            total_inflows(ii)%ext_base_pat = get_node_attribute(i, node_extInflow_basePat)
+            total_inflows(ii)%ext_baseline = get_node_attribute(i, node_extInflow_baseline)
+            total_inflows(ii)%ext_sfactor =  get_node_attribute(i, node_extInflow_sFactor)
+
+            if (l2) then
+                total_inflows(ii)%dwf_avgValue = get_node_attribute(i, node_dwfInflow_monthly_pattern)
+                total_inflows(ii)%dwf_monthly_pattern = get_node_attribute(i, node_dwfInflow_monthly_pattern)
+                total_inflows(ii)%dwf_daily_pattern = get_node_attribute(i, node_dwfInflow_daily_pattern)
+                total_inflows(ii)%dwf_hourly_pattern = get_node_attribute(i, node_dwfInflow_hourly_pattern)
+                total_inflows(ii)%dwf_weekend_pattern = get_node_attribute(i, node_dwfInflow_weekend_pattern)
+                if (total_inflows(ii)%dwf_hourly_pattern /= -1) then
+                    min_res = hourly
+                else
+                    if (total_inflows(ii)%dwf_weekend_pattern /= -1) then
+                        min_res = weekend
+                        if (total_inflows(ii)%dwf_daily_pattern /= -1) then
+                            min_res = -daily
+                        else
+                            if (total_inflows(ii)%dwf_monthly_pattern /= -1) then
+                                min_res = -monthly
+                            endif
+                        endif
+                    else
+                        if (total_inflows(ii)%dwf_daily_pattern /= -1) then
+                            min_res = daily
+                        else
+                            if (total_inflows(ii)%dwf_monthly_pattern /= -1) then
+                                min_res = monthly
+                            endif
+                        endif
+                    endif
+                endif
+            endif
+
+            if (total_inflows(ii)%ext_base_pat /= -1) then
+                ptype = all_patterns(total_inflows(ii)%ext_base_pat)%ptype
+                if (ptype == SWMM_MONTHLY_PATTERN) then
+                    if (min_res == 0) then
+                        min_res = monthly
+                    endif
+                else if (ptype == SWMM_DAILY_PATTERN) then
+                    if ((min_res <= 0) .or. (min_res == monthly) .or. (min_res == weekend)) then
+                        min_res = sign(1, min_res) * daily
+                    endif
+                else if (ptype == SWMM_HOURLY_PATTERN) then
+                    min_res = hourly
+                else if (ptype == SWMM_WEEKEND_PATTERN) then
+                    if ((min_res > 0) .and. (min_res /= hourly)) then
+                        min_res = -min_res
+                    else if (min_res == 0) then
+                        min_res = weekend
+                    endif
+                endif
+            endif
+
+            if (total_inflows(ii)%ext_t_series /= -1) then ! EXT INFLOW WITH TSERIES
+                print *, "HERE 1"
+                ! The tseries is resampled in place
+                if (min_res == -daily) then
+                    call table_resample(all_tseries(total_inflows(ii)%ext_t_series), weekend)
+                    call table_resample(all_tseries(total_inflows(ii)%ext_t_series), daily)
+                else if (min_res == -monthly) then
+                    call table_resample(all_tseries(total_inflows(ii)%ext_t_series), weekend)
+                    call table_resample(all_tseries(total_inflows(ii)%ext_t_series), monthly)
+                else if (min_res == monthly) then
+                    call table_resample(all_tseries(total_inflows(ii)%ext_t_series), monthly)
+                else if (min_res == daily) then
+                    call table_resample(all_tseries(total_inflows(ii)%ext_t_series), daily)
+                else if (min_res == hourly) then
+                    call table_resample(all_tseries(total_inflows(ii)%ext_t_series), hourly)
+                else if (min_res == weekend) then
+                    call table_resample(all_tseries(total_inflows(ii)%ext_t_series), weekend)
+                endif
+
+                tsize = all_tseries(total_inflows(ii)%ext_t_series)%tsize(1)
+                all_tseries(total_inflows(ii)%ext_t_series)%data(2)%array(1:tsize) = &
+                    all_tseries(total_inflows(ii)%ext_t_series)%data(2)%array(1:tsize) * &
+                    total_inflows(ii)%ext_sfactor !
+                if (total_inflows(ii)%ext_base_pat /= -1) then ! EXT INFLOW WITH TSERIES AND WITH PATTERN
+                    print *, "HERE 2"
+                    do jj = 1, tsize
+                        all_tseries(total_inflows(ii)%ext_t_series)%data(2)%array(jj) &
+                          = all_tseries(total_inflows(ii)%ext_t_series)%data(2)%array(jj) + &
+                          inflow_get_pattern_factor_at(total_inflows(ii)%ext_base_pat, &
+                            all_tseries(total_inflows(ii)%ext_t_series)%data(1)%array(jj)) &
+                              * total_inflows(ii)%ext_baseline
+                    enddo
+                endif
+            else ! EXT INFLOW WITHOUT TSERIES AND WITH PATTERN
+                print *, "HERE 3"
+                call tables_add_entry(total_inflows(ii)%xy, (/swmm_start_time, total_inflows(ii)%ext_baseline/))
+                call tables_add_entry(total_inflows(ii)%xy, (/swmm_end_time, total_inflows(ii)%ext_baseline/))
+                if (min_res == -daily) then
+                    call table_resample(total_inflows(ii)%xy, weekend)
+                    call table_resample(total_inflows(ii)%xy, daily)
+                else if (min_res == -monthly) then
+                    call table_resample(total_inflows(ii)%xy, weekend)
+                    call table_resample(total_inflows(ii)%xy, monthly)
+                else if (min_res == monthly) then
+                    call table_resample(total_inflows(ii)%xy, monthly)
+                else if (min_res == daily) then
+                    call table_resample(total_inflows(ii)%xy, daily)
+                else if (min_res == hourly) then
+                    call table_resample(total_inflows(ii)%xy, hourly)
+                else if (min_res == weekend) then
+                    call table_resample(total_inflows(ii)%xy, weekend)
+                endif
+                tsize = total_inflows(ii)%xy%tsize(1)
+                total_inflows(ii)%xy%data(2)%array(1:tsize) = &
+                    total_inflows(ii)%xy%data(2)%array(1:tsize) * total_inflows(ii)%ext_sfactor
+                if (total_inflows(ii)%ext_base_pat /= -1) then
+                    do jj = 1, tsize
+                        total_inflows(ii)%xy%data(2)%array(jj) = total_inflows(ii)%xy%data(2)%array(jj) * &
+                            inflow_get_pattern_factor_at &
+                                (total_inflows(ii)%ext_base_pat, total_inflows(ii)%xy%data(1)%array(jj))
+                    enddo
+                endif
+            endif
+
+            if (total_inflows(ii)%ext_t_series /= -1) then ! EXT INFLOW WITH TSERIES
+                print *, "HERE 4"
+                print *, tsize, "el size"
+                allocate(bcdataUp(ii)%TimeArray(tsize))
+                allocate(bcdataUp(ii)%ValueArray(tsize))
+                bcdataUp(ii)%TimeArray(:) = &
+                    all_tseries(total_inflows(ii)%ext_t_series)%data(1)%array(1:tsize)
+                bcdataUp(ii)%ValueArray(:) = &
+                    all_tseries(total_inflows(ii)%ext_t_series)%data(2)%array(1:tsize)
+            else ! EXT INFLOW WITHOUT TSERIES
+                print *, "HERE 5"
+                print *, tsize, "el size"
+                allocate(bcdataUp(ii)%TimeArray(tsize))
+                allocate(bcdataUp(ii)%ValueArray(tsize))
+                bcdataUp(ii)%TimeArray(:) = total_inflows(ii)%xy%data(1)%array(1:tsize)
+                bcdataUp(ii)%ValueArray(:) = total_inflows(ii)%xy%data(2)%array(1:tsize)
+            endif
+            ii = ii + 1
+        end do
+
+        do k = 1, nodes_with_dwfinflow%len
+            l1 = get_node_attribute(i, node_has_extInflow) == 1
+            i = nodes_with_dwfinflow%array(j)
+            ! data associated to dry inflow was already extracted in
+            ! previous loop for nodes with external and dry inflow
+            if (.not. l1) then ! DRY INFLOW ONLY
+                bcdataUp(ii)%NodeID = i
+                nodeI(i, ni_total_inflow) = ii
+                total_inflows(ii)%node_id = i
+                total_inflows(ii)%dwf_avgvalue = get_node_attribute(i, node_dwfInflow_avgvalue)
+                total_inflows(ii)%dwf_monthly_pattern = get_node_attribute(i, node_dwfInflow_monthly_pattern)
+                total_inflows(ii)%dwf_daily_pattern = get_node_attribute(i, node_dwfInflow_daily_pattern)
+                total_inflows(ii)%dwf_hourly_pattern = get_node_attribute(i, node_dwfInflow_hourly_pattern)
+                total_inflows(ii)%dwf_weekend_pattern = get_node_attribute(i, node_dwfInflow_weekend_pattern)
+
+                call tables_add_entry(total_inflows(ii)%xy, (/swmm_start_time, real(0)/))
+                call tables_add_entry(total_inflows(ii)%xy, (/swmm_end_time, real(0)/))
+                min_res = 0
+
+                if (total_inflows(ii)%dwf_monthly_pattern /= -1) then
+                    min_res = monthly
+                endif
+                if (total_inflows(ii)%dwf_weekend_pattern /= -1) then
+                    if (min_res == monthly) then
+                        min_res = -monthly
+                    else
+                        min_res = monthly
+                    endif
+                endif
+                if (total_inflows(ii)%dwf_daily_pattern /= -1) then
+                    if ((min_res < 0) .or. (min_res == weekend)) then
+                        min_res = -daily
+                    else
+                        min_res = daily
+                    endif
+                endif
+                if (total_inflows(ii)%dwf_hourly_pattern /= -1) then
+                    min_res = hourly
+                endif
+
+                if (min_res == -daily) then
+                    call table_resample(total_inflows(ii)%xy, weekend)
+                    call table_resample(total_inflows(ii)%xy, daily)
+                else if (min_res == daily) then
+                    call table_resample(total_inflows(ii)%xy, daily)
+                else if (min_res == -monthly) then
+                    call table_resample(total_inflows(ii)%xy, weekend)
+                    call table_resample(total_inflows(ii)%xy, monthly)
+                else if (min_res == monthly) then
+                    call table_resample(total_inflows(ii)%xy, monthly)
+                else if (min_res == hourly) then
+                    call table_resample(total_inflows(ii)%xy, hourly)
+                else if (min_res == weekend) then
+                    call table_resample(total_inflows(ii)%xy, weekend)
+                endif
+                tsize = total_inflows(ii)%xy%tsize(1)
+                print *, tsize, "el size"
+                allocate(bcdataUp(ii)%TimeArray(tsize))
+                allocate(bcdataUp(ii)%ValueArray(tsize))
+                bcdataUp(ii)%TimeArray(:) = total_inflows(ii)%xy%data(1)%array(1:tsize)
+                bcdataUp(ii)%ValueArray(:) = total_inflows(ii)%xy%data(2)%array(1:tsize)
+                ii = ii + 1
+            endif
         enddo
 
-        call inflow_get_maxima(nodeI, nodeR)
+        ii = 1
+        nodeR(:, nr_maxinflow) = 0
+        do ii = 1, nodes_with_inflow%len
+            i = bcdataUp(ii)%NodeID
+            ! DRY INFLOW WITH / WITHOUT EXT INFLOW
+            do jj = 1, size(bcdataUp(ii)%ValueArray)
+                bcdataUp(ii)%ValueArray(jj) = bcdataUp(ii)%ValueArray(jj) + &
+                    inflow_get_pattern_factor_at(total_inflows(ii)%dwf_monthly_pattern, bcdataUp(ii)%TimeArray(jj)) * &
+                    inflow_get_pattern_factor_at(total_inflows(ii)%dwf_daily_pattern, bcdataUp(ii)%TimeArray(jj)) * &
+                    inflow_get_pattern_factor_at(total_inflows(ii)%dwf_hourly_pattern, bcdataUp(ii)%TimeArray(jj)) * &
+                    inflow_get_pattern_factor_at(total_inflows(ii)%dwf_weekend_pattern, bcdataUp(ii)%TimeArray(jj)) * &
+                    total_inflows(ii)%dwf_avgvalue
+                ! Compute maximum inflow value
+                if (bcdataUp(ii)%ValueArray(jj) > nodeR(i, nr_maxinflow)) then
+                    nodeR(i, nr_maxinflow) = bcdataUp(ii)%ValueArray(jj)
+                endif
+            enddo
+            ! all_tseries are deallocated in interface.f08
+            call free_table(total_inflows(ii)%xy)
+        enddo
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
-            ! do i = 1, num_tseries
-            !     print *, "TSERIES", i
-            !     do j = 1, all_tseries(i)%table%tsize(1)
-            !         print *, all_tseries(i)%table%data(1)%array(j), all_tseries(i)%table%data(2)%array(j)
-            !     enddo
-            ! enddo
+            do i = 1, nodes_with_inflow%len
+                print *, "BCUPSTREAM", bcdataUp(i)%NodeID
+                print *, bcdataUp(i)%ValueArray
+            enddo
             print *, '*** leave ',subroutine_name
+            stop
         endif
 
     end subroutine inflow_load_inflows
-
-    subroutine inflow_free_inflows()
-        character(64) :: subroutine_name = 'inflow_free_inflows'
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-        if (allocated(ext_inflows)) then
-            deallocate(ext_inflows)
-        endif
-        if (allocated(dwf_inflows)) then
-            deallocate(dwf_inflows)
-        endif
-        if (allocated(total_inflows)) then
-            deallocate(total_inflows)
-        endif
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
-    end subroutine inflow_free_inflows
 end module inflow

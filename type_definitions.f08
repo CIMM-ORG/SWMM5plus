@@ -21,14 +21,14 @@ module type_definitions
     !%  diagnostic%Volume
     type diagnosticVolumeType
         integer  :: Step
-        real     :: Time
-        real     :: Volume
-        real     :: VolumeChange
-        real     :: NetInflowVolume
-        real     :: InflowRate
-        real     :: OutflowRate
-        real     :: ConservationThisStep ! + is artificial source, - is sink
-        real     :: ConservationTotal
+        real(4)    :: Time
+        real(4)    :: Volume
+        real(4)    :: VolumeChange
+        real(4)    :: NetInflowVolume
+        real(4)    :: InflowRate
+        real(4)    :: OutflowRate
+        real(4)    :: ConservationThisStep ! + is artificial source, - is sink
+        real(4)    :: ConservationTotal
     end type diagnosticVolumeType
 
     type diagnosticType
@@ -38,7 +38,7 @@ module type_definitions
     type real_array
         integer :: max_size = 0
         integer :: len = 0
-        real, allocatable :: array(:)
+        real(4), allocatable :: array(:)
     end type real_array
 
     !% boundary condition data
@@ -50,11 +50,11 @@ module type_definitions
         integer :: ElemInsideID
         integer :: Updn      ! bc_updn_...  (0 = upstream,  1 = downstream)
         integer :: Category  ! bc_category_... (0 = elevation, 1 = inflowrate)
-        real, allocatable :: TimeArray
-        real, allocatable :: ValueArray
-        real    :: ThisValue
-        real    :: ThisTime
-        real    :: ThisFlowrate
+        real(4), allocatable :: TimeArray(:)
+        real(4), allocatable :: ValueArray(:)
+        real(4)    :: ThisValue
+        real(4)    :: ThisTime
+        real(4)    :: ThisFlowrate
     end type bcType
 
     !% output file location
@@ -95,35 +95,29 @@ module type_definitions
         type(real_array), allocatable :: data(:)
     end type real_table
 
-    ! TIME SERIES OBJECT
-    type tseries
-        integer :: current = 1
-        type(real_table) :: table
-    end type tseries
-
     ! PATTERN OBJECT
     type pattern
         integer :: ptype
         integer :: count
-        real, dimension(24) :: factor
+        real(4), dimension(24) :: factor
     end type pattern
 
     ! EXTERNAL INFLOW OBJECT
     type totalInflow
         integer :: node_id ! index to element thar receives inflow
-        type(real_array) :: xy(2)
+        type(real_table) :: xy
         ! t_series*sfactor + base_pat*baseline
-        integer :: ext_t_series ! time_series
-        integer :: ext_base_pat ! pattern
-        real :: ext_baseline ! constant baseline value
-        real :: ext_sfactor ! time series scaling factor
+        integer :: ext_t_series = -1 ! time_series
+        integer :: ext_base_pat = -1 ! pattern
+        real(4) :: ext_baseline = 0! constant baseline value
+        real(4) :: ext_sfactor = 0! time series scaling factor
         ! ---------------------------------------------------------
-        real :: dwf_avgValue ! average inflow value
-        integer :: dwf_monthly_pattern
-        integer :: dwf_daily_pattern
-        integer :: dwf_hourly_pattern
-        integer :: dwf_weekly_pattern
-    end type
+        real(4) :: dwf_avgValue = 0 ! average inflow value
+        integer :: dwf_monthly_pattern = -1
+        integer :: dwf_daily_pattern = -1
+        integer :: dwf_hourly_pattern = -1
+        integer :: dwf_weekend_pattern = -1
+    end type totalInflow
 
     type graph_node
         integer :: node_id
@@ -141,10 +135,10 @@ module type_definitions
     ! --- File Handling
     type steady_state_record
         character(len=52) :: id_time
-        real(8) :: flowrate
-        real(8) :: wet_area
-        real(8) :: depth
-        real(8) :: froude
+        real(4) :: flowrate
+        real(4) :: wet_area
+        real(4) :: depth
+        real(4) :: froude
     end type steady_state_record
     !==========================================================================
     ! END OF MODULE type_definitions

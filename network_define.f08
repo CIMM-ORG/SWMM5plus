@@ -26,7 +26,7 @@ module network_define
 
     public :: network_initiation
 
-    integer:: debuglevel = 1
+    integer:: debuglevel = 0
 
 contains
     !
@@ -47,8 +47,8 @@ contains
 
         integer,   target,         intent(in out)      :: linkI(:,:)
         integer,   target,         intent(in out)      :: nodeI(:,:)
-        real,                      intent(in out)      :: linkR(:,:)
-        real,      target,         intent(in out)      :: nodeR(:,:)
+        real(4),                      intent(in out)      :: linkR(:,:)
+        real(4),      target,         intent(in out)      :: nodeR(:,:)
 
         type(string), intent(in out)   :: linkName(:)
         type(string), intent(in out)   :: nodeName(:)
@@ -57,21 +57,21 @@ contains
         logical,   intent(out)       :: nodeYN(:,:)
 
         !%   elem2# are the values for elements that have only 2 faces
-        real,       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
+        real(4),       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
         integer,    dimension(:,:), allocatable, target    :: elem2I       ! integer data for elements with 2 faces
         logical,    dimension(:,:), allocatable, target    :: elem2YN      ! logical data for elements with 2 faces
 
         type(string), dimension(:), allocatable, target    :: elem2Name    ! array of character strings
 
         !%   elemM# are the values for elements that have more than 2 faces
-        real,       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
+        real(4),       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
         integer,    dimension(:,:), allocatable, target    :: elemMI       ! integer data for elements with multi faces
         logical,    dimension(:,:), allocatable, target    :: elemMYN      ! logical data for elements with multi faces
 
         type(string), dimension(:), allocatable, target    :: elemMName    ! array of character strings
 
         !%   face# are the values for faces (always bounded by 2 elements)
-        real,       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
+        real(4),       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
         integer,    dimension(:,:), allocatable, target    :: faceI       ! integer data for faces
         logical,    dimension(:,:), allocatable, target    :: faceYN      ! logical data for face
 
@@ -229,14 +229,14 @@ contains
 
     subroutine network_define_num_elements(g, linkR, nodeR, linkI, nodeI)
         type(graph), intent(inout) :: g
-        real, intent(inout) :: linkR(:,:)
-        real, intent(in) :: nodeR(:,:)
+        real(4), intent(inout) :: linkR(:,:)
+        real(4), intent(in) :: nodeR(:,:)
         integer, intent(inout) :: linkI(:,:)
         integer, intent(in) :: nodeI(:,:)
 
         character(64) :: subroutine_name = 'network_define_num_elements'
         integer :: i, j
-        real :: flow_value
+        real(4) :: flow_value
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -613,11 +613,11 @@ contains
 
         integer,   target,         intent(in)      :: linkI(:,:)
         integer,   target,         intent(in)      :: nodeI(:,:)
-        real,      target,         intent(in out)  :: linkR(:,:)
-        real,      target,         intent(in)      :: nodeR(:,:)
+        real(4),      target,         intent(in out)  :: linkR(:,:)
+        real(4),      target,         intent(in)      :: nodeR(:,:)
 
         integer,   pointer :: nUp, nDn
-        real,      pointer :: zUp, zDn, oUp, oDn
+        real(4),      pointer :: zUp, zDn, oUp, oDn
         integer :: mm
 
         !--------------------------------------------------------------------------
@@ -688,17 +688,17 @@ contains
 
         integer,   target,         intent(in out)  :: linkI(:,:)
         integer,                   intent(in)      :: nodeI(:,:)
-        real,      target,         intent(in out)  :: linkR(:,:)
-        real,      target,         intent(in out)  :: nodeR(:,:)
+        real(4),      target,         intent(in out)  :: linkR(:,:)
+        real(4),      target,         intent(in out)  :: nodeR(:,:)
 
         integer :: ii, mm
 
-        real ::  delta
+        real(4) ::  delta
 
-        real,    pointer   :: linkLength(:)
+        real(4),    pointer   :: linkLength(:)
         integer, pointer   :: linkNelem(:)
 
-        real,    pointer   :: element_nominal_length(:)
+        real(4),    pointer   :: element_nominal_length(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -766,7 +766,7 @@ contains
         !
         character(64) :: subroutine_name = 'network_count_elements_and_faces'
 
-        real,    intent(in)   :: nodeR(:,:)
+        real(4),    intent(in)   :: nodeR(:,:)
         integer, intent(in)   :: linkI(:,:)
         integer, intent(in)   :: nodeI(:,:)
 
@@ -835,13 +835,13 @@ contains
         character(64) :: subroutine_name = 'network_data_create'
 
         integer, intent(in out) :: elem2I(:,:), elemMI(:,:), faceI(:,:)
-        real,    intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(4),    intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
 
         integer, intent(in out) :: linkI(:,:)
 
         integer, target, intent(in out) :: nodeI(:,:)
 
-        real,    target, intent(in)     :: linkR(:,:), nodeR(:,:)
+        real(4),    target, intent(in)     :: linkR(:,:), nodeR(:,:)
 
         logical, target, intent(in) :: nodeYN(:,:)
 
@@ -853,7 +853,7 @@ contains
 
         integer, pointer :: nodesDownstream(:)
 
-        real, pointer  :: Zdownstream
+        real(4), pointer  :: Zdownstream
 
         type(string),  intent(in out)  :: elem2Name(:), elemMName(:), faceName(:)
         type(string),  intent(in)      :: linkName(:), nodeName(:)
@@ -1052,9 +1052,9 @@ contains
         integer,               intent(in out) :: linkI(:,:)
         integer, target,       intent(in out) :: nodeI(:,:)
 
-        real,    intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(4),    intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
 
-        real,  target,    intent(in)     :: linkR(:,:),  nodeR(:,:)
+        real(4),  target,    intent(in)     :: linkR(:,:),  nodeR(:,:)
 
         type(string),  intent(in out)  :: elem2Name(:), elemMName(:), faceName(:)
         type(string),  intent(in)      :: linkName(:), nodeName(:)
@@ -1063,7 +1063,7 @@ contains
 
         integer, pointer :: dlink
 
-        real :: zDownstream
+        real(4) :: zDownstream
 
         integer, dimension(upstream_face_per_elemM) :: linkSet
 
@@ -1071,7 +1071,6 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         if (nodeI(thisNode,ni_node_type) == nBCup) then
-
             if ((debuglevel > 0) .or. (debuglevelall > 0)) then
                 print *
                 print *, subroutine_name,'----------------------------------------'
@@ -1177,6 +1176,7 @@ contains
                 print *, 'this node is nJ2 ', thisnode
             endif
 
+
             thisLink = nodeI(thisNode,ni_Mlink_u1)
             linkI(thisLink,li_assigned) = setAssigned(thisLink, li_assigned, lUnassigned, lAssigned, linkI)
 
@@ -1207,7 +1207,6 @@ contains
 
             if (thisNode > 0) then
                 if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, 'Recursion: handle_thisnode ', thisNode
-
                 call handle_thisnode &
                     (lastElem2, thisElem2, lastElemM, thisElemM, lastFace,  thisFace,  &
                      thisNode,  thisLink, elem2I, elemMI, faceI, linkI, nodeI, elem2R, &
@@ -1391,7 +1390,6 @@ contains
 
                     if (thisNode > 0) then
                         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, 'Recursion: handle_thisnode ', thisNode
-
                         call handle_thisnode &
                             (lastElem2, thisElem2, lastElemM, thisElemM,          &
                             lastFace,  thisFace,  thisNode,  thisLink,           &
@@ -1549,7 +1547,6 @@ contains
                     if (thisNode > 0) then
 
                         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, 'Recursion: handle_thisnode ', thisNode
-
                         call handle_thisnode &
                             (lastElem2, thisElem2, lastElemM, thisElemM, lastFace,  thisFace,  thisNode,  &
                              thisLink, elem2I, elemMI, faceI, linkI, nodeI, elem2R, elemMR, faceR, linkR, &
@@ -1586,12 +1583,12 @@ contains
 
         integer, intent(in out)     :: linkI(:,:)
 
-        real,    intent(in out) :: elem2R(:,:), faceR(:,:)
-        real,    intent(in)     :: linkR(:,:), nodeR(:,:)
+        real(4),    intent(in out) :: elem2R(:,:), faceR(:,:)
+        real(4),    intent(in)     :: linkR(:,:), nodeR(:,:)
 
-        real,    intent(in)     :: zDownstream
+        real(4),    intent(in)     :: zDownstream
 
-        real :: zcenter, zface
+        real(4) :: zcenter, zface
 
         integer :: mm, pp
         !--------------------------------------------------------------------------
@@ -1809,18 +1806,18 @@ contains
 
         character(64) :: subroutine_name = 'link_shortening'
 
-        real,              intent(in out)  ::  linkLength(:)
-        real,    target,   intent(in out)  ::  nodeR(:,:)
+        real(4),              intent(in out)  ::  linkLength(:)
+        real(4),    target,   intent(in out)  ::  nodeR(:,:)
 
         integer, target,   intent(in)      :: nodeI(:,:)
 
         integer,           intent(in)      :: thisNode, niNlinkX, nrElementLengthX(:), niMlinkX(:)
 
-        real,              intent(in)      :: element_nominal_length(:)
+        real(4),              intent(in)      :: element_nominal_length(:)
 
-        real                   :: delta ! local variable
+        real(4)                   :: delta ! local variable
 
-        real,      pointer     :: elemLength
+        real(4),      pointer     :: elemLength
 
         integer,   pointer     :: tlink
 

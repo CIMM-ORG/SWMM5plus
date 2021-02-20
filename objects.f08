@@ -11,11 +11,8 @@ module objects
     integer, private :: debuglevel = 0
 
     ! ----------------------------------------------
-    type(tseries), allocatable :: all_tseries(:)
+    type(real_table), allocatable :: all_tseries(:)
     type(pattern), allocatable :: all_patterns(:)
-    type(real_table), allocatable :: total_inflows(:)
+    type(totalInflow), allocatable :: total_inflows(:)
     ! ----------------------------------------------
-    type(extInflow), allocatable :: ext_inflows(:)
-    type(dwfInflow), allocatable :: dwf_inflows(:)
-
 end module objects

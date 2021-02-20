@@ -38,18 +38,18 @@ contains
         !
         character(64) :: subroutine_name = 'case_simple_channel_initialize'
 
-        real,  intent(in)  :: channel_length, channel_breadth
-        real,  intent(in)  :: channel_topwidth, subdivide_length
-        real,  intent(in)  :: lowerZ, upperZ, ManningsN, initial_flowrate
-        real,  intent(in)  :: depth_upstream, depth_dnstream, init_depth
+        real(4),  intent(in)  :: channel_length, channel_breadth
+        real(4),  intent(in)  :: channel_topwidth, subdivide_length
+        real(4),  intent(in)  :: lowerZ, upperZ, ManningsN, initial_flowrate
+        real(4),  intent(in)  :: depth_upstream, depth_dnstream, init_depth
 
         integer, intent(in):: roughness_type, idepth_type
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
@@ -115,18 +115,18 @@ contains
         !
         character(64) :: subroutine_name = 'case_simple_channel_links_and_nodes'
 
-        real,  intent(in)  :: channel_length, channel_breadth
-        real,  intent(in)  :: channel_topwidth, subdivide_length
-        real,  intent(in)  :: lowerZ, upperZ, ManningsN, initial_flowrate
-        real,  intent(in)  :: depth_upstream, depth_dnstream, init_depth
+        real(4),  intent(in)  :: channel_length, channel_breadth
+        real(4),  intent(in)  :: channel_topwidth, subdivide_length
+        real(4),  intent(in)  :: lowerZ, upperZ, ManningsN, initial_flowrate
+        real(4),  intent(in)  :: depth_upstream, depth_dnstream, init_depth
 
         integer, intent(in):: roughness_type, idepth_type
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(4),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN

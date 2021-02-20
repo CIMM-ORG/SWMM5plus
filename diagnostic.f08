@@ -37,11 +37,11 @@ contains
         !
         ! Computes thebarotropic + advection CFL from the timescales up and down
         !
-        real,      intent(in)      :: elemR(:,:)
+        real(4),      intent(in)      :: elemR(:,:)
         integer,   intent(in)      :: er_Timescale_u, er_Timescale_d
 
-        real     :: cflmax
-        real     :: cflu, cfld
+        real(4)     :: cflmax
+        real(4)     :: cflu, cfld
 
         !--------------------------------------------------------------------------
         !if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -65,8 +65,8 @@ contains
 
         character(64) :: subroutine_name = 'diagnostic_element_volume_conservation_fluxes'
 
-        real,              intent(in out)  :: elem2R(:,:), elemMR(:,:)
-        real,              intent(in)      :: faceR(:,:)
+        real(4),              intent(in out)  :: elem2R(:,:), elemMR(:,:)
+        real(4),              intent(in)      :: faceR(:,:)
         integer, target,   intent(in)      :: elem2I(:,:), elemMI(:,:)
 
         integer,   pointer :: fup(:), fdn(:)
@@ -147,7 +147,7 @@ contains
         !
         character(64) :: subroutine_name = 'diagnostic_element_volume_conservation'
 
-        real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
+        real(4),      intent(in out)  :: elem2R(:,:), elemMR(:,:)
         integer,   intent(in)      :: elem2I(:,:), elemMI(:,:)
         integer,   intent(in)      :: e2r_Volume_new, eMr_Volume_new
 
@@ -193,7 +193,7 @@ contains
 
         character(64) :: subroutine_name = 'diagnostic_froude_number'
 
-        real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
+        real(4),      intent(in out)  :: elem2R(:,:), elemMR(:,:)
         integer,   intent(in)      :: elem2I(:,:), elemMI(:,:)
 
         !--------------------------------------------------------------------------
@@ -227,7 +227,7 @@ contains
 
         type(diagnosticType), allocatable,    dimension(:), intent(out)    :: diagnostic
 
-        real,                  intent(in out)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(4),                  intent(in out)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
         integer,   target,     intent(in)      :: elem2I(:,:), elemMI(:,:)
         type(bcType),          intent(in)      :: bcdataUp(:), bcdataDn(:)
 
@@ -280,16 +280,16 @@ contains
         character(64) :: subroutine_name = 'diagnostic_volume_conservation'
 
         type(diagnosticType),  intent(in out)  :: diagnostic(:)
-        real,                  intent(in out)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(4),                  intent(in out)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
         integer,   target,     intent(in)      :: elem2I(:,:), elemMI(:,:)
         type(bcType),          intent(in)      :: bcdataUp(:), bcdataDn(:)
         integer,               intent(in)      :: thisStep
         integer,               intent(in)      :: diagnosticTask
 
         integer,   pointer :: etype2(:), etypeM(:)
-        real               :: channelVolume, weirVolume, orificevolume, totalVolume
-        real               :: junctionVolume, storageVolume
-        real               :: inflowRate, outflowRate
+        real(4)               :: channelVolume, weirVolume, orificevolume, totalVolume
+        real(4)               :: junctionVolume, storageVolume
+        real(4)               :: inflowRate, outflowRate
 
         integer :: ii
 
@@ -366,7 +366,7 @@ contains
 
         character(64) :: subroutine_name = 'diagnostic_froude_number_one'
 
-        real,      intent(in out)  :: elemR(:,:)
+        real(4),      intent(in out)  :: elemR(:,:)
         integer,   intent(in)      :: elemI(:,:)
         integer,   intent(in)      :: er_FroudeNumber, er_Velocity, er_HydDepth
         integer,   intent(in)      :: ei_elem_type, thisType
@@ -388,9 +388,9 @@ contains
 
         character(64) :: subroutine_name = 'total_inout_flowrate'
 
-        real,          target, intent(in)      :: faceR(:,:)
+        real(4),          target, intent(in)      :: faceR(:,:)
         type(bcType),  target, intent(in)      :: bcdataUp(:), bcdataDn(:)
-        real,                  intent(out)     :: inflowRate, outflowRate
+        real(4),                  intent(out)     :: inflowRate, outflowRate
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -418,13 +418,13 @@ contains
 
         character(64) :: subroutine_name = 'inout_flowrate_from_bcdata'
 
-        real,          target, intent(in)      :: faceR(:,:)
+        real(4),          target, intent(in)      :: faceR(:,:)
         type(bcType),  target, intent(in)      :: bcdata(:)
-        real,                  intent(in out)  :: inflowRate, outflowRate
+        real(4),                  intent(in out)  :: inflowRate, outflowRate
 
         integer            :: mm
         integer,   pointer :: fID, bupdn
-        real,      pointer :: flowrate
+        real(4),      pointer :: flowrate
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 

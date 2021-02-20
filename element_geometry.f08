@@ -48,29 +48,29 @@ contains
         !
         character(64) :: subroutine_name = 'element_geometry_update'
 
-        real,      target, intent(in out) :: elem2R(:,:),  elemMR(:,:)
+        real(4),      target, intent(in out) :: elem2R(:,:),  elemMR(:,:)
         integer,   target, intent(in out) :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:)
         integer,           intent(in)     :: faceI(:,:)
         integer,           intent(in)     :: e2r_VolumeColumn, eMr_VolumeColumn
-        real,              intent(in)     :: faceR(:,:), thisTime
+        real(4),              intent(in)     :: faceR(:,:), thisTime
         type(bcType),      intent(in out) :: bcdataDn(:), bcdataUp(:)
         integer,           intent(in)     :: method_EtaM
 
         integer        :: eMr_EtaOld
-        real,  pointer :: etaold(:)
+        real(4),  pointer :: etaold(:)
 
 
         integer, parameter :: ilocaldummy = 0
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(4),    intent(in out)    :: ManningsN(:)
+        real(4),    intent(in out)    :: Length(:)
+        real(4),    intent(in out)    :: zBottom(:)
+        real(4),    intent(in out)    :: xDistance(:)
+        real(4),    intent(in out)    :: Breadth(:)
+        real(4),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
 
@@ -132,12 +132,12 @@ contains
         !
         character(64) :: subroutine_name = 'element_geometry_branch_fix'
 
-        real,      target, intent(in out)  :: elemMR(:,:)
-        real,              intent(in)      :: faceR(:,:)
+        real(4),      target, intent(in out)  :: elemMR(:,:)
+        real(4),              intent(in)      :: faceR(:,:)
         integer,           intent(in)      :: elemMI(:,:), faceI(:,:)
 
         integer                :: eMr_totalarea
-        real,      pointer     :: totalarea(:)
+        real(4),      pointer     :: totalarea(:)
         integer,   parameter   :: ilocaldummy = 0
 
         !--------------------------------------------------------------------------
@@ -209,20 +209,20 @@ contains
         !
         character(64) :: subroutine_name = 'geometry_update'
 
-        real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
-        real,      intent(in)      :: faceR(:,:)
+        real(4),      intent(in out)  :: elem2R(:,:), elemMR(:,:)
+        real(4),      intent(in)      :: faceR(:,:)
         integer,   intent(in)      :: elem2I(:,:), elemMI(:,:)
         integer,   intent(in)      :: e2r_Volume_new, eMr_Volume_new, eMr_EtaOld
         integer,   intent(in)      :: method_EtaM
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(4),    intent(in out)    :: ManningsN(:)
+        real(4),    intent(in out)    :: Length(:)
+        real(4),    intent(in out)    :: zBottom(:)
+        real(4),    intent(in out)    :: xDistance(:)
+        real(4),    intent(in out)    :: Breadth(:)
+        real(4),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
 
@@ -287,7 +287,7 @@ contains
         !
         character(64) :: subroutine_name = 'channel_or_junction'
 
-        real,      target,     intent(in out)  :: elemR(:,:)
+        real(4),      target,     intent(in out)  :: elemR(:,:)
 
         integer,   intent(in)      :: elemI(:,:)
         integer,   intent(in)      :: ei_geometry, ei_elem_type, elem_type_value
@@ -301,27 +301,27 @@ contains
 
         integer, target, intent(in out)    :: wdID(:)
         integer, target, intent(in out)    :: wdnumberPairs(:)
-        real,    target, intent(in out)    :: wdManningsN(:)
-        real,    target, intent(in out)    :: wdLength(:)
-        real,    target, intent(in out)    :: wdzBottom(:)
-        real,    target, intent(in out)    :: wdxDistance(:)
-        real,    target, intent(in out)    :: wdBreadth(:)
-        real,    target, intent(in out)    :: widthDepthData(:,:,:)
+        real(4),    target, intent(in out)    :: wdManningsN(:)
+        real(4),    target, intent(in out)    :: wdLength(:)
+        real(4),    target, intent(in out)    :: wdzBottom(:)
+        real(4),    target, intent(in out)    :: wdxDistance(:)
+        real(4),    target, intent(in out)    :: wdBreadth(:)
+        real(4),    target, intent(in out)    :: widthDepthData(:,:,:)
         type(string), target, intent(in out)   :: wdcellType(:)
 
 
-        real, pointer :: volume(:), length(:), zbottom(:), breadth(:)
-        real, pointer :: area(:), eta(:), perimeter(:), depth(:), hyddepth(:)
-        real, pointer :: hydradius(:), topwidth(:), fulldepth(:)
-        real, pointer :: leftSlope(:), rightSlope(:), parabolaValue(:)
-        real, pointer :: AoverAfull(:), YoverYfull(:)
+        real(4), pointer :: volume(:), length(:), zbottom(:), breadth(:)
+        real(4), pointer :: area(:), eta(:), perimeter(:), depth(:), hyddepth(:)
+        real(4), pointer :: hydradius(:), topwidth(:), fulldepth(:)
+        real(4), pointer :: leftSlope(:), rightSlope(:), parabolaValue(:)
+        real(4), pointer :: AoverAfull(:), YoverYfull(:)
 
-        real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
-        real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
-        real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
-        real, dimension(:), allocatable :: area_difference, local_difference
+        real(4), pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+        real(4), pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+        real(4), pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+        real(4), dimension(:), allocatable :: area_difference, local_difference
 
-        real :: AA, BB, CC, DD
+        real(4) :: AA, BB, CC, DD
         integer :: ii,ind, linkIDTemp
 
         !--------------------------------------------------------------------------
@@ -501,8 +501,8 @@ contains
         !
         character(64) :: subroutine_name = 'rectangular_junction_leg'
 
-        real,      target,     intent(in out)  :: elemMR(:,:)
-        real,      target,     intent(in)      :: faceR(:,:)
+        real(4),      target,     intent(in out)  :: elemMR(:,:)
+        real(4),      target,     intent(in)      :: faceR(:,:)
         integer,   target,     intent(in)      :: elemMI(:,:)
 
         integer,               intent(in)      :: face_per_elemM, eMi_nfacesDir
@@ -518,8 +518,8 @@ contains
         integer    :: mm
 
         integer,   pointer :: fdir(:)
-        real,      pointer :: eta(:), etaM(:), etaMold(:), area(:), zbottom(:)
-        real,      pointer :: depth(:), topwidth(:), breadth(:), etaFace(:)
+        real(4),      pointer :: eta(:), etaM(:), etaMold(:), area(:), zbottom(:)
+        real(4),      pointer :: depth(:), topwidth(:), breadth(:), etaFace(:)
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 

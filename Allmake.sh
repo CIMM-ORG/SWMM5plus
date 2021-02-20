@@ -45,12 +45,12 @@ SOURCESF="  errors.f08\
         objects.f08\
         tables.f08\
         interface.f08\
+        utility.f08\
+        bc.f08\
         inflow.f08\
         network_graph.f08\
-        utility.f08\
         adjustments.f08\
         allocate_storage.f08\
-        bc.f08\
         read_width_depth.f08\
         checking.f08\
         debug.f08\

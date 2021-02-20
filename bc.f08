@@ -63,7 +63,6 @@ contains
         allocate( bcdataDn(N_BCdnstream), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation (allocation_status, emsg)
 
-        print *, N_BCdnstream, N_BCupstream
         !% the downstream arrays - HACK default downstream is elevation
         do ii=1,N_BCdnstream
             bcdataDn(ii)%idx = ii
@@ -110,13 +109,13 @@ contains
         !
         character(64) :: subroutine_name = 'bc_applied_onface'
 
-        real,          intent(in out)  :: faceR(:,:)
-        real,          intent(in out)  :: elem2R(:,:)
+        real(4),          intent(in out)  :: faceR(:,:)
+        real(4),          intent(in out)  :: elem2R(:,:)
         integer,       intent(in out)  :: faceI(:,:)
         integer,       intent(in)      :: elem2I(:,:)
         type(bcType),  intent(in out)  :: bcdataDn(:), bcdataUp(:)
         integer,       intent(in)      :: e2r_Velocity_new
-        real,          intent(in)      :: thisTime
+        real(4),          intent(in)      :: thisTime
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -152,10 +151,10 @@ contains
         !
         character(64) :: subroutine_name = 'bc_applied_onelement'
 
-        real,          intent(in out)  :: elem2R(:,:)
+        real(4),          intent(in out)  :: elem2R(:,:)
         type(bcType),  intent(in out)  :: bcdataDn(:), bcdataUp(:)
 
-        real,      intent(in)  :: thisTime
+        real(4),      intent(in)  :: thisTime
         integer,   intent(in)  :: thiscategory
         integer,   intent(in)  :: e2r_VelocityColumn
 
@@ -199,7 +198,7 @@ contains
         call bc_updatevalue (bcdataUp, setting%Time%StartTime)
 
         !% check to see that the estimated simulation time is within available BC data
-        call bc_adequate_coverage (bcdataUp, bcdataDn)
+        ! call bc_adequate_coverage (bcdataUp, bcdataDn)
         !
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine bc_checks
@@ -214,7 +213,7 @@ contains
         !
         character(64) :: subroutine_name = 'bc_timescale_value'
 
-        real,                  intent(in out)  :: elem2R(:,:)
+        real(4),                  intent(in out)  :: elem2R(:,:)
         type(bcType),  target, intent(in)      :: bcdata(:)
 
         integer :: ii
@@ -249,7 +248,7 @@ contains
         !
         character(64) :: subroutine_name = 'bc_nullify_ghost_elem'
 
-        real,                      intent(in out) :: elem2R(:,:)
+        real(4),                      intent(in out) :: elem2R(:,:)
         type(bcType),  target,     intent(in)     :: bcdata(:)
 
         integer,   pointer :: eID
@@ -298,21 +297,21 @@ contains
         !
         character(64) :: subroutine_name = 'bc_onface'
 
-        real,                      intent(in out)  :: faceR(:,:)
-        real,                      intent(in)      :: elem2R(:,:)
+        real(4),                      intent(in out)  :: faceR(:,:)
+        real(4),                      intent(in)      :: elem2R(:,:)
         integer,                   intent(in out)  :: faceI(:,:)
         type(bcType),  target,     intent(in out)  :: bcdata(:)
 
-        real,  intent(in)  :: thisTime
+        real(4),  intent(in)  :: thisTime
 
-        real,      pointer :: thisval
+        real(4),      pointer :: thisval
         integer,   pointer :: thisloc, thiscat, thisghost, thisinside
         integer :: ii
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        call bc_updatevalue (bcdata, dble(thisTime))
+        call bc_updatevalue (bcdata, thisTime)
 
         do ii=1,size(bcdata)
             thisloc => bcdata(ii)%faceID
@@ -351,14 +350,14 @@ contains
         !
         character(64) :: subroutine_name = 'bc_face_othervalues'
 
-        real,    target,   intent(in out)  :: faceR(:,:)
-        real,    target,   intent(in)      :: elem2R(:,:)
+        real(4),    target,   intent(in out)  :: faceR(:,:)
+        real(4),    target,   intent(in)      :: elem2R(:,:)
         integer, target,   intent(in)      :: faceI(:,:)
         type(bcType),  target, intent(in)  :: bcdata(:)
         !integer,               intent(in)  :: fi_Melem_inside
 
-        real                   :: thisFroudeNumber, thisDepth, sideslope
-        real,      pointer     :: froudeMax, Qrate, Depth, Top, Dinc, Area
+        real(4)                   :: thisFroudeNumber, thisDepth, sideslope
+        real(4),      pointer     :: froudeMax, Qrate, Depth, Top, Dinc, Area
         integer, dimension(3)  :: e2rset, frset
         integer,   pointer     :: fID, eID
         integer    :: ii
@@ -490,12 +489,12 @@ contains
 
         character(64) :: subroutine_name = 'bc_onelement'
 
-        real,                      intent(in out)  :: elem2R(:,:)
+        real(4),                      intent(in out)  :: elem2R(:,:)
         type(bcType),  target,     intent(in out)  :: bcdata(:)
-        real,                      intent(in)      :: thisTime
+        real(4),                      intent(in)      :: thisTime
         integer,                   intent(in)      :: thiscategory, e2r_VelocityColumn
 
-        real,      pointer :: thisval
+        real(4),      pointer :: thisval
         integer,   pointer :: thisloc, thiscat, thisghost
         integer :: ii
         !--------------------------------------------------------------------------
@@ -505,7 +504,7 @@ contains
         !print *, elem2R(:,e2r_flowrate)
 
         print *, thisTime
-        call bc_updatevalue (bcdata, dble(thisTime))
+        call bc_updatevalue (bcdata, thisTime)
 
         do ii=1,size(bcdata)
             thisghost => bcdata(ii)%ElemGhostID
@@ -549,7 +548,7 @@ contains
 
         type(bcType), intent(in out) :: bcdata(:)
 
-        real(8),  intent(in)  :: thisTime
+        real(4),  intent(in)  :: thisTime
 
         integer    :: ii
         !--------------------------------------------------------------------------
@@ -684,7 +683,7 @@ contains
 
         integer,                   intent(in)  :: nBCdir
 
-        real :: timelow, timehigh
+        real(4) :: timelow, timehigh
 
         integer :: ii
 
@@ -736,8 +735,8 @@ contains
 
         character(64) :: subroutine_name = 'bc_ghost_othervalues'
 
-        real,                  intent(in out)  :: elem2R(:,:)
-        real,                  intent(in)      :: faceR(:,:)
+        real(4),                  intent(in out)  :: elem2R(:,:)
+        real(4),                  intent(in)      :: faceR(:,:)
         integer,               intent(in)      :: elem2I(:,:)
         integer,       target, intent(in)      :: faceI(:,:)
         type(bcType),  target, intent(in)      :: bcdata(:)
