@@ -256,7 +256,7 @@ module setting_definition
 
     !%  setting%CustomIC
     type customICType
-        logical                 :: UseCustomInitialCondition = .false.
+        logical                 :: UseCustomInitialCondition = .true.
     end type customICType
 
     !%  setting%FaceCosAngle

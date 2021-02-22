@@ -528,18 +528,6 @@ contains
             volume2new = fullVolume2
             isfull     = .true.
         endwhere
-        if (count(isfull) >0) then
-            print*, '------------------------------------'
-            print*, 'full pipe deteted while OPEN PIPES TRANSITION TO FULL ', subroutine_name
-            print*
-            print*, fullVolume2, 'fullVolume2'
-            print*
-            print*, volume2new, 'volume2new'
-            print*
-            print*, eta2new, 'eta2new'
-            print*, 'press return to continue'
-            read(*,*)
-        endif
         !===========================================================================
         !% FULL PIPES
         !% Set the full pipe volume2new
@@ -588,6 +576,20 @@ contains
         where ( (elem2I(:,e2i_elem_type) == ePipe) .and. (isfull) )
             eta2old = eta2new
         endwhere
+
+        if (count(isfull) >0) then
+            print*, '------------------------------------'
+            print*, 'full pipe deteted at ', subroutine_name
+            print*, isfull, 'isFull'
+            print*
+            print*, fullVolume2, 'fullVolume2'
+            print*
+            print*, volume2new, 'volume2new'
+            print*
+            print*, eta2new, 'eta2new'
+            print*, 'press return to continue'
+            read(*,*)
+        endif
             
         !% nullify temporary array
         YoverYfull = nullvalueR

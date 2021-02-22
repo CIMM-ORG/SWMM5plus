@@ -516,85 +516,6 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine surcharged_element_geometry &
-        (elemI, elemR, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
-        volume, length, zbottom, breadth, fulldepth, fullarea, area, eta,    &
-        perimeter, depth, hyddepth, hydradius, topwidth, dHdA, elN, isFull)
-        !
-        ! Calculates geometry for surcharged elements
-        ! Surcharged elements has eta updated. Thus, these elements need special 
-        ! Geometry handler.
-        !
-        character(64) :: subroutine_name = 'surcharged_element_geometry'
-
-        real,      target,     intent(inout)  :: elemR(:,:)
-        logical,   target,     intent(inout)  :: elemYN(:,:)
-
-        integer,   intent(in)       :: elemI(:,:)
-        integer,   intent(in)       :: ei_geometry, ei_elem_type, elem_type_value
-        real,      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
-        real,      intent(in)       :: eta(:), fulldepth(:), fullarea(:)
-        logical,   intent(in)       :: isFull(:)
-
-        real,      intent(inout)    :: area(:), perimeter(:), depth(:)
-        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-        real,      intent(inout)    :: dHdA(:), elN(:)
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        !% surcharged elements already has eta updated. Only need to update
-        !% other geometry values
-        where ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
-                (elemI(:,ei_geometry)  == eRectangular)    .and. &
-                (isFull) )
-            area      = fullArea
-            depth     = fullDepth 
-            topwidth  = zeroR
-            hyddepth  = eta - zbottom
-            perimeter = twoR * (breadth + fulldepth)
-            hydradius = area / perimeter
-            dHdA      = zeroR
-            elN       = hyddepth
-
-        elsewhere ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
-                    (elemI(:,ei_geometry)  == eCircular)       .and. &
-                    (isFull) )
-            area      = fullArea
-            depth     = fullDepth 
-            topwidth  = zeroR
-            hyddepth  = eta - zbottom + (onehalfR*fulldepth) * (onefourthR*pi - oneR)
-            perimeter = pi * fulldepth
-            hydradius = onefourthR * fulldepth
-            dHdA      = zeroR 
-            elN       = hyddepth
-
-        endwhere
-
-        if (count(( (elemI(:,ei_elem_type) == elem_type_value) .and. &
-                    (elemI(:,ei_geometry)  == eCircular)       .and. &
-                    (isFull) ))>0) then
-            print*,'.........................................'
-            print*, subroutine_name
-            print*
-            print*, eta, 'eta'
-            print*
-            print*, area , 'area'
-            print*
-            print*, depth, 'depth'
-            print*
-            print*, topwidth, 'topwidth'
-            print*
-            print*, 'pipe surcharged at element geom: press return to continue'
-            read(*,*)
-        endif
-        !% HACK: other special geometry types are needed
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine surcharged_element_geometry
-    !
-    !==========================================================================
-    !==========================================================================
-    !
     subroutine circular_geometry &
         (elemI, elemR, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
         volume, length, zbottom, breadth, fulldepth, fullarea, area, eta,    &
@@ -728,6 +649,89 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine circular_geometry
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine surcharged_element_geometry &
+        (elemI, elemR, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
+        volume, length, zbottom, breadth, fulldepth, fullarea, area, eta,    &
+        perimeter, depth, hyddepth, hydradius, topwidth, dHdA, elN, isFull)
+        !
+        ! Calculates geometry for surcharged elements
+        ! Surcharged elements has eta updated. Thus, these elements need special 
+        ! Geometry handler.
+        !
+        character(64) :: subroutine_name = 'surcharged_element_geometry'
+
+        real,      target,     intent(inout)  :: elemR(:,:)
+        logical,   target,     intent(inout)  :: elemYN(:,:)
+
+        integer,   intent(in)       :: elemI(:,:)
+        integer,   intent(in)       :: ei_geometry, ei_elem_type, elem_type_value
+        real,      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
+        real,      intent(in)       :: eta(:), fulldepth(:), fullarea(:)
+        logical,   intent(in)       :: isFull(:)
+
+        real,      intent(inout)    :: area(:), perimeter(:), depth(:)
+        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+        real,      intent(inout)    :: dHdA(:), elN(:)
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !% surcharged elements already has eta updated. Only need to update
+        !% other geometry values
+        where ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                (elemI(:,ei_geometry)  == eRectangular)    .and. &
+                (isFull) )
+            area      = fullArea
+            depth     = fullDepth 
+            !%  minimum topwidth is equal to the breadth for rectangular full pipe
+            topwidth  = breadth
+            hyddepth  = eta - zbottom
+            perimeter = twoR * (breadth + fulldepth)
+            hydradius = area / perimeter
+            dHdA      = zeroR
+            elN       = hyddepth
+
+        elsewhere ( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                    (elemI(:,ei_geometry)  == eCircular)       .and. &
+                    (isFull) )
+            area      = fullArea
+            depth     = fullDepth 
+            !%  minimum topwidth at 5% of radius
+            topwidth  = 0.05 * onehalfR * fullDepth
+            hyddepth  = eta - zbottom + (onehalfR*fulldepth) * (onefourthR*pi - oneR)
+            perimeter = pi * fulldepth
+            hydradius = onefourthR * fulldepth
+            dHdA      = zeroR 
+            elN       = hyddepth
+
+        endwhere
+
+        if (count(( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+                    (elemI(:,ei_geometry)  == eCircular)       .and. &
+                    (isFull) ))>0) then
+            print*,'.........................................'
+            print*, subroutine_name
+            print*
+            print*, eta, 'eta'
+            print*
+            print*, area , 'area'
+            print*
+            print*, depth, 'depth'
+            print*
+            print*, topwidth, 'topwidth'
+            print*
+            print*, hyddepth, 'hyddepth'
+            print*
+            print*, 'pipe surcharged at element geom: press return to continue'
+            read(*,*)
+        endif
+        !% HACK: other special geometry types are needed
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine surcharged_element_geometry
     !
     !==========================================================================
     !==========================================================================

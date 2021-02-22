@@ -157,6 +157,16 @@ contains
         lowerZ(1) = upperZ(2)
         upperZ(1) = lowerZ(1) + link_slope(1) * link_length(1)
 
+
+        !% assign small values for trajkovic cases
+        setting%SmallVolume%DepthCutoff      = 1E-03
+        !% set minimum topwidth as 5% of pipe radius
+        setting%SmallVolume%MinimumTopwidth  = 0.05 * onehalfR * full_depth(1)
+        setting%SmallVolume%MinimumArea      = onehalfR * setting%SmallVolume%DepthCutoff * &
+                                                          setting%SmallVolume%MinimumTopwidth
+        setting%SmallVolume%MinimumPerimeter = setting%SmallVolume%MinimumTopwidth
+        setting%SmallVolume%MinimumHydRadius = setting%SmallVolume%MinimumArea / setting%SmallVolume%MinimumPerimeter
+
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
     end subroutine trajkovic_cases_setup
     !

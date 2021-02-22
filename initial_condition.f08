@@ -413,7 +413,8 @@ contains
 
                             elem2R(nn,e2r_HydDepth) = elem2R(nn,e2r_FullDepth)  !this is the modified hydralic depth for pipe
                             
-                            elem2R(nn,e2r_Topwidth) = zeroR
+                            !% minimum topwidth at 5% of radius (pipeAC2020)
+                            elem2R(nn,e2r_Topwidth) = 0.05 * elem2R(nn,e2r_Radius)   
 
                             elem2R(nn,e2r_HydRadius) = onefourthR * elem2R(nn,e2r_FullDepth)
 
@@ -565,7 +566,7 @@ contains
     logical,        intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
     type(bcType),   intent(in)      :: bcdataDn(:)
-    real    :: thisVal
+    real    :: thisVal, AoverAfull, YoverYfull
     integer :: ii
 
     !--------------------------------------------------------------------------
@@ -621,37 +622,70 @@ contains
                     elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                     elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area)
 
-                ! case ('trajkovic_case_a1')
+                case ('trajkovic_case_a1')
 
-                !     do ii = 1,N_elem2
-                !     if (elem2I(ii,e2i_link_ID) == 1) then
-                !         elem2R(ii,e2r_Eta) = 0.7
+                    !% setting initial head
+                    elem2R(:,e2r_Eta) = elem2R(:,e2r_Zbottom) + 0.02 
 
-                !         !%  Set surcharge condition if the pipe is full
-                !         if (elem2R(ii,e2r_Eta) .GE. elem2R(nn,e2r_Zcrown)) then
+                    !% head below d/s bc set as d/s bc head
+                    where (elem2R(:,e2r_Eta) .LE. bcdataDn(1)%ValueArray(1)) 
+                            elem2R(:,e2r_Eta) = bcdataDn(1)%ValueArray(1)
+                    endwhere 
 
-                !             elem2YN(nn,e2YN_IsSurcharged) = .true.
+                    do ii = 1,N_elem2
+                        !% setting an initial head
+                        if (elem2I(ii,e2i_link_ID) == 1) then
+                            !% pipe upstream of first gate has different head
+                            elem2R(ii,e2r_Eta) = 0.7
+                        endif
 
-                !             elem2R(nn,e2r_Area) = elem2R(nn,e2r_FullArea)
+                        !%  Set surcharge condition if the pipe is full
+                        if (elem2R(ii,e2r_Eta) .GE. elem2R(ii,e2r_Zcrown)) then
+                            elem2YN(ii,e2YN_IsSurcharged) = .true.
+                            elem2R(ii,e2r_Area)      = elem2R(ii,e2r_FullArea)
+                            elem2R(ii,e2r_HydDepth)  = elem2R(ii,e2r_FullDepth)  !this is the modified hydralic depth for pipe
+                            elem2R(ii,e2r_Topwidth)  = 0.05 * elem2R(ii,e2r_Radius) 
+                            elem2R(ii,e2r_HydRadius) = onefourthR * elem2R(ii,e2r_FullDepth)
+                            elem2R(ii,e2r_Depth)     = elem2R(ii,e2r_FullDepth)
+                        else
+                            elem2YN(ii,e2YN_IsSurcharged) = .false.
+                            elem2R(ii,e2r_Depth)     = elem2R(ii,e2r_Eta) - elem2R(ii,e2r_Zbottom)
+                            YoverYfull               = elem2R(ii,e2r_Depth) / elem2R(ii,e2r_FullDepth)
+                            elem2R(ii,e2r_Area)      = elem2R(ii,e2r_FullArea) * table_lookup(YoverYfull, ACirc, NACirc)
+                            elem2R(ii,e2r_Topwidth)  = elem2R(ii,e2r_FullDepth)* table_lookup(YoverYfull, WCirc, NWCirc)
+                            elem2R(ii,e2r_HydRadius) = onefourthR * elem2R(ii,e2r_FullDepth) * &
+                                                       table_lookup(YoverYfull, RCirc, NRCirc)
+                            AoverAfull               = elem2R(ii,e2r_Area) / elem2R(ii,e2r_FullArea)
 
-                !             elem2R(nn,e2r_HydDepth) = elem2R(nn,e2r_FullDepth)  !this is the modified hydralic depth for pipe
-                            
-                !             elem2R(nn,e2r_Topwidth) = zeroR
+                            if (AoverAfull .GT. onehalfR) then
+                                elem2R(ii,e2r_HydDepth)   = elem2R(ii,e2r_Eta) - elem2R(ii,e2r_Zbottom) + &
+                                                            elem2R(ii,e2r_Radius) * (onefourthR * pi - oneR)
+                            elseif (AoverAfull .LE. onehalfR) then
+                                elem2R(ii,e2r_HydDepth)   = max(elem2R(ii,e2r_Area)/ elem2R(ii,e2r_Topwidth), zeroR)
+                            endif
 
-                !             elem2R(nn,e2r_HydRadius) = onefourthR * elem2R(nn,e2r_FullDepth)
-
-                !             YoverYfull = oneR
-
-                !             AoverAfull = oneR
-                !         else
-
-
-
+                        endif
+                        elem2R(ii,e2r_Volume)    = elem2R(ii,e2r_Area) * elem2R(ii,e2r_Length)
+                        elem2R(ii,e2r_FullVolume) = elem2R(ii,e2r_FullArea)  * elem2R(ii,e2r_Length)
+                        elem2R(ii,e2r_Perimeter) = elem2R(ii,e2r_Area) / elem2R(ii,e2r_HydRadius)
+                    enddo
+                        
                 case default
+
                 print *, 'Warning '
                 print *, setting%TestCase%TestName, ' does not need a custom initial condition'
             end select
         endif
+        print*, '----------------------------------------------'
+        print*, 'initial condition at ', subroutine_name
+        print*, elem2R(:,e2r_Eta), 'Eta'
+        print*
+        print*, elem2R(:,e2r_Area), 'area'
+        print*
+        print*, elem2R(:,e2r_Depth), 'depth'
+        print*
+        print*, elem2R(:,e2r_Topwidth), 'topwidth'
+        print*, '----------------------------------------------'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine custom_initial_condition

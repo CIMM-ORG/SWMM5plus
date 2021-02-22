@@ -85,7 +85,7 @@ contains
 
         if     ( ii .GE. (nItems - oneI) ) then
 
-            normalizedOutput = table(nItems - oneI)
+            normalizedOutput = table(nItems)
 
         elseif ( ii .LE. zeroI) then
 
@@ -238,7 +238,7 @@ contains
                     (table(position + oneI) - table(position)) / delta       
 
         elsewhere ( (maskarray) .and. (position .GE. (nItems - oneI)) )
-            inoutarray = table(nItems - oneI)
+            inoutarray = table(nItems)
         endwhere
 
         ! quadratic interpolation for low value

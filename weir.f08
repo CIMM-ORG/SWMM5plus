@@ -623,16 +623,16 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         !% surchaged flow calculation
-        where ( is_surcharged )
-            ! for surcharged flow, head is calculated from the midpoint of the weir opening
+        where ( (elem2I(:,e2i_elem_type) == eWeir) .and.  is_surcharged )
+            !% for surcharged flow, head is calculated from the midpoint of the weir opening
             effectivehead = min(( eta - ((crown + crest) / twoR)), &
                 dir*(faceEtadn(upFace) - faceEtaup(dnFace)) )
 
             flow       = dir * cOrif * sqrt(abs(effectivehead))
-            ! blend new velocity with old velocity -- needs further checking
+            !% blend new velocity with old velocity -- needs further checking
             velocity2  = flow / area
-            ! Volume is weir flow equation * dt
-            ! blend new volume with old volume -- needs further checking
+            !% Volume is weir flow equation * dt
+            !% blend new volume with old volume -- needs further checking
             volume2    =  thiscoef * dt * flow
         endwhere
 

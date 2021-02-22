@@ -162,7 +162,7 @@ program main
         elem2R, elem2I, elem2YN, elem2Name, &
         elemMR, elemMI, elemMYN, elemMName, &
         faceR,  faceI,  faceYN,  faceName)
-    stop 
+
     print *, 'in main'
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
