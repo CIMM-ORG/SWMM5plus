@@ -9,7 +9,6 @@
 OutputThreaded
 debugoutputA
 SWMM
-SWMMwrapper/swmm_files
-SWMMwrapper/src
+SWMMwrapper
 *.mod
 brazos
