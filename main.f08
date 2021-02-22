@@ -98,9 +98,9 @@ program main
     !===========================================================
     !%  hard-code setting for test cases
 
-    setting%TestCase%UseTestCase = .true.
+    setting%TestCase%UseTestCase = .false.
     ! setting%TestCase%TestName = 'simple_channel_001'
-    setting%TestCase%TestName = 'y_channel_002'
+    ! setting%TestCase%TestName = 'y_channel_002'
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
@@ -160,11 +160,6 @@ program main
 
     print *, 'in main'
 
-    print *, "Start Time", setting%time%starttime, swmm_start_time
-    print *, "End Time", setting%time%endtime, swmm_end_time
-    print *, "Time step", setting%time%dt
-    print *, "Number of elements", sum(linkI(:, li_N_element))
-
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
 
@@ -185,17 +180,17 @@ program main
 
     !% setting a zero starting condition is useful for robustness tests
     print *, 'in main setting flowrate and velocity to 0'
-    elem2R(:,e2r_Velocity) = 0.0
-    elem2R(:,e2r_Flowrate) = 0.0
-    elemMR(:,eMr_Velocity) = 0.0
-    elemMR(:,eMr_Flowrate) = 0.0
-    elemMR(:,eMr_FlowrateUp(:)) = 0.0
-    elemMR(:,eMr_FlowrateDn(:)) = 0.0
-    elemMR(:,eMr_VelocityDn(:)) = 0.0
-    elemMR(:,eMr_VelocityUp(:)) = 0.0
-    faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.0
-    faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.0
-    faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
+    elem2R(:,e2r_Velocity) = 0.01
+    elem2R(:,e2r_Flowrate) = 0.001
+    elemMR(:,eMr_Velocity) = 0.01
+    elemMR(:,eMr_Flowrate) = 0.001
+    elemMR(:,eMr_FlowrateUp(:)) = 0.001
+    elemMR(:,eMr_FlowrateDn(:)) = 0.001
+    elemMR(:,eMr_VelocityDn(:)) = 0.01
+    elemMR(:,eMr_VelocityUp(:)) = 0.01
+    faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.01
+    faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.01
+    faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.001
 
     ! initialize output by threaded link
     call output_threaded_by_link_initialize (threadedfile)

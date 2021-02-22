@@ -515,16 +515,14 @@ module array_index
     integer, parameter :: nr_PondedArea             = 7
     integer, parameter :: nr_SurchargeDepth         = 8
     integer, parameter :: nr_MaxInflow              = 9
-    integer, parameter :: nr_temp1                  = 10
-    integer, parameter :: nr_idx_base1              = 11
-    integer, parameter :: nr_Eta                    = 12
-    integer, parameter :: nr_Depth                  = 13
-    integer, parameter :: nr_Volume                 = 14
-    integer, parameter :: nr_LateralInflow          = 15
-    integer, parameter :: nr_TotalInflow            = 16
-    integer, parameter :: nr_Flooding               = 17
-    integer, parameter :: nr_temp1                  = 18
-    integer, parameter :: nr_idx_base1              = 18
+    integer, parameter :: nr_Eta                    = 10
+    integer, parameter :: nr_Depth                  = 11
+    integer, parameter :: nr_Volume                 = 12
+    integer, parameter :: nr_LateralInflow          = 13
+    integer, parameter :: nr_TotalInflow            = 14
+    integer, parameter :: nr_Flooding               = 15
+    integer, parameter :: nr_temp1                  = 16
+    integer, parameter :: nr_idx_base1              = 16
 
     ! column index for real data on multiple branches of a node
     integer, parameter :: nr_ElementLength_u1 = nr_idx_base1 + 1 ! used for subdividing junctions

@@ -503,7 +503,6 @@ contains
         !print *, trim(subroutine_name)
         !print *, elem2R(:,e2r_flowrate)
 
-        print *, thisTime
         call bc_updatevalue (bcdata, thisTime)
 
         do ii=1,size(bcdata)

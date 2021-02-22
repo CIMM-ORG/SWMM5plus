@@ -546,11 +546,11 @@ contains
         !
         character(64) :: subroutine_name = 'output_translation_from_elements_to_link_node'
 
-        real,         target, intent(in)    :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(8),         target, intent(in)    :: elem2R(:,:), elemMR(:,:), faceR(:,:)
         integer,      target, intent(in)    :: elem2I(:,:), elemMI(:,:), faceI(:,:)
         logical,      target, intent(inout) :: elem2YN(:,:), elemMYN(:,:)
         integer,      target, intent(in)    :: linkI(:,:), nodeI(:,:)
-        real,         target, intent(inout) :: linkR(:,:), nodeR(:,:)
+        real(8),         target, intent(inout) :: linkR(:,:), nodeR(:,:)
         type(bcType), target, intent(in)    :: bcdataUp(:), bcdataDn(:)
 
         integer,              intent(in)    :: thisstep

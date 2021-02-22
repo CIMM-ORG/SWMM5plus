@@ -91,10 +91,10 @@ contains
 
     subroutine traverse_cfl_condition(g, linkR, nodeR, linkI, nodeI)
         type(graph), intent(inout) :: g
-        real(8), intent(inout) :: linkR(:,:)
-        real(8), intent(in) :: nodeR(:,:)
-        integer, intent(inout) :: linkI(:,:)
-        integer, intent(in) :: nodeI(:,:)
+        integer, allocatable, target, intent(inout) :: linkI(:,:)
+        integer, allocatable, target, intent(inout) :: nodeI(:,:)
+        real(8), allocatable, target, intent(inout) :: linkR(:,:)
+        real(8), allocatable, target, intent(inout) :: nodeR(:,:)
         integer :: i, j, link_id
         real(8) :: Q, N_R, SLP, Y, ML, MR, BT, TOL, A, P, F, DDF
         real(8), allocatable :: velocities(:)
@@ -115,7 +115,7 @@ contains
                 N_R = linkR(link_id, lr_Roughness)
                 SLP = linkR(link_id, lr_Slope)
                 BT = linkR(link_id, lr_BreadthScale)
-                Y = 0
+                Y = 1.0
                 TOL = 1000
                 if (linkI(link_id, li_geometry) == lTrapezoidal) then
                     ML = linkI(link_id, lr_LeftSlope)
@@ -134,6 +134,9 @@ contains
                     A = Y*BT + Y**2*ML/2 + Y**2*MR/2
                     P = BT + (Y**2 + (Y*ML)**2)**0.5 + (Y**2 + (Y**MR)**2)**0.5
                     velocities(link_id) = 1/N_R * (A/P)**(2/3) * SLP**0.5
+                    print *, "Slope", SLP, "BREATH", BT
+                    print*, "ROughness", N_R, "L slope", ML, "R slope", MR
+                    print *, "Wet Area", A, "Wet Perimeter", P, "Depth", Y, "VEL", velocities(link_id)
                 else
                     print *, MSG_FEATURE_NOT_COMPATIBLE
                     stop

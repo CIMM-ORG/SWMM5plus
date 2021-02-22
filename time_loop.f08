@@ -53,7 +53,7 @@ contains
         type(threadedfileType),        intent(in)     :: threadedfile(:)
 
         integer,                       intent(in)     :: linkI(:,:), nodeI(:,:)
-        real,                          intent(in out) :: linkR(:,:), nodeR(:,:)
+        real(8),                          intent(in out) :: linkR(:,:), nodeR(:,:)
 
         real(8), pointer :: rkVol(:), rkU(:)
         real(8), pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)

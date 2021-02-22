@@ -15,7 +15,7 @@ module inflow
 
     implicit none
 
-    integer, private :: debuglevel = 0
+    integer, private :: debuglevel = 1
 
 contains
 
@@ -76,6 +76,16 @@ contains
 
         call bc_allocate(bcdataDn, bcdataUp)
 
+        print *, "Setting up BC downstream"
+        do ii = 1, N_BCdnstream
+            print *, "BC dnstream", ii, '/', N_BCdnstream
+            bcdataDn(ii)%NodeID = nodeI(ii, ni_temp1)
+            allocate(bcdataDn(ii)%TimeArray(2))
+            allocate(bcdataDn(ii)%ValueArray(2))
+            bcdataDn(ii)%TimeArray = (/dble(0.0), dble(setting%time%endtime)/)
+            bcdataDn(ii)%ValueArray = nodeR(bcdataDn(ii)%NodeID, nr_Zbottom) + dble(0.1)
+        enddo
+
         do i = 1, num_nodes
             l1 = get_node_attribute(i, node_has_extInflow) == 1
             l2 = get_node_attribute(i, node_has_dwfInflow) == 1
@@ -89,6 +99,11 @@ contains
                 call dyna_integer_append(nodes_with_inflow, i)
             endif
         end do
+
+        if (nodes_with_inflow%len == 0) then
+            print *, "Error - There are no inflows"
+            stop
+        endif
 
         allocate(total_inflows(nodes_with_inflow%len))
         nodeI(:, ni_total_inflow) = -1
@@ -105,7 +120,6 @@ contains
             total_inflows(ii)%ext_base_pat = get_node_attribute(i, node_extInflow_basePat)
             total_inflows(ii)%ext_baseline = get_node_attribute(i, node_extInflow_baseline)
             total_inflows(ii)%ext_sfactor =  get_node_attribute(i, node_extInflow_sFactor)
-
             if (l2) then
                 total_inflows(ii)%dwf_avgValue = get_node_attribute(i, node_dwfInflow_monthly_pattern)
                 total_inflows(ii)%dwf_monthly_pattern = get_node_attribute(i, node_dwfInflow_monthly_pattern)
@@ -190,6 +204,7 @@ contains
                     enddo
                 endif
             else ! EXT INFLOW WITHOUT TSERIES AND WITH PATTERN
+                total_inflows(ii)%xy = new_real_table(tinflow, 2)
                 call tables_add_entry(total_inflows(ii)%xy, (/swmm_start_time, total_inflows(ii)%ext_baseline/))
                 call tables_add_entry(total_inflows(ii)%xy, (/swmm_end_time, total_inflows(ii)%ext_baseline/))
                 if (min_res == -daily) then
@@ -250,6 +265,7 @@ contains
                 total_inflows(ii)%dwf_hourly_pattern = get_node_attribute(i, node_dwfInflow_hourly_pattern)
                 total_inflows(ii)%dwf_weekend_pattern = get_node_attribute(i, node_dwfInflow_weekend_pattern)
 
+                total_inflows(ii)%xy = new_real_table(tinflow, 2)
                 call tables_add_entry(total_inflows(ii)%xy, (/swmm_start_time, dble(0)/))
                 call tables_add_entry(total_inflows(ii)%xy, (/swmm_end_time, dble(0)/))
                 min_res = 0
@@ -323,12 +339,12 @@ contains
         enddo
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
-            ! do i = 1, nodes_with_inflow%len
-            !     print *, "BCUPSTREAM", bcdataUp(i)%NodeID
-            !     print *, bcdataUp(i)%ValueArray
-            ! enddo
-            ! print *, "max inflow", nodeR(:, nr_maxinflow)
-            ! print *, '*** leave ',subroutine_name
+            do i = 1, nodes_with_inflow%len
+                print *, "BCUPSTREAM"
+                call print_object_name(bcdataUp(i)%NodeID, SWMM_NODE)
+            enddo
+            print *, "max inflow", nodeR(:, nr_maxinflow)
+            print *, '*** leave ',subroutine_name
         endif
 
     end subroutine inflow_load_inflows

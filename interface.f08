@@ -36,6 +36,24 @@ module interface
         ! --- Property-extraction
 
         ! * After Initialization
+        function api_get_object_name_len(api, k, object_type)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr), value, intent(in) :: api
+            integer(c_int), value :: k
+            integer(c_int), value :: object_type
+            integer(c_int) :: api_get_object_name_len
+        end function api_get_object_name_len
+
+        function api_get_object_name(api, k, object_name, object_type)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr), value, intent(in) :: api
+            integer(c_int), value :: k
+            character(c_char), dimension(*) :: object_name
+            integer(c_int), value :: object_type
+            integer(c_int) :: api_get_object_name
+        end function api_get_object_name
 
         function api_get_node_attribute(api, k, attr, value)
             use, intrinsic :: iso_c_binding
@@ -117,6 +135,13 @@ module interface
             implicit none
             real(c_double) :: api_get_end_datetime
         end function api_get_end_datetime
+
+        subroutine api_print_object_name(k, object_type)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value :: k
+            integer(c_int), value :: object_type
+        end subroutine api_print_object_name
     end interface
 
     character(len = 1024), private :: errmsg
@@ -230,6 +255,10 @@ module interface
     procedure(api_get_pattern_type), pointer, private :: ptr_api_get_pattern_type
     procedure(api_get_start_datetime), pointer, private :: ptr_api_get_start_datetime
     procedure(api_get_end_datetime), pointer, private :: ptr_api_get_end_datetime
+    procedure(api_get_object_name_len), pointer, private :: ptr_api_get_object_name_len
+    procedure(api_get_object_name), pointer, private :: ptr_api_get_object_name
+    procedure(api_print_object_name), pointer, private :: ptr_api_print_object_name
+
 contains
 
     ! --- Simulation
@@ -289,8 +318,6 @@ contains
         num_tseries = get_num_objects(SWMM_TSERIES)
         num_patterns = get_num_objects(SWMM_TIMEPATTERN)
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
-
         api_is_initialized = .true.
 
         swmm_start_time = get_start_datetime()
@@ -302,6 +329,14 @@ contains
         if (num_tseries > 0) call load_all_tseries()
         if (num_patterns > 0) call load_all_patterns()
 
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) then
+            print *, "num_links", num_links
+            print *, "num_nodes", num_nodes
+            print *, "num_curves", num_curves
+            print *, "num_tseries", num_tseries
+            print *, "num_patterns", num_patterns
+            print *, '*** leave ', subroutine_name
+        endif
     end subroutine initialize_api
 
     subroutine finalize_api()
@@ -325,6 +360,64 @@ contains
     ! --- Property-extraction
 
     ! * After Initialization
+
+    function get_object_name_len(k, object_type)
+        integer, intent(in) :: k
+        integer, intent(in) :: object_type
+        integer :: get_object_name_len
+        character(64) :: subroutine_name = 'get_object_name_len'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+
+        dll%procname = "api_get_object_name_len"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_get_object_name_len')
+        call c_f_procpointer(dll%procaddr, ptr_api_get_object_name_len)
+        get_object_name_len = ptr_api_get_object_name_len(api, k-1, object_type)
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    end function get_object_name_len
+
+    subroutine load_object_names(linkName, nodeName)
+        type(string), allocatable, intent(inout) :: linkName(:)
+        type(string), allocatable, intent(inout) :: nodeName(:)
+
+        integer :: name_len
+        integer :: i
+        integer :: error_code
+        character(kind = c_char) :: el_char(64)
+        character(64) :: subroutine_name = 'load_object_names'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+
+        dll%procname = "api_get_object_name"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_get_object_name')
+        call c_f_procpointer(dll%procaddr, ptr_api_get_object_name)
+
+        do i = 1, N_link
+            name_len = get_object_name_len(i, SWMM_LINK)
+            allocate(character(len=name_len+1) :: linkName(i)%str)
+            error_code = ptr_api_get_object_name(api, i-1, el_char, SWMM_LINK)
+            if (error_code /= 0) then
+                print *, "SWMM C ERROR: ", error_code
+                stop
+            endif
+            print *, el_char, "hor", name_len
+        enddo
+
+        do i = 1, N_node
+            name_len = get_object_name_len(i, SWMM_NODE)
+            allocate(character(len=name_len+1) :: nodeName(i)%str)
+            error_code = ptr_api_get_object_name(api, i-1, nodeName(i)%str, SWMM_NODE)
+            if (error_code /= 0) then
+                print *, "SWMM C ERROR: ", error_code
+                stop
+            endif
+            print *, nodeName(i)%str, "heree", name_len
+        enddo
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    end subroutine load_object_names
 
     function get_start_datetime()
         real(8) :: get_start_datetime
@@ -656,6 +749,17 @@ contains
 
     !     close (fu)
     ! end subroutine read_steady_state_file
+
+    subroutine print_object_name(k, object_type)
+        integer, intent(in) :: k
+        integer, intent(in) :: object_type
+
+        dll%procname = "api_print_object_name"
+        call load_dll(os, dll, errstat, errmsg )
+        call print_error(errstat, 'error: loading api_print_object_name')
+        call c_f_procpointer(dll%procaddr, ptr_api_print_object_name) ! index starts at 0 in C
+        call ptr_api_print_object_name(k-1, object_type)
+    end subroutine print_object_name
 
     subroutine free_interface()
         integer :: i

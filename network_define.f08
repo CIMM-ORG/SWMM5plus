@@ -45,10 +45,10 @@ contains
         !
         character(64) :: subroutine_name = 'network_initiation'
 
-        integer,   target,         intent(in out)      :: linkI(:,:)
-        integer,   target,         intent(in out)      :: nodeI(:,:)
-        real(8),                      intent(in out)      :: linkR(:,:)
-        real(8),      target,         intent(in out)      :: nodeR(:,:)
+        integer, allocatable, target, intent(inout) :: linkI(:,:)
+        integer, allocatable, target, intent(inout) :: nodeI(:,:)
+        real(8), allocatable, target, intent(inout) :: linkR(:,:)
+        real(8), allocatable, target, intent(inout) :: nodeR(:,:)
 
         type(string), intent(in out)   :: linkName(:)
         type(string), intent(in out)   :: nodeName(:)
@@ -102,8 +102,8 @@ contains
         ! Typically this should only be an issue where the links are representing a
         ! high-resolution natural channel.
 
-        ! call network_define_num_elements(swmm_graph, linkR, nodeR, linkI, nodeI)
-        linkI(:, li_N_element) = 5
+        call network_define_num_elements(swmm_graph, linkR, nodeR, linkI, nodeI)
+        ! linkI(:, li_N_element) = 10
         setting%step%final = int(setting%time%endtime / setting%time%dt)
         linkR(:, lr_ElementLength) = linkR(:, lr_Length) / linkI(:, li_N_element)
 
@@ -229,10 +229,10 @@ contains
 
     subroutine network_define_num_elements(g, linkR, nodeR, linkI, nodeI)
         type(graph), intent(inout) :: g
-        real(8), intent(inout) :: linkR(:,:)
-        real(8), intent(in) :: nodeR(:,:)
-        integer, intent(inout) :: linkI(:,:)
-        integer, intent(in) :: nodeI(:,:)
+        integer, allocatable, target, intent(inout) :: linkI(:,:)
+        integer, allocatable, target, intent(inout) :: nodeI(:,:)
+        real(8), allocatable, target, intent(inout) :: linkR(:,:)
+        real(8), allocatable, target, intent(inout) :: nodeR(:,:)
 
         character(64) :: subroutine_name = 'network_define_num_elements'
         integer :: i, j

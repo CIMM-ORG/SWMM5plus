@@ -44,17 +44,7 @@ contains
         ! Create system graph
         swmm_graph = get_network_graph()
 
-        ! call finalize_api()
-
-        print *, "Setting up BC downstream"
-        do ii = 1, N_BCdnstream
-            print *, "BC dnstream", ii, '/', N_BCdnstream
-            bcdataDn(ii)%NodeID = nodeI(ii, ni_temp1)
-            allocate(bcdataDn(ii)%TimeArray(2))
-            allocate(bcdataDn(ii)%ValueArray(2))
-            bcdataDn(ii)%TimeArray = (/dble(0.0), dble(setting%time%endtime)/)
-            bcdataDn(ii)%ValueArray = nr_Zbottom
-        enddo
+        call finalize_api()
         ! --------------------
         ! --- Finalize C API
         ! --------------------
