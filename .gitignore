@@ -1,5 +1,5 @@
 *.o
-*.inp
+# *.inp
 *.rpt
 *.out
 *.csv

@@ -219,9 +219,9 @@ contains
         !
         !--------------------------------------------------------------------------
 
-        setting%Debugout%DisplayInterval = 10
+        setting%Debugout%DisplayInterval = 1000
 
-        setting%Time%dt = 50.0
+        setting%Time%dt = 500.0
         setting%Step%First = 1
         setting%Step%Final = 40000
         setting%Step%Current = 1

@@ -167,7 +167,7 @@ contains
         print *, "Number of elements", sum(linkI(:, li_N_element))
         print *, "Minmax number of elements", minval(linkI(:, li_N_element)), maxval(linkI(:, li_N_element))
         print *, "Minmax inflows", minval(nodeR(:, nr_maxinflow)), maxval(nodeR(:, nr_maxinflow))
-
+        
         if ((debuglevel > -1) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine traverse_cfl_condition
 end module network_graph

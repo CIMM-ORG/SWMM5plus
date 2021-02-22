@@ -83,7 +83,7 @@ contains
             allocate(bcdataDn(ii)%TimeArray(2))
             allocate(bcdataDn(ii)%ValueArray(2))
             bcdataDn(ii)%TimeArray = (/dble(0.0), dble(setting%time%endtime)/)
-            bcdataDn(ii)%ValueArray = nodeR(bcdataDn(ii)%NodeID, nr_Zbottom) + dble(0.1)
+            bcdataDn(ii)%ValueArray = nodeR(bcdataDn(ii)%NodeID, nr_Zbottom) + dble(0.01)
         enddo
 
         do i = 1, num_nodes

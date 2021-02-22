@@ -170,9 +170,14 @@ program main
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
 
+    print *, "ETA", elem2R(:, e2r_Eta)
+    print *, "DEPTH", elem2R(:, e2r_Depth)
+    print *, "LINK DEPTH", linkR(:,lr_InitialDepth)
+    print *, "VOLUME", elem2R(:, e2r_Volume)
+    
     !% check consistency of the smallvolume setup
     call checking_smallvolume_consistency (elem2R, elemMR)
-
+    
     ! initialize the diagnostics
     call diagnostic_initialize &
         (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, &
@@ -180,17 +185,17 @@ program main
 
     !% setting a zero starting condition is useful for robustness tests
     print *, 'in main setting flowrate and velocity to 0'
-    elem2R(:,e2r_Velocity) = 0.01
-    elem2R(:,e2r_Flowrate) = 0.001
-    elemMR(:,eMr_Velocity) = 0.01
-    elemMR(:,eMr_Flowrate) = 0.001
-    elemMR(:,eMr_FlowrateUp(:)) = 0.001
-    elemMR(:,eMr_FlowrateDn(:)) = 0.001
-    elemMR(:,eMr_VelocityDn(:)) = 0.01
-    elemMR(:,eMr_VelocityUp(:)) = 0.01
-    faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.01
-    faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.01
-    faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.001
+    elem2R(:,e2r_Velocity) = 0.0
+    elem2R(:,e2r_Flowrate) = 0.0
+    elemMR(:,eMr_Velocity) = 0.0
+    elemMR(:,eMr_Flowrate) = 0.0
+    elemMR(:,eMr_FlowrateUp(:)) = 0.0
+    elemMR(:,eMr_FlowrateDn(:)) = 0.0
+    elemMR(:,eMr_VelocityDn(:)) = 0.0
+    elemMR(:,eMr_VelocityUp(:)) = 0.0
+    faceR(1:size(faceR,1)-1,fr_Velocity_d) = 0.0
+    faceR(1:size(faceR,1)-1,fr_Velocity_u) = 0.0
+    faceR(1:size(faceR,1)-1,fr_Flowrate) = 0.0
 
     ! initialize output by threaded link
     call output_threaded_by_link_initialize (threadedfile)

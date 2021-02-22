@@ -26,7 +26,7 @@ module network_define
 
     public :: network_initiation
 
-    integer:: debuglevel = 0
+    integer:: debuglevel = 1
 
 contains
     !
@@ -102,8 +102,8 @@ contains
         ! Typically this should only be an issue where the links are representing a
         ! high-resolution natural channel.
 
-        call network_define_num_elements(swmm_graph, linkR, nodeR, linkI, nodeI)
-        ! linkI(:, li_N_element) = 10
+        ! call network_define_num_elements(swmm_graph, linkR, nodeR, linkI, nodeI)
+        linkI(:, li_N_element) = 5
         setting%step%final = int(setting%time%endtime / setting%time%dt)
         linkR(:, lr_ElementLength) = linkR(:, lr_Length) / linkI(:, li_N_element)
 
