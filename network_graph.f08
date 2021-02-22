@@ -96,7 +96,7 @@ contains
         real(8), allocatable, target, intent(inout) :: linkR(:,:)
         real(8), allocatable, target, intent(inout) :: nodeR(:,:)
         integer :: i, j, link_id
-        real(8) :: Q, N_R, SLP, Y, ML, MR, BT, TOL, A, P, F, DDF
+        real(8) :: Q, N_R, SLP, Y, ML, MR, BT, TOL, A, P, F, DFDY, K0, K1, K2
         real(8), allocatable :: velocities(:)
         character(64) :: subroutine_name  = 'traverse_cfl_condition'
         if ((debuglevel > -1) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
@@ -112,31 +112,34 @@ contains
                     cycle
                 end if
                 Q = g%g(i)%neighbor_flows%array(j)
+                print *, "max_inflow", Q
                 N_R = linkR(link_id, lr_Roughness)
                 SLP = linkR(link_id, lr_Slope)
-                BT = linkR(link_id, lr_BreadthScale)
                 Y = 1.0
                 TOL = 1000
                 if (linkI(link_id, li_geometry) == lTrapezoidal) then
-                    ML = linkI(link_id, lr_LeftSlope)
-                    MR = linkI(link_id, lr_RightSlope)
-                    do while (ABS(TOL) > 10**(-6))
-                        F = (SLP**(1/2)*(Y*BT + Y**2*ML/2 + Y**2*MR/2)**(5/3)) / &
-                            (N_R*(BT+(Y**2+(Y*ML)**2)**0.5+(Y**2+(MR*Y)**2)**0.5)**(2/3)) - Q
-                        DDF = 5*SLP**0.5*(BT + ML*Y + MR*Y)*(BT*Y + ML*Y**2/2 + MR*Y**2/2)**(2/3) / &
-                            (3*N_R*(BT + ((ML*Y)**2 + Y**2)**0.5 + ((MR*Y)**2 + Y**2)**0.5)**(2/3)) - &
-                            2*SLP**-.5*((2*ML**2*Y+2*Y)/(2*((ML*Y)**2+Y**2)**0.5) + (2*MR**2*Y+2*Y)/(2*((MR*Y)**2+Y**2)**0.5)) &
-                            *(BT*Y+ML*Y**2/2+MR*Y**2/2)**(5/3) / (3*N_R*(BT+((ML*Y)**2 + Y**2)**0.5+((MR*Y)**2 + Y**2)**0.5)**(5/3))
-                        TOL = - F/DDF
+                    BT = linkR(link_id, lr_BreadthScale)
+                    ML = linkR(link_id, lr_LeftSlope)
+                    MR = linkR(link_id, lr_RightSlope)
+                    K0 = SLP**0.5/N_R
+                    K1 = ML + MR
+                    K2 = (1.0+ML**2.0)**0.5 + (1.0+MR**2.0)**0.5
+                    do while (ABS(TOL) > 1E-6)
+                        F = K0*(Y*BT+Y**2.0*K1/2.0)**(5.0/3.0)/(BT+Y*K2)**(2.0/3.0) - Q
+                        DFDY = 5.0*K0*(BT+K1*Y)*(BT*Y+K1*Y**2.0/2.0)**(2.0/3.0)/(3.0*(BT+K2*Y)**(2.0/3.0)) - &
+                            2.0*K0*K2*(BT*Y+K1*Y**2.0/2.0)**(5.0/3.0)/(3.0*(BT+K2*Y)**(5.0/3.0))
+                        ! print *, "F", F, "DDF", DFDY, "TOL", ABS(TOL), "Y", Y
+                        TOL = - F/DFDY
                         Y = Y + TOL
                     end do
                     ! solve V with Manning
-                    A = Y*BT + Y**2*ML/2 + Y**2*MR/2
-                    P = BT + (Y**2 + (Y*ML)**2)**0.5 + (Y**2 + (Y**MR)**2)**0.5
-                    velocities(link_id) = 1/N_R * (A/P)**(2/3) * SLP**0.5
-                    print *, "Slope", SLP, "BREATH", BT
-                    print*, "ROughness", N_R, "L slope", ML, "R slope", MR
-                    print *, "Wet Area", A, "Wet Perimeter", P, "Depth", Y, "VEL", velocities(link_id)
+                    A = Y*BT + Y**2.0*K1/2.0
+                    P = BT + Y*K2
+                    velocities(link_id) = K0*(A/P)**(2.0/3.0)
+                    ! print *, "Slope", SLP, "BREADTH", BT
+                    ! print *, "K0", K0, "K1", K1, "K2", K2
+                    ! print*, "ROughness", N_R, "L slope", ML, "R slope", MR
+                    ! print *, "Wet Area", A, "Wet Perimeter", P, "Depth", Y, "VEL", velocities(link_id)
                 else
                     print *, MSG_FEATURE_NOT_COMPATIBLE
                     stop
