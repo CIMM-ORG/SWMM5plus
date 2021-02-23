@@ -905,10 +905,9 @@ contains
             linkR(i,lr_InitialFlowrate) = get_link_attribute(i, link_q0)
             linkR(i,lr_InitialUpstreamDepth) = get_node_attribute(linkI(i,li_Mnode_u), node_initDepth)
             linkR(i,lr_InitialDnstreamDepth) = get_node_attribute(linkI(i,li_Mnode_d), node_initDepth)
-            linkR(i,lr_InitialDepth) = abs(linkR(i,lr_InitialDnstreamDepth) - linkR(i,lr_InitialUpstreamDepth)) / 2
+            linkR(i,lr_InitialDepth) = (linkR(i,lr_InitialDnstreamDepth) + linkR(i,lr_InitialUpstreamDepth)) / 2.0
 
         end do
-
         do i = 1, N_node
             total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
             nodeI(i, ni_idx) = i
@@ -918,10 +917,9 @@ contains
                 nodeI(i, ni_node_type) = nJ2
             else if (total_n_links > 2) then
                 nodeI(i, ni_node_type) = nJm
-            else
-                nodeI(i, ni_node_type) = nBCup
             end if
-
+            ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
+            nodeR(i,nr_InitialDepth) = get_node_attribute(i, node_initDepth)
             nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
         end do
 
