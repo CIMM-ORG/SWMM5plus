@@ -98,7 +98,7 @@ contains
             allocate(bcdataDn(ii)%TimeArray(2))
             allocate(bcdataDn(ii)%ValueArray(2))
             bcdataDn(ii)%TimeArray = (/dble(0.0), dble(setting%time%endtime)/)
-            bcdataDn(ii)%ValueArray = nodeR(bcdataDn(ii)%NodeID, nr_Zbottom) + dble(0.01)
+            bcdataDn(ii)%ValueArray = nodeR(bcdataDn(ii)%NodeID, nr_Zbottom) + dble(3.0)
         enddo
 
         if (nodes_with_inflow%len == 0) then
