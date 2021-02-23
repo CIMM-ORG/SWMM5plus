@@ -15,7 +15,7 @@ module inflow
 
     implicit none
 
-    integer, private :: debuglevel = 1
+    integer, private :: debuglevel = 0
 
 contains
 
@@ -70,6 +70,21 @@ contains
         ! with a bctype object in BCUpstream whose total inflow is described by vectors
         ! TimeArray and ValueArray which add all the inflow types in SWMM as a single one
 
+        do i = 1, num_nodes
+            l1 = get_node_attribute(i, node_has_extInflow) == 1
+            l2 = get_node_attribute(i, node_has_dwfInflow) == 1
+            if (l1) then
+                call dyna_integer_append(nodes_with_extinflow, i)
+            endif
+            if (l2) then
+                call dyna_integer_append(nodes_with_dwfinflow, i)
+            endif
+            if (l1 .or. l2) then
+                call dyna_integer_append(nodes_with_inflow, i)
+                nodeI(i, ni_node_type) = nBCup
+            endif
+        end do
+
         nodeI(1:N_BCdnstream, ni_temp1) = pack(nodeI(:,ni_idx),nodeI(:,ni_node_type) == nBCdn)
         N_BCdnstream = count(nodeI(:,ni_node_type) == nBCdn)
         N_BCupstream = count(nodeI(:,ni_node_type) == nBCup)
@@ -85,20 +100,6 @@ contains
             bcdataDn(ii)%TimeArray = (/dble(0.0), dble(setting%time%endtime)/)
             bcdataDn(ii)%ValueArray = nodeR(bcdataDn(ii)%NodeID, nr_Zbottom) + dble(0.01)
         enddo
-
-        do i = 1, num_nodes
-            l1 = get_node_attribute(i, node_has_extInflow) == 1
-            l2 = get_node_attribute(i, node_has_dwfInflow) == 1
-            if (l1) then
-                call dyna_integer_append(nodes_with_extinflow, i)
-            endif
-            if (l2) then
-                call dyna_integer_append(nodes_with_dwfinflow, i)
-            endif
-            if (l1 .or. l2) then
-                call dyna_integer_append(nodes_with_inflow, i)
-            endif
-        end do
 
         if (nodes_with_inflow%len == 0) then
             print *, "Error - There are no inflows"
@@ -172,6 +173,14 @@ contains
             endif
 
             if (total_inflows(ii)%ext_t_series /= -1) then ! EXT INFLOW WITH TSERIES
+                tsize = all_tseries(total_inflows(ii)%ext_t_series)%tsize(1)
+                if (all_tseries(total_inflows(ii)%ext_t_series)%data(1)%array(tsize) < &
+                    swmm_end_time) then
+                        call tables_add_entry &
+                        (all_tseries(total_inflows(ii)%ext_t_series), &
+                        (/swmm_end_time, &
+                        all_tseries(total_inflows(ii)%ext_t_series)%data(2)%array(tsize)/))
+                endif
                 ! The tseries is resampled in place
                 if (min_res == -daily) then
                     call table_resample(all_tseries(total_inflows(ii)%ext_t_series), weekend)
@@ -339,11 +348,13 @@ contains
         enddo
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
-            do i = 1, nodes_with_inflow%len
-                print *, "BCUPSTREAM"
-                call print_object_name(bcdataUp(i)%NodeID, SWMM_NODE)
-            enddo
-            print *, "max inflow", nodeR(:, nr_maxinflow)
+            ! do i = 1, nodes_with_inflow%len
+                ! print *, "BCUPSTREAM"
+                ! call print_object_name(bcdataUp(i)%NodeID, SWMM_NODE)
+                ! print *, "Time", bcdataUp(i)%TimeArray(:)
+                ! print *, "Array", bcdataUp(i)%ValueArray(:)
+            ! enddo
+            ! print *, "max inflow", nodeR(:, nr_maxinflow)
             print *, '*** leave ',subroutine_name
         endif
 
