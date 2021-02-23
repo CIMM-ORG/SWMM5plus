@@ -117,7 +117,7 @@ contains
             if (setting%Debugout%DisplayInterval > 0) then
                 if (mod(thisstep,setting%Debugout%DisplayInterval) == 0) then
                     print *, '--------------------------------------'
-                    print *, thisstep,'=current step; ', &
+                    print *, thisstep,'=current step; ', thistime, '=current time;', &
                         diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d),'=CFL max' & !Im putting the timescale for Q here. Might needed to be changed later
                         ,maxval(abs(elem2R(2:size(elem2R,1)-1,e2r_Velocity))),'=max velocity'
                     !print *, thisstep,'=current step; ', &

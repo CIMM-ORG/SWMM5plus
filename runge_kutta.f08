@@ -157,7 +157,7 @@ contains
             call overwrite_old_values &
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eJunctionChannel, .false.)
-                
+
             call overwrite_old_values &
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)
@@ -326,6 +326,13 @@ contains
             velocityMnew = (volumeMold * velocityMold + thiscoef * kuM)  &
                 / (oneR + thiscoef * dt * grav *  (mnM**2) * velocityMold / (rhM**(4.0/3.0)) )
         endwhere
+
+        ! print *, "VOLUME2", volume2new
+        ! print *, "VEL2", velocity2new
+        ! print *, "VOLUMEM", volumeMnew
+        ! print *, "VELM", velocityMnew
+        ! print *, elemMI(:,eMi_elem_type)
+        ! stop
 
         !%  CORRECTIONS ----------------------------------------------------------
 

@@ -136,10 +136,10 @@ contains
                     A = Y*BT + Y**2.0*K1/2.0
                     P = BT + Y*K2
                     velocities(link_id) = K0*(A/P)**(2.0/3.0)
-                    ! print *, "Slope", SLP, "BREADTH", BT
-                    ! print *, "K0", K0, "K1", K1, "K2", K2
-                    ! print*, "ROughness", N_R, "L slope", ML, "R slope", MR
-                    ! print *, "Wet Area", A, "Wet Perimeter", P, "Depth", Y, "VEL", velocities(link_id)
+                    print *, "Slope", SLP, "BREADTH", BT
+                    print *, "K0", K0, "K1", K1, "K2", K2
+                    print*, "ROughness", N_R, "L slope", ML, "R slope", MR
+                    print *, "Wet Area", A, "Wet Perimeter", P, "Depth", Y, "VEL", velocities(link_id)
                 else
                     print *, MSG_FEATURE_NOT_COMPATIBLE
                     stop
@@ -157,7 +157,7 @@ contains
         setting%time%dt = minval(velocities) ! minimum dt
         setting%step%final = int(setting%time%endtime / setting%time%dt)
 
-        linkI(:, li_N_element) = ceiling(velocities/setting%time%dt)
+        linkI(:, li_N_element) = ceiling(velocities/setting%time%dt)!*10
         linkR(:, lr_ElementLength) = linkR(:, lr_Length) / linkI(:, li_N_element)
         deallocate(velocities)
 
@@ -167,7 +167,7 @@ contains
         print *, "Number of elements", sum(linkI(:, li_N_element))
         print *, "Minmax number of elements", minval(linkI(:, li_N_element)), maxval(linkI(:, li_N_element))
         print *, "Minmax inflows", minval(nodeR(:, nr_maxinflow)), maxval(nodeR(:, nr_maxinflow))
-        
+
         if ((debuglevel > -1) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine traverse_cfl_condition
 end module network_graph

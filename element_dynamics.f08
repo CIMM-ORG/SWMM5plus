@@ -52,16 +52,23 @@ contains
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
+        ! print*, 'before going into elem dyna'
+        ! print*, elem2R(:,e2r_Velocity)
         !% velocity limiter on channels
         call adjust_channel_velocity_limiter &
             (elem2R, elem2YN, elem2I, &
             e2i_elem_type, eChannel, e2YN_IsAdhocFlowrate, e2r_Velocity_new )
 
+        ! print *, "adjust_channel_velocity_limiter"
+        ! print *, elem2R(:, e2r_Velocity)
+
         !% velocity limiter on junction (handled on main element only)
         call adjust_channel_velocity_limiter &
             (elemMR, elemMYN, elemMI, &
             eMi_elem_type, eJunctionChannel, eMYN_IsAdhocFlowrate,  eMr_Velocity_new)
+
+        ! print *, "adjust_channel_velocity_limiter"
+        ! print *, elem2R(:, e2r_Velocity)
 
         !%  For small volumes, compute a velocity that is blended from the update value
         !%  and a Chezy-Manning computed using the free surface slope of the element
@@ -71,6 +78,9 @@ contains
                 e2r_Velocity_new, eMr_Velocity_new)
         endif
 
+        ! print *, "blended_smallvolume_velocity"
+        ! print *, elem2R(:, e2r_Velocity)
+
         !% for extremely small volumes - perform a separate reset
         if (setting%ZeroValue%Volume > zeroR) then
             call adjust_zero_velocity_at_zero_volume &
@@ -78,14 +88,23 @@ contains
                 elemMR, elemMYN, eMr_Velocity_new, eMr_Volume_new)
         endif
 
+        ! print *, "adjust_zero_velocity_at_zero_volume"
+        ! print *, elem2R(:, e2r_Velocity)
+        
+
         !%  flowrate updated from velocity
         call element_flowrate_update  &
             (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Velocity_new, eMr_Velocity_new)
-
+            ! print *, "element_flowrate_update"
+            ! print *, elem2R(:, e2r_Velocity)
         !%  apply the boundary conditions on velocity and flowrate
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_inflowrate, e2r_Velocity_new)
-
+            ! print *, "bc_applied_onelement"
+            ! print *, elem2R(:, e2r_Velocity)
+            ! print*, elem2R(:,e2r_Area)
+            ! print*, elem2I(:,e2i_elem_type)
+            ! stop
         !% compute the timescales up and down
         call element_timescale &
             (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, bcdataDn, bcdataUp, &

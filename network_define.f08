@@ -26,7 +26,7 @@ module network_define
 
     public :: network_initiation
 
-    integer:: debuglevel = 1
+    integer:: debuglevel = 0
 
 contains
     !
@@ -103,10 +103,9 @@ contains
         ! high-resolution natural channel.
 
         ! call network_define_num_elements(swmm_graph, linkR, nodeR, linkI, nodeI)
-        linkI(:, li_N_element) = 5
+        linkI(:, li_N_element) = 2
         setting%step%final = int(setting%time%endtime / setting%time%dt)
         linkR(:, lr_ElementLength) = linkR(:, lr_Length) / linkI(:, li_N_element)
-
         !%   add sections of links to the nodes to create junctions
         call network_adjust_link_length (linkR, nodeR, linkI, nodeI)
 

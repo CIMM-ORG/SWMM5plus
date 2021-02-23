@@ -113,9 +113,9 @@ program main
     setting%Debugout%SuppressTimeValue = .true. ! which can make debug files easier
     setting%Debugout%SuppressNdat      = .true. ! to read (but less useful)
 
-    setting%Debugout%elem2R = .true.   ! select arrays to have debug output
-    setting%Debugout%elemMR = .true.   ! select arrays to have debug output
-    setting%Debugout%faceR  = .true.   ! note that not all are implemented
+    setting%Debugout%elem2R = .false.   ! select arrays to have debug output
+    setting%Debugout%elemMR = .false.   ! select arrays to have debug output
+    setting%Debugout%faceR  = .false.   ! note that not all are implemented
     setting%Debugout%linkR  = .true.
     setting%Debugout%nodeR  = .true.
 
@@ -170,14 +170,9 @@ program main
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
 
-    print *, "ETA", elem2R(:, e2r_Eta)
-    print *, "DEPTH", elem2R(:, e2r_Depth)
-    print *, "LINK DEPTH", linkR(:,lr_InitialDepth)
-    print *, "VOLUME", elem2R(:, e2r_Volume)
-    
     !% check consistency of the smallvolume setup
     call checking_smallvolume_consistency (elem2R, elemMR)
-    
+
     ! initialize the diagnostics
     call diagnostic_initialize &
         (diagnostic, elem2R, elem2I, elemMR, elemMI, faceR, &
