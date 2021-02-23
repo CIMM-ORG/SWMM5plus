@@ -646,7 +646,7 @@ contains
                 nodeR(Nindx,nr_Volume)        = zeroR
                 !% HACK: discuss with dr. hodges today and fix it
                 nodeR(Nindx,nr_LateralInflow) = nullvalueR
-                nodeR(Nindx,nr_TotalInflow)   = nullvalueR
+                nodeR(Nindx,nr_TotalInflow)   = faceR(Findx,fr_Flowrate)
 
             elseif (nodeI(Nindx,ni_node_type) == nJm) then
 
@@ -657,7 +657,7 @@ contains
                 nodeR(Nindx,nr_Volume)        = elemMR(Eindx,eMr_Volume)
                 !% HACK: discuss with dr. hodges today and fix it
                 nodeR(Nindx,nr_LateralInflow) = nullvalueR
-                nodeR(Nindx,nr_TotalInflow)   = nullvalueR
+                nodeR(Nindx,nr_TotalInflow)   = elemMR(Eindx,eMr_Flowrate)
 
             elseif (nodeI(Nindx,ni_node_type) == nStorage) then
                 print*, 'error: stroage node is not handeled yet'
