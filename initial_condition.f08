@@ -76,7 +76,7 @@ contains
         !% get data that can be extracted from links
         call initial_conditions_from_linkdata &
             (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, linkR, linkI)
-
+            
         !% custom initial condition setup for special test cases
         call custom_initial_condition &
             (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, bcdataDn)
@@ -555,8 +555,8 @@ contains
     subroutine custom_initial_condition &
         (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, bcdataDn)
     !    
-    ! set up custom initial conditions for special cases like flow over a bump
-    ! hard coded custon initial condition setup
+    ! set up custom initial conditions for special cases like flow over a bump,
+    ! trajkovic cases, or bore propagation. hard coded custon initial condition setup
     ! THIS IS HACK CODE
     !
     character(64) :: subroutine_name = 'custom_initial_condition'
@@ -582,16 +582,16 @@ contains
                     !% the zbottom is hardcoded to make it consistant with the SvePy
                     !% find the x value for elements. Later move to a subroutine
                     !% hard coded for swashes test case
-                    do ii = 2,N_elem2 -1 
-                        elem2R(ii,e2r_X) = sum(elem2R(2:N_elem2 -1,e2r_Length)) - sum(elem2R(2:ii,e2r_Length)) &
-                                              + elem2R(ii,e2r_Length)/2.0
-                                              elem2R(ii,e2r_Zbottom) = (0.2 - 0.05 * ((elem2R(ii,e2r_X) - 10.0) ** 2.0)) 
-                        if (elem2R(ii,e2r_X) < 8.0 ) then
-                            elem2R(ii,e2r_Zbottom) = 0.0
-                        elseif (elem2R(ii,e2r_X) > 12.0 ) then
-                            elem2R(ii,e2r_Zbottom) = 0.0
-                        endif
-                    enddo
+                    ! do ii = 2,N_elem2 -1 
+                    !     elem2R(ii,e2r_X) = sum(elem2R(2:N_elem2 -1,e2r_Length)) - sum(elem2R(2:ii,e2r_Length)) &
+                    !                           + elem2R(ii,e2r_Length)/2.0
+                    !                           elem2R(ii,e2r_Zbottom) = (0.2 - 0.05 * ((elem2R(ii,e2r_X) - 10.0) ** 2.0)) 
+                    !     if (elem2R(ii,e2r_X) < 8.0 ) then
+                    !         elem2R(ii,e2r_Zbottom) = 0.0
+                    !     elseif (elem2R(ii,e2r_X) > 12.0 ) then
+                    !         elem2R(ii,e2r_Zbottom) = 0.0
+                    !     endif
+                    ! enddo
 
                     ! get the boundary eta and set that for every other elements
                     thisVal = elem2R(1,e2r_eta)
@@ -608,8 +608,8 @@ contains
                     elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area) 
 
                 case ('simple_pipe_006')
-
-                !% This custom initial contion propagates a wave through a rectangular pipe
+                !% this custom initial contion propagates a wave through a rectangular pipe
+                !% this sets a custom eta for first 10 upstream elements
                     elem2R(90:101,e2r_Eta) = elem2R(90:101,e2r_Eta) + 1.5
                     elem2R(:,e2r_Depth)     = elem2R(:,e2r_Eta) - elem2R(:,e2r_Zbottom)
                     elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
@@ -622,7 +622,8 @@ contains
                     elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
                     elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area)
 
-                case ('trajkovic_case_a1')
+                case ('trajkovic_case_a3')
+                !% setting custom eta from pipeAC2020 paper
 
                     !% setting initial head
                     elem2R(:,e2r_Eta) = elem2R(:,e2r_Zbottom) + 0.02 
@@ -668,7 +669,9 @@ contains
                         elem2R(ii,e2r_Volume)    = elem2R(ii,e2r_Area) * elem2R(ii,e2r_Length)
                         elem2R(ii,e2r_FullVolume) = elem2R(ii,e2r_FullArea)  * elem2R(ii,e2r_Length)
                         elem2R(ii,e2r_Perimeter) = elem2R(ii,e2r_Area) / elem2R(ii,e2r_HydRadius)
+                        elem2R(ii,e2r_Velocity)  = elem2r(ii,e2r_Flowrate) / elem2R(ii,e2r_Area)
                     enddo
+
                         
                 case default
 
@@ -676,16 +679,20 @@ contains
                 print *, setting%TestCase%TestName, ' does not need a custom initial condition'
             end select
         endif
-        print*, '----------------------------------------------'
-        print*, 'initial condition at ', subroutine_name
-        print*, elem2R(:,e2r_Eta), 'Eta'
-        print*
-        print*, elem2R(:,e2r_Area), 'area'
-        print*
-        print*, elem2R(:,e2r_Depth), 'depth'
-        print*
-        print*, elem2R(:,e2r_Topwidth), 'topwidth'
-        print*, '----------------------------------------------'
+        ! print*, '----------------------------------------------'
+        ! print*, 'initial check at ', subroutine_name
+        ! print*, elem2R(:,e2r_Eta), 'Eta'
+        ! print*
+        ! print*, elem2R(:,e2r_Area), 'area'
+        ! print*
+        ! print*, elem2R(:,e2r_Depth), 'depth'
+        ! print*
+        ! print*, elem2R(:,e2r_Topwidth), 'topwidth'
+        ! print*
+        ! print*, elem2R(:,e2r_Flowrate), 'flowrate'
+        ! print*
+        ! print*, elem2R(:,e2r_velocity), 'velocity'
+        ! print*, '----------------------------------------------'
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine custom_initial_condition
@@ -773,7 +780,9 @@ contains
     !
     subroutine initial_storage_conditions &
         (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
-
+        !
+        !% this code has not been tested yet 
+        !
         character(64) :: subroutine_name = 'initial_storage_conditions'
 
         real,              intent(in out)  :: elemMR(:,:)
@@ -883,8 +892,8 @@ contains
         where (facemask)
             weightUpQ = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_d)
             weightDnQ = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_u)
-            valueUp  = elem2R(faceI(:,fi_Melem_u),e2r_Flowrate)
-            valueDn  = elem2R(faceI(:,fi_Melem_d),e2r_Flowrate)
+            valueUp   = elem2R(faceI(:,fi_Melem_u),e2r_Flowrate)
+            valueDn   = elem2R(faceI(:,fi_Melem_d),e2r_Flowrate)
             !% linear interpolation
             faceQ = (weightUpQ * valueDn + weightDnQ * valueUp) /(weightUpQ + weightDnQ)
         endwhere

@@ -40,7 +40,7 @@ contains
         (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN,      &
         faceYN, bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, &
         Length, zBottom, xDistance, Breadth, widthDepthData, cellType,        &
-        cycleSelect)
+        realLoop)
         !
         ! runge-kutta time advance for a single time step
         !
@@ -51,7 +51,7 @@ contains
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
         type(bcType),      intent(in out) :: bcdataDn(:),  bcdataUp(:)
         real,              intent(in)     :: thistime, dt
-        logical,           intent(in)     :: cycleSelect(:)
+        logical,           intent(in)     :: realLoop
 
         integer,   pointer :: fdn(:), fup(:)
 
@@ -112,6 +112,7 @@ contains
             !%  coefficients for the rk2 steps
             thiscoef(1) = onehalfR
             thiscoef(2) = oneR
+
             !%  Coefficients for the real time derivatives in AC
             if (setting%DefaultAC%TimeStencil == 'backwards3') then
                 af = (/1.5, -2.0, 0.5/)
@@ -131,14 +132,17 @@ contains
             endwhere
 
             do ii=1,2
-                if (cycleSelect (1)) then
-                    !%  cycleSelect(1) is only true when the solver is in normal time loop
+                if (realLoop) then
+                    !%  realLoop is only true when the solver is in normal time loop
+                    !%  thus, steptime is advanced
                     steptime = thistime + thiscoef(ii) * dt
-                else
-                    !%  when cycleSelect(1) is false, the solver is in psuedo time
-                    !%  so the steptime remains the same
+                elseif (.not. realLoop) then
+                    !%  when realLoop is false, the solver is in psuedo time
+                    !%  so the steptime is already advanced and remains the same
                     steptime = thistime
                 endif 
+
+                !% sve advance
                 if ( (  count(elem2I(:,e2i_solver) == SVE) &
                       + count(elemMI(:,eMi_solver) == SVE)> zeroI)) then
                     
@@ -149,6 +153,7 @@ contains
                         thiscoef(ii))                    
                 endif
 
+                !% ac advance
                 if (  count(elem2I(:,e2i_solver) == AC) &
                     + count(elemMI(:,eMi_solver) == AC)> zeroI ) then
 
@@ -186,9 +191,7 @@ contains
                     call diagnostic_element_volume_conservation_fluxes &
                         (elem2R, elem2I, elemMR, elemMI, faceR)
                 endif
-
-                ! print *, 'press return to proceed'
-                ! read(*,*)
+                
             end do
 
             !% compute local element-based volume conservation

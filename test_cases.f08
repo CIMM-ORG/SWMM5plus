@@ -934,7 +934,7 @@ contains
             endif
 
 
-          case ('trajkovic_case_a1')
+          case ('trajkovic_case_a3')
         
           !%  this test case is to debug ac solver
           N_node = 7
@@ -943,9 +943,9 @@ contains
           N_BCdnstream = 1
 
           !% step controls (fixed later)
-          display_interval = 1
+          display_interval = 100
           first_step       = 1
-          last_step        = 1000
+          last_step        = 30000
 
           CFL          = 0.5   ! determines dt from subdivide_length
 
@@ -963,16 +963,16 @@ contains
                 ManningsN, idepth_type, channel_geometry, inletOffset, outletOffset,         &
                 fullDepth, dischargeCoefficient1)
 
+          call this_setting_for_time_and_steps &
+                (CFL, velocity, init_depth, subdivide_length, &
+                first_step, last_step, display_interval,2)
+
           call trajkovic_cases_initialize &
                 (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,      &
                 flowrate, depth_upstream, depth_dnstream, init_depth,  inletOffset,      &
                 outletOffset, dischargeCoefficient1, fullDepth, ManningsN, idepth_type,  &
                 linkR, nodeR, linkI, nodeI,linkYN, nodeYN, linkName, nodeName, bcdataDn, &
                 bcdataUp, gateSetting)
-
-          call this_setting_for_time_and_steps &
-                (CFL, velocity, init_depth, subdivide_length, &
-                first_step, last_step, display_interval,2)
                 
           if (.not. setting%Debugout%SuppressAllFiles) then
                 call write_testcase_setup_file &

@@ -81,7 +81,7 @@ contains
         depth_upstream      = 0.02
         depth_dnstream      = 0.02
         init_depth          = 0.02
-        flowrate            = 0.013
+        flowrate            = 0.0013
         inlet_offset        = 0.0
         outlet_offset       = 0.0
         full_depth          = 0.1
@@ -99,7 +99,7 @@ contains
         link_type(2)          = lOrifice
         subdivide_elements(2) = 1
         subdivide_length(2)   = link_length(2) / subdivide_elements(2)
-        cDis1(2)              = 0.76
+        cDis1(2)              = 0.86
 
         !% pipe in between gate 1 and 2
         link_length(3)        = 8.26
@@ -112,7 +112,7 @@ contains
         link_type(4)          = lOrifice
         subdivide_elements(4) = 1
         subdivide_length(4)   = link_length(4) / subdivide_elements(4)
-        cDis1(4)              = 0.76
+        cDis1(4)              = 0.86
 
         !% pipe downstream of gate 2
         link_length(5)        = 1.4
@@ -257,14 +257,14 @@ contains
 
         !% assign control values to gate 2
         gateSetting(2)%LinkId              = 4
-        gateSetting(2)%HeightStart         = 0.014
+        gateSetting(2)%HeightStart         = 0.1
         gateSetting(2)%HeightNow           = 0.0
         gateSetting(2)%AreaNow             = 0.0
         gateSetting(2)%AreaPrior           = 0.0
         gateSetting(2)%GateTimeChange1     = 120.0
         gateSetting(2)%GateTimeChange2     = 150.0
         gateSetting(2)%GateHeightChange1   = 1E-6
-        gateSetting(2)%GateHeightChange2   = 0.008
+        gateSetting(2)%GateHeightChange2   = 0.028
         gateSetting(2)%HeightMinimum       = 1E-6
         gateSetting(2)%GateSpeed           = 0.01
         gateSetting(2)%CanMove             = .true.

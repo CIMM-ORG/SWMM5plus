@@ -69,7 +69,7 @@ contains
 
         integer, pointer :: thisStep, restartStep
 
-        logical :: rkCycle(2)
+        logical :: realLoop
         integer :: ii
 
         character(len=32) :: outdataName
@@ -149,7 +149,7 @@ contains
             if (setting%Debugout%DisplayInterval > 0) then
                 if (mod(thisstep,setting%Debugout%DisplayInterval) == 0) then
                     print *, '--------------------------------------'
-                    print *, thisstep,'=current step; ', &
+                    print *, thisstep,'=current step; ', thistime, '=this time', &
                         diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d),'=CFL max' & !Im putting the timescale for Q here. Might needed to be changed later
                         ,maxval(abs(elem2R(2:size(elem2R,1)-1,e2r_Velocity))),'=max velocity'
                     !print *, thisstep,'=current step; ', &
@@ -169,20 +169,21 @@ contains
             elem2YN(:,e2YN_IsAdhocFlowrate) = .false.
             elemMYN(:,eMYN_IsAdhocFlowrate) = .false.
 
-            !%  push the old values down the stack
+            !%  push the old values down the stack for AC solver
             call save_previous_values (elem2R, elemMR, faceR)
-            !% Runge-Kutta 2nd-order advance
-            !% rkCycle mask ensures both the RK steps are taken for time loop
-            rkCycle(1) = .true.
-            rkCycle(2) = .true.
 
+            !% Runge-Kutta 2nd-order advance
+            !% realLoop mask ensures steptime is advanced for timeloop
+            realLoop = .true.
+
+            !% HACK: only works for trajkovic cases
             call control_evaluate &
                 (elem2I, elem2R, gateSetting, N_Gates, thistime)
 
             call rk2 &
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
                 bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
-                zBottom, xDistance, Breadth, widthDepthData, cellType, rkCycle)
+                zBottom, xDistance, Breadth, widthDepthData, cellType, realLoop)
                 
             if (  count(elem2I(:,e2i_solver) == AC) &
                 + count(elemMI(:,eMi_solver) == AC)> zeroI ) then               

@@ -194,8 +194,8 @@ contains
         endif
 
         !% initialize the old volume/velocity/eta to new temporary column at the begining
-        !% an rk step. this is necessary because C denominator in the kVolume uses 
-        !% the updated volume/eta at the 2nd rk step. 
+        !% an rk step. this is necessary because C denominator calculation in the kVolume 
+        !% uses the updated volume/eta at the 2nd rk step. 
         if (wrk == onehalfR) then
             where (maskChannelPipeAC)
                 volume2new   = volume2old
@@ -225,9 +225,13 @@ contains
             eta2new = eta2old + wrk * dtau * kc2
         endwhere 
 
-        ! print*, subroutine_name
-        ! print*, '...................................'
+        ! print*, 'newly calculated vol and eta at ', subroutine_name
+        ! print*, '.........................................................'
         ! print*, volume2new, 'volume2new'
+        ! print*
+        ! print*, eta2new, 'eta2new'
+        ! print*
+        
         
         !%  HACK: Need derivation for juction-pipe elements
 
@@ -241,7 +245,9 @@ contains
         call adjust_negative_volume_reset (volume2new)
         call adjust_negative_eta_reset (eta2new, zbottom2, fullPipeOpen)
 
-        !%  All the full pipe basic geometry handling should be here
+        !%  to be consistant with the overall structure, volume2new is needed for 
+        !%  full pipes. thus, volume2new is calculated from the eta for full pipes.
+        !%  other full pipe geometrices are calculated in element_geometry
         call get_volume_from_eta &
             (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, eta2new, &
             volume2new, length2, fullVolume2, fullDepth2, breadth2, zbottom2,  &
@@ -251,6 +257,11 @@ contains
         where (maskChannelPipeAC)
             velocity2new = velocity2new / volume2new
         endwhere
+        ! print*, velocity2new, 'velocity2new'
+        ! print*
+        ! print*,'press return to continue'
+        ! print*, '.........................................................'
+        ! read(*,*)
 
         ! print*
         ! print*, velocity2new, 'velocity2new'
@@ -577,19 +588,20 @@ contains
             eta2old = eta2new
         endwhere
 
-        if (count(isfull) >0) then
-            print*, '------------------------------------'
-            print*, 'full pipe deteted at ', subroutine_name
-            print*, isfull, 'isFull'
-            print*
-            print*, fullVolume2, 'fullVolume2'
-            print*
-            print*, volume2new, 'volume2new'
-            print*
-            print*, eta2new, 'eta2new'
-            print*, 'press return to continue'
-            read(*,*)
-        endif
+        ! if (count(isfull) >0) then
+        !     print*, '------------------------------------'
+        !     print*, 'full pipe deteted at ', subroutine_name
+        !     print*, isfull, 'isFull'
+        !     print*
+        !     print*, volume2new, 'volume2new'
+        !     print*
+        !     print*, eta2new, 'eta2new'
+        !     if (isfull(22)) then
+        !         print*, 'open pipe transitioned to full'
+        !         print*, 'press terurn to continue'
+        !         read(*,*)
+        !     endif
+        ! endif
             
         !% nullify temporary array
         YoverYfull = nullvalueR

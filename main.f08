@@ -101,12 +101,10 @@ program main
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
-    ! setting%TestCase%TestName = 'simple_pipe_006'
+    setting%TestCase%TestName = 'simple_pipe_006'
     ! setting%TestCase%TestName = 'swashes_007'
     ! setting%TestCase%TestName = 'width_depth'
-    setting%TestCase%TestName = 'trajkovic_case_a1'
-
-
+    ! setting%TestCase%TestName = 'trajkovic_case_a3'
 
     !%  hard-code for debug output
     setting%Debugout%SuppressAllFiles  = .false. ! use this to easily suppress debug files
@@ -201,16 +199,12 @@ program main
     ! initialize output by threaded link
     call output_threaded_by_link_initialize (threadedfile)
 
-    !print *, "Check Point 1"
-
     !%  time marching of continuity and momentum
     call time_marching &
         (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
         bcdataDn, bcdataUp, gateSetting, linkI, debugfile, diagnostic, threadedfile, &
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
-
-    !print *, "Check Point 2"
 
     !% uncomment this if you want a final debug output
     call debug_output &

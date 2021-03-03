@@ -96,6 +96,14 @@ contains
             (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, bcdataDn, bcdataUp, &
             e2r_Velocity_new)
 
+        ! print*, 'At... ', subroutine_name
+        ! print*, elem2R(:,e2r_Velocity_new), 'e2r_Velocity_new'
+        ! print*
+        ! print*, elem2R(:,e2r_Flowrate), 'Flowrate'
+        ! print*, '--------------------------------------------------------'
+        ! read(*,*)
+
+
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine element_dynamics_update
     !
@@ -319,14 +327,15 @@ contains
             e2YN_IsSmallVolume, e2i_roughness_type, e2r_Roughness, &
             e2i_elem_type, eChannel, e2i_Mface_u, e2i_Mface_d)
 
+        !% HACK: AC debug. Probably does not work with pipe
         !%  velocity blend for pipe elements
-        call velocity_blend_with_mask &
-            (elem2R, elem2I, elem2YN, faceR, &
-            next_e2r_temparray, e2r_n_temp, e2r_Temp, &
-            e2r_Velocity_new, e2r_Flowrate, e2r_Length,  &
-            e2r_Area, e2r_HydRadius, e2r_SmallVolumeRatio, &
-            e2YN_IsSmallVolume, e2i_roughness_type, e2r_Roughness, &
-            e2i_elem_type, ePipe, e2i_Mface_u, e2i_Mface_d)
+        ! call velocity_blend_with_mask &
+        !     (elem2R, elem2I, elem2YN, faceR, &
+        !     next_e2r_temparray, e2r_n_temp, e2r_Temp, &
+        !     e2r_Velocity_new, e2r_Flowrate, e2r_Length,  &
+        !     e2r_Area, e2r_HydRadius, e2r_SmallVolumeRatio, &
+        !     e2YN_IsSmallVolume, e2i_roughness_type, e2r_Roughness, &
+        !     e2i_elem_type, ePipe, e2i_Mface_u, e2i_Mface_d)
 
         !%  velocity blend for junction elements
         !%  HACK - this arbitrarily uses the u1 and d1 for the slope

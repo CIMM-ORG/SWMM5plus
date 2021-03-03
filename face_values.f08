@@ -82,7 +82,11 @@ contains
         call face_surface_elevation_interp (elem2R, elemMR, faceR, faceI, faceYN)
 
         !% compute depth
-        call face_hydraulic_depth (elem2R, elemMR, faceR, faceI, faceYN)
+        !% HACK: the calculation is commented out for now
+        !% Face Hyddepth is not needed for any calculations
+        !% The calculation needs revision for full pipes 
+
+        ! call face_hydraulic_depth (elem2R, elemMR, faceR, faceI, faceYN)
 
 
         if (thisIter == 1) then
@@ -1050,15 +1054,13 @@ contains
             HydDn = AreaDn / fTopwidth
         endwhere
 
-        !%  in case of full pipe, face topwidth is zero. The hyddepth will be the fulldepth 
-        where ( (typUp == fPipe) .and. (fTopwidth .LE. ZeroTopWidth) .and. &
-                (AreaUp .GT. ZeroArea) )
-            HydUp = elem2R(mapUp,e2r_FullDepth)
+        !%  in case of full pipe, the hyddepth is gotten from elements
+        where ( (typUp == fPipe) .and. (AreaUp .GE. elem2R(mapUp,e2r_FullArea)) )
+            HydUp = elem2R(mapUp,e2r_HydDepth)
         endwhere
 
-        where ( (typDn == fPipe) .and. (fTopwidth .LE. ZeroTopWidth) .and. &
-                (AreaDn .GT. ZeroArea) )
-            HydDn = elem2R(mapDn,e2r_FullDepth)
+        where ( (typDn == fPipe) .and. (AreaDn .GT. elem2R(mapDn,e2r_FullArea)) )
+            HydDn = elem2R(mapDn,e2r_HydDepth)
         endwhere
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name

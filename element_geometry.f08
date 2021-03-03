@@ -101,7 +101,7 @@ contains
             ManningsN, Length, zBottom, xDistance, Breadth, widthDepthData, cellType)
             
         !% HACK -- NEED OTHER GEOMETRY TYPES
-
+        
         !% reset the computed geometry values where volumes are small
         if (setting%SmallVolume%UseSmallVolumes) then
             call adjust_smallvolumes &
@@ -502,9 +502,9 @@ contains
             next_ei_temparray, ei_n_temp, er_Temp, next_er_temparray, er_n_temp, &
             eYN_Temp, next_eYN_temparray, eYN_n_temp, isFull)
 
-        !% HACK: other special geometry types are needed
+        !% HACK: other specialized geometry types are needed
 
-        !% surcharged geomety types
+        !% geometry calculation for all surcharged elements
         call surcharged_element_geometry &
             (elemI, elemR, elemYN, ei_geometry, ei_elem_type, elem_type_value,   &
             volume, length, zbottom, breadth, fulldepth, fullarea, area, eta,    &
@@ -599,6 +599,11 @@ contains
            perimeter  = area / hydradius
         endwhere
 
+        !% HACK: DONT LET TOPWIDTH FALL AT ZERO
+        where (topwidth .LE. setting%SmallVolume%MinimumTopwidth)
+            topwidth = setting%SmallVolume%MinimumTopwidth
+        endwhere
+
         ! find modified hydraulic depth and for circular pipe from pipeAC Hodges 2020
         where ( (maskarray) .and. (AoverAfull .GT. onehalfR) )
             hyddepth   = eta - zbottom + (onehalfR*fulldepth) * (onefourthR*pi - oneR)
@@ -607,21 +612,21 @@ contains
             hyddepth   = max(area / topwidth, zeroR)
             elN        = hyddepth
         endwhere
-        if (count(maskarray)>zeroI) then
-            print*,'..............................................'
-            print*, subroutine_name
-            print*, '..............................................'
-            print*, eta, 'eta'
-            print*
-            print*, depth, 'depth'
-            print*
-            print*, topwidth, 'topwidth'
-            print*
-            print*, area, 'area'
-            print*
-            print*, elN, 'eln'
-            print*,'...............................................'
-        endif
+        ! if (count(maskarray)>zeroI) then
+        !     print*,'..............................................'
+        !     print*, subroutine_name
+        !     print*, '..............................................'
+        !     print*, eta, 'eta'
+        !     print*
+        !     print*, depth, 'depth'
+        !     print*
+        !     print*, topwidth, 'topwidth'
+        !     print*
+        !     print*, area, 'area'
+        !     print*
+        !     print*, elN, 'eln'
+        !     print*,'...............................................'
+        ! endif
 
         !% constants for circular dHdA (pipeAC2020)
         af = 1.29
@@ -709,25 +714,26 @@ contains
 
         endwhere
 
-        if (count(( (elemI(:,ei_elem_type) == elem_type_value) .and. &
-                    (elemI(:,ei_geometry)  == eCircular)       .and. &
-                    (isFull) ))>0) then
-            print*,'.........................................'
-            print*, subroutine_name
-            print*
-            print*, eta, 'eta'
-            print*
-            print*, area , 'area'
-            print*
-            print*, depth, 'depth'
-            print*
-            print*, topwidth, 'topwidth'
-            print*
-            print*, hyddepth, 'hyddepth'
-            print*
-            print*, 'pipe surcharged at element geom: press return to continue'
-            read(*,*)
-        endif
+        ! if (count(( (elemI(:,ei_elem_type) == elem_type_value) .and. &
+        !             (elemI(:,ei_geometry)  == eCircular)       .and. &
+        !             (isFull) ))>0) then
+        !     print*,'..............................................'
+        !     print*, subroutine_name
+        !     print*, '..............................................'
+        !     print*, eta, 'eta'
+        !     print*
+        !     print*, depth, 'depth'
+        !     print*
+        !     print*, topwidth, 'topwidth'
+        !     print*
+        !     print*, area, 'area'
+        !     print*
+        !     print*, elN, 'eln'
+        !     print*
+        !     print*, 'pipe surcharged at element geom: press return to continue'
+        !     print*,'...............................................'
+        ! !     read(*,*)
+        ! endif
         !% HACK: other special geometry types are needed
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

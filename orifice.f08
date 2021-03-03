@@ -180,27 +180,27 @@ contains
             velocity2, oFlow, cOrif, cWeir, oBreadth, oFullDepth, oArea,       &
             hEffective, dir, subFactor, subCorrection, thiscoef)
         
-        print*,'--------------------------------------------'
-        print*,'Orifice values at ', subroutine_name
-        print*
-        print*, oEta(28), oEta(69), 'eta'
-        print*
-        print*, oZbottom(28), oZbottom(69), 'zbottom'
-        print*
-        print*, hEffective(28), hEffective(69), 'effective head'
-        print*
-        print*, oDepth(28), oDepth(69), 'depth'
-        print*
-        print*, oFullDepth(28), oFullDepth(69), 'fulldepth'
-        print*
-        print*, oFlow(28), oFlow(69), 'flow'
-        print*
-        print*, velocity2(28), velocity2(69), 'velocity'
-        print*
-        print*, oArea(28), oArea(69), 'area'
-        print*
-        print*, volume2(28), volume2(69), 'volume'
-        print*
+        ! print*,'--------------------------------------------'
+        ! print*,'Orifice values at ', subroutine_name
+        ! print*
+        ! print*, oEta(28), oEta(69), 'eta'
+        ! print*
+        ! print*, oZbottom(28), oZbottom(69), 'zbottom'
+        ! print*
+        ! print*, hEffective(28), hEffective(69), 'effective head'
+        ! print*
+        ! print*, oDepth(28), oDepth(69), 'depth'
+        ! print*
+        ! print*, oFullDepth(28), oFullDepth(69), 'fulldepth'
+        ! print*
+        ! print*, oFlow(28), oFlow(69), 'flow'
+        ! print*
+        ! print*, velocity2(28), velocity2(69), 'velocity'
+        ! print*
+        ! print*, oArea(28), oArea(69), 'area'
+        ! print*
+        ! print*, volume2(28), volume2(69), 'volume'
+        ! print*
         ! print*, 'orifice debug: press return to continue'
         ! read(*,*)
 

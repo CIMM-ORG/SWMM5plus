@@ -117,7 +117,8 @@ contains
     !
     Subroutine control_evaluate (elem2I, elem2R, gateSetting, N_Gates, StepTime)
     !
-    ! allocate controls 
+    ! HACK: this code is adapted from pipeAC. the sole purpose of this code
+    ! is to test and compare AC-solver by utilizing trajkovic test cases 
     !
     character(64) :: subroutine_name = 'control_evaluate'
 
@@ -165,9 +166,12 @@ contains
                         if (gateSetting(ii)%HeightNow < gateSetting(ii)%GateHeightChange1) then
                             gateSetting(ii)%HeightNow = gateSetting(ii)%GateHeightChange1
                         endif
-                        print*, 'gate is moving downward ', gateSetting(ii)%HeightNow
 
                         gateSetting(ii)%MovedThisStep = .true.
+
+                        ! if (gateSetting(ii)%MovedThisStep) then
+                        !     print*, 'gate is moving downward ', gateSetting(ii)%HeightNow
+                        ! endif
 
                     else
                         gateSetting(ii)%HeightNow = gateSetting(ii)%HeightStart + gateMove
@@ -175,9 +179,13 @@ contains
                         if (gateSetting(ii)%HeightNow > gateSetting(ii)%GateHeightChange1) then
                             gateSetting(ii)%HeightNow = gateSetting(ii)%GateHeightChange1
                         endif
-                        print*, 'gate is moving upward ', gateSetting(ii)%HeightNow
-
+                    
                         gateSetting(ii)%MovedThisStep = .true.
+
+                        ! if (gateSetting(ii)%MovedThisStep) then
+                        !     print*, 'gate is moving upward ', gateSetting(ii)%HeightNow, ' at time ', StepTime
+                        ! endif
+
                     endif
 
                 !%  if in the third height regime
@@ -195,9 +203,12 @@ contains
                         if (gateSetting(ii)%HeightNow < gateSetting(ii)%GateHeightChange2) then
                             gateSetting(ii)%HeightNow = gateSetting(ii)%GateHeightChange2
                         endif
-                        print*, 'gate is moving downward ', gateSetting(ii)%HeightNow
 
                         gateSetting(ii)%MovedThisStep = .true.
+
+                        ! if (gateSetting(ii)%MovedThisStep) then
+                        !     print*, 'gate is moving downward ', gateSetting(ii)%HeightNow, ' at time ', StepTime
+                        ! endif
 
                     else
                         gateSetting(ii)%HeightNow = gateSetting(ii)%GateHeightChange1 + gateMove
@@ -205,9 +216,13 @@ contains
                         if (gateSetting(ii)%HeightNow > gateSetting(ii)%GateHeightChange2) then
                             gateSetting(ii)%HeightNow = gateSetting(ii)%GateHeightChange2
                         endif
-                        print*, 'gate is moving upward ', gateSetting(ii)%HeightNow
 
                         gateSetting(ii)%MovedThisStep = .true.
+
+                        ! if (gateSetting(ii)%MovedThisStep) then
+                        !     print*, 'gate is moving upward ', gateSetting(ii)%HeightNow, ' at time ', StepTime
+                        ! endif
+
                     endif
                 endif
 

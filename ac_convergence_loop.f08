@@ -80,7 +80,7 @@ contains
         type(string), intent(in out)   :: cellType(:)
 
         integer :: ii
-        logical :: acCycle(2)
+        logical :: realLoop
 
         character(len=32) :: outdataName
         !--------------------------------------------------------------------------
@@ -95,12 +95,15 @@ contains
 
         !%  set AC time step based on the dtau factor.
         setting%DefaultAC%dtau = dt * setting%DefaultAC%dtauFactor%dtdtau
+
         !%  initialize iteration counter for the AC loops
         thisIter = zeroI
+
         !%  initialization for AC loop
         isConverged = .false.
         tauTime = zeroR
         dtau    = setting%DefaultAC%dtau
+
         !%  count the number of element in AC loop
         !%  HACK: Check with Dr. Hodges
         NX = count(elem2I(:,e2i_solver) == AC)
@@ -117,21 +120,20 @@ contains
 
         !%  pseudo time loop
         do while ( (isConverged .eqv. .false.) .and. (thisIter < iterMax) )
-            print*, '----------------------------------------------'
-            print*, 'ac iter', thisIter, ' at step ', thisStep
+            ! print*, '----------------------------------------------'
+            ! print*, 'ac iter', thisIter, ' at step ', thisStep
             thisIter = thisIter + oneI
             !%  store norms from the last iteration
             AnormHlast = AnormH
             AnormQlast = AnormQ
 
-            !%  acCycle mask ensures only the second RK step is take in AC convergence
-            acCycle(1) = .false.
-            acCycle(2) = .true.
+            !%  realLoop mask ensures only the second RK step is take in AC convergence
+            realLoop = .false.
             
             call rk2 & 
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &
                 bcdataDn, bcdataUp, thistime, dt, ID, numberPairs, ManningsN, Length,   &
-                zBottom, xDistance, Breadth, widthDepthData, cellType, acCycle)
+                zBottom, xDistance, Breadth, widthDepthData, cellType, realLoop)
                      
             !%  baseline for tau convergence -- change from the first RK full step
             where (elem2I(:,e2i_solver) == AC)
