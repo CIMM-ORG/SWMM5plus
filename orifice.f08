@@ -185,13 +185,9 @@ contains
         ! print*
         ! print*, oEta(28), oEta(69), 'eta'
         ! print*
-        ! print*, oZbottom(28), oZbottom(69), 'zbottom'
-        ! print*
         ! print*, hEffective(28), hEffective(69), 'effective head'
         ! print*
         ! print*, oDepth(28), oDepth(69), 'depth'
-        ! print*
-        ! print*, oFullDepth(28), oFullDepth(69), 'fulldepth'
         ! print*
         ! print*, oFlow(28), oFlow(69), 'flow'
         ! print*
