@@ -40,8 +40,8 @@ contains
         integer, intent(in out) :: linkI(:,:)
         integer, intent(in out) :: nodeI(:,:)
 
-        real, intent(in out)    :: linkR(:,:)
-        real, intent(in out)    :: nodeR(:,:)
+        real(8), intent(in out)    :: linkR(:,:)
+        real(8), intent(in out)    :: nodeR(:,:)
 
         type(string), dimension(:), intent(in out)   :: nodeName, linkName
 
@@ -174,8 +174,8 @@ contains
         integer, intent(in out) :: linkI(:,:)
         integer, intent(in out) :: nodeI(:,:)
 
-        real, intent(in out)    :: linkR(:,:)
-        real, intent(in out)    :: nodeR(:,:)
+        real(8), intent(in out)    :: linkR(:,:)
+        real(8), intent(in out)    :: nodeR(:,:)
 
         type(string), dimension(:), intent(in out)   :: linkName, nodeName
 
@@ -353,7 +353,7 @@ contains
         !print *, nodeI(2,8)
         !stop
 
-        if (debuglevel > 0) print *, '*** leave ',subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine custom_6link_1_line_network
     !
     !==========================================================================
@@ -367,8 +367,8 @@ contains
         integer, intent(in out) :: linkI(:,:)
         integer, intent(in out) :: nodeI(:,:)
 
-        real, intent(in out)    :: linkR(:,:)
-        real, intent(in out)    :: nodeR(:,:)
+        real(8), intent(in out)    :: linkR(:,:)
+        real(8), intent(in out)    :: nodeR(:,:)
 
         type(string), dimension(:), intent(in out)   :: linkName, nodeName
 
@@ -535,8 +535,8 @@ contains
         integer, intent(in out) :: linkI(:,:)
         integer, intent(in out) :: nodeI(:,:)
 
-        real, intent(in out)    :: linkR(:,:)
-        real, intent(in out)    :: nodeR(:,:)
+        real(8), intent(in out)    :: linkR(:,:)
+        real(8), intent(in out)    :: nodeR(:,:)
 
         type(string), dimension(:), intent(in out)   :: linkName, nodeName
 

@@ -30,10 +30,7 @@ module adjustments
     integer :: debuglevel = 0
 
 contains
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+
     subroutine adjust_channel_velocity_limiter &
         (elemR, elemYN, elemI, &
         ei_elem_type, elemType, eYN_IsAdhocFlowrate, er_Velocity_new )
@@ -44,13 +41,13 @@ contains
         !
         character(64) :: subroutine_name = 'adjust_channel_velocity_limiter'
 
-        real,      target, intent(in out)  :: elemR(:,:)
+        real(8),      target, intent(in out)  :: elemR(:,:)
         logical,           intent(in out)  :: elemYN(:,:)
         integer,           intent(in)      :: elemI(:,:)
         integer,           intent(in)      :: ei_elem_type, elemType, eYN_IsAdhocFlowrate
         integer,           intent(in)      :: er_Velocity_new
 
-        real,  pointer ::  velocity(:)
+        real(8),  pointer ::  velocity(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -70,10 +67,7 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine adjust_channel_velocity_limiter
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+
     subroutine adjust_junction_branch_velocity_limit &
         (elemMR, elemMI)
         !
@@ -87,29 +81,27 @@ contains
         !
         character(64) :: subroutine_name = 'adjust_junction_branch_velocity_limit'
 
-        real,  target,     intent(in out)  :: elemMR(:,:)
-        integer,           intent(in)      :: elemMI(:,:)
+        real(8), target, intent(inout) :: elemMR(:,:)
+        integer, intent(in) :: elemMI(:,:)
 
-        real,  pointer :: velocity(:), flowrate(:), area(:)
-
+        real(8), pointer :: velocity(:), flowrate(:), area(:)
         integer :: mm
 
-        !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         if (setting%Limiter%Velocity%UseLimitMax) then
-            do mm=1,upstream_face_per_elemM
-                velocity => elemMR(:,eMr_VelocityUp(mm))
-                flowrate => elemMR(:,eMr_FlowrateUp(mm))
-                area     => elemMR(:,eMr_AreaUp(mm))
+            do mm = 1, upstream_face_per_elemM
+                velocity => elemMR(:, eMr_VelocityUp(mm))
+                flowrate => elemMR(:, eMr_FlowrateUp(mm))
+                area => elemMR(:, eMr_AreaUp(mm))
                 where ( (abs(velocity) > setting%Limiter%Velocity%Maximum) .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfaces_u) >= mm) )
-                    velocity = sign( 0.99 * setting%Limiter%Velocity%Maximum, velocity )
-                    flowrate = velocity * area
+                    velocity = sign(0.99*setting%Limiter%Velocity%Maximum, velocity)
+                    flowrate = velocity*area
                 endwhere
             enddo
-            do mm=1,dnstream_face_per_elemM
+            do mm = 1, dnstream_face_per_elemM
                 velocity => elemMR(:,eMr_VelocityDn(mm))
                 flowrate => elemMR(:,eMr_FlowrateDn(mm))
                 area     => elemMR(:,eMr_AreaDn(mm))
@@ -128,10 +120,7 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine adjust_junction_branch_velocity_limit
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    
     subroutine adjust_face_dynamic_limits &
         (faceR, faceI, volumeUp, volumeDn, facemask, Ltemp)
         !
@@ -139,20 +128,18 @@ contains
         !
         character(64) :: subroutine_name = 'adjust_face_dynamic_limits'
 
-        real,                  intent(in out)  :: faceR(:,:)
+        real(8),                  intent(in out)  :: faceR(:,:)
         ! note, requires that elemR be provided separately for upstream and downstream
         ! these can be the samy arrays (e.g. in the case of elem2R for channel-channel)
-        real,                  intent(in)      :: volumeUp(:), volumeDn(:)
+        real(8),                  intent(in)      :: volumeUp(:), volumeDn(:)
         integer,   target,     intent(in)      :: faceI(:,:)
         logical,               intent(in)      :: facemask(:), Ltemp
 
-        real,  pointer :: volFrac
+        real(8),  pointer :: volFrac
         integer,   pointer :: eUp(:), eDn(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-
 
         ! Ad hoc limit the volume that can be transported out of the upstream cell.
         if (setting%Limiter%Flowrate%UseFaceVolumeTransport) then
@@ -225,12 +212,12 @@ contains
         !
         character(64) :: subroutine_name = 'adjust_for_zero_geometry'
 
-        real,          intent(in out)  ::  elem2R(:,:)
-        real, target,  intent(in out)  ::  elemMR(:,:)
+        real(8),          intent(in out)  ::  elem2R(:,:)
+        real(8), target,  intent(in out)  ::  elemMR(:,:)
         integer,       intent(in)      ::  elemMI(:,:)
         logical,       intent(in)      ::  elem2YN(:,:), elemMYN(:,:)
 
-        real, pointer  :: area(:), topwidth(:)
+        real(8), pointer  :: area(:), topwidth(:)
 
         integer :: mm
 
@@ -272,7 +259,7 @@ contains
         !
         character(64) :: subroutine_name = 'adjust_negative_volume_reset'
 
-        real,  intent(in out)  ::  volume(:)
+        real(8),  intent(in out)  ::  volume(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -306,7 +293,7 @@ contains
         !
         character(64) :: subroutine_name = 'adjust_smallvolumes'
 
-        real,      intent(in out)      :: elem2R(:,:),  elemMR(:,:)
+        real(8),      intent(in out)      :: elem2R(:,:),  elemMR(:,:)
         integer,   intent(in)          :: elem2I(:,:),  elemMI(:,:)
         logical,   intent(in out)      :: elem2YN(:,:), elemMYN(:,:)
         integer,   intent(in)          :: e2r_VolumeColumn, eMr_VolumeColumn
@@ -339,19 +326,19 @@ contains
         !
         character(64) :: subroutine_name = 'adjust_Vshaped_flowrate'
 
-        real,      target,     intent(in out)  :: elem2R(:,:)
-        real,      target,     intent(in)      :: faceR(:,:)
+        real(8),      target,     intent(in out)  :: elem2R(:,:)
+        real(8),      target,     intent(in)      :: faceR(:,:)
         integer,   target,     intent(in)      :: elem2I(:,:)
         logical,   target,     intent(in out)  :: elem2YN(:,:)
 
-        real,      pointer     :: elemFlow(:), faceFlow(:), elemAdjust(:), elemVel(:), elemArea(:)
-        real,      pointer     :: tscaleUp(:), tscaleDn(:)
+        real(8),      pointer     :: elemFlow(:), faceFlow(:), elemAdjust(:), elemVel(:), elemArea(:)
+        real(8),      pointer     :: tscaleUp(:), tscaleDn(:)
         integer,   pointer     :: mapUp(:), mapDn(:)
         logical,   pointer     :: elemMask(:)
 
         integer :: e2r_adjustflow, e2YN_mask
 
-        real,      pointer     :: coef
+        real(8),      pointer     :: coef
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -444,7 +431,7 @@ contains
         !
         character(64) :: subroutine_name = 'adjust_zero_velocity_at_zero_volume'
 
-        real,      intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         logical,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
         integer,   intent(in)      :: e2r_VelocityColumn, e2r_VolumeColumn
         integer,   intent(in)      :: eMr_VelocityColumn, eMr_VolumeColumn
@@ -478,12 +465,12 @@ contains
         !
         character(64) :: subroutine_name = 'smallvolume_identification'
 
-        real,    target,   intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),    target,   intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer, target,   intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical, target,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
         integer,           intent(in)      :: eTr_Volume2,  eTr_VolumeM
 
-        real,      pointer :: smallvolumeratio(:), smallvolume(:), tvolume(:)
+        real(8),      pointer :: smallvolumeratio(:), smallvolume(:), tvolume(:)
         integer,   pointer :: elemtype(:)
 
         logical, pointer :: issmallvolume(:)
@@ -548,8 +535,8 @@ contains
         !
         character(64) :: subroutine_name = 'smallvolume_identification_for_element'
 
-        real,      intent(in out)  :: volume(:), smallvolumeratio(:)
-        real,      intent(in)      :: smallvolume(:)
+        real(8),      intent(in out)  :: volume(:), smallvolumeratio(:)
+        real(8),      intent(in)      :: smallvolume(:)
         integer,   intent(in)      :: elemtype(:)
         logical,   intent(in out)  :: issmallvolume(:)
         integer,   intent(in)      :: thiselementtype
@@ -595,13 +582,13 @@ contains
         !
         character(64) :: subroutine_name = 'smallvolume_geometry'
 
-        real,              intent(in out)  :: elem2R(:,:)
+        real(8),              intent(in out)  :: elem2R(:,:)
         integer,           intent(in)      :: elem2I(:,:)
-        real,      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
         integer,           intent(in)      :: elemMI(:,:)
         logical,           intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real,  pointer :: area(:), topwidth(:)
+        real(8),  pointer :: area(:), topwidth(:)
         integer :: mm
 
         !--------------------------------------------------------------------------
@@ -643,7 +630,7 @@ contains
         !
         character(64) :: subroutine_name = 'smallvolume_element_geometry_reset'
 
-        real,      target, intent(in out)  :: elemR(:,:)
+        real(8),      target, intent(in out)  :: elemR(:,:)
         integer,   target, intent(in)      :: elemI(:,:)
 
         logical,   intent(in)  :: elemYN(:,:)
@@ -653,9 +640,9 @@ contains
         integer,   intent(in)  :: er_HydDepth, er_HydRadius, er_Topwidth
         integer,   intent(in)  :: eYN_IsSmallVolume
 
-        real, pointer  ::  area(:), eta(:), perimeter(:), zbottom(:)
-        real, pointer  ::  hyddepth(:), hydradius(:)
-        real, pointer  ::  topwidth(:)
+        real(8), pointer  ::  area(:), eta(:), perimeter(:), zbottom(:)
+        real(8), pointer  ::  hyddepth(:), hydradius(:)
+        real(8), pointer  ::  topwidth(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -693,17 +680,16 @@ contains
         !
         character(64) :: subroutine_name = 'smallvolume_junctionbranch_reset'
 
-        real,      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
         logical,           intent(in)      :: elemMYN(:,:)
 
         ! dnstream_face_per_elemM or upstream_face_per_elemM
         integer,           intent(in)      :: Dir_face_per_elem
         integer,           intent(in)      :: eMr_AreaDir(:), eMr_TopwidthDir(:)
 
-        real,  pointer :: area(:), topwidth(:)
+        real(8),  pointer :: area(:), topwidth(:)
         integer        :: mm
 
-        !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         if (.not. setting%SmallVolume%UseSmallVolumes) return
@@ -719,10 +705,7 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine smallvolume_junctionbranch_reset
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    
     subroutine reset_element_for_zero_values &
         (elemR, elemYN, er_Area, er_Eta, er_Zbottom, er_Topwidth, er_Perimeter, &
         er_HydDepth, er_HydRadius, eYN_IsSmallVolume)
@@ -738,19 +721,18 @@ contains
         !
         character(64) :: subroutine_name = 'reset_element_for_zero_values'
 
-        real,  target,  intent(in out) :: elemR(:,:)
+        real(8),  target,  intent(in out) :: elemR(:,:)
         logical,        intent(in)     :: elemYN(:,:)
 
         integer,        intent(in)     :: er_Area, er_Eta, er_Zbottom, er_Topwidth
         integer,        intent(in)     :: er_Perimeter, er_HydDepth, er_HydRadius
         integer,        intent(in)     :: eYN_IsSmallVolume
 
-        real,  pointer :: area(:), eta(:), topwidth(:), perimeter(:)
-        real,  pointer :: zbottom(:), hyddepth(:), hydradius(:)
+        real(8),  pointer :: area(:), eta(:), topwidth(:), perimeter(:)
+        real(8),  pointer :: zbottom(:), hyddepth(:), hydradius(:)
 
         integer :: ii
 
-        !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         area       => elemR(:,er_Area)
@@ -817,10 +799,7 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine reset_element_for_zero_values
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    
     subroutine reset_juctionbranches_for_zero_values &
         (elemMR, elemMI, elemMYN, eMr_AreaDir, eMr_TopwidthDir, &
         eMr_nfaces_Dir, Dir_face_per_elemM)
@@ -830,15 +809,14 @@ contains
         !
         character(64) :: subroutine_name = 'reset_juctionbranches_for_zero_values'
 
-        real,      target,     intent(in out)  :: elemMR(:,:)
+        real(8),      target,     intent(in out)  :: elemMR(:,:)
         integer,               intent(in)      :: elemMI(:,:)
         logical,               intent(in)      :: elemMYN(:,:)
         integer,               intent(in)      :: Dir_face_per_elemM, eMr_nfaces_Dir
         integer,               intent(in)      :: eMr_AreaDir(:), eMr_TopwidthDir(:)
-        real,  pointer :: area(:), topwidth(:)
+        real(8),  pointer :: area(:), topwidth(:)
         integer        :: mm
 
-        !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         do mm=1,Dir_face_per_elemM
@@ -880,11 +858,11 @@ contains
         !
         character(64) :: subroutine_name = 'zero_velocity_at_zero_volume'
 
-        real,      target,     intent(in out)  :: elemR(:,:)
+        real(8),      target,     intent(in out)  :: elemR(:,:)
         logical,               intent(in out)  :: elemYN(:,:)
         integer,               intent(in)      :: er_Velocity, er_Volume, eYN_IsAdhocFlowrate
 
-        real,  pointer :: velocity(:),  volume(:)
+        real(8),  pointer :: velocity(:),  volume(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name

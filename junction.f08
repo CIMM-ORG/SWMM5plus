@@ -44,12 +44,12 @@ contains
         !
         character(64) :: subroutine_name = 'junction_adjacent_element_average'
 
-        real,      target,     intent(in out)  :: elemMR(:,:)
-        real,                  intent(in)      :: elem2R(:,:)
+        real(8),      target,     intent(in out)  :: elemMR(:,:)
+        real(8),                  intent(in)      :: elem2R(:,:)
         integer,               intent(in)      :: elemMI(:,:), faceI(:,:)
         integer,               intent(in)      :: e2r_data, eMr_out
 
-        real,      pointer :: Uvalue(:), Dvalue(:)
+        real(8),      pointer :: Uvalue(:), Dvalue(:)
         integer :: eMr_tUp, eMr_tDn
 
         !--------------------------------------------------------------------------
@@ -97,8 +97,8 @@ contains
         !
         character(64) :: subroutine_name = 'junction_adjacent_element_values_to_branches'
 
-        real,      intent(in out)  :: elemMR(:,:)
-        real,      intent(in)      :: elem2R(:,:)
+        real(8),      intent(in out)  :: elemMR(:,:)
+        real(8),      intent(in)      :: elem2R(:,:)
         integer,   intent(in)      :: elemMI(:,:), faceI(:,:), eMr_outUp(:), eMr_outDn(:), e2r_data
 
 
@@ -162,11 +162,11 @@ contains
         !
         character(64) :: subroutine_name = 'junction_branch_average_of_inflows_and_outflows'
 
-        real,      target, intent(in out)      :: elemMR(:,:)
+        real(8),      target, intent(in out)      :: elemMR(:,:)
         integer,           intent(in)          :: elemMI(:,:)
 
         integer        :: eMr_inflow, eMr_outflow
-        real,  pointer :: inflow(:), outflow(:)
+        real(8),  pointer :: inflow(:), outflow(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -223,12 +223,12 @@ contains
         integer, intent(in) :: eMr_FlowrateThis(:), eMr_FlowrateRdir(:)
         integer, intent(in) :: eMr_VelocityThis(:), eMr_VelocityRdir(:)
 
-        real,      target, intent(in out)  :: elemMR(:,:)
-        real,              intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
+        real(8),              intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elemMI(:,:)
 
-        real,      pointer :: area(:), totalarea(:), totalflowrate(:)
-        real,      pointer :: flowrate(:), velocity(:)
+        real(8),      pointer :: area(:), totalarea(:), totalflowrate(:)
+        real(8),      pointer :: flowrate(:), velocity(:)
         integer,   pointer :: fThis(:), fRdir(:)
 
         integer :: mm
@@ -299,11 +299,11 @@ contains
         integer, intent(in) :: eMr_AreaRdir(:), eMi_MfaceRdir(:)
         integer, intent(in) :: eMi_nfaces_This, eMi_nfaces_Rdir
 
-        real,      target, intent(in out)  :: elemMR(:,:)
-        real,              intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
+        real(8),              intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elemMI(:,:)
 
-        real,      pointer :: area(:), totalarea(:)
+        real(8),      pointer :: area(:), totalarea(:)
         integer,   pointer :: fThis(:), fRdir(:)
 
         integer :: mm
@@ -356,7 +356,7 @@ contains
         !
         character(64) :: subroutine_name = 'junction_branch_velocities'
 
-        real,      intent(in out)  :: elemMR(:,:)
+        real(8),      intent(in out)  :: elemMR(:,:)
         integer,   intent(in)      :: elemMI(:,:)
 
         !--------------------------------------------------------------------------
@@ -385,9 +385,9 @@ contains
         !
         character(64) :: subroutine_name = 'junction_geometry_setup'
 
-        real,      target,      intent(in out)  :: elemMR(:,:)
+        real(8),      target,      intent(in out)  :: elemMR(:,:)
         integer,                intent(in)      :: elemMI(:,:)
-        real,      pointer                      :: Uvalue(:), Dvalue(:)
+        real(8),      pointer                      :: Uvalue(:), Dvalue(:)
 
         integer :: ii, eMr_tUp, eMr_tDn
 
@@ -428,8 +428,8 @@ contains
 
         character(64) :: subroutine_name = 'junction_adjacent_element_values_one_direction'
 
-        real,              intent(in out)  :: elemMR(:,:)
-        real,              intent(in)      :: elem2R(:,:)
+        real(8),              intent(in out)  :: elemMR(:,:)
+        real(8),              intent(in)      :: elem2R(:,:)
         integer,   target, intent(in)      :: elemMI(:,:), faceI(:,:)
 
         integer,   intent(in)  :: dir_face_per_elemM, eMi_nfaces_dir
@@ -480,10 +480,10 @@ contains
         character(64) :: subroutine_name = 'junction_branch_average'
 
         integer,           intent(in)      :: eMr_avgvalue
-        real,      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
         integer,           intent(in)      :: elemMI(:,:)
         integer,           intent(in)      :: eMr_column_up(:), eMr_column_dn(:)
-        real,              pointer         :: avgvalue(:)
+        real(8),              pointer         :: avgvalue(:)
         !--------------------------------------------------------------------------
 
         avgvalue => elemMR(:,eMr_avgvalue)
@@ -512,11 +512,11 @@ contains
         !
         character(64) :: subroutine_name = 'junction_branch_average_for_directions_then_sum'
 
-        real,      target,      intent(in out)  :: elemMR(:,:)
+        real(8),      target,      intent(in out)  :: elemMR(:,:)
         integer,                intent(in)      :: elemMI(:,:)
         integer,                intent(in)      :: eMr_columnUp(:), eMr_columnDn(:)
         integer,                intent(in)      :: eMr_out
-        real,      pointer                      :: Uvalue(:), Dvalue(:)
+        real(8),      pointer                      :: Uvalue(:), Dvalue(:)
         integer :: ii, eMr_tUp, eMr_tDn
 
         !--------------------------------------------------------------------------
@@ -563,11 +563,11 @@ contains
         character(64) :: subroutine_name = 'junction_branch_summation'
 
         integer,           intent(in)      :: eMr_sumvalue
-        real,      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
         integer,           intent(in)      :: elemMI(:,:)
 
         integer,   intent(in)  :: eMr_column_up(:), eMr_column_dn(:)
-        real,      pointer     :: sumvalue(:)
+        real(8),      pointer     :: sumvalue(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -598,11 +598,11 @@ contains
         !
         character(64) :: subroutine_name = 'junction_branch_summation_and_updown_average'
 
-        real,      target,      intent(in out)  :: elemMR(:,:)
+        real(8),      target,      intent(in out)  :: elemMR(:,:)
         integer,                intent(in)      :: elemMI(:,:)
         integer,                intent(in)      :: eMr_columnUp(:), eMr_columnDn(:)
         integer,                intent(in)      :: eMr_out
-        real,      pointer                      :: Uvalue(:), Dvalue(:)
+        real(8),      pointer                      :: Uvalue(:), Dvalue(:)
         integer :: ii, eMr_tUp, eMr_tDn
 
         !--------------------------------------------------------------------------
@@ -649,7 +649,7 @@ contains
         character(64) :: subroutine_name = 'junction_branch_summation_one_direction'
 
         integer,   intent(in)      :: eMr_sumvalue
-        real,      intent(in out)  :: elemMR(:,:)
+        real(8),      intent(in out)  :: elemMR(:,:)
         integer,   intent(in)      :: elemMI(:,:)
         integer,   intent(in)      :: face_per_elemM, eMi_nfaces_dir, eMr_columnDir(:)
 
@@ -679,7 +679,7 @@ contains
         !
         character(64) :: subroutine_name = 'junction_branch_velocities_one_direction'
 
-        real,      intent(in out)  :: elemMR(:,:)
+        real(8),      intent(in out)  :: elemMR(:,:)
         integer,   intent(in)      :: elemMI(:,:)
         integer,   intent(in)      :: eMr_FlowrateDir(:), eMr_AreaDir(:), eMr_VelocityDir(:)
         integer,   intent(in)      :: dir_face_per_elemM, eMi_nfaces_dir
@@ -709,12 +709,12 @@ contains
         character(64) :: subroutine_name = 'junction_net_flow_in_or_out'
 
         integer,           intent(in)      :: eMr_flow
-        real,      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
         integer,           intent(in)      :: elemMI(:,:)
         integer,           intent(in)      :: dir_face_per_elemM, eMi_nfaces_dir
         integer,           intent(in)      :: eMr_FlowrateDir1(:), eMr_flowrateDir2(:)
 
-        real,      pointer         :: flow(:)
+        real(8),      pointer         :: flow(:)
         integer :: mm
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -749,7 +749,7 @@ contains
         character(64) :: subroutine_name = 'junction_net_inflow_and_outflow'
 
         integer,   intent(in)      :: eMr_inflow, eMr_outflow
-        real,      intent(in out)  :: elemMR(:,:)
+        real(8),      intent(in out)  :: elemMR(:,:)
         integer,   intent(in)      :: elemMI(:,:)
 
         !--------------------------------------------------------------------------
@@ -781,15 +781,15 @@ contains
         ! THIS SHOULD ONLY BE USED IN SETUP AND INITIAL CONDITION ROUTINES
         !
         integer,           intent(in)      :: eMr_sumvalue
-        real,      target, intent(in out)  :: elemMR(:,:)
-        real,              intent(in)      :: elem2R(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
+        real(8),              intent(in)      :: elem2R(:,:)
         integer,   target, intent(in)      :: elemMI(:,:), faceI(:,:)
 
         integer,   intent(in)  :: dir_face_per_elemM, eMi_nfaces_dir, eMi_MfaceDir(:)
         integer,   intent(in)  :: fi_Melem_dir, e2r_data
 
         integer,   pointer :: tface, telem
-        real   :: thisvalue(dir_face_per_elemM)
+        real(8)   :: thisvalue(dir_face_per_elemM)
         integer :: mm, ii
 
         !--------------------------------------------------------------------------

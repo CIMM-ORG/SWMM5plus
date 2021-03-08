@@ -43,7 +43,7 @@ contains
         !
         character(64) :: subroutine_name = 'time_marching'
 
-        real,      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+        real(8),      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         integer,   target, intent(in out) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
@@ -53,13 +53,13 @@ contains
         type(threadedfileType),        intent(in)     :: threadedfile(:)
 
         integer,                       intent(in)     :: linkI(:,:), nodeI(:,:)
-        real,                          intent(in out) :: linkR(:,:), nodeR(:,:)
+        real(8),                          intent(in out) :: linkR(:,:), nodeR(:,:)
 
-        real, pointer :: rkVol(:), rkU(:)
-        real, pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
-        real, pointer :: fEdn(:), fEup(:), eE(:)
+        real(8), pointer :: rkVol(:), rkU(:)
+        real(8), pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
+        real(8), pointer :: fEdn(:), fEup(:), eE(:)
 
-        real, pointer :: thistime, nexttime
+        real(8), pointer :: thistime, nexttime
 
         integer, pointer :: thisStep, restartStep
 
@@ -69,12 +69,12 @@ contains
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    intent(in out)    :: ManningsN(:)
+        real(8),    intent(in out)    :: Length(:)
+        real(8),    intent(in out)    :: zBottom(:)
+        real(8),    intent(in out)    :: xDistance(:)
+        real(8),    intent(in out)    :: Breadth(:)
+        real(8),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
         !--------------------------------------------------------------------------
@@ -110,13 +110,25 @@ contains
 
         !% Iterate for a fixed number of steps
         !% HACK - need to develop better time and iteration controls
+        print *, setting%step%final, "final step"
         do while (thisstep <= setting%step%final)
+
+            if (mod(thisstep, 5) == 0) then
+                ! Variable time step
+                if (diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d) &
+                    >= 0.3) then
+                    setting%time%dt = setting%time%dt * 0.5
+                else
+                    setting%time%dt = setting%time%dt * 1.25
+                endif
+            endif
 
             !% display to the screen
             if (setting%Debugout%DisplayInterval > 0) then
                 if (mod(thisstep,setting%Debugout%DisplayInterval) == 0) then
                     print *, '--------------------------------------'
-                    print *, thisstep,'=current step; ', &
+                    print *, dt, 'time step size'
+                    print *, thisstep,'=current step; ', thistime, '=current time;', &
                         diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d),'=CFL max' & !Im putting the timescale for Q here. Might needed to be changed later
                         ,maxval(abs(elem2R(2:size(elem2R,1)-1,e2r_Velocity))),'=max velocity'
                     !print *, thisstep,'=current step; ', &
@@ -152,17 +164,21 @@ contains
                 endif
             endif
 
-            call output_translation_from_elements_to_link_node &
-                (elem2I, elem2R, elem2YN, elemMI, elemMR, elemMYN, faceI, faceR, &
-                linkI, linkR, nodeI, nodeR, bcdataUp, bcdataDn, thisstep)
-                
-            call debug_output &
-                (debugfile, nodeR, linkR, elem2R, elem2I, elem2YN, elemMR,  &
-                elemMI, elemMYN, faceR, faceI, faceYN,bcdataUp, bcdataDn, thisstep)
+            if (setting%Debugout%DisplayInterval > 0) then
+                if (mod(thisstep,setting%Debugout%DisplayInterval) == 0) then
+                    call output_translation_from_elements_to_link_node &
+                        (elem2I, elem2R, elem2YN, elemMI, elemMR, elemMYN, faceI, faceR, &
+                        linkI, linkR, nodeI, nodeR, bcdataUp, bcdataDn, thisstep)
 
-            call  output_all_threaded_data_by_link &
-                (threadedfile, elem2R, elem2I, elemMR, elemMI, faceR, faceI, linkI, &
-                bcdataUp, bcdataDn, thisstep)
+                    call debug_output &
+                        (debugfile, nodeR, linkR, elem2R, elem2I, elem2YN, elemMR,  &
+                        elemMI, elemMYN, faceR, faceI, faceYN,bcdataUp, bcdataDn, thisstep)
+
+                    call  output_all_threaded_data_by_link &
+                        (threadedfile, elem2R, elem2I, elemMR, elemMI, faceR, faceI, linkI, &
+                        bcdataUp, bcdataDn, thisstep)
+                endif
+            endif
 
 
             !% TEST ROUTINES

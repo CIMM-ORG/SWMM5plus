@@ -26,7 +26,6 @@ module initialization
     public :: initialize_array_zerovalues ! sets some elemMR values to zero
     public :: initialize_dummy_values
     public :: initialize_linknode_arrays ! Retrieves data from SWMM C interface and populates link and node tables
-
     integer, private :: debuglevel = 0
 
 contains
@@ -771,7 +770,7 @@ contains
         !
         character(64) :: subroutine_name = 'initialize_array_zerovalues'
 
-        real,  intent(in out)  :: elemMR(:,:)
+        real(8),  intent(in out)  :: elemMR(:,:)
 
         integer    :: mm
 
@@ -811,7 +810,7 @@ contains
         character(64) :: subroutine_name = 'initialize_dummy_values'
 
         integer,   intent(in out) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
-        real,      intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+        real(8),      intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         logical,   intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
         !--------------------------------------------------------------------------
@@ -853,8 +852,8 @@ contains
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
         type(string), dimension(:), allocatable, target, intent(out)   :: linkName
@@ -867,11 +866,13 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
 
-        ! --- Initialize C API
-        call initialize_api()
+        if (.not. api_is_initialized) then
+            print *, MSG_API_NOT_INITIALIZED
+            stop
+        end if
 
-        N_link = get_num_links()
-        N_node = get_num_nodes()
+        N_link = num_links
+        N_node = num_nodes
 
         ! Allocate storage for link & node tables
         call allocate_linknode_storage &
@@ -882,11 +883,11 @@ contains
 
         do i = 1, N_link
             linkI(i,li_idx) = i
-            linkI(i,li_link_type) = get_link_xsect_attrs(i, link_type)
-            linkI(i,li_geometry) = get_link_xsect_attrs(i, link_geometry)
+            linkI(i,li_link_type) = get_link_attribute(i, link_type)
+            linkI(i,li_geometry) = get_link_attribute(i, link_geometry)
             linkI(i,li_roughness_type) = 1 ! TODO - get from params file
-            linkI(i,li_Mnode_u) = get_link_attr(i, link_node1) + 1 ! node1 in C starts from 0
-            linkI(i,li_Mnode_d) = get_link_attr(i, link_node2) + 1 ! node2 in C starts from 0
+            linkI(i,li_Mnode_u) = get_link_attribute(i, link_node1) + 1 ! node1 in C starts from 0
+            linkI(i,li_Mnode_d) = get_link_attribute(i, link_node2) + 1 ! node2 in C starts from 0
 
             nodeI(linkI(i,li_Mnode_u), ni_N_link_u) = nodeI(linkI(i,li_Mnode_u), ni_N_link_u) + 1
             nodeI(linkI(i,li_Mnode_u), ni_idx_base1 + nodeI(linkI(i,li_Mnode_u), ni_N_link_u)) = i
@@ -894,43 +895,39 @@ contains
             nodeI(linkI(i,li_Mnode_d), ni_idx_base2 + nodeI(linkI(i,li_Mnode_d), ni_N_link_d)) = i
 
             linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
-            linkR(i,lr_Length) = get_link_attr(i, conduit_length)
+            linkR(i,lr_Length) = get_link_attribute(i, conduit_length)
             ! linkR(i,lr_TopWidth): defined in network_define.f08
-            linkR(i,lr_BreadthScale) = get_link_xsect_attrs(i, link_xsect_wMax)
+            linkR(i,lr_BreadthScale) = get_link_attribute(i, link_xsect_wMax)
             ! linkR(i,lr_Slope): defined in network_define.f08
-            linkR(i,lr_LeftSlope) = get_link_attr(i, link_left_slope)
-            linkR(i,lr_RightSlope) = get_link_attr(i, link_right_slope)
-            linkR(i,lr_Roughness) = get_link_attr(i, conduit_roughness)
-            linkR(i,lr_InitialFlowrate) = get_link_attr(i, link_q0)
-            linkR(i,lr_InitialUpstreamDepth) = get_node_attr(linkI(i,li_Mnode_u), node_initDepth)
-            linkR(i,lr_InitialDnstreamDepth) = get_node_attr(linkI(i,li_Mnode_d), node_initDepth)
-            linkR(i,lr_InitialDepth) = abs(linkR(i,lr_InitialDnstreamDepth) - linkR(i,lr_InitialUpstreamDepth)) / 2
+            linkR(i,lr_LeftSlope) = get_link_attribute(i, link_left_slope)
+            linkR(i,lr_RightSlope) = get_link_attribute(i, link_right_slope)
+            linkR(i,lr_Roughness) = get_link_attribute(i, conduit_roughness)
+            linkR(i,lr_InitialFlowrate) = get_link_attribute(i, link_q0)
+            linkR(i,lr_InitialUpstreamDepth) = get_node_attribute(linkI(i,li_Mnode_u), node_initDepth)
+            linkR(i,lr_InitialDnstreamDepth) = get_node_attribute(linkI(i,li_Mnode_d), node_initDepth)
+            linkR(i,lr_InitialDepth) = (linkR(i,lr_InitialDnstreamDepth) + linkR(i,lr_InitialUpstreamDepth)) / 2.0
 
         end do
-
         do i = 1, N_node
             total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
             nodeI(i, ni_idx) = i
-            if (get_node_attr(i, node_type) == 1) then ! OUTFALL
+            if (get_node_attribute(i, node_type) == 1) then ! OUTFALL
                 nodeI(i, ni_node_type) = nBCdn
             else if (total_n_links == 2) then
                 nodeI(i, ni_node_type) = nJ2
             else if (total_n_links > 2) then
                 nodeI(i, ni_node_type) = nJm
-            else
-                nodeI(i, ni_node_type) = nBCup
             end if
-
-            nodeR(i,nr_Zbottom) = get_node_attr(i, node_invertElev)
+            ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
+            nodeR(i,nr_InitialDepth) = get_node_attribute(i, node_initDepth)
+            nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
         end do
-        ! --- Close C API
-        call finalize_api()
 
         if ((debuglevel > 0) .or. (debuglevel > 0)) then
-            print*, "li_idx, ", "li_link_type, ", "li_weir_type, ", "li_orif_type, ", "li_pump_type, ",&
-                    "li_geometry, ", "li_roughness_type, ", "li_N_element, ", "li_Mnode_u, ", "li_Mnode_d, ", &
-                     "li_Melem_u, ", "li_Melem_d, ", "li_Mface_u, ", "li_Mface_d, ", "li_assigned, ", &
-                     "li_InitialDepthType, ", "li_temp1"
+            print*, "li_idx, ", "li_link_type, ", "li_weir_type, ", "li_orif_type, ", "li_pump_type, ", "li_geometry, ",&
+                    "li_roughness_type, ", "li_N_element, ", "li_Mnode_u, ", "li_Mnode_d, ", "li_Melem_u, ", &
+                    "li_Melem_d, ", "li_Mface_u, ", "li_Mface_d, ", "li_assigned, ", "li_InitialDepthType, ", &
+                    "li_temp1, ", "li_idx_max"
             do i = 1, N_link
                 print *, linkI(i,:)
             end do
@@ -942,14 +939,16 @@ contains
             do i = 1, N_link
                 print *, linkR(i,:)
             end do
-            print *, "ni_idx, ", "ni_node_type, ", "ni_N_link_u, ", "ni_N_link_d, ", "ni_assigned, ", &
-                     "ni_temp1, ", "ni_Mlink_u1, ", "ni_Mlink_u2, ", "ni_Mlink_u3, ", "ni_Mlink_d1, ",&
-                     "ni_Mlink_d2, ", "ni_Mlink_d3"
+            print *, "ni_idx, ", "ni_node_type, ", "ni_N_link_u, ", "ni_N_link_d, ", "ni_curve_type, ", &
+                     "ni_assigned, ", "ni_temp1, ", "ni_idx_base1, ", "ni_Mlink_u1, ", "ni_Mlink_u2, ", &
+                     "ni_Mlink_u3, ", "ni_idx_base2, ", "ni_Mlink_d1, ", "ni_Mlink_d2, ", "ni_Mlink_d3"
             do i = 1, N_node
                 print *, nodeI(i,:)
             end do
-            print *, "nr_Zbottom, ", "nr_temp1, ", "nr_ElementLength_u1, ", "nr_ElementLength_u2, ", &
-                     "nr_ElementLength_u3, ", "nr_ElementLength_d1, ", "nr_ElementLength_d2, ", &
+            print *, "nr_Zbottom, ", "nr_InitialDepth, ", "nr_FullDepth, ", "nr_StorageConstant, ", &
+                     "nr_StorageCoeff, ", "nr_StorageExponent, ", "nr_PondedArea, ", "nr_SurchargeDepth, ", &
+                     "nr_temp1, ", "nr_idx_base1, ", "nr_ElementLength_u1, ", "nr_ElementLength_u2, ", &
+                     "nr_ElementLength_u3, ", "nr_idx_base2, ", "nr_ElementLength_d1, ", "nr_ElementLength_d2, ", &
                      "nr_ElementLength_d3"
             do i = 1, N_node
                 print *, nodeR(i,:)

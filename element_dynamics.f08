@@ -38,12 +38,12 @@ contains
         !
         character(64) :: subroutine_name = 'element_dynamics_update'
 
-        real,      target,     intent(in out)  ::  elem2R(:,:),  elemMR(:,:)
-        real,      target,     intent(in)      ::  faceR(:,:)
+        real(8),      target,     intent(in out)  ::  elem2R(:,:),  elemMR(:,:)
+        real(8),      target,     intent(in)      ::  faceR(:,:)
         integer,               intent(in)      ::  elem2I(:,:),  elemMI(:,:)
         logical,   target,     intent(in out)  ::  elem2YN(:,:), elemMYN(:,:)
         type(bcType),          intent(in out)  ::  bcdataDn(:),  bcdataUp(:)
-        real,                  intent(in)      ::  thisTime
+        real(8),                  intent(in)      ::  thisTime
         integer,               intent(in)      ::  e2r_Velocity_new, e2r_Volume_new
         integer,               intent(in)      ::  eMr_Velocity_new, eMr_Volume_new
 
@@ -52,16 +52,23 @@ contains
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
+        ! print*, 'before going into elem dyna'
+        ! print*, elem2R(:,e2r_Velocity)
         !% velocity limiter on channels
         call adjust_channel_velocity_limiter &
             (elem2R, elem2YN, elem2I, &
             e2i_elem_type, eChannel, e2YN_IsAdhocFlowrate, e2r_Velocity_new )
 
+        ! print *, "adjust_channel_velocity_limiter"
+        ! print *, elem2R(:, e2r_Velocity)
+
         !% velocity limiter on junction (handled on main element only)
         call adjust_channel_velocity_limiter &
             (elemMR, elemMYN, elemMI, &
             eMi_elem_type, eJunctionChannel, eMYN_IsAdhocFlowrate,  eMr_Velocity_new)
+
+        ! print *, "adjust_channel_velocity_limiter"
+        ! print *, elem2R(:, e2r_Velocity)
 
         !%  For small volumes, compute a velocity that is blended from the update value
         !%  and a Chezy-Manning computed using the free surface slope of the element
@@ -71,6 +78,9 @@ contains
                 e2r_Velocity_new, eMr_Velocity_new)
         endif
 
+        ! print *, "blended_smallvolume_velocity"
+        ! print *, elem2R(:, e2r_Velocity)
+
         !% for extremely small volumes - perform a separate reset
         if (setting%ZeroValue%Volume > zeroR) then
             call adjust_zero_velocity_at_zero_volume &
@@ -78,14 +88,23 @@ contains
                 elemMR, elemMYN, eMr_Velocity_new, eMr_Volume_new)
         endif
 
+        ! print *, "adjust_zero_velocity_at_zero_volume"
+        ! print *, elem2R(:, e2r_Velocity)
+        
+
         !%  flowrate updated from velocity
         call element_flowrate_update  &
             (elem2R, elemMR, faceR, elem2I, elemMI, e2r_Velocity_new, eMr_Velocity_new)
-
+            ! print *, "element_flowrate_update"
+            ! print *, elem2R(:, e2r_Velocity)
         !%  apply the boundary conditions on velocity and flowrate
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_inflowrate, e2r_Velocity_new)
-
+            ! print *, "bc_applied_onelement"
+            ! print *, elem2R(:, e2r_Velocity)
+            ! print*, elem2R(:,e2r_Area)
+            ! print*, elem2I(:,e2i_elem_type)
+            ! stop
         !% compute the timescales up and down
         call element_timescale &
             (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, bcdataDn, bcdataUp, &
@@ -109,12 +128,12 @@ contains
         !
         character(64) :: subroutine_name = 'element_flowrate_update'
 
-        real,      target, intent(in out)  ::  elem2R(:,:), elemMR(:,:)
-        real,      target, intent(in)      ::  faceR(:,:)
+        real(8),      target, intent(in out)  ::  elem2R(:,:), elemMR(:,:)
+        real(8),      target, intent(in)      ::  faceR(:,:)
         integer,   target, intent(in)      ::  elem2I(:,:), elemMI(:,:)
         integer,           intent(in)      ::  e2r_Velocity_new, eMr_Velocity_new
 
-        real,      pointer :: totalarea(:)
+        real(8),      pointer :: totalarea(:)
 
         integer :: mm, eMR_totalarea
 
@@ -208,13 +227,13 @@ contains
         !
         character(64) :: subroutine_name = 'flowrate_from_velocity'
 
-        real,  target, intent(in out)  :: elemR(:,:)
+        real(8),  target, intent(in out)  :: elemR(:,:)
         integer,       intent(in)      :: elemI(:,:)
 
         integer,       intent(in)  :: er_Flowrate, er_Area, er_Velocity, ei_elem_type
         integer,       intent(in)  :: eThisElemType
 
-        real,  pointer :: flowrate(:), area(:), velocity(:)
+        real(8),  pointer :: flowrate(:), area(:), velocity(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -246,8 +265,8 @@ contains
         !
         character(64) :: subroutine_name = 'blended_smallvolume_velocity'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,           intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
@@ -326,8 +345,8 @@ contains
         !
         character(64) :: subroutine_name = 'velocity_blend_with_mask'
 
-        real,      target,     intent(in out)  :: elemR(:,:)
-        real,                  intent(in)      :: faceR(:,:)
+        real(8),      target,     intent(in out)  :: elemR(:,:)
+        real(8),                  intent(in)      :: faceR(:,:)
         integer,   target,     intent(in)      :: elemI(:,:)
         logical,               intent(in)      :: elemYN(:,:)
 
@@ -342,9 +361,9 @@ contains
         integer  :: er_tSlope, er_tSmallVelocity, er_tManningsN
 
         integer,   pointer :: fUp(:), fDn(:)
-        real,      pointer :: Length(:), Velocity(:), Flowrate(:), HydRadius(:)
-        real,      pointer :: SmallVolumeRatio(:), Area(:)
-        real,      pointer :: Slope(:), smallVelocity(:), ManningsN(:)
+        real(8),      pointer :: Length(:), Velocity(:), Flowrate(:), HydRadius(:)
+        real(8),      pointer :: SmallVolumeRatio(:), Area(:)
+        real(8),      pointer :: Slope(:), smallVelocity(:), ManningsN(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -414,14 +433,14 @@ contains
         ! of the actual Manning's N for the channel and a setting value (typically
         ! larger)for small depths.
         !
-        real,      target,     intent(in out)  :: elemR(:,:)
+        real(8),      target,     intent(in out)  :: elemR(:,:)
         integer,               intent(in)      :: elemI(:,:)
         logical,               intent(in)      :: elemYN(:,:)
 
         integer,   intent(in) :: er_tManningsN, er_tSmallVelocity
         integer,   intent(in) :: eYN_IsSmallVolume, ei_roughness_type, er_Roughness
 
-        real,  pointer :: ManningsN(:), smallVelocity(:)
+        real(8),  pointer :: ManningsN(:), smallVelocity(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -458,7 +477,7 @@ contains
         !
         character(64) :: subroutine_name = 'element_timescale'
 
-        real,              intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),              intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,           intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,           intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
         type(bcType),      intent(in)      :: bcdataDn(:), bcdataUp(:)
@@ -493,16 +512,16 @@ contains
 
         character(64) :: subroutine_name = 'timescale_value_HonlyElement'
 
-        real,      target, intent(in out)  :: elem2R(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:)
         integer,           intent(in)      :: elem2I(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:)
 
         integer    ::  indx(2), maskindx1
 
-        real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
-        real,      pointer :: tscale_H_up(:), tscale_H_dn(:), wavespeed(:)
-        real,      pointer :: tscale_G_up(:), tscale_G_dn(:), velocity(:)
-        real,      pointer :: length(:)
+        real(8),      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
+        real(8),      pointer :: tscale_H_up(:), tscale_H_dn(:), wavespeed(:)
+        real(8),      pointer :: tscale_G_up(:), tscale_G_dn(:), velocity(:)
+        real(8),      pointer :: length(:)
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -538,16 +557,16 @@ contains
 
         character(64) :: subroutine_name = 'timescale_value_QonlyElement'
 
-        real,      target, intent(in out)  :: elem2R(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:)
         integer,           intent(in)      :: elem2I(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:)
 
         integer    ::  indx(2), maskindx1
 
-        real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
-        real,      pointer :: tscale_H_up(:), tscale_H_dn(:), wavespeed(:)
-        real,      pointer :: tscale_G_up(:), tscale_G_dn(:), velocity(:)
-        real,      pointer :: length(:)
+        real(8),      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
+        real(8),      pointer :: tscale_H_up(:), tscale_H_dn(:), wavespeed(:)
+        real(8),      pointer :: tscale_G_up(:), tscale_G_dn(:), velocity(:)
+        real(8),      pointer :: length(:)
         logical,   pointer :: maskarray1(:)
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -588,17 +607,17 @@ contains
 
         integer,           intent(in)      :: e2r_Velocity_new
 
-        real,      target, intent(in out)  :: elem2R(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:)
         integer,           intent(in)      :: elem2I(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:)
 
         integer    ::  indx(2), maskindx1, maskindx2
 
-        real,      pointer :: wavespeed(:), velocity(:)
-        real,      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
-        real,      pointer :: tscale_H_up(:), tscale_H_dn(:)
-        real,      pointer :: tscale_G_up(:), tscale_G_dn(:)
-        real,      pointer :: length(:)
+        real(8),      pointer :: wavespeed(:), velocity(:)
+        real(8),      pointer :: tscale_Q_up(:), tscale_Q_dn(:)
+        real(8),      pointer :: tscale_H_up(:), tscale_H_dn(:)
+        real(8),      pointer :: tscale_G_up(:), tscale_G_dn(:)
+        real(8),      pointer :: length(:)
         logical,   pointer :: maskarray1(:), maskarray2(:)
 
         !--------------------------------------------------------------------------
@@ -676,11 +695,11 @@ contains
 
         character(64) :: subroutine_name = 'timescale_value_junction'
 
-        real,  target,     intent(in out)  :: elemMR(:,:)
+        real(8),  target,     intent(in out)  :: elemMR(:,:)
         integer,           intent(in)      :: elemMI(:,:)
         logical,           intent(in out)  :: elemMYN(:,:)
 
-        real,  pointer ::  wavespeed(:), length(:), velocity(:), tscale(:)
+        real(8),  pointer ::  wavespeed(:), length(:), velocity(:), tscale(:)
 
         integer :: eMr_waveindx
 
@@ -730,13 +749,13 @@ contains
 
         character(64) :: subroutine_name = 'timescale_junction_one_direction'
 
-        real,      target, intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
         integer,           intent(in)      :: elemMI(:,:)
         integer,           intent(in)      :: eMr_LengthDir(:), eMr_VelocityDir(:), eMr_TimescaleDir(:)
         integer,           intent(in)      :: dir_face_per_elemM, eMi_nfaces_dir, eMr_waveindx
         logical,           intent(in)      :: isUp
 
-        real,  pointer :: length(:), velocity(:), tscale(:), wavespeed(:)
+        real(8),  pointer :: length(:), velocity(:), tscale(:), wavespeed(:)
         integer :: mm
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -771,7 +790,7 @@ contains
 
         character(64) :: subroutine_name = 'timescale_limit_junction_one_direction'
 
-        real,              intent(in out)  :: elemMR(:,:)
+        real(8),              intent(in out)  :: elemMR(:,:)
         integer,           intent(in)      :: elemMI(:,:)
         logical,   target, intent(in out)  :: elemMYN(:,:)
         integer,           intent(in)      :: dir_face_per_elemM, eMi_nfaces_dir
@@ -822,13 +841,13 @@ contains
         !
         character(64) :: subroutine_name = 'timescale_limiter'
 
-        real,      target, intent(in out)  :: elemR(:,:)
+        real(8),      target, intent(in out)  :: elemR(:,:)
         integer,           intent(in)      :: elemI(:,:)
         logical,   target, intent(in out)  :: elemYN(:,:)
         integer,           intent(in)      :: indx(:)
         integer,           intent(in)      :: maskindx1, maskindx2
 
-        real,      pointer :: tscale(:)
+        real(8),      pointer :: tscale(:)
         logical,   pointer :: maskarray1(:), maskarray2(:)
         integer            :: mm
 
@@ -868,9 +887,9 @@ contains
         !
         ! limits the inoutarray to the limitvalue where maskarray is true
         !
-        real,      intent(in out)  :: inoutarray(:)
+        real(8),      intent(in out)  :: inoutarray(:)
         logical,   intent(in)      :: maskarray(:)
-        real,      intent(in)      :: limitvalue
+        real(8),      intent(in)      :: limitvalue
         !--------------------------------------------------------------------------
 
         where (maskarray)
@@ -886,8 +905,8 @@ contains
         !
         ! provides a chezy-manning velocity used for small volumes
         !
-        real                :: small_chezy_velocity
-        real,   intent(in)  :: ManningsN, HydRadius, Slope
+        real(8)                :: small_chezy_velocity
+        real(8),   intent(in)  :: ManningsN, HydRadius, Slope
 
         small_chezy_velocity = sign(  (oneR / ManningsN)       &
             * (HydRadius**(twothirdR))  &
@@ -902,8 +921,8 @@ contains
         !
         ! Blends two velocity solutions based on small volume ratio
         !
-        real                :: velocity_blend
-        real,   intent(in)  :: SmallVolumeRatio, velocity, smallVelocity
+        real(8)                :: velocity_blend
+        real(8),   intent(in)  :: SmallVolumeRatio, velocity, smallVelocity
 
         ! HACK - need to ensure that 0 < SmallVolumeRatio < 1
         ! Cannot do it here without removing the pure elemental nature.

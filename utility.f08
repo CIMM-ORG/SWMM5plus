@@ -48,7 +48,7 @@ contains
         !
         character(64) :: subroutine_name = 'utility_print_values_by_link'
 
-        real,      intent(in)      :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(8),      intent(in)      :: elem2R(:,:), elemMR(:,:), faceR(:,:)
         integer,   intent(in)      :: elem2I(:,:), elemMI(:,:), faceI(:,:)
         integer,   intent(in)      :: ilink, fcolDn, fcolUp, e2col, eMcolC, eMcolDn(:), eMcolUp(:)
 
@@ -146,7 +146,7 @@ contains
         !
         ! computes a simple average of an array
         !
-        real,  intent(in)  :: inarray(:)
+        real(8),  intent(in)  :: inarray(:)
 
         !--------------------------------------------------------------------------
 
@@ -221,10 +221,10 @@ contains
         !
         character(64) :: subroutine_name = 'utility_linear_interpolate_within_indexlist'
 
-        real,      intent(in)  :: IndexArray(:), ValueArray(:)
-        real,      intent(in)  :: thisIndex
+        real(8),      intent(in)  :: IndexArray(:), ValueArray(:)
+        real(8),      intent(in)  :: thisIndex
 
-        real ::  thisValue
+        real(8) ::  thisValue
 
         integer :: closeloc
 
@@ -234,24 +234,27 @@ contains
         closeloc = minloc(abs(thisIndex - IndexArray),1)
 
         !% get the value if the location is exactly on an index
-        if (thisIndex - IndexArray(closeloc) == 0) then
+        if (thisIndex == IndexArray(closeloc)) then
             thisValue = ValueArray(closeloc)
 
             !% if the close location index is below the target
-        elseif ((thisIndex - IndexArray(closeloc) > 0) .and. &
+        elseif ((thisIndex > IndexArray(closeloc)) .and. &
             (closeloc < size(IndexArray,1)) ) then
             thisValue = ( ValueArray(closeloc)   * ( IndexArray(closeloc + 1) - thisIndex)    &
                 +ValueArray(closeloc+1) * ( thisIndex - IndexArray(closeloc)    ) )  &
                 / ( IndexArray(closeloc+1) - IndexArray(closeloc) )
 
             !% if the close location is above the target
-        elseif ((thisIndex - IndexArray(closeloc) < 0) .and. &
+        elseif ((thisIndex < IndexArray(closeloc)) .and. &
             (closeloc > 1) ) then
             thisValue = ( ValueArray(closeloc)   * ( IndexArray(closeloc) - thisIndex   )    &
                 +ValueArray(closeloc-1) * ( thisIndex - IndexArray(closeloc-1) )  ) &
                 / ( IndexArray(closeloc) - IndexArray(closeloc - 1) )
 
         else
+            print *, thisIndex
+            print *, IndexArray
+            print *, closeloc
             !% error condition - the index appears to be outside of the index array
             print *, 'error: interpolation index (thisIndex) is outside the array bounds (IndexArray) in ' &
                 , subroutine_name
@@ -334,12 +337,12 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    pure elemental real function utility_round_to_significant_digits &
+    pure elemental real(8) function utility_round_to_significant_digits &
         (inarray,idigits) result (outarray)
         !
         ! returns the exponent scale of the largest n where 10^n < number
         !
-        real,      intent(in)    :: inarray
+        real(8),      intent(in)    :: inarray
         integer,   intent(in)    :: idigits
 
         integer :: inscale
@@ -362,7 +365,7 @@ contains
         !
         ! returns the exponent scale of the largest n where 10^n < number
         !
-        real,      intent(in)    :: inarray
+        real(8),      intent(in)    :: inarray
 
         !--------------------------------------------------------------------------
 
@@ -373,12 +376,12 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    pure elemental real function utility_sign_with_ones &
+    pure elemental real(8) function utility_sign_with_ones &
         (inarray) result (outarray)
         !
         ! returns is an array of real ones with the sign of the inarray argument
         !
-        real,      intent(in)    :: inarray
+        real(8),      intent(in)    :: inarray
 
         !--------------------------------------------------------------------------
 

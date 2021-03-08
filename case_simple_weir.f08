@@ -40,20 +40,20 @@ contains
         !
         character(64) :: subroutine_name = 'case_simple_weir_initialize'
 
-        real,  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
-        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
-        real,  intent(in)  :: side_slope(:), inlet_offset(:), end_contractions(:)
-        real,  intent(in)  :: discharge_coefficient1(:), discharge_coefficient2(:)
-        real,  intent(in)  :: full_depth(:), ManningsN(:)
+        real(8),  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
+        real(8),  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
+        real(8),  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
+        real(8),  intent(in)  :: side_slope(:), inlet_offset(:), end_contractions(:)
+        real(8),  intent(in)  :: discharge_coefficient1(:), discharge_coefficient2(:)
+        real(8),  intent(in)  :: full_depth(:), ManningsN(:)
 
         integer, intent(in):: roughness_type, idepth_type(:)
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
@@ -123,20 +123,20 @@ contains
         !
         character(64) :: subroutine_name = 'case_simple_weir_and_nodes'
 
-        real,  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:), initial_flowrate(:)
-        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
-        real,  intent(in)  :: side_slope(:), inlet_offset(:), end_contractions(:)
-        real,  intent(in)  :: discharge_coefficient1(:), discharge_coefficient2(:)
-        real,  intent(in)  :: full_depth(:), ManningsN(:)
+        real(8),  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
+        real(8),  intent(in)  :: lowerZ(:), upperZ(:), initial_flowrate(:)
+        real(8),  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
+        real(8),  intent(in)  :: side_slope(:), inlet_offset(:), end_contractions(:)
+        real(8),  intent(in)  :: discharge_coefficient1(:), discharge_coefficient2(:)
+        real(8),  intent(in)  :: full_depth(:), ManningsN(:)
 
         integer, intent(in):: roughness_type, idepth_type(:)
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN

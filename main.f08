@@ -1,7 +1,6 @@
 !==========================================================================
 !
 program main
-
     use allocate_storage
     use array_index
     use bc
@@ -13,46 +12,53 @@ program main
     use initialization
     use initial_condition
     use junction
+    use inflow
+    use interface
+    use network_graph
     use network_define
     use output
     use setting_definition
     use type_definitions
-    use test_cases
+    use objects
+    use project
+    ! use test_cases
     use time_loop
     use utility
 
     implicit none
 
+    integer :: ii, jj
+
     !%  elem2# are the values for elements that have only 2 faces
-    real,       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
+    real(8),       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
     integer,    dimension(:,:), allocatable, target    :: elem2I       ! integer data for elements with 2 faces
     logical,    dimension(:,:), allocatable, target    :: elem2YN      ! logical data for elements with 2 faces
 
     type(string), dimension(:), allocatable, target    :: elem2Name    ! array of character strings
 
     !%  elemM# are the values for elements that have more than 2 faces
-    real,       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
+    real(8),       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
     integer,    dimension(:,:), allocatable, target    :: elemMI       ! integer data for elements with multi faces
     logical,    dimension(:,:), allocatable, target    :: elemMYN      ! logical data for elements with multi faces
 
     type(string), dimension(:), allocatable, target    :: elemMName    ! array of character strings
 
     !%  face# are the values for faces (always bounded by 2 elements)
-    real,       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
+    real(8),       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
     integer,    dimension(:,:), allocatable, target    :: faceI       ! integer data for faces
     logical,    dimension(:,:), allocatable, target    :: faceYN      ! logical data for face
 
     type(string), dimension(:), allocatable, target    :: faceName    ! array of character strings
 
     !%  links are the building blocks from SWMM link-node formulation
-    real,       dimension(:,:), allocatable, target    :: linkR       ! real data for links
+    real(8),       dimension(:,:), allocatable, target    :: linkR       ! real data for links
     integer,    dimension(:,:), allocatable, target    :: linkI       ! integer data for links
     logical,    dimension(:,:), allocatable, target    :: linkYN      ! logical data for links
 
     type(string), dimension(:), allocatable, target    :: linkName    ! array of character strings
 
     !%  nodes are the building blocks from teh SWMM link-node formulation
-    real,       dimension(:,:), allocatable, target    :: nodeR       ! real data for nodes
+    real(8),       dimension(:,:), allocatable, target    :: nodeR       ! real data for nodes
     integer,    dimension(:,:), allocatable, target    :: nodeI       ! integer data for nodes
     logical,    dimension(:,:), allocatable, target    :: nodeYN      ! logical data for nodes
 
@@ -69,16 +75,16 @@ program main
 
     !% threaded output files
     type(threadedfileType), allocatable, dimension(:) :: threadedfile
-
     integer, dimension(:),      allocatable :: wdID
     integer, dimension(:),      allocatable :: wdNumberPairs
-    real,    dimension(:),      allocatable :: wdManningsN
-    real,    dimension(:),      allocatable :: wdLength
-    real,    dimension(:),      allocatable :: wdZBottom
-    real,    dimension(:),      allocatable :: wdXDistance
-    real,    dimension(:),      allocatable :: wdBreadth
-    real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
+    real(8),    dimension(:),      allocatable :: wdManningsN
+    real(8),    dimension(:),      allocatable :: wdLength
+    real(8),    dimension(:),      allocatable :: wdZBottom
+    real(8),    dimension(:),      allocatable :: wdXDistance
+    real(8),    dimension(:),      allocatable :: wdBreadth
+    real(8),    dimension(:,:,:),  allocatable :: wdWidthDepthData
     type(string), dimension(:), allocatable :: wdCellType(:)
+
 
     !--------------------------------------------------------------------------
     print *, ''
@@ -92,9 +98,9 @@ program main
     !===========================================================
     !%  hard-code setting for test cases
 
-    setting%TestCase%UseTestCase = .true.
+    setting%TestCase%UseTestCase = .false.
     ! setting%TestCase%TestName = 'simple_channel_001'
-    setting%TestCase%TestName = 'y_channel_002'
+    ! setting%TestCase%TestName = 'y_channel_002'
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
@@ -107,13 +113,13 @@ program main
     setting%Debugout%SuppressTimeValue = .true. ! which can make debug files easier
     setting%Debugout%SuppressNdat      = .true. ! to read (but less useful)
 
-    setting%Debugout%elem2R = .true.   ! select arrays to have debug output
-    setting%Debugout%elemMR = .true.   ! select arrays to have debug output
-    setting%Debugout%faceR  = .true.   ! note that not all are implemented
+    setting%Debugout%elem2R = .false.   ! select arrays to have debug output
+    setting%Debugout%elemMR = .false.   ! select arrays to have debug output
+    setting%Debugout%faceR  = .false.   ! note that not all are implemented
     setting%Debugout%linkR  = .true.
     setting%Debugout%nodeR  = .true.
 
-    !setting%OutputThreadedLink%SuppressAllFiles = .true.
+    setting%OutputThreadedLink%SuppressAllFiles = .true.
 
     setting%OutputThreadedLink%UseThisOutput = .true.
     setting%OutputThreadedLink%area = .true.
@@ -126,25 +132,22 @@ program main
 
     !% bookkeeping routines
     call utility_get_datetime_stamp (setting%Time%DateTimeStamp)
-
     call debug_initialize (debugfile)
-
     call checking_consistency
-
     call initialize_arrayindex
 
     !% custom setup for hard-code test cases
     if (setting%TestCase%UseTestCase) then
-        call test_case_initiation &
-            (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-            bcdataDn, bcdataUp, &
-            wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
-            wdBreadth, wdWidthDepthData, wdCellType)
-    else
-        call initialize_linknode_arrays &
-            (linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
-        print *, 'error - code only designed for use with test cases'
         stop
+        ! call test_case_initiation &
+        !     (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
+        !     bcdataDn, bcdataUp, &
+        !     wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
+        !     wdBreadth, wdWidthDepthData, wdCellType)
+    else
+       call project_open &
+       (linkI, nodeI, linkR, nodeR, linkYN, &
+       nodeYN, linkName, nodeName, bcdataUp, bcdataDn)
     end if
 
     !% create the network of elements from link and node data
@@ -154,7 +157,8 @@ program main
         elem2R, elem2I, elem2YN, elem2Name, &
         elemMR, elemMI, elemMYN, elemMName, &
         faceR,  faceI,  faceYN,  faceName)
-    !print *, 'in main'
+
+    print *, 'in main'
 
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
@@ -165,7 +169,7 @@ program main
         linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
         wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
         wdBreadth, wdWidthDepthData, wdCellType)
-        
+
     !% check consistency of the smallvolume setup
     call checking_smallvolume_consistency (elem2R, elemMR)
 
@@ -214,6 +218,7 @@ program main
     !%  close out the debug files
     call debug_finalize(debugfile)
 
+    call project_close(bcdataDn, bcdataUp)
     print *
     print *, 'finished main program'
     print *, '====================='

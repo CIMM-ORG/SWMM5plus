@@ -1,9 +1,12 @@
 #!/bin/bash
 
-echo Compiling the SWMM DLL ...
-cd utilities/swmm_interface
-./make_swmm.sh
-cd ../..
+# echo Download SWMM C interface
+git clone git@github.austin.utexas.edu:gr24269/SWMMwrapper.git
+cd SWMMwrapper
+./Allmake.sh
+cp libswmm5.so ../
+cd ..
+sudo rm -r SWMMwrapper
 
 echo Making the debug directory ...
 DIRDebug=debugoutputA
@@ -26,25 +29,27 @@ echo Compiling with $FC ...
 echo Find all source files, create a list of corresponding object files ...
 
 # Find all source files, create a list of corresponding object files
-SOURCESF="  dll_mod.f08\
+SOURCESF="  errors.f08\
+        datetime.f08\
+        dll_mod.f08\
         type_definitions.f08\
+        dynamic_array.f08\
         setting_definition.f08\
         globals.f08\
-        xsect_tables.f08\
+        selectors.f08\
         array_index.f08\
+        xsect_tables.f08\
         data_keys.f08\
+        objects.f08\
+        tables.f08\
         interface.f08\
         utility.f08\
+        bc.f08\
+        inflow.f08\
+        network_graph.f08\
         adjustments.f08\
         allocate_storage.f08\
-        bc.f08\
         read_width_depth.f08\
-        case_waller_creek.f08\
-        case_simple_channel.f08\
-        case_simple_weir.f08\
-        case_simple_orifice.f08\
-        case_y_channel.f08\
-        case_y_storage_channel.f08\
         checking.f08\
         debug.f08\
         diagnostic.f08\
@@ -59,10 +64,10 @@ SOURCESF="  dll_mod.f08\
         friction_model.f08\
         initial_condition.f08\
         initialization.f08\
+        project.f08\
         link_node.f08\
         network_define.f08\
         output.f08\
-        test_cases.f08\
         runge_kutta.f08\
         time_loop.f08\
         main.f08\

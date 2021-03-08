@@ -42,11 +42,11 @@ subroutine get_specific_link_data &
     integer, dimension(:), allocatable,intent(inout):: time_steps, data_idx
     integer, dimension(:), allocatable,intent(inout):: n_linkItems
     integer, dimension(:), allocatable,intent(inout):: length_idx 
-    real, dimension(:,:), allocatable, intent(inout):: link_data
-    real, dimension(:), allocatable, intent(inout)  :: link_lengths        
-    real, dimension(:,:), allocatable, intent(out)  :: specific_linkData
-    real, dimension(:,:), allocatable, intent(inout)  :: link_long_data
-    real, dimension(:),   allocatable, intent(inout)  :: link_long_lengths, z_bottoms
+    real(8), dimension(:,:), allocatable, intent(inout):: link_data
+    real(8), dimension(:), allocatable, intent(inout)  :: link_lengths        
+    real(8), dimension(:,:), allocatable, intent(out)  :: specific_linkData
+    real(8), dimension(:,:), allocatable, intent(inout)  :: link_long_data
+    real(8), dimension(:),   allocatable, intent(inout)  :: link_long_lengths, z_bottoms
 
     integer :: allocation_status
     character(len=99) :: emsg
@@ -94,10 +94,10 @@ subroutine get_longitudinal_link_data &
     integer, dimension(:), intent(in)               :: data_idx     
     integer                                         :: istat, nn, mm
     character(len=512)                              :: tmp
-    real, dimension(:), allocatable                 :: link_long_data_temp
-    real, dimension(:), allocatable                 :: link_data_temp1, link_data_temp2
-    real, dimension(:,:), allocatable, intent(out)  :: link_long_data
-    real, dimension(:),   allocatable, intent(out)  :: link_long_lengths, z_bottoms
+    real(8), dimension(:), allocatable                 :: link_long_data_temp
+    real(8), dimension(:), allocatable                 :: link_data_temp1, link_data_temp2
+    real(8), dimension(:,:), allocatable, intent(out)  :: link_long_data
+    real(8), dimension(:),   allocatable, intent(out)  :: link_long_lengths, z_bottoms
 
     integer :: allocation_status
     character(len=99) :: emsg
@@ -200,8 +200,8 @@ subroutine get_all_link_data &
     integer, intent(in)                             :: max_linkItems, n_links
     integer, dimension(:), intent(in)               :: data_idx     
     integer                                         :: istat, nn
-    real, dimension(:), allocatable                 :: link_data_temp
-    real, dimension(:,:), allocatable, intent(out)  :: link_data
+    real(8), dimension(:), allocatable                 :: link_data_temp
+    real(8), dimension(:,:), allocatable, intent(out)  :: link_data
 
     integer :: allocation_status
     character(len=99) :: emsg
@@ -266,8 +266,8 @@ subroutine get_link_lengths &
     integer, dimension(:), intent(in)               :: length_idx   
     integer                                         :: istat
     integer, dimension(:), allocatable              :: length_idx_short
-    real, dimension(:), allocatable                 :: link_lengths_temp
-    real, dimension(:), allocatable, intent(out)    :: link_lengths
+    real(8), dimension(:), allocatable                 :: link_lengths_temp
+    real(8), dimension(:), allocatable, intent(out)    :: link_lengths
 
     integer :: allocation_status
     character(len=99) :: emsg

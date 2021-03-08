@@ -15,13 +15,13 @@ use postProcessing
     integer                                 :: specific_link
     integer, dimension(:), allocatable      :: time_steps, data_idx, n_linkItems
     integer, dimension(:), allocatable      :: length_idx 
-    real,    dimension(:,:), allocatable    :: link_data
-    real,    dimension(:), allocatable      :: link_lengths
-    real,    dimension(:,:), allocatable    :: link_long_data
-    real,    dimension(:),   allocatable    :: link_long_lengths, z_bottoms        
+    real(8),    dimension(:,:), allocatable    :: link_data
+    real(8),    dimension(:), allocatable      :: link_lengths
+    real(8),    dimension(:,:), allocatable    :: link_long_data
+    real(8),    dimension(:),   allocatable    :: link_long_lengths, z_bottoms        
     
-    real,    dimension(:,:), allocatable       :: specific_linkData
-    real,    dimension(:)  , allocatable       :: xx,yy
+    real(8),    dimension(:,:), allocatable       :: specific_linkData
+    real(8),    dimension(:)  , allocatable       :: xx,yy
 
 
 open(newunit=iunit, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_depth__20200623_1431.txt', status='OLD')
