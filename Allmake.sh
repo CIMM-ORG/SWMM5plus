@@ -4,7 +4,6 @@
 # git clone git@github.austin.utexas.edu:gr24269/SWMMwrapper.git
 cd SWMMwrapper
 ./Allmake.sh
-# cp fortran/*.f08 ../
 cp libswmm5.so ../
 cd ..
 # sudo rm -r SWMMwrapper
@@ -38,7 +37,6 @@ SOURCESF="  errors.f08\
         setting_definition.f08\
         globals.f08\
         selectors.f08\
-        linked_list.f08\
         array_index.f08\
         xsect_tables.f08\
         data_keys.f08\
