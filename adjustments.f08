@@ -30,10 +30,7 @@ module adjustments
     integer :: debuglevel = 0
 
 contains
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+
     subroutine adjust_channel_velocity_limiter &
         (elemR, elemYN, elemI, &
         ei_elem_type, elemType, eYN_IsAdhocFlowrate, er_Velocity_new )
@@ -70,10 +67,7 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine adjust_channel_velocity_limiter
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+
     subroutine adjust_junction_branch_velocity_limit &
         (elemMR, elemMI)
         !
@@ -87,29 +81,27 @@ contains
         !
         character(64) :: subroutine_name = 'adjust_junction_branch_velocity_limit'
 
-        real(8),  target,     intent(in out)  :: elemMR(:,:)
-        integer,           intent(in)      :: elemMI(:,:)
+        real(8), target, intent(inout) :: elemMR(:,:)
+        integer, intent(in) :: elemMI(:,:)
 
-        real(8),  pointer :: velocity(:), flowrate(:), area(:)
-
+        real(8), pointer :: velocity(:), flowrate(:), area(:)
         integer :: mm
 
-        !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         if (setting%Limiter%Velocity%UseLimitMax) then
-            do mm=1,upstream_face_per_elemM
-                velocity => elemMR(:,eMr_VelocityUp(mm))
-                flowrate => elemMR(:,eMr_FlowrateUp(mm))
-                area     => elemMR(:,eMr_AreaUp(mm))
+            do mm = 1, upstream_face_per_elemM
+                velocity => elemMR(:, eMr_VelocityUp(mm))
+                flowrate => elemMR(:, eMr_FlowrateUp(mm))
+                area => elemMR(:, eMr_AreaUp(mm))
                 where ( (abs(velocity) > setting%Limiter%Velocity%Maximum) .and. &
                     (elemMI(:,eMi_elem_type) == eJunctionChannel) .and. &
                     (elemMI(:,eMi_nfaces_u) >= mm) )
-                    velocity = sign( 0.99 * setting%Limiter%Velocity%Maximum, velocity )
-                    flowrate = velocity * area
+                    velocity = sign(0.99*setting%Limiter%Velocity%Maximum, velocity)
+                    flowrate = velocity*area
                 endwhere
             enddo
-            do mm=1,dnstream_face_per_elemM
+            do mm = 1, dnstream_face_per_elemM
                 velocity => elemMR(:,eMr_VelocityDn(mm))
                 flowrate => elemMR(:,eMr_FlowrateDn(mm))
                 area     => elemMR(:,eMr_AreaDn(mm))
@@ -128,10 +120,7 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine adjust_junction_branch_velocity_limit
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    
     subroutine adjust_face_dynamic_limits &
         (faceR, faceI, volumeUp, volumeDn, facemask, Ltemp)
         !
@@ -151,8 +140,6 @@ contains
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-
 
         ! Ad hoc limit the volume that can be transported out of the upstream cell.
         if (setting%Limiter%Flowrate%UseFaceVolumeTransport) then
@@ -703,7 +690,6 @@ contains
         real(8),  pointer :: area(:), topwidth(:)
         integer        :: mm
 
-        !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         if (.not. setting%SmallVolume%UseSmallVolumes) return
@@ -719,10 +705,7 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine smallvolume_junctionbranch_reset
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    
     subroutine reset_element_for_zero_values &
         (elemR, elemYN, er_Area, er_Eta, er_Zbottom, er_Topwidth, er_Perimeter, &
         er_HydDepth, er_HydRadius, eYN_IsSmallVolume)
@@ -750,7 +733,6 @@ contains
 
         integer :: ii
 
-        !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         area       => elemR(:,er_Area)
@@ -817,10 +799,7 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine reset_element_for_zero_values
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    
     subroutine reset_juctionbranches_for_zero_values &
         (elemMR, elemMI, elemMYN, eMr_AreaDir, eMr_TopwidthDir, &
         eMr_nfaces_Dir, Dir_face_per_elemM)
@@ -838,7 +817,6 @@ contains
         real(8),  pointer :: area(:), topwidth(:)
         integer        :: mm
 
-        !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         do mm=1,Dir_face_per_elemM

@@ -524,6 +524,12 @@ contains
                     ! store the same value on the ghost
                     elem2R(thisghost,e2r_Flowrate)       = thisval
                     elem2R(thisghost,e2r_VelocityColumn) = thisval / elem2R(thisloc,e2r_Area)
+                    ! if (elem2R(thisghost,e2r_VelocityColumn) > 20) then
+                    !     print*, 'U/S BC', ii
+                    !     print*, 'AREA', elem2R(thisloc,e2r_Area)
+                    !     print*, 'Velocity', elem2R(thisghost,e2r_VelocityColumn)
+                    !     stop
+                    ! endif
                 else
                     print *, 'error: unexpected value for bcdata%category of ',thiscat,' in ',subroutine_name
                     stop

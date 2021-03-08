@@ -113,10 +113,21 @@ contains
         print *, setting%step%final, "final step"
         do while (thisstep <= setting%step%final)
 
+            if (mod(thisstep, 5) == 0) then
+                ! Variable time step
+                if (diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d) &
+                    >= 0.3) then
+                    setting%time%dt = setting%time%dt * 0.5
+                else
+                    setting%time%dt = setting%time%dt * 1.25
+                endif
+            endif
+
             !% display to the screen
             if (setting%Debugout%DisplayInterval > 0) then
                 if (mod(thisstep,setting%Debugout%DisplayInterval) == 0) then
                     print *, '--------------------------------------'
+                    print *, dt, 'time step size'
                     print *, thisstep,'=current step; ', thistime, '=current time;', &
                         diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d),'=CFL max' & !Im putting the timescale for Q here. Might needed to be changed later
                         ,maxval(abs(elem2R(2:size(elem2R,1)-1,e2r_Velocity))),'=max velocity'
@@ -153,17 +164,21 @@ contains
                 endif
             endif
 
-            call output_translation_from_elements_to_link_node &
-                (elem2I, elem2R, elem2YN, elemMI, elemMR, elemMYN, faceI, faceR, &
-                linkI, linkR, nodeI, nodeR, bcdataUp, bcdataDn, thisstep)
-                
-            call debug_output &
-                (debugfile, nodeR, linkR, elem2R, elem2I, elem2YN, elemMR,  &
-                elemMI, elemMYN, faceR, faceI, faceYN,bcdataUp, bcdataDn, thisstep)
+            if (setting%Debugout%DisplayInterval > 0) then
+                if (mod(thisstep,setting%Debugout%DisplayInterval) == 0) then
+                    call output_translation_from_elements_to_link_node &
+                        (elem2I, elem2R, elem2YN, elemMI, elemMR, elemMYN, faceI, faceR, &
+                        linkI, linkR, nodeI, nodeR, bcdataUp, bcdataDn, thisstep)
 
-            call  output_all_threaded_data_by_link &
-                (threadedfile, elem2R, elem2I, elemMR, elemMI, faceR, faceI, linkI, &
-                bcdataUp, bcdataDn, thisstep)
+                    call debug_output &
+                        (debugfile, nodeR, linkR, elem2R, elem2I, elem2YN, elemMR,  &
+                        elemMI, elemMYN, faceR, faceI, faceYN,bcdataUp, bcdataDn, thisstep)
+
+                    call  output_all_threaded_data_by_link &
+                        (threadedfile, elem2R, elem2I, elemMR, elemMI, faceR, faceI, linkI, &
+                        bcdataUp, bcdataDn, thisstep)
+                endif
+            endif
 
 
             !% TEST ROUTINES

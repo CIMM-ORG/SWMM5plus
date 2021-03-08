@@ -172,7 +172,7 @@ module setting_definition
         real(8)   :: Flowrate     = 0.0     ! m^3/s
         real(8)   :: Topwidth     = 1.0e-4  ! m
         real(8)   :: Velocity     = 0.0     ! m/s
-        real(8)   :: Volume       = 1.0e-7  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
+        real(8)   :: Volume       = 1.0e-6  ! m^3 !%%%%%%%%%%%%%%%%%%I changed it from 1.0e-6
     end type zerovalueType
 
     !%  setting%Weir
@@ -219,9 +219,9 @@ contains
         !
         !--------------------------------------------------------------------------
 
-        setting%Debugout%DisplayInterval = 10
+        setting%Debugout%DisplayInterval = 1500
 
-        setting%Time%dt = 5
+        setting%Time%dt = 0.5
         setting%Step%First = 1
         setting%Step%Final = 40000
         setting%Step%Current = 1

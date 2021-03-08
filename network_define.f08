@@ -103,6 +103,7 @@ contains
         ! high-resolution natural channel.
 
         ! call network_define_num_elements(swmm_graph, linkR, nodeR, linkI, nodeI)
+        ! DEFINE NUM ELEMENTS
         linkI(:, li_N_element) = 2
         setting%step%final = int(setting%time%endtime / setting%time%dt)
         linkR(:, lr_ElementLength) = linkR(:, lr_Length) / linkI(:, li_N_element)
@@ -218,6 +219,7 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine network_initiation
+
     !
     !==========================================================================
     !
@@ -280,7 +282,7 @@ contains
         do ii=1,N_link
             !%  get the upstream node of the link
             thisnode = linkI(ii,li_Mnode_u)
-            print *, 'this node=', thisnode
+            ! print *, 'this node=', thisnode
             if ((thisnode < 1) .or. (thisnode > N_node)) then
                 print *, ii,'= this link'
                 print *, thisnode,'= upstream node assigned'
@@ -873,8 +875,6 @@ contains
         nodesDownstream => nodeI(:,ni_temp1)
         N_BCnodes_d = count(nodeYNmask)
 
-        print *, nodeYNmask
-
         if (N_BCnodes_d == 0) then
             print *, 'No downstream channel boundary nodes found - code development incomplete for dowstream pipe'
             STOP
@@ -1242,9 +1242,9 @@ contains
                 STOP
             endif
 
-            print *, 'Junction with downstream of thisLink ',thisLink
-            print *, 'linkSet ',linkSet(:)
-            print *, linkSet(:)
+            ! print *, 'Junction with downstream of thisLink ',thisLink
+            ! print *, 'linkSet ',linkSet(:)
+            ! print *, linkSet(:)
             ! print *, 'linkAss ',linkI(linkSet(1),li_assigned),linkI(linkSet(2),li_assigned)
 
             !%  Create the junction element we will use here and increment for the next(recursion)

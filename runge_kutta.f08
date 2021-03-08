@@ -107,8 +107,8 @@ contains
                     thiscoef(ii))
 
                 !  Sets the Qonly element geometry to provisional values
-                call QonlyElement_provisional_geometry &
-                    (elem2R, elemMR, faceR, elem2I, elemMI)
+                ! call QonlyElement_provisional_geometry &
+                !     (elem2R, elemMR, faceR, elem2I, elemMI)
 
                 if ( count(elemMI(:,eMi_elem_type) == eStorage) > zeroI) then
                     ! call storage step if storage unit exists in the network
@@ -125,10 +125,10 @@ contains
                     cellType)
 
                 !% advane Qonly elemnt
-                call QonlyElement_step &
-                    (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
-                    e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
-                    faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
+                ! call QonlyElement_step &
+                !     (e2r_Volume, e2r_Velocity, eMr_Volume, eMr_Velocity, e2r_Volume_new, &
+                !     e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, elem2R, elemMR, &
+                !     faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
 
                 if (ii==1) then
                     !% store the net face fluxes that are used for volume advance.
@@ -146,21 +146,21 @@ contains
                 (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
                 e2r_Volume, e2r_Volume_new, e2i_elem_type, eChannel, .true.)
 
-            call overwrite_old_values &
-                (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
-                e2r_Volume, e2r_Volume_new, e2i_elem_type, eWeir, .true.)
+            ! call overwrite_old_values &
+            !     (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
+            !     e2r_Volume, e2r_Volume_new, e2i_elem_type, eWeir, .true.)
 
-            call overwrite_old_values &
-                (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
-                e2r_Volume, e2r_Volume_new, e2i_elem_type, eOrifice, .true.)
+            ! call overwrite_old_values &
+            !     (elem2R, elem2I, e2r_Velocity, e2r_Velocity_new, &
+            !     e2r_Volume, e2r_Volume_new, e2i_elem_type, eOrifice, .true.)
 
             call overwrite_old_values &
                 (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
                 eMr_Volume, eMr_Volume_new, eMi_elem_type, eJunctionChannel, .false.)
 
-            call overwrite_old_values &
-                (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
-                eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)
+            ! call overwrite_old_values &
+            !     (elemMR, elemMI, eMr_Velocity, eMr_Velocity_new, &
+            !     eMr_Volume, eMr_Volume_new, eMi_elem_type, eStorage, .false.)
 
         endif
 
