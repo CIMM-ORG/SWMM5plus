@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # echo Download SWMM C interface
-# git clone git@github.austin.utexas.edu:gr24269/SWMMwrapper.git
+git clone git@github.austin.utexas.edu:gr24269/SWMMwrapper.git
 cd SWMMwrapper
 ./Allmake.sh
 cp libswmm5.so ../
 cd ..
-# sudo rm -r SWMMwrapper
+sudo rm -r SWMMwrapper
 
 echo Making the debug directory ...
 DIRDebug=debugoutputA
