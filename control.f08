@@ -66,6 +66,7 @@ contains
             gateSetting(ii)%HeightNow           = nullvalueR
             gateSetting(ii)%AreaNow             = nullvalueR
             gateSetting(ii)%AreaPrior           = nullvalueR
+            gateSetting(ii)%FullDepth           = nullvalueR
             !% HACK code
             gateSetting(ii)%GateTimeChange1     = nullvalueR
             gateSetting(ii)%GateTimeChange2     = nullvalueR
@@ -115,7 +116,8 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    Subroutine control_evaluate (elem2I, elem2R, gateSetting, N_Gates, StepTime)
+    Subroutine control_evaluate &
+        (elem2I, elem2R, gateSetting, N_Gates, StepTime, isInitialization)
     !
     ! HACK: this code is adapted from pipeAC. the sole purpose of this code
     ! is to test and compare AC-solver by utilizing trajkovic test cases 
@@ -125,21 +127,25 @@ contains
         integer,                   intent(in)     :: elem2I(:,:)
         real,                      intent(inout)  :: elem2R(:,:)
         type(controlType), target, intent(inout)  :: gateSetting(:)
+        logical,                   intent(in)     :: isInitialization
 
         integer,             intent(in)    :: N_Gates
         real,                intent(in)    :: StepTime
         integer, pointer                   :: eID
         real                               :: gateInterval, gateMove, gateChange
-        real                               :: newFullDepth, YoverYfull, newFullArea
+        real                               :: YoverYfull, newFullArea
+        real, dimension(:), allocatable    :: initFullDepth
 
         integer    :: ii, mm
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
+        allocate(initFullDepth(N_Gates))
         !%  cycle through gates
         do ii=1,N_Gates
 
             eID => gateSetting(ii)%ElemId
+
             !%  for fixed gates
             if (.not. gateSetting(ii)%CanMove) then
 
@@ -240,10 +246,20 @@ contains
             if ( (elem2I(eID,e2i_elem_type) == eOrifice) .and. &
                  (elem2I(eID,e2i_geometry) == eCircular)  ) then
 
-                YoverYfull                = gateSetting(ii)%HeightNow / elem2r(eID,e2r_FullDepth)
-                elem2R(eID,e2r_FullArea)  = elem2R(eID,e2r_FullArea) * table_lookup(YoverYfull, ACirc, NACirc)
+                YoverYfull                = gateSetting(ii)%HeightNow / gateSetting(ii)%FullDepth
+                elem2R(eID,e2r_FullArea)  = (pi*(gateSetting(ii)%FullDepth / 2.0) ** 2.0) &
+                                        * table_lookup(YoverYfull, ACirc, NACirc)
                 elem2R(eID,e2r_FullDepth) = gateSetting(ii)%HeightNow
-                elem2R(eID,e2r_Zcrown)    = elem2R(eID,e2r_Zbottom) + elem2R(eID,e2r_FullDepth)
+                elem2R(eID,e2r_Zcrown)    = elem2R(eID,e2r_Zbottom) + elem2R(eID,e2r_FullDepth) 
+
+                ! if (setting%Time%ThisTime > 149.0) then
+                !     print*, eID, 'eID'
+                !     print*, YoverYfull , 'YoverYfull '
+                !     print*, elem2R(eID,e2r_FullDepth), 'e2r_FullDepth'
+                !     print*, elem2R(eID,e2r_FullArea), 'e2r_FullArea'
+                !     print*, elem2R(eID,e2r_Zcrown) , 'e2r_Zcrown'
+                !     read(*,*)
+                ! endif
 
             elseif ( (elem2I(eID,e2i_elem_type) == eOrifice)   .and. &
                      (elem2I(eID,e2i_geometry) == eRectangular) ) then
@@ -253,7 +269,6 @@ contains
                 elem2R(eID,e2r_Zcrown)    = elem2R(eID,e2r_Zbottom) + elem2R(eID,e2r_FullDepth)
             endif
         enddo
-
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name    
     end Subroutine control_evaluate

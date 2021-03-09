@@ -1597,8 +1597,8 @@ contains
         ! zcenter = zDownstream + linkR(thislink,lr_OutletOffset) - &
         !     0.5 * linkR(thislink,lr_ElementLength) * linkR(thislink,lr_Slope)
 
-        ! !%  HACK: If a link does not share common zbottom then how the zbottom of face
-        ! !%  should be handeled? The pipeAC code does not provide a clear answer 
+        !%  HACK: If a link does not share common zbottom then how the zbottom of face
+        !%  should be handeled? The pipeAC code does not provide a clear answer 
         ! zface   = zDownstream + linkR(thislink,lr_OutletOffset)
         
         do mm = 1,linkI(thisLink,li_N_element)

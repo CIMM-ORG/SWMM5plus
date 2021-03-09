@@ -388,12 +388,12 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         if (setting%ZeroValue%UseZeroValues) then
-            where ( ((eta - zbottom) < setting%Zerovalue%Area) .and. maskarray )
-                eta = setting%Zerovalue%Area
+            where ( ((eta - zbottom) < setting%Zerovalue%Depth) .and. maskarray )
+                eta = setting%Zerovalue%Depth + zbottom
             endwhere
         else
-            where ( ((eta - zbottom) < setting%Zerovalue%Area) .and. maskarray )
-                eta = zeroR
+            where ( ((eta - zbottom) < zeroR) .and. maskarray )
+                eta = zeroR + zbottom
             endwhere
         endif
 

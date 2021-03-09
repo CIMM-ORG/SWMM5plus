@@ -177,8 +177,8 @@ contains
             realLoop = .true.
 
             !% HACK: only works for trajkovic cases
-            call control_evaluate &
-                (elem2I, elem2R, gateSetting, N_Gates, thistime)
+            ! call control_evaluate &
+            !     (elem2I, elem2R, gateSetting, N_Gates, thistime, .false.)
 
             call rk2 &
                 (elem2R, elemMR, elem2I, elemMI, faceR, faceI, elem2YN, elemMYN, faceYN, &

@@ -179,26 +179,30 @@ contains
             (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2, &
             velocity2, oFlow, cOrif, cWeir, oBreadth, oFullDepth, oArea,       &
             hEffective, dir, subFactor, subCorrection, thiscoef)
-        
-        ! print*,'--------------------------------------------'
-        ! print*,'Orifice values at ', subroutine_name
-        ! print*
-        ! print*, oEta(28), oEta(69), 'eta'
-        ! print*
-        ! print*, hEffective(28), hEffective(69), 'effective head'
-        ! print*
-        ! print*, oDepth(28), oDepth(69), 'depth'
-        ! print*
-        ! print*, oFlow(28), oFlow(69), 'flow'
-        ! print*
-        ! print*, velocity2(28), velocity2(69), 'velocity'
-        ! print*
-        ! print*, oArea(28), oArea(69), 'area'
-        ! print*
-        ! print*, volume2(28), volume2(69), 'volume'
-        ! print*
-        ! print*, 'orifice debug: press return to continue'
-        ! read(*,*)
+
+        ! if (setting%Time%ThisTime > 120.0) then
+        !     print*,'--------------------------------------------'
+        !     print*,'Orifice values at ', subroutine_name
+        !     print*
+        !     print*, oEta(28), oEta(69), 'eta'
+        !     print*
+        !     print*, hEffective(28), hEffective(69), 'effective head'
+        !     print*
+        !     print*, oDepth(28), oDepth(69), 'depth'
+        !     print*
+        !     print*, oFlow(28), oFlow(69), 'flow'
+        !     print*
+        !     print*, velocity2(28), velocity2(69), 'velocity'
+        !     print*
+        !     print*, oArea(28), oArea(69), 'area'
+        !     print*
+        !     print*, oCrown(28), oCrown(69), 'oCrown'
+        !     print*
+        !     print*, oZbottom(28), oZbottom(69), 'oZbottom'
+        !     print*
+        !     print*, 'orifice debug: press return to continue'
+        !     read(*,*)
+        ! endif
 
         ! release temporary arrays
         hEffective     = nullvalueR
@@ -260,6 +264,16 @@ contains
             eta     = max(faceEtaDn(upFace), faceEtaup(dnFace))
             dir     = int(sign(oneR, (faceEtaDn(upFace) - faceEtaup(dnFace))))
         endwhere
+
+        ! if (setting%Time%ThisTime > 120.0) then
+        !     print*,'--------------------------------------------'
+        !     print*,'Orifice values at ', subroutine_name
+        !     print*
+        !     print*, crest(28), crest(69), 'crest'
+        !     print*
+        !     print*, dir(28), dir(69), 'dir'
+        !     read(*,*)
+        ! endif
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine orifice_initialize
@@ -438,6 +452,16 @@ contains
                 dir * (faceEtaDn(upFace) - faceEtaUp(dnFace)))
         endwhere
 
+        ! if (setting%Time%ThisTime > 120.0) then
+        !     print*, subroutine_name
+        !     print*, effectiveHead(28), effectiveHead(69), 'effectiveHead'
+        !     print*, dir(28), dir(69), 'dir'
+        !     print*, maskarray_dn_submergence(28), maskarray_dn_submergence(69), 'maskarray_dn_submergence'
+        !     print*, maskarray_up_submergence(28), maskarray_up_submergence(69), 'maskarray_up_submergence'
+        !     print*, 'press returen to continue'
+        !     read(*,*)
+        ! endif
+
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine orifice_effective_head
     !
@@ -533,7 +557,20 @@ contains
             hydradius = onefourthR * fulldepth * hydradius
             perimeter = area / hydradius
         endwhere
+
+        ! if (setting%Time%ThisTime > 120.0) then
+        !     print*, subroutine_name
+        !     print*, depth(28), depth(69), 'depth'
+        !     print*, YoverYfull(28), YoverYfull(69), 'YoverYfull'
+        !     print*, fullArea(28), fullArea(69), 'fullArea'
+        !     print*, fulldepth(28), fulldepth(69), 'fulldepth'
+        !     print*, 'press returen to continue'
+        !     read(*,*)
+        ! endif
         !% ==========================================================================
+        !% area is used to calculate velocity. so any zero or negative area needs adjustments
+        call adjust_negative_area_reset (area)
+
         !%  nullify and release temporary pointers
         YoverYfull          = nullvalueR
         maskCircularOrifice = nullvalueL

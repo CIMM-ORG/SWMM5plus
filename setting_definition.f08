@@ -63,7 +63,7 @@ module setting_definition
     !%  setting%Limiter%Velocity
     type velocityType
         logical :: UseLimitMax  = .true.
-        real    :: Maximum      = 20.0 ! m/s
+        real    :: Maximum      = 10.0 ! m/s
     endtype velocityType
         
     !%  setting%DefaultAC%Switch
@@ -188,7 +188,7 @@ module setting_definition
     !%  setting%SmallVolume
     type smallvolumeType
         ! Dont using small volumes for weir case. Needed to be changed later
-        logical ::  UseSmallVolumes = .false. ! YN to determine if smallvolume adjustments used
+        logical ::  UseSmallVolumes = .true. ! YN to determine if smallvolume adjustments used
         real    ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
         real    ::  ManningsN        = 0.01
         real    ::  MinimumTopwidth  = 0.5   ! m   Minimum value used for smallvolume reset
@@ -266,7 +266,7 @@ module setting_definition
 
     !%  setting%Solver
     type solverType
-        character(len=64)       :: SolverSelect =  'AC'! 'SVE-AC', 'SVE'
+        character(len=64)       :: SolverSelect =  'SVE'! 'SVE-AC', 'AC'
     end type solverType 
 
     !% FIRST LEVEL TYPE  ----------------------------------------------

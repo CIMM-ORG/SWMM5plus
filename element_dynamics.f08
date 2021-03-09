@@ -149,6 +149,11 @@ contains
             ( elem2R, elem2I, &
             e2r_Flowrate, e2r_Area, e2r_Velocity_new, e2i_elem_type, ePipe)
 
+        !%  HACK: Orifice flowrate update if adhoc flow present
+        call flowrate_from_velocity &
+            ( elem2R, elem2I, &
+            e2r_Flowrate, e2r_Area, e2r_Velocity_new, e2i_elem_type, eOrifice)
+
         call flowrate_from_velocity &
             ( elemMR, elemMI, &
             eMr_Flowrate, eMr_Area, eMr_Velocity_new, eMi_elem_type, eJunctionChannel)

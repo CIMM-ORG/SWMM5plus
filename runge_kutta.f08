@@ -634,7 +634,7 @@ contains
         integer,           intent(in out)  :: faceI(:,:)
         real,      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
-        logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
+        logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
         logical,   target, intent(in out)  :: faceYN(:,:)
         real,              intent(in)      :: thiscoef
 
@@ -676,6 +676,11 @@ contains
                 (e2r_Volume_new, e2r_Velocity_new, elem2R, elemMR, faceI, faceR, &
                 faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef)
         endif
+
+        !%  HACK: experimental use of the channel velocity limiter for orifice. 
+        call adjust_channel_velocity_limiter &
+            (elem2R, elem2YN, elem2I, &
+            e2i_elem_type, eOrifice, e2YN_IsAdhocFlowrate, e2r_Velocity_new)
         
         !% face reconstruction -- only flow values
         !% update the flow to their faces

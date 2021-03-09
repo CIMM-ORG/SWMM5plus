@@ -32,6 +32,7 @@ module type_definitions
         real    :: HeightNow
         real    :: AreaNow
         real    :: AreaPrior
+        real    :: FullDepth
         real    :: GateTimeChange1
         real    :: GateTimeChange2
         real    :: GateHeightChange1

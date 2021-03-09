@@ -96,12 +96,12 @@ program main
     !%  hard-code setting for test cases
 
     setting%TestCase%UseTestCase = .true.
-    ! setting%TestCase%TestName = 'simple_channel_001'
+    setting%TestCase%TestName = 'simple_channel_001'
     ! setting%TestCase%TestName = 'y_channel_002'
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
-    setting%TestCase%TestName = 'simple_pipe_006'
+    ! setting%TestCase%TestName = 'simple_pipe_006'
     ! setting%TestCase%TestName = 'swashes_007'
     ! setting%TestCase%TestName = 'width_depth'
     ! setting%TestCase%TestName = 'trajkovic_case_a3'

@@ -87,13 +87,13 @@ contains
         call initial_storage_conditions &
             (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
 
-        !% set elements to cotrol structure
-        call control_assign &
-            (elem2I, gateSetting, N_Gates)
+        ! !% set elements to cotrol structure
+        ! call control_assign &
+        !     (elem2I, gateSetting, N_Gates)
 
-        !% set initial control conditions
-        call control_evaluate &
-            (elem2I, elem2R, gateSetting, N_Gates, thistime)
+        ! !% set initial control conditions
+        ! call control_evaluate &
+        !     (elem2I, elem2R, gateSetting, N_Gates, thistime, .true.)
 
         !% set the bc elements (outside of face) to null values
         call bc_nullify_ghost_elem (elem2R, bcdataDn)

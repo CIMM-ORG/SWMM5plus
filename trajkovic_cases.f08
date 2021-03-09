@@ -246,6 +246,7 @@ contains
         gateSetting(1)%HeightNow           = 0.0
         gateSetting(1)%AreaNow             = 0.0
         gateSetting(1)%AreaPrior           = 0.0
+        gateSetting(1)%FullDepth           = 0.1
         gateSetting(1)%GateTimeChange1     = nullvalueR
         gateSetting(1)%GateTimeChange2     = nullvalueR
         gateSetting(1)%GateHeightChange1   = 0.014
@@ -261,6 +262,7 @@ contains
         gateSetting(2)%HeightNow           = 0.0
         gateSetting(2)%AreaNow             = 0.0
         gateSetting(2)%AreaPrior           = 0.0
+        gateSetting(2)%FullDepth           = 0.1
         gateSetting(2)%GateTimeChange1     = 120.0
         gateSetting(2)%GateTimeChange2     = 150.0
         gateSetting(2)%GateHeightChange1   = 1E-6

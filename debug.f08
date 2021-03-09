@@ -62,7 +62,7 @@ contains
         !% needed for the long term code.
         ndebug = 0
         if (setting%Debugout%elem2R) then
-            ndebug = ndebug + 26
+            ndebug = ndebug + 27
         endif
         if (setting%Debugout%elem2I) then
             ndebug = ndebug + 10
@@ -170,6 +170,8 @@ contains
             call debug_singlefile_open (debugfile(ii), 'elem2R','VolumeConservation', e2r_VolumeConservation)
             ii=ii+1
             call debug_singlefile_open (debugfile(ii), 'elem2R','FroudeNumber', e2r_FroudeNumber)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'elem2R','FullDepth', e2r_FullDepth)
             ii=ii+1
         endif
 
