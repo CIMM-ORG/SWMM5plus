@@ -35,19 +35,19 @@ contains
         !
         character(64) :: subroutine_name = 'case_shashes_initialize'
 
-        real,  intent(in)  :: channel_length(:), channel_breadth(:)
-        real,  intent(in)  :: channel_topwidth(:), subdivide_length(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
-        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
-        real,  intent(in)  :: ManningsN(:), full_depth(:), zbottom(:)
+        real(8),  intent(in)  :: channel_length(:), channel_breadth(:)
+        real(8),  intent(in)  :: channel_topwidth(:), subdivide_length(:)
+        real(8),  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
+        real(8),  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
+        real(8),  intent(in)  :: ManningsN(:), full_depth(:), zbottom(:)
 
         integer, intent(in):: roughness_type, idepth_type(:), N_link, N_node
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
@@ -115,18 +115,18 @@ contains
         !
         character(64) :: subroutine_name = 'case_swashes_links_and_nodes'
 
-        real,  intent(in)  :: channel_length(:), channel_breadth(:), full_depth(:)
-        real,  intent(in)  :: channel_topwidth(:), subdivide_length(:), zbottom(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:), ManningsN(:), initial_flowrate(:)
-        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
+        real(8),  intent(in)  :: channel_length(:), channel_breadth(:), full_depth(:)
+        real(8),  intent(in)  :: channel_topwidth(:), subdivide_length(:), zbottom(:)
+        real(8),  intent(in)  :: lowerZ(:), upperZ(:), ManningsN(:), initial_flowrate(:)
+        real(8),  intent(in)  :: depth_upstream(:), depth_dnstream(:), init_depth(:)
 
         integer, intent(in):: roughness_type, idepth_type(:), N_link, N_node
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN

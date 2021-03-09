@@ -44,8 +44,8 @@ contains
 
         integer,   target,         intent(in out)      :: linkI(:,:)
         integer,   target,         intent(in out)      :: nodeI(:,:)
-        real,                      intent(in out)      :: linkR(:,:)
-        real,      target,         intent(in out)      :: nodeR(:,:)
+        real(8),                      intent(in out)      :: linkR(:,:)
+        real(8),      target,         intent(in out)      :: nodeR(:,:)
 
         type(string), intent(in out)   :: linkName(:)
         type(string), intent(in out)   :: nodeName(:)
@@ -54,21 +54,21 @@ contains
         logical,   intent(out)       :: nodeYN(:,:)
 
         !%   elem2# are the values for elements that have only 2 faces
-        real,       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
+        real(8),       dimension(:,:), allocatable, target    :: elem2R       ! real(8) data for elements with 2 faces
         integer,    dimension(:,:), allocatable, target    :: elem2I       ! integer data for elements with 2 faces
         logical,    dimension(:,:), allocatable, target    :: elem2YN      ! logical data for elements with 2 faces
 
         type(string), dimension(:), allocatable, target    :: elem2Name    ! array of character strings
 
         !%   elemM# are the values for elements that have more than 2 faces
-        real,       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
+        real(8),       dimension(:,:), allocatable, target    :: elemMR       ! real(8) data for elements with multi faces
         integer,    dimension(:,:), allocatable, target    :: elemMI       ! integer data for elements with multi faces
         logical,    dimension(:,:), allocatable, target    :: elemMYN      ! logical data for elements with multi faces
 
         type(string), dimension(:), allocatable, target    :: elemMName    ! array of character strings
 
         !%   face# are the values for faces (always bounded by 2 elements)
-        real,       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
+        real(8),       dimension(:,:), allocatable, target    :: faceR       ! real(8) data for faces
         integer,    dimension(:,:), allocatable, target    :: faceI       ! integer data for faces
         logical,    dimension(:,:), allocatable, target    :: faceYN      ! logical data for face
 
@@ -590,11 +590,11 @@ contains
 
         integer,   target,         intent(in)      :: linkI(:,:)
         integer,   target,         intent(in)      :: nodeI(:,:)
-        real,      target,         intent(in out)  :: linkR(:,:)
-        real,      target,         intent(in)      :: nodeR(:,:)
+        real(8),      target,         intent(in out)  :: linkR(:,:)
+        real(8),      target,         intent(in)      :: nodeR(:,:)
 
         integer,   pointer :: nUp, nDn
-        real,      pointer :: zUp, zDn, oUp, oDn
+        real(8),      pointer :: zUp, zDn, oUp, oDn
         integer :: mm
 
         !--------------------------------------------------------------------------
@@ -668,17 +668,17 @@ contains
 
         integer,   target,         intent(in out)  :: linkI(:,:)
         integer,                   intent(in)      :: nodeI(:,:)
-        real,      target,         intent(in out)  :: linkR(:,:)
-        real,      target,         intent(in out)  :: nodeR(:,:)
+        real(8),      target,         intent(in out)  :: linkR(:,:)
+        real(8),      target,         intent(in out)  :: nodeR(:,:)
 
         integer :: ii, mm
 
-        real ::  delta
+        real(8) ::  delta
 
-        real,    pointer   :: linkLength(:)
+        real(8),    pointer   :: linkLength(:)
         integer, pointer   :: linkNelem(:)
 
-        real,    pointer   :: element_nominal_length(:)
+        real(8),    pointer   :: element_nominal_length(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -747,7 +747,7 @@ contains
         !
         character(64) :: subroutine_name = 'network_count_elements_and_faces'
 
-        real,    intent(in)   :: nodeR(:,:)
+        real(8),    intent(in)   :: nodeR(:,:)
         integer, intent(in)   :: linkI(:,:)
         integer, intent(in)   :: nodeI(:,:)
 
@@ -816,13 +816,13 @@ contains
         character(64) :: subroutine_name = 'network_data_create'
 
         integer, intent(in out) :: elem2I(:,:), elemMI(:,:), faceI(:,:)
-        real,    intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(8),    intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
 
         integer, intent(in out) :: linkI(:,:)
 
         integer, target, intent(in out) :: nodeI(:,:)
 
-        real,    target, intent(in)     :: linkR(:,:), nodeR(:,:)
+        real(8),    target, intent(in)     :: linkR(:,:), nodeR(:,:)
 
         logical, target, intent(in) :: nodeYN(:,:)
 
@@ -834,7 +834,7 @@ contains
 
         integer, pointer :: nodesDownstream(:)
 
-        real, pointer  :: Zdownstream
+        real(8), pointer  :: Zdownstream
 
         type(string),  intent(in out)  :: elem2Name(:), elemMName(:), faceName(:)
         type(string),  intent(in)      :: linkName(:), nodeName(:)
@@ -1031,9 +1031,9 @@ contains
         integer,               intent(in out) :: linkI(:,:)
         integer, target,       intent(in out) :: nodeI(:,:)
 
-        real,    intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(8),    intent(in out) :: elem2R(:,:), elemMR(:,:), faceR(:,:)
 
-        real,  target,    intent(in)     :: linkR(:,:),  nodeR(:,:)
+        real(8),  target,    intent(in)     :: linkR(:,:),  nodeR(:,:)
 
         type(string),  intent(in out)  :: elem2Name(:), elemMName(:), faceName(:)
         type(string),  intent(in)      :: linkName(:), nodeName(:)
@@ -1042,7 +1042,7 @@ contains
 
         integer, pointer :: dlink
 
-        real :: zDownstream
+        real(8) :: zDownstream
 
         integer, dimension(upstream_face_per_elemM) :: linkSet
 
@@ -1568,12 +1568,12 @@ contains
 
         integer, intent(in out)     :: linkI(:,:)
 
-        real,    intent(in out) :: elem2R(:,:), faceR(:,:)
-        real,    intent(in)     :: linkR(:,:), nodeR(:,:)
+        real(8),    intent(in out) :: elem2R(:,:), faceR(:,:)
+        real(8),    intent(in)     :: linkR(:,:), nodeR(:,:)
 
-        real,    intent(in)     :: zDownstream
+        real(8),    intent(in)     :: zDownstream
 
-        real :: zcenter, zface
+        real(8) :: zcenter, zface
 
         integer :: mm, pp
         !--------------------------------------------------------------------------
@@ -1810,18 +1810,18 @@ contains
 
         character(64) :: subroutine_name = 'link_shortening'
 
-        real,              intent(in out)  ::  linkLength(:)
-        real,    target,   intent(in out)  ::  nodeR(:,:)
+        real(8),              intent(in out)  ::  linkLength(:)
+        real(8),    target,   intent(in out)  ::  nodeR(:,:)
 
         integer, target,   intent(in)      :: nodeI(:,:)
 
         integer,           intent(in)      :: thisNode, niNlinkX, nrElementLengthX(:), niMlinkX(:)
 
-        real,              intent(in)      :: element_nominal_length(:)
+        real(8),              intent(in)      :: element_nominal_length(:)
 
-        real                   :: delta ! local variable
+        real(8)                   :: delta ! local variable
 
-        real,      pointer     :: elemLength
+        real(8),      pointer     :: elemLength
 
         integer,   pointer     :: tlink
 

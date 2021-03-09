@@ -131,13 +131,13 @@ contains
         !
         character(64) :: subroutine_name = 'bc_applied_onface'
 
-        real,          intent(in out)  :: faceR(:,:)
-        real,          intent(in out)  :: elem2R(:,:)
+        real(8),          intent(in out)  :: faceR(:,:)
+        real(8),          intent(in out)  :: elem2R(:,:)
         integer,       intent(in out)  :: faceI(:,:)
         integer,       intent(in)      :: elem2I(:,:)
         type(bcType),  intent(in out)  :: bcdataDn(:), bcdataUp(:)
         integer,       intent(in)      :: e2r_Velocity_new
-        real,          intent(in)      :: thisTime
+        real(8),          intent(in)      :: thisTime
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -173,10 +173,10 @@ contains
         !
         character(64) :: subroutine_name = 'bc_applied_onelement'
 
-        real,          intent(in out)  :: elem2R(:,:)
+        real(8),          intent(in out)  :: elem2R(:,:)
         type(bcType),  intent(in out)  :: bcdataDn(:), bcdataUp(:)
 
-        real,      intent(in)  :: thisTime
+        real(8),      intent(in)  :: thisTime
         integer,   intent(in)  :: thiscategory
         integer,   intent(in)  :: e2r_VelocityColumn
 
@@ -235,7 +235,7 @@ contains
         !
         character(64) :: subroutine_name = 'bc_timescale_value'
 
-        real,                  intent(in out)  :: elem2R(:,:)
+        real(8),                  intent(in out)  :: elem2R(:,:)
         type(bcType),  target, intent(in)      :: bcdata(:)
 
         integer :: ii
@@ -270,7 +270,7 @@ contains
         !
         character(64) :: subroutine_name = 'bc_nullify_ghost_elem'
 
-        real,                      intent(in out) :: elem2R(:,:)
+        real(8),                      intent(in out) :: elem2R(:,:)
         type(bcType),  target,     intent(in)     :: bcdata(:)
 
         integer,   pointer :: eID
@@ -320,14 +320,14 @@ contains
         !
         character(64) :: subroutine_name = 'bc_onface'
 
-        real,                      intent(in out)  :: faceR(:,:)
-        real,                      intent(in)      :: elem2R(:,:)
+        real(8),                      intent(in out)  :: faceR(:,:)
+        real(8),                      intent(in)      :: elem2R(:,:)
         integer,                   intent(in out)  :: faceI(:,:)
         type(bcType),  target,     intent(in out)  :: bcdata(:)
 
-        real,  intent(in)  :: thisTime
+        real(8),  intent(in)  :: thisTime
 
-        real,      pointer :: thisval
+        real(8),      pointer :: thisval
         integer,   pointer :: thisloc, thiscat, thisghost, thisinside
         integer :: ii
 
@@ -373,14 +373,14 @@ contains
         !
         character(64) :: subroutine_name = 'bc_face_othervalues'
 
-        real,    target,   intent(in out)  :: faceR(:,:)
-        real,    target,   intent(in)      :: elem2R(:,:)
+        real(8),    target,   intent(in out)  :: faceR(:,:)
+        real(8),    target,   intent(in)      :: elem2R(:,:)
         integer, target,   intent(in)      :: faceI(:,:)
         type(bcType),  target, intent(in)  :: bcdata(:)
         !integer,               intent(in)  :: fi_Melem_inside
 
-        real                   :: thisFroudeNumber, thisDepth, sideslope
-        real,      pointer     :: froudeMax, Qrate, Depth, Top, Dinc, Area
+        real(8)                   :: thisFroudeNumber, thisDepth, sideslope
+        real(8),      pointer     :: froudeMax, Qrate, Depth, Top, Dinc, Area
         integer, dimension(3)  :: e2rset, frset
         integer,   pointer     :: fID, eID
         integer    :: ii
@@ -517,12 +517,12 @@ contains
 
         character(64) :: subroutine_name = 'bc_onelement'
 
-        real,                      intent(in out)  :: elem2R(:,:)
+        real(8),                      intent(in out)  :: elem2R(:,:)
         type(bcType),  target,     intent(in out)  :: bcdata(:)
-        real,                      intent(in)      :: thisTime
+        real(8),                      intent(in)      :: thisTime
         integer,                   intent(in)      :: thiscategory, e2r_VelocityColumn
 
-        real,      pointer :: thisval
+        real(8),      pointer :: thisval
         integer,   pointer :: thisloc, thiscat, thisghost
         integer :: ii
         !--------------------------------------------------------------------------
@@ -575,7 +575,7 @@ contains
 
         type(bcType), intent(in out) :: bcdata(:)
 
-        real,  intent(in)  :: thisTime
+        real(8),  intent(in)  :: thisTime
 
         integer    :: ii
         !--------------------------------------------------------------------------
@@ -712,7 +712,7 @@ contains
 
         integer,                   intent(in)  :: nBCdir
 
-        real :: timelow, timehigh
+        real(8) :: timelow, timehigh
 
         integer :: ii
 
@@ -764,8 +764,8 @@ contains
 
         character(64) :: subroutine_name = 'bc_ghost_othervalues'
 
-        real,                  intent(in out)  :: elem2R(:,:)
-        real,                  intent(in)      :: faceR(:,:)
+        real(8),                  intent(in out)  :: elem2R(:,:)
+        real(8),                  intent(in)      :: faceR(:,:)
         integer,               intent(in)      :: elem2I(:,:)
         integer,       target, intent(in)      :: faceI(:,:)
         type(bcType),  target, intent(in)      :: bcdata(:)

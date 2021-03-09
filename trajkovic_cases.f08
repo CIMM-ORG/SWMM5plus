@@ -39,19 +39,19 @@ contains
 
         character(64) :: subroutine_name = 'trajkovic_cases_setup'
 
-        real, intent(inout) :: init_depth(:), depth_dnstream(:), depth_upstream(:)
-        real, intent(inout) :: lowerZ(:), upperZ(:), link_length(:), link_breadth(:)
-        real, intent(inout) :: subdivide_length(:), flowrate(:), area(:), velocity(:)
-        real, intent(inout) :: Froude(:), ManningsN(:), full_depth(:), inlet_offset(:)
-        real, intent(inout) :: cDis1(:), outlet_offset(:)
+        real(8), intent(inout) :: init_depth(:), depth_dnstream(:), depth_upstream(:)
+        real(8), intent(inout) :: lowerZ(:), upperZ(:), link_length(:), link_breadth(:)
+        real(8), intent(inout) :: subdivide_length(:), flowrate(:), area(:), velocity(:)
+        real(8), intent(inout) :: Froude(:), ManningsN(:), full_depth(:), inlet_offset(:)
+        real(8), intent(inout) :: cDis1(:), outlet_offset(:)
 
         integer, intent(inout) :: idepth_type(:)
         integer, intent(inout) :: link_geometry(:)
 
-        real,    dimension(:), allocatable :: link_slope
+        real(8),    dimension(:), allocatable :: link_slope
         integer, dimension(:), allocatable :: link_type, subdivide_elements
 
-        real :: CFL, ManningsNBuffer,total_length
+        real(8) :: CFL, ManningsNBuffer,total_length
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -184,19 +184,19 @@ contains
         !
         character(64) :: subroutine_name = 'trajkovic_cases_initialize'
 
-        real,  intent(in)  :: link_length(:), link_breadth(:), subdivide_length(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
-        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
-        real,  intent(in)  :: inlet_offset(:), discharge_coefficient1(:)
-        real,  intent(in)  :: full_depth(:), ManningsN(:), outlet_offset(:)
+        real(8),  intent(in)  :: link_length(:), link_breadth(:), subdivide_length(:)
+        real(8),  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
+        real(8),  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
+        real(8),  intent(in)  :: inlet_offset(:), discharge_coefficient1(:)
+        real(8),  intent(in)  :: full_depth(:), ManningsN(:), outlet_offset(:)
 
         integer, intent(in):: idepth_type(:)
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
@@ -299,19 +299,19 @@ contains
         !
         character(64) :: subroutine_name = 'trajkovic_cases_link_node'
 
-        real,  intent(in)  :: link_length(:), link_breadth(:), subdivide_length(:)
-        real,  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
-        real,  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
-        real,  intent(in)  :: inlet_offset(:), discharge_coefficient1(:)
-        real,  intent(in)  :: full_depth(:), ManningsN(:), outlet_offset(:)
+        real(8),  intent(in)  :: link_length(:), link_breadth(:), subdivide_length(:)
+        real(8),  intent(in)  :: lowerZ(:), upperZ(:),  initial_flowrate(:)
+        real(8),  intent(in)  :: depth_upstream(:), depth_dnstream(:), initial_depth(:)
+        real(8),  intent(in)  :: inlet_offset(:), discharge_coefficient1(:)
+        real(8),  intent(in)  :: full_depth(:), ManningsN(:), outlet_offset(:)
 
         integer, intent(in):: idepth_type(:)
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
 
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
 
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN

@@ -40,12 +40,12 @@ contains
         character(64) :: subroutine_name = 'face_update'
 
         integer,       intent(in out)  :: faceI(:,:)
-        real,          intent(in out)  :: faceR(:,:)
-        real,          intent(in out)  :: elem2R(:,:)
-        real,          intent(in)      :: elemMR(:,:)
+        real(8),          intent(in out)  :: faceR(:,:)
+        real(8),          intent(in out)  :: elem2R(:,:)
+        real(8),          intent(in)      :: elemMR(:,:)
         integer,       intent(in)      :: elem2I(:,:)
         type(bcType),  intent(in out)  :: bcdataDn(:), bcdataUp(:)
-        real,          intent(in)      :: thisTime
+        real(8),          intent(in)      :: thisTime
 
         integer,       intent(in)      :: e2r_Velocity_new, eMr_Velocity_new, thisIter
         integer,       intent(in)      :: e2r_Volume_new, eMr_Volume_new
@@ -111,7 +111,7 @@ contains
         character(64) :: subroutine_name = 'face_bc_flowrate_update'
 
         type(bcType),  target,     intent(in out)  :: bcdataDn(:), bcdataUp(:)
-        real,                      intent(in)      :: faceR(:,:)
+        real(8),                      intent(in)      :: faceR(:,:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -131,7 +131,7 @@ contains
         character(64) :: subroutine_name = 'face_bc_flowrate_update_onevalue'
 
         type(bcType),  target,     intent(in out)  :: bcdata(:)
-        real,                      intent(in)      :: faceR(:,:)
+        real(8),                      intent(in)      :: faceR(:,:)
 
         integer,   pointer :: fID
         integer            :: mm
@@ -159,18 +159,18 @@ contains
         character(64) :: subroutine_name = 'face_interp_for_elem2faces'
 
         integer,               intent(in)      :: faceI(:,:)
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,      target,     intent(in)      :: elem2R(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),      target,     intent(in)      :: elem2R(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
         type(bcType),          intent(in)      :: bcdataDn(:), bcdataUp(:)
         integer,               intent(in)      :: e2r_Volume_new
         ! logical,               intent(in)      :: facemask_meta_u(:), facemask_meta_d(:)
 
-        real,      pointer  :: valueUp(:), valueDn(:)
-        real,      pointer  :: weightUpQ(:), weightDnQ(:)
-        real,      pointer  :: weightUpH(:), weightDnH(:)
-        real,      pointer  :: weightUpG(:), weightDnG(:)
-        real,      pointer  :: inoutarray(:)
+        real(8),      pointer  :: valueUp(:), valueDn(:)
+        real(8),      pointer  :: weightUpQ(:), weightDnQ(:)
+        real(8),      pointer  :: weightUpH(:), weightDnH(:)
+        real(8),      pointer  :: weightUpG(:), weightDnG(:)
+        real(8),      pointer  :: inoutarray(:)
         logical,   pointer  :: facemask(:), facemask_eHQ2(:)
 
         integer :: mm
@@ -316,14 +316,14 @@ contains
         character(64) :: subroutine_name = 'face_interp_for_upstreamchannel_to_downstreamjunction'
 
         integer,               intent(in)      :: faceI(:,:)
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
         integer,               intent(in)      :: e2r_Volume_new, eMr_Volume_new
 
         logical,   pointer  :: facemask(:)
-        real,      pointer  :: valueUp(:), valueDn(:)
-        real,      pointer  :: weightUp(:), weightDn(:)
+        real(8),      pointer  :: valueUp(:), valueDn(:)
+        real(8),      pointer  :: weightUp(:), weightDn(:)
 
         integer :: mm
 
@@ -419,13 +419,13 @@ contains
         character(64) :: subroutine_name = 'face_interp_for_downstreamchannel_to_upstreamjunction'
 
         integer,               intent(in)      :: faceI(:,:)
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
         integer,               intent(in)      :: e2r_Volume_new, eMr_Volume_new
 
         logical,   pointer  :: facemask(:)
-        real,      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
+        real(8),      pointer  :: valueUp(:), valueDn(:), weightUp(:), weightDn(:)
 
         integer :: mm
 
@@ -519,16 +519,16 @@ contains
         character(64) :: subroutine_name = 'face_interp_for_upstream_elem2_downstream_storage'
 
         integer,               intent(in)      :: faceI(:,:)
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
         integer,               intent(in)      :: e2r_Volume_new, eMr_Volume_new
 
         logical,   pointer  :: facemask(:)
-        real,      pointer  :: valueUp(:), valueDn(:)
-        real,      pointer  :: weightUpQ(:), weightDnQ(:)
-        real,      pointer  :: weightUpH(:), weightDnH(:)
-        real,      pointer  :: weightUpG(:), weightDnG(:)
+        real(8),      pointer  :: valueUp(:), valueDn(:)
+        real(8),      pointer  :: weightUpQ(:), weightDnQ(:)
+        real(8),      pointer  :: weightUpH(:), weightDnH(:)
+        real(8),      pointer  :: weightUpG(:), weightDnG(:)
 
         integer :: mm
 
@@ -631,16 +631,16 @@ contains
         character(64) :: subroutine_name = 'face_interp_for_downstream_elem2_upstream_storage'
 
         integer,               intent(in)      :: faceI(:,:)
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
         integer,               intent(in)      :: e2r_Volume_new, eMr_Volume_new
 
         logical,   pointer  :: facemask(:)
-        real,      pointer  :: valueUp(:), valueDn(:)
-        real,      pointer  :: weightUpQ(:), weightDnQ(:)
-        real,      pointer  :: weightUpH(:), weightDnH(:)
-        real,      pointer  :: weightUpG(:), weightDnG(:)
+        real(8),      pointer  :: valueUp(:), valueDn(:)
+        real(8),      pointer  :: weightUpQ(:), weightDnQ(:)
+        real(8),      pointer  :: weightUpH(:), weightDnH(:)
+        real(8),      pointer  :: weightUpG(:), weightDnG(:)
 
         integer :: mm
 
@@ -743,18 +743,18 @@ contains
         !
         character(64) :: subroutine_name = 'face_hydraulic_jump'
 
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
         integer,   target,     intent(in out)  :: faceI(:,:)
         integer,               intent(in)      :: e2r_Velocity_new, eMr_Velocity_new
 
         integer,   pointer :: mapUp(:), mapDn(:), typUp(:), typDn(:), jumptype(:)
-        real,      pointer :: froudeUp(:), froudeDn(:), etaUp(:), etaDn(:)
-        real,      pointer :: areaUp(:), areaDn(:), velUp(:), velDn(:), flowrate(:)
+        real(8),      pointer :: froudeUp(:), froudeDn(:), etaUp(:), etaDn(:)
+        real(8),      pointer :: areaUp(:), areaDn(:), velUp(:), velDn(:), flowrate(:)
 
         integer    :: fr_froudeUp, fr_froudeDn
 
-        real :: feps, rc
+        real(8) :: feps, rc
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -904,12 +904,12 @@ contains
 
         character(64) :: subroutine_name = 'face_surface_elevation_interp'
 
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),                  intent(in)      :: elem2R(:,:), elemMR(:,:)
         integer,   target,     intent(in)      :: faceI(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
         integer,   pointer :: mapUp(:), mapDn(:)
-        real,      pointer :: weightUp(:), weightDn(:), etaUp(:), etaDn(:)
+        real(8),      pointer :: weightUp(:), weightDn(:), etaUp(:), etaDn(:)
         logical,   pointer :: facemask(:)
 
         integer :: mm
@@ -1020,16 +1020,16 @@ contains
 
         character(64) :: subroutine_name = 'face_hydraulic_depth'
 
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),                  intent(in)      :: elem2R(:,:), elemMR(:,:)
         integer,   target,     intent(in)      :: faceI(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
 
         integer,   pointer :: mapUp(:), mapDn(:), typUp(:), typDn(:)
-        real,      pointer :: HydUp(:), HydDn(:), AreaUp(:), AreaDn(:)
-        real,      pointer :: fTopwidth(:)
+        real(8),      pointer :: HydUp(:), HydDn(:), AreaUp(:), AreaDn(:)
+        real(8),      pointer :: fTopwidth(:)
 
-        real    :: ZeroTopWidth, ZeroArea
+        real(8)    :: ZeroTopWidth, ZeroArea
         integer :: mm
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -1074,18 +1074,18 @@ contains
 
         character(64) :: subroutine_name = 'face_cosangle'
 
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),                  intent(in)      :: elem2R(:,:), elemMR(:,:)
         integer,   target,     intent(in)      :: faceI(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
 
         integer,   pointer :: mapUp(:), mapDn(:)
-        real,      pointer :: zDist(:), xDist(:), etaUp(:), etaDn(:), cosAngle(:)
+        real(8),      pointer :: zDist(:), xDist(:), etaUp(:), etaDn(:), cosAngle(:)
         logical,   pointer :: facemask(:)
 
         integer    :: fr_zdist, fr_xdist
 
-        real :: feps, rc
+        real(8) :: feps, rc
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -1146,16 +1146,16 @@ contains
         !
         character(64) :: subroutine_name = 'interp_channel_onetype'
 
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,                  intent(in out)  :: valueUp(:),  valueDn(:)
-        real,                  intent(in)      :: weightUp(:), weightDn(:)
-        real,                  intent(in)      :: elem2R(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),                  intent(in out)  :: valueUp(:),  valueDn(:)
+        real(8),                  intent(in)      :: weightUp(:), weightDn(:)
+        real(8),                  intent(in)      :: elem2R(:,:)
         integer,               intent(in)      :: faceI(:,:)
 
         integer,               intent(in)      :: e2r_ThisType, fr_ThisType
         logical,               intent(in)      :: facemask(:)
 
-        real,  pointer :: inoutarray(:)
+        real(8),  pointer :: inoutarray(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -1186,17 +1186,17 @@ contains
 
         character(64) :: subroutine_name = 'interp_with_junction_downstream'
 
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,                  intent(in out)  :: valueUp(:),  valueDn(:)
-        real,                  intent(in)      :: weightUp(:), weightDn(:)
-        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),                  intent(in out)  :: valueUp(:),  valueDn(:)
+        real(8),                  intent(in)      :: weightUp(:), weightDn(:)
+        real(8),                  intent(in)      :: elem2R(:,:), elemMR(:,:)
         integer,               intent(in)      :: faceI(:,:)
 
         integer,               intent(in)      :: e2r_ThisValue, fr_ThisValue
         integer,               intent(in)      :: eMr_ThisValueUp(:)
         logical,               intent(in)      :: facemask(:)
 
-        real,  pointer :: inoutarray(:)
+        real(8),  pointer :: inoutarray(:)
 
         integer :: mm
 
@@ -1233,10 +1233,10 @@ contains
         !
         character(64) :: subroutine_name = 'interp_with_junction_upstream'
 
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,                  intent(in out)  :: valueUp(:),  valueDn(:)
-        real,                  intent(in)      :: weightUp(:), weightDn(:)
-        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),                  intent(in out)  :: valueUp(:),  valueDn(:)
+        real(8),                  intent(in)      :: weightUp(:), weightDn(:)
+        real(8),                  intent(in)      :: elem2R(:,:), elemMR(:,:)
 
         integer,               intent(in)      :: faceI(:,:)
 
@@ -1245,7 +1245,7 @@ contains
 
         logical,               intent(in)      :: facemask(:)
 
-        real,  pointer :: inoutarray(:)
+        real(8),  pointer :: inoutarray(:)
 
         integer :: mm
 
@@ -1283,17 +1283,17 @@ contains
 
         character(64) :: subroutine_name = 'interp_with_storage_downstream'
 
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,                  intent(in out)  :: valueUp(:),  valueDn(:)
-        real,                  intent(in)      :: weightUp(:), weightDn(:)
-        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),                  intent(in out)  :: valueUp(:),  valueDn(:)
+        real(8),                  intent(in)      :: weightUp(:), weightDn(:)
+        real(8),                  intent(in)      :: elem2R(:,:), elemMR(:,:)
         integer,               intent(in)      :: faceI(:,:)
 
         integer,               intent(in)      :: e2r_ThisValue, fr_ThisValue
         integer,               intent(in)      :: eMr_ThisValueUp
         logical,               intent(in)      :: facemask(:)
 
-        real,  pointer :: inoutarray(:)
+        real(8),  pointer :: inoutarray(:)
 
         integer :: mm
 
@@ -1325,10 +1325,10 @@ contains
         !
         character(64) :: subroutine_name = 'interp_with_storage_upstream'
 
-        real,      target,     intent(in out)  :: faceR(:,:)
-        real,                  intent(in out)  :: valueUp(:),  valueDn(:)
-        real,                  intent(in)      :: weightUp(:), weightDn(:)
-        real,                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+        real(8),      target,     intent(in out)  :: faceR(:,:)
+        real(8),                  intent(in out)  :: valueUp(:),  valueDn(:)
+        real(8),                  intent(in)      :: weightUp(:), weightDn(:)
+        real(8),                  intent(in)      :: elem2R(:,:), elemMR(:,:)
 
         integer,               intent(in)      :: faceI(:,:)
 
@@ -1337,7 +1337,7 @@ contains
 
         logical,               intent(in)      :: facemask(:)
 
-        real,  pointer :: inoutarray(:)
+        real(8),  pointer :: inoutarray(:)
 
         integer :: mm
 
@@ -1367,10 +1367,10 @@ contains
         ! downstream value - e.g., if length is the weighting, then the upstream value
         ! being further away gives a larger emphasis to the downstream value
         !
-        real,      intent(in out)  :: inoutarray(:)
+        real(8),      intent(in out)  :: inoutarray(:)
         logical,   intent(in)      :: facemask(:)
-        real,      intent(in)      :: upstreamWeight(:), downstreamWeight(:)
-        real,      intent(in)      :: upstreamValue(:),  downstreamValue(:)
+        real(8),      intent(in)      :: upstreamWeight(:), downstreamWeight(:)
+        real(8),      intent(in)      :: upstreamValue(:),  downstreamValue(:)
 
         !--------------------------------------------------------------------------
         !

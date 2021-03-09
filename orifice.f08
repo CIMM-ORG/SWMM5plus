@@ -38,23 +38,23 @@ contains
         ! indexes for old/new volume and velocity storage
         integer,   intent(in) :: e2r_Volume_col, e2r_Velocity_col
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,           intent(in out)  :: faceI(:,:)
-        real,      target, intent(in out)  :: faceR(:,:)
+        real(8),      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
         logical,           intent(in out)  :: faceYN(:,:)
-        real,              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
-        real,  pointer     ::  volume2(:), velocity2(:), oBreadth(:) 
-        real,  pointer     ::  oDischargeCoeff(:), oInletoffset(:)
-        real,  pointer     ::  oFullDepth(:), oZbottom(:), oFlow(:), oDepth(:)
-        real,  pointer     ::  oEta(:), oLength(:), oArea(:),oPerimeter(:)
-        real,  pointer     ::  oHyddepth(:), oHydradius(:), oTopwidth(:)
-        real,  pointer     ::  hEffective(:), oCrest(:), oCrown(:), oFullArea(:)
-        real,  pointer     ::  hCrit(:), cOrif(:), cWeir(:)
-        real,  pointer     ::  subFactor(:), subCorrection(:)
-        real,  pointer     ::  fEdn(:), fEup(:)
+        real(8),  pointer     ::  volume2(:), velocity2(:), oBreadth(:) 
+        real(8),  pointer     ::  oDischargeCoeff(:), oInletoffset(:)
+        real(8),  pointer     ::  oFullDepth(:), oZbottom(:), oFlow(:), oDepth(:)
+        real(8),  pointer     ::  oEta(:), oLength(:), oArea(:),oPerimeter(:)
+        real(8),  pointer     ::  oHyddepth(:), oHydradius(:), oTopwidth(:)
+        real(8),  pointer     ::  hEffective(:), oCrest(:), oCrown(:), oFullArea(:)
+        real(8),  pointer     ::  hCrit(:), cOrif(:), cWeir(:)
+        real(8),  pointer     ::  subFactor(:), subCorrection(:)
+        real(8),  pointer     ::  fEdn(:), fEup(:)
 
         integer, pointer   ::  iup(:), idn(:), dir(:)
 
@@ -239,14 +239,14 @@ contains
         !
         character(64) :: subroutine_name = 'orifice_initialize'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real,    intent(inout)  :: crest(:), length(:), eta(:)
-        real,    intent(in)     :: inletoffset(:), zbottom(:), fulldepth(:)
-        real,    intent(in)     :: crown(:), faceEtaDn(:), faceEtaUp(:)
+        real(8),    intent(inout)  :: crest(:), length(:), eta(:)
+        real(8),    intent(in)     :: inletoffset(:), zbottom(:), fulldepth(:)
+        real(8),    intent(in)     :: crown(:), faceEtaDn(:), faceEtaUp(:)
         integer, intent(inout)  :: dir(:)
         integer, intent(in)     :: upFace(:), dnFace(:)
 
@@ -290,13 +290,13 @@ contains
         !
         character(64) :: subroutine_name = 'orifice_equivalent_discharge_coefficient'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real,    intent(inout) ::  critDepth(:), coeffOrif(:), coeffWeir(:)  
-        real,    intent(in)    ::  breadth(:), fulldepth(:), coeffDischarge(:)
+        real(8),    intent(inout) ::  critDepth(:), coeffOrif(:), coeffWeir(:)  
+        real(8),    intent(in)    ::  breadth(:), fulldepth(:), coeffDischarge(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -374,14 +374,14 @@ contains
         !
         character(64) :: subroutine_name = 'orifice_effective_head'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real,    intent(inout)   :: effectiveHead(:), submergenceFactor(:)
-        real,    intent(in)      :: crest(:), crown(:), eta(:), critDepth(:)
-        real,    intent(in)      :: faceEtaUp(:), faceEtaDn(:)
+        real(8),    intent(inout)   :: effectiveHead(:), submergenceFactor(:)
+        real(8),    intent(in)      :: crest(:), crown(:), eta(:), critDepth(:)
+        real(8),    intent(in)      :: faceEtaUp(:), faceEtaDn(:)
 
         logical, intent(inout)   :: maskarray_dn_submergence(:), maskarray_up_submergence(:)
 
@@ -478,18 +478,18 @@ contains
         character(64) :: subroutine_name = 'orifice_geometry'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
 
-        real,    intent(inout) ::  area(:), perimeter(:), hyddepth(:)
-        real,    intent(inout) ::  hydradius(:), topwidth(:), depth(:)
-        real,    intent(in)    ::  breadth(:), fullDepth(:), fullArea(:)
-        real,    intent(in)    ::  eta(:), crest(:), zbottom(:)
+        real(8),    intent(inout) ::  area(:), perimeter(:), hyddepth(:)
+        real(8),    intent(inout) ::  hydradius(:), topwidth(:), depth(:)
+        real(8),    intent(in)    ::  breadth(:), fullDepth(:), fullArea(:)
+        real(8),    intent(in)    ::  eta(:), crest(:), zbottom(:)
 
-        real,    pointer       ::  YoverYfull(:)
+        real(8),    pointer       ::  YoverYfull(:)
         logical, pointer       ::  maskCircularOrifice(:)
 
         !--------------------------------------------------------------------------
@@ -592,13 +592,13 @@ contains
         !
         character(64) :: subroutine_name = 'villemonte_orifice_submergence_correction'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real,    intent(inout) ::  submerganceCorrection(:)
-        real,    intent(in)    ::  crest(:), faceEtaDn(:), faceEtaUp(:)
+        real(8),    intent(inout) ::  submerganceCorrection(:)
+        real(8),    intent(in)    ::  crest(:), faceEtaDn(:), faceEtaUp(:)
         integer, intent(in)    ::  upFace(:), dnFace(:)
         logical, intent(in)    ::  maskarray_submergence(:)
 
@@ -631,17 +631,17 @@ contains
         character(64) :: subroutine_name = 'orifice_flow'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
-        real,              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
 
-        real,    intent(inout)   ::  volume2(:), velocity2(:), flow(:)
-        real,    intent(in)      ::  coeffOrif(:), coeffWeir(:), breadth(:)
-        real,    intent(in)      ::  fulldepth(:), area(:), submergenceFactor(:)
-        real,    intent(in)      ::  effectiveHead(:),submerganceCorrection(:)
+        real(8),    intent(inout)   ::  volume2(:), velocity2(:), flow(:)
+        real(8),    intent(in)      ::  coeffOrif(:), coeffWeir(:), breadth(:)
+        real(8),    intent(in)      ::  fulldepth(:), area(:), submergenceFactor(:)
+        real(8),    intent(in)      ::  effectiveHead(:),submerganceCorrection(:)
         integer, intent(in)      ::  dir(:)
 
         !--------------------------------------------------------------------------

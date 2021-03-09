@@ -24,35 +24,35 @@ program main
     implicit none
 
     !%  elem2# are the values for elements that have only 2 faces
-    real,       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
+    real(8),       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
     integer,    dimension(:,:), allocatable, target    :: elem2I       ! integer data for elements with 2 faces
     logical,    dimension(:,:), allocatable, target    :: elem2YN      ! logical data for elements with 2 faces
 
     type(string), dimension(:), allocatable, target    :: elem2Name    ! array of character strings
 
     !%  elemM# are the values for elements that have more than 2 faces
-    real,       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
+    real(8),       dimension(:,:), allocatable, target    :: elemMR       ! real data for elements with multi faces
     integer,    dimension(:,:), allocatable, target    :: elemMI       ! integer data for elements with multi faces
     logical,    dimension(:,:), allocatable, target    :: elemMYN      ! logical data for elements with multi faces
 
     type(string), dimension(:), allocatable, target    :: elemMName    ! array of character strings
 
     !%  face# are the values for faces (always bounded by 2 elements)
-    real,       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
+    real(8),       dimension(:,:), allocatable, target    :: faceR       ! real data for faces
     integer,    dimension(:,:), allocatable, target    :: faceI       ! integer data for faces
     logical,    dimension(:,:), allocatable, target    :: faceYN      ! logical data for face
 
     type(string), dimension(:), allocatable, target    :: faceName    ! array of character strings
 
     !%  links are the building blocks from SWMM link-node formulation
-    real,       dimension(:,:), allocatable, target    :: linkR       ! real data for links
+    real(8),       dimension(:,:), allocatable, target    :: linkR       ! real data for links
     integer,    dimension(:,:), allocatable, target    :: linkI       ! integer data for links
     logical,    dimension(:,:), allocatable, target    :: linkYN      ! logical data for links
 
     type(string), dimension(:), allocatable, target    :: linkName    ! array of character strings
 
     !%  nodes are the building blocks from teh SWMM link-node formulation
-    real,       dimension(:,:), allocatable, target    :: nodeR       ! real data for nodes
+    real(8),       dimension(:,:), allocatable, target    :: nodeR       ! real(8) data for nodes
     integer,    dimension(:,:), allocatable, target    :: nodeI       ! integer data for nodes
     logical,    dimension(:,:), allocatable, target    :: nodeYN      ! logical data for nodes
 
@@ -75,12 +75,12 @@ program main
 
     integer, dimension(:),      allocatable :: wdID
     integer, dimension(:),      allocatable :: wdNumberPairs
-    real,    dimension(:),      allocatable :: wdManningsN
-    real,    dimension(:),      allocatable :: wdLength
-    real,    dimension(:),      allocatable :: wdZBottom
-    real,    dimension(:),      allocatable :: wdXDistance
-    real,    dimension(:),      allocatable :: wdBreadth
-    real,    dimension(:,:,:),  allocatable :: wdWidthDepthData
+    real(8),    dimension(:),      allocatable :: wdManningsN
+    real(8),    dimension(:),      allocatable :: wdLength
+    real(8),    dimension(:),      allocatable :: wdZBottom
+    real(8),    dimension(:),      allocatable :: wdXDistance
+    real(8),    dimension(:),      allocatable :: wdBreadth
+    real(8),    dimension(:,:,:),  allocatable :: wdWidthDepthData
     type(string), dimension(:), allocatable :: wdCellType(:)
 
     !--------------------------------------------------------------------------

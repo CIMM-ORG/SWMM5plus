@@ -48,8 +48,8 @@ contains
 
         integer,      dimension(:,:), allocatable, intent(out) :: linkI
         integer,      dimension(:,:), allocatable, intent(out) :: nodeI
-        real,         dimension(:,:), allocatable, intent(out) :: linkR
-        real,         dimension(:,:), allocatable, intent(out) :: nodeR
+        real(8),         dimension(:,:), allocatable, intent(out) :: linkR
+        real(8),         dimension(:,:), allocatable, intent(out) :: nodeR
         logical,      dimension(:,:), allocatable, intent(out) :: linkYN
         logical,      dimension(:,:), allocatable, intent(out) :: nodeYN
         type(string), dimension(:),   allocatable, intent(out) :: linkName
@@ -57,55 +57,55 @@ contains
         type(bcType), dimension(:),   allocatable, intent(out) :: bcdataUp, bcdataDn
         type(controlType), dimension(:),   allocatable, intent(out) :: gateSetting
 
-        real, dimension(:), allocatable :: depth_dnstream, depth_upstream, init_depth
-        real, dimension(:), allocatable :: subdivide_length, channel_length
-        real, dimension(:), allocatable :: channel_breadth, channel_topwidth
-        real, dimension(:), allocatable :: lowerZ, upperZ, flowrate, zbottom
-        real, dimension(:), allocatable :: area, velocity,  Froude, ManningsN
-        real, dimension(:), allocatable :: fullDepth, inletOffset, outletOffset, sideSlope
-        real, dimension(:), allocatable :: parabolaValue, leftSlope, rightSlope
-        real, dimension(:), allocatable :: dischargeCoefficient1, dischargeCoefficient2
-        real, dimension(:), allocatable :: endContractions
+        real(8), dimension(:), allocatable :: depth_dnstream, depth_upstream, init_depth
+        real(8), dimension(:), allocatable :: subdivide_length, channel_length
+        real(8), dimension(:), allocatable :: channel_breadth, channel_topwidth
+        real(8), dimension(:), allocatable :: lowerZ, upperZ, flowrate, zbottom
+        real(8), dimension(:), allocatable :: area, velocity,  Froude, ManningsN
+        real(8), dimension(:), allocatable :: fullDepth, inletOffset, outletOffset, sideSlope
+        real(8), dimension(:), allocatable :: parabolaValue, leftSlope, rightSlope
+        real(8), dimension(:), allocatable :: dischargeCoefficient1, dischargeCoefficient2
+        real(8), dimension(:), allocatable :: endContractions
 
         integer, dimension(:), allocatable :: idepth_type
         integer, dimension(:), allocatable :: channel_geometry
 
-        real :: CFL, ManningsNBuffer, total_length
+        real(8) :: CFL, ManningsNBuffer, total_length
 
         integer :: first_step, last_step, display_interval, mm
         integer :: N_Swashes
 
-        real :: climit, cvel, uz, lz
+        real(8) :: climit, cvel, uz, lz
 
         !Waller Creek
         integer, dimension(:), allocatable :: init_ID
         integer, dimension(:), allocatable :: init_numberPairs
-        real,    dimension(:), allocatable :: init_ManningsN
-        real,    dimension(:), allocatable :: init_Length
-        real,    dimension(:), allocatable :: init_zBottom
-        real,    dimension(:), allocatable :: init_xDistance
-        real,    dimension(:), allocatable :: init_Breadth
+        real(8),    dimension(:), allocatable :: init_ManningsN
+        real(8),    dimension(:), allocatable :: init_Length
+        real(8),    dimension(:), allocatable :: init_zBottom
+        real(8),    dimension(:), allocatable :: init_xDistance
+        real(8),    dimension(:), allocatable :: init_Breadth
         integer, dimension(:), allocatable :: init_upNode ! We need these to describe connectivity
         integer, dimension(:), allocatable :: init_dnNode ! We need these to describe connectivity
-        real,    dimension(:), allocatable :: init_flowrate !initial flowrate 
-        real,    dimension(:,:,:),  allocatable :: init_widthDepthData
+        real(8),    dimension(:), allocatable :: init_flowrate !initial flowrate 
+        real(8),    dimension(:,:,:),  allocatable :: init_widthDepthData
         type(string), dimension(:), allocatable :: init_cellType
-        real, dimension(:),         allocatable :: faceZBottom
+        real(8), dimension(:),         allocatable :: faceZBottom
 
         integer, dimension(:),      allocatable :: newID
         integer, dimension(:),      allocatable :: newNumberPairs
-        real,    dimension(:),      allocatable :: newManningsN
-        real,    dimension(:),      allocatable :: newLength
-        real,    dimension(:),      allocatable :: newZBottom
-        real,    dimension(:),      allocatable :: newXDistance
-        real,    dimension(:),      allocatable :: newBreadth
-        real,    dimension(:,:,:),  allocatable, target :: newWidthDepthData
+        real(8),    dimension(:),      allocatable :: newManningsN
+        real(8),    dimension(:),      allocatable :: newLength
+        real(8),    dimension(:),      allocatable :: newZBottom
+        real(8),    dimension(:),      allocatable :: newXDistance
+        real(8),    dimension(:),      allocatable :: newBreadth
+        real(8),    dimension(:,:,:),  allocatable, target :: newWidthDepthData
         type(string), dimension(:), allocatable :: newCellType(:)
 
 
-        real :: inflowBC, heightBC, Waller_Creek_initial_depth
-        real :: geometry_downstream_minimum_length
-        real :: Waller_Creek_cellsize_target
+        real(8) :: inflowBC, heightBC, Waller_Creek_initial_depth
+        real(8) :: geometry_downstream_minimum_length
+        real(8) :: Waller_Creek_cellsize_target
 
         logical :: geometry_add_downstream_buffer
 
@@ -113,14 +113,14 @@ contains
         integer :: n_rows_in_file_node = 0
         integer :: max_number_of_pairs = 0
 
-        real :: subdivide_length_check = 10.0
+        real(8) :: subdivide_length_check = 10.0
 
         integer :: ii
 
-        real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
-        real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
-        real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
-        real, pointer :: area_difference(:,:), local_difference(:,:)
+        real(8), pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+        real(8), pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+        real(8), pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+        real(8), pointer :: area_difference(:,:), local_difference(:,:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -1008,15 +1008,15 @@ contains
 
         character(64) :: subroutine_name = 'control_variable_allocation'
 
-        real, dimension(:), allocatable, intent(out) :: depth_dnstream, depth_upstream, init_depth
-        real, dimension(:), allocatable, intent(out) :: subdivide_length, channel_length
-        real, dimension(:), allocatable, intent(out) :: channel_breadth, channel_topwidth
-        real, dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate !initial_flowrate
-        real, dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
-        real, dimension(:), allocatable, intent(out) :: parabolaValue, leftSlope, rightSlope
-        real, dimension(:), allocatable, intent(out) :: inletOffset, outletOffset, sideSlope
-        real, dimension(:), allocatable, intent(out) :: dischargeCoefficient1, dischargeCoefficient2
-        real, dimension(:), allocatable, intent(out) :: fullDepth, endContractions
+        real(8), dimension(:), allocatable, intent(out) :: depth_dnstream, depth_upstream, init_depth
+        real(8), dimension(:), allocatable, intent(out) :: subdivide_length, channel_length
+        real(8), dimension(:), allocatable, intent(out) :: channel_breadth, channel_topwidth
+        real(8), dimension(:), allocatable, intent(out) :: lowerZ, upperZ, flowrate !initial_flowrate
+        real(8), dimension(:), allocatable, intent(out) :: area, velocity, Froude, ManningsN
+        real(8), dimension(:), allocatable, intent(out) :: parabolaValue, leftSlope, rightSlope
+        real(8), dimension(:), allocatable, intent(out) :: inletOffset, outletOffset, sideSlope
+        real(8), dimension(:), allocatable, intent(out) :: dischargeCoefficient1, dischargeCoefficient2
+        real(8), dimension(:), allocatable, intent(out) :: fullDepth, endContractions
 
         integer, dimension(:), allocatable, intent(out) :: idepth_type
         integer, dimension(:), allocatable, intent(out) :: channel_geometry
@@ -1064,13 +1064,13 @@ contains
 
         character(64) :: subroutine_name = 'this_setting_for_time_and_steps'
 
-        real,  intent(in) :: CFL, velocity(:), depth(:), subdivide_length(:)
+        real(8),  intent(in) :: CFL, velocity(:), depth(:), subdivide_length(:)
 
         integer, intent(in) :: first_step, last_step, display_interval, dt_significant_digits
 
-        real,  dimension(size(velocity)) :: dtSet, CFLset
+        real(8),  dimension(size(velocity)) :: dtSet, CFLset
 
-        real       :: dtmin
+        real(8)       :: dtmin
         integer    :: dtscale
 
         !--------------------------------------------------------------------------
@@ -1113,15 +1113,15 @@ contains
 
         character(64) :: subroutine_name = 'froude_driven_setup'
 
-        real,  intent(out)    :: area, flowrate, velocity, upperZ, topwidth
-        real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
-        real,  intent(in)     :: depth
-        real,  intent(in)     :: parabolaValue, leftSlope, rightSlope
+        real(8),  intent(out)    :: area, flowrate, velocity, upperZ, topwidth
+        real(8),  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
+        real(8),  intent(in)     :: depth
+        real(8),  intent(in)     :: parabolaValue, leftSlope, rightSlope
 
-        real :: perimeter, rh, slope
+        real(8) :: perimeter, rh, slope
         integer, intent(in) :: channel_geometry
 
-        real :: xParabola , hDepth
+        real(8) :: xParabola , hDepth
 
 
 
@@ -1191,11 +1191,11 @@ contains
 
         character(64) :: subroutine_name = 'weir_setup'
 
-        real,  intent(out)    :: area, flowrate, velocity, upperZ
-        real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
-        real,  intent(in)     :: depth, sideslope
+        real(8),  intent(out)    :: area, flowrate, velocity, upperZ
+        real(8),  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
+        real(8),  intent(in)     :: depth, sideslope
 
-        real :: perimeter, rh, slope
+        real(8) :: perimeter, rh, slope
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -1238,11 +1238,11 @@ contains
 
         character(64) :: subroutine_name = 'orifice_setup'
 
-        real,  intent(out)    :: area, flowrate, velocity, upperZ
-        real,  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
-        real,  intent(in)     :: depth, sideslope
+        real(8),  intent(out)    :: area, flowrate, velocity, upperZ
+        real(8),  intent(in)     :: Froude,  breadth, ManningsN, lowerZ, total_length
+        real(8),  intent(in)     :: depth, sideslope
 
-        real :: perimeter, rh, slope
+        real(8) :: perimeter, rh, slope
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -1282,13 +1282,13 @@ contains
 
         character(64) :: subroutine_name = 'froude_driven_pipe_setup'
 
-        real,    intent(out)    :: area, topwidth, flowrate, velocity, upperZ
-        real,    intent(in)     :: Froude, breadth, ManningsN, lowerZ, fulldepth
-        real,    intent(in)     :: depth, total_length
+        real(8),    intent(out)    :: area, topwidth, flowrate, velocity, upperZ
+        real(8),    intent(in)     :: Froude, breadth, ManningsN, lowerZ, fulldepth
+        real(8),    intent(in)     :: depth, total_length
 
         integer, intent(in)     :: pipe_geometry
 
-        real :: perimeter, rh, slope, AoverAfull, YoverYfull
+        real(8) :: perimeter, rh, slope, AoverAfull, YoverYfull
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -1350,13 +1350,13 @@ contains
 
         character(64) :: subroutine_name = 'swashes_setup'
 
-        real,    intent(out)    :: area(:), topwidth(:), velocity(:), zbottom(:), link_length(:)
-        real,    intent(out)    :: upperZ(:), lowerZ(:), ManningsN(:), subdivide_length(:)
-        real,    intent(in)     :: breadth(:), depth(:)
-        real,    intent(in)     :: ManningsNBuffer, flowrate(:), total_length
+        real(8),    intent(out)    :: area(:), topwidth(:), velocity(:), zbottom(:), link_length(:)
+        real(8),    intent(out)    :: upperZ(:), lowerZ(:), ManningsN(:), subdivide_length(:)
+        real(8),    intent(in)     :: breadth(:), depth(:)
+        real(8),    intent(in)     :: ManningsNBuffer, flowrate(:), total_length
 
-        real    :: xvalueDn, xvalueUp, xvalue, length_change, new_link_length
-        real    :: xvaluedn_new, xvalueUp_new, new_subdivide_length
+        real(8)    :: xvalueDn, xvalueUp, xvalue, length_change, new_link_length
+        real(8)    :: xvaluedn_new, xvalueUp_new, new_subdivide_length
         integer :: mm
         logical :: apex_pass1, apex_pass2, divide_apex
 
@@ -1468,21 +1468,21 @@ contains
 
         character(64) :: subroutine_name = 'Initial_condition_for_width_depth_system'
 
-        real,  intent(out)    :: area(:), flowrate(:), velocity(:), topwidth(:)
-        real,  intent(in)     :: Froude(:),  breadth(:), ManningsN(:), lowerZ(:), total_length(:)
-        real,  intent(in)     :: depth(:)
+        real(8),  intent(out)    :: area(:), flowrate(:), velocity(:), topwidth(:)
+        real(8),  intent(in)     :: Froude(:),  breadth(:), ManningsN(:), lowerZ(:), total_length(:)
+        real(8),  intent(in)     :: depth(:)
         !
-        real,    target, intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    target, intent(in out)    :: widthDepthData(:,:,:)
 
-        real :: perimeter(size(depth,1)), rh(size(depth,1)), slope(size(depth,1))
-        real :: AA, BB, CC, DD
+        real(8) :: perimeter(size(depth,1)), rh(size(depth,1)), slope(size(depth,1))
+        real(8) :: AA, BB, CC, DD
         integer :: ind, ii
-        real :: temp1(size(depth,1)), hDepth(size(depth,1))
+        real(8) :: temp1(size(depth,1)), hDepth(size(depth,1))
 
-        real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
-        real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
-        real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
-        real, pointer :: area_difference(:,:), local_difference(:,:), depthTBL(:,:)
+        real(8), pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+        real(8), pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+        real(8), pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+        real(8), pointer :: area_difference(:,:), local_difference(:,:), depthTBL(:,:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -1546,21 +1546,21 @@ contains
 
         character(64) :: subroutine_name = 'Initial_condition_for_width_depth_system_new'
 
-        real,  intent(out)    :: area(:), flowrate(:), velocity(:), topwidth(:)
-        real,  intent(in)     :: Froude(:),  breadth(:), ManningsN(:), lowerZ(:), total_length(:)
-        real,  intent(in)     :: depth(:)
+        real(8),  intent(out)    :: area(:), flowrate(:), velocity(:), topwidth(:)
+        real(8),  intent(in)     :: Froude(:),  breadth(:), ManningsN(:), lowerZ(:), total_length(:)
+        real(8),  intent(in)     :: depth(:)
         !
-        real,    target, intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    target, intent(in out)    :: widthDepthData(:,:,:)
 
-        real :: perimeter(size(depth,1)), rh(size(depth,1)), slope(size(depth,1))
-        real :: AA, BB, CC, DD
+        real(8) :: perimeter(size(depth,1)), rh(size(depth,1)), slope(size(depth,1))
+        real(8) :: AA, BB, CC, DD
         integer :: ind, ii
-        real :: temp1(size(depth,1)), hDepth(size(depth,1))
+        real(8) :: temp1(size(depth,1)), hDepth(size(depth,1))
 
-        real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
-        real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
-        real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
-        real, pointer :: area_difference(:,:), local_difference(:,:), depthTBL(:,:)
+        real(8), pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+        real(8), pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+        real(8), pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+        real(8), pointer :: area_difference(:,:), local_difference(:,:), depthTBL(:,:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -1608,10 +1608,10 @@ contains
 
         character(64) :: subroutine_name = ' write_testcase_setup_file'
 
-        real,  intent(in)  :: CFL
-        real,  intent(in)  :: Froude(:),  flowrate(:), velocity(:),  breadth(:), topwidth(:)
-        real,  intent(in)  :: area(:), total_length(:), subdivide_length(:), lowerZ(:), upperZ(:)
-        real,  intent(in)  :: ManningsN(:), depth_upstream(:), depth_dnstream(:), init_depth(:)
+        real(8),  intent(in)  :: CFL
+        real(8),  intent(in)  :: Froude(:),  flowrate(:), velocity(:),  breadth(:), topwidth(:)
+        real(8),  intent(in)  :: area(:), total_length(:), subdivide_length(:), lowerZ(:), upperZ(:)
+        real(8),  intent(in)  :: ManningsN(:), depth_upstream(:), depth_dnstream(:), init_depth(:)
 
         integer        :: UnitNumber
 
@@ -1711,8 +1711,8 @@ contains
 
         ! character(64) :: subroutine_name = 'get_dt_from_CFL'
 
-        real,  intent(in) :: CFL, velocity, depth, element_length
-        real :: dt
+        real(8),  intent(in) :: CFL, velocity, depth, element_length
+        real(8) :: dt
 
         !--------------------------------------------------------------------------
 

@@ -47,29 +47,29 @@ contains
         !
         character(64) :: subroutine_name = 'element_geometry_update'
 
-        real,      target, intent(in out) :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in out) :: elem2R(:,:),  elemMR(:,:)
         integer,   target, intent(in out) :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:)
         integer,           intent(in)     :: faceI(:,:)
         integer,           intent(in)     :: e2r_VolumeColumn, eMr_VolumeColumn
-        real,              intent(in)     :: faceR(:,:), thisTime
+        real(8),              intent(in)     :: faceR(:,:), thisTime
         type(bcType),      intent(in out) :: bcdataDn(:), bcdataUp(:)
         integer,           intent(in)     :: method_EtaM
 
         integer        :: eMr_EtaOld
-        real,  pointer :: etaold(:)
+        real(8),  pointer :: etaold(:)
 
 
         integer, parameter :: ilocaldummy = 0
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    intent(in out)    :: ManningsN(:)
+        real(8),    intent(in out)    :: Length(:)
+        real(8),    intent(in out)    :: zBottom(:)
+        real(8),    intent(in out)    :: xDistance(:)
+        real(8),    intent(in out)    :: Breadth(:)
+        real(8),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
 
@@ -130,12 +130,12 @@ contains
         !
         character(64) :: subroutine_name = 'element_geometry_branch_fix'
 
-        real,      target, intent(in out)  :: elemMR(:,:)
-        real,              intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
+        real(8),              intent(in)      :: faceR(:,:)
         integer,           intent(in)      :: elemMI(:,:), faceI(:,:)
 
         integer                :: eMr_totalarea
-        real,      pointer     :: totalarea(:)
+        real(8),      pointer     :: totalarea(:)
         integer,   parameter   :: ilocaldummy = 0
 
         !--------------------------------------------------------------------------
@@ -207,8 +207,8 @@ contains
         !
         character(64) :: subroutine_name = 'geometry_update'
 
-        real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
-        real,      intent(in)      :: faceR(:,:)
+        real(8),      intent(in out)  :: elem2R(:,:), elemMR(:,:)
+        real(8),      intent(in)      :: faceR(:,:)
         integer,   intent(in)      :: elem2I(:,:), elemMI(:,:)
         logical,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
         integer,   intent(in)      :: e2r_Volume_new, eMr_Volume_new, eMr_EtaOld
@@ -216,12 +216,12 @@ contains
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    intent(in out)    :: ManningsN(:)
+        real(8),    intent(in out)    :: Length(:)
+        real(8),    intent(in out)    :: zBottom(:)
+        real(8),    intent(in out)    :: xDistance(:)
+        real(8),    intent(in out)    :: Breadth(:)
+        real(8),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
 
@@ -308,7 +308,7 @@ contains
         !
         character(64) :: subroutine_name = 'channel_pipe_junction'
 
-        real,      target,     intent(in out)  :: elemR(:,:)
+        real(8),      target,     intent(in out)  :: elemR(:,:)
         logical,   target,     intent(in out)  :: elemYN(:,:)
         
         
@@ -327,30 +327,30 @@ contains
 
         integer, target, intent(in out)    :: wdID(:)
         integer, target, intent(in out)    :: wdnumberPairs(:)
-        real,    target, intent(in out)    :: wdManningsN(:)
-        real,    target, intent(in out)    :: wdLength(:)
-        real,    target, intent(in out)    :: wdzBottom(:)
-        real,    target, intent(in out)    :: wdxDistance(:)
-        real,    target, intent(in out)    :: wdBreadth(:)
-        real,    target, intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    target, intent(in out)    :: wdManningsN(:)
+        real(8),    target, intent(in out)    :: wdLength(:)
+        real(8),    target, intent(in out)    :: wdzBottom(:)
+        real(8),    target, intent(in out)    :: wdxDistance(:)
+        real(8),    target, intent(in out)    :: wdBreadth(:)
+        real(8),    target, intent(in out)    :: widthDepthData(:,:,:)
         type(string), target, intent(in out)   :: wdcellType(:)
 
 
-        real,    pointer :: volume(:), length(:), zbottom(:), breadth(:)
-        real,    pointer :: leftSlope(:), rightSlope(:), parabolaValue(:), fullDepth(:)
-        real,    pointer :: fullArea(:), area(:), eta(:), topwidth(:), perimeter(:)
-        real,    pointer :: depth(:), hyddepth(:), hydradius(:), dHdA(:), elN(:)
+        real(8),    pointer :: volume(:), length(:), zbottom(:), breadth(:)
+        real(8),    pointer :: leftSlope(:), rightSlope(:), parabolaValue(:), fullDepth(:)
+        real(8),    pointer :: fullArea(:), area(:), eta(:), topwidth(:), perimeter(:)
+        real(8),    pointer :: depth(:), hyddepth(:), hydradius(:), dHdA(:), elN(:)
         
         logical, pointer :: isFull(:)
 
-        real, pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
-        real, pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
-        real, pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
-        !real, dimension(:), allocatable :: area_difference, local_difference
+        real(8), pointer :: widthAtLayerTop(:,:), depthAtLayerTop(:,:), areaThisLayer(:,:)
+        real(8), pointer :: areaTotalBelowThisLayer(:,:), dWidth(:,:)
+        real(8), pointer :: dDepth(:,:), angle(:,:), perimeterBelowThisLayer(:,:)
+        !real(8), dimension(:), allocatable :: area_difference, local_difference
 
-        real, dimension(:), allocatable :: AA, BB, CC, DD, a_diff 
+        real(8), dimension(:), allocatable :: AA, BB, CC, DD, a_diff 
         ! w_d_variables are for solving qudratic function for width-depth geometry
-        real, dimension(:), allocatable :: w_d_angle, w_d_widthAtLayerTop, w_d_depthAtLayerTop, w_d_perimeterBelowThisLayer 
+        real(8), dimension(:), allocatable :: w_d_angle, w_d_widthAtLayerTop, w_d_depthAtLayerTop, w_d_perimeterBelowThisLayer 
 
         integer :: ii
 
@@ -527,25 +527,25 @@ contains
         !
         character(64) :: subroutine_name = 'circular_geometry'
 
-        real,      target,     intent(inout)  :: elemR(:,:)
+        real(8),      target,     intent(inout)  :: elemR(:,:)
         logical,   target,     intent(inout)  :: elemYN(:,:)
 
         integer,   intent(in)       :: elemI(:,:)
         integer,   intent(in)       :: ei_geometry, ei_elem_type, elem_type_value
-        real,      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
-        real,      intent(in)       :: fulldepth(:), fullarea(:)
+        real(8),      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
+        real(8),      intent(in)       :: fulldepth(:), fullarea(:)
         integer,   intent(in)       :: ei_n_temp, er_n_temp, eYN_n_temp
         integer,   intent(in)       :: ei_Temp(:), er_Temp(:), eYN_Temp(:)
         logical,   intent(in)       :: isFull(:)
 
-        real,      intent(inout)    :: area(:), eta(:), perimeter(:), depth(:)
-        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-        real,      intent(inout)    :: dHdA(:), elN(:)
+        real(8),      intent(inout)    :: area(:), eta(:), perimeter(:), depth(:)
+        real(8),      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+        real(8),      intent(inout)    :: dHdA(:), elN(:)
         integer,   intent(inout)    :: next_ei_temparray, next_er_temparray, next_eYN_temparray
 
-        real,       pointer         :: AoverAfull(:), YoverYfull(:) 
+        real(8),       pointer         :: AoverAfull(:), YoverYfull(:) 
         logical,    pointer         :: maskarray(:)
-        real                        :: af, bf, cf
+        real(8)                        :: af, bf, cf
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -669,18 +669,18 @@ contains
         !
         character(64) :: subroutine_name = 'surcharged_element_geometry'
 
-        real,      target,     intent(inout)  :: elemR(:,:)
+        real(8),      target,     intent(inout)  :: elemR(:,:)
         logical,   target,     intent(inout)  :: elemYN(:,:)
 
         integer,   intent(in)       :: elemI(:,:)
         integer,   intent(in)       :: ei_geometry, ei_elem_type, elem_type_value
-        real,      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
-        real,      intent(in)       :: eta(:), fulldepth(:), fullarea(:)
+        real(8),      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
+        real(8),      intent(in)       :: eta(:), fulldepth(:), fullarea(:)
         logical,   intent(in)       :: isFull(:)
 
-        real,      intent(inout)    :: area(:), perimeter(:), depth(:)
-        real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-        real,      intent(inout)    :: dHdA(:), elN(:)
+        real(8),      intent(inout)    :: area(:), perimeter(:), depth(:)
+        real(8),      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+        real(8),      intent(inout)    :: dHdA(:), elN(:)
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -755,7 +755,7 @@ contains
     !     !
     !     character(64) :: subroutine_name = 'pipe_or_junction'
 
-    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     real(8),      target,     intent(inout)  :: elemR(:,:)
     !     logical,   target,     intent(inout)  :: elemYN(:,:)
     !     integer,   target,     intent(in)     :: elemI(:,:)
 
@@ -770,10 +770,10 @@ contains
 
     !     integer,   intent(inout)   :: next_er_temparray, next_ei_temparray, next_eYN_temparray
 
-    !     real,    pointer    :: volume(:), length(:), zbottom(:), breadth(:), hyddepth(:)
-    !     real,    pointer    :: area(:),  eta(:), perimeter(:), depth(:), dHdA(:), elN(:)
-    !     real,    pointer    :: hydradius(:), topwidth(:), fulldepth(:), zcrown(:)
-    !     real,    pointer    :: radius(:), AoverAfull(:), YoverYfull(:), fullarea(:)
+    !     real(8),    pointer    :: volume(:), length(:), zbottom(:), breadth(:), hyddepth(:)
+    !     real(8),    pointer    :: area(:),  eta(:), perimeter(:), depth(:), dHdA(:), elN(:)
+    !     real(8),    pointer    :: hydradius(:), topwidth(:), fulldepth(:), zcrown(:)
+    !     real(8),    pointer    :: radius(:), AoverAfull(:), YoverYfull(:), fullarea(:)
     !     integer, pointer    :: solver(:), geometry(:)
     !     logical, pointer    :: isfull(:), maskarray(:)
 
@@ -919,19 +919,19 @@ contains
     !     !
     !     character(64) :: subroutine_name = 'open_pipe_transition_to_full'
 
-    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     real(8),      target,     intent(inout)  :: elemR(:,:)
     !     logical,   target,     intent(inout)  :: elemYN(:,:)
 
     !     integer,   intent(in)       :: elemI(:,:)
-    !     real,      intent(in)       :: length(:), zbottom(:), breadth(:)
-    !     real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
+    !     real(8),      intent(in)       :: length(:), zbottom(:), breadth(:)
+    !     real(8),      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
     !     integer,   intent(in)       :: ei_n_temp, eYN_n_temp
     !     integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
     !     logical,   intent(in)       :: maskarray(:)
 
-    !     real,      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
-    !     real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-    !     real,      intent(inout)    :: AoverAfull(:), YoverYfull(:)
+    !     real(8),      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
+    !     real(8),      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+    !     real(8),      intent(inout)    :: AoverAfull(:), YoverYfull(:)
     !     integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
     !     logical,   intent(inout)    :: isfull(:)
 
@@ -999,19 +999,19 @@ contains
     !     !
     !     character(64) :: subroutine_name = 'full_pipe_transition_to_open'
 
-    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     real(8),      target,     intent(inout)  :: elemR(:,:)
     !     logical,   target,     intent(inout)  :: elemYN(:,:)
 
     !     integer,   intent(in)       :: elemI(:,:)
-    !     real,      intent(in)       :: length(:), zbottom(:), breadth(:)
-    !     real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
+    !     real(8),      intent(in)       :: length(:), zbottom(:), breadth(:)
+    !     real(8),      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
     !     integer,   intent(in)       :: ei_n_temp, eYN_n_temp
     !     integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
     !     logical,   intent(in)       :: maskarray(:), isfull(:)
 
-    !     real,      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
-    !     real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-    !     real,      intent(inout)    :: AoverAfull(:), YoverYfull(:)
+    !     real(8),      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
+    !     real(8),      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+    !     real(8),      intent(inout)    :: AoverAfull(:), YoverYfull(:)
     !     integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
 
     !     logical,    pointer         :: maskarray_pipe_transition(:)
@@ -1092,19 +1092,19 @@ contains
     !     !
     !     character(64) :: subroutine_name = 'open_pipe'
 
-    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     real(8),      target,     intent(inout)  :: elemR(:,:)
     !     logical,   target,     intent(inout)  :: elemYN(:,:)
 
     !     integer,   intent(in)       :: elemI(:,:)
-    !     real,      intent(in)       :: length(:), zbottom(:), breadth(:)
-    !     real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
+    !     real(8),      intent(in)       :: length(:), zbottom(:), breadth(:)
+    !     real(8),      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
     !     integer,   intent(in)       :: ei_n_temp, eYN_n_temp
     !     integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
     !     logical,   intent(in)       :: maskarray(:), isfull(:)
 
-    !     real,      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
-    !     real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-    !     real,      intent(inout)    :: AoverAfull(:), YoverYfull(:)
+    !     real(8),      intent(inout)    :: volume(:), area(:), eta(:), perimeter(:), depth(:)
+    !     real(8),      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+    !     real(8),      intent(inout)    :: AoverAfull(:), YoverYfull(:)
     !     integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray 
 
     !     logical,    pointer         :: maskarray_open_pipe(:)
@@ -1194,23 +1194,23 @@ contains
     !     !
     !     character(64) :: subroutine_name = 'pipe_additional_geometric_properties'
 
-    !     real,      target,     intent(inout)  :: elemR(:,:)
+    !     real(8),      target,     intent(inout)  :: elemR(:,:)
     !     logical,   target,     intent(inout)  :: elemYN(:,:)
 
     !     integer,   intent(in)       :: elemI(:,:)
-    !     real,      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
-    !     real,      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
+    !     real(8),      intent(in)       :: volume(:), length(:), zbottom(:), breadth(:)
+    !     real(8),      intent(in)       :: fulldepth(:), fullarea(:), zcrown(:), radius(:)
     !     integer,   intent(in)       :: ei_n_temp, eYN_n_temp
     !     integer,   intent(in)       :: solver(:), geometry(:), ei_Temp(:), eYN_Temp(:)
     !     logical,   intent(in)       :: maskarray(:), isfull(:)
 
-    !     real,      intent(inout)    :: area(:), eta(:), perimeter(:), depth(:)
-    !     real,      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
-    !     real,      intent(inout)    :: dHdA(:), elN(:), AoverAfull(:), YoverYfull(:)
+    !     real(8),      intent(inout)    :: area(:), eta(:), perimeter(:), depth(:)
+    !     real(8),      intent(inout)    :: hyddepth(:), hydradius(:), topwidth(:)
+    !     real(8),      intent(inout)    :: dHdA(:), elN(:), AoverAfull(:), YoverYfull(:)
     !     integer,   intent(inout)    :: next_ei_temparray, next_eYN_temparray
     !     logical,   pointer          :: maskarray_pipe_geometry(:) 
 
-    !     real :: af, bf, cf
+    !     real(8) :: af, bf, cf
     !     !--------------------------------------------------------------------------
     !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -1333,8 +1333,8 @@ contains
         !
         character(64) :: subroutine_name = 'rectangular_junction_leg'
 
-        real,      target,     intent(in out)  :: elemMR(:,:)
-        real,      target,     intent(in)      :: faceR(:,:)
+        real(8),      target,     intent(in out)  :: elemMR(:,:)
+        real(8),      target,     intent(in)      :: faceR(:,:)
         integer,   target,     intent(in)      :: elemMI(:,:)
 
         integer,               intent(in)      :: face_per_elemM, eMi_nfacesDir
@@ -1350,8 +1350,8 @@ contains
         integer    :: mm
 
         integer,   pointer :: fdir(:)
-        real,      pointer :: eta(:), etaM(:), etaMold(:), area(:), zbottom(:)
-        real,      pointer :: depth(:), topwidth(:), breadth(:), etaFace(:)
+        real(8),      pointer :: eta(:), etaM(:), etaMold(:), area(:), zbottom(:)
+        real(8),      pointer :: depth(:), topwidth(:), breadth(:), etaFace(:)
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -1427,37 +1427,37 @@ contains
         character(64) :: subroutine_name = 'width_depth_quadratic_function'
 
         integer,                intent(in)      :: elemI(:,:)
-        real,       target,     intent(in out)  :: elemR(:,:)
-        real,       target,     intent(in)      :: widthDepthData(:,:,:)
+        real(8),       target,     intent(in out)  :: elemR(:,:)
+        real(8),       target,     intent(in)      :: widthDepthData(:,:,:)
 
         integer,                intent(in)      :: ei_geometry, ei_elem_type, elem_type_value
         integer,                intent(in)      :: er_Length
         integer,                intent(in)      :: er_Area
         integer,                intent(in)      :: er_Volume
 
-        real,                   intent(in out)  :: w_d_angle(:)
-        real,                   intent(in out)  :: w_d_widthAtLayerTop(:)
-        real,                   intent(in out)  :: w_d_depthAtLayerTop(:)
-        real,                   intent(in out)  :: w_d_perimeterBelowThisLayer(:)
+        real(8),                   intent(in out)  :: w_d_angle(:)
+        real(8),                   intent(in out)  :: w_d_widthAtLayerTop(:)
+        real(8),                   intent(in out)  :: w_d_depthAtLayerTop(:)
+        real(8),                   intent(in out)  :: w_d_perimeterBelowThisLayer(:)
 
-        real,       pointer                     :: volume(:)
-        real,       pointer                     :: area(:)
-        real,       pointer                     :: length(:)
+        real(8),       pointer                     :: volume(:)
+        real(8),       pointer                     :: area(:)
+        real(8),       pointer                     :: length(:)
 
-        real,       pointer                     :: areaTotalBelowThisLayer(:,:)
-        real,       pointer                     :: widthAtLayerTop(:,:)
-        real,       pointer                     :: depthAtLayerTop(:,:)
-        real,       pointer                     :: angle(:,:)
-        real,       pointer                     :: perimeterBelowThisLayer(:,:)
+        real(8),       pointer                     :: areaTotalBelowThisLayer(:,:)
+        real(8),       pointer                     :: widthAtLayerTop(:,:)
+        real(8),       pointer                     :: depthAtLayerTop(:,:)
+        real(8),       pointer                     :: angle(:,:)
+        real(8),       pointer                     :: perimeterBelowThisLayer(:,:)
         
         
-        real,       dimension(:), allocatable   :: area_difference
+        real(8),       dimension(:), allocatable   :: area_difference
 
-        real,                   intent(in out)  :: a_diff(:)
+        real(8),                   intent(in out)  :: a_diff(:)
         integer                                 :: ind
 
         integer                                 :: ii, linkIDTemp
-        real                                    :: local_diff
+        real(8)                                    :: local_diff
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name

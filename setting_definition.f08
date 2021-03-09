@@ -18,69 +18,69 @@ module setting_definition
     !% setting%Method%AdjustVshapedFlowrate
     type adjustVshapedFlowrateType
         logical ::  Apply = .true.
-        real    ::  Coef  = 1.0
+        real(8)    ::  Coef  = 1.0
     end type adjustVshapedFlowrateType
 
     !% setting%Method%AdjustPressure
     type adjustPressureType
         character(len=64)   ::  Type  = 'vshape'  !'smoothall' 'vshape'
         logical             ::  Apply = .true.
-        real                ::  Coef  = 1.0
+        real(8)                ::  Coef  = 1.0
     end type adjustPressureType
 
     !% setting%Method%AdjustWidthDepth
     type adjustWidthDepthType
         logical :: Apply               = .true.
         logical :: AddDownstreamBuffer = .false.
-        real    :: AdjustFractionMax   = 0.05
-        real    :: AdjustFraction      = 0.01
-        real    :: SmallWidth          = 1e-8
-        real    :: DownstreamMinLength = 0.0
-        real    :: depthMaxExpected    = 5.0
-        real    :: angleMinimum        = 0.1
-        real    :: areaMaximum         = 2.0
-        real    :: cellSizeTarget      = 10.0
+        real(8)    :: AdjustFractionMax   = 0.05
+        real(8)    :: AdjustFraction      = 0.01
+        real(8)    :: SmallWidth          = 1e-8
+        real(8)    :: DownstreamMinLength = 0.0
+        real(8)    :: depthMaxExpected    = 5.0
+        real(8)    :: angleMinimum        = 0.1
+        real(8)    :: areaMaximum         = 2.0
+        real(8)    :: cellSizeTarget      = 10.0
     endtype adjustWidthDepthType
 
     !% setting%Limiter%BC
     type BClimiterType
         logical :: UseInflowFroudeNumberLimiter = .true.
-        real    :: FroudeInflowMaximum = 1.5 ! max value of Fr at inflow
+        real(8)    :: FroudeInflowMaximum = 1.5 ! max value of Fr at inflow
     endtype BClimiterType
 
     !%  setting%Limiter%flowrate
     type flowrateType
         logical :: UseFaceVolumeTransport = .true.
-        real    :: FaceVolumeTransport = 0.5 ! Fraction of usptream volume that can be transported in on time step
+        real(8)    :: FaceVolumeTransport = 0.5 ! Fraction of usptream volume that can be transported in on time step
     endtype flowrateType
 
     !%  setting%Limiter%Timescale
     type timescaleType
-        real    :: Maximum      = 1e6
-        real    :: Minimum      = 1e-6
+        real(8)    :: Maximum      = 1e6
+        real(8)    :: Minimum      = 1e-6
     endtype timescaleType
 
     !%  setting%Limiter%Velocity
     type velocityType
         logical :: UseLimitMax  = .true.
-        real    :: Maximum      = 10.0 ! m/s
+        real(8)    :: Maximum      = 10.0 ! m/s
     endtype velocityType
         
     !%  setting%DefaultAC%Switch
     type switchType
-        real    :: Depth        = 0.9   ! switch to AC solver if depth/depthMax >= 0.9
-        real    :: Area         = 0.9   ! switch to AC solver if area/areaMax >= 0.9
-        real    :: Buffer       = 0.05  ! 5% buffer for the switch
+        real(8)    :: Depth        = 0.9   ! switch to AC solver if depth/depthMax >= 0.9
+        real(8)    :: Area         = 0.9   ! switch to AC solver if area/areaMax >= 0.9
+        real(8)    :: Buffer       = 0.05  ! 5% buffer for the switch
     end type switchType
 
 
     !%  setting%DefaultAC%Anomaly
     type anomalyType
         logical :: DensityCorrection = .false.  ! density anomaly correction to handle residual (or non-convergence) of the AC
-        real    :: DnsityLowcutoff   = 1e-10    ! Note: setting the lowcutoff to zero can cause small truncation error velocities 
-        real    :: DensityHighcutoff = 0.1      ! to cause waves that buildup over time into a sloshing flow. The lowcutoff avoid this
-        real    :: OpenPipFactor     = 1.0      ! fraction of residual that is corrected - generally should be 1.0
-        real    :: FullPipeFactor    = 1.0      ! fraction of residual that is corrected - generally should be 1.0
+        real(8)    :: DnsityLowcutoff   = 1e-10    ! Note: setting the lowcutoff to zero can cause small truncation error velocities 
+        real(8)    :: DensityHighcutoff = 0.1      ! to cause waves that buildup over time into a sloshing flow. The lowcutoff avoid this
+        real(8)    :: OpenPipFactor     = 1.0      ! fraction of residual that is corrected - generally should be 1.0
+        real(8)    :: FullPipeFactor    = 1.0      ! fraction of residual that is corrected - generally should be 1.0
     end type anomalyType
 
     !%  setting%DefaultAC%Iter
@@ -92,34 +92,34 @@ module setting_definition
 
     !%  setting%DefaultAC%CFL
     type cflType
-        real    :: CFLmax      = 2.0        ! maximum cfl for the AC dtau -- may be higher than 1.0)
-        real    :: CFLsmall    = 0.05       ! small maximum cfl when reset to larger dtau
+        real(8)    :: CFLmax      = 2.0        ! maximum cfl for the AC dtau -- may be higher than 1.0)
+        real(8)    :: CFLsmall    = 0.05       ! small maximum cfl when reset to larger dtau
     end type cflType
 
     !%  setting%DefaultAC%Celerity
     type celerityType
-        real    :: RC          = 1.0        ! celerity ratio of AC wave speed to gravity wave speed (1.0 works)
+        real(8)    :: RC          = 1.0        ! celerity ratio of AC wave speed to gravity wave speed (1.0 works)
     end type celerityType
 
     !%  setting%DefaultAC%Convergence
     type convergenceType
-        real    :: Hrelative   = 1e-2       ! AC convergence relative change in L2 norm when cutting off AC
-        real    :: Qrelative   = 1e-2       ! AC convergence relative change in L2 norm when cutting off AC
-        real    :: Habsolute   = 1e-5       ! AC convergence change in absolute L2 norm when cutting off AC
-        real    :: Qabsolute   = 1e-5       ! AC convergence change in absolute L2 norm when cutting off AC
+        real(8)    :: Hrelative   = 1e-2       ! AC convergence relative change in L2 norm when cutting off AC
+        real(8)    :: Qrelative   = 1e-2       ! AC convergence relative change in L2 norm when cutting off AC
+        real(8)    :: Habsolute   = 1e-5       ! AC convergence change in absolute L2 norm when cutting off AC
+        real(8)    :: Qabsolute   = 1e-5       ! AC convergence change in absolute L2 norm when cutting off AC
     end type convergenceType
 
     !%  setting%DefaultAC%dtauFactor
     type dtaufactorType
-        real :: dtdtau      = 1.0 / 3.0     ! ratio of dt/dtau (changes with flow)
-        real :: dtdtauMax   = 1.0 / 3.0     ! ensure the minimum number of iterations.
+        real(8) :: dtdtau      = 1.0 / 3.0     ! ratio of dt/dtau (changes with flow)
+        real(8) :: dtdtauMax   = 1.0 / 3.0     ! ensure the minimum number of iterations.
     end type dtaufactorType
 
     !% SECOND LEVEL TYPES ----------------------------------------------
 
     !%  setting%Constant
     type constantType
-        real  :: gravity = 9.81  ! m^2/s
+        real(8)  :: gravity = 9.81  ! m^2/s
     end type constantType
 
     !%  setting%DebugOut
@@ -151,8 +151,8 @@ module setting_definition
 
     !%  setting%Eps
     type epsilonType
-        real    :: FroudeJump                     = 0.1 ! +- small non-dimensional range for hyd jump discrimination
-        real    :: InflowDepthIncreaseFroudeLimit = 0.1 ! Fractional increase in depth under froude limitation
+        real(8)    :: FroudeJump                     = 0.1 ! +- small non-dimensional range for hyd jump discrimination
+        real(8)    :: InflowDepthIncreaseFroudeLimit = 0.1 ! Fractional increase in depth under froude limitation
     end type epsilonType
 
     !%  setting%Limiter
@@ -189,12 +189,12 @@ module setting_definition
     type smallvolumeType
         ! Dont using small volumes for weir case. Needed to be changed later
         logical ::  UseSmallVolumes = .true. ! YN to determine if smallvolume adjustments used
-        real    ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
-        real    ::  ManningsN        = 0.01
-        real    ::  MinimumTopwidth  = 0.5   ! m   Minimum value used for smallvolume reset
-        real    ::  MinimumArea      = 0.005  ! m^2
-        real    ::  MinimumPerimeter = 0.52  ! m
-        real    ::  MinimumHydRadius = 0.009  ! m
+        real(8)    ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
+        real(8)    ::  ManningsN        = 0.01
+        real(8)    ::  MinimumTopwidth  = 0.5   ! m   Minimum value used for smallvolume reset
+        real(8)    ::  MinimumArea      = 0.005  ! m^2
+        real(8)    ::  MinimumPerimeter = 0.52  ! m
+        real(8)    ::  MinimumHydRadius = 0.009  ! m
     end type smallvolumeType
 
     !%  setting%Step
@@ -214,22 +214,22 @@ module setting_definition
     !%  setting%Time
     type timeType
         character(14)   ::  DateTimeStamp
-        real :: Dt  ! s
-        real :: StartTime = 0.0
-        real :: EndTime   = 0.0
-        real :: ThisTime
-        real :: NextTime
+        real(8) :: Dt  ! s
+        real(8) :: StartTime = 0.0
+        real(8) :: EndTime   = 0.0
+        real(8) :: ThisTime
+        real(8) :: NextTime
     end type timeType
 
     !%  setting%ZeroValue
     type zerovalueType
         logical :: UseZeroValues = .true.
-        real    :: Area         = 1.0e-6  ! m^2
-        real    :: Depth        = 1.0e-4  ! m
-        real    :: Flowrate     = 0.0     ! m^3/s
-        real    :: Topwidth     = 1.0e-4  ! m
-        real    :: Velocity     = 0.0     ! m/s
-        real    :: Volume       = 1.0e-6  ! m^3 
+        real(8)    :: Area         = 1.0e-6  ! m^2
+        real(8)    :: Depth        = 1.0e-4  ! m
+        real(8)    :: Flowrate     = 0.0     ! m^3/s
+        real(8)    :: Topwidth     = 1.0e-4  ! m
+        real(8)    :: Velocity     = 0.0     ! m/s
+        real(8)    :: Volume       = 1.0e-6  ! m^3 
     end type zerovalueType
 
     !%  setting%DefaultAC
@@ -237,7 +237,7 @@ module setting_definition
         character(len=64)       :: Tsource     = 'T20' ! 'T10', 'T00'
         character(len=64)       :: TimeStencil = 'backwards3'   ! 'CN' 
         logical                 :: PrintConvergence = .false.
-        real                    :: dtau  
+        real(8)                    :: dtau  
         type(dtaufactorType)    :: dtauFactor
         type(convergenceType)   :: Convergence
         type(celerityType)      :: Celerity
@@ -250,8 +250,8 @@ module setting_definition
     !%  setting%BCondition
     type bconditionType
         logical                 :: InflowRampup     = .false.
-        real                    :: InflowRampupTime = 100.0
-        real                    :: flowrateIC       = 0.01
+        real(8)                    :: InflowRampupTime = 100.0
+        real(8)                    :: flowrateIC       = 0.01
     end type bconditionType 
 
     !%  setting%CustomIC

@@ -74,13 +74,13 @@ contains
         integer, dimension(:), allocatable :: upNode
         integer, dimension(:), allocatable :: dnNode
 
-        real, dimension(:), allocatable :: ManningsN
-        real, dimension(:), allocatable :: Length
-        real, dimension(:), allocatable :: zBottom
-        real, dimension(:), allocatable :: xDistance
-        real, dimension(:), allocatable :: Breadth
+        real(8), dimension(:), allocatable :: ManningsN
+        real(8), dimension(:), allocatable :: Length
+        real(8), dimension(:), allocatable :: zBottom
+        real(8), dimension(:), allocatable :: xDistance
+        real(8), dimension(:), allocatable :: Breadth
 
-        real, dimension(:,:,:), allocatable :: widthDepthData
+        real(8), dimension(:,:,:), allocatable :: widthDepthData
 
         type(string), dimension(:), allocatable :: cellType
         !  character(len=:), allocatable :: cellType(:)
@@ -91,7 +91,7 @@ contains
 
         integer :: allocation_status
         character(len=99) :: emsg
-        real :: tmpID
+        real(8) :: tmpID
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name

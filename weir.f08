@@ -37,21 +37,21 @@ contains
         ! indexes for old/new volume and velocity storage
         integer,   intent(in) :: e2r_Volume_col, e2r_Velocity_col
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,           intent(in out)  :: faceI(:,:)
-        real,      target, intent(in out)  :: faceR(:,:)
+        real(8),      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
         logical,           intent(in out)  :: faceYN(:,:)
-        real,              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
-        real,  pointer     ::  volume2(:), velocity2(:), wFlow(:), wEta(:)
-        real,  pointer     ::  wPerimeter(:), wHyddepth(:), wHydradius(:), wTopwidth(:)
-        real,  pointer     ::  wArea(:), lEffective(:), hEffective(:), wCrest(:)
-        real,  pointer     ::  cOrif(:), subFactor1(:), subFactor2(:)
-        real,  pointer     ::  wBreadth(:), wInletoffset(:), wFullDepth(:), wZbottom(:)
-        real,  pointer     ::  wSideSlope(:), wEndContractions(:), cTriangular(:), wCrown(:)
-        real,  pointer     ::  cRectangular(:), wLength(:), fEdn(:), fEup(:)
+        real(8),  pointer     ::  volume2(:), velocity2(:), wFlow(:), wEta(:)
+        real(8),  pointer     ::  wPerimeter(:), wHyddepth(:), wHydradius(:), wTopwidth(:)
+        real(8),  pointer     ::  wArea(:), lEffective(:), hEffective(:), wCrest(:)
+        real(8),  pointer     ::  cOrif(:), subFactor1(:), subFactor2(:)
+        real(8),  pointer     ::  wBreadth(:), wInletoffset(:), wFullDepth(:), wZbottom(:)
+        real(8),  pointer     ::  wSideSlope(:), wEndContractions(:), cTriangular(:), wCrown(:)
+        real(8),  pointer     ::  cRectangular(:), wLength(:), fEdn(:), fEup(:)
         
         integer, pointer   ::  iup(:), idn(:), dir(:)
 
@@ -222,15 +222,15 @@ contains
         character(64) :: subroutine_name = 'weir_initialize'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
-        real,              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
-        real,    intent(inout) :: crest(:), length(:), eta(:)
-        real,    intent(in)    :: inletoffset(:), zbottom(:), crown(:)
-        real,    intent(in)    :: fullDepth(:), faceEtaDn(:), faceEtaUp(:)
+        real(8),    intent(inout) :: crest(:), length(:), eta(:)
+        real(8),    intent(in)    :: inletoffset(:), zbottom(:), crown(:)
+        real(8),    intent(in)    :: fullDepth(:), faceEtaDn(:), faceEtaUp(:)
 
         integer, intent(inout) :: dir(:)
         integer, intent(in)    :: upFace(:), dnFace(:)
@@ -265,16 +265,16 @@ contains
         !
         character(64) :: subroutine_name = 'weir_surcharge_coefficient'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
-        real,              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
-        real,    intent(inout) ::  volume2(:), velocity2(:), flow(:), crestlength(:), corif(:)
-        real,    intent(in)    ::  sideslope(:), cTrig(:), cRect(:), breadth(:), area(:)
-        real,    intent(in)    ::  fulldepth(:), endcontractions(:)
-        real,    intent(in)    ::  submergenceFactor1(:), submergenceFactor2(:)
+        real(8),    intent(inout) ::  volume2(:), velocity2(:), flow(:), crestlength(:), corif(:)
+        real(8),    intent(in)    ::  sideslope(:), cTrig(:), cRect(:), breadth(:), area(:)
+        real(8),    intent(in)    ::  fulldepth(:), endcontractions(:)
+        real(8),    intent(in)    ::  submergenceFactor1(:), submergenceFactor2(:)
         integer, intent(in)    ::  dir(:)
 
         !--------------------------------------------------------------------------
@@ -311,14 +311,14 @@ contains
         character(64) :: subroutine_name = 'weir_effective_head'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real,    intent(inout)   :: effectivehead(:)
-        real,    intent(in)      :: crest(:), crown(:), eta(:)
-        real,    intent(in)      :: faceEtaUp(:), faceEtaDn(:)
+        real(8),    intent(inout)   :: effectivehead(:)
+        real(8),    intent(in)      :: crest(:), crown(:), eta(:)
+        real(8),    intent(in)      :: faceEtaUp(:), faceEtaDn(:)
         integer, intent(in)      :: upFace(:), dnFace(:), dir(:)
         logical, intent(inout)   :: maskarray_dn_submergence(:), maskarray_up_submergence(:)
         logical, intent(inout)   :: is_surcharged(:)
@@ -368,14 +368,14 @@ contains
         character(64) :: subroutine_name = 'weir_geometry'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real,  intent(inout)   ::  breadth(:), slope(:), area(:), topwidth(:)
-        real,  intent(inout)   ::  perimeter(:), hyddepth(:), hydradius(:)
-        real,  intent(in)      ::  depth(:)
+        real(8),  intent(inout)   ::  breadth(:), slope(:), area(:), topwidth(:)
+        real(8),  intent(inout)   ::  perimeter(:), hyddepth(:), hydradius(:)
+        real(8),  intent(in)      ::  depth(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -424,14 +424,14 @@ contains
         character(64) :: subroutine_name = 'weir_effective_crest_length'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real,  intent(inout)   :: crestlength(:) 
-        real,  intent(in)      :: endcontractions(:), head(:)
-        real,  intent(in)      :: breadth(:), sideslope(:)
+        real(8),  intent(inout)   :: crestlength(:) 
+        real(8),  intent(in)      :: endcontractions(:), head(:)
+        real(8),  intent(in)      :: breadth(:), sideslope(:)
 
         integer :: mm
         !--------------------------------------------------------------------------
@@ -463,13 +463,13 @@ contains
         !
         character(64) :: subroutine_name = 'villemonte_weir_submergence_correction'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real,    intent(inout) ::  submergenceFactor1(:), submergenceFactor2(:)
-        real,    intent(in)    ::  crest(:), faceEtaDn(:), faceEtaUp(:)
+        real(8),    intent(inout) ::  submergenceFactor1(:), submergenceFactor2(:)
+        real(8),    intent(in)    ::  crest(:), faceEtaDn(:), faceEtaUp(:)
         integer, intent(in)    ::  upFace(:), dnFace(:)
         logical, intent(in)    ::  maskarray_submergence(:)
 
@@ -522,17 +522,17 @@ contains
         character(64) :: subroutine_name = 'weir_flow'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
-        real,              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
 
-        real,    intent(inout)   ::  volume2(:), velocity2(:), flow(:)
-        real,    intent(in)      ::  area(:), sideslope(:), cTrig(:), cRect(:)
-        real,    intent(in)      ::  submergenceFactor1(:), submergenceFactor2(:)
-        real,    intent(in)      ::  effectivehead(:), crestlength(:)
+        real(8),    intent(inout)   ::  volume2(:), velocity2(:), flow(:)
+        real(8),    intent(in)      ::  area(:), sideslope(:), cTrig(:), cRect(:)
+        real(8),    intent(in)      ::  submergenceFactor1(:), submergenceFactor2(:)
+        real(8),    intent(in)      ::  effectivehead(:), crestlength(:)
         integer, intent(in)      ::  dir(:)
 
         integer :: mm
@@ -606,16 +606,16 @@ contains
         character(64) :: subroutine_name = 'weir_surcharge_flow'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
-        real,              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
 
-        real,    intent(inout) ::  volume2(:), velocity2(:), flow(:), effectivehead(:)
-        real,    intent(in)    ::  crest(:), crown(:), eta(:), area(:), cOrif(:)
-        real,    Intent(in)    ::  faceEtaup(:), faceEtadn(:)
+        real(8),    intent(inout) ::  volume2(:), velocity2(:), flow(:), effectivehead(:)
+        real(8),    intent(in)    ::  crest(:), crown(:), eta(:), area(:), cOrif(:)
+        real(8),    Intent(in)    ::  faceEtaup(:), faceEtadn(:)
         integer, intent(in)    ::  upFace(:), dnFace(:), dir(:)
         logical, intent(in)    ::  is_surcharged(:)
 

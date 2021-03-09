@@ -803,7 +803,7 @@ contains
         !
         character(64) :: subroutine_name = 'initialize_array_zerovalues'
 
-        real,  intent(in out)  :: elemMR(:,:)
+        real(8),  intent(in out)  :: elemMR(:,:)
 
         integer    :: mm
 
@@ -843,7 +843,7 @@ contains
         character(64) :: subroutine_name = 'initialize_dummy_values'
 
         integer,   intent(in out) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
-        real,      intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+        real(8),      intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         logical,   intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
         !--------------------------------------------------------------------------
@@ -885,8 +885,8 @@ contains
 
         integer,   dimension(:,:), allocatable, target, intent(out)    :: linkI
         integer,   dimension(:,:), allocatable, target, intent(out)    :: nodeI
-        real,      dimension(:,:), allocatable, target, intent(out)    :: linkR
-        real,      dimension(:,:), allocatable, target, intent(out)    :: nodeR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: linkR
+        real(8),      dimension(:,:), allocatable, target, intent(out)    :: nodeR
         logical,   dimension(:,:), allocatable, target, intent(out)    :: linkYN
         logical,   dimension(:,:), allocatable, target, intent(out)    :: nodeYN
         type(string), dimension(:), allocatable, target, intent(out)   :: linkName

@@ -27,7 +27,7 @@ module xsect_tables
     !==========================================================================
     !% Y/Yfull v. A/Afull
     integer, parameter      :: NYCirc = 51
-    real, dimension(NYCirc) :: YCirc = (/0.0, 0.05236, 0.08369, 0.11025, 0.13423, 0.15643,    &
+    real(8), dimension(NYCirc) :: YCirc = (/0.0, 0.05236, 0.08369, 0.11025, 0.13423, 0.15643,    &
         0.17755, 0.19772, 0.21704, 0.23581, 0.25412, 0.27194, 0.28948, 0.30653, 0.32349,      &
         0.34017, 0.35666, 0.37298, 0.38915, 0.40521, 0.42117, 0.43704, 0.45284, 0.46858,      &
         0.48430, 0.50000, 0.51572, 0.53146, 0.54723, 0.56305, 0.57892, 0.59487, 0.61093,      &
@@ -35,7 +35,7 @@ module xsect_tables
         0.78297, 0.80235, 0.82240, 0.84353, 0.86563, 0.88970, 0.91444, 0.94749, 1.000 /)
     !% A/Afull v. Y/Yfull
     integer, parameter      :: NACirc = 51
-    real, dimension(NACirc) :: ACirc = (/0.0, 0.00471, 0.0134, 0.024446, 0.0374, 0.05208,     &
+    real(8), dimension(NACirc) :: ACirc = (/0.0, 0.00471, 0.0134, 0.024446, 0.0374, 0.05208,     &
         0.0680, 0.08505, 0.1033, 0.12236, 0.1423, 0.16310, 0.1845, 0.20665, 0.2292, 0.25236,  &
         0.2759, 0.29985, 0.3242, 0.34874, 0.3736, 0.39878, 0.4237, 0.44907, 0.4745, 0.50000,  &
         0.5255, 0.55093, 0.5763, 0.60135, 0.6264, 0.65126, 0.6758, 0.70015, 0.7241, 0.74764,  &
@@ -43,7 +43,7 @@ module xsect_tables
         0.9626, 0.97555, 0.9866, 0.99516,  1.000 /)
     !% R/Rfull v. Y/Yfull
     integer, parameter      :: NRCirc = 51
-    real, dimension(NRCirc) :: RCirc = (/0.01, 0.0528, 0.1048, 0.1556, 0.2052, 0.2540,        &
+    real(8), dimension(NRCirc) :: RCirc = (/0.01, 0.0528, 0.1048, 0.1556, 0.2052, 0.2540,        &
         0.3016, 0.3484, 0.3944, 0.4388, 0.4824, 0.5248, 0.5664, 0.6064, 0.6456, 0.6836,       &
         0.7204, 0.7564, 0.7912, 0.8244, 0.8568, 0.8880, 0.9176, 0.9464, 0.9736, 1.0000,       &
         1.0240, 1.0480, 1.0700, 1.0912, 1.1100, 1.1272, 1.1440, 1.1596, 1.1740, 1.1848,       &
@@ -51,7 +51,7 @@ module xsect_tables
         1.1780, 1.1584, 1.1320, 1.0940, 1.000 /)
     !%W/Wmax v. Y/Yfull
     integer, parameter      :: NWCirc = 51
-    real, dimension(NWCirc) :: WCirc = (/0.0, 0.2800, 0.3919, 0.4750, 0.5426, 0.6000, 0.6499, &
+    real(8), dimension(NWCirc) :: WCirc = (/0.0, 0.2800, 0.3919, 0.4750, 0.5426, 0.6000, 0.6499, &
         0.6940, 0.7332, 0.7684, 0.8000, 0.8285, 0.8542, 0.8773, 0.8980, 0.9165, 0.9330,       &
         0.9474, 0.9600, 0.9708, 0.9798, 0.9871, 0.9928, 0.9968, 0.9992, 1.0000, 0.9992,       &
         0.9968, 0.9928, 0.9871, 0.9798, 0.9708, 0.9600, 0.9474, 0.9330, 0.9165, 0.8980,       &
@@ -69,12 +69,12 @@ contains
         !
         ! table lookup function. This function is single operation
         !
-        real,      intent(in)      :: table(:)
-        real,      intent(in)      :: normalizedInput
+        real(8),      intent(in)      :: table(:)
+        real(8),      intent(in)      :: normalizedInput
         integer,   intent(in)      :: nItems
 
-        real     :: normalizedOutput, normalizedOutput2
-        real     :: delta, startPos, endPos
+        real(8)     :: normalizedOutput, normalizedOutput2
+        real(8)     :: delta, startPos, endPos
         integer  :: ii
 
         !--------------------------------------------------------------------------
@@ -123,10 +123,10 @@ contains
         !
         ! get the angle theta for small value of A/Afull (alpha) for circular geometry
         !
-        real,      intent(in)      :: alpha
+        real(8),      intent(in)      :: alpha
 
-        real     :: theta
-        real     :: theta1, d, ap
+        real(8)     :: theta
+        real(8)     :: theta1, d, ap
         integer  :: ii
 
         !--------------------------------------------------------------------------
@@ -144,7 +144,7 @@ contains
             do ii = 1,40
                 d = - (ap - theta + sin(theta)) / (1.0 - cos(theta))
                 if (d > 1.0) then
-                    d = sign(1.0,d)
+                    d = sign(oneR,d)
                 endif
                 theta = theta - d
                 if ( abs(d) .LE. 0.0001 ) then
@@ -168,18 +168,18 @@ contains
         !
         character(64) :: subroutine_name = 'table_lookup_mask'
 
-        real,      target,  intent(inout)    :: elemR(:,:)
+        real(8),      target,  intent(inout)    :: elemR(:,:)
         integer,   target,  intent(in)       :: elemI(:,:)
 
         integer,   intent(in)       :: ei_n_temp, nItems
         integer,   intent(in)       :: ei_Temp(:)
-        real,      intent(in)       :: table(:), normalizedInput(:)
+        real(8),      intent(in)       :: table(:), normalizedInput(:)
         logical,   intent(in)       :: maskarray(:)
-        real,      intent(inout)    :: inoutarray(:)
+        real(8),      intent(inout)    :: inoutarray(:)
         integer,   intent(inout)    :: next_ei_temparray 
         
         
-        real                        :: delta
+        real(8)                        :: delta
         integer,   pointer          :: position(:)
 
         !--------------------------------------------------------------------------
@@ -217,10 +217,10 @@ contains
         !
         character(64) :: subroutine_name = 'table_interpolation'
         
-        real,      intent(inout)    :: inoutarray(:)
-        real,      intent(in)       :: normalizedInput(:)
-        real,      intent(in)       :: table(:)
-        real,      intent(in)       :: delta
+        real(8),      intent(inout)    :: inoutarray(:)
+        real(8),      intent(in)       :: normalizedInput(:)
+        real(8),      intent(in)       :: table(:)
+        real(8),      intent(in)       :: delta
         logical,   intent(in)       :: maskarray(:)
         integer,   intent(in)       :: nItems        
         integer,   intent(in)       :: position(:)

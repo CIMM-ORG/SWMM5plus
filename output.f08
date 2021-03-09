@@ -120,7 +120,7 @@ contains
 
         type(threadedfileType), intent(in) :: threadedfile(:)
 
-        real,      target, intent(in)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(8),      target, intent(in)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
         integer,   target, intent(in)  :: elem2I(:,:), elemMI(:,:), faceI(:,:)
         integer,   target, intent(in)  :: linkI(:,:)
         type(bcType),      intent(in)  :: bcdataUp(:), bcdataDn(:)
@@ -212,13 +212,13 @@ contains
         character(len=*), intent(in)  :: outdataName
         integer,           intent(in)  :: thisUnit
 
-        real,      target, intent(in)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(8),      target, intent(in)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
         integer,   target, intent(in)  :: elem2I(:,:), elemMI(:,:), faceI(:,:)
         integer,   target, intent(in)  :: linkI(:,:)
         type(bcType),      intent(in)  :: bcdataUp(:), bcdataDn(:)
         integer,           intent(in)  :: thisstep, itemp
 
-        real, dimension(:), allocatable, save  :: thisdata, thisx
+        real(8), dimension(:), allocatable, save  :: thisdata, thisx
 
         integer :: ElemCol, FaceCol_u, FaceCol_d, JunctionCol
         integer :: BranchColUp(upstream_face_per_elemM), BranchColDn(dnstream_face_per_elemM)

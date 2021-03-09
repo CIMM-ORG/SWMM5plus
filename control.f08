@@ -125,16 +125,16 @@ contains
     character(64) :: subroutine_name = 'control_evaluate'
 
         integer,                   intent(in)     :: elem2I(:,:)
-        real,                      intent(inout)  :: elem2R(:,:)
+        real(8),                      intent(inout)  :: elem2R(:,:)
         type(controlType), target, intent(inout)  :: gateSetting(:)
         logical,                   intent(in)     :: isInitialization
 
         integer,             intent(in)    :: N_Gates
-        real,                intent(in)    :: StepTime
+        real(8),                intent(in)    :: StepTime
         integer, pointer                   :: eID
-        real                               :: gateInterval, gateMove, gateChange
-        real                               :: YoverYfull, newFullArea
-        real, dimension(:), allocatable    :: initFullDepth
+        real(8)                               :: gateInterval, gateMove, gateChange
+        real(8)                               :: YoverYfull, newFullArea
+        real(8), dimension(:), allocatable    :: initFullDepth
 
         integer    :: ii, mm
         !--------------------------------------------------------------------------

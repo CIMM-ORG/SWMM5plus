@@ -46,7 +46,7 @@ contains
         !
         character(64) :: subroutine_name = 'time_marching'
 
-        real,      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+        real(8),      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         integer,   target, intent(in out) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
@@ -58,14 +58,14 @@ contains
 
         integer,                       intent(in)     :: linkI(:,:)
 
-        real, pointer :: rkVol(:), rkU(:)
-        real, pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
-        real, pointer :: fEdn(:), fEup(:), eE(:)
+        real(8), pointer :: rkVol(:), rkU(:)
+        real(8), pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
+        real(8), pointer :: fEdn(:), fEup(:), eE(:)
 
-        real    :: AnormH(3), AnormQ(3), AnormHlast(3), AnormQlast(3)
-        real    :: TnormH(3), TnormQ(3), RTnormH(3), RTnormQ(3), RLnormH(3), RLnormQ(3)
+        real(8)    :: AnormH(3), AnormQ(3), AnormHlast(3), AnormQlast(3)
+        real(8)    :: TnormH(3), TnormQ(3), RTnormH(3), RTnormQ(3), RLnormH(3), RLnormQ(3)
 
-        real, pointer :: thistime, nexttime
+        real(8), pointer :: thistime, nexttime
 
         integer, pointer :: thisStep, restartStep
 
@@ -76,12 +76,12 @@ contains
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    intent(in out)    :: ManningsN(:)
+        real(8),    intent(in out)    :: Length(:)
+        real(8),    intent(in out)    :: zBottom(:)
+        real(8),    intent(in out)    :: xDistance(:)
+        real(8),    intent(in out)    :: Breadth(:)
+        real(8),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
         !--------------------------------------------------------------------------
@@ -257,7 +257,7 @@ contains
         !
         character(64) :: subroutine_name = 'save_previous_values'
 
-        real,   intent(inout)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        real(8),   intent(inout)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -294,7 +294,7 @@ contains
         !
         character(64) :: subroutine_name = 'assign_solver'
 
-        real,      target, intent(inout)  :: elemR(:,:)
+        real(8),      target, intent(inout)  :: elemR(:,:)
         integer,   target, intent(inout)  :: elemI(:,:)
 
         integer,   intent(in)      ::  er_Area, er_FullArea, er_n_temp
@@ -302,8 +302,8 @@ contains
         integer,   intent(in)      ::  er_Temp(:)
         integer,   intent(inout)   ::  next_er_temparray
 
-        real,      pointer  :: AoverAfull(:), Area(:), FullArea(:)
-        real                :: switchBufferP, switchBufferM
+        real(8),      pointer  :: AoverAfull(:), Area(:), FullArea(:)
+        real(8)                :: switchBufferP, switchBufferM
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -364,8 +364,8 @@ contains
     !     ! 
     !     character(64) :: subroutine_name = 'dynamic_time_step_size'
 
-    !     real,   intent(inout)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
-    !     real                   :: maxcfl
+    !     real(8),   intent(inout)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+    !     real(8)                   :: maxcfl
     !     !--------------------------------------------------------------------------
     !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 

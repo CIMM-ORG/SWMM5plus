@@ -46,11 +46,11 @@ contains
         !
         character(64) :: subroutine_name = 'rk2'
 
-        real,      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+        real(8),      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         integer,   target, intent(in out) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
         type(bcType),      intent(in out) :: bcdataDn(:),  bcdataUp(:)
-        real,              intent(in)     :: thistime, dt
+        real(8),              intent(in)     :: thistime, dt
         logical,           intent(in)     :: realLoop
 
         integer,   pointer :: fdn(:), fup(:)
@@ -58,18 +58,18 @@ contains
         integer :: e2r_Volume_new, e2r_Velocity_new, e2r_Eta_new
         integer :: eMr_Volume_new, eMr_Velocity_new, eMr_Eta_new
         integer :: ii
-        real    :: thiscoef(2), steptime, af(3)
+        real(8)    :: thiscoef(2), steptime, af(3)
 
         integer :: ilink
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    intent(in out)    :: ManningsN(:)
+        real(8),    intent(in out)    :: Length(:)
+        real(8),    intent(in out)    :: zBottom(:)
+        real(8),    intent(in out)    :: xDistance(:)
+        real(8),    intent(in out)    :: Breadth(:)
+        real(8),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
         !--------------------------------------------------------------------------
@@ -264,18 +264,18 @@ contains
         integer,   intent(in) :: e2r_Volume_new, e2r_Velocity_new
         integer,   intent(in) :: eMr_Volume_new, eMr_Velocity_new
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
-        real,              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
-        real,  pointer ::  fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:), fEup(:)
-        real,  pointer ::  kc2(:), ku2(:), ones2r(:)
-        real,  pointer ::  kcM(:), kuM(:), onesMr(:)
-        real,  pointer ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
-        real,  pointer ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
-        real,  pointer ::  eta2(:), etaM(:), rh2(:), mn2(:), rhM(:), mnM(:)
+        real(8),  pointer ::  fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:), fEup(:)
+        real(8),  pointer ::  kc2(:), ku2(:), ones2r(:)
+        real(8),  pointer ::  kcM(:), kuM(:), onesMr(:)
+        real(8),  pointer ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
+        real(8),  pointer ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
+        real(8),  pointer ::  eta2(:), etaM(:), rh2(:), mn2(:), rhM(:), mnM(:)
 
         logical, pointer :: maskChannelPipeSVE(:), maskJunctionChannelPipeSVE(:)
         integer, pointer :: iup(:), idn(:)
@@ -472,24 +472,24 @@ contains
 
         character(64) :: subroutine_name = 'rk2_update_auxiliary_variables'
 
-        real,      target, intent(in out)  :: elemMR(:,:)
-        real,              intent(in out)  :: elem2R(:,:), faceR(:,:)
+        real(8),      target, intent(in out)  :: elemMR(:,:)
+        real(8),              intent(in out)  :: elem2R(:,:), faceR(:,:)
         integer,           intent(in out)  :: elem2I(:,:), elemMI(:,:), faceI(:,:)
         logical,           intent(in out)  :: elem2YN(:,:),elemMYN(:,:),faceYN(:,:)
         type(bcType),      intent(in out)  :: bcdataDn(:), bcdataUp(:)
         integer,           intent(in)      :: e2r_Velocity_new, eMr_Velocity_new
         integer,           intent(in)      :: e2r_Volume_new,   eMr_Volume_new
         integer,           intent(in)      :: rkiteration
-        real,              intent(in)      :: steptime
+        real(8),              intent(in)      :: steptime
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    intent(in out)    :: ManningsN(:)
+        real(8),    intent(in out)    :: Length(:)
+        real(8),    intent(in out)    :: zBottom(:)
+        real(8),    intent(in out)    :: xDistance(:)
+        real(8),    intent(in out)    :: Breadth(:)
+        real(8),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
         !--------------------------------------------------------------------------
@@ -550,7 +550,7 @@ contains
         !
         character(64) :: subroutine_name = 'overwrite_old_values'
 
-        real,      intent(in out)  :: elemR(:,:)
+        real(8),      intent(in out)  :: elemR(:,:)
 
         integer,   intent(in)      :: elemI(:,:)
 
@@ -593,8 +593,8 @@ contains
         character(64) :: subroutine_name = 'QonlyElement_provisional_geometry'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in)      :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
 
         integer :: mm
@@ -630,17 +630,17 @@ contains
         ! indexes for new volume and velocity storage
         integer,   intent(in) :: e2r_Volume_new, e2r_Velocity_new
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,           intent(in out)  :: faceI(:,:)
-        real,      target, intent(in out)  :: faceR(:,:)
+        real(8),      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
         logical,   target, intent(in out)  :: faceYN(:,:)
-        real,              intent(in)      :: thiscoef
+        real(8),              intent(in)      :: thiscoef
 
-        real,      pointer  :: valueUp(:), valueDn(:)
-        real,      pointer  :: weightUpQ(:), weightDnQ(:)
-        real,      pointer  :: faceQ(:)
+        real(8),      pointer  :: valueUp(:), valueDn(:)
+        real(8),      pointer  :: weightUpQ(:), weightDnQ(:)
+        real(8),      pointer  :: faceQ(:)
         logical,   pointer  :: facemask(:)
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name

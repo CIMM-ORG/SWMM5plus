@@ -46,25 +46,25 @@ contains
 
         character(64) :: subroutine_name = 'initial_condition_setup'
 
-        real,      intent(in out)  :: elem2R(:,:),  elemMR(:,:), faceR(:,:)
+        real(8),      intent(in out)  :: elem2R(:,:),  elemMR(:,:), faceR(:,:)
         integer,   intent(in out)  :: elem2I(:,:),  elemMI(:,:), faceI(:,:)
         logical,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
-        real,                intent(in)      :: linkR(:,:), nodeR(:,:)
+        real(8),                intent(in)      :: linkR(:,:), nodeR(:,:)
         integer,   target,   intent(in)      :: linkI(:,:), nodeI(:,:)
-        real,                intent(in)      :: thisTime
+        real(8),                intent(in)      :: thisTime
 
         type(bcType),        intent(in out)      :: bcdataDn(:), bcdataUp(:)
         type(controlType),   intent(in out)      :: gateSetting(:)
 
         integer, intent(inout)    :: ID(:)
         integer, intent(inout)    :: numberPairs(:)
-        real,    intent(inout)    :: ManningsN(:)
-        real,    intent(inout)    :: Length(:)
-        real,    intent(inout)    :: zBottom(:)
-        real,    intent(inout)    :: xDistance(:)
-        real,    intent(inout)    :: Breadth(:)
-        real,    intent(inout)    :: widthDepthData(:,:,:)
+        real(8),    intent(inout)    :: ManningsN(:)
+        real(8),    intent(inout)    :: Length(:)
+        real(8),    intent(inout)    :: zBottom(:)
+        real(8),    intent(inout)    :: xDistance(:)
+        real(8),    intent(inout)    :: Breadth(:)
+        real(8),    intent(inout)    :: widthDepthData(:,:,:)
 
         type(string), intent(in out)   :: cellType(:)
 
@@ -166,19 +166,19 @@ contains
         !
         character(64) :: subroutine_name = 'initial_conditions_from_linkdata'
 
-        real,      intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,   intent(in out)  :: elem2I(:,:),  elemMI(:,:)
         logical,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
-        real,      target,   intent(in)      :: linkR(:,:)
+        real(8),      target,   intent(in)      :: linkR(:,:)
         integer,   target,   intent(in)      :: linkI(:,:)
 
-        real               :: kappa
-        real,      pointer :: dup, ddn
+        real(8)               :: kappa
+        real(8),      pointer :: dup, ddn
         integer,   pointer :: Lindx, LdepthType
         integer :: ii, ei_max, mm, nn
 
-        real :: trapz_tanTheta, CC, BB, AoverAfull, YoverYfull
+        real(8) :: trapz_tanTheta, CC, BB, AoverAfull, YoverYfull
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
@@ -561,12 +561,12 @@ contains
     !
     character(64) :: subroutine_name = 'custom_initial_condition'
 
-    real,           intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+    real(8),           intent(in out)  :: elem2R(:,:),  elemMR(:,:)
     integer,        intent(in out)  :: elem2I(:,:),  elemMI(:,:)
     logical,        intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
     type(bcType),   intent(in)      :: bcdataDn(:)
-    real    :: thisVal, AoverAfull, YoverYfull
+    real(8)    :: thisVal, AoverAfull, YoverYfull
     integer :: ii
 
     !--------------------------------------------------------------------------
@@ -705,14 +705,14 @@ contains
 
         character(64) :: subroutine_name = 'initial_junction_conditions'
 
-        real,              intent(in out)  :: elemMR(:,:)
+        real(8),              intent(in out)  :: elemMR(:,:)
         logical,           intent(in out)  :: elemMYN(:,:)
-        real,      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
+        real(8),      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:), nodeI(:,:), faceI(:,:)
 
         integer,   pointer :: tface, telem
 
-        real   :: upvalue(upstream_face_per_elemM), dnvalue(dnstream_face_per_elemM)
+        real(8)   :: upvalue(upstream_face_per_elemM), dnvalue(dnstream_face_per_elemM)
 
         integer :: ii, mm
         !--------------------------------------------------------------------------
@@ -785,13 +785,13 @@ contains
         !
         character(64) :: subroutine_name = 'initial_storage_conditions'
 
-        real,              intent(in out)  :: elemMR(:,:)
-        real,      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
+        real(8),              intent(in out)  :: elemMR(:,:)
+        real(8),      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:), nodeI(:,:), faceI(:,:)
 
         integer,   pointer :: tface, telem
 
-        real   :: upvalue(upstream_face_per_elemM), dnvalue(dnstream_face_per_elemM)
+        real(8)   :: upvalue(upstream_face_per_elemM), dnvalue(dnstream_face_per_elemM)
 
         integer,   dimension(4)    :: e2rset, eMrset
 
@@ -837,16 +837,16 @@ contains
         character(64) :: subroutine_name = 'QonlyElem_initial_condition_setup'
 
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,           intent(in out)  :: faceI(:,:)
-        real,      target, intent(in out)  :: faceR(:,:)
+        real(8),      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
         logical,   target, intent(in out)  :: faceYN(:,:)
 
-        real,      pointer  :: valueUp(:), valueDn(:)
-        real,      pointer  :: weightUpQ(:), weightDnQ(:)
-        real,      pointer  :: faceQ(:)
+        real(8),      pointer  :: valueUp(:), valueDn(:)
+        real(8),      pointer  :: weightUpQ(:), weightDnQ(:)
+        real(8),      pointer  :: faceQ(:)
         logical,   pointer  :: facemask(:)
 
 
@@ -875,11 +875,11 @@ contains
         !% call weir and orifice step to initialize their geometry and flow
         call weir_step &
             (e2r_Volume, e2r_Velocity, elem2R, elemMR, faceI, faceR, &
-            faceYN, elem2I, elemMI, elem2YN, elemMYN, 1.0)
+            faceYN, elem2I, elemMI, elem2YN, elemMYN, oneR)
 
         call orifice_step &
             (e2r_Volume, e2r_Velocity, elem2R, elemMR, faceI, faceR, &
-            faceYN, elem2I, elemMI, elem2YN, elemMYN, 1.0)
+            faceYN, elem2I, elemMI, elem2YN, elemMYN, oneR)
 
         !% face reconstruction
         !% update the flow to their faces
@@ -920,7 +920,7 @@ contains
 
         character(64) :: subroutine_name = 'initial_solver_select'
         
-        real,      intent(in)     :: elem2R(:,:), elemMR(:,:)
+        real(8),      intent(in)     :: elem2R(:,:), elemMR(:,:)
         integer,   intent(inout)  :: elem2I(:,:), elemMI(:,:)
 
         integer :: mm
@@ -994,7 +994,7 @@ contains
     !
     ! character(64) :: subroutine_name = 'initial_condition_setup'
     !
-    ! real,      intent(in out)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+    ! real(8),      intent(in out)  :: elem2R(:,:), elemMR(:,:), faceR(:,:)
     !
     ! integer,   intent(in out)  :: elem2I(:,:), elemMI(:,:)
     !
@@ -1004,7 +1004,7 @@ contains
     !
     ! type(bcType),  intent(in)  :: bcdataDn(:), bcdataUp(:)
     !
-    ! real  ::  uniform_water_depth, uniform_bottom_roughness, uniform_flowrate
+    ! real(8)  ::  uniform_water_depth, uniform_bottom_roughness, uniform_flowrate
     !
     ! integer :: mm
     !!--------------------------------------------------------------------------
@@ -1084,7 +1084,7 @@ contains
     !!
     ! character(64) :: subroutine_name = 'initial_condition_for_uniform_rectangular_channel'
     !
-    ! real,      intent(in out)  :: elem2R(:,:), elemMR(:,:)
+    ! real(8),      intent(in out)  :: elem2R(:,:), elemMR(:,:)
     !
     ! integer,   intent(in out)  :: elem2I(:,:), elemMI(:,:)
     !
@@ -1094,7 +1094,7 @@ contains
     !
     ! type(bcType),  target,  intent(in)  :: bcdataDn(:), bcdataUp(:)
     !
-    ! real,  intent(in)  :: uniform_water_depth, uniform_bottom_roughness
+    ! real(8),  intent(in)  :: uniform_water_depth, uniform_bottom_roughness
     !
     ! integer,   pointer :: eID
     !

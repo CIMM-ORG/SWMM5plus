@@ -53,28 +53,28 @@ contains
         integer,   intent(in) :: e2r_Volume_new, e2r_Velocity_new, e2r_Eta_new
         integer,   intent(in) :: eMr_Volume_new, eMr_Velocity_new, eMr_Eta_new
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in out)  :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
-        real,              intent(in)      :: dt, wrk, af(:)
+        real(8),              intent(in)      :: dt, wrk, af(:)
         
-        real,  pointer ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
-        real,  pointer ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
-        real,  pointer ::  eta2old(:), eta2new(:), etaMold(:), etaMnew(:)
-        real,  pointer ::  volume2n0(:), volume2n1(:), flowrate2n0(:), flowrate2n1(:)
-        real,  pointer ::  VolumeMn0(:), VolumeMn1(:), flowrateMn0(:), flowrateMn1(:)
-        real,  pointer ::  dHdA2(:), zcrown2(:), zbottom2(:), rh2(:), mn2(:)
-        real,  pointer ::  fullVolume2(:), fullDepth2(:), fullVolumeM(:), dHdAM(:), rhM(:)
-        real,  pointer ::  length2(:), elN2(:) , breadth2(:), lengthM(:), elNM(:), mnM(:)
-        real,  pointer ::  fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:), fEup(:)
-        real,  pointer ::  kc2(:), ku2(:), kcM(:), kuM(:)
+        real(8),  pointer ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
+        real(8),  pointer ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
+        real(8),  pointer ::  eta2old(:), eta2new(:), etaMold(:), etaMnew(:)
+        real(8),  pointer ::  volume2n0(:), volume2n1(:), flowrate2n0(:), flowrate2n1(:)
+        real(8),  pointer ::  VolumeMn0(:), VolumeMn1(:), flowrateMn0(:), flowrateMn1(:)
+        real(8),  pointer ::  dHdA2(:), zcrown2(:), zbottom2(:), rh2(:), mn2(:)
+        real(8),  pointer ::  fullVolume2(:), fullDepth2(:), fullVolumeM(:), dHdAM(:), rhM(:)
+        real(8),  pointer ::  length2(:), elN2(:) , breadth2(:), lengthM(:), elNM(:), mnM(:)
+        real(8),  pointer ::  fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:), fEup(:)
+        real(8),  pointer ::  kc2(:), ku2(:), kcM(:), kuM(:)
 
         integer,  pointer ::  iup(:), idn(:)
         logical,  pointer ::  isFull(:), fullPipeOpen(:)
         logical,  pointer ::  maskChannelPipeAC(:), maskJunctionAC(:)
 
-        real              :: dtau, rc2
+        real(8)              :: dtau, rc2
         integer :: mm
 
         !--------------------------------------------------------------------------
@@ -300,20 +300,20 @@ contains
         !%
         character(64) :: subroutine_name = 'Kvolume2AC'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in out)  :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
-        real,       intent(inout)  :: kc2(:)
-        real,       intent(in)     :: volume2new(:), eta2new(:), volume2old(:)
-        real,       intent(in)     :: eta2old(:), volume2n0(:), volume2n1(:)
-        real,       intent(in)     :: length2(:), elN2(:),dHdA2(:), af(:), fQ(:)
-        real,       intent(in)     :: dt, dtau, rc2, wrk
+        real(8),       intent(inout)  :: kc2(:)
+        real(8),       intent(in)     :: volume2new(:), eta2new(:), volume2old(:)
+        real(8),       intent(in)     :: eta2old(:), volume2n0(:), volume2n1(:)
+        real(8),       intent(in)     :: length2(:), elN2(:),dHdA2(:), af(:), fQ(:)
+        real(8),       intent(in)     :: dt, dtau, rc2, wrk
         integer,    intent(in)     :: iup(:), idn(:)
         logical,    intent(in)     :: maskChannelPipeAC(:), isFull(:)
 
-        real                       :: invdt, gammaV, gammaH, lambdaV, lambdaH
+        real(8)                       :: invdt, gammaV, gammaH, lambdaV, lambdaH
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -387,23 +387,23 @@ contains
         !
         character(64) :: subroutine_name = 'Kmomentum2AC'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in out)  :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
-        real,       intent(inout) :: ku2(:), velocity2new(:)
-        real,       intent(in)    :: velocity2old(:), eta2new(:),eta2old(:)
-        real,       intent(in)    :: volume2old(:), length2(:), flowrate2n0(:)
-        real,       intent(in)    :: flowrate2n1(:), mn2(:), rh2(:), fQ(:)
-        real,       intent(in)    :: fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:)
-        real,       intent(in)    :: fEup(:), af(:)
-        real,       intent(in)    :: wrk, dt, dtau, rc2
+        real(8),       intent(inout) :: ku2(:), velocity2new(:)
+        real(8),       intent(in)    :: velocity2old(:), eta2new(:),eta2old(:)
+        real(8),       intent(in)    :: volume2old(:), length2(:), flowrate2n0(:)
+        real(8),       intent(in)    :: flowrate2n1(:), mn2(:), rh2(:), fQ(:)
+        real(8),       intent(in)    :: fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:)
+        real(8),       intent(in)    :: fEup(:), af(:)
+        real(8),       intent(in)    :: wrk, dt, dtau, rc2
         integer,    intent(in)    :: iup(:), idn(:)
         logical,    intent(in)    :: maskChannelPipeAC(:), isFull(:)
 
-        real,       pointer    :: gammaUV(:)     
-        real                   :: invdt, tDelta
+        real(8),       pointer    :: gammaUV(:)     
+        real(8)                   :: invdt, tDelta
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -465,7 +465,7 @@ contains
 
         !%  Other source term calculation
         where (maskChannelPipeAC)
-            !%  adding real time levels to source
+            !%  adding real(8) time levels to source
             ku2 = ku2 - (af(2) * flowrate2n0 + af(3) * flowrate2n1) * invdt * length2
             !%  gamma term
             gammaUV = - af(1) * invdt - grav * ((mn2**twoR) / (rh2**(fourR/threeR))) * abs(velocity2new)
@@ -500,17 +500,17 @@ contains
         !
         character(64) :: subroutine_name = 'get_volume_from_eta'
 
-        real,      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real,      target, intent(in out)  :: faceR(:,:)
+        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),      target, intent(in out)  :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
-        real,       intent(inout) :: eta2new(:), volume2new(:), eta2old(:)
-        real,       intent(in)    :: length2(:), fullVolume2(:), fullDepth2(:)
-        real,       intent(in)    :: breadth2(:), zbottom2(:), zcrown2(:)
+        real(8),       intent(inout) :: eta2new(:), volume2new(:), eta2old(:)
+        real(8),       intent(in)    :: length2(:), fullVolume2(:), fullDepth2(:)
+        real(8),       intent(in)    :: breadth2(:), zbottom2(:), zcrown2(:)
         logical,    intent(inout) :: isFull(:)
 
-        real,       pointer       :: YoverYfull(:)
+        real(8),       pointer       :: YoverYfull(:)
         logical,    pointer       :: OpenPipe(:), maskarray(:)
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name

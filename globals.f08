@@ -19,26 +19,26 @@ module globals
 
     ! note that nullvalueI < 0 is required
     integer, parameter :: nullvalueI = -998877
-    real,    parameter :: nullvalueR = -9.98877e16
+    real(8),    parameter :: nullvalueR = -9.98877e16
     logical, parameter :: nullvalueL = .false.
-    real,    parameter :: negoneR    = -1.0
-    real,    parameter :: zeroR      = 0.0
-    real,    parameter :: oneR       = 1.0
-    real,    parameter :: twoR       = 2.0
-    real,    parameter :: threeR     = 3.0
-    real,    parameter :: fourR      = 4.0
-    real,    parameter :: sixR       = 6.0
-    real,    parameter :: eightR     = 8.0
-    real,    parameter :: tenR       = 10.0
-    real,    parameter :: pi         = 4.d0*datan(1.d0)
+    real(8),    parameter :: negoneR    = -1.0
+    real(8),    parameter :: zeroR      = 0.0
+    real(8),    parameter :: oneR       = 1.0
+    real(8),    parameter :: twoR       = 2.0
+    real(8),    parameter :: threeR     = 3.0
+    real(8),    parameter :: fourR      = 4.0
+    real(8),    parameter :: sixR       = 6.0
+    real(8),    parameter :: eightR     = 8.0
+    real(8),    parameter :: tenR       = 10.0
+    real(8),    parameter :: pi         = 4.d0*datan(1.d0)
 
 
-    real,    parameter :: oneeighthR    = oneR   / eightR
-    real,    parameter :: onefourthR   = oneR   / fourR
-    real,    parameter :: onethirdR    = oneR   / threeR
-    real,    parameter :: onehalfR     = oneR   / twoR
-    real,    parameter :: twothirdR    = twoR   / threeR
-    real,    parameter :: threefourthR = threeR / fourR
+    real(8),    parameter :: oneeighthR    = oneR   / eightR
+    real(8),    parameter :: onefourthR   = oneR   / fourR
+    real(8),    parameter :: onethirdR    = oneR   / threeR
+    real(8),    parameter :: onehalfR     = oneR   / twoR
+    real(8),    parameter :: twothirdR    = twoR   / threeR
+    real(8),    parameter :: threefourthR = threeR / fourR
 
     integer, parameter :: zeroI      = 0
     integer, parameter :: oneI       = 1
@@ -73,8 +73,8 @@ module globals
     integer :: outputfile_next_unitnumber = 10 ! used for fileopening
 
     ! useful shortcuts
-    real, pointer :: dt   => setting%time%dt
-    real, pointer :: grav => setting%constant%gravity
+    real(8), pointer :: dt   => setting%time%dt
+    real(8), pointer :: grav => setting%constant%gravity
 
     integer :: debugcounter = 0
 

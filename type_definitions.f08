@@ -25,20 +25,20 @@ module type_definitions
         integer :: Idx
         integer :: LinkId
         integer :: ElemId
-        real, dimension(:), allocatable :: TimeArray
-        real, dimension(:), allocatable :: HeightArray
-        real, dimension(:), allocatable :: AreaArray
-        real    :: HeightStart
-        real    :: HeightNow
-        real    :: AreaNow
-        real    :: AreaPrior
-        real    :: FullDepth
-        real    :: GateTimeChange1
-        real    :: GateTimeChange2
-        real    :: GateHeightChange1
-        real    :: GateHeightChange2
-        real    :: HeightMinimum
-        real    :: GateSpeed
+        real(8), dimension(:), allocatable :: TimeArray
+        real(8), dimension(:), allocatable :: HeightArray
+        real(8), dimension(:), allocatable :: AreaArray
+        real(8)    :: HeightStart
+        real(8)    :: HeightNow
+        real(8)    :: AreaNow
+        real(8)    :: AreaPrior
+        real(8)    :: FullDepth
+        real(8)    :: GateTimeChange1
+        real(8)    :: GateTimeChange2
+        real(8)    :: GateHeightChange1
+        real(8)    :: GateHeightChange2
+        real(8)    :: HeightMinimum
+        real(8)    :: GateSpeed
         logical :: CanMove
         logical :: MovedThisStep     
     end type controlType
@@ -46,14 +46,14 @@ module type_definitions
     !%  diagnostic%Volume
     type diagnosticVolumeType
         integer  :: Step
-        real     :: Time
-        real     :: Volume
-        real     :: VolumeChange
-        real     :: NetInflowVolume
-        real     :: InflowRate
-        real     :: OutflowRate
-        real     :: ConservationThisStep ! + is artificial source, - is sink
-        real     :: ConservationTotal
+        real(8)     :: Time
+        real(8)     :: Volume
+        real(8)     :: VolumeChange
+        real(8)     :: NetInflowVolume
+        real(8)     :: InflowRate
+        real(8)     :: OutflowRate
+        real(8)     :: ConservationThisStep ! + is artificial source, - is sink
+        real(8)     :: ConservationTotal
     end type diagnosticVolumeType
 
     type diagnosticType
@@ -69,11 +69,11 @@ module type_definitions
         integer :: ElemInsideID
         integer :: Updn      ! bc_updn_...  (0 = upstream,  1 = downstream)
         integer :: Category  ! bc_category_... (0 = elevation, 1 = inflowrate)
-        real, dimension(:), allocatable :: TimeArray
-        real, dimension(:), allocatable :: ValueArray
-        real    :: ThisValue
-        real    :: ThisTime
-        real    :: ThisFlowrate
+        real(8), dimension(:), allocatable :: TimeArray
+        real(8), dimension(:), allocatable :: ValueArray
+        real(8)    :: ThisValue
+        real(8)    :: ThisTime
+        real(8)    :: ThisFlowrate
     end type bcType
 
     !% output file location

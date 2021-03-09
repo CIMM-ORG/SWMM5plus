@@ -410,7 +410,7 @@ contains
         !
         character(len=64) :: subroutine_name = 'debug_output'
 
-        real,      target,     intent(in) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+        real(8),   target,     intent(in) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         integer,   target,     intent(in) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
         logical,   target,     intent(in) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
@@ -424,10 +424,10 @@ contains
 
         integer,       pointer ::  CI, UnitNumber
 
-        real,          pointer ::  thisdataR(:)
+        real(8),       pointer ::  thisdataR(:)
         integer,       pointer ::  thisdataI(:)
 
-        integer :: arrayContains= 0  ! =1 for real, 2 for integer, 3 for logical
+        integer :: arrayContains= 0  ! =1 for real(8), 2 for integer, 3 for logical
 
         integer, parameter :: dataR = 1
         integer, parameter :: dataI = 2

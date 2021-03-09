@@ -72,7 +72,7 @@ contains
         !
         character(64) :: subroutine_name = 'checking_smallvolume_consistency'
 
-        real,  intent(in)  :: elem2R(:,:), elemMR(:,:)
+        real(8),  intent(in)  :: elem2R(:,:), elemMR(:,:)
         integer :: ii
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name

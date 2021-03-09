@@ -47,7 +47,7 @@ contains
         !
         character(64) :: subroutine_name = 'pseudo_time_marching'
 
-        real,      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+        real(8),      target, intent(in out) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
         integer,   target, intent(in out) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
         logical,   target, intent(in out) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
@@ -57,13 +57,13 @@ contains
         type(threadedfileType),        intent(in)     :: threadedfile(:)
 
         integer,                       intent(in)     :: linkI(:,:)
-        real,     intent(in)         :: thisTime
+        real(8),     intent(in)         :: thisTime
         integer,  intent(in)         :: thisStep   
-        real,     intent(in out)     :: AnormH(:), AnormQ(:), AnormHlast(:), AnormQlast(:)
-        real,     intent(in out)     :: TnormH(:), TnormQ(:)
-        real,     intent(in out)     :: RTnormH(:), RTnormQ(:), RLnormH(:), RLnormQ(:)
+        real(8),     intent(in out)     :: AnormH(:), AnormQ(:), AnormHlast(:), AnormQlast(:)
+        real(8),     intent(in out)     :: TnormH(:), TnormQ(:)
+        real(8),     intent(in out)     :: RTnormH(:), RTnormQ(:), RLnormH(:), RLnormQ(:)
 
-        real    :: dtau, tauTime, NX
+        real(8)    :: dtau, tauTime, NX
         integer :: thisIter, iterMax, iterMin
         logical :: isConverged
 
@@ -71,12 +71,12 @@ contains
 
         integer, intent(in out)    :: ID(:)
         integer, intent(in out)    :: numberPairs(:)
-        real,    intent(in out)    :: ManningsN(:)
-        real,    intent(in out)    :: Length(:)
-        real,    intent(in out)    :: zBottom(:)
-        real,    intent(in out)    :: xDistance(:)
-        real,    intent(in out)    :: Breadth(:)
-        real,    intent(in out)    :: widthDepthData(:,:,:)
+        real(8),    intent(in out)    :: ManningsN(:)
+        real(8),    intent(in out)    :: Length(:)
+        real(8),    intent(in out)    :: zBottom(:)
+        real(8),    intent(in out)    :: xDistance(:)
+        real(8),    intent(in out)    :: Breadth(:)
+        real(8),    intent(in out)    :: widthDepthData(:,:,:)
         type(string), intent(in out)   :: cellType(:)
 
         integer :: ii

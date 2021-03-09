@@ -34,7 +34,7 @@ contains
         !
         character(64) :: subroutine_name = 'friction_on_element'
 
-        real,      target, intent(in out)  ::  elemR(:,:)
+        real(8),      target, intent(in out)  ::  elemR(:,:)
 
         integer,           intent(in)      ::  elemI(:,:)
 
@@ -43,7 +43,7 @@ contains
         integer,           intent(in)      ::  ei_elem_type, ei_roughness_type
         integer,           intent(in)      ::  ThisElemType
 
-        real,  pointer :: friction(:), velocity(:), volume(:), manningsn(:), rh(:)
+        real(8),  pointer :: friction(:), velocity(:), volume(:), manningsn(:), rh(:)
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
