@@ -17,6 +17,7 @@ module output
     public  :: output_threaded_by_link_initialize
     public  :: output_all_threaded_data_by_link
     public  :: output_one_threaded_data_by_link
+    public  :: output_translation_from_elements_to_link_node
 
     integer :: debuglevel = 0
 
@@ -544,6 +545,169 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine output_one_threaded_data_by_link
+    !
+    !==========================================================================
+    !
+    !==========================================================================
+    !
+    subroutine output_translation_from_elements_to_link_node &
+        (elem2I, elem2R, elem2YN, elemMI, elemMR, elemMYN, faceI, faceR, &
+        linkI, linkR, nodeI, nodeR, bcdataUp, bcdataDn, thisstep)
+        !
+        !%  this subroutine translates output data from from element scale to
+        !%  link-node scale
+        !
+        character(64) :: subroutine_name = 'output_translation_from_elements_to_link_node'
+
+        real(8),         target, intent(in)    :: elem2R(:,:), elemMR(:,:), faceR(:,:)
+        integer,      target, intent(in)    :: elem2I(:,:), elemMI(:,:), faceI(:,:)
+        logical,      target, intent(inout) :: elem2YN(:,:), elemMYN(:,:)
+        integer,      target, intent(in)    :: linkI(:,:), nodeI(:,:)
+        real(8),         target, intent(inout) :: linkR(:,:), nodeR(:,:)
+        type(bcType), target, intent(in)    :: bcdataUp(:), bcdataDn(:)
+
+        integer,              intent(in)    :: thisstep
+
+        integer,           pointer ::  Lindx, Ltyp, Nindx, UpFace, DnFace
+        integer,           pointer ::  upBC_Nindx, upBC_Eindx
+        integer,           pointer ::  dnBC_Nindx, dnBC_Eindx
+        logical,           pointer ::  elemMask(:)
+
+        character(len=32)  :: outdataName
+        integer            :: ii, mm, Findx, Eindx
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        !%  temporary space for elem2YN
+        elemMask             => elem2YN(:,e2YN_Temp(next_e2YN_temparray) )
+        next_e2YN_temparray  = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
+
+        !% translation from element data to link data
+        do ii=1,N_link
+            !% set null value to temporary mask
+            elemMask = nullvalueL
+            !% link index
+            Lindx  => linkI(ii,li_idx)
+            !% link type
+            Ltyp   => linkI(ii,li_link_type)
+            !% upstream face of the link
+            UpFace => linkI(ii, li_Mface_u)
+            !% donwstream face of the link
+            DnFace => linkI(ii, li_Mface_d)
+
+            elemMask = ( (elem2I(:,e2i_link_ID) == Lindx) .and. (elem2I(:,e2i_elem_type) == Ltyp) ) 
+
+            linkR(Lindx,lr_Volume)    = sum(elem2R(:,e2r_Volume),elemMask)
+
+            linkR(Lindx,lr_Flowrate)  = (sum(elem2R(:,e2r_Volume)*elem2R(:,e2r_Flowrate),&
+                    elemMask)) / linkR(Lindx,lr_Volume) 
+
+            linkR(Lindx,lr_DepthUp)   = faceR(UpFace, fr_Eta_d) - faceR(UpFace, fr_Zbottom) 
+
+            linkR(Lindx,lr_DepthDn)   = faceR(DnFace, fr_Eta_u) - faceR(DnFace, fr_Zbottom) 
+
+            linkR(Lindx,lr_Depth)     = onehalfR * (linkR(Lindx,lr_DepthUp) + linkR(Lindx,lr_DepthDn))
+
+            linkR(Lindx,lr_Velocity)  = (linkR(Lindx,lr_Flowrate) * sum(elem2R(:,e2r_Length),elemMask)) &
+                    / linkR(Lindx,lr_Volume) 
+
+            !% link capacity will be fixed later when we have a clear idea what it means for irregular channel        
+            linkR(Lindx,lr_Capacity)  = nullvalueR
+        end do
+
+        !% translation of element data to node data
+        !% upstream boundary condition nodes
+        do ii=1,N_BCupstream
+            upBC_Nindx => bcdataUp(ii)%NodeID
+            upBC_Eindx => bcdataUp(ii)%ElemGhostID
+            
+            nodeR(upBC_Nindx,nr_Eta)    = elem2R(upBC_Eindx,e2r_eta)
+            nodeR(upBC_Nindx,nr_Depth)  = nodeR(upBC_Nindx,nr_Eta) - nodeR(upBC_Nindx,nr_Zbottom)
+            nodeR(upBC_Nindx,nr_Volume) = elem2R(upBC_Eindx,e2r_Volume)
+
+            !% HACK: discuss with dr. hodges today and fix it
+            nodeR(upBC_Nindx,nr_LateralInflow) = nullvalueR
+            nodeR(upBC_Nindx,nr_TotalInflow)   = nullvalueR
+        end do
+
+        !% downstream boundary condition nodes
+        do ii=1,N_BCdnstream
+            dnBC_Nindx => bcdataDn(ii)%NodeID
+            dnBC_Eindx => bcdataDn(ii)%ElemGhostID
+
+            nodeR(dnBC_Nindx,nr_Eta)    = elem2R(dnBC_Eindx,e2r_eta)
+            nodeR(dnBC_Nindx,nr_Depth)  = nodeR(dnBC_Nindx,nr_Eta) - nodeR(dnBC_Nindx,nr_Zbottom)
+            nodeR(dnBC_Nindx,nr_Volume) = elem2R(dnBC_Eindx,e2r_Volume)
+
+            !% HACK: discuss with dr. hodges today and fix it
+            nodeR(dnBC_Nindx,nr_LateralInflow) = nullvalueR
+            nodeR(dnBC_Nindx,nr_TotalInflow)   = nullvalueR
+        end do
+
+        !% rest of the nodes
+        do ii=1,N_Node
+            !% node index
+            Nindx => nodeI(ii,ni_idx)
+
+            if (nodeI(Nindx,ni_node_type) == nJ2) then
+
+                Findx = findloc(faceI(:,fi_node_ID),Nindx, DIM=1)
+
+                nodeR(Nindx,nr_Eta)           = onehalfR * (faceR(Findx,fr_Eta_u) + faceR(Findx,fr_Eta_d))
+                nodeR(Nindx,nr_Depth)         = nodeR(Nindx,nr_Eta) - faceR(Findx,fr_Zbottom)
+                nodeR(Nindx,nr_Volume)        = zeroR
+                !% HACK: discuss with dr. hodges today and fix it
+                nodeR(Nindx,nr_LateralInflow) = nullvalueR
+                nodeR(Nindx,nr_TotalInflow)   = nullvalueR
+
+            elseif (nodeI(Nindx,ni_node_type) == nJm) then
+
+                Eindx = findloc(elemMI(:,eMi_node_ID),Nindx, DIM=1)
+
+                nodeR(Nindx,nr_Eta)           = elemMR(Eindx,eMr_Eta)
+                nodeR(Nindx,nr_Depth)         = elemMR(Eindx,eMr_Eta) - elemMR(Eindx,eMr_Zbottom)
+                nodeR(Nindx,nr_Volume)        = elemMR(Eindx,eMr_Volume)
+                !% HACK: discuss with dr. hodges today and fix it
+                nodeR(Nindx,nr_LateralInflow) = nullvalueR
+                nodeR(Nindx,nr_TotalInflow)   = nullvalueR
+
+            elseif (nodeI(Nindx,ni_node_type) == nStorage) then
+                print*, 'error: stroage node is not handeled yet'
+                stop
+            endif
+        enddo
+        
+        ! print*,'------------------------------------------------'
+        ! print*, 'printing linkR'
+        ! print*, linkR(:,lr_Volume), 'lr_Volume'
+        ! print*
+        ! print*, linkR(:,lr_Flowrate), 'lr_Flowrate'
+        ! print*
+        ! print*, linkR(:,lr_Velocity), 'lr_Velocity'
+        ! print*
+        ! print*, linkR(:,lr_Depth), 'lr_Depth'
+        ! print*
+
+        ! print*, 'printing nodeR'
+        ! print*, nodeR(:,nr_Volume), 'nr_Volume'
+        ! print*
+        ! print*, nodeR(:,nr_TotalInflow), 'nr_TotalInflow'
+        ! print*
+        ! print*, nodeR(:,nr_Depth), 'nr_Depth'
+        ! print*
+        ! print*, nodeR(:,nr_Eta), 'nr_Eta'
+        ! print*,'------------------------------------------------'
+
+        ! release temporary arrays
+        elemMask = nullvalueL
+
+        nullify(elemMask)
+        next_e2YN_temparray = next_e2YN_temparray - 1
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    end subroutine output_translation_from_elements_to_link_node
+    !
     !==========================================================================
     !
     ! PRIVATE BELOW HERE
