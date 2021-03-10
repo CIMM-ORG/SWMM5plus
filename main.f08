@@ -67,6 +67,9 @@ program main
     !%  bcdata are structures containing boundary condition data
     type(bcType), dimension(:), allocatable :: bcdataUp, bcdataDn
 
+    !%  control data are structures containinng gate settings
+    type(controlType), dimension(:), allocatable :: gateSetting 
+
     !%  debug output file information
     type(debugfileType),  dimension(:),   allocatable :: debugfile
 
@@ -104,7 +107,10 @@ program main
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
-    ! setting%TestCase%TestName = 'waller_creek'
+    ! setting%TestCase%TestName = 'simple_pipe_006'
+    ! setting%TestCase%TestName = 'swashes_007'
+    ! setting%TestCase%TestName = 'width_depth'
+    ! setting%TestCase%TestName = 'trajkovic_case_a3'
 
     !%  hard-code for debug output
     setting%Debugout%SuppressAllFiles  = .false. ! use this to easily suppress debug files
@@ -113,9 +119,9 @@ program main
     setting%Debugout%SuppressTimeValue = .true. ! which can make debug files easier
     setting%Debugout%SuppressNdat      = .true. ! to read (but less useful)
 
-    setting%Debugout%elem2R = .false.   ! select arrays to have debug output
+    setting%Debugout%elem2R = .true.   ! select arrays to have debug output
     setting%Debugout%elemMR = .false.   ! select arrays to have debug output
-    setting%Debugout%faceR  = .false.   ! note that not all are implemented
+    setting%Debugout%faceR  = .true.   ! note that not all are implemented
     setting%Debugout%linkR  = .true.
     setting%Debugout%nodeR  = .true.
 
@@ -140,7 +146,7 @@ program main
     if (setting%TestCase%UseTestCase) then
         call test_case_initiation &
             (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-            bcdataDn, bcdataUp, &
+            bcdataDn, bcdataUp, gateSetting, &
             wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
             wdBreadth, wdWidthDepthData, wdCellType)
     else
@@ -148,6 +154,7 @@ program main
        (linkI, nodeI, linkR, nodeR, linkYN, &
        nodeYN, linkName, nodeName, bcdataUp, bcdataDn)
     end if
+
 
     !% create the network of elements from link and node data
     call network_initiation &
@@ -158,16 +165,15 @@ program main
         faceR,  faceI,  faceYN,  faceName)
 
     print *, 'in main'
-
     !% check the boundary condition data arrays are correctly defined
     call bc_checks(bcdataUp, bcdataDn, elem2I, faceI, nodeI )
 
     !% set the initial conditions throughout
     call initial_condition_setup &
         (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, setting%Time%StartTime, &
-        wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
-        wdBreadth, wdWidthDepthData, wdCellType)
+        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, gateSetting,             &
+        setting%Time%StartTime, wdID, wdNumberPairs, wdManningsN, wdLength,      &
+        wdZBottom, wdXDistance, wdBreadth, wdWidthDepthData, wdCellType)
 
     !% check consistency of the smallvolume setup
     call checking_smallvolume_consistency (elem2R, elemMR)
@@ -197,15 +203,16 @@ program main
     !%  time marching of continuity and momentum
     call time_marching &
         (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN, &
-        bcdataDn, bcdataUp, linkI, nodeI, linkR, nodeR, debugfile, diagnostic,   &
-        threadedfile, wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom,     &
-        wdXDistance, wdBreadth, wdWidthDepthData, wdCellType)
+        bcdataDn, bcdataUp, gateSetting, linkI, nodeI, linkR, nodeR, debugfile,  &
+        diagnostic, threadedfile, wdID, wdNumberPairs, wdManningsN, wdLength,    &
+        wdZBottom, wdXDistance, wdBreadth, wdWidthDepthData, wdCellType)
+
 
     !% uncomment this if you want a final debug output
-    ! call debug_output &
-    !    (debugfile, &
-    !     elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-    !     bcdataUp, bcdataDn)
+    call debug_output &
+       (debugfile, nodeR, linkR, &
+        elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
+        bcdataUp, bcdataDn, setting%Step%Current)
 
     !
     !=========================================================

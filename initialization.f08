@@ -60,18 +60,32 @@ contains
         e2r_Temp(8)  = e2r_temp8
         e2r_Temp(9)  = e2r_temp9
         e2r_Temp(10) = e2r_temp10
-        if (e2r_n_temp > 10) then
+        e2r_Temp(11) = e2r_temp11
+        e2r_Temp(12) = e2r_temp12
+        e2r_Temp(13) = e2r_temp13
+        e2r_Temp(14) = e2r_temp14
+        e2r_Temp(15) = e2r_temp15
+        e2r_Temp(16) = e2r_temp16
+        e2r_Temp(17) = e2r_temp17
+        e2r_Temp(18) = e2r_temp18
+        e2r_Temp(19) = e2r_temp19
+        e2r_Temp(20) = e2r_temp20
+        if (e2r_n_temp > 20) then
             print *, 'error need to update initialization of e2r_Temp in ',subroutine_name
             stop
         endif
 
-        eMr_Temp(1) = eMr_temp1
-        eMr_Temp(2) = eMr_temp2
-        eMr_Temp(3) = eMr_temp3
-        eMr_Temp(4) = eMr_temp4
-        eMr_Temp(5) = eMr_temp5
-        eMr_Temp(6) = eMr_temp6
-        if (eMr_n_temp > 6) then
+        eMr_Temp(1)  = eMr_temp1
+        eMr_Temp(2)  = eMr_temp2
+        eMr_Temp(3)  = eMr_temp3
+        eMr_Temp(4)  = eMr_temp4
+        eMr_Temp(5)  = eMr_temp5
+        eMr_Temp(6)  = eMr_temp6
+        eMr_Temp(7)  = eMr_temp7
+        eMr_Temp(8)  = eMr_temp8
+        eMr_Temp(9)  = eMr_temp9
+        eMr_Temp(10) = eMr_temp10
+        if (eMr_n_temp > 10) then
             print *, 'error need to update initialization of eMr_Temp in ',subroutine_name
             stop
         endif
@@ -115,7 +129,8 @@ contains
         e2YN_Temp(2) = e2YN_temp2
         e2YN_Temp(3) = e2YN_temp3
         e2YN_Temp(4) = e2YN_temp4
-        if (e2YN_n_temp > 4) then
+        e2YN_Temp(5) = e2YN_temp5
+        if (e2YN_n_temp > 5) then
             print *, 'error need to update initialization of e2YN_Temp in ',subroutine_name
             stop
         endif
@@ -124,7 +139,8 @@ contains
         eMYN_Temp(2) = eMYN_temp2
         eMYN_Temp(3) = eMYN_temp3
         eMYN_Temp(4) = eMYN_temp4
-        if (eMYN_n_temp > 4) then
+        eMYN_Temp(5) = eMYN_temp5
+        if (eMYN_n_temp > 5) then
             print *, 'error need to update initialization of eMYN_Temp in ',subroutine_name
             stop
         endif
@@ -346,6 +362,22 @@ contains
         endif
         if (e2r_Temp(6) /= e2r_temp6) then
             print *, 'error: e2r_Temp(6) unexpectedly changed in code in ',subroutine_name
+            stop
+        endif
+        if (e2r_Temp(7) /= e2r_temp7) then
+            print *, 'error: e2r_Temp(7) unexpectedly changed in code in ',subroutine_name
+            stop
+        endif
+        if (e2r_Temp(8) /= e2r_temp8) then
+            print *, 'error: e2r_Temp(8) unexpectedly changed in code in ',subroutine_name
+            stop
+        endif
+        if (e2r_Temp(9) /= e2r_temp9) then
+            print *, 'error: e2r_Temp(9) unexpectedly changed in code in ',subroutine_name
+            stop
+        endif
+        if (e2r_Temp(10) /= e2r_temp10) then
+            print *, 'error: e2r_Temp(10) unexpectedly changed in code in ',subroutine_name
             stop
         endif
 

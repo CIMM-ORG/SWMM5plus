@@ -139,6 +139,15 @@ contains
         !%   assign branch mappings for faces
         call junction_branch_assigned_to_faces (faceI, elemMI)
 
+        !% assign meta-elements type for elem2
+        call meta_element_assign (elem2I, e2i_elem_type, e2i_meta_elem_type)
+
+        !% assign meta-elements type for elemM
+        call meta_element_assign (elemMI, eMi_elem_type, eMi_meta_elem_type)
+
+        !% assign face u/s and d/s meta-element types
+        call face_meta_element_type_assign (faceI, elem2I, N_face)
+
         !% Debug output
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
             print *, subroutine_name,'----------------------------------------'
@@ -169,7 +178,7 @@ contains
             enddo
 
             print *
-            print *, 'e)       ii  ,e2r_Length, e2r_Topwidth, e2r_Zbottom'
+            print *, 'e)       ii  ,e2r_Length,    e2r_Topwidth,    e2r_Zbottom'
             do ii=first_elem2_index, first_elem2_index+N_elem2-1
                 print *, ii, elem2R(ii,e2r_Length), elem2R(ii,e2r_Topwidth), elem2R(ii,e2r_Zbottom)
             enddo
@@ -627,7 +636,7 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-
+        !% old code without inlet or outlet offsets
         do mm = 1,N_link
             nUp => linkI(mm,li_Mnode_u)
             nDn => linkI(mm,li_Mnode_d)
@@ -635,11 +644,14 @@ contains
             zDn => nodeR(nDn,nr_Zbottom)
             linkR(mm,lr_Slope) = (zUp - zDn) / linkR(mm,lr_Length)
         end do
-        !% to be consistent with SWMM5, each links needs inlet and outlet offset valuse.
+
+        !% HACK: to be consistent with SWMM5, each links needs inlet and outlet offset values.
         !% these values indicate the offset from upstream and downstream nodes
         !% so, the z values for links will be the offset + node zbottom
-        !% this offset is only used in specialized elements i.e. weir, orifice, storage
-        !% this need to be further discussed
+
+        !% at the current state of the code, offsets for specialized elements i.e. weir, orifice,
+        !% are handeled in their subsequent modules. this need to be further discussed
+
         ! do mm = 1,N_link
         !    if (linkR(mm, lr_InletOffset) == nullvalueR) then
         !        !% if offset value are not assigned/sepcified, offset will be set to zero
@@ -735,7 +747,7 @@ contains
         do ii = 1,N_link
 
             linkNelem(ii) = floor(linkLength(ii)/element_nominal_length(ii))
-
+            !print *, "LinkID = ", ii, "linkNelem=", linkNelem(ii)
             if (linkNelem(ii) > 0) then
                 delta = ( linkLength(ii) - element_nominal_length(ii) * linkNelem(ii)) &
                     / linkNelem(ii)
@@ -974,9 +986,7 @@ contains
                 faceR(thisFace,fr_Topwidth)        = linkR(thisLink,lr_Topwidth)
               case (lCircular)
                 elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-                !% check this again
-                elem2R(thisElem2,e2r_Topwidth)     = twoR * sqrt(linkR(thisLink,lr_InitialDepth)*&
-                    (linkR(thisLink,lr_FullDepth)-linkR(thisLink,lr_InitialDepth)))
+                elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
               case default
                 print *, 'error: case statement is incomplete in ',subroutine_name
                 stop
@@ -997,8 +1007,10 @@ contains
             faceI(thisFace,fi_link_Pos)     = nullvalueI
             faceI(thisFace,fi_node_ID)      = thisNode
 
-            faceR(thisFace,fr_Zbottom)      = nodeR(thisNode,nr_Zbottom)
+            !% HACK: if there is a offset elevation between the link and the corresponding
+            !% downstream boundary node, what should be the face Zbottom? 
 
+            faceR(thisFace,fr_Zbottom)      = nodeR(thisNode,nr_Zbottom)
             faceName(thisFace)              = nodeName(thisNode)
 
             lastFace = thisFace
@@ -1117,19 +1129,23 @@ contains
               case (eParabolic)
                 elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
               case (eTrapezoidal)
                 elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
               case (eTriangular)
                 elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
               case (eWidthDepth)
                 elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
+              case (eCircular)
+                elem2R(thisElem2,e2r_Topwidth) = elem2R(lastElem2,e2r_Topwidth)
+                elem2R(thisElem2,e2r_BreadthScale) = elem2R(lastElem2,e2r_BreadthScale)
+                ! faceR(thisFace,fr_Topwidth)    = elem2R(lastElem2,e2r_Topwidth)
               case default
                 print *, 'error: case statement is incomplete in ',subroutine_name
                 stop
@@ -1605,6 +1621,18 @@ contains
         zcenter = zDownstream - 0.5 * linkR(thislink,lr_ElementLength) * linkR(thislink,lr_Slope)
         zface   = zDownstream
 
+        !%  HACK: Dealing with inlet and outlet offset
+        !%  offset elevation is added here. This needs further revision
+        !%  below is a hack code only works with Trajkovic cases test file
+        !%  may be it will work with other cases as well but requires further
+        !%  testing
+        
+        ! zcenter = zDownstream + linkR(thislink,lr_OutletOffset) - &
+        !     0.5 * linkR(thislink,lr_ElementLength) * linkR(thislink,lr_Slope)
+
+        !%  HACK: If a link does not share common zbottom then how the zbottom of face
+        !%  should be handeled? The pipeAC code does not provide a clear answer 
+        ! zface   = zDownstream + linkR(thislink,lr_OutletOffset)
         do mm = 1,linkI(thisLink,li_N_element)
             !%  store the elem info
             elem2I(thisElem2,e2i_idx)               = thisElem2
@@ -1656,11 +1684,10 @@ contains
               case (lWidthDepth)
                 elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
                 elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-                faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
+                ! faceR(thisFace,fr_Topwidth)    = linkR(thisLink,lr_Topwidth)
               case (lCircular)
                 elem2R(thisElem2,e2r_BreadthScale) = linkR(thisLink,lr_BreadthScale)
-                elem2R(thisElem2,e2r_Topwidth)     = twoR * sqrt(linkR(thisLink,lr_InitialDepth)*&
-                    (linkR(thisLink,lr_FullDepth)-linkR(thisLink,lr_InitialDepth)))
+                elem2R(thisElem2,e2r_Topwidth)     = linkR(thisLink,lr_Topwidth)
               case default
                 print *, 'error: case statement is incomplete in ',subroutine_name
                 stop
@@ -1755,18 +1782,22 @@ contains
                 f_result = fBCup
             elseif (dn_elem_type == eBCdn) then
                 f_result = fBCdn
-            elseif (dn_elem_type == eWeir) then
+            elseif (dn_elem_type == fWeir) then
                 f_result = fWeir
-            elseif (up_elem_type == eWeir) then
+            elseif (up_elem_type == fWeir) then
                 f_result = fWeir
-            elseif (dn_elem_type == eOrifice) then
+            elseif (dn_elem_type == fOrifice) then
                 f_result = fOrifice
-            elseif (up_elem_type == eOrifice) then
+            elseif (up_elem_type == fOrifice) then
                 f_result = fOrifice
-            elseif (dn_elem_type == ePump) then
+            elseif (dn_elem_type == fPump) then
                 f_result = fPump
-            elseif (up_elem_type == ePump) then
+            elseif (up_elem_type == fPump) then
                 f_result = ePump
+            elseif( (up_elem_type == fPipe) .and.  (dn_elem_type == fChannel) ) then
+                f_result = fPipe
+            elseif( (up_elem_type == fChannel) .and.  (dn_elem_type == fPipe) ) then
+                f_result = fPipe
             else
                 f_result = fMultiple
             endif
@@ -1775,11 +1806,11 @@ contains
                 f_result = fChannel
             elseif (up_elem_type == fPipe) then
                 f_result = fPipe
-            elseif (up_elem_type == ePump) then
+            elseif (up_elem_type == fPump) then
                 f_result = ePump
-            elseif (up_elem_type == eOrifice) then
+            elseif (up_elem_type == fOrifice) then
                 f_result = fOrifice
-            elseif (up_elem_type == eWeir) then
+            elseif (up_elem_type == fWeir) then
                 f_result = fWeir
             else
                 print *, 'upstream element: ',up_elem_type
@@ -1788,6 +1819,9 @@ contains
                 STOP
             endif
         endif
+
+        !%  fWeir, fOrifice, fPump is not used anywhere other than output file generation. 
+        !%  still theis is needed to be cleaned up.
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end function setFaceType
@@ -1853,4 +1887,138 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine link_shortening
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine meta_element_assign (elemI, ei_elem_type, ei_meta_elem_type)
+        !
+        ! Assign meta element type to elements
+        !
+
+        character(64) :: subroutine_name = 'meta_element_assign'
+
+        integer,   target,     intent(inout)    :: elemI(:,:)
+        integer,               intent(in)       :: ei_elem_type
+
+        integer,               intent(in)       :: ei_meta_elem_type
+
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        where ( (elemI(:,ei_elem_type) == eChannel)  .or. &
+                (elemI(:,ei_elem_type) == ePipe) )
+
+            elemI(:,ei_meta_elem_type) = eHQ2
+
+        elsewhere ( (elemI(:,ei_elem_type) == eJunctionChannel) .or. &
+                    (elemI(:,ei_elem_type) == eJunctionPipe)  )
+
+            elemI(:,ei_meta_elem_type) = eHQM
+
+        elsewhere ( (elemI(:,ei_elem_type) == eWeir)    .or. &
+                    (elemI(:,ei_elem_type) == eorifice) .or. &
+                    (elemI(:,ei_elem_type) == ePump)  )
+
+            elemI(:,ei_meta_elem_type) = eQonly
+
+        elsewhere ( (elemI(:,ei_elem_type) == eStorage) )
+
+            elemI(:,ei_meta_elem_type) = eHonly
+
+        elsewhere ( (elemI(:,ei_elem_type) == eBCup) .or. &
+            (elemI(:,ei_elem_type) == eBCdn)  )
+            ! Assigning nonHQ meta elem type to boundary conditions. Confirm this!
+            elemI(:,ei_meta_elem_type) = eNonHQ
+        end where
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine meta_element_assign
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine face_meta_element_type_assign (faceI, elemI, N_face)
+
+        character(64) :: subroutine_name = 'face_meta_element_type_assign'
+
+        integer,      target,     intent(in out)  :: faceI(:,:), elemI(:,:)
+        integer,                  intent(in)      :: N_face
+
+        integer :: ii
+
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        do ii=1, N_face
+            if ( (faceI(ii,fi_etype_u) == eChannel) .or. &
+                (faceI(ii,fi_etype_u) == ePipe) ) then
+
+                faceI(ii,fi_meta_etype_u) = eHQ2
+
+            elseif ( (faceI(ii,fi_etype_u) == eJunctionChannel) .or. &
+                (faceI(ii,fi_etype_u) == eJunctionPipe) ) then
+
+                faceI(ii,fi_meta_etype_u) = eHQm
+
+            elseif ( (faceI(ii,fi_etype_u) == eWeir)    .or. &
+                (faceI(ii,fi_etype_u) == eorifice) .or. &
+                (faceI(ii,fi_etype_u) == ePump) ) then
+
+                faceI(ii,fi_meta_etype_u) = eQonly
+
+            elseif ( (faceI(ii,fi_etype_u) == eStorage) ) then
+
+                faceI(ii,fi_meta_etype_u) = eHonly
+
+            elseif ( (faceI(ii,fi_etype_u) == eBCdn)    .or. &
+                (faceI(ii,fi_etype_u) == eBCup) ) then
+
+                faceI(ii,fi_meta_etype_u) = eNonHQ
+
+            else
+                print*, 'undefined element type upstream of face', ii
+                stop
+            endif
+        end do
+
+        do ii=1, N_face
+            if ( (faceI(ii,fi_etype_d) == eChannel) .or. &
+                (faceI(ii,fi_etype_d) == ePipe) ) then
+
+                faceI(ii,fi_meta_etype_d) = eHQ2
+
+            elseif ( (faceI(ii,fi_etype_d) == eJunctionChannel) .or. &
+                (faceI(ii,fi_etype_d) == eJunctionPipe) ) then
+
+                faceI(ii,fi_meta_etype_d) = eHQm
+
+            elseif ( (faceI(ii,fi_etype_d) == eWeir)    .or. &
+                (faceI(ii,fi_etype_d) == eorifice) .or. &
+                (faceI(ii,fi_etype_d) == ePump) ) then
+
+                faceI(ii,fi_meta_etype_d) = eQonly
+
+            elseif ( (faceI(ii,fi_etype_d) == eStorage) ) then
+
+                faceI(ii,fi_meta_etype_d) = eHonly
+
+            elseif ( (faceI(ii,fi_etype_d) == eBCdn)    .or. &
+                (faceI(ii,fi_etype_d) == eBCup) ) then
+
+                faceI(ii,fi_meta_etype_d) = eNonHQ
+
+            else
+                print*, 'undefined element type downstream of face', ii
+                stop
+            endif
+        end do
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+    end subroutine face_meta_element_type_assign
+    !
+    !==========================================================================
+    ! END OF MODULE network_define
+    !==========================================================================
 end module network_define

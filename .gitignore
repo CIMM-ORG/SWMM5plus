@@ -6,6 +6,7 @@
 *.zip
 *.out
 *.so
+*.png
 OutputThreaded
 debugoutputA
 SWMM

@@ -332,8 +332,18 @@ contains
                 thisdata(4) = faceR(fdn,FaceCol_u)
                 thisX(4)    = zeroR
               case (fPipe)
-                print *, 'error: pipe output not handled'
-                stop
+                ! downstream last element from previous link - upstream face
+                thisdata(1) = faceR(elem2I(edn,e2i_Mface_d),FaceCol_u)
+                thisX(1)    = -elem2R(edn,e2r_Length)
+                ! downstream last element from previous linke - center
+                thisdata(2) =  elem2R(edn,elemCol)
+                thisX(2)    = -onehalfR * elem2R(edn,e2r_Length)
+                ! face downstream at link connection (node)
+                thisdata(3) = faceR(fdn,FaceCol_d)
+                thisX(3)    = -oneeighthR * elem2R(edn,e2r_Length)
+                ! face upstream at link connection (node)
+                thisdata(4) = faceR(fdn,FaceCol_u)
+                thisX(4)    = zeroR
               case (fWeir)
                 ! downstream last element from previous link - upstream face
                 thisdata(1) = faceR(elem2I(edn,e2i_Mface_d),FaceCol_u)
@@ -470,8 +480,11 @@ contains
                 thisdata(eLast+2) = faceR(elem2I(eup,e2i_Mface_u),FaceCol_d)
                 thisX(eLast+2)    = thisX(eLast) + elem2R(eup,e2r_Length)
               case (fPipe)
-                print *, 'error: pipe not handled yet in ',trim(subroutine_name)
-                stop
+                !%  First element of the next upstream link
+                thisdata(eLast+1) = elem2R(eup,ElemCol)
+                thisX(eLast+1)    = thisX(eLast) + onehalfR * elem2R(eup,e2r_Length)
+                thisdata(eLast+2) = faceR(elem2I(eup,e2i_Mface_u),FaceCol_d)
+                thisX(eLast+2)    = thisX(eLast) + elem2R(eup,e2r_Length)
               case (fWeir)
                 !%  First element of the next upstream link
                 thisdata(eLast+1) = elem2R(eup,ElemCol)

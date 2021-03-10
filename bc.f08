@@ -259,6 +259,7 @@ contains
 
         do ii=1,size(bcdata)
             eID => bcdata(ii)%ElemGhostID
+            print *, "eID:", eID
             elem2R(eID,:) = nullvalueR
         end do
 
@@ -392,7 +393,12 @@ contains
                 faceR(fID,fr_Eta_u) = faceR(fID,fr_Eta_d)
                 if (faceR(fID,fr_Area_d) > zeroR) then
                     faceR(fID,fr_Velocity_d) = faceR(fID,fr_flowrate) / faceR(fID,fr_Area_d)
-                    faceR(fID,fr_HydDepth_d) = faceR(fID,fr_Area_d) / faceR(fID,fr_Topwidth)
+                    
+                    !% talk with DR. Hodges ==>
+                    !% For full pipe, topwidth becomes zero/ small value 
+                    !% thus HydDepth blows up. this needs revision. untill then, I commented out
+                    ! faceR(fID,fr_HydDepth_d) = faceR(fID,fr_Area_d) / faceR(fID,fr_Topwidth)
+
                     thisFroudeNumber = faceR(fID,fr_Velocity_d) / (sqrt(grav * faceR(fID,fr_HydDepth_d)) )
                 else
                     faceR(fID,fr_Velocity_d) = setting%Limiter%Velocity%Maximum

@@ -62,10 +62,10 @@ contains
         !% needed for the long term code.
         ndebug = 0
         if (setting%Debugout%elem2R) then
-            ndebug = ndebug + 22
+            ndebug = ndebug + 23
         endif
         if (setting%Debugout%elem2I) then
-            ndebug = ndebug + 8
+            ndebug = ndebug + 10
         endif
         if (setting%Debugout%elem2YN) then
             ndebug = ndebug + 2
@@ -85,7 +85,8 @@ contains
             ndebug = ndebug + 10
         endif
         if (setting%Debugout%faceI) then
-            ndebug = ndebug + 12
+            ndebug = ndebug + 1
+            ! ndebug = ndebug + 12
         endif
         if (setting%Debugout%faceYN) then
             ndebug = ndebug + 0
@@ -162,6 +163,8 @@ contains
             ii=ii+1
             call debug_singlefile_open (debugfile(ii), 'elem2R','FroudeNumber', e2r_FroudeNumber)
             ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'elem2R','FullDepth', e2r_FullDepth)
+            ii=ii+1
         endif
 
         if (setting%Debugout%elem2I) then
@@ -182,6 +185,8 @@ contains
             call debug_singlefile_open (debugfile(ii), 'elem2I','Mface_u', e2i_Mface_u)
             ii=ii+1
             call debug_singlefile_open (debugfile(ii), 'elem2I','Mface_d', e2i_Mface_d)
+            ii=ii+1
+            call debug_singlefile_open (debugfile(ii), 'elem2I','solver', e2i_solver)
             ii=ii+1
         endif
 
@@ -315,30 +320,30 @@ contains
         endif
 
         if (setting%Debugout%faceI) then
-            call debug_singlefile_open (debugfile(ii), 'faceI','idx', fi_idx)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','fi_type', fi_type)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','Melem_u', fi_Melem_u)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','Melem_d', fi_Melem_d)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','etype_u', fi_etype_u)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','etype_d', fi_etype_d)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','branch_u', fi_branch_u)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','branch_d', fi_branch_d)
-            ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','idx', fi_idx)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','fi_type', fi_type)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','Melem_u', fi_Melem_u)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','Melem_d', fi_Melem_d)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','etype_u', fi_etype_u)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','etype_d', fi_etype_d)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','branch_u', fi_branch_u)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','branch_d', fi_branch_d)
+            ! ii=ii+1
             call debug_singlefile_open (debugfile(ii), 'faceI','jump_type', fi_jump_type)
             ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','node_ID', fi_node_ID)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','link_ID', fi_link_ID)
-            ii=ii+1
-            call debug_singlefile_open (debugfile(ii), 'faceI','link_Pos', fi_link_Pos)
-            ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','node_ID', fi_node_ID)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','link_ID', fi_link_ID)
+            ! ii=ii+1
+            ! call debug_singlefile_open (debugfile(ii), 'faceI','link_Pos', fi_link_Pos)
+            ! ii=ii+1
         endif
 
         if (setting%Debugout%faceYN) then
@@ -416,6 +421,7 @@ contains
 
         real(8),      target,     intent(in) :: nodeR(:,:),   linkR(:,:)
         real(8),      target,     intent(in) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
+
         integer,   target,     intent(in) :: elem2I(:,:),  elemMI(:,:),  faceI(:,:)
         logical,   target,     intent(in) :: elem2YN(:,:), elemMYN(:,:), faceYN(:,:)
 
@@ -429,8 +435,7 @@ contains
         character(len=32), pointer ::  ArrayName
 
         integer,       pointer ::  CI, UnitNumber
-
-        real(8),          pointer ::  thisdataR(:)
+        real(8),       pointer ::  thisdataR(:)
         integer,       pointer ::  thisdataI(:)
 
         integer :: arrayContains= 0  ! =1 for real(8), 2 for integer, 3 for logical

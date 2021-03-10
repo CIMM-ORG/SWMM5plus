@@ -18,17 +18,40 @@ module type_definitions
         character(len=:), allocatable :: str
     end type string
 
+    !%  control data
+    type controlType
+        integer :: Idx
+        integer :: LinkId
+        integer :: ElemId
+        real(8), dimension(:), allocatable :: TimeArray
+        real(8), dimension(:), allocatable :: HeightArray
+        real(8), dimension(:), allocatable :: AreaArray
+        real(8)    :: HeightStart
+        real(8)    :: HeightNow
+        real(8)    :: AreaNow
+        real(8)    :: AreaPrior
+        real(8)    :: FullDepth
+        real(8)    :: GateTimeChange1
+        real(8)    :: GateTimeChange2
+        real(8)    :: GateHeightChange1
+        real(8)    :: GateHeightChange2
+        real(8)    :: HeightMinimum
+        real(8)    :: GateSpeed
+        logical :: CanMove
+        logical :: MovedThisStep     
+    end type controlType
+
     !%  diagnostic%Volume
     type diagnosticVolumeType
         integer  :: Step
-        real(8)    :: Time
-        real(8)    :: Volume
-        real(8)    :: VolumeChange
-        real(8)    :: NetInflowVolume
-        real(8)    :: InflowRate
-        real(8)    :: OutflowRate
-        real(8)    :: ConservationThisStep ! + is artificial source, - is sink
-        real(8)    :: ConservationTotal
+        real(8)     :: Time
+        real(8)     :: Volume
+        real(8)     :: VolumeChange
+        real(8)     :: NetInflowVolume
+        real(8)     :: InflowRate
+        real(8)     :: OutflowRate
+        real(8)     :: ConservationThisStep ! + is artificial source, - is sink
+        real(8)     :: ConservationTotal
     end type diagnosticVolumeType
 
     type diagnosticType

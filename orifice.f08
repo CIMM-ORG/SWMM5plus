@@ -30,18 +30,13 @@ contains
     !==========================================================================
     !
     subroutine orifice_step &
-        (e2r_Volume_old, e2r_Velocity_old, eMr_Volume_old, eMr_Velocity_old, &
-        e2r_Volume_new, e2r_Velocity_new, eMr_Volume_new, eMr_Velocity_new, &
-        elem2R, elemMR, faceI, faceR, faceYN, elem2I, elemMI, elem2YN, &
-        elemMYN, thiscoef)
+        (e2r_Volume_col, e2r_Velocity_col, elem2R, elemMR, faceI, faceR, &
+        faceYN, elem2I, elemMI, elem2YN, elemMYN, thiscoef)
         !
         character(64) :: subroutine_name = 'orifice_step'
 
         ! indexes for old/new volume and velocity storage
-        integer,   intent(in) :: e2r_Volume_old, e2r_Velocity_old
-        integer,   intent(in) :: eMr_Volume_old, eMr_Velocity_old
-        integer,   intent(in) :: e2r_Volume_new, e2r_Velocity_new
-        integer,   intent(in) :: eMr_Volume_new, eMr_Velocity_new
+        integer,   intent(in) :: e2r_Volume_col, e2r_Velocity_col
 
         real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,           intent(in out)  :: faceI(:,:)
@@ -51,15 +46,15 @@ contains
         logical,           intent(in out)  :: faceYN(:,:)
         real(8),              intent(in)      :: thiscoef
 
-        real(8),  pointer     ::  volume2old(:), volume2new(:), velocity2old(:), velocity2new(:)
-        real(8),  pointer     ::  volumeMold(:), volumeMnew(:), velocityMold(:), velocityMnew(:)
-        real(8),  pointer     ::  oBreadth(:), oDischargeCoeff(:), oInletoffset(:)
-        real(8),  pointer     ::  oFullDepth(:), oZbottom(:)
-        real(8),  pointer     ::  oFlow(:), oEta(:), oLength(:), oArea(:)
-        real(8),  pointer     ::  oPerimeter(:), oHyddepth(:), oHydradius(:)
-        real(8),  pointer     ::  oTopwidth(:), hEffective(:)
-        real(8),  pointer     ::  hCrest(:), hCrown(:), hCrit(:)
-        real(8),  pointer     ::  cOrif(:), cWeir(:), subFactor(:), subCorrection(:)
+
+        real(8),  pointer     ::  volume2(:), velocity2(:), oBreadth(:) 
+        real(8),  pointer     ::  oDischargeCoeff(:), oInletoffset(:)
+        real(8),  pointer     ::  oFullDepth(:), oZbottom(:), oFlow(:), oDepth(:)
+        real(8),  pointer     ::  oEta(:), oLength(:), oArea(:),oPerimeter(:)
+        real(8),  pointer     ::  oHyddepth(:), oHydradius(:), oTopwidth(:)
+        real(8),  pointer     ::  hEffective(:), oCrest(:), oCrown(:), oFullArea(:)
+        real(8),  pointer     ::  hCrit(:), cOrif(:), cWeir(:)
+        real(8),  pointer     ::  subFactor(:), subCorrection(:)
         real(8),  pointer     ::  fEdn(:), fEup(:)
 
         integer, pointer   ::  iup(:), idn(:), dir(:)
@@ -71,20 +66,8 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         !%  pointers for convenience in notation
-        fEdn         => faceR(:,fr_Eta_d)
-        fEup         => faceR(:,fr_Eta_u)
-
-        volume2old   => elem2R(:,e2r_Volume_old)
-        volume2new   => elem2R(:,e2r_Volume_new)
-
-        velocity2old => elem2R(:,e2r_Velocity_old)
-        velocity2new => elem2R(:,e2r_Velocity_new)
-
-        volumeMold   => elemMR(:,eMr_Volume_old)
-        volumeMnew   => elemMR(:,eMr_Volume_new)
-
-        velocityMold => elemMR(:,eMr_Velocity_old)
-        velocityMnew => elemMR(:,eMr_Velocity_new)
+        volume2   => elem2R(:,e2r_Volume_col)
+        velocity2 => elem2R(:,e2r_Velocity_col)
 
         !%  pointers for orifice geometry and settings
         !%  input
@@ -93,6 +76,10 @@ contains
         oInletoffset       => elem2R(:,e2r_InletOffset)
         oFullDepth         => elem2R(:,e2r_FullDepth)
         oZbottom           => elem2R(:,e2r_Zbottom)
+        oCrown             => elem2R(:,e2r_Zcrown)
+        oFullArea          => elem2R(:,e2r_FullArea)
+        fEdn               => faceR(:,fr_Eta_d)
+        fEup               => faceR(:,fr_Eta_u)
 
         !%  output
         oFlow              => elem2R(:,e2r_Flowrate)
@@ -103,17 +90,17 @@ contains
         oHyddepth          => elem2R(:,e2r_HydDepth)
         oHydradius         => elem2R(:,e2r_HydRadius)
         oTopwidth          => elem2R(:,e2r_Topwidth)
-        hEffective         => elem2R(:,e2r_Depth)
+        oDepth             => elem2R(:,e2r_Depth)
 
         !%  pointers for upstream and downstream faces
         iup          => elem2I(:,e2i_Mface_u)
         idn          => elem2I(:,e2i_Mface_d)
 
         !%  temporary space for elem2
-        hCrest        => elem2R(:,e2r_Temp(next_e2r_temparray))
+        hEffective    => elem2R(:,e2r_Temp(next_e2r_temparray))
         next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
-        hCrown        => elem2R(:,e2r_Temp(next_e2r_temparray))
+        oCrest        => elem2R(:,e2r_Temp(next_e2r_temparray))
         next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
         hCrit         => elem2R(:,e2r_Temp(next_e2r_temparray))
@@ -141,62 +128,86 @@ contains
         next_e2YN_temparray  = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
 
         !%  zero temporary arrays
-        hCrown         = nullvalueR
-        hCrest         = nullvalueR
+        hEffective     = nullvalueR
+        oCrest         = nullvalueR
         hCrit          = nullvalueR
         cOrif          = nullvalueR
         cWeir          = nullvalueR
         subFactor      = nullvalueR
-
-        dir            = nullvalueI
         subCorrection  = oneR
 
+        dir            = nullvalueI
+    
         maskarrayDnSubmerge  = nullvalueL
         maskarrayUpSubmerge  = nullvalueL
 
         !% sets necessary orifice setting and find eta on orifice element
         call orifice_initialize &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,    &
-            oInletoffset, oZbottom, oFullDepth, oLength, oEta, hCrown,  &
-            hCrest, fEdn, fEup, iup, idn, dir, thiscoef)
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,   &
+            oInletoffset, oZbottom, oFullDepth, oLength, oEta, oCrown,  &
+            oCrest, fEdn, fEup, iup, idn, dir)
 
         !% calculates the  equivalent orificeand weir discharge coefficients
         call orifice_equivalent_discharge_coefficient &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, oBreadth, &
-            oFullDepth, oDischargeCoeff, hCrit, cOrif, cWeir)
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,   & 
+            oBreadth, oFullDepth, oDischargeCoeff, hCrit, cOrif, cWeir)
 
         !% calculates effective head in orifice elements
         call orifice_effective_head &
             (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-            oEta, fEup, fEdn, iup, idn, dir, hCrest, hCrown, hcrit,  &
-            hEffective, subFactor, maskarrayDnSubmerge,              &
+            oEta, fEup, fEdn, iup, idn, dir, oCrest, oCrown, hcrit,   &
+            hEffective, subFactor, maskarrayDnSubmerge,               &
             maskarrayUpSubmerge)
 
         !% updates geometry in orifice elements
         call orifice_geometry &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,         &
-            oBreadth, oFullDepth, oArea, oPerimeter, oHyddepth, oHydradius,  &
-            oTopwidth, hEffective)
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,      &
+            oBreadth, oFullDepth, oFullArea, oArea, oPerimeter, oHyddepth, &
+            oHydradius, oTopwidth, oDepth, oEta, oCrest, oZbottom)
 
         !% Villemonte correction for downstream submergence
         call villemonte_orifice_submergence_correction &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, hcrest, &
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, ocrest, &
             subCorrection, fEdn, fEup, iup, idn, maskarrayDnSubmerge)
 
         !% Villemonte correction for upstream submergence
         call villemonte_orifice_submergence_correction &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, hcrest, &
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, ocrest, &
             subCorrection, fEup, fEdn, idn, iup, maskarrayUpSubmerge)
 
         !% calculates flow in orifice elements
         call orifice_flow &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2new,   &
-            velocity2new, volumeMnew, velocityMnew, oFlow, cOrif, cWeir, oBreadth, &
-            oFullDepth, oArea, hEffective, dir, subFactor, subCorrection, thiscoef)
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2, &
+            velocity2, oFlow, cOrif, cWeir, oBreadth, oFullDepth, oArea,       &
+            hEffective, dir, subFactor, subCorrection, thiscoef)
+
+        ! if (setting%Time%ThisTime > 120.0) then
+        !     print*,'--------------------------------------------'
+        !     print*,'Orifice values at ', subroutine_name
+        !     print*
+        !     print*, oEta(28), oEta(69), 'eta'
+        !     print*
+        !     print*, hEffective(28), hEffective(69), 'effective head'
+        !     print*
+        !     print*, oDepth(28), oDepth(69), 'depth'
+        !     print*
+        !     print*, oFlow(28), oFlow(69), 'flow'
+        !     print*
+        !     print*, velocity2(28), velocity2(69), 'velocity'
+        !     print*
+        !     print*, oArea(28), oArea(69), 'area'
+        !     print*
+        !     print*, oCrown(28), oCrown(69), 'oCrown'
+        !     print*
+        !     print*, oZbottom(28), oZbottom(69), 'oZbottom'
+        !     print*
+        !     print*, 'orifice debug: press return to continue'
+        !     read(*,*)
+        ! endif
 
         ! release temporary arrays
-        hCrown         = nullvalueR
-        hCrest         = nullvalueR
+        hEffective     = nullvalueR
+        oCrest         = nullvalueR
         hCrit          = nullvalueR
         cOrif          = nullvalueR
         cWeir          = nullvalueR
@@ -208,7 +219,7 @@ contains
         maskarrayUpSubmerge = nullvalueL
         maskarrayDnSubmerge = nullvalueL
 
-        nullify(hCrest, hCrown, hCrit, cOrif, cWeir, subFactor, subCorrection, &
+        nullify(hEffective, oCrest, hCrit, cOrif, cWeir, subFactor, subCorrection, &
             dir, maskarrayUpSubmerge, maskarrayDnSubmerge)
 
         next_e2r_temparray  = next_e2r_temparray  - 7
@@ -216,7 +227,6 @@ contains
         next_e2YN_temparray = next_e2YN_temparray - 2
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-
     end subroutine orifice_step
     !
     !==========================================================================
@@ -224,9 +234,9 @@ contains
     !==========================================================================
     !
     subroutine orifice_initialize &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,    &
+        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,   &
         inletoffset, zbottom, fulldepth, length, eta, crown, crest, &
-        faceEtaDn, faceEtaUp, upFace, dnFace, dir, thiscoef)
+        faceEtaDn, faceEtaUp, upFace, dnFace, dir)
         !
         character(64) :: subroutine_name = 'orifice_initialize'
 
@@ -234,13 +244,12 @@ contains
         real(8),      target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
-        real(8),              intent(in)      :: thiscoef
 
-        real(8),  pointer   :: inletoffset(:), zbottom(:), fulldepth(:)
-        real(8),  pointer   :: length(:), eta(:), crest(:), crown(:)
-        real(8),  pointer   :: faceEtaDn(:), faceEtaUp(:)
-
-        integer, pointer :: upFace(:), dnFace(:), dir(:)
+        real(8),    intent(inout)  :: crest(:), length(:), eta(:)
+        real(8),    intent(in)     :: inletoffset(:), zbottom(:), fulldepth(:)
+        real(8),    intent(in)     :: crown(:), faceEtaDn(:), faceEtaUp(:)
+        integer, intent(inout)  :: dir(:)
+        integer, intent(in)     :: upFace(:), dnFace(:)
 
         integer :: mm
         !--------------------------------------------------------------------------
@@ -250,7 +259,6 @@ contains
         where ( (elem2I(:,e2i_elem_type) == eOrifice) )
 
             crest   = inletoffset + zbottom
-            crown   = crest + fulldepth
             ! find the effective orifice length
             length  = min(twoR * dt * sqrt(grav * fulldepth), 200.0)
             ! set the free surface elevation at orifice element
@@ -258,8 +266,17 @@ contains
             dir     = int(sign(oneR, (faceEtaDn(upFace) - faceEtaup(dnFace))))
         endwhere
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+        ! if (setting%Time%ThisTime > 120.0) then
+        !     print*,'--------------------------------------------'
+        !     print*,'Orifice values at ', subroutine_name
+        !     print*
+        !     print*, crest(28), crest(69), 'crest'
+        !     print*
+        !     print*, dir(28), dir(69), 'dir'
+        !     read(*,*)
+        ! endif
 
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine orifice_initialize
     !
     !==========================================================================
@@ -269,6 +286,9 @@ contains
         (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, breadth, &
         fulldepth, coeffDischarge, critDepth, coeffOrif, coeffWeir)
         !
+        !%  calculates equivalent discharge coefficients depending on
+        !%  whether or not the flow is weir or orifice.
+        !
         character(64) :: subroutine_name = 'orifice_equivalent_discharge_coefficient'
 
         real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
@@ -276,10 +296,8 @@ contains
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real(8),    pointer ::  breadth(:), fulldepth(:), coeffDischarge(:)
-        real(8),    pointer ::  critDepth(:), coeffOrif(:), coeffWeir(:)
-
-        integer :: mm
+        real(8),    intent(inout) ::  critDepth(:), coeffOrif(:), coeffWeir(:)  
+        real(8),    intent(in)    ::  breadth(:), fulldepth(:), coeffDischarge(:)
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -290,7 +308,7 @@ contains
         !% of the opening. For a basic sharp crested weir, Cw = 0.414.
 
         where ( (elem2I(:,e2i_orif_elem_type) == eBottomOrifice) .and. &
-            (elem2I(:,e2i_geometry) == eRectangular) )
+                (elem2I(:,e2i_geometry) == eRectangular        )       )
 
             critDepth = coeffDischarge * (fulldepth * breadth) / &
                 (0.414 * twoR  * (fullDepth + breadth) )
@@ -299,7 +317,7 @@ contains
                 sqrt(twoR * grav * critDepth)
 
         elsewhere ( (elem2I(:,e2i_orif_elem_type) == eBottomOrifice) .and. &
-            (elem2I(:,e2i_geometry) == eCircular) )
+                    (elem2I(:,e2i_geometry) == eCircular           )       )
 
             critDepth = coeffDischarge * fulldepth / (0.414 * fourR)
 
@@ -307,7 +325,7 @@ contains
                 sqrt(twoR * grav * critDepth)
 
         elsewhere ( (elem2I(:,e2i_orif_elem_type) == eSideOrifice) .and. &
-            (elem2I(:,e2i_geometry) == eRectangular))
+                    (elem2I(:,e2i_geometry) == eRectangular      )       )
 
             critDepth = fulldepth
 
@@ -315,41 +333,41 @@ contains
                 sqrt(grav * critDepth)
 
         elsewhere ( (elem2I(:,e2i_orif_elem_type) == eSideOrifice) .and. &
-            (elem2I(:,e2i_geometry) == eCircular))
+                    (elem2I(:,e2i_geometry) == eCircular         )       )
 
             critDepth = fulldepth
             coeffWeir = coeffDischarge * ((pi / fourR) * fulldepth ** twoR) * &
                 sqrt(grav * critDepth)
 
         endwhere
+
         !% find effective orifice discharge coefficient.
         !% Co = CdAo(g)^0.5
         !% Cd = discharge coefficient
         !% Ao = Area of orifice opening
-        where     ( (elem2I(:,e2i_elem_type) == eOrifice) .and. &
-            (elem2I(:,e2i_geometry) == eCircular) )
+
+        where ( (elem2I(:,e2i_elem_type) == eOrifice) .and. &
+                (elem2I(:,e2i_geometry) == eCircular)       )
 
             coeffOrif = coeffDischarge * (pi / fourR * fulldepth ** twoR) * &
                 sqrt(twoR * grav)
 
-        elsewhere ( (elem2I(:,e2i_elem_type) == eOrifice) .and. &
-            (elem2I(:,e2i_geometry) == eRectangular) )
+        elsewhere ( (elem2I(:,e2i_elem_type) == eOrifice   ) .and. &
+                    (elem2I(:,e2i_geometry) == eRectangular)       )
 
             coeffOrif = coeffDischarge * (fulldepth * breadth) * &
                 sqrt(twoR * grav)
 
         endwhere
 
-
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-
     end subroutine orifice_equivalent_discharge_coefficient
     !
     !==========================================================================
     !==========================================================================
     !
     subroutine orifice_effective_head &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, eta,        &
+        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, eta,       &
         faceEtaUp, faceEtaDn, upFace, dnFace, dir, crest, crown, critDepth,  &
         effectiveHead, submergenceFactor, maskarray_dn_submergence,          &
         maskarray_up_submergence)
@@ -361,69 +379,70 @@ contains
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real(8),  pointer   :: crest(:), crown(:), effectiveHead(:), critDepth(:)
-        real(8),  pointer   :: faceEtaUp(:), faceEtaDn(:), eta(:), submergenceFactor(:)
+        real(8),    intent(inout)   :: effectiveHead(:), submergenceFactor(:)
+        real(8),    intent(in)      :: crest(:), crown(:), eta(:), critDepth(:)
+        real(8),    intent(in)      :: faceEtaUp(:), faceEtaDn(:)
 
-        logical, pointer :: maskarray_dn_submergence(:), maskarray_up_submergence(:)
+        logical, intent(inout)   :: maskarray_dn_submergence(:), maskarray_up_submergence(:)
 
-        integer, pointer :: upFace(:), dnFace(:), dir(:)
+        integer, intent(in)      :: upFace(:), dnFace(:), dir(:)
 
-
-        integer :: mm
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         !% effective head calculation for bottom orifice
-        where      ( (elem2I(:,e2i_orif_elem_type) == eBottomOrifice) .and. &
-            (eta .LE. crest) )
+        where ( (elem2I(:,e2i_orif_elem_type) == eBottomOrifice) .and. &
+                (eta .LE. crest                                )       )
 
             effectiveHead = zeroR
 
         elsewhere  ( (elem2I(:,e2i_orif_elem_type) == eBottomOrifice) .and. &
-            (eta .GT. crest) )
+                     (eta .GT. crest                                )       )
 
-            effectiveHead = min( (eta - crest), dir * &
-                (faceEtaDn(upFace) - faceEtaUp(dnFace)) )
-            ! find fraction of critical height for which weir flow occurs
+            effectiveHead = min( (eta - crest), &
+                    dir * (faceEtaDn(upFace) - faceEtaUp(dnFace)) )
+
+            !% find fraction of critical height for which weir flow occurs
             submergenceFactor  = min(effectiveHead / critDepth, oneR)
 
-            ! downstream submergence
-            maskarray_dn_submergence = ((dir .GT. zeroI)              .and. &
-                (submergenceFactor .LT. oneR) .and. &
-                (faceEtaUp(dnFace) .GT. crest)      )
-            ! upstream submergance
-            maskarray_up_submergence = ((dir .LT. zeroI)              .and. &
-                (submergenceFactor .LT. oneR) .and. &
-                (faceEtaDn(upFace) .GT. crest)      )
+            !% downstream submergence
+            maskarray_dn_submergence = ((dir .GT. zeroI)               .and. &
+                                        (submergenceFactor .LT. oneR ) .and. &
+                                        (faceEtaUp(dnFace) .GT. crest)       )
+            !% upstream submergance
+            maskarray_up_submergence = ((dir .LT. zeroI)               .and. &
+                                        (submergenceFactor .LT. oneR ) .and. &
+                                        (faceEtaDn(upFace) .GT. crest)       )
         endwhere
 
         !% find degree of submergence for side orifice
-        where      ( (elem2I(:,e2i_orif_elem_type) == eSideOrifice) .and. &
-            (eta .LT. crown) .and. (crown .GT. crest))
+        where ( (elem2I(:,e2i_orif_elem_type) == eSideOrifice) .and. &
+                (eta .LT. Crown                              )       )
 
             submergenceFactor = (eta - crest) / (crown - crest)
 
             ! downstream submergence
             maskarray_dn_submergence = ((dir .GT. zeroI)              .and. &
-                (submergenceFactor .LT. oneR) .and. &
-                (faceEtaUp(dnFace) .GT. crest)      )
+                                        (submergenceFactor .LT. oneR) .and. &
+                                        (faceEtaUp(dnFace) .GT. crest)      )
             ! upstream submergance
             maskarray_up_submergence = ((dir .LT. zeroI)              .and. &
-                (submergenceFactor .LT. oneR) .and. &
-                (faceEtaDn(upFace) .GT. crest)      )
+                                        (submergenceFactor .LT. oneR) .and. &
+                                        (faceEtaDn(upFace) .GT. crest)      )
 
         elsewhere ( elem2I(:,e2i_orif_elem_type) == eSideOrifice )
             submergenceFactor = OneR
         endwhere
 
         !% effective head calculation for side orifice
-        where      ( (elem2I(:,e2i_orif_elem_type) == eSideOrifice) .and. &
-            (submergenceFactor .LE. zeroR) )
+        where ( (elem2I(:,e2i_orif_elem_type ) == eSideOrifice) .and. &
+                (submergenceFactor .LE. zeroR)                        )
 
             effectiveHead = zeroR
 
-        elsewhere ( (elem2I(:,e2i_orif_elem_type) == eSideOrifice) .and. &
-            (submergenceFactor .GT. zeroR) .and. (submergenceFactor .LT. oneR))
+        elsewhere ( (elem2I(:,e2i_orif_elem_type ) == eSideOrifice) .and. &
+                    (submergenceFactor .GT. zeroR)                  .and. &
+                    (submergenceFactor .LT. oneR )                        )
 
             effectiveHead = eta - crest
 
@@ -433,17 +452,28 @@ contains
                 dir * (faceEtaDn(upFace) - faceEtaUp(dnFace)))
         endwhere
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+        ! if (setting%Time%ThisTime > 120.0) then
+        !     print*, subroutine_name
+        !     print*, effectiveHead(28), effectiveHead(69), 'effectiveHead'
+        !     print*, dir(28), dir(69), 'dir'
+        !     print*, maskarray_dn_submergence(28), maskarray_dn_submergence(69), 'maskarray_dn_submergence'
+        !     print*, maskarray_up_submergence(28), maskarray_up_submergence(69), 'maskarray_up_submergence'
+        !     print*, 'press returen to continue'
+        !     read(*,*)
+        ! endif
 
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine orifice_effective_head
     !
     !==========================================================================
     !==========================================================================
     !
     subroutine orifice_geometry &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,   &
-        breadth, fullDepth, area, perimeter, hyddepth, hydradius,  &
-        topwidth, depth)
+        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, breadth,   &
+        fullDepth, fullArea, area, perimeter, hyddepth, hydradius, topwidth, &
+        depth, eta, crest, zbottom)
+        !
+        !%  geometry handler for orifice elements
         !
         character(64) :: subroutine_name = 'orifice_geometry'
 
@@ -453,46 +483,102 @@ contains
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real(8),  pointer     ::  breadth(:), fullDepth(:), area(:)
-        real(8),  pointer     ::  perimeter(:), hyddepth(:), hydradius(:)
-        real(8),  pointer     ::  topwidth(:), depth(:)
+        real(8),    intent(inout) ::  area(:), perimeter(:), hyddepth(:)
+        real(8),    intent(inout) ::  hydradius(:), topwidth(:), depth(:)
+        real(8),    intent(in)    ::  breadth(:), fullDepth(:), fullArea(:)
+        real(8),    intent(in)    ::  eta(:), crest(:), zbottom(:)
 
-        real(8)               ::  YoverYfull, Afull
+        real(8),    pointer       ::  YoverYfull(:)
+        logical, pointer       ::  maskCircularOrifice(:)
 
-        integer :: mm, ii
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        do ii=1, size(depth,1)
-            if      ( (elem2I(ii,e2i_geometry)  == eCircular)          .and. &
-                (elem2I(ii,e2i_elem_type) == eOrifice )          ) then
+        !% temporary pointer allocation fo circular for geometry update
+        YoverYfull => elem2R(:,e2r_Temp(next_e2r_temparray))
+        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
 
-                YoverYfull  = depth(ii) / fulldepth(ii)
-                Afull       = pi / fourR * fullDepth(ii) ** twoR
+        !% temporary mask to find circular orifice elements
+        maskCircularOrifice => elem2YN(:,e2YN_Temp(next_e2YN_temparray))
+        next_e2YN_temparray = utility_advance_temp_array (next_e2YN_temparray,e2YN_n_temp)
 
-                if (YoverYfull .LE. zeroR) then
-                    area(ii) = zeroR
-                else
-                    area(ii) = Afull * table_lookup(YoverYfull, ACirc, NACirc)
-                endif
-                topwidth(ii)   = fulldepth(ii) * table_lookup(YoverYfull, WCirc, NWCirc)
-                hyddepth(ii)   = depth(ii)
-                hydradius(ii)  = onefourthR * fulldepth (ii) * table_lookup(YoverYfull, RCirc, NRCirc)
-                perimeter(ii)  = area(ii) / hydradius(ii)
+        YoverYfull          = nullvalueR
+        maskCircularOrifice = nullvalueL
 
-            elseif ( (elem2I(ii,e2i_geometry)  == eRectangular) .and. &
-                (elem2I(ii,e2i_elem_type) == eOrifice )       ) then
+        !% ==========================================================================
+        !%  rectangular orifice geometry handler
+        !% ==========================================================================
+        where ( (elem2I(:,e2i_elem_type) == eOrifice    ) .and. &
+                (elem2I(:,e2i_geometry)  == eRectangular)       ) 
 
-                area(ii)        = depth(ii) * breadth(ii)
-                topwidth(ii)    = breadth(ii)
-                hyddepth(ii)    = depth(ii)
-                perimeter(ii)   = breadth(ii) + twoR * hyddepth(ii)
-                hydradius(ii)   = area(ii) / perimeter(ii)
-            endif
-        enddo
+                depth       = min( max((eta - crest), zeroR), fullDepth)
+                area        = depth * breadth
+                topwidth    = breadth
+                hyddepth    = depth
+                perimeter   = breadth + twoR * hyddepth
+                hydradius   = area / perimeter
+        endwhere
+        !% ==========================================================================
+        !%  circular orifice geometry handler 
+        !% ==========================================================================
+        !%  mask circular orifice elements
+        maskCircularOrifice = ( (elem2I(:,e2i_elem_type) == eOrifice ) .and. &
+                                (elem2I(:,e2i_geometry)  == eCircular)       ) 
+
+        !%  find Y/Yfull for table interpolation
+        where (maskCircularOrifice)
+            depth       = min( max((eta - crest), zeroR), fullDepth)
+            YoverYfull  = depth / fullDepth
+        endwhere
+
+        !% find normalized area using Y/Yfull from lookup tables
+        !% normalized area (A/Afull) is saved in the area column
+        call table_lookup_mask &
+            (elem2I, elem2R, area, YoverYfull, ACirc, NACirc, maskCircularOrifice, &
+            e2i_Temp, next_e2i_temparray, e2i_n_temp)
+
+        !% find normalized topwidth using Y/Yfull from lookup tables
+        !% normalized topwidth (W/Wmax) is saved in the topwidth column
+        call table_lookup_mask &
+            (elem2I, elem2R, topwidth, YoverYfull, WCirc, NWCirc, maskCircularOrifice, &
+            e2i_Temp, next_e2i_temparray, e2i_n_temp)
+
+        !% find normalized hydraulic radius using Y/Yfull from lookup tables
+        !% normalized hydraulic radius (R/Rmax) is saved in the hydradius column
+        call table_lookup_mask &
+            (elem2I, elem2R, hydradius, YoverYfull, RCirc, NRCirc, maskCircularOrifice, &
+            e2i_Temp, next_e2i_temparray, e2i_n_temp)
+
+        where (maskCircularOrifice)
+            area      = fullArea  * area 
+            topwidth  = fulldepth * topwidth
+            hyddepth  = area / topwidth
+            hydradius = onefourthR * fulldepth * hydradius
+            perimeter = area / hydradius
+        endwhere
+
+        ! if (setting%Time%ThisTime > 120.0) then
+        !     print*, subroutine_name
+        !     print*, depth(28), depth(69), 'depth'
+        !     print*, YoverYfull(28), YoverYfull(69), 'YoverYfull'
+        !     print*, fullArea(28), fullArea(69), 'fullArea'
+        !     print*, fulldepth(28), fulldepth(69), 'fulldepth'
+        !     print*, 'press returen to continue'
+        !     read(*,*)
+        ! endif
+        !% ==========================================================================
+        !% area is used to calculate velocity. so any zero or negative area needs adjustments
+        call adjust_negative_area_reset (area)
+
+        !%  nullify and release temporary pointers
+        YoverYfull          = nullvalueR
+        maskCircularOrifice = nullvalueL
+        nullify(YoverYfull, maskCircularOrifice)
+
+        next_e2r_temparray  = next_e2r_temparray  - 1
+        next_e2YN_temparray = next_e2YN_temparray - 1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-
     end subroutine orifice_geometry
     !
     !==========================================================================
@@ -510,12 +596,10 @@ contains
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real(8),  pointer ::  crest(:), submerganceCorrection(:)
-        real(8),  pointer ::  faceEtaDn(:), faceEtaUp(:)
-
-        integer, pointer :: upFace(:), dnFace(:)
-
-        logical, pointer :: maskarray_submergence(:)
+        real(8),    intent(inout) ::  submerganceCorrection(:)
+        real(8),    intent(in)    ::  crest(:), faceEtaDn(:), faceEtaUp(:)
+        integer, intent(in)    ::  upFace(:), dnFace(:)
+        logical, intent(in)    ::  maskarray_submergence(:)
 
         integer :: mm
         !--------------------------------------------------------------------------
@@ -526,22 +610,22 @@ contains
         where (maskarray_submergence)
 
             submerganceCorrection = (oneR - ((faceEtaUp(dnFace) - crest) / &
-                (faceEtaDn(upFace) - crest)) ** 1.5) ** 0.385
-
+                    (faceEtaDn(upFace) - crest)) ** 1.5) ** 0.385
         endwhere
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-
     end subroutine villemonte_orifice_submergence_correction
     !
     !==========================================================================
     !==========================================================================
     !
     subroutine orifice_flow &
-        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2new, &
-        velocity2new, volumeMnew, velocityMnew, flow, coeffOrif, coeffWeir,  &
-        breadth, fulldepth, area, effectiveHead, dir, submergenceFactor,     &
-        submerganceCorrection, thiscoef)
+        (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2, &
+        velocity2, flow, coeffOrif, coeffWeir, breadth, fulldepth, area,   &
+        effectiveHead, dir, submergenceFactor, submerganceCorrection,      &
+        thiscoef)
+        !
+        !%  calculate orifice flow using effective head
         !
         character(64) :: subroutine_name = 'orifice_flow'
 
@@ -552,40 +636,38 @@ contains
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
         real(8),              intent(in)      :: thiscoef
 
+        real(8),    intent(inout)   ::  volume2(:), velocity2(:), flow(:)
+        real(8),    intent(in)      ::  coeffOrif(:), coeffWeir(:), breadth(:)
+        real(8),    intent(in)      ::  fulldepth(:), area(:), submergenceFactor(:)
+        real(8),    intent(in)      ::  effectiveHead(:),submerganceCorrection(:)
+        integer, intent(in)      ::  dir(:)
 
-        real(8),  pointer   ::  volume2new(:), velocity2new(:), volumeMnew(:), velocityMnew(:)
-        real(8),  pointer   ::  flow(:), coeffOrif(:), coeffWeir(:), breadth(:), fulldepth(:)
-        real(8),  pointer   ::  area(:), submergenceFactor(:)
-        real(8),  pointer   ::  effectiveHead(:),submerganceCorrection(:)
-
-        integer, pointer :: dir(:)
-
-        integer :: mm
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         !% flow and volume calculation
-        where     ( (elem2I(:,e2i_elem_type) == eOrifice) .and. &
-            (submergenceFactor .LE. zeroR) .or. (effectiveHead == zeroR))
+        where ( (elem2I(:,e2i_elem_type) == eOrifice) .and. &
+                (submergenceFactor .LE. zeroR       ) .or.  &
+                (effectiveHead == zeroR             )       )
 
-            flow         = zeroR
-            velocity2new = zeroR
-            volume2new   = zeroR
+            flow      = zeroR
+            velocity2 = zeroR
+            volume2   = zeroR
 
-        elsewhere ( (elem2I(:,e2i_elem_type) == eOrifice)      .and. &
-            (submergenceFactor .LT. oneR) )
+        elsewhere ( (elem2I(:,e2i_elem_type) == eOrifice) .and. &
+                    (submergenceFactor .LT. oneR        )       )
 
-            flow         = dir * coeffWeir * submerganceCorrection * &
+            flow      = dir * coeffWeir * submerganceCorrection * &
                 submergenceFactor ** 1.5
-            velocity2new = flow / area
-            volume2new   = flow * dt
+            velocity2 = flow / area
+            volume2   = flow * dt * thiscoef
 
         elsewhere (elem2I(:,e2i_elem_type) == eOrifice )
 
-            flow         = dir * coeffOrif * submerganceCorrection * &
+            flow      = dir * coeffOrif * submerganceCorrection * &
                 sqrt(abs(effectiveHead))
-            velocity2new = flow / area
-            volume2new   = flow * dt
+            velocity2 = flow / area
+            volume2   = flow * dt * thiscoef
         endwhere
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name

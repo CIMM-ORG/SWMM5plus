@@ -49,7 +49,7 @@ contains
     !==========================================================================
     !
     subroutine read_widthdepth_pairs &
-        (iunit, ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
+        (iunit, ID, upNode, dnNode, numberPairs, ManningsN, Length, zBottom, xDistance, &
         Breadth, widthDepthData, cellType)
 
         character(64) :: subroutine_name = 'read_widthdepth_pairs'
@@ -71,6 +71,8 @@ contains
         ! These should be organized later
         integer, dimension(:), allocatable :: ID
         integer, dimension(:), allocatable :: numberPairs
+        integer, dimension(:), allocatable :: upNode
+        integer, dimension(:), allocatable :: dnNode
 
         real(8), dimension(:), allocatable :: ManningsN
         real(8), dimension(:), allocatable :: Length
@@ -101,6 +103,12 @@ contains
 
         allocate(ID(number_of_cells), stat=allocation_status, errmsg=emsg)
         ID(:) = 0
+
+        allocate(upNode(number_of_cells), stat=allocation_status, errmsg=emsg)
+        upNode(:) = 0
+
+        allocate(dnNode(number_of_cells), stat=allocation_status, errmsg=emsg)
+        dnNode(:) = 0
 
         allocate(numberPairs(number_of_cells), stat=allocation_status, errmsg=emsg)
         numberPairs(:) = 0
@@ -164,6 +172,12 @@ contains
             if (value1 == 'ID') then
                 read(value2 , *, iostat=istat) tmpID
                 ID(icell) = int(tmpID)
+            elseif (value1 == 'UpNode') then
+                read(value2, *, iostat=istat) tmpID
+                upNode(icell) = int(tmpID)
+            elseif (value1 == 'DnNode') then
+                read(value2, *, iostat=istat) tmpID
+                dnNode(icell) = int(tmpID)
             elseif (value1 == 'ManningsN') then
                 read(value2 , *, iostat=istat) ManningsN(icell)
             elseif (value1 == 'Length') then

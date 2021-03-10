@@ -214,7 +214,8 @@ contains
         integer,   intent(in)  :: fi_Melem_dir, e2r_data
 
         integer,   pointer :: tface, telem
-        real(8)  :: thisvalue(dir_face_per_elemM)
+        real(8)   :: thisvalue(dir_face_per_elemM)
+
         integer :: mm, ii
 
         !--------------------------------------------------------------------------

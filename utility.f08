@@ -141,7 +141,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    pure real function utility_average &
+    pure real(8) function utility_average &
         (inarray) result(outscalar)
         !
         ! computes a simple average of an array

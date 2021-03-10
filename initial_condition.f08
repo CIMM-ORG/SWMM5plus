@@ -12,6 +12,7 @@ module initial_condition
     use array_index
     use bc
     use data_keys
+    use control
     use element_geometry
     use element_dynamics
     use face_values
@@ -39,8 +40,8 @@ contains
     !
     subroutine initial_condition_setup &
         (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, faceR, faceI, faceYN, &
-        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, thisTime, ID,           &
-        numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,            &
+        linkR, linkI, nodeR, nodeI, bcdataDn, bcdataUp, gateSetting, thisTime,   &
+        ID, numberPairs, ManningsN, Length, zBottom, xDistance, Breadth,         &
         widthDepthData, cellType)
 
         character(64) :: subroutine_name = 'initial_condition_setup'
@@ -54,6 +55,7 @@ contains
         real(8),                intent(in)      :: thisTime
 
         type(bcType),        intent(in out)      :: bcdataDn(:), bcdataUp(:)
+        type(controlType),   intent(in out)      :: gateSetting(:)
 
         integer, intent(inout)    :: ID(:)
         integer, intent(inout)    :: numberPairs(:)
@@ -73,18 +75,30 @@ contains
 
         !% get data that can be extracted from links
         call initial_conditions_from_linkdata &
-            (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
+            (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, linkR, linkI)
+            
+        !% custom initial condition setup for special test cases
+        call custom_initial_condition &
+            (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, bcdataDn)
 
         call initial_junction_conditions &
-            (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
+           (faceR, faceI, elem2R, elem2I, elemMR, elemMYN, elemMI, nodeR, nodeI)
 
         call initial_storage_conditions &
             (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
 
+        ! !% set elements to cotrol structure
+        ! call control_assign &
+        !     (elem2I, gateSetting, N_Gates)
+
+        ! !% set initial control conditions
+        ! call control_evaluate &
+        !     (elem2I, elem2R, gateSetting, N_Gates, thistime, .true.)
+
         !% set the bc elements (outside of face) to null values
         call bc_nullify_ghost_elem (elem2R, bcdataDn)
         call bc_nullify_ghost_elem (elem2R, bcdataUp)
-
+ 
         !% update the geometry
         call element_geometry_update &
             (elem2R, elem2I, elem2YN, e2r_Volume, &
@@ -93,18 +107,10 @@ contains
             ID, numberPairs, ManningsN, Length, zBottom, xDistance, &
             Breadth, widthDepthData, cellType)
 
-        call meta_element_assign &
-            (elem2I, e2i_elem_type, e2i_meta_elem_type)
-
-        call meta_element_assign &
-            (elemMI, eMi_elem_type, eMi_meta_elem_type)
-
         call element_dynamics_update &
             (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
             bcdataDn, bcdataUp, e2r_Velocity, eMr_Velocity, &
             e2r_Volume, eMr_Volume, thisTime)
-
-        call face_meta_element_assign (faceI, elem2I, N_face)
 
         call face_update &
             (elem2R, elem2I, elemMR, faceR, faceI, faceYN, &
@@ -114,6 +120,11 @@ contains
         !% set the initial condition for Qonly element
         call QonlyElem_initial_condition_setup &
             (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN)
+
+        !% select the solver based on Area/AreaFull
+        call initial_solver_select &
+            (elem2R, elemMR, elem2I, elemMI)
+
         !% set the element-specific smallvolume value
         !% HACK - THIS IS ONLY FOR RECTANGULAR ELEMENTS
         !% HACK - OTHER GEOMETRY TYPE NEEDED
@@ -148,7 +159,7 @@ contains
     !==========================================================================
     !
     subroutine initial_conditions_from_linkdata &
-        (elem2R, elem2I, elemMR, elemMI, linkR, linkI)
+        (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, linkR, linkI)
         !
         ! The link data structure can store a variety of geometric data.
         ! This will be expanded in the future
@@ -157,6 +168,7 @@ contains
 
         real(8),      intent(in out)  :: elem2R(:,:),  elemMR(:,:)
         integer,   intent(in out)  :: elem2I(:,:),  elemMI(:,:)
+        logical,   intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
 
         real(8),      target,   intent(in)      :: linkR(:,:)
         integer,   target,   intent(in)      :: linkI(:,:)
@@ -164,10 +176,9 @@ contains
         real(8)               :: kappa
         real(8),      pointer :: dup, ddn
         integer,   pointer :: Lindx, LdepthType
-        integer :: ii, ei_max, mm
+        integer :: ii, ei_max, mm, nn
 
-        real(8) :: trapz_tanTheta, CC, BB
-
+        real(8) :: trapz_tanTheta, CC, BB, AoverAfull, YoverYfull
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -182,7 +193,7 @@ contains
 
             select case (LdepthType)
 
-              case (1)
+              case (1) !uniform initial depth
 
                 !%  Initial depth --------------------------------------------------
                 if (linkR(ii,lr_InitialDepth) /= nullvalueR) then
@@ -195,7 +206,7 @@ contains
                         elem2R(:,e2r_Depth) = 0.5*(dup + ddn)
                     endwhere
                 endif
-              case (2)
+              case (2) 
                 !% if the link has linearly-varying depth
                 !% depth at the downstream element (link position =1)
                 where ( (elem2I(:,e2i_link_Pos) == 1) .and. (elem2I(:,e2i_link_ID) == Lindx) )
@@ -265,19 +276,25 @@ contains
                 elem2R(:,e2r_LeftSlope)      = linkR(ii,lr_LeftSlope)
                 elem2R(:,e2r_RightSlope)     = linkR(ii,lr_RightSlope)
                 elem2R(:,e2r_ParabolaValue)  = linkR(ii,lr_ParabolaValue)
+                elem2R(:,e2r_FullDepth)      = linkR(ii,lr_FUllDepth)
+                elem2R(:,e2r_Volume_N0)      = elem2R(:,e2r_Volume)
+                elem2R(:,e2r_Volume_N1)      = elem2R(:,e2r_Volume)
+                elem2R(:,e2r_Zcrown)         = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
             endwhere
 
             if (linkI(ii,li_geometry) == lRectangular ) then
                 !% handle rectangular elements
                 where (elem2I(:,e2i_link_ID) == Lindx)
-                    elem2I(:,e2i_geometry)  = eRectangular
-                    elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
+                    elem2I(:,e2i_geometry)   = eRectangular
+                    elem2R(:,e2r_HydDepth)   = elem2R(:,e2r_Depth)
                     elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
-                    elem2R(:,e2r_Topwidth)  = linkR(ii,lr_BreadthScale)
-                    elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
-                    elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
-                    elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area)     * elem2R(:,e2r_Length)
-                    elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Topwidth)   = linkR(ii,lr_BreadthScale)
+                    elem2R(:,e2r_Eta)        = elem2R(:,e2r_Zbottom)   + elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Area)       = elem2R(:,e2r_HydDepth)  * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_FullArea)   = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_Volume)     = elem2R(:,e2r_Area)      * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Perimeter)  = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
                 endwhere
 
             elseif (linkI(ii,li_geometry) == lParabolic ) then
@@ -296,6 +313,9 @@ contains
 
                     elem2R(:,e2r_Area)      = twothirdR * elem2R(:,e2r_Depth) &
                         * elem2R(:,e2r_Topwidth)
+
+                    elem2R(:,e2r_FullArea)  = twothirdR * elem2R(:,e2r_FullDepth) &
+                        * twoR * sqrt(elem2R(:,e2r_FullDepth)/elem2R(:,e2r_ParabolaValue))
 
                     elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Topwidth) &
                         *( &
@@ -324,6 +344,7 @@ contains
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) &
                         * elem2R(:,e2r_Length)
 
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea) * elem2R(:,e2r_Length)
                 endwhere
 
             elseif (linkI(ii,li_geometry) == lTrapezoidal ) then
@@ -340,6 +361,11 @@ contains
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                         * elem2R(:,e2r_Depth)) * elem2R(:,e2r_Depth)
 
+                    elem2R(:,e2r_FullArea)  = (elem2R(:,e2r_BreadthScale)           &
+                        + onehalfR &
+                        * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
+                        * elem2R(:,e2r_FullDepth)) * elem2R(:,e2r_FullDepth)
+
                     ! Bottom width + (lslope + rslope) * hydraulicDepth
                     elem2R(:,e2r_Topwidth)  = elem2R(:,e2r_BreadthScale)            &
                         + elem2R(:,e2r_Depth)                                   &
@@ -353,41 +379,78 @@ contains
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) &
                         * elem2R(:,e2r_Length)
 
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+
                     ! Bottom width + hydraulicDepth*lengthSidewall
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) &
                         + elem2R(:,e2r_Depth) &
                         * (sqrt(oneR + elem2R(:,e2r_LeftSlope)**twoR) &
                         + sqrt(oneR + elem2R(:,e2r_RightSlope)**twoR))
                 endwhere
+
             elseif (linkI(ii,li_geometry) == lCircular ) then
                 !% handle circular elements
-                ! Input: InitialDepth, Full Depth
-                ! these geometric properties are wrong. but they will get correctly updated later.
+    
+                do nn=1, size(elem2I(:,e2i_link_ID),1)
+                    if (elem2I(nn,e2i_link_ID) == Lindx) then
+                        elem2I(nn,e2i_geometry)     = eCircular
+                        
+                        elem2R(nn,e2r_BreadthScale) = linkR(ii,lr_FUllDepth)
+                        
+                        elem2R(nn,e2r_Radius)   = linkR(ii,lr_FUllDepth) / twoR
 
-                ! Talk with Dr. Hodges about this matter.
-                where (elem2I(:,e2i_link_ID) == Lindx)
-                    elem2I(:,e2i_geometry)     = eCircular
+                        elem2R(nn,e2r_FullArea) = onefourthR * pi * linkR(ii,lr_FUllDepth)  ** twoR
 
-                    elem2R(:,e2r_FullDepth)    = linkR(ii,lr_FUllDepth)
+                        elem2R(nn,e2r_Eta)      = elem2R(nn,e2r_Zbottom) + elem2R(nn,e2r_Depth)
 
-                    elem2R(:,e2r_BreadthScale) = linkR(ii,lr_FUllDepth)
+                        ! Set surcharge condition if the pipe is full
+                        if (elem2R(nn,e2r_Eta) .GE. elem2R(nn,e2r_Zcrown)) then
 
-                    elem2R(:,e2r_Area)         = onefourthR * pi *                    &
-                        elem2R(:,e2r_FullDepth)  ** twoR
+                            elem2YN(nn,e2YN_IsSurcharged) = .true.
 
-                    elem2R(:,e2r_HydDepth)     = elem2R(:,e2r_Depth)
+                            elem2R(nn,e2r_Area) = elem2R(nn,e2r_FullArea)
 
-                    elem2R(:,e2r_Topwidth)     = twoR * sqrt(elem2R(:,e2r_HydDepth) * &
-                        (elem2R(:,e2r_FullDepth) - elem2R(:,e2r_HydDepth)))
+                            elem2R(nn,e2r_HydDepth) = elem2R(nn,e2r_FullDepth)  !this is the modified hydralic depth for pipe
+                            
+                            !% minimum topwidth at 5% of radius (pipeAC2020)
+                            elem2R(nn,e2r_Topwidth) = 0.05 * elem2R(nn,e2r_Radius)   
 
-                    elem2R(:,e2r_Eta)          = elem2R(:,e2r_Zbottom)                &
-                        + elem2R(:,e2r_HydDepth)
+                            elem2R(nn,e2r_HydRadius) = onefourthR * elem2R(nn,e2r_FullDepth)
 
-                    elem2R(:,e2r_Volume)       = elem2R(:,e2r_Area) &
-                        * elem2R(:,e2r_Length)
+                            YoverYfull = oneR
 
-                    elem2R(:,e2r_Perimeter)    = pi * elem2R(:,e2r_FullDepth)
-                endwhere
+                            AoverAfull = oneR
+                        else
+                            elem2YN(nn,e2YN_IsSurcharged) = .false.
+
+                            YoverYfull = elem2R(nn,e2r_Depth) / elem2R(nn,e2r_FullDepth)
+
+                            elem2R(nn,e2r_Area)     = elem2R(nn,e2r_FullArea) * table_lookup(YoverYfull, ACirc, NACirc)
+
+                            elem2R(nn,e2r_Topwidth) = elem2R(nn,e2r_FullDepth)* table_lookup(YoverYfull, WCirc, NWCirc)
+
+                            elem2R(nn,e2r_HydRadius) = onefourthR * elem2R(nn,e2r_FullDepth) * &
+                                                        table_lookup(YoverYfull, RCirc, NRCirc)
+
+                            AoverAfull = elem2R(nn,e2r_Area) / elem2R(nn,e2r_FullArea)
+
+                            if (AoverAfull .GT. onehalfR) then
+                                elem2R(nn,e2r_HydDepth)   = elem2R(nn,e2r_Eta) - elem2R(nn,e2r_Zbottom) + &
+                                                                elem2R(nn,e2r_Radius) * (onefourthR * pi - oneR)
+
+                            elseif (AoverAfull .LE. onehalfR) then
+                                elem2R(nn,e2r_HydDepth)   = max(elem2R(nn,e2r_Area)/ elem2R(nn,e2r_Topwidth), zeroR)
+                            endif
+
+                        endif
+
+                        elem2R(nn,e2r_Volume)    = elem2R(nn,e2r_Area) * elem2R(nn,e2r_Length)
+
+                        elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+
+                        elem2R(nn,e2r_Perimeter) = elem2R(nn,e2r_Area) / elem2R(nn,e2r_HydRadius)
+                    endif
+                enddo
 
             elseif (linkI(ii,li_geometry) == lTriangular ) then
                 !% handle triangle elements
@@ -395,14 +458,19 @@ contains
                 where (elem2I(:,e2i_link_ID) == Lindx)
                     elem2I(:,e2i_geometry)  = eTriangular
 
-                    elem2R(:,e2r_HydDepth) = onehalfR * elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_HydDepth)  = onehalfR * elem2R(:,e2r_Depth)
 
                     elem2R(:,e2r_BreadthScale) = elem2R(:,e2r_FullDepth)              &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope))
+
                     ! (averageSlope * hydraulicDepth)*hydraulicDepth
                     elem2R(:,e2r_Area) = onehalfR &
                         * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
                         * elem2R(:,e2r_Depth) * elem2R(:,e2r_Depth)
+
+                    elem2R(:,e2r_FullArea) = onehalfR &
+                        * (elem2R(:,e2r_LeftSlope) + elem2R(:,e2r_RightSlope)) &
+                        * elem2R(:,e2r_FullDepth) * elem2R(:,e2r_FullDepth)
 
                     ! (lslope + rslope) * hydraulicDepth
                     elem2R(:,e2r_Topwidth) = elem2R(:,e2r_Depth)               &
@@ -413,6 +481,8 @@ contains
 
                     elem2R(:,e2r_Volume) = elem2R(:,e2r_Area) &
                         * elem2R(:,e2r_Length)
+
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
 
                     ! hydraulicDepth*lengthSidewall
                     elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Depth) &
@@ -426,13 +496,15 @@ contains
                 where (elem2I(:,e2i_link_ID) == Lindx)
 
                     elem2I(:,e2i_geometry)  = eWidthDepth
-                    elem2R(:,e2r_HydDepth) = elem2R(:,e2r_Depth)
                     elem2R(:,e2r_BreadthScale)   = linkR(ii,lr_BreadthScale)
                     elem2R(:,e2r_Topwidth)  = linkR(ii,lr_TopWidth)
+                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth) ! hydDepth should be the area/topwidth
                     elem2R(:,e2r_Eta)       = elem2R(:,e2r_Zbottom)  + elem2R(:,e2r_HydDepth)
                     elem2R(:,e2r_Area)      = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_FullArea)  = elem2R(:,e2r_Topwidth) * elem2R(:,e2r_FullDepth)
                     elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
-                    elem2R(:,e2r_Perimeter) = onehalfR * elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_FullVolume) = elem2R(:,e2r_FullArea)  * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Perimeter) = elem2R(:,e2r_Area) / elem2R(:,e2r_HydDepth) + twoR * elem2R(:,e2r_HydDepth)
                 endwhere
             else
                 !% handle elements of other geometry types
@@ -440,17 +512,29 @@ contains
                 stop
             end if
 
-            !% Setting provisional geometry for weir and orifice element to correctly interpolate to faces
-            where      ( (elem2I(:,e2i_elem_type) == eWeir) .or. &
-                (elem2I(:,e2i_elem_type) == eOrifice) )
-                elem2R(:,e2r_HydDepth)     = 1.0e-7
-                elem2R(:,e2r_Topwidth)     = 1.0e-7
-                elem2R(:,e2r_Eta)          = 1.0e-7
-                elem2R(:,e2r_Area)         = 1.0e-7
-                elem2R(:,e2r_Volume)       = 1.0e-7
-                elem2R(:,e2r_Perimeter)    = 1.0e-7
-                elem2R(:,e2r_Depth)        = 1.0e-7
+            !%  Find if an element is surcharged. Set topwidth to zero for surcharged condition
+            where ( (elem2I(:,e2i_elem_type) == ePipe)      .and.  &
+                    (elem2R(:,e2r_Eta)  .GE. elem2R(:,e2r_Zcrown)) )
+                elem2YN(:,e2YN_IsSurcharged) = .true.
+                elem2R(:,e2r_Topwidth) = zeroR 
             endwhere
+
+            !%  Qonly elements need the face values at time n first to calculate flow at time n
+            !%  Setting provisional geometry for Qonly element so that Qonly element faces 
+            !%  does not get junk values.
+            where ( elem2I(:,e2i_meta_elem_type) == eQonly )
+                elem2R(:,e2r_HydDepth)      = 1.0e-7
+                elem2R(:,e2r_Topwidth)      = 1.0e-7
+                elem2R(:,e2r_Eta)           = 1.0e-7
+                elem2R(:,e2r_Area)          = 1.0e-7
+                elem2R(:,e2r_Volume)        = 1.0e-7
+                elem2R(:,e2r_Perimeter)     = 1.0e-7
+                elem2R(:,e2r_Depth)         = 1.0e-7
+            endwhere
+
+            if (setting%BCondition%InflowRampup) then
+                elem2R(:,e2r_Flowrate) = setting%BCondition%flowrateIC
+            endif
 
             !%  Update velocity
             where (  (elem2I(:,e2i_link_ID) == Lindx) .and. (elem2R(:,e2r_Area) > zeroR) )
@@ -459,18 +543,170 @@ contains
 
         enddo
 
+        
+
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine initial_conditions_from_linkdata
     !
     !==========================================================================
     !==========================================================================
     !
+    subroutine custom_initial_condition &
+        (elem2R, elem2I, elemMR, elemMI, elem2YN, elemMYN, bcdataDn)
+    !    
+    ! set up custom initial conditions for special cases like flow over a bump,
+    ! trajkovic cases, or bore propagation. hard coded custon initial condition setup
+    ! THIS IS HACK CODE
+    !
+    character(64) :: subroutine_name = 'custom_initial_condition'
+
+    real(8),           intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+    integer,        intent(in out)  :: elem2I(:,:),  elemMI(:,:)
+    logical,        intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+
+    type(bcType),   intent(in)      :: bcdataDn(:)
+    real(8)    :: thisVal, AoverAfull, YoverYfull
+    integer :: ii
+
+    !--------------------------------------------------------------------------
+    if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+        if (setting%CustomIC%UseCustomInitialCondition) then
+
+            select case (setting%TestCase%TestName)
+
+                case ('swashes_007')
+                    !% there are problem with zbottom calculation for elements and reproducing
+                    !% the same zbottom as SvePy.
+                    !% the zbottom is hardcoded to make it consistant with the SvePy
+                    !% find the x value for elements. Later move to a subroutine
+                    !% hard coded for swashes test case
+                    ! do ii = 2,N_elem2 -1 
+                    !     elem2R(ii,e2r_X) = sum(elem2R(2:N_elem2 -1,e2r_Length)) - sum(elem2R(2:ii,e2r_Length)) &
+                    !                           + elem2R(ii,e2r_Length)/2.0
+                    !                           elem2R(ii,e2r_Zbottom) = (0.2 - 0.05 * ((elem2R(ii,e2r_X) - 10.0) ** 2.0)) 
+                    !     if (elem2R(ii,e2r_X) < 8.0 ) then
+                    !         elem2R(ii,e2r_Zbottom) = 0.0
+                    !     elseif (elem2R(ii,e2r_X) > 12.0 ) then
+                    !         elem2R(ii,e2r_Zbottom) = 0.0
+                    !     endif
+                    ! enddo
+
+                    ! get the boundary eta and set that for every other elements
+                    thisVal = elem2R(1,e2r_eta)
+                    elem2R(:,e2r_Eta)       = thisVal
+                    elem2R(:,e2r_Depth)     = elem2R(:,e2r_Eta) - elem2R(:,e2r_Zbottom)
+                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_FullArea)  = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Volume_N0) = elem2R(:,e2r_Volume)
+                    elem2R(:,e2r_Volume_N1) = elem2R(:,e2r_Volume)
+                    elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
+                    elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area) 
+
+                case ('simple_pipe_006')
+                !% this custom initial contion propagates a wave through a rectangular pipe
+                !% this sets a custom eta for first 10 upstream elements
+                    elem2R(90:101,e2r_Eta) = elem2R(90:101,e2r_Eta) + 1.5
+                    elem2R(:,e2r_Depth)     = elem2R(:,e2r_Eta) - elem2R(:,e2r_Zbottom)
+                    elem2R(:,e2r_HydDepth)  = elem2R(:,e2r_Depth)
+                    elem2R(:,e2r_Area)      = elem2R(:,e2r_HydDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_FullArea)  = elem2R(:,e2r_FullDepth) * elem2R(:,e2r_BreadthScale)
+                    elem2R(:,e2r_Volume)    = elem2R(:,e2r_Area) * elem2R(:,e2r_Length)
+                    elem2R(:,e2r_Volume_N0) = elem2R(:,e2r_Volume)
+                    elem2R(:,e2r_Volume_N1) = elem2R(:,e2r_Volume)
+                    elem2R(:,e2r_Perimeter) = elem2R(:,e2r_BreadthScale) + twoR * elem2R(:,e2r_HydDepth)
+                    elem2R(:,e2r_Zcrown)    = elem2R(:,e2r_Zbottom) + elem2R(:,e2r_FullDepth)
+                    elem2R(:,e2r_Velocity)  = elem2r(:,e2r_Flowrate) / elem2R(:,e2r_Area)
+
+                case ('trajkovic_case_a3')
+                !% setting custom eta from pipeAC2020 paper
+
+                    !% setting initial head
+                    elem2R(:,e2r_Eta) = elem2R(:,e2r_Zbottom) + 0.02 
+
+                    !% head below d/s bc set as d/s bc head
+                    where (elem2R(:,e2r_Eta) .LE. bcdataDn(1)%ValueArray(1)) 
+                            elem2R(:,e2r_Eta) = bcdataDn(1)%ValueArray(1)
+                    endwhere 
+
+                    do ii = 1,N_elem2
+                        !% setting an initial head
+                        if (elem2I(ii,e2i_link_ID) == 1) then
+                            !% pipe upstream of first gate has different head
+                            elem2R(ii,e2r_Eta) = 0.7
+                        endif
+
+                        !%  Set surcharge condition if the pipe is full
+                        if (elem2R(ii,e2r_Eta) .GE. elem2R(ii,e2r_Zcrown)) then
+                            elem2YN(ii,e2YN_IsSurcharged) = .true.
+                            elem2R(ii,e2r_Area)      = elem2R(ii,e2r_FullArea)
+                            elem2R(ii,e2r_HydDepth)  = elem2R(ii,e2r_FullDepth)  !this is the modified hydralic depth for pipe
+                            elem2R(ii,e2r_Topwidth)  = 0.05 * elem2R(ii,e2r_Radius) 
+                            elem2R(ii,e2r_HydRadius) = onefourthR * elem2R(ii,e2r_FullDepth)
+                            elem2R(ii,e2r_Depth)     = elem2R(ii,e2r_FullDepth)
+                        else
+                            elem2YN(ii,e2YN_IsSurcharged) = .false.
+                            elem2R(ii,e2r_Depth)     = elem2R(ii,e2r_Eta) - elem2R(ii,e2r_Zbottom)
+                            YoverYfull               = elem2R(ii,e2r_Depth) / elem2R(ii,e2r_FullDepth)
+                            elem2R(ii,e2r_Area)      = elem2R(ii,e2r_FullArea) * table_lookup(YoverYfull, ACirc, NACirc)
+                            elem2R(ii,e2r_Topwidth)  = elem2R(ii,e2r_FullDepth)* table_lookup(YoverYfull, WCirc, NWCirc)
+                            elem2R(ii,e2r_HydRadius) = onefourthR * elem2R(ii,e2r_FullDepth) * &
+                                                       table_lookup(YoverYfull, RCirc, NRCirc)
+                            AoverAfull               = elem2R(ii,e2r_Area) / elem2R(ii,e2r_FullArea)
+
+                            if (AoverAfull .GT. onehalfR) then
+                                elem2R(ii,e2r_HydDepth)   = elem2R(ii,e2r_Eta) - elem2R(ii,e2r_Zbottom) + &
+                                                            elem2R(ii,e2r_Radius) * (onefourthR * pi - oneR)
+                            elseif (AoverAfull .LE. onehalfR) then
+                                elem2R(ii,e2r_HydDepth)   = max(elem2R(ii,e2r_Area)/ elem2R(ii,e2r_Topwidth), zeroR)
+                            endif
+
+                        endif
+                        elem2R(ii,e2r_Volume)    = elem2R(ii,e2r_Area) * elem2R(ii,e2r_Length)
+                        elem2R(ii,e2r_FullVolume) = elem2R(ii,e2r_FullArea)  * elem2R(ii,e2r_Length)
+                        elem2R(ii,e2r_Perimeter) = elem2R(ii,e2r_Area) / elem2R(ii,e2r_HydRadius)
+                        elem2R(ii,e2r_Velocity)  = elem2r(ii,e2r_Flowrate) / elem2R(ii,e2r_Area)
+                    enddo
+
+                        
+                case default
+
+                print *, 'Warning '
+                print *, setting%TestCase%TestName, ' does not need a custom initial condition'
+            end select
+        endif
+        ! print*, '----------------------------------------------'
+        ! print*, 'initial check at ', subroutine_name
+        ! print*, elem2R(:,e2r_Eta), 'Eta'
+        ! print*
+        ! print*, elem2R(:,e2r_Area), 'area'
+        ! print*
+        ! print*, elem2R(:,e2r_Depth), 'depth'
+        ! print*
+        ! print*, elem2R(:,e2r_Topwidth), 'topwidth'
+        ! print*
+        ! print*, elem2R(:,e2r_Flowrate), 'flowrate'
+        ! print*
+        ! print*, elem2R(:,e2r_velocity), 'velocity'
+        ! print*, '----------------------------------------------'
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+    end subroutine custom_initial_condition
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine initial_junction_conditions &
-        (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
+        (faceR, faceI, elem2R, elem2I, elemMR, elemMYN, elemMI, nodeR, nodeI)
 
         character(64) :: subroutine_name = 'initial_junction_conditions'
 
         real(8),              intent(in out)  :: elemMR(:,:)
+        logical,           intent(in out)  :: elemMYN(:,:)
+
         real(8),      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:), nodeI(:,:), faceI(:,:)
 
@@ -518,6 +754,13 @@ contains
                 elemMR(:,eMr_HydRadius) = elemMR(:,eMr_Area) / elemMR(:,eMr_Perimeter)
             endwhere
 
+            where (elemMR(:,eMr_Eta) .GE. elem2R(:,eMr_Zcrown))
+                elemMYN(:,eMYN_IsSurcharged) = .true.
+                elemMR(:,eMr_Topwidth) = zeroR 
+            elsewhere (elemMR(:,eMr_Eta) .LE. elem2R(:,eMr_Zcrown))
+                elemMYN(:,eMYN_IsSurcharged) = .false.
+            endwhere
+
             !% velocities
             call junction_branch_velocities (elemMR, elemMI)
 
@@ -537,7 +780,9 @@ contains
     !
     subroutine initial_storage_conditions &
         (faceR, faceI, elem2R, elem2I, elemMR, elemMI, nodeR, nodeI)
-
+        !
+        !% this code has not been tested yet 
+        !
         character(64) :: subroutine_name = 'initial_storage_conditions'
 
         real(8),              intent(in out)  :: elemMR(:,:)
@@ -586,137 +831,6 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine meta_element_assign (elemI, ei_elem_type, ei_meta_elem_type)
-        !
-        ! Assign meta element type to elements
-        !
-
-        character(64) :: subroutine_name = 'meta_element_assign'
-
-        integer,   target,     intent(inout)    :: elemI(:,:)
-        integer,               intent(in)       :: ei_elem_type
-
-        integer,               intent(in)       :: ei_meta_elem_type
-
-
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        where ( (elemI(:,ei_elem_type) == eChannel)             .or. &
-
-            (elemI(:,ei_elem_type) == ePipe) )
-
-            elemI(:,ei_meta_elem_type) = eHQ2
-
-        elsewhere ( (elemI(:,ei_elem_type) == eJunctionChannel)     .or. &
-            (elemI(:,ei_elem_type) == eJunctionPipe)  )
-
-            elemI(:,ei_meta_elem_type) = eHQM
-
-        elsewhere ( (elemI(:,ei_elem_type) == eWeir)            .or. &
-            (elemI(:,ei_elem_type) == eorifice)         .or. &
-            (elemI(:,ei_elem_type) == ePump)  )
-
-            elemI(:,ei_meta_elem_type) = eQonly
-
-        elsewhere ( (elemI(:,ei_elem_type) == eStorage) )
-
-            elemI(:,ei_meta_elem_type) = eHonly
-
-        elsewhere ( (elemI(:,ei_elem_type) == eBCup)            .or. &
-            (elemI(:,ei_elem_type) == eBCdn)  )
-            ! Assigning nonHQ meta elem type to boundary conditions. Confirm this!
-            elemI(:,ei_meta_elem_type) = eNonHQ
-        end where
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine meta_element_assign
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine face_meta_element_assign (faceI, elemI, N_face)
-
-        character(64) :: subroutine_name = 'face_meta_element_assign'
-
-        integer,      target,     intent(in out)  :: faceI(:,:), elemI(:,:)
-        integer,                  intent(in)      :: N_face
-
-        integer :: ii
-
-        !--------------------------------------------------------------------------
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        do ii=1, N_face
-            if ( (faceI(ii,fi_etype_u) == eChannel) .or. &
-                (faceI(ii,fi_etype_u) == ePipe) ) then
-
-                faceI(ii,fi_meta_etype_u) = eHQ2
-
-            elseif ( (faceI(ii,fi_etype_u) == eJunctionChannel) .or. &
-                (faceI(ii,fi_etype_u) == eJunctionPipe) ) then
-
-                faceI(ii,fi_meta_etype_u) = eHQm
-
-            elseif ( (faceI(ii,fi_etype_u) == eWeir)    .or. &
-                (faceI(ii,fi_etype_u) == eorifice) .or. &
-                (faceI(ii,fi_etype_u) == ePump) ) then
-
-                faceI(ii,fi_meta_etype_u) = eQonly
-
-            elseif ( (faceI(ii,fi_etype_u) == eStorage) ) then
-
-                faceI(ii,fi_meta_etype_u) = eHonly
-
-            elseif ( (faceI(ii,fi_etype_u) == eBCdn)    .or. &
-                (faceI(ii,fi_etype_u) == eBCup) ) then
-
-                faceI(ii,fi_meta_etype_u) = eNonHQ
-
-            else
-                print*, 'undefined element type upstream of face', ii
-                stop
-            endif
-        end do
-
-        do ii=1, N_face
-            if ( (faceI(ii,fi_etype_d) == eChannel) .or. &
-                (faceI(ii,fi_etype_d) == ePipe) ) then
-
-                faceI(ii,fi_meta_etype_d) = eHQ2
-
-            elseif ( (faceI(ii,fi_etype_d) == eJunctionChannel) .or. &
-                (faceI(ii,fi_etype_d) == eJunctionPipe) ) then
-
-                faceI(ii,fi_meta_etype_d) = eHQm
-
-            elseif ( (faceI(ii,fi_etype_d) == eWeir)    .or. &
-                (faceI(ii,fi_etype_d) == eorifice) .or. &
-                (faceI(ii,fi_etype_d) == ePump) ) then
-
-                faceI(ii,fi_meta_etype_d) = eQonly
-
-            elseif ( (faceI(ii,fi_etype_d) == eStorage) ) then
-
-                faceI(ii,fi_meta_etype_d) = eHonly
-
-            elseif ( (faceI(ii,fi_etype_d) == eBCdn)    .or. &
-                (faceI(ii,fi_etype_d) == eBCup) ) then
-
-                faceI(ii,fi_meta_etype_d) = eNonHQ
-
-            else
-                print*, 'undefined element type downstream of face', ii
-                stop
-            endif
-        end do
-
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    end subroutine face_meta_element_assign
-    !
-    !==========================================================================
-    !==========================================================================
-    !
     subroutine QonlyElem_initial_condition_setup &
         (elem2R, elemMR, faceR, elem2I, elemMI, faceI, elem2YN, elemMYN, faceYN)
         ! this subroutine sets the wier and orifice initial condition.
@@ -730,8 +844,6 @@ contains
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
         logical,   target, intent(in out)  :: faceYN(:,:)
 
-        integer :: e2r_Volume_dummy, e2r_Velocity_dummy, eMr_Volume_dummy, eMr_Velocity_dummy
-
         real(8),      pointer  :: valueUp(:), valueDn(:)
         real(8),      pointer  :: weightUpQ(:), weightDnQ(:)
         real(8),      pointer  :: faceQ(:)
@@ -742,19 +854,7 @@ contains
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
-        !% dummy pointers to call the wier/orifice step to find the flow through them.
-        e2r_Volume_dummy = e2r_Temp(next_e2r_temparray)
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        e2r_Velocity_dummy = e2r_Temp(next_e2r_temparray)
-        next_e2r_temparray = utility_advance_temp_array (next_e2r_temparray,e2r_n_temp)
-
-        eMr_Volume_dummy = eMr_Temp(next_eMr_temparray)
-        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
-
-        eMr_Velocity_dummy = eMr_Temp(next_eMr_temparray)
-        next_eMr_temparray = utility_advance_temp_array (next_eMr_temparray,eMr_n_temp)
-
+        !% temporary pointers to call the wier/orifice step to find the flow through them.
         valueUp => faceR(:,fr_Temp(next_fr_temparray))
         next_fr_temparray = utility_advance_temp_array (next_fr_temparray, fr_n_temp)
 
@@ -774,19 +874,17 @@ contains
 
         !% call weir and orifice step to initialize their geometry and flow
         call weir_step &
-            (e2r_Volume_dummy, e2r_Velocity_dummy, eMr_Volume_dummy, eMr_Velocity_dummy, e2r_Volume, &
-            e2r_Velocity, eMr_Volume, eMr_Velocity, elem2R, elemMR, &
-            faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, dble(1.0))
+            (e2r_Volume, e2r_Velocity, elem2R, elemMR, faceI, faceR, &
+            faceYN, elem2I, elemMI, elem2YN, elemMYN, oneR)
 
         call orifice_step &
-            (e2r_Volume_dummy, e2r_Velocity_dummy, eMr_Volume_dummy, eMr_Velocity_dummy, e2r_Volume, &
-            e2r_Velocity, eMr_Volume, eMr_Velocity, elem2R, elemMR, &
-            faceI, faceR, faceYN, elem2I, elemMI, elem2YN, elemMYN, dble(1.0))
+            (e2r_Volume, e2r_Velocity, elem2R, elemMR, faceI, faceR, &
+            faceYN, elem2I, elemMI, elem2YN, elemMYN, oneR)
 
         !% face reconstruction
         !% update the flow to their faces
         facemask = ( (faceI(:,fi_meta_etype_u) == eQonly) .or. &
-            (faceI(:,fi_meta_etype_d) == eQonly) )
+                     (faceI(:,fi_meta_etype_d) == eQonly)      )
 
         weightUpQ = setting%Limiter%Timescale%Maximum
         weightDnQ = setting%Limiter%Timescale%Maximum
@@ -794,8 +892,8 @@ contains
         where (facemask)
             weightUpQ = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_d)
             weightDnQ = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_u)
-            valueUp  = elem2R(faceI(:,fi_Melem_u),e2r_Flowrate)
-            valueDn  = elem2R(faceI(:,fi_Melem_d),e2r_Flowrate)
+            valueUp   = elem2R(faceI(:,fi_Melem_u),e2r_Flowrate)
+            valueDn   = elem2R(faceI(:,fi_Melem_d),e2r_Flowrate)
             !% linear interpolation
             faceQ = (weightUpQ * valueDn + weightDnQ * valueUp) /(weightUpQ + weightDnQ)
         endwhere
@@ -807,14 +905,84 @@ contains
 
         nullify(valueUp, valueDn, weightUpQ, weightDnQ, facemask)
 
-        next_e2r_temparray = next_e2r_temparray - 2
-        next_eMr_temparray = next_eMr_temparray - 2
         next_fr_temparray  = next_fr_temparray  - 4
         next_fYN_temparray = next_fYN_temparray - 1
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
     end subroutine QonlyElem_initial_condition_setup
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine initial_solver_select &
+        (elem2R, elemMR, elem2I, elemMI)
+
+        character(64) :: subroutine_name = 'initial_solver_select'
+        
+        real(8),      intent(in)     :: elem2R(:,:), elemMR(:,:)
+        integer,   intent(inout)  :: elem2I(:,:), elemMI(:,:)
+
+        integer :: mm
+        !--------------------------------------------------------------------------
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+        if (setting%Solver%SolverSelect == 'SVE') then
+            where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
+                    (elem2I(:,e2i_elem_type) == ePipe   ) )
+                elem2I(:,e2i_solver) = SVE
+            endwhere
+            
+            where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
+                    (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
+                elemMI(:,eMi_solver) = SVE
+            endwhere
+
+        elseif (setting%Solver%SolverSelect == 'AC') then
+            where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
+                    (elem2I(:,e2i_elem_type) == ePipe   ) )
+                elem2I(:,e2i_solver) = AC
+            endwhere
+            
+            where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
+                    (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )           
+                elemMI(:,eMi_solver) = AC
+            endwhere
+
+        elseif (setting%Solver%SolverSelect == 'SVE-AC') then
+
+            where ( (elem2I(:,e2i_elem_type) == eChannel) .or. &
+                    (elem2I(:,e2i_elem_type) == ePipe   ) )
+                elem2I(:,e2i_solver) = SVE
+            endwhere
+            
+            where ( (elemMI(:,eMi_elem_type) == eJunctionChannel) .or. &
+                    (elemMI(:,eMi_elem_type) == eJunctionPipe   ) )
+                elemMI(:,eMi_solver) = SVE
+            endwhere
+
+            where ( (elem2I(:,e2i_elem_type) == ePipe)           .and. &
+                    (elem2R(:,e2r_Area)/elem2R(:,e2r_FullArea)   .GE.  &
+                     setting%DefaultAC%Switch%Area) )
+                elem2I(:,e2i_solver) = AC
+            endwhere
+
+            where ( (elem2I(:,eMi_elem_type) == eJunctionPipe)   .and. &
+                    (elemMR(:,eMr_Area)/elemMR(:,eMr_FullArea)   .GE.  &
+                     setting%DefaultAC%Switch%Area) )
+                elemMI(:,eMi_solver) = AC
+            endwhere
+        else
+            print *, 'error: unexpected value for setting%Solver%SolverSelect ', & 
+                     setting%Solver%SolverSelect,' in ', subroutine_name
+            stop
+        endif
+
+
+        ! elem2I(50:101,e2i_solver) = SVE
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+    end subroutine initial_solver_select
     !
     !==========================================================================
     !==========================================================================
@@ -836,7 +1004,7 @@ contains
     !
     ! type(bcType),  intent(in)  :: bcdataDn(:), bcdataUp(:)
     !
-    ! real  ::  uniform_water_depth, uniform_bottom_roughness, uniform_flowrate
+    ! real(8)  ::  uniform_water_depth, uniform_bottom_roughness, uniform_flowrate
     !
     ! integer :: mm
     !!--------------------------------------------------------------------------
