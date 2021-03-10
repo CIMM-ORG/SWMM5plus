@@ -21,7 +21,7 @@ program main
     use type_definitions
     use objects
     use project
-    ! use test_cases
+    use test_cases
     use time_loop
     use utility
 
@@ -98,8 +98,8 @@ program main
     !===========================================================
     !%  hard-code setting for test cases
 
-    setting%TestCase%UseTestCase = .false.
-    ! setting%TestCase%TestName = 'simple_channel_001'
+    setting%TestCase%UseTestCase = .true.
+    setting%TestCase%TestName = 'simple_channel_001'
     ! setting%TestCase%TestName = 'y_channel_002'
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
@@ -138,12 +138,11 @@ program main
 
     !% custom setup for hard-code test cases
     if (setting%TestCase%UseTestCase) then
-        stop
-        ! call test_case_initiation &
-        !     (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
-        !     bcdataDn, bcdataUp, &
-        !     wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
-        !     wdBreadth, wdWidthDepthData, wdCellType)
+        call test_case_initiation &
+            (linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
+            bcdataDn, bcdataUp, &
+            wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
+            wdBreadth, wdWidthDepthData, wdCellType)
     else
        call project_open &
        (linkI, nodeI, linkR, nodeR, linkYN, &

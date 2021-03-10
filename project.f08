@@ -52,8 +52,10 @@ contains
 
     subroutine project_close(bcdataDn, bcdataUp)
         type(bcType), dimension(:), allocatable, target, intent(inout)   :: bcdataUp, bcdataDn
-        call free_graph(swmm_graph)
-        call free_interface()
+        if (.not. setting%TestCase%UseTestCase) then
+            call free_graph(swmm_graph)
+            call free_interface()
+        endif
         call free_bc(bcdataDn, bcdataUp)
     end subroutine project_close
 
