@@ -303,7 +303,7 @@ contains
         rpt_file = trim(rpt_file) // c_null_char
         out_file = trim(out_file) // c_null_char
 
-        dll%filename = "libswmm5.so"
+        dll%filename = trim(cwd) // "/libswmm5.so"
 
         ! Initialize API
         dll%procname = "api_initialize"
