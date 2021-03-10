@@ -79,7 +79,7 @@ DRY_ONLY         NO
 [TIMESERIES]
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
-TESTINFLOW       FILE "/home/griano/Documents/Github/SWMMengine/swmm_files/inflow.dat"
+TESTINFLOW       FILE "/home/saz/SWMM/SWMMengine/swmm_files/inflow.dat"
 ;
 T1                          0:00       0         
 T1                          1:00       0.25      
