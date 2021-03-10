@@ -11,6 +11,7 @@ module globals
 
     use setting_definition
     use type_definitions
+
     implicit none
 
     public
@@ -18,9 +19,9 @@ module globals
     character(len=99) :: casename
 
     ! note that nullvalueI < 0 is required
-    integer, parameter :: nullvalueI = -998877
+    integer,    parameter :: nullvalueI = -998877
     real(8),    parameter :: nullvalueR = -9.98877e16
-    logical, parameter :: nullvalueL = .false.
+    logical,    parameter :: nullvalueL = .false.
     real(8),    parameter :: negoneR    = -1.0
     real(8),    parameter :: zeroR      = 0.0
     real(8),    parameter :: oneR       = 1.0
@@ -28,6 +29,7 @@ module globals
     real(8),    parameter :: threeR     = 3.0
     real(8),    parameter :: fourR      = 4.0
     real(8),    parameter :: sixR       = 6.0
+
     real(8),    parameter :: eightR     = 8.0
     real(8),    parameter :: tenR       = 10.0
     real(8),    parameter :: pi         = 4.d0*datan(1.d0)
@@ -76,6 +78,7 @@ module globals
     real(8), pointer :: dt   => setting%time%dt
     real(8), pointer :: grav => setting%constant%gravity
 
+    type(graph) :: swmm_graph
     integer :: debugcounter = 0
 
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls

@@ -353,7 +353,7 @@ contains
         !print *, nodeI(2,8)
         !stop
 
-        if (debuglevel > 0) print *, '*** leave ',subroutine_name
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine custom_6link_1_line_network
     !
     !==========================================================================

@@ -215,6 +215,7 @@ contains
 
         integer,   pointer :: tface, telem
         real(8)   :: thisvalue(dir_face_per_elemM)
+
         integer :: mm, ii
 
         !--------------------------------------------------------------------------

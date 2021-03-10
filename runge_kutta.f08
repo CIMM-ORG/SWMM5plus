@@ -58,6 +58,7 @@ contains
         integer :: e2r_Volume_new, e2r_Velocity_new, e2r_Eta_new
         integer :: eMr_Volume_new, eMr_Velocity_new, eMr_Eta_new
         integer :: ii
+
         real(8)    :: thiscoef(2), steptime, af(3)
 
         integer :: ilink
@@ -186,6 +187,7 @@ contains
                     (e2r_Volume_new, e2r_Velocity_new, elem2R, elemMR,  faceI, faceR, faceYN, &
                     elem2I, elemMI, elem2YN, elemMYN, thiscoef(ii))
 
+
                 if (ii==1) then
                     !% store the net face fluxes that are used for volume advance.
                     call diagnostic_element_volume_conservation_fluxes &
@@ -264,10 +266,12 @@ contains
         integer,   intent(in) :: e2r_Volume_new, e2r_Velocity_new
         integer,   intent(in) :: eMr_Volume_new, eMr_Velocity_new
 
-        real(8),      target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
-        real(8),      target, intent(in)      :: faceR(:,:)
+        real(8),   target, intent(in out)  :: elem2R(:,:),  elemMR(:,:)
+        real(8),   target, intent(in)      :: faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
+
         logical,   target, intent(in out)  :: elem2YN(:,:), elemMYN(:,:)
+
         real(8),              intent(in)      :: thiscoef
 
         real(8),  pointer ::  fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:), fEdn(:), fEup(:)
@@ -423,6 +427,13 @@ contains
             velocityMnew = (volumeMold * velocityMold + thiscoef * kuM)  &
                 / (oneR + thiscoef * dt * grav *  (mnM**2) * abs(velocityMold) / (rhM**(4.0/3.0)) )
         endwhere
+
+        ! print *, "VOLUME2", volume2new
+        ! print *, "VEL2", velocity2new
+        ! print *, "VOLUMEM", volumeMnew
+        ! print *, "VELM", velocityMnew
+        ! print *, elemMI(:,eMi_elem_type)
+        ! stop
 
         !%  CORRECTIONS ----------------------------------------------------------
 

@@ -335,7 +335,6 @@ contains
         real(8),    target, intent(in out)    :: widthDepthData(:,:,:)
         type(string), target, intent(in out)   :: wdcellType(:)
 
-
         real(8),    pointer :: volume(:), length(:), zbottom(:), breadth(:)
         real(8),    pointer :: leftSlope(:), rightSlope(:), parabolaValue(:), fullDepth(:)
         real(8),    pointer :: fullArea(:), area(:), eta(:), topwidth(:), perimeter(:)
@@ -353,7 +352,6 @@ contains
         real(8), dimension(:), allocatable :: w_d_angle, w_d_widthAtLayerTop, w_d_depthAtLayerTop, w_d_perimeterBelowThisLayer 
 
         integer :: ii
-
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 

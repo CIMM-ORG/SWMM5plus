@@ -171,10 +171,10 @@ contains
         real(8),      pointer  :: weightUpH(:), weightDnH(:)
         real(8),      pointer  :: weightUpG(:), weightDnG(:)
         real(8),      pointer  :: inoutarray(:)
+
         logical,   pointer  :: facemask(:), facemask_eHQ2(:)
 
         integer :: mm
-
         integer,   dimension(3)    :: e2rset, frset
 
         !--------------------------------------------------------------------------
@@ -745,6 +745,7 @@ contains
 
         real(8),      target,     intent(in out)  :: faceR(:,:)
         real(8),      target,     intent(in)      :: elem2R(:,:), elemMR(:,:)
+
         integer,   target,     intent(in out)  :: faceI(:,:)
         integer,               intent(in)      :: e2r_Velocity_new, eMr_Velocity_new
 
@@ -755,7 +756,6 @@ contains
         integer    :: fr_froudeUp, fr_froudeDn
 
         real(8) :: feps, rc
-
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -788,6 +788,7 @@ contains
 
         !%  compute the upstream and downstream froude number on each face
         !%  note the froude numbers are signed with + being downstream flow.
+
         where (typUp == fChannel)
             froudeUp = elem2R(mapUp,e2r_Velocity_new) / (sqrt(grav * elem2R(mapUp,e2r_HydDepth)))
         endwhere
@@ -822,7 +823,6 @@ contains
         where (typDn == fMultiple)
             froudeDn = elemMR(mapDn,eMr_Velocity_new) / (sqrt(grav * elemMR(mapDn,eMr_HydDepth)))
         endwhere
-
 
         !%  Define whether the jump is upstream or downstream or none
         !%  Note the mask for water surface level is required because with a coarse
@@ -906,9 +906,11 @@ contains
 
         real(8),      target,     intent(in out)  :: faceR(:,:)
         real(8),                  intent(in)      :: elem2R(:,:), elemMR(:,:)
+
         integer,   target,     intent(in)      :: faceI(:,:)
         logical,   target,     intent(in out)  :: faceYN(:,:)
         integer,   pointer :: mapUp(:), mapDn(:)
+
         real(8),      pointer :: weightUp(:), weightDn(:), etaUp(:), etaDn(:)
         logical,   pointer :: facemask(:)
 
@@ -974,6 +976,7 @@ contains
             ! the interpolation gives the eta of the element upstream.
             etaUp = elem2R(faceI(:,fi_Melem_u),e2r_Eta)
             etaDn = etaUP
+
         endwhere
 
         where (faceI(:,fi_meta_etype_u) == eQonly)

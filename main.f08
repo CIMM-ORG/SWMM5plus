@@ -1,7 +1,6 @@
 !==========================================================================
 !
 program main
-
     use allocate_storage
     use array_index
     use bc
@@ -13,15 +12,22 @@ program main
     use initialization
     use initial_condition
     use junction
+    use inflow
+    use interface
+    use network_graph
     use network_define
     use output
     use setting_definition
     use type_definitions
+    use objects
+    use project
     use test_cases
     use time_loop
     use utility
 
     implicit none
+
+    integer :: ii, jj
 
     !%  elem2# are the values for elements that have only 2 faces
     real(8),       dimension(:,:), allocatable, target    :: elem2R       ! real data for elements with 2 faces
@@ -52,7 +58,7 @@ program main
     type(string), dimension(:), allocatable, target    :: linkName    ! array of character strings
 
     !%  nodes are the building blocks from teh SWMM link-node formulation
-    real(8),       dimension(:,:), allocatable, target    :: nodeR       ! real(8) data for nodes
+    real(8),       dimension(:,:), allocatable, target    :: nodeR       ! real data for nodes
     integer,    dimension(:,:), allocatable, target    :: nodeI       ! integer data for nodes
     logical,    dimension(:,:), allocatable, target    :: nodeYN      ! logical data for nodes
 
@@ -72,7 +78,6 @@ program main
 
     !% threaded output files
     type(threadedfileType), allocatable, dimension(:) :: threadedfile
-
     integer, dimension(:),      allocatable :: wdID
     integer, dimension(:),      allocatable :: wdNumberPairs
     real(8),    dimension(:),      allocatable :: wdManningsN
@@ -82,6 +87,7 @@ program main
     real(8),    dimension(:),      allocatable :: wdBreadth
     real(8),    dimension(:,:,:),  allocatable :: wdWidthDepthData
     type(string), dimension(:), allocatable :: wdCellType(:)
+
 
     !--------------------------------------------------------------------------
     print *, ''
@@ -96,8 +102,8 @@ program main
     !%  hard-code setting for test cases
 
     setting%TestCase%UseTestCase = .true.
-    ! setting%TestCase%TestName = 'simple_channel_001'
-    setting%TestCase%TestName = 'y_channel_002'
+    setting%TestCase%TestName = 'simple_channel_001'
+    ! setting%TestCase%TestName = 'y_channel_002'
     ! setting%TestCase%TestName = 'simple_weir_003'
     ! setting%TestCase%TestName = 'simple_orifice_004'
     ! setting%TestCase%TestName = 'y_storage_channel_005'
@@ -119,7 +125,7 @@ program main
     setting%Debugout%linkR  = .true.
     setting%Debugout%nodeR  = .true.
 
-    !setting%OutputThreadedLink%SuppressAllFiles = .true.
+    setting%OutputThreadedLink%SuppressAllFiles = .true.
 
     setting%OutputThreadedLink%UseThisOutput = .true.
     setting%OutputThreadedLink%area = .true.
@@ -132,11 +138,8 @@ program main
 
     !% bookkeeping routines
     call utility_get_datetime_stamp (setting%Time%DateTimeStamp)
-
     call debug_initialize (debugfile)
-
     call checking_consistency
-
     call initialize_arrayindex
 
     !% custom setup for hard-code test cases
@@ -147,10 +150,9 @@ program main
             wdID, wdNumberPairs, wdManningsN, wdLength, wdZBottom, wdXDistance, &
             wdBreadth, wdWidthDepthData, wdCellType)
     else
-        call initialize_linknode_arrays &
-            (linkI, nodeI, linkR, nodeR, linkYN, nodeYN, linkName, nodeName)
-        print *, 'error - code only designed for use with test cases'
-        stop
+       call project_open &
+       (linkI, nodeI, linkR, nodeR, linkYN, &
+       nodeYN, linkName, nodeName, bcdataUp, bcdataDn)
     end if
 
 
@@ -173,8 +175,6 @@ program main
         setting%Time%StartTime, wdID, wdNumberPairs, wdManningsN, wdLength,      &
         wdZBottom, wdXDistance, wdBreadth, wdWidthDepthData, wdCellType)
 
-    !stop to check if the initial conditions are setup correctly
-    !check the geometry values
     !% check consistency of the smallvolume setup
     call checking_smallvolume_consistency (elem2R, elemMR)
 
@@ -224,6 +224,7 @@ program main
     !%  close out the debug files
     call debug_finalize(debugfile)
 
+    call project_close(bcdataDn, bcdataUp)
     print *
     print *, 'finished main program'
     print *, '====================='

@@ -15,13 +15,18 @@ use postProcessing
     integer                                 :: specific_link
     integer, dimension(:), allocatable      :: time_steps, data_idx, n_linkItems
     integer, dimension(:), allocatable      :: length_idx 
-    real,    dimension(:,:), allocatable    :: link_data
-    real,    dimension(:), allocatable      :: link_lengths
-    real,    dimension(:,:), allocatable    :: link_long_data
-    real,    dimension(:),   allocatable    :: link_long_lengths, z_bottoms        
+    real(8),    dimension(:,:), allocatable    :: link_data
+    real(8),    dimension(:), allocatable      :: link_lengths
+    real(8),    dimension(:,:), allocatable    :: link_long_data
+    real(8),    dimension(:),   allocatable    :: link_long_lengths, z_bottoms        
     
+<<<<<<< HEAD
     real,    dimension(:,:), allocatable       :: specific_linkData1, specific_linkData2
     real,    dimension(:)  , allocatable       :: xx,yy1, yy2
+=======
+    real(8),    dimension(:,:), allocatable       :: specific_linkData
+    real(8),    dimension(:)  , allocatable       :: xx,yy
+>>>>>>> development
 
 
 open(newunit=iunit1, file='/home/saz/SWMM/SWMMengine/OutputThreaded/out_eta_20201030_1120.txt', status='OLD')

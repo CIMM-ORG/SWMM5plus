@@ -125,8 +125,10 @@ contains
         !
         real(8),      intent(in)      :: alpha
 
+
         real(8)     :: theta
         real(8)     :: theta1, d, ap
+
         integer  :: ii
 
         !--------------------------------------------------------------------------

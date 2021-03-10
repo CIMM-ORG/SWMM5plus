@@ -88,6 +88,7 @@ contains
         integer, dimension(:), allocatable :: init_upNode ! We need these to describe connectivity
         integer, dimension(:), allocatable :: init_dnNode ! We need these to describe connectivity
         real(8),    dimension(:), allocatable :: init_flowrate !initial flowrate 
+
         real(8),    dimension(:,:,:),  allocatable :: init_widthDepthData
         type(string), dimension(:), allocatable :: init_cellType
         real(8), dimension(:),         allocatable :: faceZBottom
@@ -291,10 +292,11 @@ contains
 
             call case_waller_creek_initialize &
                 (channel_length, channel_breadth, channel_topwidth, subdivide_length, &
-                lowerZ, init_flowrate, init_depth, depth_upstream, depth_dnstream, &
+                lowerZ, upperZ, flowrate, init_depth, depth_upstream, depth_dnstream, &
                 ManningsN, lManningsN, idepth_type,                                   &
                 linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,    &
-                bcdataDn, bcdataUp, newID, newWidthDepthData)
+                bcdataDn, bcdataUp, newID, newNumberPairs, &
+                newXDistance, newWidthDepthData, newCellType)
 
             call this_setting_for_time_and_steps &
                 (CFL, velocity, init_depth, subdivide_length, first_step, last_step, &
@@ -1071,6 +1073,7 @@ contains
         real(8),  dimension(size(velocity)) :: dtSet, CFLset
 
         real(8)       :: dtmin
+
         integer    :: dtscale
 
         !--------------------------------------------------------------------------

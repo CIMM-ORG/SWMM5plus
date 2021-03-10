@@ -419,7 +419,6 @@ contains
         !
         character(len=64) :: subroutine_name = 'debug_output'
 
-
         real(8),      target,     intent(in) :: nodeR(:,:),   linkR(:,:)
         real(8),      target,     intent(in) :: elem2R(:,:),  elemMR(:,:),  faceR(:,:)
 
@@ -436,7 +435,6 @@ contains
         character(len=32), pointer ::  ArrayName
 
         integer,       pointer ::  CI, UnitNumber
-
         real(8),       pointer ::  thisdataR(:)
         integer,       pointer ::  thisdataI(:)
 

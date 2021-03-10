@@ -46,6 +46,7 @@ contains
         logical,           intent(in out)  :: faceYN(:,:)
         real(8),              intent(in)      :: thiscoef
 
+
         real(8),  pointer     ::  volume2(:), velocity2(:), oBreadth(:) 
         real(8),  pointer     ::  oDischargeCoeff(:), oInletoffset(:)
         real(8),  pointer     ::  oFullDepth(:), oZbottom(:), oFlow(:), oDepth(:)
@@ -297,7 +298,6 @@ contains
 
         real(8),    intent(inout) ::  critDepth(:), coeffOrif(:), coeffWeir(:)  
         real(8),    intent(in)    ::  breadth(:), fulldepth(:), coeffDischarge(:)
-
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -483,7 +483,6 @@ contains
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-
         real(8),    intent(inout) ::  area(:), perimeter(:), hyddepth(:)
         real(8),    intent(inout) ::  hydradius(:), topwidth(:), depth(:)
         real(8),    intent(in)    ::  breadth(:), fullDepth(:), fullArea(:)
@@ -636,7 +635,6 @@ contains
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
         real(8),              intent(in)      :: thiscoef
-
 
         real(8),    intent(inout)   ::  volume2(:), velocity2(:), flow(:)
         real(8),    intent(in)      ::  coeffOrif(:), coeffWeir(:), breadth(:)

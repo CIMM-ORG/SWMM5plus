@@ -307,9 +307,9 @@ contains
         !
         !--------------------------------------------------------------------------
 
-        setting%Debugout%DisplayInterval = 1
 
-        setting%Time%dt = 0.005
+        setting%Debugout%DisplayInterval = 1500
+        setting%Time%dt = 0.5
         setting%Step%First = 1
         setting%Step%Final = 8000
         setting%Step%Current = 1

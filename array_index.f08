@@ -509,8 +509,9 @@ module array_index
     integer, parameter :: ni_N_link_d         = 4 ! number of downstram links at this node
     integer, parameter :: ni_curve_type       = 5 ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
     integer, parameter :: ni_assigned         = 6 ! given 1 when node has been assigned to face/elem,
-    integer, parameter :: ni_temp1            = 7
-    integer, parameter :: ni_idx_base1        = 7
+    integer, parameter :: ni_total_inflow     = 7 ! index to total_inflow (-1 if not total_inflow)
+    integer, parameter :: ni_temp1            = 8
+    integer, parameter :: ni_idx_base1        = 8
 
     ! column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
@@ -570,14 +571,15 @@ module array_index
     integer, parameter :: nr_StorageExponent        = 6
     integer, parameter :: nr_PondedArea             = 7
     integer, parameter :: nr_SurchargeDepth         = 8
-    integer, parameter :: nr_Eta                    = 9
-    integer, parameter :: nr_Depth                  = 10
-    integer, parameter :: nr_Volume                 = 11
-    integer, parameter :: nr_LateralInflow          = 12
-    integer, parameter :: nr_TotalInflow            = 13
-    integer, parameter :: nr_Flooding               = 14
-    integer, parameter :: nr_temp1                  = 15
-    integer, parameter :: nr_idx_base1              = 15
+    integer, parameter :: nr_MaxInflow              = 9
+    integer, parameter :: nr_Eta                    = 10
+    integer, parameter :: nr_Depth                  = 11
+    integer, parameter :: nr_Volume                 = 12
+    integer, parameter :: nr_LateralInflow          = 13
+    integer, parameter :: nr_TotalInflow            = 14
+    integer, parameter :: nr_Flooding               = 15
+    integer, parameter :: nr_temp1                  = 16
+    integer, parameter :: nr_idx_base1              = 16
 
     ! column index for real data on multiple branches of a node
     integer, parameter :: nr_ElementLength_u1 = nr_idx_base1 + 1 ! used for subdividing junctions
@@ -618,7 +620,6 @@ module array_index
     integer, parameter :: wd_area_difference         = 12
     integer, parameter :: wd_local_difference        = 13
     integer, parameter :: wd_idx_max                 = 13
-
     !==========================================================================
     ! END OF MODULE array_index
     !==========================================================================

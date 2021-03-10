@@ -29,6 +29,7 @@ module bc
     public :: bc_applied_onelement
     public :: bc_timescale_value
     public :: bc_nullify_ghost_elem
+    public :: free_bc
 
     integer :: debuglevel = 0
 
@@ -38,7 +39,7 @@ contains
     !==========================================================================
     !
     subroutine bc_allocate &
-        (bcdataDn, bcdataUp, ndnstreamBC, nupstreamBC, ntimepoint)
+        (bcdataDn, bcdataUp)
         !
         ! allocate storage for boundary conditions.
         ! HACK - possibly move this to allocation_storage module
@@ -46,8 +47,6 @@ contains
         character(64) :: subroutine_name = 'bc_allocate'
 
         type(bcType), dimension(:),   allocatable,    intent(out) :: bcdataDn, bcdataUp
-
-        integer,   intent(in)  :: ndnstreamBC, nupstreamBC, ntimepoint
 
         integer    :: ii
 
@@ -58,25 +57,17 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         !% the Upstream and Downstream bc structure
-        allocate( bcdataUp(nupstreamBC), stat=allocation_status, errmsg=emsg)
+        allocate( bcdataUp(N_BCupstream), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation (allocation_status, emsg)
 
-        allocate( bcdataDn(ndnstreamBC), stat=allocation_status, errmsg=emsg)
+        allocate( bcdataDn(N_BCdnstream), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% the downstream arrays - HACK default downstream is elevation
-
-        do ii=1,ndnstreamBC
+        do ii=1,N_BCdnstream
             bcdataDn(ii)%idx = ii
             bcdataDn(ii)%Updn          = bc_updn_downstream
             bcdataDn(ii)%Category      = bc_category_elevation
-
-            allocate( bcdataDn(ii)%TimeArray(ntimepoint), stat=allocation_status, errmsg=emsg)
-            call utility_check_allocation (allocation_status, emsg)
-
-            allocate( bcdataDn(ii)%ValueArray(ntimepoint), stat=allocation_status, errmsg=emsg)
-            call utility_check_allocation (allocation_status, emsg)
-
             bcdataDn(ii)%NodeID         = nullvalueI
             bcdataDn(ii)%FaceID         = nullvalueI
             bcdataDn(ii)%ElemGhostID    = nullvalueI
@@ -84,25 +75,14 @@ contains
             bcdataDn(ii)%ThisValue      = nullvalueR
             bcdataDn(ii)%ThisTime       = nullvalueR
             bcdataDn(ii)%ThisFlowrate   = nullvalueR
-            bcdataDn(ii)%TimeArray      = nullvalueR
-            bcdataDn(ii)%ValueArray     = nullvalueR
         end do
 
 
         !% the upstream arrays = HACK default upstream is flowrate
-
-
-        do ii=1,nupstreamBC
+        do ii=1,N_BCupstream
             bcdataUp(ii)%idx = ii
             bcdataUp(ii)%Updn       = bc_updn_upstream
             bcdataUp(ii)%category   = bc_category_inflowrate
-
-            allocate( bcdataUp(ii)%TimeArray(ntimepoint), stat=allocation_status, errmsg=emsg)
-            call utility_check_allocation (allocation_status, emsg)
-
-            allocate( bcdataUp(ii)%ValueArray(ntimepoint), stat=allocation_status, errmsg=emsg)
-            call utility_check_allocation (allocation_status, emsg)
-
             bcdataUp(ii)%NodeID         = nullvalueI
             bcdataUp(ii)%FaceID         = nullvalueI
             bcdataUp(ii)%ElemGhostID    = nullvalueI
@@ -110,8 +90,6 @@ contains
             bcdataUp(ii)%ThisValue      = nullvalueR
             bcdataUp(ii)%ThisTime       = nullvalueR
             bcdataUp(ii)%ThisFlowrate   = nullvalueR
-            bcdataUp(ii)%TimeArray      = nullvalueR
-            bcdataUp(ii)%ValueArray     = nullvalueR
         end do
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
@@ -220,7 +198,7 @@ contains
         call bc_updatevalue (bcdataUp, setting%Time%StartTime)
 
         !% check to see that the estimated simulation time is within available BC data
-        call bc_adequate_coverage (bcdataUp, bcdataDn)
+        ! call bc_adequate_coverage (bcdataUp, bcdataDn)
         !
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine bc_checks
@@ -552,6 +530,12 @@ contains
                     ! store the same value on the ghost
                     elem2R(thisghost,e2r_Flowrate)       = thisval
                     elem2R(thisghost,e2r_VelocityColumn) = thisval / elem2R(thisloc,e2r_Area)
+                    ! if (elem2R(thisghost,e2r_VelocityColumn) > 20) then
+                    !     print*, 'U/S BC', ii
+                    !     print*, 'AREA', elem2R(thisloc,e2r_Area)
+                    !     print*, 'Velocity', elem2R(thisghost,e2r_VelocityColumn)
+                    !     stop
+                    ! endif
                 else
                     print *, 'error: unexpected value for bcdata%category of ',thiscat,' in ',subroutine_name
                     stop
@@ -667,7 +651,6 @@ contains
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
         do ii=1,size(bcdata)
             !%  known
             nID      => bcdata(ii)%NodeID  ! already assigned
@@ -677,7 +660,6 @@ contains
             fID      => bcdata(ii)%FaceID
             insideID => bcdata(ii)%ElemInsideID
             ghostID  => bcdata(ii)%ElemGhostID
-
 
             !%  location where the face nodeID is the same as the bc nodeID
             fID  = minloc(abs(faceI(:,fi_node_ID) - nID),1)
@@ -807,6 +789,21 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine bc_ghost_othervalues
+
+    subroutine free_bc(bcdataDn, bcdataUp)
+        type(bcType), dimension(:), allocatable, intent(inout)   :: bcdataUp, bcdataDn
+        integer :: ii
+        do ii = 1, N_BCdnstream
+            deallocate(bcdataDn(ii)%TimeArray)
+            deallocate(bcdataDn(ii)%ValueArray)
+        enddo
+        do ii = 1, N_BCupstream
+            deallocate(bcdataUp(ii)%TimeArray)
+            deallocate(bcdataUp(ii)%ValueArray)
+        enddo
+        deallocate(bcdataUp)
+        deallocate(bcdataDn)
+    end subroutine free_bc
     !
     !==========================================================================
     !==========================================================================

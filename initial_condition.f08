@@ -179,7 +179,6 @@ contains
         integer :: ii, ei_max, mm, nn
 
         real(8) :: trapz_tanTheta, CC, BB, AoverAfull, YoverYfull
-
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
@@ -707,6 +706,7 @@ contains
 
         real(8),              intent(in out)  :: elemMR(:,:)
         logical,           intent(in out)  :: elemMYN(:,:)
+
         real(8),      target, intent(in)      :: elem2R(:,:), nodeR(:,:), faceR(:,:)
         integer,   target, intent(in)      :: elem2I(:,:), elemMI(:,:), nodeI(:,:), faceI(:,:)
 

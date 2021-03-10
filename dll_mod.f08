@@ -1,14 +1,21 @@
 !-----------------------------------------------------------------------
-!module dll_mod
+! Module dll_mod
 !-----------------------------------------------------------------------
+
 module dll_mod
+
     use iso_c_binding
+
     implicit none
+
     private ! all by default
+
     public :: os_type, dll_type, load_dll, free_dll, init_os_type, init_dll, print_error
+
     ! general constants:
     ! the number of bits in an address (32-bit or 64-bit).
     integer, parameter :: bits_in_addr = c_intptr_t*8
+
     ! global error-level variables:
     integer, parameter :: errid_none = 0
     integer, parameter :: errid_info = 1
@@ -63,6 +70,7 @@ module dll_mod
     end interface
 
 contains
+
     !-----------------------------------------------------------------------
     !Subroutine init_dll
     !-----------------------------------------------------------------------
@@ -112,6 +120,7 @@ contains
     !-----------------------------------------------------------------------
     !Subroutine load_dll
     !-----------------------------------------------------------------------
+
     subroutine load_dll (os, dll, errstat, errmsg )
         ! this subroutine is used to dynamically load a dll.
 
@@ -166,6 +175,7 @@ contains
     !-----------------------------------------------------------------------
     !Subroutine free_dll
     !-----------------------------------------------------------------------
+
     subroutine free_dll (os, dll, errstat, errmsg )
 
         ! this subroutine is used to free a dynamically loaded dll
@@ -209,6 +219,7 @@ contains
     !-----------------------------------------------------------------------
     !Subroutine print_error
     !-----------------------------------------------------------------------
+
     subroutine print_error (errstat, procname)
         implicit none
         integer, intent(in) :: errstat

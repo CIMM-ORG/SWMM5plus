@@ -4,7 +4,6 @@
 !
 module control
 
-    use adjustments
     use array_index
     use data_keys
     use globals

@@ -1,5 +1,5 @@
 *.o
-*.inp
+# *.inp
 *.rpt
 *.out
 *.csv
@@ -9,5 +9,7 @@
 *.png
 OutputThreaded
 debugoutputA
-utilities
 SWMM
+SWMMwrapper
+*.mod
+brazos

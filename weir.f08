@@ -52,7 +52,6 @@ contains
         real(8),  pointer     ::  wBreadth(:), wInletoffset(:), wFullDepth(:), wZbottom(:)
         real(8),  pointer     ::  wSideSlope(:), wEndContractions(:), cTriangular(:), wCrown(:)
         real(8),  pointer     ::  cRectangular(:), wLength(:), fEdn(:), fEup(:)
-        
         integer, pointer   ::  iup(:), idn(:), dir(:)
 
         logical, pointer   ::  maskarrayUpSubmerge(:), maskarrayDnSubmerge(:)
@@ -528,7 +527,6 @@ contains
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
         real(8),              intent(in)      :: thiscoef
 
-
         real(8),    intent(inout)   ::  volume2(:), velocity2(:), flow(:)
         real(8),    intent(in)      ::  area(:), sideslope(:), cTrig(:), cRect(:)
         real(8),    intent(in)      ::  submergenceFactor1(:), submergenceFactor2(:)
@@ -611,7 +609,6 @@ contains
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
         real(8),              intent(in)      :: thiscoef
-
 
         real(8),    intent(inout) ::  volume2(:), velocity2(:), flow(:), effectivehead(:)
         real(8),    intent(in)    ::  crest(:), crown(:), eta(:), area(:), cOrif(:)

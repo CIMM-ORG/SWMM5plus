@@ -1,0 +1,340 @@
+[TITLE]
+;;Project Title/Notes
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CFS
+INFILTRATION         HORTON
+FLOW_ROUTING         KINWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           08/18/2020
+START_TIME           00:00:00
+REPORT_START_DATE    08/18/2020
+REPORT_START_TIME    00:00:00
+END_DATE             08/20/2020
+END_TIME             00:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:15:00
+WET_STEP             00:05:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0:00:01
+
+INERTIAL_DAMPING     PARTIAL
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         12.557
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.005
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[TEMPERATURE]
+;;Data Element     Values
+TIMESERIES         Temperature
+WINDSPEED MONTHLY  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+SNOWMELT           32 0.5 0.6 850 45 0.0
+ADC IMPERVIOUS     0 0 0 0 0 0 0 0 0 0
+ADC PERVIOUS       0 0 0 0 0 0 0 0 0 0
+
+[RAINGAGES]
+;;Name           Format    Interval SCF      Source
+;;-------------- --------- ------ ------ ----------
+RAIN1            INTENSITY 1:00     1.0      TIMESERIES R1
+
+[SUBCATCHMENTS]
+;;Name           Rain Gage        Outlet           Area     %Imperv  Width    %Slope   CurbLen  SnowPack
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- -------- ----------------
+rain_&_snow_subcatch RAIN1            1                5        25       500      0.5      0        Snow1
+Aquifer_subcatch RAIN1            1                5        25       500      0.5      0
+LID_bio_subcatch RAIN1            1                5        25       500      0.5      0
+LID_RB_subcatch  RAIN1            1                5        50       100      1        0
+LID_RG_&_GR_subcatch RAIN1            1                5        50       100      1        0
+LID_IT_subcatch  RAIN1            1                5        25       500      0.5      0
+LD_PP_subcatch   RAIN1            1                5        25       500      0.5      0
+LID_RFD_subcatch RAIN1            1                5        25       500      0.5      0
+LID_VS_subcatch  RAIN1            1                5        25       500      0.5      0
+node2_rain_subcatch RAIN1            2                5        25       500      0.5      0
+
+[SUBAREAS]
+;;Subcatchment   N-Imperv   N-Perv     S-Imperv   S-Perv     PctZero    RouteTo    PctRouted
+;;-------------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+rain_&_snow_subcatch 0.01       0.1        0.05       0.05       25         OUTLET
+Aquifer_subcatch 0.01       0.1        0.05       0.05       25         PERVIOUS   100
+LID_bio_subcatch 0.01       0.1        0.05       0.05       25         OUTLET
+LID_RB_subcatch  0.01       0.1        0.05       0.05       25         OUTLET
+LID_RG_&_GR_subcatch 0.01       0.1        0.05       0.05       25         OUTLET
+LID_IT_subcatch  0.01       0.1        0.05       0.05       25         OUTLET
+LD_PP_subcatch   0.01       0.1        0.05       0.05       25         OUTLET
+LID_RFD_subcatch 0.01       0.1        0.05       0.05       25         OUTLET
+LID_VS_subcatch  0.01       0.1        0.05       0.05       25         OUTLET
+node2_rain_subcatch 0.01       0.1        0.05       0.05       25         OUTLET
+
+[INFILTRATION]
+;;Subcatchment   MaxRate    MinRate    Decay      DryTime    MaxInfil
+;;-------------- ---------- ---------- ---------- ---------- ----------
+rain_&_snow_subcatch 3.0        0.5        4          7          0
+Aquifer_subcatch 3.0        0.5        4          7          0
+LID_bio_subcatch 3.0        0.5        4          7          0
+LID_RB_subcatch  3.0        0.5        4          7          0
+LID_RG_&_GR_subcatch 3.0        0.5        4          7          0
+LID_IT_subcatch  3.0        0.5        4          7          0
+LD_PP_subcatch   3.0        0.5        4          7          0
+LID_RFD_subcatch 3.0        0.5        4          7          0
+LID_VS_subcatch  3.0        0.5        4          7          0
+node2_rain_subcatch 3.0        0.5        4          7          0
+
+[LID_CONTROLS]
+;;Name           Type/Layer Parameters
+;;-------------- ---------- ----------
+Bio-Retention    BC
+Bio-Retention    SURFACE    1000       0.0        0.1        1.0        5
+Bio-Retention    SOIL       1000       0.5        0.25       0.1        10         10.0       100
+Bio-Retention    STORAGE    1000       0.1        0          0
+Bio-Retention    DRAIN      0          0.5        0          6          0          0
+
+Rain_Barrel      RB
+Rain_Barrel      STORAGE    48         0.75       0.5        0
+Rain_Barrel      DRAIN      1          0.5        0          0          0          0
+
+Green_Roof       GR
+Green_Roof       SURFACE    6          .25        0.1        1.0        5
+Green_Roof       SOIL       12         0.5        0.2        0.1        0.5        10.0       3.5
+Green_Roof       DRAINMAT   3          0.5        0.1
+
+Rain_Garden      RG
+Rain_Garden      SURFACE    6          .25        0.1        1.0        5
+Rain_Garden      SOIL       12         0.5        0.2        0.1        0.5        10.0       3.5
+Rain_Garden      STORAGE    0          0.75       0.5        0
+
+Infiltration_Trench IT
+Infiltration_Trench SURFACE    100        0          .013       1.0        5
+Infiltration_Trench STORAGE    1000       .33        10         0
+Infiltration_Trench DRAIN      0          0.5        6          6          0          0
+
+Permeable_Pavement PP
+Permeable_Pavement SURFACE    1.5        0.0        0.1        1.0        5
+Permeable_Pavement PAVEMENT   100        .16        0          254        0          0          0
+Permeable_Pavement SOIL       10         0.5        0.2        0.1        0.5        10.0       88.9
+Permeable_Pavement STORAGE    450        .63        3.3        0
+Permeable_Pavement DRAIN      0          0.5        6          6          0          0
+
+Rooftop_Disconnection RD
+Rooftop_Disconnection SURFACE    100        0.0        .013       1.0        5
+Rooftop_Disconnection DRAIN      0          0.5        6          6          0          0
+
+Vegetative_Swale VS
+Vegetative_Swale SURFACE    25         .35        0.1        1.0        5
+
+[LID_USAGE]
+;;Subcatchment   LID Process      Number  Area       Width      InitSat    FromImp    ToPerv     RptFile                  DrainTo          FromPerv
+;;-------------- ---------------- ------- ---------- ---------- ---------- ---------- ---------- ------------------------ ---------------- ----------
+LID_bio_subcatch Bio-Retention    1       35000      10         0          100        0          *                        *                0
+LID_RB_subcatch  Rain_Barrel      100     12         10         0          25         0          *                        *                0
+LID_RG_&_GR_subcatch Rain_Garden      100     50         10         0          25         1          *                        *                0
+LID_RG_&_GR_subcatch Green_Roof       100     50         10         0          25         1          *                        *                0
+LID_IT_subcatch  Infiltration_Trench 1       10890.00   10         0          25         0          *                        *                0
+LD_PP_subcatch   Permeable_Pavement 1       10890.00   10         0          25         1          *                        *                0
+LID_RFD_subcatch Rooftop_Disconnection 1       21780.00   10         0          25         0          *                        *                0
+LID_VS_subcatch  Vegetative_Swale 1       10890.00   15         0          25         0          *                        *                0
+
+[AQUIFERS]
+;;Name           Por    WP     FC     Ksat   Kslope Tslope ETu    ETs    Seep   Ebot   Egw    Umc    ETupat
+;;-------------- ------ ------ ------ ------ ------ ------ ------ ------ ------ ------ ------ ------ ------
+Aquifer1         .46    .13    .23    1      5      0      .5     15     0.002  .1     3.9    .23
+
+[GROUNDWATER]
+;;Subcatchment   Aquifer          Node             Esurf  A1     B1     A2     B2     A3     Dsw    Egwt   Ebot   Wgr    Umc
+;;-------------- ---------------- ---------------- ------ ------ ------ ------ ------ ------ ------ ------ ------ ------ ------
+Aquifer_subcatch aquifer1         1                16.3   .001   2      0      0      0      0      1.75
+
+[SNOWPACKS]
+;;Name           Surface    Parameters
+;;-------------- ---------- ----------
+Snow1            PLOWABLE   .003       .01        31         .03        .1         0.00       0
+Snow1            IMPERVIOUS .003       .01        32.0       .05        .1         0.00       1
+Snow1            PERVIOUS   .003       .01        32.0       .05        .2         0.00       1
+Snow1            REMOVAL    1.0        0.0        0.0        0.0        0.0        0.0
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded
+;;-------------- ---------- ---------- ---------- ---------- ----------
+1                1          0          0          0          0
+2                0          0          0          0          0
+3                0          0          0          0          0
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+4                0          FREE                        NO
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+1                1                2                400        0.01       0          0          0          0
+2                2                3                400        0.01       0          0          0          0
+3                3                4                400        0.01       0          0          0          0
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+1                CIRCULAR     1                0          0          0          1
+2                CIRCULAR     1                0          0          0          1
+3                CIRCULAR     1                0          0          0          1
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+1                FLOW             inflow_file      FLOW     1.0      1.0      1        baseline_direct
+3                FLOW             inflow_file      FLOW     1.0      1.0
+
+[DWF]
+;;Node           Constituent      Baseline   Patterns
+;;-------------- ---------------- ---------- ----------
+1                FLOW             5          "baseline_direct" "" ""
+
+[HYDROGRAPHS]
+;;Hydrograph     Rain Gage/Month  Response R        T        K        Dmax     Drecov   Dinit
+;;-------------- ---------------- -------- -------- -------- -------- -------- -------- --------
+UHG1             RAIN1
+UHG1             All              Short    0.06     0.5      3        0        0        0
+UHG1             All              Medium   0.1      1        4        0        0        0
+UHG1             All              Long     0.2      10       1        0        0        0
+
+
+[RDII]
+;;Node           Unit Hydrograph  Sewer Area
+;;-------------- ---------------- ----------
+1                UHG1             10
+
+[TIMESERIES]
+;;Name           Date       Time       Value
+;;-------------- ---------- ---------- ----------
+R1                          0:00       0
+R1                          1:00       0.25
+R1                          2:00       0.5
+R1                          3:00       0.8
+R1                          4:00       0.4
+R1                          5:00       0.1
+R1                          6:00       0
+R1                          27:00      0
+R1                          28:00      0.4
+R1                          29:00      0.2
+R1                          30:00      0
+;
+Temperature                 2:00       23
+Temperature                 4:00       28
+Temperature                 6:00       32
+Temperature                 8:00       35
+Temperature                 10:00      47
+Temperature                 12:00      50
+Temperature                 14:00      57
+Temperature                 16:00      60
+Temperature                 18:00      49
+Temperature                 20:00      38
+Temperature                 22:00      36
+Temperature                 24:00      30
+;
+inflow_file      FILE "/home/griano/Documents/Github/SWMMengine/swmm_files/raindata.txt"
+
+[PATTERNS]
+;;Name           Type       Multipliers
+;;-------------- ---------- -----------
+baseline_direct  HOURLY     .25   .25   .25   .3    .3    .4
+baseline_direct             .7    1     1     1     1.2   1.3
+baseline_direct             1.5   1.75  1.75  1.75  1.8   2
+baseline_direct             2     1.5   1.2   1     .7    .5
+;
+node3_dryWeather HOURLY     5     3     2     1     2     4
+node3_dryWeather            6     7     2     1     1     2
+node3_dryWeather            1     3     2     1     2     3
+node3_dryWeather            2     1     3     2     1     3
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 0.000 0.000 10000.000 10000.000
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord
+;;-------------- ------------------ ------------------
+1                916.575            7036.224
+2                1004.391           6004.391
+3                1147.091           4950.604
+4                1783.754           3951.701
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord
+;;-------------- ------------------ ------------------
+
+[Polygons]
+;;Subcatchment   X-Coord            Y-Coord
+;;-------------- ------------------ ------------------
+rain_&_snow_subcatch 3685.121           8892.734
+rain_&_snow_subcatch 5023.068           7670.127
+rain_&_snow_subcatch 3673.587           6574.394
+rain_&_snow_subcatch 2128.028           7681.661
+Aquifer_subcatch -271.050           9042.676
+Aquifer_subcatch 1378.316           9884.660
+Aquifer_subcatch 2773.933           9284.890
+Aquifer_subcatch 1182.238           8258.362
+LID_bio_subcatch -1193.772          8858.131
+LID_bio_subcatch -86.505            8108.420
+LID_bio_subcatch -1862.745          6724.337
+LID_bio_subcatch -3050.750          8108.420
+LID_RB_subcatch  -1712.803          9492.503
+LID_RB_subcatch  -524.798           9653.979
+LID_RB_subcatch  -524.798           9100.346
+LID_RB_subcatch  -1747.405          9077.278
+LID_RG_&_GR_subcatch 4250.288           10103.806
+LID_RG_&_GR_subcatch 4550.173           8950.404
+LID_RG_&_GR_subcatch 3016.148           9238.754
+LID_RG_&_GR_subcatch 3143.022           9884.660
+LID_IT_subcatch  -547.866           6678.201
+LID_IT_subcatch  51.903             6043.829
+LID_IT_subcatch  -1020.761          5374.856
+LID_IT_subcatch  -1701.269          6078.431
+LD_PP_subcatch   3441.273           6267.838
+LD_PP_subcatch   3660.812           5521.405
+LD_PP_subcatch   2277.717           5290.889
+LD_PP_subcatch   2091.109           6432.492
+LID_RFD_subcatch 5669.594           6410.538
+LID_RFD_subcatch 5373.216           5653.128
+LID_RFD_subcatch 4187.706           5708.013
+LID_RFD_subcatch 4231.614           6794.731
+LID_VS_subcatch  -2771.679          5697.036
+LID_VS_subcatch  -3331.504          6410.538
+LID_VS_subcatch  -2288.694          6772.777
+LID_VS_subcatch  -1959.385          5817.783
+node2_rain_subcatch -510.428           5181.120
+node2_rain_subcatch -236.004           4412.733
+node2_rain_subcatch -916.575           4291.987
+node2_rain_subcatch -960.483           5104.281
+
+[SYMBOLS]
+;;Gage           X-Coord            Y-Coord
+;;-------------- ------------------ ------------------
+RAIN1            279.912            7091.109
+
