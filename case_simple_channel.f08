@@ -13,6 +13,7 @@ module case_simple_channel
     use data_keys
     use globals
     use setting_definition
+    use utility
 
     implicit none
 
@@ -59,21 +60,40 @@ contains
 
         type(bcType), dimension(:), allocatable, intent(out) :: bcdataUp, bcdataDn
 
-        integer    :: ntimepoint, ndnstreamBC, nupstreamBC
+        integer    :: ntimepoint, N_BCdnstream, N_BCupstream
 
+        integer            :: allocation_status, ii
+        character(len=99)  :: emsg
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
 
         ! Boundary conditions
         ntimepoint = 2
-        nupstreamBC = 1
-        ndnstreamBC = 1
+        N_BCupstream = 1
+        N_BCdnstream = 1
 
         ! check if
 
         call bc_allocate &
-            (bcdataDn, bcdataUp, ndnstreamBC, nupstreamBC, ntimepoint)
+            (bcdataDn, bcdataUp)
+
+        do ii = 1, N_BCdnstream
+            allocate( bcdataDn(ii)%TimeArray(ntimepoint), stat=allocation_status, errmsg=emsg)
+            call utility_check_allocation (allocation_status, emsg)
+            allocate( bcdataDn(ii)%ValueArray(ntimepoint), stat=allocation_status, errmsg=emsg)
+            call utility_check_allocation (allocation_status, emsg)
+            bcdataDn(ii)%TimeArray      = nullvalueR
+            bcdataDn(ii)%ValueArray     = nullvalueR
+        enddo
+        do ii = 1, N_BCupstream
+            allocate( bcdataUp(ii)%TimeArray(ntimepoint), stat=allocation_status, errmsg=emsg)
+            call utility_check_allocation (allocation_status, emsg)
+            allocate( bcdataUp(ii)%ValueArray(ntimepoint), stat=allocation_status, errmsg=emsg)
+            call utility_check_allocation (allocation_status, emsg)
+            bcdataUp(ii)%TimeArray      = nullvalueR
+            bcdataUp(ii)%ValueArray     = nullvalueR
+        enddo
 
         ! assign values
         ! downstream is default to elevation

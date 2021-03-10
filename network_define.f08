@@ -102,11 +102,14 @@ contains
         ! Typically this should only be an issue where the links are representing a
         ! high-resolution natural channel.
 
-        ! call network_define_num_elements(swmm_graph, linkR, nodeR, linkI, nodeI)
-        ! DEFINE NUM ELEMENTS
-        linkI(:, li_N_element) = 2
-        setting%step%final = int(setting%time%endtime / setting%time%dt)
-        linkR(:, lr_ElementLength) = linkR(:, lr_Length) / linkI(:, li_N_element)
+        if (.not. setting%TestCase%UseTestCase) then
+            ! call network_define_num_elements(swmm_graph, linkR, nodeR, linkI, nodeI)
+            ! DEFINE NUM ELEMENTS
+            linkI(:, li_N_element) = 2
+            setting%step%final = int(setting%time%endtime / setting%time%dt)
+            linkR(:, lr_ElementLength) = linkR(:, lr_Length) / linkI(:, li_N_element)
+        endif
+
         !%   add sections of links to the nodes to create junctions
         call network_adjust_link_length (linkR, nodeR, linkI, nodeI)
 
