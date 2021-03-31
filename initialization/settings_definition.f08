@@ -257,10 +257,267 @@ module settings_definition
         type(ZeroValueType) :: ZeroValue ! finite values to represent small or negative values
     end type settingType
 
+    type(settingType) :: setting
+
 contains
 
     subroutine load_settings(fpath)
         character(len=:), intent(in) :: fpath
+        character(kind=json_CK, len=:), allocatable :: c
+        real(8) :: real_value
+        integer :: integer_value
+        logical :: logical_value
+        logical :: found
         type(json_file) :: json
+
+        call json%initialize()
+        call json%load(filename = fpath)
+
+        ! Load ACmethod Settings
+        call json%get('ACmethod.Anomaly.DensityLowCutoff', real_value, found)
+        setting%ACmethod%Anomaly%DensityLowCutoff = real_value
+        if (.not. found) stop 1
+        call json%get('ACmethod.Anomaly.FullPipeFactor', real_value, found)
+        setting%ACmethod%Anomaly%FullPipeFactor = real_value
+        if (.not. found) stop 1
+        call json%get('ACmethod.Anomaly.OpenPipeFactor', real_value, found)
+        setting%ACmethod%Anomaly%OpenPipeFactor = real_value
+        if (.not. found) stop 1
+        call json%get('ACmethod.Anomaly.UseDensityCorrection', logical_value, found)
+        setting%ACmethod%Anomaly%UseDensityCorrection = logical_value
+        if (.not. found) stop 1
+        call json%get('ACmethod.Anomaly.DensityHighCutoff', real_value, found)
+        setting%ACmethod%Anomaly%DensityHighCutoff = real_value
+        if (.not. found) stop 1
+
+        ! Load CFL Settings
+        call json%get('CFL.CFLmax', real_value, found)
+        setting%CFL%CFLmax = real_value
+        if (.not. found) stop 1
+        call json%get('CFL.CFLmax', real_value, found)
+        setting%CFL%CFLmax = real_value
+        if (.not. found) stop 1
+
+        ! Load Celerity Settings
+        call json%get('Celerity.RC', real_value, found)
+        setting%Celerity%RC = real_value
+        if (.not. found) stop 1
+
+        ! Load Convergence Settings
+        call json%get('Convergence.Habsolute', real_value, found)
+        setting%Convergence%Habsolute = real_value
+        if (.not. found) stop 1
+        call json%get('Convergence.Hrelative', real_value, found)
+        setting%Convergence%Hrelative = real_value
+        if (.not. found) stop 1
+        call json%get('Convergence.Qabsolute', real_value, found)
+        setting%Convergence%Qabsolute = real_value
+        if (.not. found) stop 1
+        call json%get('Convergence.Qrelative', real_value, found)
+        setting%Convergence%Qrelative = real_value
+        if (.not. found) stop 1
+
+        ! Load Iter Settings
+        call json%get('Iter.Firststep', integer_value, found)
+        setting%Iter%Firststep = integer_value
+        if (.not. found) stop 1
+        call json%get('Iter.Max', integer_value, found)
+        setting%Iter%Max = integer_value
+        if (.not. found) stop 1
+        call json%get('Iter.Min', integer_value, found)
+        setting%Iter%Min = integer_value
+        if (.not. found) stop 1
+
+        ! Load Switch Settings
+        call json%get('Switch.Area', real_value, found)
+        setting%Switch%Area = real_value
+        if (.not. found) stop 1
+        call json%get('Switch.Buffer', real_value, found)
+        setting%Switch%Buffer = real_value
+        if (.not. found) stop 1
+        call json%get('Switch.Depth', real_value, found)
+        setting%Switch%Depth = real_value
+        if (.not. found) stop 1
+
+        ! Load Adjust Settings
+        call json%get('Adjust.Flowrate.Apply', logical_value, found)
+        setting%Adjust%Flowrate%Apply = logical_value
+        if (.not. found) stop 1
+        call json%get('Adjust.Flowrate.approach', c, found)
+        if (c == 'vshape') then
+            setting%Adjust%Flowrate%approach = vshape
+        else if (c == 'smoothall') then
+            setting%Adjust%Flowrate%approach = smoothall
+        else
+            print *, "Error, Adjust.Flowrate.approach not compatible"
+            stop
+        endif
+        call json%get('Adjust.Flowrate.Coef', real_value, found)
+        setting%Adjust%Flowrate%Coef = real_value
+        if (.not. found) stop 1
+
+        call json%get('Adjust.Head.Apply', logical_value, found)
+        setting%Adjust%Head%Apply = logical_value
+        if (.not. found) stop 1
+        call json%get('Adjust.Head.approach', c, found)
+        if (c == 'vshape') then
+            setting%Adjust%Head%approach = vshape
+        else if (c == 'smoothall') then
+            setting%Adjust%Head%approach = smoothall
+        else
+            print *, "Error, Adjust.Head.approach not compatible"
+            stop
+        endif
+        call json%get('Adjust.Head.Coef', real_value, found)
+        setting%Adjust%Head%Coef = real_value
+        if (.not. found) stop 1
+
+        ! Load Constant Settings
+        call json%get('Constant.gravity', real_value, found)
+        setting%Constant%gravity = real_value
+        if (.not. found) stop 1
+
+        ! Load Eps Settings
+        call json%get('Eps.FroudeJump', real_value, found)
+        setting%Eps%FroudeJump = real_value
+        if (.not. found) stop 1
+        call json%get('Eps.InflowDepthIncreaseFroudeLimit', real_value, found)
+        setting%Eps%InflowDepthIncreaseFroudeLimit = real_value
+        if (.not. found) stop 1
+
+        ! Load Limiter Settings
+        call json%get('Limiter.BC.approach', c, found)
+        if (c == 'FroudeNumber') then
+            setting%Limiter%BC%approach = FroudeNumber
+        else
+            print *, "Error, Limiter.BC.approach not compatible"
+            stop
+        endif
+        if (.not. found) stop 1
+        call json%get('Limiter.BC.FroudeInflowMaximum', real_value, found)
+        setting%Limiter%BC%FroudeInflowMaximum = real_value
+        if (.not. found) stop 1
+        call json%get('Limiter.BC.UseInflowLimiter', logical_value, found)
+        setting%Limiter%BC%UseInflowLimiter = logical_value
+        if (.not. found) stop 1
+
+        call json%get('Limiter.Flowrate.FaceVolumeTransport', real_value, found)
+        setting%Limiter%Flowrate%FaceVolumeTransport = real_value
+        if (.not. found) stop 1
+        call json%get('Limiter.Flowrate.UseFaceVolumeTransport', logical_value, found)
+        setting%Limiter%Flowrate%UseFaceVolumeTransport = logical_value
+        if (.not. found) stop 1
+
+        call json%get('Limiter.Timescale.Maximum', real_value, found)
+        setting%Limiter%Timescale%Maximum = real_value
+        if (.not. found) stop 1
+        call json%get('Limiter.Timescale.Minimum', real_value, found)
+        setting%Limiter%Timescale%Minimum = real_value
+        if (.not. found) stop 1
+
+        call json%get('Limiter.Velocity.Maximum', real_value, found)
+        setting%Limiter%Velocity%Maximum = real_value
+        if (.not. found) stop 1
+        call json%get('Limiter.Velocity.UseLimitMax', logical_value, found)
+        setting%Limiter%Velocity%UseLimitMax = logical_value
+        if (.not. found) stop 1
+
+        ! Load SmallVolume Settings
+        call json%get('SmallVolume.DepthCutoff', real_value, found)
+        setting%SmallVolume%DepthCutoff = real_value
+        if (.not. found) stop 1
+        call json%get('SmallVolume.ManningsN', real_value, found)
+        setting%SmallVolume%ManningsN = real_value
+        if (.not. found) stop 1
+        call json%get('SmallVolume.MinimumArea', real_value, found)
+        setting%SmallVolume%MinimumArea = real_value
+        if (.not. found) stop 1
+        call json%get('SmallVolume.MinimumHydRadius', real_value, found)
+        setting%SmallVolume%MinimumHydRadius = real_value
+        if (.not. found) stop 1
+        call json%get('SmallVolume.MinimumPerimeter', real_value, found)
+        setting%SmallVolume%MinimumPerimeter = real_value
+        if (.not. found) stop 1
+        call json%get('SmallVolume.MinimumTopwidth', real_value, found)
+        setting%SmallVolume%MinimumTopwidth = real_value
+        if (.not. found) stop 1
+        call json%get('SmallVolume.UseSmallVolumes', logical_value, found)
+        setting%SmallVolume%UseSmallVolumes = logical_value
+        if (.not. found) stop 1
+
+        ! Load Solver Settings
+        call json%get('Solver.crk2', real_value, found)
+        setting%Solver%crk2 = real_value
+        if (.not. found) stop 1
+        call json%get('Solver.MomentumSourceMethod', c, found)
+        if (c == 'T00') then
+            setting%Solver%MomentumSourceMethod = T00
+        else if (c == 'T10') then
+            setting%Solver%MomentumSourceMethod = T10
+        else if (c == 'T20') then
+            setting%Solver%MomentumSourceMethod = T20
+        endif
+        if (.not. found) stop 1
+        call json%get('Solver.PreissmanSlot', logical_value, found)
+        setting%Solver%PreissmanSlot = logical_value
+        if (.not. found) stop 1
+        call json%get('Solver.SolverSelect', c, found)
+        if (c == 'SVE') then
+            setting%Solver%SolverSelect = SVE
+        else if (c == 'SVE_AC') then
+            setting%Solver%SolverSelect = SVE_AC
+        else if (c == 'AC') then
+            setting%Solver%SolverSelect = AC
+        endif
+        if (.not. found) stop 1
+
+        ! Load Step Settings
+        call json%get('Step.Current', real_value, found)
+        setting%Step%Current = real_value
+        if (.not. found) stop 1
+        call json%get('Step.Final', real_value, found)
+        setting%Step%Final = real_value
+        if (.not. found) stop 1
+        call json%get('Step.First', real_value, found)
+        setting%Step%First = real_value
+        if (.not. found) stop 1
+
+        ! Load Time Settings
+        call json%get('Time.DateTimeStamp', real_value, found)
+        setting%Time%DateTimeStamp = real_value
+        if (.not. found) stop 1
+        call json%get('Time.Dt', real_value, found)
+        setting%Time%Dt = real_value
+        if (.not. found) stop 1
+        call json%get('Time.EndTime', real_value, found)
+        setting%Time%EndTime = real_value
+        if (.not. found) stop 1
+        call json%get('Time.NextTime', real_value, found)
+        setting%Time%NextTime = real_value
+        if (.not. found) stop 1
+        call json%get('Time.StartTime', real_value, found)
+        setting%Time%StartTime = real_value
+        if (.not. found) stop 1
+
+        ! Load ZeroValue Settings
+        call json%get('ZeroValue.Area', real_value, found)
+        setting%ZeroValue%Area = real_value
+        if (.not. found) stop 1
+        call json%get('ZeroValue.Depth', real_value, found)
+        setting%ZeroValue%Depth = real_value
+        if (.not. found) stop 1
+        call json%get('ZeroValue.Topwidth', real_value, found)
+        setting%ZeroValue%Topwidth = real_value
+        if (.not. found) stop 1
+        call json%get('ZeroValue.UseZeroValues', logical_value, found)
+        setting%ZeroValue%UseZeroValues = logical_value
+        if (.not. found) stop 1
+        call json%get('ZeroValue.Volume', real_value, found)
+        setting%ZeroValue%Volume = real_value
+        if (.not. found) stop 1
+
+        call json%destroy()
+        if (json%failed()) stop 1
+
     end subroutine load_settings
 end module settings_definition

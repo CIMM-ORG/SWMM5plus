@@ -153,6 +153,9 @@ module data_keys
     integer, parameter :: vshape = 1
     integer, parameter :: smoothall = 2
 
+    ! data types for limiter BC approach (setting%Limiter%BC%approach)
+    integer, parameter :: FroudeNumber = 1
+
     !==========================================================================
     ! END OF MODULE data_keys
     !==========================================================================
