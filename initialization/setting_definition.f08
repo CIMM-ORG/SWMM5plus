@@ -1,4 +1,4 @@
-module settings_definition
+module setting_definition
 
     use data_keys
     use json_module
@@ -520,4 +520,4 @@ contains
         if (json%failed()) stop 1
 
     end subroutine load_settings
-end module settings_definition
+end module setting_definition
