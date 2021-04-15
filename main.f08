@@ -49,14 +49,10 @@ program main
                 else if (trim(arg) == 'y_storage_channel') then
                 else
                     write(*, *) 'The test case ' // trim(arg) // ' is unsupported. Please use one of the following:'
-                    print *, new_line("simple_channel")
-                    print *, new_line("simple_orifice")
-                    print *, new_line("simple_pipe")
-                    print *, new_line("simple_weir")
-                    print *, new_line("swashes")
-                    print *, new_line("waller_creek")
-                    print *, new_line("y_channel")
-                    print *, new_line("y_storage_channel")
+                    print *, new_line('')
+                    print *, "simple_channel, simple_orifice, simple_pipe"
+                    print *, "simple_weir, swashes, waller_creek"
+                    print *, "y_channel, y_storage_channel"
                     stop
                 endif
             endif
