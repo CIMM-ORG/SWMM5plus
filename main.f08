@@ -12,7 +12,7 @@ program main
     character(len=8) :: param
     character(len=256) :: arg
 
-    ! ---  Define project path
+    ! ---  Define paths
 
     call getcwd(setting%Paths%project)
     setting%Paths%setting = trim(setting%Paths%project) // '/initialization/settings.json'
@@ -48,7 +48,15 @@ program main
                 else if (trim(arg) == 'y_channel') then
                 else if (trim(arg) == 'y_storage_channel') then
                 else
-                    write(*, *) 'The test case ' // trim(arg) // ' is unsupported'
+                    write(*, *) 'The test case ' // trim(arg) // ' is unsupported. Please use one of the following:'
+                    print *, new_line("simple_channel")
+                    print *, new_line("simple_orifice")
+                    print *, new_line("simple_pipe")
+                    print *, new_line("simple_weir")
+                    print *, new_line("swashes")
+                    print *, new_line("waller_creek")
+                    print *, new_line("y_channel")
+                    print *, new_line("y_storage_channel")
                     stop
                 endif
             endif
