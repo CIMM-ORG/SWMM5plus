@@ -1,5 +1,4 @@
 *.o
-# *.inp
 *.rpt
 *.out
 *.csv
@@ -7,10 +6,8 @@
 *.out
 *.so
 *.png
-OutputThreaded
-debugoutputA
-SWMM
-SWMMwrapper
 *.mod
-brazos
+SWMM
+initialization/interface/src
 json-fortran
+debug
