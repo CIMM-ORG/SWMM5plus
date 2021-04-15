@@ -17,8 +17,151 @@
 module array_index
 
     use globals
+    use iso_c_binding
 
     implicit none
+    !%  FIRST INDEXES (DO NOT CHANGE) --------------------------------------------
+    ! In theory, we can use different first index values for the arrays.
+    ! This was initially used in debugging, but it seemed the gfortran compiler
+    ! had some behaviors with non-unity starting points that I couldn't figure out.
+    integer, parameter :: first_face_index  = 1
+    integer, parameter :: first_elemM_index = 1
+    integer, parameter :: first_elem2_index = 1
+
+    !%  SIZES FOR MULTI_FACE ELEMENTS --------------------------------------------
+    ! design of array depends on faces per element and elements per face
+    ! CODE NOTE: face_per_elemM must equal sum of upstream and downstream
+    integer, parameter :: face_per_elemM          = 6  !maximum number of faces per elemM 6,3 and 3
+    integer, parameter :: upstream_face_per_elemM = 3  !maximum number of upstream faces
+    integer, parameter :: dnstream_face_per_elemM = 3
+
+    !%  linkI COLUMN INDEXES FOR INTEGER DATA OF LINKS IN LINK/NODE SYSTEM -------
+    ! column index for integer data in linkI array
+    enum, bind(c)
+        enumerator :: li_idx = 1
+        enumerator :: li_link_type
+        enumerator :: li_weir_type  ! type of weir link
+        enumerator :: li_orif_type  ! type of orifice link
+        enumerator :: li_pump_type  ! type of pump link
+        enumerator :: li_geometry
+        enumerator :: li_roughness_type
+        enumerator :: li_N_element  ! Number of elements in this link
+        enumerator :: li_Mnode_u  ! map to upstream node connecting to link
+        enumerator :: li_Mnode_d ! map to downstram node connecting to link
+        enumerator :: li_Melem_u ! element ID of upstream element of link
+        enumerator :: li_Melem_d ! element ID of downstream element of link
+        enumerator :: li_Mface_u ! face ID of upstream face of link
+        enumerator :: li_Mface_d ! face ID of downstream face of link
+        enumerator :: li_assigned ! given 1 when link is assigned
+        enumerator :: li_InitialDepthType ! 1=uniform, 2= lineary change, 3=exponential decay
+    end enum
+    integer, parameter :: li_idx_max = li_InitialDepthType
+
+    !%  nodeI COLUMN INDEXES FOR INTEGER DATA OF NODES IN LINK/NODE SYSTEM -------
+    ! column index for integer data in nodeI array
+    enum, bind(c)
+        enumerator :: ni_idx = 1
+        enumerator :: ni_node_type
+        enumerator :: ni_N_link_u ! number of upstream links at this node
+        enumerator :: ni_N_link_d ! number of downstram links at this node
+        enumerator :: ni_curve_type ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
+        enumerator :: ni_assigned ! given 1 when node has been assigned to face/elem,
+        enumerator :: ni_total_inflow ! index to total_inflow (-1 if not total_inflow)
+    end enum
+    integer, parameter :: ni_idx_base1 = ni_total_inflow
+
+    ! column indexes for multi-branch nodes
+    integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
+    integer, parameter :: ni_Mlink_u2   = ni_idx_base1+2 ! map to link up dowstream branch 1
+    integer, parameter :: ni_Mlink_u3   = ni_idx_base1+3
+    integer, parameter :: ni_idx_base2  = ni_idx_base1 + upstream_face_per_elemM
+
+    integer, parameter :: ni_Mlink_d1   = ni_idx_base2+1
+    integer, parameter :: ni_Mlink_d2   = ni_idx_base2+2
+    integer, parameter :: ni_Mlink_d3   = ni_idx_base2+3
+    integer, parameter :: ni_idx_max = ni_idx_base2 + dnstream_face_per_elemM
+
+    ! storage for link index for upstream and downstream links
+    integer, dimension(upstream_face_per_elemM) :: ni_MlinkUp = nullvalueI
+    integer, dimension(dnstream_face_per_elemM) :: ni_MlinkDn = nullvalueI
+
+    !%  linkR COLUMN INDEXES FOR REAL DATA OF LINKS IN LINK/NODE SYSTEM  --------
+    ! column index for real data in the linkR array
+    enum, bind(c)
+        enumerator :: lr_Length = 1
+        enumerator :: lr_InletOffset ! Every links should have a inlet and oulet offset
+        enumerator :: lr_OutletOffset ! to make it consistent with SWMM.
+        enumerator :: lr_BreadthScale
+        enumerator :: lr_TopWidth
+        enumerator :: lr_ElementLength
+        enumerator :: lr_Slope
+        enumerator :: lr_LeftSlope
+        enumerator :: lr_RightSlope
+        enumerator :: lr_Roughness
+        enumerator :: lr_InitialFlowrate
+        enumerator :: lr_InitialDepth
+        enumerator :: lr_InitialUpstreamDepth
+        enumerator :: lr_InitialDnstreamDepth
+        enumerator :: lr_ParabolaValue
+        enumerator :: lr_SideSlope ! for weirs only
+        enumerator :: lr_DischargeCoeff1 ! discharge coefficient for triangular weir part or orifice element
+        enumerator :: lr_DischargeCoeff2 ! discharge coefficient for rectangular weir part
+        enumerator :: lr_FullDepth ! vertical opening of pipe, weir, orifice
+        enumerator :: lr_EndContractions
+        enumerator :: lr_Flowrate
+        enumerator :: lr_Depth
+        enumerator :: lr_DepthUp
+        enumerator :: lr_DepthDn
+        enumerator :: lr_Volume
+        enumerator :: lr_Velocity
+        enumerator :: lr_Capacity
+    end enum
+    integer, parameter :: lr_idx_max = lr_Capacity
+
+    !%  nodeR COLUMN INDEXES FOR REAL DATA OF NODES IN LINK/NODE SYSTEM ----------
+    ! column index for real data in the nodeR array
+    enum, bind(c)
+        enumerator :: nr_Zbottom = 1
+        enumerator :: nr_InitialDepth
+        enumerator :: nr_FullDepth
+        enumerator :: nr_StorageConstant
+        enumerator :: nr_StorageCoeff
+        enumerator :: nr_StorageExponent
+        enumerator :: nr_PondedArea
+        enumerator :: nr_SurchargeDepth
+        enumerator :: nr_MaxInflow
+        enumerator :: nr_Eta
+        enumerator :: nr_Depth
+        enumerator :: nr_Volume
+        enumerator :: nr_LateralInflow
+        enumerator :: nr_TotalInflow
+        enumerator :: nr_Flooding
+    end enum
+    integer, parameter :: nr_idx_base1 = nr_Flooding
+
+    ! column index for real data on multiple branches of a node
+    integer, parameter :: nr_ElementLength_u1 = nr_idx_base1 + 1 ! used for subdividing junctions
+    integer, parameter :: nr_ElementLength_u2 = nr_idx_base1 + 2 ! used for subdividing junctions
+    integer, parameter :: nr_ElementLength_u3 = nr_idx_base1 + 3 ! used for subdividing junctions
+    integer, parameter :: nr_idx_base2 = nr_idx_base1 + upstream_face_per_elemM
+    integer, parameter :: nr_ElementLength_d1 = nr_idx_base2 + 1 ! used for subdividing junctions
+    integer, parameter :: nr_ElementLength_d2 = nr_idx_base2 + 2 ! used for subdividing junctions
+    integer, parameter :: nr_ElementLength_d3 = nr_idx_base2 + 3 ! used for subdividing junctions
+    integer, parameter :: nr_idx_max = nr_idx_base2 + dnstream_face_per_elemM
+
+    ! storage of node indexes for multi-branch data
+    integer, dimension(upstream_face_per_elemM) :: nr_ElementLengthUp = nullvalueI
+    integer, dimension(dnstream_face_per_elemM) :: nr_ElementLengthDn = nullvalueI
+
+    !%  nodeYN COLUMN INDEXES FOR LOGICAL DATA ON NODES --------------------------
+    ! column index for logical data in nodeYN array
+    integer, parameter :: nYN_temp1 = 1
+    integer, parameter :: nYN_idx_max = 1
+
+    !%  linkYN COLUMN INDEXES FOR LOGICAL DATA ON LINKS ---------------------------
+    ! column index for logical data in linkYN array
+    integer, parameter :: lYN_temp1 = 1
+    integer, parameter :: lYN_idx_max = 1
 
     !% define the column indexes for elemI(:,:) array
     enum, bind(c)
@@ -104,7 +247,7 @@ module array_index
         enumerator :: em_CCJM_H_AC_surcharged !% surcharged channels, conduits, junction mains with AC method for
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemM = em_CCJM_H_AC_closed
+    integer, parameter :: Ncol_elemM = em_CCJM_H_AC_surcharged
 
     enum, bind(c)
         enumerator :: ep_ALLtm = 1 !% all ETM, AC elements
@@ -153,9 +296,6 @@ module array_index
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSI = eSI_storage_curveType
 
-    !% local definitions
-    integer :: Ncol_elemSR_circular, Ncol_elemSR_rectangular, Ncol_elemSR_trapezoidal
-    integer :: Ncol_elemSR_parabolic, Ncol_elemSR_weir_orifice
     !% define the column indexes for elemSR(:,:) for circular geometry
     enum, bind(c)
         enumerator :: eSr_Circular_Radius = 1 !% radius for circular geometry (Circular Cross-Section)
@@ -196,34 +336,12 @@ module array_index
     integer, parameter :: Ncol_elemSR_weir_orifice = eSr_EndContractions
 
     !% find the max array size for any type of special element data stored in elemSR
-    Ncol_elemSR = max( &
-    Ncol_elemSR_circular, &
-    Ncol_elemSR_rectangular, &
-    Ncol_elemSR_trapezoidal, &
-    Ncol_elemSR_parabolic, &
-    Ncol_elemSR_weir_orifice )
-
-    !% define the column indexes for elemWDI(:,:) for width-depth pairs
-    enum, bind(c)
-        enumerator :: eWDi_Melem_Lidx = 1 !% Map to local idx of element
-        !% Location of first row in elemWDR array for this element
-        enumerator :: eWDi_elemWDRidx_F
-        !% Location of last row in elemWDR array for this element
-        enumerator :: eWDi_elemWDRidx_L
-        !% Number of width-depth pairs (rows in elemWDR) for this element
-        enumerator :: eWDi_Melem_Lidx
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemWDI = eWDi_Melem_Lidx
-
-    !% define the column indexes for elemWDR(:,:) for width-depth pairs
-    enum, bind(c)
-        enumerator :: eWDr_Width = 1 !% Width at a given depth
-        !% Location of first row in elemWDR array for this element
-        enumerator :: eWDr_Depth !% Depth at a given width
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemWDR = eWDr_Depth
+    integer, parameter :: Ncol_elemSR = &
+        max(Ncol_elemSR_circular, &
+            Ncol_elemSR_rectangular, &
+            Ncol_elemSR_trapezoidal, &
+            Ncol_elemSR_parabolic, &
+            Ncol_elemSR_weir_orifice)
 
     !% define the column indexes for faceI(:,:)
     enum, bind(c)
@@ -287,5 +405,4 @@ module array_index
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_faceYN = fYN_isnull
-    !==========================================================================
 end module array_index
