@@ -4,32 +4,32 @@
             "DensityLowCutoff" : 1e-10,
             "FullPipeFactor" : 1.0,
             "OpenPipeFactor" : 1.0,
-            "UseDensityCorrection" : false,
+            "UseDensityCorrection" : true,
             "DensityHighCutoff" : 0.1
+        },
+        "CFL" : {
+            "CFLmax" : 0.7,
+            "CFLsmall" : 0.2
+        },
+        "Celerity" : {
+            "RC" : 1.0
+        },
+        "Convergence" : {
+            "Habsolute" : 1e-5,
+            "Hrelative" : 1e-2,
+            "Qabsolute" : 1e-5,
+            "Qrelative" : 1e-2
+        },
+        "Iter" : {
+            "Firststep" : 100,
+            "Max" : 100,
+            "Min" : 3
+        },
+        "Switch" : {
+            "Area" : 0.9,
+            "Buffer" : 0.05,
+            "Depth" : 0.9
         }
-    },
-    "CFL" : {
-        "CFLmax" : 0.7,
-        "CFLsmall" : 0.2
-    },
-    "Celerity" : {
-        "RC" : 1.0
-    },
-    "Convergence" : {
-        "Habsolute" : 1e-5,
-        "Hrelative" : 1e-2,
-        "Qabsolute" : 1e-5,
-        "Qrelative" : 1e-2
-    },
-    "Iter" : {
-        "Firststep" : 100,
-        "Max" : 100,
-        "Min" : 3
-    },
-    "Switch" : {
-        "Area" : 0.9,
-        "Buffer" : 0.05,
-        "Depth" : 0.9
     },
     "Adjust" : {
         "Flowrate" : {

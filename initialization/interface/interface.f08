@@ -1,13 +1,12 @@
 module interface
 
-    use errors
     use iso_c_binding
     use dll
-    use objects
-    use setting_definition
+    use setting_definition, only: setting
     use tables
     use datetime
-    use data_keys ! (comment if debugging)
+    use data_keys
+    use globals
 
     implicit none
 
@@ -148,108 +147,14 @@ module interface
     integer, private :: errstat
     integer, private :: debuglevel = 0
     type(dll_type), private :: dll
-    type(os_type) :: os
     type(c_ptr) :: api
     logical :: api_is_initialized = .false.
-
-    ! Error codes - Uncomment if debugging (also defined in globals.f08)
-    ! integer, parameter :: nullvalueI = -998877
-    ! real(8), parameter :: nullvalueR = -9.98877e16
 
     ! Time constants
     real(8) :: swmm_start_time ! in days
     real(8) :: swmm_end_time ! in days
 
-    ! Number of objects
-    integer :: num_nodes
-    integer :: num_links
-    integer :: num_curves
-    integer :: num_tseries
-    integer :: num_patterns
-
-    ! SWMM objects
-    integer, parameter :: SWMM_NODE = 2
-    integer, parameter :: SWMM_LINK = 3
-    integer, parameter :: SWMM_TIMEPATTERN = 6
-    integer, parameter :: SWMM_CURVES = 7
-    integer, parameter :: SWMM_TSERIES = 8
-    integer, parameter :: API_NODES_WITH_EXTINFLOW = 1000
-    integer, parameter :: API_NODES_WITH_DWFINFLOW = 1001
-
-    ! SWMM XSECT_TYPES
-    enum, bind(c)
-        enumerator :: SWMM_RECT_CLOSED = 3
-        enumerator :: SWMM_RECT_OPEN
-        enumerator :: SWMM_TRAPEZOIDAL
-        enumerator :: SWMM_TRIANGULAR
-        enumerator :: SWMM_PARABOLIC
-    end enum
-
-    ! SWMM PATTERN TYPES
-    enum, bind(c)
-        enumerator :: SWMM_MONTHLY_PATTERN = 0
-        enumerator :: SWMM_DAILY_PATTERN
-        enumerator :: SWMM_HOURLY_PATTERN
-        enumerator :: SWMM_WEEKEND_PATTERN
-    end enum
-
-    ! SWMM+ XSECT_TYPES - Uncomment if debugging (also defined in data_keys.f08)
-    ! integer, parameter :: lchannel = 1
-    ! integer, parameter :: lpipe = 2
-    ! integer, parameter :: lRectangular = 1
-    ! integer, parameter :: lParabolic = 2
-    ! integer, parameter :: lTrapezoidal = 3
-    ! integer, parameter :: lTriangular = 4
-
-    ! api_node_attributes
-    enum, bind(c)
-        enumerator :: node_ID = 1
-        enumerator :: node_type
-        enumerator :: node_invertElev
-        enumerator :: node_initDepth
-        enumerator :: node_extInflow_tSeries
-        enumerator :: node_extInflow_basePat
-        enumerator :: node_extInflow_baseline
-        enumerator :: node_extInflow_sFactor
-        enumerator :: node_has_extInflow
-        enumerator :: node_dwfInflow_monthly_pattern
-        enumerator :: node_dwfInflow_daily_pattern
-        enumerator :: node_dwfInflow_hourly_pattern
-        enumerator :: node_dwfInflow_weekend_pattern
-        enumerator :: node_dwfInflow_avgvalue
-        enumerator :: node_has_dwfInflow
-        enumerator :: node_inflow
-        enumerator :: node_volume
-        enumerator :: node_overflow
-    end enum
     integer, parameter :: num_node_attributes = node_overflow
-
-    ! api_link_attributes
-    enum, bind(c)
-        enumerator :: link_ID = 1
-        enumerator :: link_subIndex
-        enumerator :: link_node1
-        enumerator :: link_node2
-        enumerator :: link_q0
-        enumerator :: link_flow
-        enumerator :: link_depth
-        enumerator :: link_volume
-        enumerator :: link_froude
-        enumerator :: link_setting
-        enumerator :: link_left_slope
-        enumerator :: link_right_slope
-        enumerator :: conduit_roughness
-        enumerator :: conduit_length
-        ! --- xsect attributes
-        enumerator :: link_type
-        enumerator :: link_xsect_type
-        enumerator :: link_geometry
-        enumerator :: link_xsect_wMax
-        enumerator :: link_xsect_yBot
-    end enum
-    integer, parameter :: num_link_attributes = conduit_length
-    integer, parameter :: num_link_xsect_attributes = link_xsect_yBot - num_link_attributes
-    integer, parameter :: num_total_link_attributes = num_link_attributes + num_link_xsect_attributes
 
     procedure(api_initialize), pointer, private :: ptr_api_initialize
     procedure(api_finalize), pointer, private :: ptr_api_finalize
@@ -274,10 +179,6 @@ contains
     subroutine initialize_api()
 
         integer :: ppos, num_args
-        character(len=256) :: inp_file ! absolute path to .inp
-        character(len=256) :: rpt_file ! absolute path to .rpt
-        character(len=256) :: out_file ! absolute path to .out
-        character(len = 256) :: cwd
         character(64) :: subroutine_name
 
         subroutine_name = 'initialize_api'
@@ -286,45 +187,38 @@ contains
 
         ! Initialize C API
         api = c_null_ptr
-        call init_os_type(1, os)
-        call init_dll(dll)
 
-        ! Get current working directory
-        call getcwd(cwd)
-
-        ! Retrieve .inp file path from args
-        num_args = command_argument_count()
-        if (num_args < 1) then
-            print *, "error: path to .inp file was not defined"
+        if (setting%Paths%inp == "") then
+            print *, "ERROR: it is necessary to define the path to the .inp file"
             stop
-        end if
-
-        call get_command_argument(1, inp_file)
-
-        ppos = scan(trim(inp_file), '.', back = .true.)
+        endif
+        ppos = scan(trim(setting%Paths%inp), '.', back = .true.)
         if (ppos > 0) then
-            rpt_file = inp_file(1:ppos) // "rpt"
-            out_file = inp_file(1:ppos) // "out"
+            setting%Paths%rpt = setting%Paths%inp(1:ppos) // "rpt"
+            setting%Paths%out = setting%Paths%inp(1:ppos) // "out"
         end if
 
-        inp_file = trim(inp_file) // c_null_char
-        rpt_file = trim(rpt_file) // c_null_char
-        out_file = trim(out_file) // c_null_char
+        setting%Paths%inp = trim(setting%Paths%inp) // c_null_char
+        setting%Paths%rpt = trim(setting%Paths%rpt) // c_null_char
+        setting%Paths%out = trim(setting%Paths%out) // c_null_char
 
-        dll%filename = trim(cwd) // "/libswmm5.so"
+        dll%filename = trim(setting%Paths%project) // "/libswmm5.so"
 
         ! Initialize API
         dll%procname = "api_initialize"
-        call load_dll(os, dll, errstat, errmsg)
-        call print_error(errstat, 'error: loading api_initialize')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_initialize)
-        api = ptr_api_initialize(inp_file, rpt_file, out_file)
+        api = ptr_api_initialize(setting%Paths%inp, setting%Paths%rpt, setting%Paths%out)
 
-        num_links = get_num_objects(SWMM_LINK)
-        num_nodes = get_num_objects(SWMM_NODE)
-        num_curves = get_num_objects(SWMM_CURVES)
-        num_tseries = get_num_objects(SWMM_TSERIES)
-        num_patterns = get_num_objects(SWMM_TIMEPATTERN)
+        N_link = get_num_objects(SWMM_LINK)
+        N_node = get_num_objects(SWMM_NODE)
+        N_curve = get_num_objects(SWMM_CURVES)
+        N_tseries = get_num_objects(SWMM_TSERIES)
+        N_pattern = get_num_objects(SWMM_TIMEPATTERN)
 
         api_is_initialized = .true.
 
@@ -334,15 +228,16 @@ contains
         setting%time%starttime = 0
         setting%time%endtime = (swmm_end_time - swmm_start_time) * real(secsperday)
 
-        if (num_tseries > 0) call load_all_tseries()
-        if (num_patterns > 0) call load_all_patterns()
+        if (N_tseries > 0) call load_all_tseries()
+        if (N_pattern > 0) call load_all_patterns()
 
+        print *, new_line("")
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
-            print *, "num_links", num_links
-            print *, "num_nodes", num_nodes
-            print *, "num_curves", num_curves
-            print *, "num_tseries", num_tseries
-            print *, "num_patterns", num_patterns
+            print *, "N_link", N_link
+            print *, "N_node", N_node
+            print *, "N_curve", N_curve
+            print *, "N_tseries", N_tseries
+            print *, "N_pattern", N_pattern
             print *, '*** leave ', subroutine_name
         endif
     end subroutine initialize_api
@@ -353,14 +248,13 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_finalize"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_finalize')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_finalize)
         call ptr_api_finalize(api)
-        if (errstat /= 0) then
-            call print_error(errstat, dll%procname)
-            stop
-        end if
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
 
     end subroutine finalize_api
@@ -369,7 +263,7 @@ contains
         integer :: i
 
         if (allocated(all_tseries)) then
-            do i = 1, num_tseries
+            do i = 1, N_tseries
                 call free_table(all_tseries(i))
             enddo
             deallocate(all_tseries)
@@ -391,8 +285,11 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_get_start_datetime"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_get_start_datetime')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_get_start_datetime)
         get_start_datetime = ptr_api_get_start_datetime()
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
@@ -407,8 +304,11 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_get_end_datetime"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_get_end_datetime')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_get_end_datetime)
         get_end_datetime = ptr_api_get_end_datetime()
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
@@ -422,14 +322,16 @@ contains
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
-        if (num_tseries == 0) return
+        if (N_tseries == 0) return
 
-        allocate(all_tseries(num_tseries))
-        do i = 1, num_tseries
+        allocate(all_tseries(N_tseries))
+        do i = 1, N_tseries
             all_tseries(i) = new_real_table(SWMM_TSERIES, 2)
             success = get_first_table_entry(i, SWMM_TSERIES, entries)
             if (success == 0) then
-                print *, MSG_API_TSERIES_HANDLING_ERROR
+                print *, new_line("")
+                print *, "ERROR: API can't get Tseries"
+                stop
             endif
             call tables_add_entry(all_tseries(i), entries)
             do while (.true.)
@@ -448,10 +350,10 @@ contains
         integer :: success
         real(8), dimension(2) :: entries
 
-        if (num_patterns == 0) return
+        if (N_pattern == 0) return
 
-        allocate(all_patterns(num_patterns))
-        do i = 1, num_patterns
+        allocate(all_patterns(N_pattern))
+        do i = 1, N_pattern
             all_patterns(i) = get_pattern(i)
         end do
     end subroutine load_all_patterns
@@ -474,14 +376,17 @@ contains
             stop
         end if
 
-        if ((node_idx > num_nodes) .or. (node_idx < 1)) then
+        if ((node_idx > N_node) .or. (node_idx < 1)) then
             print *, "error: unexpected node index value", node_idx
             stop
         end if
 
         dll%procname = "api_get_node_attribute"
-        call load_dll(os, dll, errstat, errmsg)
-        call print_error(errstat, 'error: loading api_get_node_attribute')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_get_node_attribute)
         ! Fortran index starts in 1, whereas in C starts in 0
         error = ptr_api_get_node_attribute(api, node_idx-1, attr, cptr_value)
@@ -519,14 +424,17 @@ contains
             stop
         end if
 
-        if ((link_idx > num_links) .or. (link_idx < 1)) then
+        if ((link_idx > N_link) .or. (link_idx < 1)) then
             print *, "error: unexpected link index value", link_idx
             stop
         end if
 
         dll%procname = "api_get_link_attribute"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_get_link_attribute')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_get_link_attribute)
 
         if (attr <= num_link_attributes) then
@@ -619,8 +527,11 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_get_num_objects"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_get_num_objects')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_get_num_objects)
         get_num_objects = ptr_api_get_num_objects(api, obj_type)
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
@@ -639,8 +550,11 @@ contains
         cptr_y = c_loc(y)
 
         dll%procname = "api_get_first_table_entry"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_get_first_table_entry')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_get_first_table_entry)
         get_first_table_entry = ptr_api_get_first_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
 
@@ -660,8 +574,11 @@ contains
         cptr_y = c_loc(y)
 
         dll%procname = "api_get_next_table_entry"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_get_next_table_entry')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_get_next_table_entry)
         get_next_table_entry = ptr_api_get_next_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
 
@@ -677,22 +594,31 @@ contains
 
         if (k .ne. -1) then
             dll%procname = "api_get_pattern_count"
-            call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'error: loading api_get_pattern_count')
+            call load_dll(dll, errstat, errmsg)
+            if (errstat /= 0) then
+                print *, "ERROR: " // trim(errmsg)
+                stop
+            endif
             call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_count)
             get_pattern%count = ptr_api_get_pattern_count(k-1)
 
             dll%procname = "api_get_pattern_factor"
-            call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'error: loading api_get_pattern_factor')
+            call load_dll(dll, errstat, errmsg)
+            if (errstat /= 0) then
+                print *, "ERROR: " // trim(errmsg)
+                stop
+            endif
             call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factor)
             do i = 1, 24
                 get_pattern%factor(i) = ptr_api_get_pattern_factor(k-1, i-1) ! index starts at 0 in C
             end do
 
             dll%procname = "api_get_pattern_type"
-            call load_dll(os, dll, errstat, errmsg )
-            call print_error(errstat, 'error: loading api_get_pattern_type')
+            call load_dll(dll, errstat, errmsg)
+            if (errstat /= 0) then
+                print *, "ERROR: " // trim(errmsg)
+                stop
+            endif
             call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_type) ! index starts at 0 in C
             get_pattern%ptype = ptr_api_get_pattern_type(k-1)
         end if
@@ -705,8 +631,11 @@ contains
         integer, intent(in) :: object_type
 
         dll%procname = "api_print_object_name"
-        call load_dll(os, dll, errstat, errmsg )
-        call print_error(errstat, 'error: loading api_print_object_name')
+        call load_dll(dll, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        endif
         call c_f_procpointer(dll%procaddr, ptr_api_print_object_name) ! index starts at 0 in C
         call ptr_api_print_object_name(k-1, object_type)
     end subroutine print_object_name
