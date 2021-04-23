@@ -12,7 +12,7 @@ TEST_DIR='test_cases'
 UTIL_DIR='utilities'
 VARS_DIR='vars'
 
-FC='gfortran-9'
+FC='gfortran'
 OUPTFLAGS=-g
 FFLAGS=-O3
 PROGRAM=SWMM
@@ -47,6 +47,23 @@ then
     mv Stormwater*/src "$API_DIR/src"
     rm -r Stormwater*
 fi
+
+# Download Opencoarray
+if ! [ -x "$(command -v caf)" ]
+then
+    echo Opencoarray is not installed.
+    echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
+    git clone --branch 1.9.3 https://github.com/sourceryinstitute/OpenCoarrays
+    cd OpenCoarrays
+    mkdir opencoarrays-build
+    cd opencoarrays-build
+    CC=gcc FC=gfortran cmake .. -DCMAKE_INSTALL_PREFIX=${HOME}/packages/
+    make
+    make install
+    cd ..
+fi
+
+
 
 # Compile SWMM C
 
@@ -86,7 +103,7 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           main.f08"
 
 echo Compiling ...
-$FC $SOURCESF -ldl -o $PROGRAM
+caf $SOURCESF -ldl -o $PROGRAM
 
 $clean:
     echo Clean Object files ...
