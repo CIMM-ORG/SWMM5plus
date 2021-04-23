@@ -22,7 +22,7 @@ module initialization
     implicit none
     private
 
-    integer :: debuglevel = 1
+    integer :: debuglevel = 0
 
     ! Retrieves data from SWMM C interface and populates link and node tables
     public :: initialize_linknode_arrays
