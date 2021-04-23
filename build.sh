@@ -34,6 +34,7 @@ then
     sudo rm -r .*
     mv src/*.* .
     rm -r src
+    cd ..
 fi
 
 # Download SWMM C
