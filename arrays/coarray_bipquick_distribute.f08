@@ -16,17 +16,23 @@ module coarray_bipquick_distribute
     
     implicit none
 
+    integer, private :: debuglevel =0
+
     integer, allocatable :: Link_c(:,:)[:], Node_c(:,:)[:]
 
-    public :: get_num_of_images
-    public :: image_number_calculation
     public :: coarray_data_assignment
     contains
 
     subroutine get_num_of_images(nimgs)
         ! A subroutine for returing the number of involved images
         integer, intent(inout) :: nimgs
+        character(64) :: subroutine_name = 'get_num_of_images'
+
+        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+
         nimgs = num_images()
+
+        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
     end subroutine get_num_of_images
 
 
@@ -39,6 +45,9 @@ module coarray_bipquick_distribute
         integer, intent(inout) :: nimgs_assign
         integer, allocatable :: img_arr(:), unique(:)
         integer :: ii=0, min_val, max_val
+        character(64) :: subroutine_name = 'image_number_calculation'
+
+        if (debuglevel > 0) print *, '*** enter ',subroutine_name
 
         allocate(img_arr(size(arr,1)))
         allocate(unique(size(arr,1)))
@@ -56,7 +65,8 @@ module coarray_bipquick_distribute
         allocate(unique_imagenum(ii), source = unique(1:ii)) ! The list of image number from BIPquick
         
         nimgs_assign = size(unique_imagenum,1) ! The number of images assigned by BIPquick
-
+        
+        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
     end subroutine image_number_calculation
 
     
@@ -67,7 +77,9 @@ module coarray_bipquick_distribute
         integer, intent(inout) :: coarray_length
         integer :: ii 
         integer, allocatable :: temp_arr(:)
+        character(64) :: subroutine_name = 'array_length_calculation'
         
+        if (debuglevel > 0) print *, '*** enter ',subroutine_name
 
         do ii=1, size(unique_imagenum,1)
             temp_arr = PACK(arr(:,1), arr(:,2) .eq. unique_imagenum(ii))
@@ -75,17 +87,25 @@ module coarray_bipquick_distribute
                 coarray_length = size(temp_arr,1)
             endif
         enddo        
+        
+        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
 
     end subroutine array_length_calculation
+
 
     subroutine coarray_allocation(nimgs_assign, coarray_length)
         ! allocate the coarray to images
 
         integer, intent(in) :: nimgs_assign, coarray_length
-        
+        character(64) :: subroutine_name = 'coarray_allocation'
+
+        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+
         allocate(Link_c(coarray_length,2)[*]) ![1:nimgs_assign])
         allocate(Node_c(coarray_length,2)[*]) ![1:nimgs_assign])
         sync all 
+
+        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
 
     end subroutine coarray_allocation
 
@@ -95,6 +115,9 @@ module coarray_bipquick_distribute
         integer :: coarray_length = 0
         integer, allocatable :: unique_imagenum(:), temp_arr(:)
         integer :: ii
+        character(64) :: subroutine_name = 'coarray_data_assignment'
+
+        if (debuglevel > 0) print *, '*** enter ',subroutine_name
 
 
         call get_num_of_images(nimgs) ! compute the available image number
@@ -140,6 +163,8 @@ module coarray_bipquick_distribute
             print *, "Image 3"
             print *, Link_c(:,1)[3]
         endif
+        
+        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
 
     end subroutine coarray_data_assignment
 
