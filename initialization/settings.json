@@ -103,7 +103,7 @@
         "UseZeroValues" : true,
         "Volume" : 1e-6
     },
-    "BIPquickFlag" : {
+    "BIPquickFlags" : {
         "UseBIPquick" : true,
         "BIPquickTestCase" : false
     }
