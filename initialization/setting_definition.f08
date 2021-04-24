@@ -89,7 +89,7 @@ module setting_definition
     ! setting%Adjust%WidthDepth
     type AdjustWidthDepthType
         logical :: Apply = .true.
-    endtype AdjustWidthDepthType
+    end type AdjustWidthDepthType
 
     ! setting%Limiter%BC
     type LimiterBCType
@@ -97,7 +97,7 @@ module setting_definition
         integer :: Approach = FroudeNumber
         ! max value of Fr at inflow
         real(8) :: FroudeInflowMaximum = 1.5
-    endtype LimiterBCType
+    end type LimiterBCType
 
     ! setting%Limiter%Flowrate
     type LimiterFlowrateType
@@ -105,19 +105,19 @@ module setting_definition
         ! Fraction of usptream volume that can be
         ! transported in on time step
         real(8) :: FaceVolumeTransport = 0.5
-    endtype LimiterFlowrateType
+    end type LimiterFlowrateType
 
     ! setting%Limiter%Timescale
     type LimiterTimescaleType
         real(8) :: Maximum = 1e6
         real(8) :: Minimum = 1e-6
-    endtype LimiterTimescaleType
+    end type LimiterTimescaleType
 
     ! setting%Limiter%Velocity
     type LimiterVelocityType
         logical :: UseLimitMax = .true.
         real(8) :: Maximum = 10.0 ! m/s
-    endtype LimiterVelocityType
+    end type LimiterVelocityType
 
     ! -
     ! --
@@ -191,7 +191,7 @@ module setting_definition
         type(LimiterFlowrateType) :: Flowrate
         type(LimiterTimescaleType) :: Timescale
         type(LimiterVelocityType) :: Velocity
-    endtype LimiterType
+    end type LimiterType
 
     ! setting%SmallVolume
     type SmallVolumeType
@@ -374,7 +374,7 @@ contains
         else
             print *, "Error, Adjust.Flowrate.approach not compatible"
             stop
-        endif
+        end if
         call json%get('Adjust.Flowrate.Coef', real_value, found)
         setting%Adjust%Flowrate%Coef = real_value
         if (.not. found) stop 20
@@ -390,7 +390,7 @@ contains
         else
             print *, "Error, Adjust.Head.approach not compatible"
             stop
-        endif
+        end if
         call json%get('Adjust.Head.Coef', real_value, found)
         setting%Adjust%Head%Coef = real_value
         if (.not. found) stop 22
@@ -415,7 +415,7 @@ contains
         else
             print *, "Error, Limiter.BC.approach not compatible"
             stop
-        endif
+        end if
         if (.not. found) stop 26
         call json%get('Limiter.BC.FroudeInflowMaximum', real_value, found)
         setting%Limiter%BC%FroudeInflowMaximum = real_value
@@ -479,7 +479,7 @@ contains
             setting%Solver%MomentumSourceMethod = T10
         else if (c == 'T20') then
             setting%Solver%MomentumSourceMethod = T20
-        endif
+        end if
         if (.not. found) stop 43
         call json%get('Solver.PreissmanSlot', logical_value, found)
         setting%Solver%PreissmanSlot = logical_value
@@ -491,7 +491,7 @@ contains
             setting%Solver%SolverSelect = SVE_AC
         else if (c == 'AC') then
             setting%Solver%SolverSelect = AC
-        endif
+        end if
         if (.not. found) stop 45
 
         ! Load Step Settings
