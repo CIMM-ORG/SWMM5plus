@@ -253,6 +253,12 @@ module setting_definition
         character(len=256) :: rpt ! path to SWMM report (.rpt) file
         character(len=256) :: out ! path to SWMM output (.out) file
     end type PathType
+
+    !% setting%BIPquickSettings%Flag
+    type BIPflagType
+        logical :: UseBIPquick = .true.
+        logical :: BIPquickTestCase = .false.
+    endtype BIPflagType
     ! -
     ! --
 
@@ -271,6 +277,7 @@ module setting_definition
         type(ZeroValueType) :: ZeroValue ! finite values to represent small or negative values
         type(TestCaseType) :: TestCase
         type(PathType) :: Paths
+        type(BIPFlagType) :: BIPquickFlags
     end type settingType
 
     type(settingType), target :: setting
@@ -532,8 +539,16 @@ contains
         setting%ZeroValue%Volume = real_value
         if (.not. found) stop 58
 
+        ! Load BIPquick Settings
+        call json%get('BIPquickFlags.UseBIPquick', logical_value, found)
+        setting%BIPquickFlags%UseBIPquick = logical_value
+        if (.not. found) stop 60
+        call json%get('BIPquickFlags.BIPquickTestCase', logical_value, found)
+        setting%BIPquickFlags%BIPquickTestCase = logical_value 
+
         call json%destroy()
         if (json%failed()) stop 59
+
 
     end subroutine load_settings
 end module setting_definition

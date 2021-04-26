@@ -25,7 +25,7 @@ module initialization
 
     private
 
-    integer :: debuglevel = 1
+    integer :: debuglevel = 0
 
     public :: initialize_linknode_arrays
 

@@ -4,6 +4,7 @@ program main
     use initialization
     use setting_definition, only: setting
     use interface
+    use BIPquick
 
     implicit none
 
