@@ -1,17 +1,4 @@
-! module initialization
-!
-! This creates the arrays index structures that are used for accessing
-! data. Arguably, this could be done more simply but we want the fundamental
-! column indexes in array_index to be parameters rather than variables. By
-! using parameters we reduce the possibility of accidentally changing a
-! column definition.
-!
-!==========================================================================
-!
 module initialization
-    !
-    ! general initialization of data structures (not including network)
-    !
     use allocate_storage
     use array_index
     use data_keys
@@ -20,20 +7,42 @@ module initialization
     use utility, only: utility_export_linknode_csv
 
     implicit none
+
+
+!-----------------------------------------------------------------------------
+!
+! Description:
+!   General initialization of data structures (not including network)
+!
+! Method:
+!    Creates the arrays index structures that are used for accessing data.
+!    Arguably, this could be done more simply but we want the fundamental
+!    column indexes in array_index to be parameters rather than variables. By
+!    using parameters we reduce the possibility of accidentally changing a
+!    column definition.
+!
+!-----------------------------------------------------------------------------
+
     private
 
     integer :: debuglevel = 1
 
-    ! Retrieves data from SWMM C interface and populates link and node tables
     public :: initialize_linknode_arrays
 
 contains
 
     subroutine initialize_linknode_arrays()
-        character(64) :: subroutine_name
-        integer :: i, total_n_links
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !   Retrieves data from SWMM C interface and populates link and node tables
+    !
+    !-----------------------------------------------------------------------------
 
-        subroutine_name = 'initialize_arrays'
+        integer       :: i, total_n_links
+        character(64) :: subroutine_name = 'initialize_arrays'
+
+    !-----------------------------------------------------------------------------
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
 
@@ -41,9 +50,6 @@ contains
             print *, "ERROR: API is not initialized"
             stop
         end if
-
-        N_link = N_link
-        N_node = N_node
 
         ! Allocate storage for link & node tables
         call allocate_linknode_storage ()
@@ -77,6 +83,7 @@ contains
             linkR(i,lr_InitialDnstreamDepth) = get_node_attribute(linkI(i,li_Mnode_d), node_initDepth)
             linkR(i,lr_InitialDepth) = (linkR(i,lr_InitialDnstreamDepth) + linkR(i,lr_InitialUpstreamDepth)) / 2.0
         end do
+
         do i = 1, N_node
             total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
             nodeI(i, ni_idx) = i
