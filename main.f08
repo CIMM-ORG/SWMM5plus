@@ -4,6 +4,7 @@ program main
     use initialization
     use setting_definition, only: setting
     use interface
+    use BIPquick
 
     implicit none
 
@@ -31,7 +32,7 @@ program main
             else
                 write(*, *) 'The argument ' // trim(arg) // ' is unsupported'
                 stop
-            endif
+            end if
         else
             arg_param = .false.
             if (trim(param) == '-s') then
@@ -54,10 +55,10 @@ program main
                     print *, "simple_weir, swashes, waller_creek"
                     print *, "y_channel, y_storage_channel"
                     stop
-                endif
-            endif
-        endif
-    enddo
+                end if
+            end if
+        end if
+    end do
 
     ! --- Load Settings
 
