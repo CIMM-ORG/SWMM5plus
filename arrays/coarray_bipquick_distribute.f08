@@ -155,15 +155,6 @@ module coarray_bipquick_distribute
         endif
         sync all
 
-        if (this_image() .eq. 1) then
-            print *, "Image 1"
-            print *, Link_c(:,1)[1]
-            print *, "Image 2"
-            print *, Link_C(:,1)[2]
-            print *, "Image 3"
-            print *, Link_c(:,1)[3]
-        endif
-        
         if (debuglevel > 0)  print *, '*** leave ',subroutine_name
 
     end subroutine coarray_data_assignment
