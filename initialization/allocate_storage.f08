@@ -57,6 +57,14 @@ contains
         call utility_check_allocation(allocation_status, emsg)
         linkI(:,:) = nullvalueI
 
+        allocate(B_nodeI(N_node, 3), stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        B_nodeI(:,:) = nullvalueI
+
+        allocate(B_linkI(N_link, 2), stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        B_linkI(:,:) = nullvalueI
+
         allocate(nodeR(N_node, nr_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeR(:,:) = nullvalueR

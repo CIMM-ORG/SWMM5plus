@@ -10,7 +10,7 @@
 
  private
 
- public :: BIPquick_subroutine, BIPquick_Optimal_Hardcode
+ public :: BIPquick_subroutine, BIPquick_Optimal_Hardcode, BIPquick_YJunction_Hardcode
  
 !  integer, parameter :: dp = selected_real(8)_kind(15)
  real(8), parameter :: precision_matching_tolerance = 1.0D-5
@@ -20,6 +20,7 @@
 
  integer, parameter :: B_ni_idx_Partition = 1 ! the node index number
  integer, parameter :: B_ni_Partition_No = 2 ! the Partition number to which that node index belongs
+ integer, parameter :: B_ni_is_boundary = 3 ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
 
  integer, parameter :: B_li_idx_Partition = 1 ! the link index number
  integer, parameter :: B_li_Partition_No = 2 ! the Partition number to which that link index belongs
@@ -30,15 +31,13 @@
  contains
  
 !-------------------------------------------------------------------------- 
+
  subroutine BIPquick_Optimal_Hardcode(nodeI, linkI, B_nodeI, B_linkI) 
-    integer, dimension(:,:), intent(in out), allocatable   :: B_nodeI
-    integer, dimension(:,:), intent(in out), allocatable   :: B_linkI
+    integer, dimension(:,:), intent(in out)  :: B_nodeI
+    integer, dimension(:,:), intent(in out)   :: B_linkI
     integer,  dimension(:,:), intent(in out)  :: linkI
     integer,  dimension(:,:), intent(in out)  :: nodeI
     integer :: ii
-
-    allocate(B_nodeI(size(nodeI,1), 2))
-    allocate(B_linkI(size(linkI,1), 2))
 
     B_nodeI(:, B_ni_Partition_No) = (/1, 1, 1, 2, 3, 3, 1, 1, 2, 2, 2, 2, 3, 3, 3, 1, 3/)
     B_linkI(:, B_li_Partition_No) = (/1, 1, 1, 2, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1/)
@@ -52,6 +51,26 @@
     enddo
 
 end subroutine BIPquick_Optimal_Hardcode
+
+
+subroutine BIPquick_YJunction_Hardcode() 
+    integer :: ii
+
+    print*, "The YJunction Arrays have been initialized and are size", size(B_nodeI,1), size(B_linkI,1)
+
+    B_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3/)
+    B_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
+    B_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
+
+    do ii = 1, size(nodeI, 1)
+        B_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
+    enddo
+
+    do ii = 1, size(linkI, 1)
+        B_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
+    enddo
+
+end subroutine BIPquick_YJunction_Hardcode
 
  
  subroutine BIPquick_subroutine(linkI, nodeI, linkR, nodeR)

@@ -97,9 +97,9 @@ contains
             "nr_ElementLength_u2,nr_ElementLength_u3,nr_ElementLength_d1,nr_ElementLength_d2,"    // &
             "nr_ElementLength_d3"
 
-        write(4, '(A)')
-            "ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_curve_type,ni_assigned,ni_total_inflow," // &
-            "ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3"
+        ! write(4, '(A)')
+        !     "ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_curve_type,ni_assigned,ni_total_inflow," // &
+        !     "ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3"
 
         do i = 1, N_node
             write(3,'(*(G0.6,:,","))') nodeR(i,:)
