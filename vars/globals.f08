@@ -20,6 +20,7 @@ module globals
     !%  links are the building blocks from SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: linkR ! real data for links
     integer, dimension(:,:), allocatable, target :: linkI ! integer data for links
+    integer, dimension(:,:), allocatable, target :: B_linkI ! BIPquick output for links
     logical, dimension(:,:), allocatable, target :: linkYN ! logical data for links
 
     type(string), dimension(:), allocatable, target :: linkName ! array of character strings
@@ -27,6 +28,7 @@ module globals
     !%  nodes are the building blocks from teh SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: nodeR ! real data for nodes
     integer, dimension(:,:), allocatable, target :: nodeI ! integer data for nodes
+    integer, dimension(:,:), allocatable, target :: B_nodeI ! BIPquick output for nodes
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
 
     !% elems in coarray
