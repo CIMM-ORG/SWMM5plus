@@ -82,4 +82,27 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage
 
+
+    subroutine coarray_storage_allocation(max_caf_elem_N, max_caf_face_N)
+        ! the max_caf_elem and max_caf_face are the maximum length of the coarray 
+        ! across all employed images
+        integer, intent(in) :: max_caf_elem_N, max_caf_face_N
+        integer, pointer :: ncol
+        !-----------------------------------------------------------------------------
+
+        character(64) :: subroutine_name = 'coarray_storage_allocation'
+    
+        !-----------------------------------------------------------------------------
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+
+
+        ncol => Ncol_elemR ! the maxmiumu number of columns
+        allocate(elemR_caf(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        
+        ncol => Ncol_elemI
+        allocate(elemI_caf(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+
+        ncol => Ncol_elemYN
+    end subroutine coarray_storage_allocation
 end module allocate_storage

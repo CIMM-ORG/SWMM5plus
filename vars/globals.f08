@@ -29,6 +29,17 @@ module globals
     integer, dimension(:,:), allocatable, target :: nodeI ! integer data for nodes
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
 
+    !% elems in coarray
+    real(8), dimension(:,:)[:], allocatable, target :: elemR_caf ! coarray for elements
+    integer, dimension(:,:)[:], allocatable, target :: elemI_caf ! coarray for element Interger
+    logical, dimension(:,:)[:], allocatable, target :: elemYN_caf ! coarray for element logical
+
+    !% faces in coarray
+    real(8), dimension(:,:)[:]. allocatable, target :: faceR_caf ! coarray for faces real data
+    integer , dimension(:,:)[:], allocatable, target :: faceI_caf ! coarray for faces integer data
+    logical, dimension(:,:)[:], allocatable, target :: faceYN_caf ! coarray for faces logical data
+    
+
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
     ! note that nullvalueI < 0 is required
