@@ -1,22 +1,25 @@
 !==========================================================================
 !2019-11-11 ==> Contributed by Eddie Tiernan
- module BIPquick
+ module BIPquick ! the module name that is referenced in the main.f08
 
+! the modules that need to precede BIPquick
  use array_index
  use globals
  use setting_definition
  
+! this designation just means that every variable has to be given an explicit type/size
  implicit none
 
+! the module's subroutines are private by default, allows some generically named subroutines to be used here and elsewhere
  private
 
+! the public subroutines are ones that can be called from any module that has $ use BIPquick $ at the top
  public :: BIPquick_subroutine, BIPquick_Optimal_Hardcode, BIPquick_YJunction_Hardcode
  
-!  integer, parameter :: dp = selected_real(8)_kind(15)
- real(8), parameter :: precision_matching_tolerance = 1.0D-5
+ real(8), parameter :: precision_matching_tolerance = 1.0D-5 ! a tolerance parameter for whether or not two real(8) numbers are equal
  
- integer, parameter :: B_nr_directweight_u = 1 ! the cumulative weight of the links directly upstream
- integer, parameter :: B_nr_totalweight_u  = 2 ! the cumulative weight of all links upstream
+ integer, parameter :: B_nr_directweight_u = 1 ! the cumulative weight of the links directly upstream of a node
+ integer, parameter :: B_nr_totalweight_u  = 2 ! the cumulative weight of all links upstream of a node
 
  integer, parameter :: B_ni_idx_Partition = 1 ! the node index number
  integer, parameter :: B_ni_Partition_No = 2 ! the Partition number to which that node index belongs
@@ -32,6 +35,8 @@
  
 !-------------------------------------------------------------------------- 
 
+! These two subroutines just populate the B_nodeI, B_linkI arrays with hardcoded values that *would* be the output of BIPquick_subroutine (if it worked)
+! OPTIMAL.inp is the name of the system input file this hardcode subroutine emulates
  subroutine BIPquick_Optimal_Hardcode(nodeI, linkI, B_nodeI, B_linkI) 
     integer, dimension(:,:), intent(in out)  :: B_nodeI
     integer, dimension(:,:), intent(in out)   :: B_linkI
@@ -52,7 +57,7 @@
 
 end subroutine BIPquick_Optimal_Hardcode
 
-
+! Y_Junction_NetworkDefineTest.inp is the name of the system input file this hardcode subroutine emulates
 subroutine BIPquick_YJunction_Hardcode() 
     integer :: ii
 
@@ -72,7 +77,10 @@ subroutine BIPquick_YJunction_Hardcode()
 
 end subroutine BIPquick_YJunction_Hardcode
 
- 
+! This subroutine is the main BIPquick subroutine
+! It uses the link-node arrays initialized in $ call initialize_linknode_arrays() $ in the main.f08
+! It also uses B_nodeI, B_linkI arrays that are initialized in allocate_storage.f08
+! Two dummy arrays, B_nodeI and B_nodeR are used to contain some of the BIPquick specific parameters
  subroutine BIPquick_subroutine(linkI, nodeI, linkR, nodeR)
      real(8)    :: lr_target_default = 1.0                         ! for the time being, the target length of an element is a hardcoded parameter
      integer :: n_rows_in_file_node, n_rows_in_file_link    ! counter for the number of rows in the node/link .csv files
