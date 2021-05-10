@@ -54,6 +54,7 @@ module array_index
         enumerator :: li_Mface_d ! face ID of downstream face of link
         enumerator :: li_assigned ! given 1 when link is assigned
         enumerator :: li_InitialDepthType ! 1=uniform, 2= lineary change, 3=exponential decay
+        enumerator :: li_BQ_image ! image number assigned from BIPquick
     end enum
     integer, parameter :: li_idx_max = li_InitialDepthType
 
@@ -67,6 +68,8 @@ module array_index
         enumerator :: ni_curve_type ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
         enumerator :: ni_assigned ! given 1 when node has been assigned to face/elem,
         enumerator :: ni_total_inflow ! index to total_inflow (-1 if not total_inflow)
+        enumerator :: ni_BQ_image ! image number assigned from BIPquick
+        enumerator :: ni_BQ_edge  ! 0=this node has nothing to do with image communication; 1=this node is an edge
     end enum
     integer, parameter :: ni_idx_base1 = ni_total_inflow
 
