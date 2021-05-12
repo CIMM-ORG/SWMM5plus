@@ -84,18 +84,8 @@ end subroutine BIPquick_YJunction_Hardcode
  subroutine BIPquick_subroutine(linkI, nodeI, linkR, nodeR)
      real(8)    :: lr_target_default = 1.0                         ! for the time being, the target length of an element is a hardcoded parameter
      integer :: n_rows_in_file_node, n_rows_in_file_link    ! counter for the number of rows in the node/link .csv files
-     integer :: iunit = 10
-     integer :: runit = 11
-     integer :: lunit = 12
-     integer :: header_row = 1
      integer :: n_rows_excluding_header_node, n_rows_excluding_header_link  ! number of rows in the node/link .csv files excluding the header, used to determine the size of the arrays
      integer :: n_rows_plus_processors_node, n_rows_plus_processors_link    ! the NodeMatrix and LinkMatrix arrays are of the size of the .csv file plus the number of processors, for phantom nodes/links
-     integer :: istat
-     integer,parameter          :: line_length=256
-     character(line_length)     :: line
-     character(len=line_length) :: word
-     real(8)    :: a(line_length/2+1)
-     integer :: i,io,icount,rcount
      integer :: multiprocessors = 3                         ! for the OPTIMAL example, the number of processors is 3.  This is a project dependent parameter
      integer :: phantom_node_idx, phantom_link_idx
      integer :: spanning_node_upstream
@@ -141,17 +131,13 @@ end subroutine BIPquick_YJunction_Hardcode
      
      integer:: ii, jj, kk, mp                                   ! counters: ii - row in nodeMatrix, jj - row in linkMatrix, kk - secondary row counter for node/linkMatrix, mp - for each multiprocessor
      integer :: print_counter = 0
-     integer :: link_counter
-     integer :: missed_counter
-     integer :: while_counter
-     integer :: missing_links
-     integer :: sorted_connectivity_metric, unsorted_connectivity_metric
+     integer :: sorted_connectivity_metric, unsorted_connectivity_metric, link_counter, missed_counter, while_counter, missing_links
      
 
      real(8) :: start, intermediate, finish
      call cpu_time(start)
 
-     if ( setting%BIPquickFlags%UseBIPquick .eqv. .true. ) then
+     if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then
 
         ! Allocate and set the temporary arrays. (Multiprocessors - 1) represents the maximum number of phantom nodes
         ! B_node Partition will hold [ni_idx, Partition_No]
@@ -176,19 +162,19 @@ end subroutine BIPquick_YJunction_Hardcode
         allocate(B_nodeI(size(nodeI, 1) + multiprocessors - 1, upstream_face_per_elemM))
         B_nodeI(:,:) = nullValueI
 
-        do i = 1, size(nodeI,1)
-            print*, nodeI(i,ni_idx), nodeI(i, ni_node_type), nodeI(i, ni_Mlink_u1:ni_Mlink_d3)
+        do ii = 1, size(nodeI,1)
+            print*, nodeI(ii,ni_idx), nodeI(ii, ni_node_type), nodeI(ii, ni_Mlink_u1:ni_Mlink_d3)
         enddo
         print*, '_______'
-        do i = 1, size(linkI,1)
-            print*, linkI(i,li_idx), linkI(i, li_Mnode_u:li_Mnode_d), linkR(i, lr_Length)
+        do ii = 1, size(linkI,1)
+            print*, linkI(ii,li_idx), linkI(ii, li_Mnode_u:li_Mnode_d), linkR(ii, lr_Length)
         enddo
         print*, '_______'
 
         call network_node_preprocessing(nodeI, linkI, B_nodeI)
         print*, "printing the upstream nodes"
-        do i = 1, size(B_nodeI,1)
-            print*, B_nodeI(i,:)
+        do ii = 1, size(B_nodeI,1)
+            print*, B_nodeI(ii,:)
         enddo        
                   
          ! the idx of the phantom nodes are based on how many nodes exist, so this function determines the number of digits in the last node/link.  Then the phantom_index starts at 10^digits
@@ -209,8 +195,8 @@ end subroutine BIPquick_YJunction_Hardcode
         !  determine the weight directly upstream of each node
          call local_node_weighting(nodeI, linkI, nodeR, linkR, B_nodeR, lr_target_default)
 
-         do i = 1, size(B_nodeR,1)
-             print*, B_nodeR(i, B_nr_directweight_u)
+         do ii = 1, size(B_nodeR,1)
+             print*, B_nodeR(ii, B_nr_directweight_u)
          enddo
 
          print*, "----------------------------------------"  

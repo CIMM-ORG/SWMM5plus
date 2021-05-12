@@ -255,10 +255,11 @@ module setting_definition
     end type PathType
 
     !% setting%BIPquickSettings%Flag
-    type BIPflagType
-        logical :: UseBIPquick = .true.
-        logical :: BIPquickTestCase = .false.
-    endtype BIPflagType
+    type PartitioningFlags
+        logical :: UseBIPquick
+        logical :: UseDefault
+        logical :: BIPquickTestCase
+    endtype PartitioningFlags
     ! -
     ! --
 
@@ -277,7 +278,7 @@ module setting_definition
         type(ZeroValueType) :: ZeroValue ! finite values to represent small or negative values
         type(TestCaseType) :: TestCase
         type(PathType) :: Paths
-        type(BIPFlagType) :: BIPquickFlags
+        type(PartitioningFlags) :: Partitioning
     end type settingType
 
     type(settingType), target :: setting
@@ -540,11 +541,15 @@ contains
         if (.not. found) stop 58
 
         ! Load BIPquick Settings
-        call json%get('BIPquickFlags.UseBIPquick', logical_value, found)
-        setting%BIPquickFlags%UseBIPquick = logical_value
+        call json%get('Partitioning.UseBIPquick', logical_value, found)
+        setting%Partitioning%UseBIPquick = logical_value
         if (.not. found) stop 60
-        call json%get('BIPquickFlags.BIPquickTestCase', logical_value, found)
-        setting%BIPquickFlags%BIPquickTestCase = logical_value 
+        call json%get('Partitioning.BIPquickTestCase', logical_value, found)
+        setting%Partitioning%BIPquickTestCase = logical_value 
+        if (.not. found) stop 61
+        call json%get('Partitioning.UseDefault', logical_value, found)
+        setting%Partitioning%UseDefault = logical_value
+        if (.not. found) stop 62
 
         call json%destroy()
         if (json%failed()) stop 59
