@@ -80,12 +80,6 @@ contains
         call utility_check_allocation(allocation_status, emsg)
         linkYN(:,:) = nullvalueL
 
-        allocate(nodeName(N_node), stat=allocation_status, errmsg=emsg)
-        call utility_check_allocation(allocation_status, emsg)
-
-        allocate(linkName(N_link), stat=allocation_status, errmsg=emsg)
-        call utility_check_allocation(allocation_status, emsg)
-
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage
 

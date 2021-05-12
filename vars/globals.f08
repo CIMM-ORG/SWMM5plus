@@ -20,18 +20,16 @@ module globals
     !%  links are the building blocks from SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: linkR ! real data for links
     integer, dimension(:,:), allocatable, target :: linkI ! integer data for links
-    integer, dimension(:,:), allocatable, target :: B_linkI ! BIPquick output for links
     logical, dimension(:,:), allocatable, target :: linkYN ! logical data for links
-
-    type(string), dimension(:), allocatable, target :: linkName ! array of character strings
 
     !%  nodes are the building blocks from teh SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: nodeR ! real data for nodes
     integer, dimension(:,:), allocatable, target :: nodeI ! integer data for nodes
-    integer, dimension(:,:), allocatable, target :: B_nodeI ! BIPquick output for nodes
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
 
-    type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
+    ! BIPQuick data structures
+    integer, dimension(:,:), allocatable, target :: B_linkI ! BIPquick output for links
+    integer, dimension(:,:), allocatable, target :: B_nodeI ! BIPquick output for nodes
 
     ! note that nullvalueI < 0 is required
     integer, parameter :: nullvalueI = 998877
@@ -75,12 +73,8 @@ module globals
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
 
     ! Tables
-    type(real_table), allocatable :: all_tseries(:)
-    type(pattern), allocatable :: all_patterns(:)
-    type(totalInflow), allocatable :: total_inflows(:,:,:)
+    type(totalInflow), allocatable :: total_inflows(:)
 
     ! Boundary Conditions
-    real(8), allocatable :: bcdataDn
-    real(8), allocatable :: bcdataUp
 
 end module globals

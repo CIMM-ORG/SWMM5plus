@@ -271,4 +271,13 @@ module data_keys
         enumerator :: curve_table
         enumerator :: tinflow
     end enum
+
+    ! Datetime resolution types
+    enum, bind(c)
+        enumerator :: monthly = 1
+        enumerator :: daily
+        enumerator :: hourly
+        enumerator :: weekend
+    end enum
+
 end module data_keys

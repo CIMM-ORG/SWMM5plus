@@ -1,5 +1,7 @@
 module datetime
 
+    use data_keys, only: weekend, daily, hourly, monthly
+
     implicit none
 
     integer :: dayspermonth(12,2) = &
@@ -8,12 +10,6 @@ module datetime
 
     integer, parameter :: datedelta = 693594
     integer, parameter :: secsperday = 86400
-
-    ! Resolution types
-    integer, parameter :: monthly = 1
-    integer, parameter :: daily = 2
-    integer, parameter :: hourly = 3
-    integer, parameter :: weekend = 4
 
     contains
 
@@ -34,7 +30,7 @@ module datetime
             print *, "Resolution type not supported, use"
             print *, "(1) monthly, (2) daily, (3) hourly, (4) weekend"
             stop
-        endif
+        end if
     end function datetime_get_next_time
 
     function days_to_secs(date_in_days, start_date_in_days)
@@ -54,7 +50,7 @@ module datetime
     function isleapyear(year)
         integer, intent(in) :: year
         integer :: isleapyear
-        if ((mod(year,4) == 0) .and. ((mod(year,100) .ne. 0) .or. (mod(year,400) == 0))) then
+        if ((mod(year,4) == 0) .and. ((mod(year,100) /= 0) .or. (mod(year,400) == 0))) then
             isleapyear = 2
         else
             isleapyear = 1
@@ -71,7 +67,7 @@ module datetime
         else
             result = n/d
             remainder = n - d*result
-        endif
+        end if
     end subroutine
 
     function datetime_encodedate(year, month, day)
@@ -85,11 +81,11 @@ module datetime
             .and. (month <= 12) .and. (day >= 1) .and. (day <= dayspermonth(month,i))) then
             do j = 1, month-1
                 dday = dday + dayspermonth(j,i)
-            enddo
+            end do
             i = year-1
             datetime_encodedate = i*365 + i/4 - i/100 + i/400 + dday - datedelta
             return
-        endif
+        end if
         datetime_encodedate = -datedelta
     end function datetime_encodedate
 
@@ -100,7 +96,7 @@ module datetime
             s = (hour * 3600 + minute * 60 + second)
             datetime_encodetime = s/real(secsperday)
             return
-        endif
+        end if
         datetime_encodetime = 0
     end function datetime_encodetime
 
@@ -126,12 +122,12 @@ module datetime
             do while (t >= d400)
                 t = t - d400
                 y = y + 400
-            enddo
+            end do
             call divmod(t, d100, i, d)
             if (i == 4) then
                 i = i - 1
                 d = d + d100
-            endif
+            end if
             y = y + i*100
             call divmod(d, d4, i, d)
             y = y + i*4
@@ -139,7 +135,7 @@ module datetime
             if (i == 4) then
                 i = i - 1
                 d = d + d1
-            endif
+            end if
             y = y + i
             k = isleapyear(y)
             m = 1
@@ -148,11 +144,11 @@ module datetime
                 if (d < i) exit
                 d = d - i
                 m = m + 1
-            enddo
+            end do
             year = y
             month = m
             day = d + 1
-        endif
+        end if
     end subroutine
 
     subroutine datetime_decodetime(time_in_days, h, m, s)
@@ -196,7 +192,7 @@ module datetime
             datetime_get_next_day = real(ceiling(date_in_days))
         else
             datetime_get_next_day = date_in_days + real(1.0)
-        endif
+        end if
     end function datetime_get_next_day
 
     function datetime_get_next_hour(date_in_days)
@@ -222,11 +218,11 @@ module datetime
             next = datetime_get_next_hour(date_in_days)
             dayofweek = datetime_dayofweek(next)
             call datetime_decodetime(next, h, m, s)
-            if ((dayofweek .ne. 1) .and. (dayofweek .ne. 7)) then
+            if ((dayofweek /= 1) .and. (dayofweek /= 7)) then
                 if ((h == 0) .and. (m == 0) .and. (s == 0) .and. (dayofweek == 2)) return
                 next = datetime_get_next_weekendday_hour(next)
-            endif
-        endif
+            end if
+        end if
     end function datetime_get_next_weekendday_hour
 
 end module datetime
