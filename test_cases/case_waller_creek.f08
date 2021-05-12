@@ -97,7 +97,7 @@ contains
             call utility_check_allocation (allocation_status, emsg)
             bcdataDn(ii)%TimeArray      = nullvalueR
             bcdataDn(ii)%ValueArray     = nullvalueR
-        enddo
+        end do
         do ii = 1, N_BCupstream
             allocate( bcdataUp(ii)%TimeArray(ntimepoint), stat=allocation_status, errmsg=emsg)
             call utility_check_allocation (allocation_status, emsg)
@@ -105,7 +105,7 @@ contains
             call utility_check_allocation (allocation_status, emsg)
             bcdataUp(ii)%TimeArray      = nullvalueR
             bcdataUp(ii)%ValueArray     = nullvalueR
-        enddo
+        end do
 
         ! assign values
         ! upstream is default to flowrate
@@ -246,7 +246,7 @@ contains
             linkR(mm,lr_ElementLength)   = subdivide_length(mm)
             linkR(mm,lr_InitialFlowrate) = initial_flowrate(mm)
             linkI(mm,li_InitialDepthType)= idepth_type(mm)
-        enddo
+        end do
 
         linkR(:  ,lr_InitialDepth)         = init_depth(:)
         linkR(:  ,lr_InitialDnstreamDepth) = depth_dnstream(:)
@@ -268,7 +268,7 @@ contains
             !print *, nodeI(:,ni_Mlink_d1), 'downstream1 link'
             !print *, nodeI(:,ni_N_link_u), 'number of upstream links'
             !print *, nodeI(:,ni_Mlink_u1), 'upstream1 link'
-        endif
+        end if
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine case_waller_creek_links_and_nodes
@@ -346,7 +346,7 @@ contains
         ! set array for integer counting of non-monotonic cells
         where (temp1*temp2 < zeroR)
             isnonmonotonic = 1
-        endwhere
+        end where
 
         ! counting the new elements
         newNX = NX + twoI * count(isnonmonotonic/= 0)
@@ -438,8 +438,8 @@ contains
                 newWidthDepthData(jj,:,:) = widthDepthData (ii,:,:)
                 newCellType      (jj)%str = cellType       (ii)%str
                 jj = jj + 1
-            endif
-        enddo
+            end if
+        end do
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine nonmonotonic_subdivide
@@ -523,8 +523,8 @@ contains
         do ii = 1, size(widthDepthData,1)
             if(cellType(ii)%str == 'widthdepth_pair') then
                 area(ii, numberPairs(ii):eIn1) = zeroR
-            endif
-        enddo
+            end if
+        end do
 
         ! store width and depth differences
         dWidth(:,1) = width(:,1)
@@ -542,7 +542,7 @@ contains
             ! a near-90 degree angle will have an infinite tangent.
             ! we handle this case by setting all these angles to pi/2 - small value
             angle = pi/twoR - setting%Method%AdjustWidthDepth%angleMinimum
-        endwhere
+        end where
 
         ! accumulated area of the trapezoids to the ii width-depth level
         areaTBL(:,1) = zeroR
@@ -555,7 +555,7 @@ contains
         ! area at the uppermost level.
         if (setting%Method%AdjustWidthDepth%areaMaximum < maxval(areaTBL(:, eIn1))) then
             setting%Method%AdjustWidthDepth%areaMaximum = twoR * maxval(areaTBL(:, eIn1))
-        endif
+        end if
 
         ! perimeter below this layer
         perimeterBL(:,1) = zeroR
@@ -608,15 +608,15 @@ contains
                 !compute difference in depth across eacg level
                 dDepth(ii,1:jj-1) = widthDepthData(ii,2:jj,depth) &
                     - widthDepthData(ii,1:jj-1,depth)
-            enddo
-        enddo
+            end do
+        end do
 
         !negative values indicate non-monotonic behavior that can be fixed.
         nfix = nfix + count(dWidth < 0.0 .or. dDepth < 0.0)
 
         if ((setting%Method%AdjustWidthDepth%Apply .eqv. .true.) .and. (nfix > 0)) then
             call widthdepth_pair_fix(widthDepthData)
-        endif
+        end if
 
         !check that the width-depth pairs cover enough depth and fix with vertical walls
         !width-Depth matrix has an extra cell when allocated
@@ -632,8 +632,8 @@ contains
 
                 !an additional pair has been added at this element
                 numberPairs(ii) = numberPairs(ii) + 1
-            endif
-        enddo
+            end if
+        end do
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine widthdepth_pair_consistency
@@ -682,9 +682,9 @@ contains
                 elsewhere
                     !both depth and width are inconsistent - simple expansion
                     up1D = lowD*(1.0 + setting%Method%AdjustWidthDepth%AdjustFraction)
-                endwhere
-            endwhere
-        endwhere
+                end where
+            end where
+        end where
 
         !fix inconsistent widht
         where (up1W < lowW)
@@ -699,9 +699,9 @@ contains
                 elsewhere
                     !both widht and width are inconsistent - simple expansion
                     up1W = lowW*(1.0 + setting%Method%AdjustWidthDepth%AdjustFraction)
-                endwhere
-            endwhere
-        endwhere
+                end where
+            end where
+        end where
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine widthdepth_pair_fix
