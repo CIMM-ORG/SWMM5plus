@@ -144,7 +144,7 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
 echo
 echo Compiling SWMM5+ ...
 echo
-$FC $SOURCESF -fcoarray=lib -lcaf_mpi -ldl -o $PROGRAM
+$FC $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
 
 $clean:
     echo
