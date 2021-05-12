@@ -14,21 +14,16 @@ program main_caf
     character(len=256) :: arg
 
     ! ---  Define paths
-    if (this_image() == 1) then
+    if (this_image() .eq. 1) then
        call getcwd(setting%Paths%project)
        setting%Paths%setting = trim(setting%Paths%project) // '/initialization/settings.json'
-
+    
     ! --- Read args
-
-    do i = 1, iargc()
-        call getarg(i, arg)
-        if (.not. arg_param) then
-            param = arg
-            if (i == 1) then
-                if (arg(:1) == '-') then
-                    print *, "ERROR: it is necessary to define the path to the .inp file"
-                    stop
-                endif
+       do i = 1, iargc()
+          call getarg(i, arg)
+          if (.not. arg_param) then
+             param = arg
+             if (i == 1) then
                 setting%Paths%inp = arg
              elseif ((trim(arg) == "-s") .or. & ! user provides settings file
                   (trim(arg) == "-t")) then  ! hard coded test case
@@ -60,24 +55,23 @@ program main_caf
                    print *, "y_channel, y_storage_channel"
                    stop
                 end if
-            end if
-        end if
-    end do
-
-    ! --- Load Settings
-
-    call load_settings(setting%Paths%setting)
-    call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
+             end if
+          end if
+       end do
+       
+       ! --- Load Settings
+       
+       call load_settings(setting%Paths%setting)
 
     ! --- Initialization
-
+    
        call initialize_api()
        call initialize_linknode_arrays()
-       call finalize_api()
-       call BIPquick_Optimal_Hardcode(nodei, linki, B_nodeI, B_linkI)
+       call finalize_api()   
+       call BIPquick_Optimal_Hardcode(nodei, linki, B_nodeI, B_linkI)    
     end if
-    sync all
-
-
-
+    sync all 
+    
+   
+       
 end program main_caf

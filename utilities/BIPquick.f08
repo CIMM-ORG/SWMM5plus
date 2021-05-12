@@ -1,25 +1,29 @@
 !==========================================================================
 !2019-11-11 ==> Contributed by Eddie Tiernan
- module BIPquick
+ module BIPquick ! the module name that is referenced in the main.f08
 
+! the modules that need to precede BIPquick
  use array_index
  use globals
  use setting_definition, only: setting
  
+! this designation just means that every variable has to be given an explicit type/size
  implicit none
 
+! the module's subroutines are private by default, allows some generically named subroutines to be used here and elsewhere
  private
 
- public :: BIPquick_subroutine, BIPquick_Optimal_Hardcode
+! the public subroutines are ones that can be called from any module that has $ use BIPquick $ at the top
+ public :: BIPquick_subroutine, BIPquick_Optimal_Hardcode, BIPquick_YJunction_Hardcode
  
-!  integer, parameter :: dp = selected_real(8)_kind(15)
- real(8), parameter :: precision_matching_tolerance = 1.0D-5
+ real(8), parameter :: precision_matching_tolerance = 1.0D-5 ! a tolerance parameter for whether or not two real(8) numbers are equal
  
- integer, parameter :: B_nr_directweight_u = 1 ! the cumulative weight of the links directly upstream
- integer, parameter :: B_nr_totalweight_u  = 2 ! the cumulative weight of all links upstream
+ integer, parameter :: B_nr_directweight_u = 1 ! the cumulative weight of the links directly upstream of a node
+ integer, parameter :: B_nr_totalweight_u  = 2 ! the cumulative weight of all links upstream of a node
 
  integer, parameter :: B_ni_idx_Partition = 1 ! the node index number
  integer, parameter :: B_ni_Partition_No = 2 ! the Partition number to which that node index belongs
+ integer, parameter :: B_ni_is_boundary = 3 ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
 
  integer, parameter :: B_li_idx_Partition = 1 ! the link index number
  integer, parameter :: B_li_Partition_No = 2 ! the Partition number to which that link index belongs
@@ -27,15 +31,15 @@
  contains
  
 !-------------------------------------------------------------------------- 
+
+! These two subroutines just populate the B_nodeI, B_linkI arrays with hardcoded values that *would* be the output of BIPquick_subroutine (if it worked)
+! OPTIMAL.inp is the name of the system input file this hardcode subroutine emulates
  subroutine BIPquick_Optimal_Hardcode(nodeI, linkI, B_nodeI, B_linkI) 
-    integer, dimension(:,:), intent(in out), allocatable   :: B_nodeI
-    integer, dimension(:,:), intent(in out), allocatable   :: B_linkI
+    integer, dimension(:,:), intent(in out)  :: B_nodeI
+    integer, dimension(:,:), intent(in out)   :: B_linkI
     integer,  dimension(:,:), intent(in out)  :: linkI
     integer,  dimension(:,:), intent(in out)  :: nodeI
     integer :: ii
-
-    allocate(B_nodeI(size(nodeI,1), 2))
-    allocate(B_linkI(size(linkI,1), 2))
 
     B_nodeI(:, B_ni_Partition_No) = (/1, 1, 1, 2, 3, 3, 1, 1, 2, 2, 2, 2, 3, 3, 3, 1, 3/)
     B_linkI(:, B_li_Partition_No) = (/1, 1, 1, 2, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1/)
@@ -50,22 +54,35 @@
 
 end subroutine BIPquick_Optimal_Hardcode
 
- 
+! Y_Junction_NetworkDefineTest.inp is the name of the system input file this hardcode subroutine emulates
+subroutine BIPquick_YJunction_Hardcode() 
+    integer :: ii
+
+    print*, "The YJunction Arrays have been initialized and are size", size(B_nodeI,1), size(B_linkI,1)
+
+    B_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3/)
+    B_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
+    B_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
+
+    do ii = 1, size(nodeI, 1)
+        B_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
+    enddo
+
+    do ii = 1, size(linkI, 1)
+        B_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
+    enddo
+
+end subroutine BIPquick_YJunction_Hardcode
+
+! This subroutine is the main BIPquick subroutine
+! It uses the link-node arrays initialized in $ call initialize_linknode_arrays() $ in the main.f08
+! It also uses B_nodeI, B_linkI arrays that are initialized in allocate_storage.f08
+! Two dummy arrays, B_nodeI and B_nodeR are used to contain some of the BIPquick specific parameters
  subroutine BIPquick_subroutine(linkI, nodeI, linkR, nodeR)
      real(8)    :: lr_target_default = 1.0                         ! for the time being, the target length of an element is a hardcoded parameter
      integer :: n_rows_in_file_node, n_rows_in_file_link    ! counter for the number of rows in the node/link .csv files
-     integer :: iunit = 10
-     integer :: runit = 11
-     integer :: lunit = 12
-     integer :: header_row = 1
      integer :: n_rows_excluding_header_node, n_rows_excluding_header_link  ! number of rows in the node/link .csv files excluding the header, used to determine the size of the arrays
      integer :: n_rows_plus_processors_node, n_rows_plus_processors_link    ! the NodeMatrix and LinkMatrix arrays are of the size of the .csv file plus the number of processors, for phantom nodes/links
-     integer :: istat
-     integer,parameter          :: line_length=256
-     character(line_length)     :: line
-     character(len=line_length) :: word
-     real(8)    :: a(line_length/2+1)
-     integer :: i,io,icount,rcount
      integer :: multiprocessors = 3                         ! for the OPTIMAL example, the number of processors is 3.  This is a project dependent parameter
      integer :: phantom_node_idx, phantom_link_idx
      integer :: spanning_node_upstream
@@ -111,17 +128,13 @@ end subroutine BIPquick_Optimal_Hardcode
      
      integer:: ii, jj, kk, mp                                   ! counters: ii - row in nodeMatrix, jj - row in linkMatrix, kk - secondary row counter for node/linkMatrix, mp - for each multiprocessor
      integer :: print_counter = 0
-     integer :: link_counter
-     integer :: missed_counter
-     integer :: while_counter
-     integer :: missing_links
-     integer :: sorted_connectivity_metric, unsorted_connectivity_metric
+     integer :: sorted_connectivity_metric, unsorted_connectivity_metric, link_counter, missed_counter, while_counter, missing_links
      
 
      real(8) :: start, intermediate, finish
      call cpu_time(start)
 
-     if ( setting%BIPquickFlags%UseBIPquick .eqv. .true. ) then
+     if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then
 
         ! Allocate and set the temporary arrays. (Multiprocessors - 1) represents the maximum number of phantom nodes
         ! B_node Partition will hold [ni_idx, Partition_No]
@@ -146,19 +159,19 @@ end subroutine BIPquick_Optimal_Hardcode
         allocate(B_nodeI(size(nodeI, 1) + multiprocessors - 1, upstream_face_per_elemM))
         B_nodeI(:,:) = nullValueI
 
-        do i = 1, size(nodeI,1)
-            print*, nodeI(i,ni_idx), nodeI(i, ni_node_type), nodeI(i, ni_Mlink_u1:ni_Mlink_d3)
+        do ii = 1, size(nodeI,1)
+            print*, nodeI(ii,ni_idx), nodeI(ii, ni_node_type), nodeI(ii, ni_Mlink_u1:ni_Mlink_d3)
         enddo
         print*, '_______'
-        do i = 1, size(linkI,1)
-            print*, linkI(i,li_idx), linkI(i, li_Mnode_u:li_Mnode_d), linkR(i, lr_Length)
+        do ii = 1, size(linkI,1)
+            print*, linkI(ii,li_idx), linkI(ii, li_Mnode_u:li_Mnode_d), linkR(ii, lr_Length)
         enddo
         print*, '_______'
 
         call network_node_preprocessing(nodeI, linkI, B_nodeI)
         print*, "printing the upstream nodes"
-        do i = 1, size(B_nodeI,1)
-            print*, B_nodeI(i,:)
+        do ii = 1, size(B_nodeI,1)
+            print*, B_nodeI(ii,:)
         enddo        
                   
          ! the idx of the phantom nodes are based on how many nodes exist, so this function determines the number of digits in the last node/link.  Then the phantom_index starts at 10^digits
@@ -179,8 +192,8 @@ end subroutine BIPquick_Optimal_Hardcode
         !  determine the weight directly upstream of each node
          call local_node_weighting(nodeI, linkI, nodeR, linkR, B_nodeR, lr_target_default)
 
-         do i = 1, size(B_nodeR,1)
-             print*, B_nodeR(i, B_nr_directweight_u)
+         do ii = 1, size(B_nodeR,1)
+             print*, B_nodeR(ii, B_nr_directweight_u)
          enddo
 
          print*, "----------------------------------------"  

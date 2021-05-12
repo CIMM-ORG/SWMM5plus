@@ -106,8 +106,9 @@
         "UseZeroValues" : true,
         "Volume" : 1e-6
     },
-    "BIPquickFlags" : {
+    "Partitioning" : {
         "UseBIPquick" : true,
+        "UseDefault"  : false,
         "BIPquickTestCase" : false
     },
     "Debug" : {
