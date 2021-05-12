@@ -88,7 +88,7 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           main.f08"
 
 echo Compiling ...
-$FC $SOURCESF -ldl -o $PROGRAM
+$FC $SOURCESF -fcoarray=lib -lcaf_mpi -ldl -o $PROGRAM
 
 $clean:
     echo Clean Object files ...
