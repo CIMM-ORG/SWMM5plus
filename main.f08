@@ -25,6 +25,10 @@ program main
         if (.not. arg_param) then
             param = arg
             if (i == 1) then
+                if (arg(:1) == '-') then
+                    print *, "ERROR: it is necessary to define the path to the .inp file"
+                    stop
+                endif
                 setting%Paths%inp = arg
             elseif ((trim(arg) == "-s") .or. & ! user provides settings file
                 (trim(arg) == "-t")) then  ! hard coded test case
@@ -63,6 +67,7 @@ program main
     ! --- Load Settings
 
     call load_settings(setting%Paths%setting)
+    call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
 
     ! --- Initialization
 

@@ -2,8 +2,8 @@ module utility
 
     use array_index
     use data_keys
-    use setting_definition
     use globals
+    use setting_definition, only: setting
 
     implicit none
 
@@ -16,8 +16,6 @@ module utility
 
     private
 
-    integer :: debuglevel = 0
-
     public :: utility_check_allocation
     public :: utility_export_linknode_csv
 
@@ -27,7 +25,7 @@ contains
     !-----------------------------------------------------------------------------
     !
     ! Description:
-    !   Checks allocation status and STOPs if there is an error
+    !   Checks allocation status and stops if there is an error
     !
     !-----------------------------------------------------------------------------
 
@@ -38,14 +36,14 @@ contains
 
     !-----------------------------------------------------------------------------
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility) print *, '*** enter ',subroutine_name
 
         if (allocation_status > 0) then
             print *, trim(emsg)
-            STOP
+            stop
         end if
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
 
     end subroutine utility_check_allocation
 
@@ -97,7 +95,7 @@ contains
             "nr_ElementLength_u2,nr_ElementLength_u3,nr_ElementLength_d1,nr_ElementLength_d2,"    // &
             "nr_ElementLength_d3"
 
-        write(4, '(A)')
+        write(4, '(A)')                                                                                 &
             "ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_curve_type,ni_assigned,ni_total_inflow," // &
             "ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3"
 

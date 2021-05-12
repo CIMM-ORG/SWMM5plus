@@ -3,6 +3,7 @@ module allocate_storage
     use array_index
     use globals
     use utility, only: utility_check_allocation
+    use setting_definition, only: setting
 
     implicit none
 
@@ -19,7 +20,6 @@ module allocate_storage
 
     ! allocate_storage constants
     integer           :: allocation_status
-    integer           ::        debuglevel = 0
     character(len=99) ::              emsg
 
     ! public members
@@ -28,7 +28,6 @@ module allocate_storage
 contains
 
     subroutine allocate_linknode_storage ()
-
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -47,7 +46,7 @@ contains
 
     !-----------------------------------------------------------------------------
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
 
         allocate(nodeI(N_node, ni_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
@@ -79,7 +78,7 @@ contains
         allocate(linkName(N_link), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage
 
 end module allocate_storage
