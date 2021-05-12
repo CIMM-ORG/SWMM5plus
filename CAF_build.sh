@@ -15,7 +15,7 @@ VARS_DIR='vars'
 FC='gfortran-9'
 OUPTFLAGS=-g
 FFLAGS=-O3
-PROGRAM=SWMM
+PROGRAM=CAF_SWMM
 DEBUG=true
 
 if [ $DEBUG = true ]
@@ -85,7 +85,7 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           $INIT_DIR/allocate_storage.f08\
           $INIT_DIR/initialization.f08\
           $UTIL_DIR/BIPquick.f08
-          main.f08"
+          main_caf.f08"
 
 echo Compiling ...
 $FC $SOURCESF -fcoarray=lib -lcaf_mpi -ldl -o $PROGRAM

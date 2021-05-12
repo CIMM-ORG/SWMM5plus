@@ -14,7 +14,7 @@ program main_caf
     character(len=256) :: arg
 
     ! ---  Define paths
-    if (this_image() == 1) then
+    if (this_image() .eq. 1) then
        call getcwd(setting%Paths%project)
        setting%Paths%setting = trim(setting%Paths%project) // '/initialization/settings.json'
     
