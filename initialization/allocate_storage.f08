@@ -89,61 +89,61 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage
 
-    subroutine allocate_bc()
-    !
-    ! allocate storage for boundary conditions.
-    !
-    !-----------------------------------------------------------------------------
+    ! subroutine allocate_bc()
+    ! !
+    ! ! allocate storage for boundary conditions.
+    ! !
+    ! !-----------------------------------------------------------------------------
 
-        character(64)      :: subroutine_name = 'allocate_bc'
-        integer            :: ii
-        integer            :: allocation_status
-        character(len=99)  :: emsg
+    !     character(64)      :: subroutine_name = 'allocate_bc'
+    !     integer            :: ii
+    !     integer            :: allocation_status
+    !     character(len=99)  :: emsg
 
-    !-----------------------------------------------------------------------------
+    ! !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+    !     if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
 
-        !% the Upstream and Downstream bc structure
-        allocate(bcdataUp(N_BCupstream), stat=allocation_status, errmsg=emsg)
-        call utility_check_allocation (allocation_status, emsg)
+    !     !% the Upstream and Downstream bc structure
+    !     allocate(bcdataUp(N_BCupstream), stat=allocation_status, errmsg=emsg)
+    !     call utility_check_allocation (allocation_status, emsg)
 
-        allocate(bcdataDn(N_BCdnstream), stat=allocation_status, errmsg=emsg)
-        call utility_check_allocation (allocation_status, emsg)
+    !     allocate(bcdataDn(N_BCdnstream), stat=allocation_status, errmsg=emsg)
+    !     call utility_check_allocation (allocation_status, emsg)
 
-        !% the downstream arrays - HACK default downstream is elevation
-        do ii=1,N_BCdnstream
-            bcdataDn(ii)%idx = ii
-            bcdataDn(ii)%Updn          = bc_updn_downstream
-            bcdataDn(ii)%Category      = bc_category_elevation
-            bcdataDn(ii)%NodeID         = nullvalueI
-            bcdataDn(ii)%FaceID         = nullvalueI
-            bcdataDn(ii)%ElemGhostID    = nullvalueI
-            bcdataDn(ii)%ElemInsideID   = nullvalueI
-            bcdataDn(ii)%ThisValue      = nullvalueR
-            bcdataDn(ii)%ThisTime       = nullvalueR
-            bcdataDn(ii)%ThisFlowrate   = nullvalueR
-            allocate(bcdataUp(ii)%TimeArray(setting%Constant%BCSlots))
-            allocate(bcdataUp(ii)%ValueArray(setting%Constant%BCSlots))
-        end do
+    !     !% the downstream arrays - HACK default downstream is elevation
+    !     do ii=1,N_BCdnstream
+    !         bcdataDn(ii)%idx = ii
+    !         bcdataDn(ii)%Updn          = bc_updn_downstream
+    !         bcdataDn(ii)%Category      = bc_category_elevation
+    !         bcdataDn(ii)%NodeID         = nullvalueI
+    !         bcdataDn(ii)%FaceID         = nullvalueI
+    !         bcdataDn(ii)%ElemGhostID    = nullvalueI
+    !         bcdataDn(ii)%ElemInsideID   = nullvalueI
+    !         bcdataDn(ii)%ThisValue      = nullvalueR
+    !         bcdataDn(ii)%ThisTime       = nullvalueR
+    !         bcdataDn(ii)%ThisFlowrate   = nullvalueR
+    !         allocate(bcdataUp(ii)%TimeArray(setting%Constant%BCSlots))
+    !         allocate(bcdataUp(ii)%ValueArray(setting%Constant%BCSlots))
+    !     end do
 
-        !% the upstream arrays = HACK default upstream is flowrate
-        do ii=1,N_BCupstream
-            bcdataUp(ii)%idx = ii
-            bcdataUp(ii)%Updn       = bc_updn_upstream
-            bcdataUp(ii)%category   = bc_category_inflowrate
-            bcdataUp(ii)%NodeID         = nullvalueI
-            bcdataUp(ii)%FaceID         = nullvalueI
-            bcdataUp(ii)%ElemGhostID    = nullvalueI
-            bcdataUp(ii)%ElemInsideID   = nullvalueI
-            bcdataUp(ii)%ThisValue      = nullvalueR
-            bcdataUp(ii)%ThisTime       = nullvalueR
-            bcdataUp(ii)%ThisFlowrate   = nullvalueR
-            allocate(bcdataUp(ii)%TimeArray(setting%Constant%BCSlots))
-            allocate(bcdataUp(ii)%ValueArray(setting%Constant%BCSlots))
-        end do
+    !     !% the upstream arrays = HACK default upstream is flowrate
+    !     do ii=1,N_BCupstream
+    !         bcdataUp(ii)%idx = ii
+    !         bcdataUp(ii)%Updn       = bc_updn_upstream
+    !         bcdataUp(ii)%category   = bc_category_inflowrate
+    !         bcdataUp(ii)%NodeID         = nullvalueI
+    !         bcdataUp(ii)%FaceID         = nullvalueI
+    !         bcdataUp(ii)%ElemGhostID    = nullvalueI
+    !         bcdataUp(ii)%ElemInsideID   = nullvalueI
+    !         bcdataUp(ii)%ThisValue      = nullvalueR
+    !         bcdataUp(ii)%ThisTime       = nullvalueR
+    !         bcdataUp(ii)%ThisFlowrate   = nullvalueR
+    !         allocate(bcdataUp(ii)%TimeArray(setting%Constant%BCSlots))
+    !         allocate(bcdataUp(ii)%ValueArray(setting%Constant%BCSlots))
+    !     end do
 
-        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
-    end subroutine allocate_bc
+    !     if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+    ! end subroutine allocate_bc
 
 end module allocate_storage
