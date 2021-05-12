@@ -12,7 +12,7 @@ TEST_DIR='test_cases'
 UTIL_DIR='utilities'
 VARS_DIR='vars'
 
-FC='gfortran-9'
+FC='gfortran'
 OUPTFLAGS=-g
 FFLAGS=-O3
 PROGRAM=CAF_SWMM
