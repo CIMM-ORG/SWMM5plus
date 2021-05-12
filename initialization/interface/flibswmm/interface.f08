@@ -145,7 +145,6 @@ module interface
 
     character(len = 1024), private :: errmsg
     integer, private :: errstat
-    integer, private :: debuglevel = 0
     type(dll_type), private :: dll
     type(c_ptr) :: api
     logical :: api_is_initialized = .false.
@@ -183,7 +182,7 @@ contains
 
         subroutine_name = 'initialize_api'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
         ! Initialize C API
         api = c_null_ptr
@@ -191,7 +190,7 @@ contains
         if (setting%Paths%inp == "") then
             print *, "ERROR: it is necessary to define the path to the .inp file"
             stop
-        endif
+        end if
         ppos = scan(trim(setting%Paths%inp), '.', back = .true.)
         if (ppos > 0) then
             setting%Paths%rpt = setting%Paths%inp(1:ppos) // "rpt"
@@ -210,7 +209,7 @@ contains
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_initialize)
         api = ptr_api_initialize(setting%Paths%inp, setting%Paths%rpt, setting%Paths%out)
 
@@ -232,30 +231,30 @@ contains
         if (N_pattern > 0) call load_all_patterns()
 
         print *, new_line("")
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) then
+        if (setting%Debug%File%interface) then
             print *, "N_link", N_link
             print *, "N_node", N_node
             print *, "N_curve", N_curve
             print *, "N_tseries", N_tseries
             print *, "N_pattern", N_pattern
             print *, '*** leave ', subroutine_name
-        endif
+        end if
     end subroutine initialize_api
 
     subroutine finalize_api()
         character(64) :: subroutine_name = 'finalize_api'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_finalize"
         call load_dll(dll, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_finalize)
         call ptr_api_finalize(api)
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
     end subroutine finalize_api
 
@@ -265,13 +264,13 @@ contains
         if (allocated(all_tseries)) then
             do i = 1, N_tseries
                 call free_table(all_tseries(i))
-            enddo
+            end do
             deallocate(all_tseries)
-        endif
+        end if
 
         if (allocated(all_patterns)) then
             deallocate(all_patterns)
-        endif
+        end if
     end subroutine free_api
 
     ! --- Property-extraction
@@ -282,17 +281,17 @@ contains
         real(8) :: get_start_datetime
         character(64) :: subroutine_name = 'get_start_datetime'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_get_start_datetime"
         call load_dll(dll, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_start_datetime)
         get_start_datetime = ptr_api_get_start_datetime()
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
     end function get_start_datetime
 
     function get_end_datetime()
@@ -301,17 +300,17 @@ contains
 
         subroutine_name = 'get_end_datetime'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_get_end_datetime"
         call load_dll(dll, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_end_datetime)
         get_end_datetime = ptr_api_get_end_datetime()
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
     end function get_end_datetime
 
     subroutine load_all_tseries()
@@ -320,7 +319,7 @@ contains
         real(8), dimension(2) :: entries
         character(64) :: subroutine_name = 'load_all_tseries'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
         if (N_tseries == 0) return
 
@@ -332,7 +331,7 @@ contains
                 print *, new_line("")
                 print *, "ERROR: API can't get Tseries"
                 stop
-            endif
+            end if
             call tables_add_entry(all_tseries(i), entries)
             do while (.true.)
                 success = get_next_table_entry(i, SWMM_TSERIES, entries)
@@ -342,7 +341,7 @@ contains
                 call tables_add_entry(all_tseries(i), entries)
             end do
         end do
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
     end subroutine load_all_tseries
 
     subroutine load_all_patterns()
@@ -369,7 +368,7 @@ contains
         cptr_value = c_loc(node_value)
 
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
         if ((attr > num_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
@@ -386,7 +385,7 @@ contains
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_node_attribute)
         ! Fortran index starts in 1, whereas in C starts in 0
         error = ptr_api_get_node_attribute(api, node_idx-1, attr, cptr_value)
@@ -397,9 +396,9 @@ contains
         ! Fortran index correction
         if ((attr == node_extInflow_tSeries) .or. (attr == node_extInflow_basePat)) then
             if (node_value /= -1) get_node_attribute = get_node_attribute + 1
-        endif
+        end if
 
-        if (debuglevel > 0)  then
+        if (setting%Debug%File%interface)  then
             print *, '*** leave ', subroutine_name
             ! print *, "NODE", node_value, attr
         end if
@@ -417,7 +416,7 @@ contains
 
         subroutine_name = 'get_link_attribute'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
         if ((attr > num_total_link_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
@@ -434,7 +433,7 @@ contains
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_link_attribute)
 
         if (attr <= num_link_attributes) then
@@ -510,7 +509,7 @@ contains
                 get_link_attribute = nullvalueR
             end if
         end if
-        if (debuglevel > 0)  then
+        if (setting%Debug%File%interface)  then
             print *, '*** leave ', subroutine_name
             ! print *, "LINK", link_value, attr
         end if
@@ -524,17 +523,17 @@ contains
 
         subroutine_name = 'get_num_objects'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
         dll%procname = "api_get_num_objects"
         call load_dll(dll, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_num_objects)
         get_num_objects = ptr_api_get_num_objects(api, obj_type)
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
     end function get_num_objects
 
@@ -554,7 +553,7 @@ contains
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_first_table_entry)
         get_first_table_entry = ptr_api_get_first_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
 
@@ -578,7 +577,7 @@ contains
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_next_table_entry)
         get_next_table_entry = ptr_api_get_next_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
 
@@ -592,13 +591,13 @@ contains
         type(pattern) :: get_pattern
         integer :: i, count
 
-        if (k .ne. -1) then
+        if (k /= -1) then
             dll%procname = "api_get_pattern_count"
             call load_dll(dll, errstat, errmsg)
             if (errstat /= 0) then
                 print *, "ERROR: " // trim(errmsg)
                 stop
-            endif
+            end if
             call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_count)
             get_pattern%count = ptr_api_get_pattern_count(k-1)
 
@@ -607,7 +606,7 @@ contains
             if (errstat /= 0) then
                 print *, "ERROR: " // trim(errmsg)
                 stop
-            endif
+            end if
             call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factor)
             do i = 1, 24
                 get_pattern%factor(i) = ptr_api_get_pattern_factor(k-1, i-1) ! index starts at 0 in C
@@ -618,7 +617,7 @@ contains
             if (errstat /= 0) then
                 print *, "ERROR: " // trim(errmsg)
                 stop
-            endif
+            end if
             call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_type) ! index starts at 0 in C
             get_pattern%ptype = ptr_api_get_pattern_type(k-1)
         end if
@@ -635,14 +634,14 @@ contains
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
-        endif
+        end if
         call c_f_procpointer(dll%procaddr, ptr_api_print_object_name) ! index starts at 0 in C
         call ptr_api_print_object_name(k-1, object_type)
     end subroutine print_object_name
 
     subroutine print_swmm_error_code(error)
         integer, intent(in) :: error
-        if (error .ne. 0) then
+        if (error /= 0) then
             print *, "SWMM Error Code: " , error
             stop
         end if

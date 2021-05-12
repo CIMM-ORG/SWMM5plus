@@ -29,18 +29,44 @@ static int  Ntokens;                   // Number of tokens in line of input
 
 // --- Simulation
 
+// Initializes the SWMM C simulation. It creates an Interface
+// variable (details about Interface in interface.h). The
+// function opens de SWMM input file and creates report and
+// output files. Although the .inp is parsed within swmm_start,
+// not every property is extracted, e.g., slopes of trapezoidal channels.
+// In swmm.c
+// to parse the .inp again using SWMM C functionalities
+// within api_load_vars
+// The interface object is passed to many functions in interface.c
+// but it is passed as a void pointer. This is because the object
+// is also used by the Fortran engine. Treating Interface as void*
+// facilitates interoperability
+
 void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3)
 {
     int error;
     Interface* api = (Interface*) malloc(sizeof(Interface));
-    swmm_open(f1, f2, f3);
-    swmm_start(0);
+    error = swmm_open(f1, f2, f3);
+    if (error != 0) {
+        api->IsInitialized = FALSE;
+        return (void*) api;
+    }
+    error = swmm_start(0);
+    if (error != 0) {
+        api->IsInitialized = FALSE;
+        return (void*) api;
+    }
     api->IsInitialized = TRUE;
     error = api_load_vars((void*) api);
     return (void*) api;
 }
 
 void DLLEXPORT api_finalize(void* f_api)
+//
+//  Input: f_api is an Interface object passed as a void*
+//  Output: None
+//  Purpose: Closes the link with the SWMM C library
+//
 {
     int i;
     Interface* api = (Interface*) f_api;
@@ -48,12 +74,14 @@ void DLLEXPORT api_finalize(void* f_api)
     swmm_end();
     swmm_close();
 
+    // frees double variables in API
     for (i = 0; i < NUM_API_DOUBLE_VARS; i++)
     {
         if (api->double_vars[i] != NULL)
             free(api->double_vars[i]);
     }
 
+    // // frees integer variables in API
     // for (i = 0; i < NUM_API_INT_VARS; i++)
     // {
     //     if (api->int_vars[i] != NULL)
@@ -68,6 +96,13 @@ void DLLEXPORT api_finalize(void* f_api)
 // * During Simulation
 
 int DLLEXPORT api_get_node_results(void* f_api, char* node_name, float* inflow, float* overflow, float* depth, float* volume)
+//
+//  Input:    f_api = Interface object passed as a void*
+//            node_name = string identifier of node
+//            inflow, overflow, depth, volume =
+//  Output: None
+//  Purpose: Closes the link with the SWMM C library
+//
 {
     int j, error;
     Interface * api = (Interface*) f_api;
@@ -431,6 +466,7 @@ int add_link(
     return -296;
 }
 
+
 int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
 {
     //  link
@@ -544,8 +580,8 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
         ni_node_type[i] = Node[i].type;
     }
 
-    f_nodes = fopen("nodes_info.csv", "w");
-    f_links = fopen("links_info.csv", "w");
+    f_nodes = fopen("debug/nodes_info.csv", "w");
+    f_links = fopen("debug/links_info.csv", "w");
 
     fprintf(f_nodes,
         "n_left,node_id,ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3\n");
@@ -692,6 +728,7 @@ int check_api_is_initialized(Interface* api)
     return 0;
 }
 
+// ---
 int api_load_vars(void * f_api)
 {
     Interface * api = (Interface*) f_api;
@@ -749,6 +786,16 @@ int api_load_vars(void * f_api)
     return 0;
 }
 
+
+int api_findObject(int type, char *id)
+{
+    return project_findObject(type, id);
+}
+
+// Copy pasted getTokens from src/input.c to ensure independence
+// from the original SWMM C code. In the original code
+// getTokens is not defined as an external API function
+
 int getTokens(char *s)
 //
 //  Input:   s = a character string
@@ -794,9 +841,4 @@ int getTokens(char *s)
         len -= m+1;                         // update length of s
     }
     return(n);
-}
-
-int api_findObject(int type, char *id)
-{
-    return project_findObject(type, id);
 }

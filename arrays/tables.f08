@@ -4,10 +4,9 @@ module tables
     use globals
     use datetime
     use data_keys, only: tseries_table, curve_table, tinflow
+    use setting_definition, only: setting
 
     implicit none
-
-    integer, private :: debuglevel = 0
 
     ! Interpolation Types
     integer :: INTERPOLATION_LINEAR
@@ -31,7 +30,8 @@ contains
 
         integer :: n, i
         character(64) :: subroutine_name  = 'tables_add_entry'
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+
+        if (setting%Debug%File%tables)  print *, '*** enter ', subroutine_name
 
         n = size(entry)
         if (present(axis)) then
@@ -41,15 +41,16 @@ contains
                 end do
                 table%tsize(axis) = table%tsize(axis) + n
                 return
-            endif
-        endif
+            end if
+        end if
 
         do i = 1, n
             call dyna_real_append(table%data(i), entry(i))
         end do
         table%tsize = table%tsize + 1
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+
+        if (setting%Debug%File%tables)  print *, '*** leave ', subroutine_name
     end subroutine tables_add_entry
 
     subroutine free_table(table)
@@ -59,13 +60,15 @@ contains
 
         subroutine_name = 'free_table'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
+
+        if (setting%Debug%File%tables)  print *, '*** enter ', subroutine_name
         if (allocated(table%tsize)) deallocate(table%tsize)
         do i = 1, table%dim
             call free_real_array(table%data(i))
         end do
         if (allocated(table%data)) deallocate(table%data)
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+
+        if (setting%Debug%File%tables)  print *, '*** leave ', subroutine_name
     end subroutine free_table
 
     ! Interpolation
@@ -83,7 +86,7 @@ contains
             xy(2) = y2
         else
             xy(2) = interpolate(xy(1), x1, x2, y1, y2, INTERPOLATION_LINEAR)
-        endif
+        end if
     end function find_next_xy_between
 
     subroutine table_resample(tablexy, resolution_type)
@@ -120,8 +123,8 @@ contains
                 x1 = xy(1)
                 y1 = xy(2)
                 call tables_add_entry(tablexy, (/x1, y1/))
-            enddo
-        enddo
+            end do
+        end do
 
         call tables_add_entry(tablexy, (/x(size(x)), y(size(y))/))
         deallocate(x)
@@ -140,11 +143,12 @@ contains
 
         subroutine_name = 'tables_find_time'
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** enter ', subroutine_name
-        if (table%dim .ne. 2) then
+
+        if (setting%Debug%File%tables)  print *, '*** enter ', subroutine_name
+        if (table%dim /= 2) then
             print *, "ERROR: feature not compatible"
             stop
-        endif
+        end if
 
         n = table%tsize(1) / 2
         x = table%data(1)%array
@@ -189,7 +193,8 @@ contains
             end if
         end do
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+
+        if (setting%Debug%File%tables)  print *, '*** leave ', subroutine_name
 
     end function tables_find_time
 
@@ -204,6 +209,6 @@ contains
         else
             print *, "ERROR: feature not compatible"
             stop
-        endif
+        end if
     end function
 end module tables

@@ -82,7 +82,7 @@ contains
             call utility_check_allocation (allocation_status, emsg)
             bcdataDn(ii)%TimeArray      = nullvalueR
             bcdataDn(ii)%ValueArray     = nullvalueR
-        enddo
+        end do
         do ii = 1, N_BCupstream
             allocate( bcdataUp(ii)%TimeArray(ntimepoint), stat=allocation_status, errmsg=emsg)
             call utility_check_allocation (allocation_status, emsg)
@@ -90,7 +90,7 @@ contains
             call utility_check_allocation (allocation_status, emsg)
             bcdataUp(ii)%TimeArray      = nullvalueR
             bcdataUp(ii)%ValueArray     = nullvalueR
-        enddo
+        end do
 
         ! assign values
         ! downstream is default to elevation
@@ -234,7 +234,7 @@ contains
             linkR(mm,lr_ElementLength)   = subdivide_length(mm)
             linkR(mm,lr_InitialFlowrate) = initial_flowrate(mm)
             linkI(mm,li_InitialDepthType)= idepth_type(mm)
-        enddo
+        end do
 
         linkR(:  ,lr_InitialDepth)         = init_depth(:)
         linkR(:  ,lr_InitialDnstreamDepth) = depth_dnstream(:)
@@ -261,7 +261,7 @@ contains
             !print *, nodeI(:,ni_Mlink_d1), 'downstream1 link'
             !print *, nodeI(:,ni_N_link_u), 'number of upstream links'
             !print *, nodeI(:,ni_Mlink_u1), 'upstream1 link'
-        endif
+        end if
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine case_y_channel_links_and_nodes

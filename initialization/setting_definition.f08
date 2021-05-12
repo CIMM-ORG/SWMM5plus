@@ -119,6 +119,20 @@ module setting_definition
         real(8) :: Maximum = 10.0 ! m/s
     end type LimiterVelocityType
 
+    ! setting%Debug%File
+    type DebugFileType
+        logical :: dynamic_array    = .false.
+        logical :: tables           = .false.
+        logical :: allocate_storage = .false.
+        logical :: initialization   = .false.
+        logical :: interface        = .false.
+        logical :: interface_tests  = .false.
+        logical :: BIPquick         = .false.
+        logical :: utility          = .false.
+        logical :: globals          = .false.
+        logical :: inflow           = .false.
+    end type DebugFileType
+
     ! -
     ! --
     ! ---
@@ -145,37 +159,15 @@ module setting_definition
         type(AdjustWidthDepthType) :: WidthDepth
     end type AdjustType
 
+    ! setting%BC
+    type BCPropertiesType
+        integer :: BCSlots = 10
+    end type BCPropertiesType
+
     ! setting%Constant
     type ConstantType
         real(8) :: gravity = 9.81 ! m^2/s
     end type ConstantType
-
-    ! setting%DebugOut
-    type DebugOutType
-        logical :: elem2R = .false.
-        logical :: elem2I = .false.
-        logical :: elem2YN = .false.
-        logical :: elemMR = .false.
-        logical :: elemMI = .false.
-        logical :: elemMYN = .false.
-        logical :: faceR = .false.
-        logical :: faceI = .false.
-        logical :: faceYN = .false.
-        logical :: nodeR = .false.
-        logical :: nodeI = .false.
-        logical :: nodeYN = .false.
-        logical :: linkR = .false.
-        logical :: linkI = .false.
-        logical :: linkYN = .false.
-        integer :: DisplayInterval = 1
-        logical :: SuppressAllFiles = .false.
-        logical :: SuppressTimeStep = .false.
-        logical :: SuppressTimeValue = .false.
-        logical :: SuppressNdat = .false.
-        character(len=12) :: FolderName = 'debugoutputA'
-        character(len=5) :: FileName = 'debug'
-        character(len=256) :: FolderPath = './'
-    end type DebugOutType
 
     ! setting%Eps
     type EpsilonType
@@ -254,30 +246,38 @@ module setting_definition
         character(len=256) :: out ! path to SWMM output (.out) file
     end type PathType
 
+    !% setting%Debug
+    type DebugType
+        logical :: DebugAPI = .false.
+        type(DebugFileType) :: File
+    end type DebugType
+
     !% setting%BIPquickSettings%Flag
     type PartitioningFlags
         logical :: UseBIPquick
         logical :: UseDefault
         logical :: BIPquickTestCase
     endtype PartitioningFlags
+
     ! -
     ! --
 
     ! First Level Type (setting)
     type settingType
-        type(ACmethodType) :: ACmethod
-        type(AdjustType) :: Adjust
-        type(ConstantType) :: Constant ! Constants
-        type(DebugOutType) :: DebugOut ! control of debougout files
-        type(EpsilonType) :: Eps ! epsilons used to provide bandwidth for comparisons
-        type(LimiterType) :: Limiter ! maximum and minimum limiters
-        type(SmallVolumeType) :: SmallVolume ! controls for small volumes
-        type(SolverType) :: Solver ! switch for solver
-        type(StepType) :: Step ! controls over simulation time stepping
-        type(TimeType) :: Time ! controls of time step
-        type(ZeroValueType) :: ZeroValue ! finite values to represent small or negative values
-        type(TestCaseType) :: TestCase
-        type(PathType) :: Paths
+        type(ACmethodType)     :: ACmethod
+        type(AdjustType)       :: Adjust
+        type(BCPropertiesType) :: BC
+        type(ConstantType)     :: Constant ! Constants
+        type(EpsilonType)      :: Eps ! epsilons used to provide bandwidth for comparisons
+        type(LimiterType)      :: Limiter ! maximum and minimum limiters
+        type(SmallVolumeType)  :: SmallVolume ! controls for small volumes
+        type(SolverType)       :: Solver ! switch for solver
+        type(StepType)         :: Step ! controls over simulation time stepping
+        type(TimeType)         :: Time ! controls of time step
+        type(ZeroValueType)    :: ZeroValue ! finite values to represent small or negative values
+        type(TestCaseType)     :: TestCase
+        type(PathType)         :: Paths
+        type(DebugType)        :: Debug
         type(PartitioningFlags) :: Partitioning
     end type settingType
 
@@ -396,18 +396,23 @@ contains
         setting%Adjust%Head%Coef = real_value
         if (.not. found) stop 22
 
+        ! Load BC Settings
+        call json%get('BC.BCSlots', real_value, found)
+        setting%BC%BCslots = real_value
+        if (.not. found) stop 23
+
         ! Load Constant Settings
         call json%get('Constant.gravity', real_value, found)
         setting%Constant%gravity = real_value
-        if (.not. found) stop 23
+        if (.not. found) stop 24
 
         ! Load Eps Settings
         call json%get('Eps.FroudeJump', real_value, found)
         setting%Eps%FroudeJump = real_value
-        if (.not. found) stop 24
+        if (.not. found) stop 25
         call json%get('Eps.InflowDepthIncreaseFroudeLimit', real_value, found)
         setting%Eps%InflowDepthIncreaseFroudeLimit = real_value
-        if (.not. found) stop 25
+        if (.not. found) stop 26
 
         ! Load Limiter Settings
         call json%get('Limiter.BC.approach', c, found)
@@ -417,62 +422,62 @@ contains
             print *, "Error, Limiter.BC.approach not compatible"
             stop
         end if
-        if (.not. found) stop 26
+        if (.not. found) stop 27
         call json%get('Limiter.BC.FroudeInflowMaximum', real_value, found)
         setting%Limiter%BC%FroudeInflowMaximum = real_value
-        if (.not. found) stop 27
+        if (.not. found) stop 28
         call json%get('Limiter.BC.UseInflowLimiter', logical_value, found)
         setting%Limiter%BC%UseInflowLimiter = logical_value
-        if (.not. found) stop 28
+        if (.not. found) stop 29
 
         call json%get('Limiter.Flowrate.FaceVolumeTransport', real_value, found)
         setting%Limiter%Flowrate%FaceVolumeTransport = real_value
-        if (.not. found) stop 29
+        if (.not. found) stop 30
         call json%get('Limiter.Flowrate.UseFaceVolumeTransport', logical_value, found)
         setting%Limiter%Flowrate%UseFaceVolumeTransport = logical_value
-        if (.not. found) stop 30
+        if (.not. found) stop 31
 
         call json%get('Limiter.Timescale.Maximum', real_value, found)
         setting%Limiter%Timescale%Maximum = real_value
-        if (.not. found) stop 31
+        if (.not. found) stop 32
         call json%get('Limiter.Timescale.Minimum', real_value, found)
         setting%Limiter%Timescale%Minimum = real_value
-        if (.not. found) stop 32
+        if (.not. found) stop 33
 
         call json%get('Limiter.Velocity.Maximum', real_value, found)
         setting%Limiter%Velocity%Maximum = real_value
-        if (.not. found) stop 33
+        if (.not. found) stop 34
         call json%get('Limiter.Velocity.UseLimitMax', logical_value, found)
         setting%Limiter%Velocity%UseLimitMax = logical_value
-        if (.not. found) stop 34
+        if (.not. found) stop 35
 
         ! Load SmallVolume Settings
         call json%get('SmallVolume.DepthCutoff', real_value, found)
         setting%SmallVolume%DepthCutoff = real_value
-        if (.not. found) stop 35
+        if (.not. found) stop 36
         call json%get('SmallVolume.ManningsN', real_value, found)
         setting%SmallVolume%ManningsN = real_value
-        if (.not. found) stop 36
+        if (.not. found) stop 37
         call json%get('SmallVolume.MinimumArea', real_value, found)
         setting%SmallVolume%MinimumArea = real_value
-        if (.not. found) stop 37
+        if (.not. found) stop 38
         call json%get('SmallVolume.MinimumHydRadius', real_value, found)
         setting%SmallVolume%MinimumHydRadius = real_value
-        if (.not. found) stop 38
+        if (.not. found) stop 39
         call json%get('SmallVolume.MinimumPerimeter', real_value, found)
         setting%SmallVolume%MinimumPerimeter = real_value
-        if (.not. found) stop 39
+        if (.not. found) stop 40
         call json%get('SmallVolume.MinimumTopwidth', real_value, found)
         setting%SmallVolume%MinimumTopwidth = real_value
-        if (.not. found) stop 40
+        if (.not. found) stop 41
         call json%get('SmallVolume.UseSmallVolumes', logical_value, found)
         setting%SmallVolume%UseSmallVolumes = logical_value
-        if (.not. found) stop 41
+        if (.not. found) stop 42
 
         ! Load Solver Settings
         call json%get('Solver.crk2', real_value, found)
         setting%Solver%crk2 = real_value
-        if (.not. found) stop 42
+        if (.not. found) stop 43
         call json%get('Solver.MomentumSourceMethod', c, found)
         if (c == 'T00') then
             setting%Solver%MomentumSourceMethod = T00
@@ -481,10 +486,10 @@ contains
         else if (c == 'T20') then
             setting%Solver%MomentumSourceMethod = T20
         end if
-        if (.not. found) stop 43
+        if (.not. found) stop 44
         call json%get('Solver.PreissmanSlot', logical_value, found)
         setting%Solver%PreissmanSlot = logical_value
-        if (.not. found) stop 44
+        if (.not. found) stop 45
         call json%get('Solver.SolverSelect', c, found)
         if (c == 'SVE') then
             setting%Solver%SolverSelect = SVE
@@ -493,67 +498,98 @@ contains
         else if (c == 'AC') then
             setting%Solver%SolverSelect = AC
         end if
-        if (.not. found) stop 45
+        if (.not. found) stop 46
 
         ! Load Step Settings
         call json%get('Step.Current', real_value, found)
         setting%Step%Current = real_value
-        if (.not. found) stop 46
+        if (.not. found) stop 47
         call json%get('Step.Final', real_value, found)
         setting%Step%Final = real_value
-        if (.not. found) stop 47
+        if (.not. found) stop 48
         call json%get('Step.First', real_value, found)
         setting%Step%First = real_value
-        if (.not. found) stop 48
+        if (.not. found) stop 49
 
         ! Load Time Settings
         call json%get('Time.DateTimeStamp', c, found)
         setting%Time%DateTimeStamp = c
-        if (.not. found) stop 49
+        if (.not. found) stop 50
         call json%get('Time.Dt', real_value, found)
         setting%Time%Dt = real_value
-        if (.not. found) stop 50
+        if (.not. found) stop 51
         call json%get('Time.EndTime', real_value, found)
         setting%Time%EndTime = real_value
-        if (.not. found) stop 51
+        if (.not. found) stop 52
         call json%get('Time.NextTime', real_value, found)
         setting%Time%NextTime = real_value
-        if (.not. found) stop 52
+        if (.not. found) stop 53
         call json%get('Time.StartTime', real_value, found)
         setting%Time%StartTime = real_value
-        if (.not. found) stop 53
+        if (.not. found) stop 54
 
         ! Load ZeroValue Settings
         call json%get('ZeroValue.Area', real_value, found)
         setting%ZeroValue%Area = real_value
-        if (.not. found) stop 54
+        if (.not. found) stop 55
         call json%get('ZeroValue.Depth', real_value, found)
         setting%ZeroValue%Depth = real_value
-        if (.not. found) stop 55
+        if (.not. found) stop 56
         call json%get('ZeroValue.Topwidth', real_value, found)
         setting%ZeroValue%Topwidth = real_value
-        if (.not. found) stop 56
+        if (.not. found) stop 57
         call json%get('ZeroValue.UseZeroValues', logical_value, found)
         setting%ZeroValue%UseZeroValues = logical_value
-        if (.not. found) stop 57
+        if (.not. found) stop 58
         call json%get('ZeroValue.Volume', real_value, found)
         setting%ZeroValue%Volume = real_value
-        if (.not. found) stop 58
+        if (.not. found) stop 59
 
-        ! Load BIPquick Settings
+        ! Load Debug Settings
+        call json%get('Debug.DebugAPI', logical_value, found)
+        setting%Debug%DebugAPI = logical_value
+        if (.not. found) stop 60
+        call json%get('Debug.File.dynamic_array', logical_value, found)
+        setting%Debug%File%dynamic_array = logical_value
+        if (.not. found) stop 61
+        call json%get('Debug.File.tables', logical_value, found)
+        setting%Debug%File%tables = logical_value
+        if (.not. found) stop 62
+        call json%get('Debug.File.allocate_storage', logical_value, found)
+        setting%Debug%File%allocate_storage = logical_value
+        if (.not. found) stop 63
+        call json%get('Debug.File.initialization', logical_value, found)
+        setting%Debug%File%initialization = logical_value
+        if (.not. found) stop 64
+        call json%get('Debug.File.interface', logical_value, found)
+        setting%Debug%File%interface = logical_value
+        if (.not. found) stop 65
+        call json%get('Debug.File.BIPquick', logical_value, found)
+        setting%Debug%File%BIPquick = logical_value
+        if (.not. found) stop 66
+        call json%get('Debug.File.utility', logical_value, found)
+        setting%Debug%File%utility = logical_value
+        if (.not. found) stop 67
+        call json%get('Debug.File.globals', logical_value, found)
+        setting%Debug%File%globals = logical_value
+        if (.not. found) stop 68
+        call json%get('Debug.File.inflow', logical_value, found)
+        setting%Debug%File%inflow = logical_value
+        if (.not. found) stop 69
+
+        ! Load BIPQuick settings
         call json%get('Partitioning.UseBIPquick', logical_value, found)
         setting%Partitioning%UseBIPquick = logical_value
-        if (.not. found) stop 60
+        if (.not. found) stop 70
         call json%get('Partitioning.BIPquickTestCase', logical_value, found)
-        setting%Partitioning%BIPquickTestCase = logical_value 
-        if (.not. found) stop 61
+        setting%Partitioning%BIPquickTestCase = logical_value
+        if (.not. found) stop 71
         call json%get('Partitioning.UseDefault', logical_value, found)
         setting%Partitioning%UseDefault = logical_value
-        if (.not. found) stop 62
+        if (.not. found) stop 72
 
         call json%destroy()
-        if (json%failed()) stop 59
-
+        if (json%failed()) stop 73
 
     end subroutine load_settings
 end module setting_definition

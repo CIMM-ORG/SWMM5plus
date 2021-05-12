@@ -43,6 +43,9 @@
             "Coef" : 1.0
         }
     },
+    "BC" : {
+        "BCSlots" : 10
+    },
     "Constant" : {
         "gravity" : 9.81
     },
@@ -107,5 +110,22 @@
         "UseBIPquick" : true,
         "UseDefault"  : false,
         "BIPquickTestCase" : false
+    },
+    "Debug" : {
+        "DebugAPI" : false,
+        "File" : {
+            "dynamic_array" : false,
+            "tables" : false,
+            "allocate_storage" : false,
+            "initialization" : true,
+            "interface" : false,
+            "BIPquick" : false,
+            "utility" : false,
+            "globals" : false,
+            "inflow" : false
+        },
+        "Output" : {
+
+        }
     }
 }
