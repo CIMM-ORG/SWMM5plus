@@ -72,6 +72,10 @@ contains
 
             linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
             linkR(i,lr_Length) = get_link_attribute(i, conduit_length)
+
+            ! This is just temporary use - we need a separate module for CFL condition to compute N_element
+            linkI(i,li_N_element) = ceiling(linkR(i,lr_Length)/element_length)
+
             ! linkR(i,lr_TopWidth): defined in network_define.f08
             linkR(i,lr_BreadthScale) = get_link_attribute(i, link_xsect_wMax)
             ! linkR(i,lr_Slope): defined in network_define.f08

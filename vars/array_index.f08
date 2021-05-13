@@ -56,7 +56,7 @@ module array_index
         enumerator :: li_InitialDepthType ! 1=uniform, 2= lineary change, 3=exponential decay
         enumerator :: li_BQ_image ! image number assigned from BIPquick
     end enum
-    integer, parameter :: li_idx_max = li_InitialDepthType
+    integer, parameter :: li_idx_max = li_BQ_image
 
     !%  nodeI COLUMN INDEXES FOR INTEGER DATA OF NODES IN LINK/NODE SYSTEM -------
     ! column index for integer data in nodeI array
@@ -71,7 +71,7 @@ module array_index
         enumerator :: ni_BQ_image ! image number assigned from BIPquick
         enumerator :: ni_BQ_edge  ! 0=this node has nothing to do with image communication; 1=this node is an edge
     end enum
-    integer, parameter :: ni_idx_base1 = ni_total_inflow
+    integer, parameter :: ni_idx_base1 = ni_BQ_edge
 
     ! column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
@@ -87,6 +87,9 @@ module array_index
     ! storage for link index for upstream and downstream links
     integer, dimension(upstream_face_per_elemM) :: ni_MlinkUp = nullvalueI
     integer, dimension(dnstream_face_per_elemM) :: ni_MlinkDn = nullvalueI
+
+
+
 
     !%  linkR COLUMN INDEXES FOR REAL DATA OF LINKS IN LINK/NODE SYSTEM  --------
     ! column index for real data in the linkR array

@@ -61,6 +61,12 @@ subroutine BIPquick_YJunction_Hardcode()
     B_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3/)
     B_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
     B_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
+    
+    
+    linkI(:,li_BQ_image) = (/1, 2, 3/)
+    nodeI(:,ni_BQ_image) = (/1, 2, 1, 3/)
+    nodeI(:,ni_BQ_edge) = (/0, 0, 1, 0/)
+
 
     do ii = 1, size(nodeI, 1)
         B_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)

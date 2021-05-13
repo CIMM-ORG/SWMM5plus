@@ -16,6 +16,8 @@ module globals
 
     public
 
+    real(8), parameter :: element_length = 10.0 ! This is a temperory element length
+
     ! Main Arrays
     !%  links are the building blocks from SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: linkR ! real data for links
@@ -32,14 +34,20 @@ module globals
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
 
     !% elems in coarray
-    real(8), dimension(:,:)[:], allocatable, target :: elemR_caf ! coarray for elements
-    integer, dimension(:,:)[:], allocatable, target :: elemI_caf ! coarray for element Interger
-    logical, dimension(:,:)[:], allocatable, target :: elemYN_caf ! coarray for element logical
+    real(8), allocatable :: elemR_caf(:,:)[:]   ! coarray for elements
+    integer, allocatable :: elemI_caf(:,:)[:]    ! coarray for element Interger
+    logical, allocatable :: elemYN_caf(:,:)[:]   ! coarray for element logical
+    integer, allocatable :: elemP_caf(:,:)[:]    ! coarray for element pack array
+    !integer, allocatable, target :: elemPG_caf(:,:)[:]   ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
+    integer, allocatable :: elemSI_caf(:,:)[:]   ! coarray for special element Integer
+    real(8), allocatable :: elemSR_caf(:,:)[:]   ! coarray for special elemen Real
+    real(8), allocatable :: elemSGR_caf(:,:)[:]  ! coarray for special element geometry Real
 
     !% faces in coarray
-    real(8), dimension(:,:)[:]. allocatable, target :: faceR_caf ! coarray for faces real data
-    integer , dimension(:,:)[:], allocatable, target :: faceI_caf ! coarray for faces integer data
-    logical, dimension(:,:)[:], allocatable, target :: faceYN_caf ! coarray for faces logical data
+    real(8), allocatable, target :: faceR_caf(:,:)[:]    ! coarray for faces real data
+    integer, allocatable, target :: faceI_caf(:,:)[:]    ! coarray for faces integer data
+    logical, allocatable, target :: faceYN_caf(:,:)[:]   ! coarray for faces logical data
+    integer, allocatable, target :: faceP_caf(:,:)[:]    ! coarray for faces pack array
     
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
@@ -77,6 +85,14 @@ module globals
     integer :: N_curve
     integer :: N_tseries
     integer :: N_pattern
+
+    ! Coarray variables
+    integer :: max_caf_elem_N ! size of all elem array in coarray
+    integer :: max_caf_face_N ! size of all face array in coarray
+
+    ! images information
+    integer :: nimgs
+   
 
     ! useful shortcuts
     real(8), pointer :: dt => setting%time%dt

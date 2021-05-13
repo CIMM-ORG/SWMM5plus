@@ -5,6 +5,8 @@ program main
     use setting_definition, only: setting
     use interface
     use BIPquick
+    use data_keys
+    use coarray_bipquick
 
     implicit none
 
@@ -70,4 +72,13 @@ program main
     call initialize_linknode_arrays()
     call finalize_api()
     call BIPquick_YJunction_Hardcode()
+    call coarray_length_calculation()
+    !call coarray_storage_allocation()
+    print *, max_caf_elem_N
+
+    print *, max_caf_face_N
+    
+
+
+
 end program main
