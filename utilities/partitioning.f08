@@ -19,12 +19,12 @@ module partitioning
 
     private
 
-    public :: default_partitioning, partition_check
+    public :: default_partitioning, partitioning_algorithm_check
 
 
 contains
 
-subroutine partition_check()
+subroutine partitioning_algorithm_check()
     print*, setting%Partitioning%UseBIPquick, setting%Partitioning%UseDefault
     if ( (setting%Partitioning%UseBIPquick .eqv. .true.) .and. (setting%Partitioning%UseDefault .eqv. .true.) )  then
         print*, "There are two partitioning algorithms being used"
@@ -39,17 +39,15 @@ subroutine partition_check()
             print*, "Using Default Partitioning"
         end if
     end if
-end subroutine partition_check
+end subroutine partitioning_algorithm_check
 
 subroutine default_partitioning()
     integer :: ii 
-    if ( setting%Partitioning%UseDefault .eqv. .true. ) then
-        
-        do ii = 1, size(B_nodeI,1)
-            print*, B_nodeI(ii, :)
-        end do
 
-    end if
+    do ii = 1, size(P_nodeI,1)
+        print*, P_nodeI(ii, :)
+    end do
+
 end subroutine default_partitioning
 
 

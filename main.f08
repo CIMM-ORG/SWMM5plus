@@ -77,8 +77,12 @@ program main
 
 
    ! --- Testing Partitioning Module
-   call partition_check
-   call default_partitioning
+   call partitioning_algorithm_check()
+   if ( setting%Partitioning%UseDefault .eqv. .true. ) then
+        call default_partitioning
+   else if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then
+        call BIPquick_YJunction_Hardcode()
+   end if
 
 
    ! --- Finalization
