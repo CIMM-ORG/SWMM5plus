@@ -5,6 +5,7 @@ program main
    use setting_definition, only: setting
    use interface
    use BIPquick
+   use partitioning
 
    implicit none
 
