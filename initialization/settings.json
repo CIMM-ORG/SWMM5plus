@@ -107,7 +107,7 @@
         "Volume" : 1e-6
     },
     "Partitioning" : {
-        "UseBIPquick" : true,
+        "UseBIPquick" : false,
         "UseDefault"  : false,
         "BIPquickTestCase" : false
     },

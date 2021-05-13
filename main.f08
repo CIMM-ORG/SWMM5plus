@@ -76,6 +76,9 @@ program main
    call initialize_linknode_arrays()
 
 
+   ! --- Testing Partitioning Module
+   call partition_check
+   call default_partitioning
 
 
    ! --- Finalization
