@@ -79,15 +79,21 @@ program main
 
    ! --- Testing Partitioning Module
    call partitioning_algorithm_check()
-!    do i = 1, size(nodeI, 1)
-!         print*, nodeI(i, ni_node_type) 
-!    end do
-!    stop
+
    if ( setting%Partitioning%UseDefault .eqv. .true. ) then
         call default_partitioning
    else if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then
         call BIPquick_YJunction_Hardcode()
    end if
+
+   do i = 1, size(P_nodeI, 1)
+        print*, P_nodeI(i, :) 
+   end do
+   do i = 1, size(P_linkI, 1)
+        print*, P_linkI(i, :)
+   end do
+   stop
+
 
 
    ! --- Finalization
