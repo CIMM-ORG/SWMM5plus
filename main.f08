@@ -1,6 +1,7 @@
 program main
 
    use globals
+   use array_index
    use initialization
    use setting_definition, only: setting
    use interface
@@ -78,6 +79,10 @@ program main
 
    ! --- Testing Partitioning Module
    call partitioning_algorithm_check()
+!    do i = 1, size(nodeI, 1)
+!         print*, nodeI(i, ni_node_type) 
+!    end do
+!    stop
    if ( setting%Partitioning%UseDefault .eqv. .true. ) then
         call default_partitioning
    else if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then

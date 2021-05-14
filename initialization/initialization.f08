@@ -39,6 +39,7 @@ contains
     !-----------------------------------------------------------------------------
 
         integer       :: i, total_n_links
+        logical       :: l1, l2
         character(64) :: subroutine_name = 'initialize_arrays'
 
     !-----------------------------------------------------------------------------
@@ -93,6 +94,16 @@ contains
                 nodeI(i, ni_node_type) = nJm
             end if
             ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
+            l1 = get_node_attribute(i, node_has_extInflow) == 1
+            l2 = get_node_attribute(i, node_has_dwfInflow) == 1
+            if (l1 .or. l2) then
+                !nodeYN(i, nYN_has_inflow) = .true.
+                if (total_n_links == 1) then
+                    nodeI(i, ni_node_type) = nBCup
+                end if
+            end if
+
+
             nodeR(i,nr_InitialDepth) = get_node_attribute(i, node_initDepth)
             nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
         end do
