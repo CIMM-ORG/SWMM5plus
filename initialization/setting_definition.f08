@@ -259,6 +259,11 @@ module setting_definition
         logical :: UseBIPquick = .true.
         logical :: BIPquickTestCase = .false.
     endtype BIPflagType
+
+    !% setting%ElementLengthAdjus
+    type ElementLengthType
+        real(8) :: LinkShortingFactor = 0.33
+    endtype ElementLengthType
     ! -
     ! --
 
@@ -278,6 +283,7 @@ module setting_definition
         type(TestCaseType) :: TestCase
         type(PathType) :: Paths
         type(BIPFlagType) :: BIPquickFlags
+        type(ElementLengthType) :: ElementLengthAdjust
     end type settingType
 
     type(settingType), target :: setting
@@ -545,9 +551,15 @@ contains
         if (.not. found) stop 60
         call json%get('BIPquickFlags.BIPquickTestCase', logical_value, found)
         setting%BIPquickFlags%BIPquickTestCase = logical_value 
+        if (.not. found) stop 61
+
+        ! Load Element Shorten Settings
+        call json%get("ElementLengthAdjust.LinkShortingFactor", real_value, found)
+        setting%ElementLengthAdjust%LinkShortingFactor = real_value
+        if (.not. found) stop 62
 
         call json%destroy()
-        if (json%failed()) stop 59
+        if (json%failed()) stop 63
 
 
     end subroutine load_settings

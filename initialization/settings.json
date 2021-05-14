@@ -106,5 +106,8 @@
     "BIPquickFlags" : {
         "UseBIPquick" : true,
         "BIPquickTestCase" : false
+    },
+    "ElementLengthAdjust" : {
+        "LinkShortingFactor" : 0.33
     }
 }

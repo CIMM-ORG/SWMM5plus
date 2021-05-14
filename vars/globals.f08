@@ -98,6 +98,7 @@ module globals
     real(8), pointer :: dt => setting%time%dt
     real(8), pointer :: grav => setting%constant%gravity
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
+    real(8), pointer :: elem_shorten_cof => setting%ElementLengthAdjust%LinkShortingFactor
 
     ! Tables
     type(real_table), allocatable :: all_tseries(:)

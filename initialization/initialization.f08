@@ -73,9 +73,6 @@ contains
             linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
             linkR(i,lr_Length) = get_link_attribute(i, conduit_length)
 
-            ! This is just temporary use - we need a separate module for CFL condition to compute N_element
-            linkI(i,li_N_element) = ceiling(linkR(i,lr_Length)/element_length)
-
             ! linkR(i,lr_TopWidth): defined in network_define.f08
             linkR(i,lr_BreadthScale) = get_link_attribute(i, link_xsect_wMax)
             ! linkR(i,lr_Slope): defined in network_define.f08
@@ -103,6 +100,10 @@ contains
             nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
         end do
 
+        ! adjust the length and calculate the number/length of elements in each link
+        call link_length_adjust()
+        call N_elem_assign()
+
         if ((debuglevel > 0) .or. (debuglevel > 0)) then
             call utility_export_linknode_csv()
         end if
@@ -110,4 +111,58 @@ contains
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
 
+
+    ! this is a subroutine for adjusting the length of links.
+    ! Put it here for now but can be moved to somewhere else
+    subroutine link_length_adjust()
+        integer :: ii
+        real(8) :: temp_length
+        character(64) :: subroutine_name = 'link_length_adjust'
+        
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+
+        do ii =1, N_link
+            temp_length = linkR(ii,lr_Length) ! lenght of link ii
+            
+            if ( nodeI(linkI(ii,li_Mnode_u), ni_node_type) .eq. nJm ) then
+                temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for upstream M junction
+            endif
+
+            if ( nodeI(linkI(ii,li_Mnode_d), ni_node_type) .eq. nJm ) then
+                temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for downstream M junction
+            endif
+
+            linkR(ii,lr_Length) = temp_length
+        enddo
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+    end subroutine link_length_adjust
+
+    subroutine N_elem_assign()
+        integer :: ii
+        real(8) :: remainder
+        character(64) :: subroutine_name = 'N_elem_assign'
+        
+        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+
+        do ii = 1, N_link
+            remainder = mod(linkR(ii,lr_Length), element_length)
+            if ( remainder .eq. zeroR ) then
+                linkI(ii, li_N_element) = int(linkR(ii, lr_Length)/element_length)
+                linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
+            elseif ( remainder .ge. onehalfR * linkR(ii,lr_Length) ) then
+                linkI(ii, li_N_element) = ceiling(linkR(ii,lr_Length)/element_length)
+                linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
+            else
+                linkI(ii, li_N_element) = floor(linkR(ii,lr_Length)/element_length)
+                linkR(ii, lr_ELementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
+            endif
+        enddo
+
+        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+
+    end subroutine N_elem_assign
+
+
 end module initialization
+
