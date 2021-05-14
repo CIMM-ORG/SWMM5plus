@@ -49,17 +49,24 @@ subroutine partitioning_algorithm_check()
 end subroutine partitioning_algorithm_check
 
 subroutine default_partitioning()
-    integer :: ii, num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes
+    integer :: ii, jj, num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes
     integer :: total_num_elements, num_attributed_elements, assigning_image
+    integer :: current_node_image, adjacent_link_image
+    integer, allocatable, dimension(:) :: adjacent_links
     real(8) :: partition_threshold
+
+! ----------------------------------------------------------------------------------------------------------------
     ! This subroutine populates the P_nodeI, P_linkI arrays
     ! Rather than applying the BIPquick routine, the default partitioning is going to work by
     !   - Counting the total number of elements expected, using that to calculate the partition threshold
     !   - Iterating through the nodeI array until the number of elements expected exceeds the partition threshold
     !   - Iterating through the linkI array until the number of elements expected exceeds the partition threshold
     !   - Iterating again through the nodeI array to determine if the adjacent links are on different processors
+! -----------------------------------------------------------------------------------------------------------------
+    ! Determines the number of nodes of each type for the purpose of calculating partition threshold
     call count_node_types(num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes)
     print*, num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes
+
     ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
     linkI(:, li_N_element) = 10
     print*, sum(linkI(:, li_N_element))
@@ -70,8 +77,27 @@ subroutine default_partitioning()
     partition_threshold = total_num_elements / real(setting%Partitioning%Num_Images_Setting)
     print*, total_num_elements, setting%Partitioning%Num_Images_Setting, partition_threshold
 
+    ! This loop counts the elements attributed to each link, and assigns the link to an image
     num_attributed_elements = 0
     assigning_image = 1
+    do ii = 1, size(linkI, 1)
+        num_attributed_elements = num_attributed_elements + linkI(ii, li_N_element)
+        ! If the number of elements is greater than the partition threshold, reset the number of elements and increment the image
+        if ( num_attributed_elements > partition_threshold) then
+            num_attributed_elements = 0
+            ! This is a check to make sure that links aren't added to an image that doesn't exist
+            if ( assigning_image /= setting%Partitioning%Num_Images_Setting ) then 
+                assigning_image = assigning_image + 1
+            end if
+        end if
+
+        P_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
+        P_linkI(ii, B_li_Partition_No) = assigning_image
+    end do
+
+    ! This loop counts the elements attributed to each node, and assigns the node to an image
+    ! It also determines if that node has an adjacent link on a different image
+    allocate(adjacent_links(6))
     do ii = 1, size(nodeI, 1)
         if ( (nodeI(ii, ni_node_type) == nBCup) &
             .or. (nodeI(ii, ni_node_type) == nBCdn) &
@@ -81,29 +107,35 @@ subroutine default_partitioning()
             num_attributed_elements = num_attributed_elements + 7
         end if
 
+        ! If the number of attributed nodes exceeds the partition_threshold, then the remaining nodes are assigned to a new image
         if ( num_attributed_elements > partition_threshold) then
-            assigning_image = assigning_image + 1
+            num_attributed_elements = 0
+            ! This is a check to make sure that nodes aren't added to an image that doesn't exist
+            if ( assigning_image /= setting%Partitioning%Num_Images_Setting ) then 
+                assigning_image = assigning_image + 1
+            end if
         end if
 
+        ! Fills in the P_nodeI array
         P_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
         P_nodeI(ii, B_ni_Partition_No) = assigning_image
+        P_nodeI(ii, B_ni_is_boundary) = 0
 
-        print*, P_nodeI(ii, :)
-        print*, num_attributed_elements, assigning_image
+        ! This bit of code checks the current node image, and compares it to the images of the adjacent links
+        current_node_image = P_nodeI(ii, B_ni_Partition_No)
+        adjacent_links = nodeI(ii, ni_Mlink_u1:ni_Mlink_d3)
+        do jj = 1, size(adjacent_links)
+            if ( adjacent_links(jj) == nullValueI ) then
+                cycle
+            end if
+            adjacent_link_image = P_linkI(adjacent_links(jj), B_li_Partition_No)
+            ! If the adjacent link and current node are on different images, then that node is a boundary
+            if ( adjacent_link_image /= current_node_image ) then
+                P_nodeI(ii, B_ni_is_boundary) = 1
+            end if
+        end do
     end do
 
-    do ii = 1, size(linkI, 1)
-        num_attributed_elements = num_attributed_elements + linkI(ii, li_N_element)
-        if ( num_attributed_elements > partition_threshold) then
-            assigning_image = assigning_image + 1
-        end if
-
-        P_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
-        P_linkI(ii, B_li_Partition_No) = assigning_image
-
-        print*, P_linkI(ii, :)
-        print*, num_attributed_elements, assigning_image
-    end do
 
     
     
