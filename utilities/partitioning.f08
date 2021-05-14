@@ -42,13 +42,21 @@ subroutine partitioning_algorithm_check()
 end subroutine partitioning_algorithm_check
 
 subroutine default_partitioning()
-    integer :: ii 
-
-    do ii = 1, size(P_nodeI,1)
-        print*, P_nodeI(ii, :)
-    end do
+    integer :: ii, num_nJm_nodes
+    num_nJm_nodes = count_nJm_nodes()
+    
+    ! do ii = 1, size(P_nodeI,1)
+    !     print*, P_nodeI(ii, :)
+    ! end do
 
 end subroutine default_partitioning
+
+function count_nJm_nodes() result(num_nJm_nodes)
+    integer :: num_nJm_nodes
+    ! This subroutine iterates through the nodeI array and counts the number of instances of ni_node_type == nJm
+    num_nJm_nodes = 1
+    
+end function count_nJm_nodes
 
 
 end module partitioning

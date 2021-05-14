@@ -64,13 +64,20 @@ subroutine BIPquick_YJunction_Hardcode()
     P_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
     P_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
 
+    print*, "The P_nodeI array looks like"
+
     do ii = 1, size(nodeI, 1)
         P_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
+        print*, P_nodeI(ii, :)
     enddo
+
+    print*, "The P_linkI array looks like"
 
     do ii = 1, size(linkI, 1)
         P_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
+        print*, P_linkI(ii, :)
     enddo
+
 
 end subroutine BIPquick_YJunction_Hardcode
 

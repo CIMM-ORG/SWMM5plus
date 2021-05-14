@@ -108,7 +108,7 @@
     },
     "Partitioning" : {
         "UseBIPquick" : false,
-        "UseDefault"  : false,
+        "UseDefault"  : true,
         "BIPquickTestCase" : false
     },
     "Debug" : {
