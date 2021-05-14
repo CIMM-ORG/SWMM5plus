@@ -254,6 +254,7 @@ module setting_definition
 
     !% setting%BIPquickSettings%Flag
     type PartitioningFlags
+        integer :: Num_Images_Setting
         logical :: UseBIPquick
         logical :: UseDefault
         logical :: BIPquickTestCase
@@ -578,18 +579,21 @@ contains
         if (.not. found) stop 69
 
         ! Load BIPQuick settings
+        call json%get('Partitioning.Num_Images_Setting', integer_value, found)
+        setting%Partitioning%Num_Images_Setting = integer_value
+        if (.not. found) stop 70
         call json%get('Partitioning.UseBIPquick', logical_value, found)
         setting%Partitioning%UseBIPquick = logical_value
-        if (.not. found) stop 70
+        if (.not. found) stop 71
         call json%get('Partitioning.BIPquickTestCase', logical_value, found)
         setting%Partitioning%BIPquickTestCase = logical_value
-        if (.not. found) stop 71
+        if (.not. found) stop 72
         call json%get('Partitioning.UseDefault', logical_value, found)
         setting%Partitioning%UseDefault = logical_value
-        if (.not. found) stop 72
+        if (.not. found) stop 73
 
         call json%destroy()
-        if (json%failed()) stop 73
+        if (json%failed()) stop 74
 
     end subroutine load_settings
 end module setting_definition

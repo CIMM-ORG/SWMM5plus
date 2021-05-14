@@ -20,6 +20,13 @@ module partitioning
     private
 
     public :: default_partitioning, partitioning_algorithm_check
+   
+    integer, parameter :: B_ni_idx_Partition = 1 ! the node index number
+    integer, parameter :: B_ni_Partition_No = 2 ! the Partition number to which that node index belongs
+    integer, parameter :: B_ni_is_boundary = 3 ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
+   
+    integer, parameter :: B_li_idx_Partition = 1 ! the link index number
+    integer, parameter :: B_li_Partition_No = 2 ! the Partition number to which that link index belongs
 
 
 contains
@@ -43,6 +50,8 @@ end subroutine partitioning_algorithm_check
 
 subroutine default_partitioning()
     integer :: ii, num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes
+    integer :: total_num_elements, num_attributed_elements, assigning_image
+    real(8) :: partition_threshold
     ! This subroutine populates the P_nodeI, P_linkI arrays
     ! Rather than applying the BIPquick routine, the default partitioning is going to work by
     !   - Counting the total number of elements expected, using that to calculate the partition threshold
@@ -55,12 +64,49 @@ subroutine default_partitioning()
     linkI(:, li_N_element) = 10
     print*, sum(linkI(:, li_N_element))
 
-    
+    ! HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
+    ! multiplied by how many elements are expected for that node_type
+    total_num_elements = sum(linkI(:, li_N_element)) + num_nJm_nodes*7 + num_one_elem_nodes*1 + num_zero_elem_nodes*0
+    partition_threshold = total_num_elements / real(setting%Partitioning%Num_Images_Setting)
+    print*, total_num_elements, setting%Partitioning%Num_Images_Setting, partition_threshold
+
+    num_attributed_elements = 0
+    assigning_image = 1
+    do ii = 1, size(nodeI, 1)
+        if ( (nodeI(ii, ni_node_type) == nBCup) &
+            .or. (nodeI(ii, ni_node_type) == nBCdn) &
+            .or. (nodeI(ii, ni_node_type) == nStorage) ) then
+            num_attributed_elements = num_attributed_elements + 1
+        else if ( nodeI(ii, ni_node_type) == nJm ) then
+            num_attributed_elements = num_attributed_elements + 7
+        end if
+
+        if ( num_attributed_elements > partition_threshold) then
+            assigning_image = assigning_image + 1
+        end if
+
+        P_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
+        P_nodeI(ii, B_ni_Partition_No) = assigning_image
+
+        print*, P_nodeI(ii, :)
+        print*, num_attributed_elements, assigning_image
+    end do
+
+    do ii = 1, size(linkI, 1)
+        num_attributed_elements = num_attributed_elements + linkI(ii, li_N_element)
+        if ( num_attributed_elements > partition_threshold) then
+            assigning_image = assigning_image + 1
+        end if
+
+        P_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
+        P_linkI(ii, B_li_Partition_No) = assigning_image
+
+        print*, P_linkI(ii, :)
+        print*, num_attributed_elements, assigning_image
+    end do
 
     
-    do ii = 1, size(nodeI,1)
-        print*, nodeI(ii, ni_node_type)
-    end do
+    
 
 end subroutine default_partitioning
 
