@@ -96,15 +96,15 @@ module coarray_bipquick
                 if ( nodeI(idx,ni_node_type) .eq. nJm) then !.and. ( nodeI(idx, ni_BQ_edge) .eq. 1 ) ) then
                     ! This needs work - we loop through all up/dn links to check if 
                     ! any of them is assigned to the same image
-                    
-                    do kk = ni_Mlink_u1, ni_Mlink_d3 ! loop through all 6 up/dn stream links
-                        if ( any(linkI(link_index, li_idx) == nodeI(idx, kk) )) then
-                            elem_counter = elem_counter+1
-                            ! if any up/dn link is adjacent to the junction and in this image
-                            ! elem + 1 (because we need to split a section to junction) 
-                        endif
-                    enddo
-                    elem_counter = elem_counter + 1 ! Junction itself
+                    !
+                    !do kk = ni_Mlink_u1, ni_Mlink_d3 ! loop through all 6 up/dn stream links
+                    !    if ( any(linkI(link_index, li_idx) == nodeI(idx, kk) )) then
+                    !        elem_counter = elem_counter+1
+                    !        ! if any up/dn link is adjacent to the junction and in this image
+                    !        ! elem + 1 (because we need to split a section to junction) 
+                    !    endif
+                    !enddo
+                    elem_counter = elem_counter + 7 ! Junction itself
                     face_counter = face_counter + 6 ! 6 faces for each junction
                 endif
             enddo
