@@ -112,6 +112,8 @@ contains
         !% reset the geometry (non-volume) where values are below minimums
         call adjust_for_zero_geometry (elem2R, elem2YN, elemMR, elemMI, elemMYN)
 
+        ! print*, subroutine_name
+        ! print*, 'head', elem2R(:, e2r_Eta)
         !%  release the temp array
         etaold = nullvalueR
         nullify(etaold)
@@ -491,6 +493,12 @@ contains
             elN         = hyddepth 
 
         endwhere
+
+        ! print*
+        ! print*, subroutine_name
+        ! print*, volume, 'volume'
+        ! print*, area, 'area'
+        ! print*, topwidth, 'topwidth'
 
         !%  specialized geometry types
         call circular_geometry &

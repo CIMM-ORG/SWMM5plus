@@ -580,7 +580,7 @@ contains
         mapDn => elem2I(:,e2i_Mface_d)
 
         !% handling pipe elements
-        where ( (elem2I(:,e2i_elem_type) == ePipe) )
+        where ( (elem2I(:,e2i_elem_type) == ePipe) .or. (elem2I(:,e2i_elem_type) == eChannel) )
             elemMask = .true.
         endwhere
 
@@ -594,9 +594,9 @@ contains
 
         elseif (setting%Method%AdjustPressure%Type =='vshape') then
             where (elemMask)
-                elemMask = ( ( (utility_sign_with_ones(faceEtaDn(mapUp) - elemEta))             &
-                             * (utility_sign_with_ones(faceEtaUp(mapDn) - elemEta)) > 0 ) .and. &
-                             (elemEta .GE. zCrown) )
+                elemMask = ( (utility_sign_with_ones(faceEtaDn(mapUp) - elemEta))             &
+                             * (utility_sign_with_ones(faceEtaUp(mapDn) - elemEta)) > 0 ) !.and. &
+                             ! (elemEta .GE. zCrown) )
             endwhere
 
         else

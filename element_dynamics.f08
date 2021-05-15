@@ -102,10 +102,10 @@ contains
         call bc_applied_onelement &
             (elem2R, bcdataDn, bcdataUp, thisTime, bc_category_inflowrate, e2r_Velocity_new)
             ! print *, "bc_applied_onelement"
-            ! print *, elem2R(:, e2r_Velocity)
-            ! print*, elem2R(:,e2r_Area)
-            ! print*, elem2I(:,e2i_elem_type)
-            ! stop
+            ! print *, elem2R(:, e2r_Velocity), 'e2r_Velocity'
+            ! print*, elem2R(:,e2r_Eta), 'e2r_Eta'
+            ! print*, elem2I(:,e2i_elem_type), 'e2i_elem_type'
+            
         !% compute the timescales up and down
         call element_timescale &
             (elem2R, elem2I, elem2YN, elemMR, elemMI, elemMYN, bcdataDn, bcdataUp, &

@@ -144,11 +144,11 @@ contains
             wEta, fEdn, fEup, iup, idn, dir, thiscoef)
 
         !% calculate the  equivalent orifice discharge coefficient while surcharged
-        call weir_surcharge_coefficient &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2, &
-            velocity2, wFlow, wSideSlope, cTriangular, cRectangular, wBreadth, &
-            wArea, dir, wFullDepth, wEndContractions, lEffective, subFactor1,  &
-            subFactor2, cOrif, thiscoef)
+        ! call weir_surcharge_coefficient &
+        !     (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, volume2, &
+        !     velocity2, wFlow, wSideSlope, cTriangular, cRectangular, wBreadth, &
+        !     wArea, dir, wFullDepth, wEndContractions, lEffective, subFactor1,  &
+        !     subFactor2, cOrif, thiscoef)
 
         !% calculate effective head on weir element
         call weir_effective_head &
@@ -165,8 +165,9 @@ contains
 
         !% calculate weir length and effective crest length
         call weir_effective_crest_length &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,     &
-            wEndContractions, hEffective, wBreadth, wSideSlope, lEffective)
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,       &
+            wEndContractions, hEffective, wBreadth, wSideSlope, wFullDepth, &
+            lEffective)
 
         !% Villemonte correction for downstream submergence
         call villemonte_weir_submergence_correction &
@@ -190,6 +191,8 @@ contains
             velocity2, wFlow, wCrest, wCrown, wEta, wArea, cOrif, hEffective,  &
             fEup, fEdn, iup, idn, dir, thiscoef, IsSurcharged)
 
+        ! print*, 'press return to continue in ', subroutine_name
+        ! read(*,*)
         ! release temporary arrays
         lEffective     = nullvalueR
         subFactor1     = nullvalueR
@@ -197,6 +200,8 @@ contains
         cOrif          = nullvalueR
         wCrest         = nullvalueR
         dir            = nullvalueI
+
+        ! print*, 'Weir flow', wFlow(4)
 
         nullify(lEffective, wCrest, wCrown, cOrif, subFactor1, subFactor2, &
                 dir, maskarrayDnSubmerge, maskarrayUpSubmerge)
@@ -241,11 +246,17 @@ contains
         where ( (elem2I(:,e2i_elem_type) == eWeir) )
             crest   =  inletoffset + zbottom
             ! find the effective weir length (changes depending on control setting)
-            length  = min(twoR*dt*sqrt(grav*fullDepth), 200.0)
+            ! length  = min(twoR*dt*sqrt(grav*fullDepth), 200.0)
             ! set the free surface elevation at weir element
             eta  = max(faceEtaDn(upFace), faceEtaUp(dnFace))
-            dir  = int(sign(oneR, ( faceEtaDn(upFace) - faceEtaUp(dnFace))))
+            dir  = int(sign(oneR, (faceEtaDn(upFace) - faceEtaUp(dnFace))))
         endwhere
+        ! faceEtaDn(upFace) indicates the upstream head
+        ! faceEtaUp(dnFace) indicates the downstream head
+        ! print*, 'head', eta(4)
+        ! print*, 'dir', dir(4)
+        ! print*, 'upstream head',  faceEtaDn(upFace(4))
+        ! print*, 'downstream head', faceEtaUp(dnFace(4))
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine weir_initialize
@@ -281,8 +292,9 @@ contains
 
         !% get effective crest length for maximum weir opening
         call weir_effective_crest_length &
-            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-            endcontractions, fulldepth, breadth, sideslope, crestlength)
+            (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN,  &
+            endcontractions, fulldepth, breadth, sideslope, fulldepth, &
+            crestlength)
 
         !% get flow for maximum weir opening
         call weir_flow &
@@ -354,6 +366,12 @@ contains
                               (eta .GT. crown)                         )
         endwhere
 
+        ! print*
+        ! print*, subroutine_name
+        ! print*,'effectivehead' , effectivehead(4)
+        ! print*, 'maskarray_dn_submergence', maskarray_dn_submergence(4)
+        ! print*, 'maskarray_up_submergence', maskarray_up_submergence(4)
+
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine weir_effective_head
     !
@@ -415,7 +433,8 @@ contains
     !
     subroutine weir_effective_crest_length &
         (elem2R, elemMR, faceR, elem2I, elemMI, elem2YN, elemMYN, &
-        endcontractions, head, breadth, sideslope, crestlength)
+        endcontractions, head, breadth, sideslope, fulldepth,     &
+        crestlength)
         !
         !%  ths subroutine calculates effective creast length for
         !%  trapezoidal and rectangular weir
@@ -428,9 +447,9 @@ contains
         integer,   target, intent(in)      :: elem2I(:,:),  elemMI(:,:)
         logical,   target, intent(in)      :: elem2YN(:,:), elemMYN(:,:)
 
-        real(8),  intent(inout)   :: crestlength(:) 
+        real(8),  intent(inout)   :: crestlength(:)
         real(8),  intent(in)      :: endcontractions(:), head(:)
-        real(8),  intent(in)      :: breadth(:), sideslope(:)
+        real(8),  intent(in)      :: breadth(:), sideslope(:), fulldepth(:)
 
         integer :: mm
         !--------------------------------------------------------------------------
@@ -445,7 +464,7 @@ contains
         elsewhere ( (elem2I(:,e2i_elem_type) == eWeir       ) .and. &
                     (elem2I(:,e2i_geometry)  == eTrapezoidal)       )
 
-            crestlength = breadth + twoR * sideslope * head
+            crestlength = breadth
 
         endwhere
 
@@ -505,6 +524,10 @@ contains
 
         endwhere
 
+        ! print*, subroutine_name
+        ! print*, 'maskarray_submergence', maskarray_submergence(4)
+        ! print*, 'submergenceFactor1' ,submergenceFactor1(4)
+
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine villemonte_weir_submergence_correction
     !
@@ -552,8 +575,8 @@ contains
             ! Trapezoidal weir
             ! Q = d*fs1*(Cw1SH^2.5) + d*fs2*(Cw2LH^1.5)
             flow      = dir * submergenceFactor1 * (cTrig * sideslope *    &
-                effectivehead ** 2.5) + dir * submergenceFactor2 * (cRect *  &
-                crestlength * effectivehead ** 1.5)
+                (effectivehead ** 2.5)) + dir * submergenceFactor2 * (cRect *  &
+                crestlength * (effectivehead ** 1.5))
             velocity2 = flow / area
             ! Volume = Q * dt
             volume2   = thiscoef * dt * flow
@@ -586,6 +609,15 @@ contains
             ! Volume = Q * dt
             volume2   = thiscoef * dt * flow
         endwhere
+        ! print*
+        ! print*, subroutine_name
+        ! print*, submergenceFactor1, 'submergenceFactor1'
+        ! print*, crestlength, 'crestlength'
+        ! print*
+        ! print*, 'flow', flow(22)
+        ! print*, 'velocity2', velocity2(22)
+        ! read(*,*)
+        
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
 
@@ -633,6 +665,9 @@ contains
             volume2    =  thiscoef * dt * flow
         endwhere
 
+        ! print*
+        ! print*, 'is_surcharged', is_surcharged(4)
+        ! print*, 'flow', flow(4)
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
     end subroutine weir_surcharge_flow
     !

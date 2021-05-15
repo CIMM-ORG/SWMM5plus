@@ -22,6 +22,7 @@ module test_cases
     use read_width_depth
     use setting_definition
     use trajkovic_cases
+    use weir_steady_state_test
     use utility
     use xsect_tables
 
@@ -438,9 +439,9 @@ contains
                 dischargeCoefficient2, fullDepth, endContractions)
 
             ! step controls
-            display_interval = 100
+            display_interval = 1
             first_step = 1
-            last_step  =  30000
+            last_step  =  3000
 
             ! set up flow and time step for differen subcases
             ! tests that ran:  Fr = 0.25, 0.5
@@ -450,45 +451,48 @@ contains
             CFL          = 0.25  ! determines dt from subdivide_length
 
             ! keep these physics fixed
-            idepth_type        = 1  !1 = uniform, 2=linear, 3=exponential decay
-            ManningsN          = 0.03
+            idepth_type        = 2  !1 = uniform, 2=linear, 3=exponential decay
+            ManningsN          = 0.01
 
             channel_geometry(1) = lRectangular
-            lowerZ(1)          = 1.0
-            depth_dnstream(1)  = 1.0e-2
-            depth_upstream(1)  = 1.0e-2
-            init_depth(1)      = 1.0e-2
+            lowerZ(1)          = 0.00
+            depth_dnstream(1)  = 0.19
+            depth_upstream(1)  = 0.27
+            init_depth(1)      = 0.23
 
             channel_geometry(2) = lTriangular
-            depth_dnstream(2)  = 1.0e-2         !This is the depth in weir
-            depth_upstream(2)  = 1.0e-2         !This is the depth in weir
-            init_depth(2)      = 1.0e-2
+            depth_dnstream(2)  = 0.27         !This is the depth in weir
+            depth_upstream(2)  = 1.48      !This is the depth in weir
+            init_depth(2)      = 0.88
 
             channel_geometry(3) = lRectangular
-            depth_dnstream(3)  = 0.25
-            depth_upstream(3)  = 0.25
-            init_depth(3)      = 0.25
+            depth_dnstream(3)  = 1.45
+            depth_upstream(3)  = 1.48
+            init_depth(3)      = 1.465
 
-            channel_breadth      = 3.0
-            channel_length       = 1000.0
-            channel_length(2)    = 1        !This is Weir Length
+            channel_breadth      = 2.0
+            channel_length(1)    = 10.0
+            channel_length(2)    = 0.1        !This is Weir Length
+            channel_length(3)    = 10.0
+            ManningsN(3)         = 0.01
 
-            subdivide_length     = 500.0
-            subdivide_length(2)  = 1        !We are not subdividing weir element. So this value is same as weir length
+            subdivide_length(1)  = 0.5
+            subdivide_length(2)  = 0.1  
+            subdivide_length(3)  = 0.5      !We are not subdividing weir element. So this value is same as weir length
 
             leftSlope             = 1.0
             rightSlope            = 1.0
-            sideSlope             = nullValueR
+            sideSlope             = 1.0
             inletOffset           = nullValueR
             dischargeCoefficient1 = nullValueR
             dischargeCoefficient2 = nullValueR
             fullDepth             = nullValueR
-            endContractions       = nullValueR
+            endContractions       = 0.0
 
             ! wier settings
-            inletOffset(2)             = 1.0
-            dischargeCoefficient1(2)   = 1.40
-            fullDepth(2)               = 1.5
+            inletOffset(2)             = 0.5
+            dischargeCoefficient1(2)   = 1.84
+            fullDepth(2)               = 1.0
             sideSlope(2)               = 1.0
 
             ! get consistent bottom Z values for the desired Froude number in each link
@@ -528,9 +532,11 @@ contains
                 end select
             end do
 
-            call this_setting_for_time_and_steps &
-                (CFL, velocity, depth_upstream, subdivide_length, &
-                first_step, last_step, display_interval,2)
+            ! call this_setting_for_time_and_steps &
+            !     (CFL, velocity, depth_upstream, subdivide_length, &
+            !     first_step, last_step, display_interval,2)
+
+            call setting_default
 
             call case_simple_weir_initialize &
                 (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,    &
@@ -984,8 +990,60 @@ contains
                     lowerZ, upperZ, ManningsN)
             endif
 
+          case ('weir_steady_state_008')
+
+            N_link = 2
+            N_node = 3
+            N_BCupstream = 1
+            N_BCdnstream = 1
+
             
-          case default
+
+            ! step controls
+            display_interval = 1
+            first_step = 1
+            last_step  =  30
+
+            CFL          = 0.5  ! determines dt from subdivide_length
+
+            !% create the local variables that must be populated to set up the test case
+            call control_variable_allocation &
+                (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+                channel_breadth, channel_topwidth, subdivide_length, flowrate, area,        &
+                velocity,  Froude, ManningsN, idepth_type, channel_geometry, parabolaValue, &
+                leftSlope, rightSlope, sideslope, inletOffset, outletOffset, dischargeCoefficient1, &
+                dischargeCoefficient2, fullDepth, endContractions)
+
+ 
+            call weir_steady_state_test_setup &
+                (init_depth, depth_dnstream, depth_upstream, lowerZ, upperZ, channel_length, &
+                channel_breadth, subdivide_length, flowrate, area, velocity, Froude,         &
+                ManningsN, idepth_type, channel_geometry, inletOffset, outletOffset,         &
+                fullDepth, dischargeCoefficient1)
+            
+
+            ! call this_setting_for_time_and_steps &
+                ! (CFL, velocity, depth_upstream, subdivide_length, &
+                ! first_step, last_step, display_interval,2)
+            call setting_default
+
+            call weir_steady_state_test_initialize &
+                (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ,      &
+                flowrate, depth_upstream, depth_dnstream, init_depth,  inletOffset,      &
+                outletOffset, dischargeCoefficient1, fullDepth, ManningsN, idepth_type,  &
+                linkR, nodeR, linkI, nodeI,linkYN, nodeYN, linkName, nodeName, bcdataDn, &
+                bcdataUp, gateSetting)
+
+            if (.not. setting%Debugout%SuppressAllFiles) then
+                call write_testcase_setup_file &
+                    (Froude, CFL, flowrate, velocity, init_depth, depth_upstream,   &
+                    depth_dnstream, channel_breadth, channel_topwidth, area, &
+                    channel_length, subdivide_length, &
+                    lowerZ, upperZ, ManningsN)
+            endif
+
+            case default
+
             print *, setting%TestCase%TestName
             print *, 'error: no valid test case of ',&
                 trim(setting%TestCase%TestName),' in ',subroutine_name

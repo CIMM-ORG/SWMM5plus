@@ -169,12 +169,12 @@ contains
                 call QonlyElement_provisional_geometry &
                     (elem2R, elemMR, faceR, elem2I, elemMI)
 
-                ! if ( count(elemMI(:,eMi_elem_type) == eStorage) > zeroI) then
-                !     ! call storage step if storage unit exists in the network
-                !     call storage_step &
-                !         (eMr_Volume, eMr_Velocity, eMr_Volume_new, eMr_Velocity_new,  &
-                !         elemMR, faceR, elemMI, elemMYN, thiscoef(ii))
-                ! endif
+                if ( count(elemMI(:,eMi_elem_type) == eStorage) > zeroI) then
+                    ! call storage step if storage unit exists in the network
+                    call storage_step &
+                        (eMr_Volume, eMr_Velocity, eMr_Volume_new, eMr_Velocity_new,  &
+                        elemMR, faceR, elemMI, elemMYN, thiscoef(ii))
+                endif
 
                 call rk2_update_auxiliary_variables &
                     (e2r_Velocity_new, eMr_Velocity_new, e2r_Volume_new, eMr_Volume_new,  &
@@ -505,7 +505,11 @@ contains
 
         !--------------------------------------------------------------------------
         if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
+        ! print*
+        ! print*, 'before element_geometry_update'
+        ! print*, elem2R(:,e2r_Eta), 'eta'
+        ! print*, elem2R(:,e2r_Velocity_new), 'e2r_Velocity_new'
+        ! print*, elem2R(:,e2r_Volume_new), 'e2r_Volume_new'
         !%  advance all geometry and dynamics
         call element_geometry_update &
             (elem2R, elem2I, elem2YN, e2r_Volume_new, elemMR, elemMI, elemMYN, &
@@ -541,6 +545,10 @@ contains
             call adjust_pressure_in_pipe (elem2R, faceR, elem2I, elem2YN)
         endif
 
+        ! print*, subroutine_name
+        ! print*, 'flowrate', elem2r(22,e2r_Flowrate)
+        ! print*, 'flowrate', elem2r(:,e2r_Flowrate)
+        ! read(*,*)
         !% HACK: in the original SvePy and PipeAC code, element_dynamics face_dynamics 
         !% subroutines are called after Vshape flow adjustment, since flowrate is modified. 
         !% Additinally, face_free_surface subroutine is called in PipeAC after pressure 
@@ -700,7 +708,9 @@ contains
 
         weightUpQ = setting%Limiter%Timescale%Maximum
         weightDnQ = setting%Limiter%Timescale%Maximum
-
+        ! print*, 'before'
+        ! print*, 'faceQ upstream of weir', faceQ(4)
+        ! print*, 'faceQ downstream of weir', faceQ(3)
         where (facemask)
             weightUpQ = elem2R(faceI(:,fi_Melem_u),e2r_Timescale_Q_d)
             weightDnQ = elem2R(faceI(:,fi_Melem_d),e2r_Timescale_Q_u)
@@ -709,6 +719,14 @@ contains
             !% linear interpolation
             faceQ = (weightUpQ * valueDn + weightDnQ * valueUp) /(weightUpQ + weightDnQ)
         endwhere
+        ! print*, 'facemask', facemask
+        ! print*, 'valueUp', valueUp
+        ! print*, 'valueDn',  valueDn
+        ! print*, 'after'
+        ! print*, 'faceQ upstream of weir', faceQ(4)
+        ! print*, 'faceQ downstream of weir', faceQ(3)
+        ! print*, 'After Q only face update at ', subroutine_name
+        ! read(*,*)
 
         valueUp    = nullvalueR
         valueDn    = nullvalueR

@@ -81,6 +81,12 @@ contains
 
         call face_surface_elevation_interp (elem2R, elemMR, faceR, faceI, faceYN)
 
+        ! print*, 'fr_Eta_u upstream of weir',faceR(4,fr_Eta_u)
+        ! print*, 'fr_Eta_d upstream of weir', faceR(4,fr_Eta_d)
+        ! print*
+        ! print*, 'fr_Eta_u downstream of weir',faceR(3,fr_Eta_u)
+        ! print*, 'fr_Eta_d downstream of weir', faceR(3,fr_Eta_d)
+
         !% compute depth
         !% HACK: the calculation is commented out for now
         !% Face Hyddepth is not needed for any calculations

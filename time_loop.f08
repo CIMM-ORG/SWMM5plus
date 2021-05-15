@@ -149,15 +149,15 @@ contains
         print *, setting%step%final, "final step"
         do while (thisstep <= setting%step%final)
 
-            if (mod(thisstep, 5) == 0) then
-                ! Variable time step
-                if (diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d) &
-                    >= 0.3) then
-                    setting%time%dt = setting%time%dt * 0.5
-                else
-                    setting%time%dt = setting%time%dt * 1.25
-                endif
-            endif
+            ! if (mod(thisstep, 5) == 0) then
+            !     ! Variable time step
+            !     if (diagnostic_CFL(elem2R, e2r_Timescale_Q_u, e2r_Timescale_Q_d) &
+            !         >= 0.3) then
+            !         setting%time%dt = setting%time%dt * 0.5
+            !     else
+            !         setting%time%dt = setting%time%dt * 1.25
+            !     endif
+            ! endif
 
             !% display to the screen
             if (setting%Debugout%DisplayInterval > 0) then

@@ -39,7 +39,7 @@ SOURCESF="  errors.f08  datetime.f08  dll_mod.f08  type_definitions.f08  dynamic
         network_define.f08  output.f08  artificial_compressibility.f08 runge_kutta.f08  ac_convergence_loop.f08\
         time_loop.f08 stub.f08  case_simple_channel.f08  case_simple_orifice.f08  case_simple_weir.f08\
         case_waller_creek.f08  case_y_channel.f08  case_y_storage_channel.f08  case_simple_pipe.f08 case_swashes.f08\
-        trajkovic_cases.f08 test_cases.f08 main.f08"
+        trajkovic_cases.f08 weir_steady_state_test.f08 test_cases.f08 main.f08"
 
 # Linker
 echo Compiling ...

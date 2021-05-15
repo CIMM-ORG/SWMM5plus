@@ -21,7 +21,7 @@ module case_simple_channel
 
     public :: case_simple_channel_initialize
 
-    integer :: debuglevel = 0
+    integer :: debuglevel = 1
 
 contains
     !
@@ -225,6 +225,8 @@ contains
             print *, linkI(:,li_link_type), ' type'
             print *, linkI(:,li_Mnode_u) , ' upstream node'
             print *, linkI(:,li_Mnode_d) , ' downstream node'
+            print *, linkR(:,lr_InitialFlowrate), 'initial flowrate'
+            print *, linkR(:,lr_InitialDepth), 'initial depth'
             print *, ''
             print *, 'node info'
             print *, nodeI(:,ni_idx), ' idx'
@@ -232,9 +234,10 @@ contains
             print *, nodeI(:,ni_N_link_d), 'number of downstream links'
             !print *, nodeI(:,ni_Mlink_d1), 'downstream1 link'
             print *, nodeI(:,ni_N_link_u), 'number of upstream links'
+            print *, nodeR(:,nr_Zbottom), 'zbottom'
             !print *, nodeI(:,ni_Mlink_u1), 'upstream1 link'
         endif
-
+        
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine case_simple_channel_links_and_nodes
     !

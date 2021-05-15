@@ -17,15 +17,15 @@ module setting_definition
 
     !% setting%Method%AdjustVshapedFlowrate
     type adjustVshapedFlowrateType
-        logical ::  Apply = .true.
+        logical    ::  Apply = .true.
         real(8)    ::  Coef  = 1.0
     end type adjustVshapedFlowrateType
 
     !% setting%Method%AdjustPressure
     type adjustPressureType
         character(len=64)   ::  Type  = 'vshape'  !'smoothall' 'vshape'
-        logical             ::  Apply = .true.
-        real(8)                ::  Coef  = 1.0
+        logical             ::  Apply = .false.
+        real(8)             ::  Coef  = 1.0
     end type adjustPressureType
 
     !% setting%Method%AdjustWidthDepth
@@ -188,7 +188,7 @@ module setting_definition
     !%  setting%SmallVolume
     type smallvolumeType
         ! Dont using small volumes for weir case. Needed to be changed later
-        logical ::  UseSmallVolumes = .true. ! YN to determine if smallvolume adjustments used
+        logical ::  UseSmallVolumes = .false. ! YN to determine if smallvolume adjustments used
         real(8)    ::  DepthCutoff      = 0.01  ! m Determines where small volumes begin
         real(8)    ::  ManningsN        = 0.01
         real(8)    ::  MinimumTopwidth  = 0.5   ! m   Minimum value used for smallvolume reset
@@ -308,10 +308,10 @@ contains
         !--------------------------------------------------------------------------
 
 
-        setting%Debugout%DisplayInterval = 1500
-        setting%Time%dt = 0.5
+        setting%Debugout%DisplayInterval = 1
+        setting%Time%dt = 0.05
         setting%Step%First = 1
-        setting%Step%Final = 8000
+        setting%Step%Final = 3000
         setting%Step%Current = 1
         setting%Step%FromRestart = 1
 

@@ -99,15 +99,15 @@ contains
         bcdataDn(1)%NodeID = 1
         bcdataDn(1)%TimeArray(1)     = setting%Time%StartTime
         bcdataDn(1)%TimeArray(2)     = setting%Time%EndTime + 100.0 !s
-        bcdataDn(1)%ValueArray(1)    = lowerZ(1) +  depth_dnstream(1)   ! m
-        bcdataDn(1)%ValueArray(2)    = lowerZ(1) +  depth_dnstream(1) ! m
+        bcdataDn(1)%ValueArray(1)    = 0.19 ! m
+        bcdataDn(1)%ValueArray(2)    = 0.19 ! m
 
         ! upstream is default to flowrate
         bcdataUp(1)%NodeID = 4
         bcdataUp(1)%TimeArray(1)  = setting%Time%StartTime
         bcdataUp(1)%TimeArray(2)  = setting%Time%EndTime + 100.0 !s
-        bcdataUp(1)%ValueArray(1) = initial_flowrate(3)  ! m^3/s
-        bcdataUp(1)%ValueArray(2) = initial_flowrate(3)  ! m^3/2
+        bcdataUp(1)%ValueArray(1) = 0.5  ! m^3/s
+        bcdataUp(1)%ValueArray(2) = 0.5  ! m^3/s
 
         call case_simple_weir_and_nodes &
             (channel_length, channel_breadth, subdivide_length, lowerZ, upperZ, &
@@ -189,22 +189,22 @@ contains
 
         ! designate the upstream nodes
         nodeI(1,ni_node_type) = nBCdn
-        nodeR(1,nr_Zbottom) = lowerZ(1)
+        nodeR(1,nr_Zbottom) = 0.0
         nodeName(1)%str = 'DownstreamBC'
 
         ! designate the downstream node
         nodeI(2,ni_node_type) = nJ2
-        nodeR(2,nr_Zbottom) = lowerZ(2)
+        nodeR(2,nr_Zbottom) = 0.0
         nodeName(2)%str = 'JunctionDn'
 
         ! designate the downstream node
         nodeI(3,ni_node_type) = nJ2
-        nodeR(3,nr_Zbottom) = lowerZ(3)
+        nodeR(3,nr_Zbottom) = 0.0
         nodeName(3)%str = 'JunctionUp'
 
         ! designate the downstream node
         nodeI(4,ni_node_type) = nBCup
-        nodeR(4,nr_Zbottom) = upperZ(3)
+        nodeR(4,nr_Zbottom) = 0.0
         nodeName(4)%str = 'UpstreamBC'
 
         ! assign the link types
@@ -213,11 +213,19 @@ contains
         linkI(3,li_link_type) = lChannel
 
         ! assign weir type
-        linkI(2,li_weir_type) = lVnotchWeir
+        linkI(2,li_weir_type) = lTrapezoidalWeir
+
+
+    ! date types for linkI(:,li_weir_type)
+    ! lTransverseWeir  ! ID for rectangular transverse weir
+    ! lSideFlowWeir    ! ID for rectangular sideflow weir
+    ! lRoadWayWeir     ! ID for rectangular roadway weir
+    ! lVnotchWeir      ! ID for triangular v-notch weir
+    ! lTrapezoidalWeir ! ID for trapezoidal weir
 
         ! assign link geometry
         linkI(1,li_geometry) = lRectangular
-        linkI(2,li_geometry) = lTriangular
+        linkI(2,li_geometry) = lTrapezoidal
         linkI(3,li_geometry) = lRectangular
 
         ! assign the link position and mappings
@@ -232,23 +240,29 @@ contains
 
         do mm = 1,N_link
             linkR(mm,lr_Length)                 = channel_length(mm)
-            linkR(mm,lr_BreadthScale)           = channel_breadth(mm)
+            linkR(mm,lr_BreadthScale)           = 2.0
             linkR(mm,lr_ElementLength)          = subdivide_length(mm)
-            linkR(mm,lr_InitialFlowrate)        = initial_flowrate(mm)
+            linkR(mm,lr_InitialFlowrate)        = 0.5
             linkR(mm,lr_InitialUpstreamDepth)   = depth_upstream(mm)
             linkR(mm,lr_InitialDnstreamDepth)   = depth_dnstream(mm)
             linkR(mm,lr_InitialDepth)           = initial_depth(mm)
-            linkR(mm,lr_SideSlope)              = side_slope(mm)
-            linkR(mm,lr_LeftSlope)              = side_slope(mm)
-            linkR(mm,lr_RightSlope)             = side_slope(mm)
-            linkR(mm,lr_InletOffset)            = inlet_offset(mm)
-            linkR(mm,lr_OutletOffset)           = inlet_offset(mm)
-            linkR(mm,lr_DischargeCoeff1)        = discharge_coefficient1(mm)
-            linkR(mm,lr_DischargeCoeff2)        = discharge_coefficient2(mm)
-            linkR(mm,lr_FullDepth)              = full_depth(mm)
-            linkR(mm,lr_EndContractions)        = end_contractions(mm)
+            linkR(mm,lr_SideSlope)              = 0.5
+            linkR(mm,lr_LeftSlope)              = 0.5
+            linkR(mm,lr_RightSlope)             = 0.5
+            linkR(mm,lr_InletOffset)            = 0.0
+            linkR(mm,lr_OutletOffset)           = 0.0
+            linkR(mm,lr_DischargeCoeff1)        = 1.84
+            linkR(mm,lr_DischargeCoeff2)        = 1.84
+            linkR(mm,lr_FullDepth)              = 2.0
+            linkR(mm,lr_EndContractions)        = 0.0
             linkI(mm,li_InitialDepthType)       = idepth_type(mm)
         end do
+            linkR(2,lr_BreadthScale)           = 2.0
+            linkR(1,lr_InitialFlowrate)        = 0.06
+            linkR(3,lr_InitialFlowrate)        = 1.0
+            linkR(2,lr_InletOffset)            = 1.0
+            linkR(2,lr_OutletOffset)           = 1.0
+            ! linkR(2,lr_FullDepth)              = 1.0
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
             print *
@@ -260,6 +274,7 @@ contains
             print *, linkI(:,li_Mnode_d) , ' downstream node'
             print *, linkR(:,lr_InitialDnstreamDepth), 'downstream depth'
             print *, linkR(:,lr_InitialUpstreamDepth), 'upstream depth'
+            print *, linkR(:,lr_InitialDepth), 'initial depth'
             print *, linkR(:,lr_InletOffset), ' inletOffset'
             print *, linkR(:,lr_OutletOffset), ' outletOffset'
             print *, 'node info'
