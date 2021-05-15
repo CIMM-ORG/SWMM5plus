@@ -1,12 +1,11 @@
 module dynamic_array
 
     use type_definitions
+    use setting_definition, only: setting
 
     implicit none
 
     integer :: MAX_DARRAY_SIZE = 10
-
-    integer, private :: debuglevel = 0
 
 contains
 
@@ -16,7 +15,7 @@ contains
         real(8), allocatable :: resized_arr(:)
         character(64) :: subroutine_name = 'dyna_real_append'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%dynamic_array) print *, '*** enter ',subroutine_name
 
         if (this%max_size == 0) then
             allocate(this%array(MAX_DARRAY_SIZE))
@@ -31,7 +30,7 @@ contains
 
         this%len = this%len + 1
         this%array(this%len) = x
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%dynamic_array)  print *, '*** leave ',subroutine_name
     end subroutine dyna_real_append
 
     subroutine dyna_real_extend(this, a)
@@ -40,11 +39,11 @@ contains
         integer :: i
         character(64) :: subroutine_name = 'dyna_real_extend'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%dynamic_array) print *, '*** enter ',subroutine_name
         do i = 1, a%len
             call dyna_real_append(this, a%array(i))
         end do
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%dynamic_array)  print *, '*** leave ',subroutine_name
     end subroutine dyna_real_extend
 
     subroutine dyna_integer_append(this, x)
@@ -53,7 +52,7 @@ contains
         integer, allocatable :: resized_arr(:)
         character(64) :: subroutine_name = 'dyna_integer_append'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%dynamic_array) print *, '*** enter ',subroutine_name
 
         if (this%max_size == 0) then
             allocate(this%array(MAX_DARRAY_SIZE))
@@ -68,7 +67,7 @@ contains
 
         this%len = this%len + 1
         this%array(this%len) = x
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%dynamic_array)  print *, '*** leave ',subroutine_name
     end subroutine dyna_integer_append
 
     subroutine dyna_integer_extend(this, a)
@@ -77,11 +76,11 @@ contains
         integer :: i
         character(64) :: subroutine_name = 'dyna_integer_extend'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%dynamic_array) print *, '*** enter ',subroutine_name
         do i = 1, a%len
             call dyna_integer_append(this, a%array(i))
         end do
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%dynamic_array)  print *, '*** leave ',subroutine_name
     end subroutine dyna_integer_extend
 
     function dyna_real_pop(this)
@@ -89,10 +88,10 @@ contains
         real(8) :: dyna_real_pop
         character(64) :: subroutine_name = 'dyna_real_pop'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%dynamic_array) print *, '*** enter ',subroutine_name
         dyna_real_pop = this%array(this%len)
         this%len = this%len - 1
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%dynamic_array)  print *, '*** leave ',subroutine_name
     end function dyna_real_pop
 
     function dyna_integer_pop(this)
@@ -100,27 +99,27 @@ contains
         integer :: dyna_integer_pop
         character(64) :: subroutine_name = 'dyna_integer_pop'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%dynamic_array) print *, '*** enter ',subroutine_name
         dyna_integer_pop = this%array(this%len)
         this%len = this%len - 1
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%dynamic_array)  print *, '*** leave ',subroutine_name
     end function dyna_integer_pop
 
     subroutine free_real_array(this)
         type(real_array), intent(inout) :: this
         character(64) :: subroutine_name = 'free_real_array'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%dynamic_array) print *, '*** enter ',subroutine_name
         deallocate(this%array)
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%dynamic_array)  print *, '*** leave ',subroutine_name
     end subroutine
 
     subroutine free_integer_array(this)
         type(integer_array), intent(inout) :: this
         character(64) :: subroutine_name = 'free_integer_array'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%dynamic_array) print *, '*** enter ',subroutine_name
         deallocate(this%array)
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%dynamic_array)  print *, '*** leave ',subroutine_name
     end subroutine
 end module

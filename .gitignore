@@ -8,6 +8,6 @@
 *.png
 *.mod
 SWMM
-initialization/interface/src
+initialization/interface/flibswmm/src
 json-fortran
 debug

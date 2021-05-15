@@ -5,6 +5,7 @@ module initialization
     use globals
     use interface
     use utility, only: utility_export_linknode_csv
+    use setting_definition, only: setting
 
     implicit none
 
@@ -25,8 +26,6 @@ module initialization
 
     private
 
-    integer :: debuglevel = 0
-
     public :: initialize_linknode_arrays
 
 contains
@@ -44,7 +43,7 @@ contains
 
     !-----------------------------------------------------------------------------
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
@@ -61,7 +60,6 @@ contains
             linkI(i,li_idx) = i
             linkI(i,li_link_type) = get_link_attribute(i, link_type)
             linkI(i,li_geometry) = get_link_attribute(i, link_geometry)
-            linkI(i,li_roughness_type) = 1 ! TODO - get from params file
             linkI(i,li_Mnode_u) = get_link_attribute(i, link_node1) + 1 ! node1 in C starts from 0
             linkI(i,li_Mnode_d) = get_link_attribute(i, link_node2) + 1 ! node2 in C starts from 0
 
@@ -104,11 +102,11 @@ contains
         call link_length_adjust()
         call N_elem_assign()
 
-        if ((debuglevel > 0) .or. (debuglevel > 0)) then
+        if (setting%Debug%File%initialization) then
             call utility_export_linknode_csv()
         end if
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
 
 
@@ -119,7 +117,7 @@ contains
         real(8) :: temp_length
         character(64) :: subroutine_name = 'link_length_adjust'
         
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
         do ii =1, N_link
             temp_length = linkR(ii,lr_Length) ! lenght of link ii
@@ -135,7 +133,7 @@ contains
             linkR(ii,lr_Length) = temp_length
         enddo
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine link_length_adjust
 
     subroutine N_elem_assign()
@@ -143,7 +141,7 @@ contains
         real(8) :: remainder
         character(64) :: subroutine_name = 'N_elem_assign'
         
-        if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
         do ii = 1, N_link
             remainder = mod(linkR(ii,lr_Length), element_length)
@@ -159,7 +157,7 @@ contains
             endif
         enddo
 
-        if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine N_elem_assign
 

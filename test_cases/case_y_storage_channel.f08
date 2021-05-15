@@ -82,7 +82,7 @@ contains
             call utility_check_allocation (allocation_status, emsg)
             bcdataDn(ii)%TimeArray      = nullvalueR
             bcdataDn(ii)%ValueArray     = nullvalueR
-        enddo
+        end do
         do ii = 1, N_BCupstream
             allocate( bcdataUp(ii)%TimeArray(ntimepoint), stat=allocation_status, errmsg=emsg)
             call utility_check_allocation (allocation_status, emsg)
@@ -90,7 +90,7 @@ contains
             call utility_check_allocation (allocation_status, emsg)
             bcdataUp(ii)%TimeArray      = nullvalueR
             bcdataUp(ii)%ValueArray     = nullvalueR
-        enddo
+        end do
 
         ! assign values
         ! downstream is default to elevation
@@ -251,7 +251,7 @@ contains
             linkR(mm,lr_InletOffset)     = zeroR
             linkR(mm,lr_OutletOffset)    = zeroR
             linkI(mm,li_InitialDepthType)= idepth_type(mm)
-        enddo
+        end do
         ! setting the link 1 inlet offset 1m above the upstream storage node
         linkR(1,lr_InletOffset) = 1.0
         ! setting the link 2 & 3 outlet offset 1m above the upstream storage node
@@ -286,7 +286,7 @@ contains
             !print *, nodeI(:,ni_Mlink_d1), 'downstream1 link'
             !print *, nodeI(:,ni_N_link_u), 'number of upstream links'
             !print *, nodeI(:,ni_Mlink_u1), 'upstream1 link'
-        endif
+        end if
 
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine case_y_storage_channel_links_and_nodes

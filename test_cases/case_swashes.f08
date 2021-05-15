@@ -79,13 +79,13 @@ contains
             allocate( bcdataDn(ii)%ValueArray(ntimepoint))
             bcdataDn(ii)%TimeArray      = nullvalueR
             bcdataDn(ii)%ValueArray     = nullvalueR
-        enddo
+        end do
         do ii = 1, N_BCupstream
             allocate( bcdataUp(ii)%TimeArray(ntimepoint))
             allocate( bcdataUp(ii)%ValueArray(ntimepoint))
             bcdataUp(ii)%TimeArray      = nullvalueR
             bcdataUp(ii)%ValueArray     = nullvalueR
-        enddo
+        end do
 
         ! assign values
         ! downstream is default to elevation
@@ -212,7 +212,7 @@ contains
             linkR(ii,lr_InitialUpstreamDepth)    = depth_upstream(ii)
             linkR(ii,lr_InitialDnstreamDepth)    = depth_dnstream(ii)
             linkI(ii,li_InitialDepthType)        = idepth_type(ii)
-        enddo
+        end do
         
 
         if ((debuglevel > 0) .or. (debuglevelall > 0)) then
@@ -234,7 +234,7 @@ contains
             print *, nodeI(:,ni_N_link_u), 'number of upstream links'
             !print *, nodeI(:,ni_Mlink_u1), 'upstream1 link'
             print *, nodeR(:,nr_Zbottom), 'node zbottom'
-        endif
+        end if
         if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
     end subroutine case_swashes_links_and_nodes
     !

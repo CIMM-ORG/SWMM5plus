@@ -1,22 +1,25 @@
 !==========================================================================
 !2019-11-11 ==> Contributed by Eddie Tiernan
- module BIPquick
+ module BIPquick ! the module name that is referenced in the main.f08
 
+! the modules that need to precede BIPquick
  use array_index
  use globals
- use setting_definition
+ use setting_definition, only: setting
  
+! this designation just means that every variable has to be given an explicit type/size
  implicit none
 
+! the module's subroutines are private by default, allows some generically named subroutines to be used here and elsewhere
  private
 
+! the public subroutines are ones that can be called from any module that has $ use BIPquick $ at the top
  public :: BIPquick_subroutine, BIPquick_Optimal_Hardcode, BIPquick_YJunction_Hardcode
  
-!  integer, parameter :: dp = selected_real(8)_kind(15)
- real(8), parameter :: precision_matching_tolerance = 1.0D-5
+ real(8), parameter :: precision_matching_tolerance = 1.0D-5 ! a tolerance parameter for whether or not two real(8) numbers are equal
  
- integer, parameter :: B_nr_directweight_u = 1 ! the cumulative weight of the links directly upstream
- integer, parameter :: B_nr_totalweight_u  = 2 ! the cumulative weight of all links upstream
+ integer, parameter :: B_nr_directweight_u = 1 ! the cumulative weight of the links directly upstream of a node
+ integer, parameter :: B_nr_totalweight_u  = 2 ! the cumulative weight of all links upstream of a node
 
  integer, parameter :: B_ni_idx_Partition = 1 ! the node index number
  integer, parameter :: B_ni_Partition_No = 2 ! the Partition number to which that node index belongs
@@ -25,13 +28,12 @@
  integer, parameter :: B_li_idx_Partition = 1 ! the link index number
  integer, parameter :: B_li_Partition_No = 2 ! the Partition number to which that link index belongs
  
- integer :: debuglevel = 0
-! integer :: debuglevelall = 0
-
  contains
  
 !-------------------------------------------------------------------------- 
 
+! These two subroutines just populate the B_nodeI, B_linkI arrays with hardcoded values that *would* be the output of BIPquick_subroutine (if it worked)
+! OPTIMAL.inp is the name of the system input file this hardcode subroutine emulates
  subroutine BIPquick_Optimal_Hardcode(nodeI, linkI, B_nodeI, B_linkI) 
     integer, dimension(:,:), intent(in out)  :: B_nodeI
     integer, dimension(:,:), intent(in out)   :: B_linkI
@@ -52,7 +54,7 @@
 
 end subroutine BIPquick_Optimal_Hardcode
 
-
+! Y_Junction_NetworkDefineTest.inp is the name of the system input file this hardcode subroutine emulates
 subroutine BIPquick_YJunction_Hardcode() 
     integer :: ii
 
@@ -78,22 +80,15 @@ subroutine BIPquick_YJunction_Hardcode()
 
 end subroutine BIPquick_YJunction_Hardcode
 
- 
+! This subroutine is the main BIPquick subroutine
+! It uses the link-node arrays initialized in $ call initialize_linknode_arrays() $ in the main.f08
+! It also uses B_nodeI, B_linkI arrays that are initialized in allocate_storage.f08
+! Two dummy arrays, B_nodeI and B_nodeR are used to contain some of the BIPquick specific parameters
  subroutine BIPquick_subroutine(linkI, nodeI, linkR, nodeR)
      real(8)    :: lr_target_default = 1.0                         ! for the time being, the target length of an element is a hardcoded parameter
      integer :: n_rows_in_file_node, n_rows_in_file_link    ! counter for the number of rows in the node/link .csv files
-     integer :: iunit = 10
-     integer :: runit = 11
-     integer :: lunit = 12
-     integer :: header_row = 1
      integer :: n_rows_excluding_header_node, n_rows_excluding_header_link  ! number of rows in the node/link .csv files excluding the header, used to determine the size of the arrays
      integer :: n_rows_plus_processors_node, n_rows_plus_processors_link    ! the NodeMatrix and LinkMatrix arrays are of the size of the .csv file plus the number of processors, for phantom nodes/links
-     integer :: istat
-     integer,parameter          :: line_length=256
-     character(line_length)     :: line
-     character(len=line_length) :: word
-     real(8)    :: a(line_length/2+1)
-     integer :: i,io,icount,rcount
      integer :: multiprocessors = 3                         ! for the OPTIMAL example, the number of processors is 3.  This is a project dependent parameter
      integer :: phantom_node_idx, phantom_link_idx
      integer :: spanning_node_upstream
@@ -139,17 +134,13 @@ end subroutine BIPquick_YJunction_Hardcode
      
      integer:: ii, jj, kk, mp                                   ! counters: ii - row in nodeMatrix, jj - row in linkMatrix, kk - secondary row counter for node/linkMatrix, mp - for each multiprocessor
      integer :: print_counter = 0
-     integer :: link_counter
-     integer :: missed_counter
-     integer :: while_counter
-     integer :: missing_links
-     integer :: sorted_connectivity_metric, unsorted_connectivity_metric
+     integer :: sorted_connectivity_metric, unsorted_connectivity_metric, link_counter, missed_counter, while_counter, missing_links
      
 
      real(8) :: start, intermediate, finish
      call cpu_time(start)
 
-     if ( setting%BIPquickFlags%UseBIPquick .eqv. .true. ) then
+     if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then
 
         ! Allocate and set the temporary arrays. (Multiprocessors - 1) represents the maximum number of phantom nodes
         ! B_node Partition will hold [ni_idx, Partition_No]
@@ -174,19 +165,19 @@ end subroutine BIPquick_YJunction_Hardcode
         allocate(B_nodeI(size(nodeI, 1) + multiprocessors - 1, upstream_face_per_elemM))
         B_nodeI(:,:) = nullValueI
 
-        do i = 1, size(nodeI,1)
-            print*, nodeI(i,ni_idx), nodeI(i, ni_node_type), nodeI(i, ni_Mlink_u1:ni_Mlink_d3)
+        do ii = 1, size(nodeI,1)
+            print*, nodeI(ii,ni_idx), nodeI(ii, ni_node_type), nodeI(ii, ni_Mlink_u1:ni_Mlink_d3)
         enddo
         print*, '_______'
-        do i = 1, size(linkI,1)
-            print*, linkI(i,li_idx), linkI(i, li_Mnode_u:li_Mnode_d), linkR(i, lr_Length)
+        do ii = 1, size(linkI,1)
+            print*, linkI(ii,li_idx), linkI(ii, li_Mnode_u:li_Mnode_d), linkR(ii, lr_Length)
         enddo
         print*, '_______'
 
         call network_node_preprocessing(nodeI, linkI, B_nodeI)
         print*, "printing the upstream nodes"
-        do i = 1, size(B_nodeI,1)
-            print*, B_nodeI(i,:)
+        do ii = 1, size(B_nodeI,1)
+            print*, B_nodeI(ii,:)
         enddo        
                   
          ! the idx of the phantom nodes are based on how many nodes exist, so this function determines the number of digits in the last node/link.  Then the phantom_index starts at 10^digits
@@ -207,8 +198,8 @@ end subroutine BIPquick_YJunction_Hardcode
         !  determine the weight directly upstream of each node
          call local_node_weighting(nodeI, linkI, nodeR, linkR, B_nodeR, lr_target_default)
 
-         do i = 1, size(B_nodeR,1)
-             print*, B_nodeR(i, B_nr_directweight_u)
+         do ii = 1, size(B_nodeR,1)
+             print*, B_nodeR(ii, B_nr_directweight_u)
          enddo
 
          print*, "----------------------------------------"  
@@ -458,7 +449,7 @@ end subroutine BIPquick_subroutine
 !  integer :: sorted_connectivity_metric
 !  integer :: nullValue = -998877
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
 
 !  allocate(sorted_nodes(multiprocessors, size(nodeMatrix,1)))
 !  sorted_nodes(:,:) = nullValue
@@ -501,7 +492,7 @@ end subroutine BIPquick_subroutine
 
 !  sorted_connectivity_metric = node_contained_counter - node_basis_counter
  
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
 !  end function sorted_metric
 ! !
 ! !============================================================================ 
@@ -526,7 +517,7 @@ end subroutine BIPquick_subroutine
 !  integer :: unsorted_connectivity_metric
 !  integer :: nullValue = -998877
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
 
 !  allocate(default_nodes(multiprocessors, size(nodeMatrix,1), size(nodeMatrix,2)))
 !  allocate(default_links(multiprocessors, size(linkMatrix,1), size(linkMatrix,2)))
@@ -587,7 +578,7 @@ end subroutine BIPquick_subroutine
 
 !  unsorted_connectivity_metric = node_contained_counter - node_basis_counter
  
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
 !  end function unsorted_metric
 ! !
 ! !============================================================================ 
@@ -605,11 +596,11 @@ end subroutine BIPquick_subroutine
  real(8), intent(in)  :: link_length
  real(8) :: weight
 !-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
+ if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
  
  weight = link_length/lr_target
  
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',function_name
+ if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
  end function weighting_function
 !
 !============================================================================ 
@@ -626,13 +617,13 @@ end subroutine BIPquick_subroutine
  integer :: ii
  real(8) :: nullValue = nullvalueR
 !-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
  
  where (array(:) == nullValue)
      array(:) = 0.0
  endwhere
  
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
  end subroutine null_value_convert
 !
 !============================================================================ 
@@ -654,7 +645,7 @@ end subroutine BIPquick_subroutine
  integer ii, jj
  
 !-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
  
  call null_value_convert(B_nodeR(:,B_nr_directweight_u))
  call null_value_convert(B_nodeR(:,B_nr_totalweight_u))
@@ -677,7 +668,7 @@ end subroutine BIPquick_subroutine
     enddo
  enddo
  
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
  end subroutine local_node_weighting
 !
 !============================================================================ 
@@ -696,7 +687,7 @@ end subroutine BIPquick_subroutine
  integer ii, jj, uplinks
  
 !-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
  
  do ii= 1,size(nodeI,1)
     if ( mod(ii, 1) == 0 ) then
@@ -718,7 +709,7 @@ end subroutine BIPquick_subroutine
     enddo
  enddo
 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
  end subroutine network_node_preprocessing
 !
 !============================================================================ 
@@ -740,7 +731,7 @@ end subroutine BIPquick_subroutine
  integer :: ii, jj, kk
  
 !-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
 	 if ( (visited_flag_weight(root) .eqv. .false.) .and. (visit_network_mask(root) .eqv. .false.) ) then
 		visited_flag_weight(root) = .true.
 		B_nodeR(weight_index, B_nr_totalweight_u) &
@@ -763,7 +754,7 @@ end subroutine BIPquick_subroutine
 		enddo  
     endif
  
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
  end subroutine upstream_weight_calculation
 !
 !============================================================================ 
@@ -784,7 +775,7 @@ end subroutine BIPquick_subroutine
  real(8) :: nullValue = nullValueI
  
 !-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
  
  do ii=1, size(B_node_Partition,1)
     if ( mod(ii, 1) == 0 )then
@@ -804,7 +795,7 @@ end subroutine BIPquick_subroutine
  
  max_weight = (maxval(B_nodeR(:, B_nr_totalweight_u)))
  
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
  end subroutine nr_totalweight_assigner
 ! !
 ! !============================================================================ 
@@ -826,7 +817,7 @@ end subroutine BIPquick_subroutine
 !  integer, intent (in out) :: print_counter
  
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
  
 !  if  ( visit_network_mask(root) .eqv. .false. ) then
 !     visit_network_mask(root) = .true.
@@ -847,7 +838,7 @@ end subroutine BIPquick_subroutine
 !         print_counter = print_counter + 1
 !  endif
  
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
 !  end subroutine subnetwork_carving
 ! !
 ! !============================================================================ 
@@ -870,7 +861,7 @@ end subroutine BIPquick_subroutine
 !  real(8) :: accountingLink
 !  logical :: accountedLink = .false.
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
  
 !  allocate (potential_endpoints(size(nodes_container,1)))
 !  potential_endpoints(:) = nodes_container(:, B_ni_idx)
@@ -889,7 +880,7 @@ end subroutine BIPquick_subroutine
 !     endif
 !  enddo
  
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
 !  end subroutine subnetworks_links
 ! !
 ! !============================================================================ 
@@ -908,7 +899,7 @@ end subroutine BIPquick_subroutine
  integer :: ii
  integer :: nullValue = nullValueI
 !-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
 
  nearest_overestimate = max_weight*1.1
  effective_root = nullValue
@@ -930,7 +921,7 @@ end subroutine BIPquick_subroutine
     endif
  enddo
  
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+ if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
  end function ideal_partition_check
 ! !
 ! !============================================================================ 
@@ -954,7 +945,7 @@ end subroutine BIPquick_subroutine
 !  integer :: ii, jj
  
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
  
 !  spanning_link = -998877
 
@@ -983,7 +974,7 @@ end subroutine BIPquick_subroutine
 !     endif
 !  enddo
  
-!  5568 if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name  
+!  5568 if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name  
 !  end subroutine spanning_check
 ! !
 ! !========================================================================== 
@@ -1000,7 +991,7 @@ end subroutine BIPquick_subroutine
 !  real(8) :: length_from_start, total_length, start, weight_ratio
 !  integer :: ii
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
 !  do ii= 1,size(linkMatrix,1)
 !     if (int(linkMatrix(ii, B_li_idx)) == spanning_link) then
 !         total_length = linkMatrix(ii, B_lr_Length)
@@ -1010,7 +1001,7 @@ end subroutine BIPquick_subroutine
 !  weight_ratio = (partition_threshold - start)&
 !     /weighting_function(lr_target, total_length)
 !  length_from_start = weight_ratio*total_length
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
 !  end function linear_interpolator
 ! !
 ! !========================================================================== 
@@ -1025,7 +1016,7 @@ end subroutine BIPquick_subroutine
 !  integer :: max_node_idx, max_link_idx
 !  integer, allocatable :: node_indices(:), link_indices(:)
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
  
 !  allocate(node_indices(size(nodeMatrix,1)))
 !  allocate(link_indices(size(linkMatrix,1)))
@@ -1039,7 +1030,7 @@ end subroutine BIPquick_subroutine
 !  phantom_node_idx = max_node_idx
 !  phantom_link_idx = max_link_idx
  
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
 !  end subroutine phantom_naming_convention2
 ! !
 ! !========================================================================== 
@@ -1054,7 +1045,7 @@ end subroutine BIPquick_subroutine
  integer :: max_node_idx, max_link_idx
  integer, allocatable :: node_indices(:), link_indices(:)
 !-------------------------------------------------------------------------- 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
+ if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
 
  allocate(node_indices(size(nodeI,1)))
  allocate(link_indices(size(linkI,1)))
@@ -1068,7 +1059,7 @@ end subroutine BIPquick_subroutine
  phantom_node_idx = max_node_idx + 1
  phantom_link_idx = max_link_idx + 1
 
- if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',function_name
+ if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
  end subroutine phantom_naming_convention
 ! !
 ! !========================================================================== 
@@ -1099,7 +1090,7 @@ end subroutine BIPquick_subroutine
 !  integer :: downstream_node, upstream_spanning_node
 !  integer :: ii, jj, kk
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
  
 !  phantom_name = int(phantom_node_idx) + phantom_counter
  
@@ -1170,7 +1161,7 @@ end subroutine BIPquick_subroutine
 !  !   print*, nodeMatrix(ii,:)
 !  !enddo
  
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name  
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name  
 !  end subroutine phantom_node_generator
 ! !
 ! !============================================================================ 
@@ -1185,7 +1176,7 @@ end subroutine BIPquick_subroutine
 !  integer             :: istat
 !  character(64) :: function_name = 'number_of_lines_in_file'
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
 !  rewind(iunit)
 !  n_lines = 0
 !  do
@@ -1194,7 +1185,7 @@ end subroutine BIPquick_subroutine
 !      n_lines = n_lines + 1
 !  end do
 !  rewind(iunit)
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
 !  end function number_of_lines_in_file
 ! !
 ! !============================================================================ 
@@ -1209,7 +1200,7 @@ end subroutine BIPquick_subroutine
 !  integer :: ii, jj, linkMatrix_count, accounted_count, missing_links
 
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
 
 !  linkMatrix_count = 0
 !  accounted_count = 0
@@ -1228,7 +1219,7 @@ end subroutine BIPquick_subroutine
 
 !  missing_links = linkMatrix_count - accounted_count
 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',function_name
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
 !  end function check_links
 ! !
 ! !============================================================================ 
@@ -1253,7 +1244,7 @@ end subroutine BIPquick_subroutine
 !  integer :: ii, jj, mp
  
 ! !-------------------------------------------------------------------------- 
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+!  if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
  
 !  allocate(reorganizedNodes(size(nodeMatrix,1),size(nodeMatrix,2)))
 !  reorganizedNodes = -998877
@@ -1299,7 +1290,7 @@ end subroutine BIPquick_subroutine
  
 !  linkMatrix(:,:) = reorganizedLinks(:,:)
  
-!  if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+!  if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
 !  end subroutine reorganize_arrays
 ! !
 ! !========================================================================== 

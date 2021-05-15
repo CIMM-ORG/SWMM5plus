@@ -85,6 +85,8 @@ module globals
     integer :: N_curve
     integer :: N_tseries
     integer :: N_pattern
+    integer :: N_BCupstream
+    integer :: N_BCdnstream
 
     ! Coarray variables
     integer :: max_caf_elem_N ! size of all elem array in coarray
@@ -103,6 +105,10 @@ module globals
     ! Tables
     type(real_table), allocatable :: all_tseries(:)
     type(pattern), allocatable :: all_patterns(:)
-    type(totalInflow), allocatable :: total_inflows(:)
+    type(totalInflow), allocatable :: total_inflows(:,:,:)
+
+    ! Boundary Conditions
+    real(8), allocatable :: bcdataDn
+    real(8), allocatable :: bcdataUp
 
 end module globals
