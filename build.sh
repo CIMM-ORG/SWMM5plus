@@ -77,9 +77,32 @@ fi
 
 if ! [ -x "$(command -v mpiexec)" ]
 then
-    echo "Install the prerequisite (openmpi) for opencoarray fortran ..."
-    apt-get install openmpi-bin libopenmpi-dev
+    #echo "Installing the prerequisite (openmpi) for opencoarray fortran ..."
+    #wget "http://www.mpich.org/static/downloads/3.4.1/mpich-3.4.1.tar.gz"
+    #tar -xvf *.tar.gz
+    #rm *.tar.gz
+    #cd mpi*/
+    #mkdir /tmp/mpich-build
+    #cd /tmp/mpich-build
+    #sudo /home/cy4782/Desktop/TEST_INSTALL/mpich-3.4.1/configure -prefix=${HOME}/packages 2>&1 | tee c.txt
+    sudo apt update
+    sudo apt-get install openmpi-bin libopenmpi-dev
+    #sudo apt install mpich
 fi
+
+if ! [ -x "$(command -v cmake)" ]
+then 
+    echo "Installing the prerequisite (cmake) for opencoarray fortran ..."
+    wget "http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz"
+    tar -xvf *.tar.gz
+    rm *.tar.gz
+    cd cmake-2.8.3
+    ./configure --prefix=/opt/cmake
+    make
+    sudo make install
+    cd ../
+fi
+
 
 # Download Opencoarray
 if ! [ -x "$(command -v caf)" ]
@@ -93,7 +116,7 @@ then
     CC=gcc FC=gfortran cmake .. -DCMAKE_INSTALL_PREFIX=${HOME}/packages/
     make
     make install
-    cd ..
+    cd ../../
 fi
 
 
