@@ -155,6 +155,13 @@ module data_keys
     integer, parameter :: bc_category_elevation = 0
     integer, parameter :: bc_category_inflowrate = 1
 
+    ! default number of elements for different node types
+    integer, parameter :: N_elem_nJ2 = 0 ! 2-link nodes are assigned to a single face
+    integer, parameter :: N_elem_nJm = 7 ! M-link nodes are assigned a maximum of 7 elements
+    integer, parameter :: N_elem_nStorage = 1 ! Storage nodes are assigned to 1 element
+    integer, parameter :: N_elem_nBCdn = 1 ! Downstream BC nodes are assigned to 1 element
+    integer, parameter :: N_elem_nBCup = 1 ! Upstream BC nodes are assigned to 1 element
+
     ! data types for Momentum Source type (setting%Solver%MomentumSourceM)
     enum, bind(c)
         enumerator :: T00 = 1

@@ -50,7 +50,7 @@ subroutine partitioning_algorithm_check()
 end subroutine partitioning_algorithm_check
 
 subroutine default_partitioning()
-    integer :: ii, jj, num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes
+    integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
     integer :: total_num_elements, num_attributed_elements, assigning_image
     integer :: current_node_image, adjacent_link_image
     integer, allocatable, dimension(:) :: adjacent_links
@@ -65,14 +65,15 @@ subroutine default_partitioning()
     !   - Iterating again through the nodeI array to determine if the adjacent links are on different processors
 ! -----------------------------------------------------------------------------------------------------------------
     ! Determines the number of nodes of each type for the purpose of calculating partition threshold
-    call count_node_types(num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes)
+    call count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
     ! print*, num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes
 
     ! print*, sum(linkI(:, li_N_element))
 
     ! HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
     ! multiplied by how many elements are expected for that node_type
-    total_num_elements = sum(linkI(:, li_N_element)) + num_nJm_nodes*7 + num_one_elem_nodes*1 + num_zero_elem_nodes*0
+    total_num_elements = sum(linkI(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
+        (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
     partition_threshold = total_num_elements / real(setting%Partitioning%Num_Images_Setting)
     ! print*, total_num_elements, setting%Partitioning%Num_Images_Setting, partition_threshold
 

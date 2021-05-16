@@ -118,9 +118,9 @@ contains
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
 
-    subroutine count_node_types(num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes)
-        integer, intent(in out) :: num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes
-        integer :: ii, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+    subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+        integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+        integer :: ii
     
         ! This subroutine uses the vectorized count() function to search the array for number of instances of each node type
         N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
@@ -130,9 +130,9 @@ contains
         N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
     
         ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
-        num_nJm_nodes = N_nJm
-        num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
-        num_zero_elem_nodes = N_nJ2
+        ! num_nJm_nodes = N_nJm
+        ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
+        ! num_zero_elem_nodes = N_nJ2
     
     end subroutine count_node_types
 
