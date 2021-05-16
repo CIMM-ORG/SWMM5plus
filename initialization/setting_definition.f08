@@ -252,13 +252,13 @@ module setting_definition
         type(DebugFileType) :: File
     end type DebugType
 
-    !% setting%BIPquickSettings%Flag
-    type PartitioningFlags
-        integer :: Num_Images_Setting
+    !% setting%PartitioningType
+    type PartitioningType
+        integer :: N_Image
         logical :: UseBIPquick
         logical :: UseDefault
         logical :: BIPquickTestCase
-    endtype PartitioningFlags
+    endtype PartitioningType
 
     ! -
     ! --
@@ -279,7 +279,7 @@ module setting_definition
         type(TestCaseType)     :: TestCase
         type(PathType)         :: Paths
         type(DebugType)        :: Debug
-        type(PartitioningFlags) :: Partitioning
+        type(PartitioningType) :: Partitioning
     end type settingType
 
     type(settingType), target :: setting
@@ -579,8 +579,8 @@ contains
         if (.not. found) stop 69
 
         ! Load BIPQuick settings
-        call json%get('Partitioning.Num_Images_Setting', integer_value, found)
-        setting%Partitioning%Num_Images_Setting = integer_value
+        call json%get('Partitioning.N_Image', integer_value, found)
+        setting%Partitioning%N_Image = integer_value
         if (.not. found) stop 70
         call json%get('Partitioning.UseBIPquick', logical_value, found)
         setting%Partitioning%UseBIPquick = logical_value

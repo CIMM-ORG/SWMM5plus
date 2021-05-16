@@ -107,7 +107,7 @@
         "Volume" : 1e-6
     },
     "Partitioning" : {
-        "Num_Images_Setting"  : 3, 
+        "N_Image"  : 3, 
         "UseBIPquick" : false,
         "UseDefault"  : true,
         "BIPquickTestCase" : false

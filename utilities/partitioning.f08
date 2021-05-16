@@ -74,7 +74,7 @@ subroutine default_partitioning()
     ! multiplied by how many elements are expected for that node_type
     total_num_elements = sum(linkI(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
         (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
-    partition_threshold = total_num_elements / real(setting%Partitioning%Num_Images_Setting)
+    partition_threshold = total_num_elements / real(setting%Partitioning%N_Image)
     ! print*, total_num_elements, setting%Partitioning%Num_Images_Setting, partition_threshold
 
     ! This loop counts the elements attributed to each link, and assigns the link to an image
@@ -86,7 +86,7 @@ subroutine default_partitioning()
         if ( num_attributed_elements > partition_threshold) then
             num_attributed_elements = 0
             ! This is a check to make sure that links aren't added to an image that doesn't exist
-            if ( assigning_image /= setting%Partitioning%Num_Images_Setting ) then 
+            if ( assigning_image /= setting%Partitioning%N_Image ) then 
                 assigning_image = assigning_image + 1
             end if
         end if
@@ -111,7 +111,7 @@ subroutine default_partitioning()
         if ( num_attributed_elements > partition_threshold) then
             num_attributed_elements = 0
             ! This is a check to make sure that nodes aren't added to an image that doesn't exist
-            if ( assigning_image /= setting%Partitioning%Num_Images_Setting ) then 
+            if ( assigning_image /= setting%Partitioning%N_Image ) then 
                 assigning_image = assigning_image + 1
             end if
         end if
