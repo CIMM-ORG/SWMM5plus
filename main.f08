@@ -86,16 +86,6 @@ program main
         call BIPquick_YJunction_Hardcode()
    end if
 
-   do i = 1, size(P_nodeI, 1)
-        print*, P_nodeI(i, :) 
-   end do
-   do i = 1, size(P_linkI, 1)
-        print*, P_linkI(i, :)
-   end do
-   stop
-
-
-
    ! --- Finalization
 
    call finalize_api() ! closes link with shared library

@@ -55,6 +55,7 @@ subroutine default_partitioning()
     integer :: current_node_image, adjacent_link_image
     integer, allocatable, dimension(:) :: adjacent_links
     real(8) :: partition_threshold
+    logical :: partition_correct
 
 ! ----------------------------------------------------------------------------------------------------------------
     ! This subroutine populates the P_nodeI, P_linkI arrays
@@ -136,11 +137,66 @@ subroutine default_partitioning()
         end do
     end do
 
-
-    
-    
+    ! This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
+    partition_correct = default_performance_check()
+    print*, partition_correct
 
 end subroutine default_partitioning
+
+
+function default_performance_check() result(partition_correct)
+    integer :: ii
+    logical :: partition_correct
+    integer, allocatable, dimension(:,:) :: PartCheck_nodeI, PartCheck_linkI
+    logical, allocatable, dimension(:,:) :: ArraySame_nodeI, ArraySame_linkI
+
+    ! Allocate and initialize the correct partition arrays to be checked against
+    allocate(PartCheck_nodeI(size(nodeI,1), B_ni_is_boundary))
+    allocate(PartCheck_linkI(size(linkI,1), B_li_Partition_No))
+    allocate(ArraySame_nodeI(size(nodeI,1), B_ni_is_boundary))
+    allocate(ArraySame_linkI(size(linkI,1), B_li_Partition_No))
+
+    PartCheck_nodeI(:, B_ni_idx_Partition) = (/1,2,3,4/) 
+    PartCheck_nodeI(:, B_ni_Partition_No) = (/2,2,3,3/)
+    PartCheck_nodeI(:, B_ni_is_boundary) = (/1,0,1,1/)
+
+    PartCheck_linkI(:, B_li_idx_Partition) = (/1,2,3/)
+    PartCheck_linkI(:, B_li_Partition_No) = (/1,2,2/)
+
+    ! Assume that the partition arrays are going to be incorrect
+    partition_correct = .false.
+
+    ! Create a logical array of if the two arrays match
+    ArraySame_nodeI(:,:) = ( PartCheck_nodeI == P_nodeI )
+    ArraySame_linkI(:,:) = ( PartCheck_linkI == P_linkI )
+    
+    if ( all(ArraySame_nodeI) .eqv. .true. ) then 
+        print*, "The node arrays are partitioned correctly"
+    else
+        print*, "There is a mistake in the P_nodeI"
+        print*, ArraySame_nodeI(:,:)
+        do ii = 1, size(P_nodeI, 1)
+            print*, P_nodeI(ii, :)
+            print*, PartCheck_nodeI(ii, :)
+       end do
+    end if
+
+    if ( all(ArraySame_linkI) .eqv. .true. ) then 
+        print*, "The link arrays are partitioned correctly"
+    else
+        print*, "There is a mistake in the P_linkI"
+        print*, ArraySame_linkI(:,:)
+        do ii = 1, size(P_linkI, 1)
+            print*, P_linkI(ii, :)
+            print*, PartCheck_linkI(ii, :)
+       end do
+    end if
+
+    if ( (all(ArraySame_nodeI) .eqv. .true.) .and. (all(ArraySame_linkI) .eqv. .true.) ) then
+        partition_correct = .true.
+    end if
+
+end function default_performance_check
 
 
 end module partitioning
