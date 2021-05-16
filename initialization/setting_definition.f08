@@ -254,10 +254,10 @@ module setting_definition
 
     !% setting%PartitioningType
     type PartitioningType
-        integer :: N_Image
-        logical :: UseBIPquick
-        logical :: UseDefault
-        logical :: BIPquickTestCase
+        integer :: N_Image = 3
+        logical :: UseBIPquick = .false.
+        logical :: UseDefault = .true.
+        logical :: BIPquickTestCase = .true.
     endtype PartitioningType
 
     ! -
