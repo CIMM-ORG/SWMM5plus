@@ -26,7 +26,7 @@ module initialization
 
     private
 
-    public :: initialize_linknode_arrays
+    public :: initialize_linknode_arrays, count_node_types
 
 contains
 
@@ -63,6 +63,9 @@ contains
             linkI(i,li_geometry) = get_link_attribute(i, link_geometry)
             linkI(i,li_Mnode_u) = get_link_attribute(i, link_node1) + 1 ! node1 in C starts from 0
             linkI(i,li_Mnode_d) = get_link_attribute(i, link_node2) + 1 ! node2 in C starts from 0
+
+            ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
+            linkI(i, li_N_element) = 10
 
             nodeI(linkI(i,li_Mnode_u), ni_N_link_u) = nodeI(linkI(i,li_Mnode_u), ni_N_link_u) + 1
             nodeI(linkI(i,li_Mnode_u), ni_idx_base1 + nodeI(linkI(i,li_Mnode_u), ni_N_link_u)) = i
@@ -114,5 +117,23 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
+
+    subroutine count_node_types(num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes)
+        integer, intent(in out) :: num_nJm_nodes, num_one_elem_nodes, num_zero_elem_nodes
+        integer :: ii, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+    
+        ! This subroutine uses the vectorized count() function to search the array for number of instances of each node type
+        N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
+        N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
+        N_nJm = count(nodeI(:, ni_node_type) == nJM)
+        N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
+        N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
+    
+        ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
+        num_nJm_nodes = N_nJm
+        num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
+        num_zero_elem_nodes = N_nJ2
+    
+    end subroutine count_node_types
 
 end module initialization

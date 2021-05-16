@@ -113,7 +113,7 @@
         "BIPquickTestCase" : false
     },
     "Debug" : {
-        "DebugAPI" : true,
+        "DebugAPI" : false,
         "File" : {
             "dynamic_array" : false,
             "tables" : false,
