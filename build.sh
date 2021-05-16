@@ -15,6 +15,7 @@ while getopts 'd' flag; do
 done
 
 # Constants
+SWMM5PLUS_DIR=$PWD
 
 ARRAY_DIR='arrays'
 INIT_DIR='initialization'
@@ -26,6 +27,14 @@ TEST_DIR='test_cases'
 UTIL_DIR='utilities'
 VARS_DIR='vars'
 
+# Dependencies paths
+CMAKE_SOURCE="$SWMM5PLUS_DIR/cmake"
+CMAKE_INSTALL="$CMAKE_SOURCE/cmake-install"
+COARRAY_SOURCE="$SWMM5PLUS_DIR/opencoarray"
+COARRAY_INSTALL="$COARRAY_SOURCE/opencoarray-install"
+
+
+COARRAY_FC="${COARRAY_INSTALL}/bin/caf"
 FC='gfortran'
 OUPTFLAGS=-g
 FFLAGS=-O3
@@ -77,7 +86,7 @@ fi
 
 if ! [ -x "$(command -v mpiexec)" ]
 then
-    #echo "Installing the prerequisite (openmpi) for opencoarray fortran ..."
+    echo "Installing the prerequisite (openmpi) for opencoarray fortran ..."
     #wget "http://www.mpich.org/static/downloads/3.4.1/mpich-3.4.1.tar.gz"
     #tar -xvf *.tar.gz
     #rm *.tar.gz
@@ -90,33 +99,43 @@ then
     #sudo apt install mpich
 fi
 
-if ! [ -x "$(command -v cmake)" ]
+if ! [ -d $CMAKE_SOURCE ]  #[ -x "$(command -v cmake)" ]
 then 
-    echo "Installing the prerequisite (cmake) for opencoarray fortran ..."
-    wget "http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz"
+    echo "cmake is not found in current directory."
+    echo "Installing cmake - the prerequisite for opencoarray fortran ..."
+    sleep 3.0
+    mkdir $CMAKE_SOURCE
+    cd $CMAKE_SOURCE
+    mkdir $CMAKE_INSTALL
+    wget "https://cmake.org/files/v3.3/cmake-3.3.2.tar.gz"  # use 3.3.2 for now. Versions: https://cmake.org/files/
     tar -xvf *.tar.gz
     rm *.tar.gz
-    cd cmake-2.8.3
-    ./configure --prefix=/opt/cmake
+    cd cmake-3.3.2
+    ./configure --prefix=$CMAKE_INSTALL
     make
-    sudo make install
-    cd ../
+    make install
+    cd ../../
 fi
 
 
 # Download Opencoarray
-if ! [ -x "$(command -v caf)" ]
+if ! [ -d $COARRAY_SOURCE ]#[ -x "$(command -v $COARRAY_FC)" ]
 then
-    echo Opencoarray is not installed.
+    echo "opencoarray is not found in current directory."
+    sleep 3.0
+    mkdir $COARRAY_SOURCE
+    cd $COARRAY_SOURCE
+    mkdir $COARRAY_INSTALL
     echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
+    sleep 3.0
     git clone --branch 1.9.3 https://github.com/sourceryinstitute/OpenCoarrays
     cd OpenCoarrays
     mkdir opencoarrays-build
     cd opencoarrays-build
-    CC=gcc FC=gfortran cmake .. -DCMAKE_INSTALL_PREFIX=${HOME}/packages/
+    CC=gcc FC=gfortran ${CMAKE_INSTALL}/bin/cmake .. -DCMAKE_INSTALL_PREFIX=$COARRAY_INSTALL
     make
-    make install
-    cd ../../
+    sudo make install
+    cd ../../../
 fi
 
 
@@ -192,7 +211,9 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-caf $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
+#caf $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
+$COARRAY_FC $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
+
 
 $clean:
     echo

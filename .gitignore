@@ -10,4 +10,6 @@
 SWMM
 initialization/interface/flibswmm/src
 json-fortran
+cmake
+opencoarray
 debug
