@@ -22,13 +22,6 @@ module partitioning
 
     public :: execute_partitioning
    
-    integer, parameter :: B_ni_idx_Partition = 1 ! the node index number
-    integer, parameter :: B_ni_Partition_No = 2 ! the Partition number to which that node index belongs
-    integer, parameter :: B_ni_is_boundary = 3 ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
-   
-    integer, parameter :: B_li_idx_Partition = 1 ! the link index number
-    integer, parameter :: B_li_Partition_No = 2 ! the Partition number to which that link index belongs
-
     integer, pointer :: setP_N_images => setting%Partitioning%N_Image
     logical, pointer :: setP_UseBIPquick => setting%Partitioning%UseBIPquick
     logical, pointer :: setP_UseDefault => setting%Partitioning%UseDefault
@@ -127,8 +120,8 @@ subroutine default_partitioning()
             end if
         end if
 
-        P_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
-        P_linkI(ii, B_li_Partition_No) = assigning_image
+        P_linkI(ii, P_li_idx_Partition) = linkI(ii, ni_idx)
+        P_linkI(ii, P_li_Partition_No) = assigning_image
     end do
 
     ! This loop counts the elements attributed to each node, and assigns the node to an image
@@ -153,21 +146,21 @@ subroutine default_partitioning()
         end if
 
         ! Fills in the P_nodeI array
-        P_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
-        P_nodeI(ii, B_ni_Partition_No) = assigning_image
-        P_nodeI(ii, B_ni_is_boundary) = 0
+        P_nodeI(ii, P_ni_idx_Partition) = nodeI(ii, ni_idx)
+        P_nodeI(ii, P_ni_Partition_No) = assigning_image
+        P_nodeI(ii, P_ni_is_boundary) = 0
 
         ! This bit of code checks the current node image, and compares it to the images of the adjacent links
-        current_node_image = P_nodeI(ii, B_ni_Partition_No)
+        current_node_image = P_nodeI(ii, P_ni_Partition_No)
         adjacent_links = nodeI(ii, ni_Mlink_u1:ni_Mlink_d3)
         do jj = 1, size(adjacent_links)
             if ( adjacent_links(jj) == nullValueI ) then
                 cycle
             end if
-            adjacent_link_image = P_linkI(adjacent_links(jj), B_li_Partition_No)
+            adjacent_link_image = P_linkI(adjacent_links(jj), P_li_Partition_No)
             ! If the adjacent link and current node are on different images, then that node is a boundary
             if ( adjacent_link_image /= current_node_image ) then
-                P_nodeI(ii, B_ni_is_boundary) = 1
+                P_nodeI(ii, P_ni_is_boundary) = 1
             end if
         end do
     end do
@@ -182,17 +175,17 @@ function default_performance_check() result(partition_correct)
     logical, allocatable, dimension(:,:) :: ArraySame_nodeI, ArraySame_linkI
 
     ! Allocate and initialize the correct partition arrays to be checked against
-    allocate(PartCheck_nodeI(size(nodeI,1), B_ni_is_boundary))
-    allocate(PartCheck_linkI(size(linkI,1), B_li_Partition_No))
-    allocate(ArraySame_nodeI(size(nodeI,1), B_ni_is_boundary))
-    allocate(ArraySame_linkI(size(linkI,1), B_li_Partition_No))
+    allocate(PartCheck_nodeI(size(nodeI,1), P_ni_is_boundary))
+    allocate(PartCheck_linkI(size(linkI,1), P_li_Partition_No))
+    allocate(ArraySame_nodeI(size(nodeI,1), P_ni_is_boundary))
+    allocate(ArraySame_linkI(size(linkI,1), P_li_Partition_No))
 
-    PartCheck_nodeI(:, B_ni_idx_Partition) = (/1,2,3,4/) 
-    PartCheck_nodeI(:, B_ni_Partition_No) = (/2,2,3,3/)
-    PartCheck_nodeI(:, B_ni_is_boundary) = (/1,0,1,1/)
+    PartCheck_nodeI(:, P_ni_idx_Partition) = (/1,2,3,4/) 
+    PartCheck_nodeI(:, P_ni_Partition_No) = (/2,2,3,3/)
+    PartCheck_nodeI(:, P_ni_is_boundary) = (/1,0,1,1/)
 
-    PartCheck_linkI(:, B_li_idx_Partition) = (/1,2,3/)
-    PartCheck_linkI(:, B_li_Partition_No) = (/1,2,2/)
+    PartCheck_linkI(:, P_li_idx_Partition) = (/1,2,3/)
+    PartCheck_linkI(:, P_li_Partition_No) = (/1,2,2/)
 
     ! Assume that the partition arrays are going to be incorrect
     partition_correct = .false.
