@@ -20,7 +20,7 @@ module partitioning
 
     private
 
-    public :: default_partitioning, partitioning_algorithm_check
+    public :: execute_partitioning
    
     integer, parameter :: B_ni_idx_Partition = 1 ! the node index number
     integer, parameter :: B_ni_Partition_No = 2 ! the Partition number to which that node index belongs
@@ -29,25 +29,48 @@ module partitioning
     integer, parameter :: B_li_idx_Partition = 1 ! the link index number
     integer, parameter :: B_li_Partition_No = 2 ! the Partition number to which that link index belongs
 
+    integer, pointer :: setP_N_images => setting%Partitioning%N_Image
+    logical, pointer :: setP_UseBIPquick => setting%Partitioning%UseBIPquick
+    logical, pointer :: setP_UseDefault => setting%Partitioning%UseDefault
 
 contains
 
+
+subroutine execute_partitioning()
+    logical :: partition_correct
+    ! --- Testing Partitioning Module
+   call partitioning_algorithm_check()
+
+   if ( setP_UseDefault .eqv. .true. ) then
+        call default_partitioning()
+   else if ( setP_UseBIPquick .eqv. .true. ) then
+        call BIPquick_YJunction_Hardcode()
+   end if
+
+    ! This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
+   partition_correct = default_performance_check()
+
+   print*, "*** partitioning is complete", partition_correct
+end subroutine 
+
+
 subroutine partitioning_algorithm_check()
-    print*, setting%Partitioning%UseBIPquick, setting%Partitioning%UseDefault
-    if ( (setting%Partitioning%UseBIPquick .eqv. .true.) .and. (setting%Partitioning%UseDefault .eqv. .true.) )  then
+    ! print*, setting%Partitioning%UseBIPquick, setting%Partitioning%UseDefault
+    if ( (setP_UseBIPquick .eqv. .true.) .and. (setP_UseDefault .eqv. .true.) )  then
         print*, "There are two partitioning algorithms being used"
         stop
-    else if ( (setting%Partitioning%UseBIPquick .eqv. .false.) .and. (setting%Partitioning%UseDefault .eqv. .false.) ) then
+    else if ( (setP_UseBIPquick .eqv. .false.) .and. (setP_UseDefault .eqv. .false.) ) then
         print*, "No partitioning algorithms have been specified, default partitioning will be used"
-        setting%Partitioning%UseDefault = .true.
+        setP_UseDefault = .true.
     else
-        if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then
+        if ( setP_UseBIPquick .eqv. .true. ) then
             print*, "Using BIPquick Partitioning"
-        else if ( setting%Partitioning%UseDefault .eqv. .true. ) then
+        else if ( setP_UseDefault .eqv. .true. ) then
             print*, "Using Default Partitioning"
         end if
     end if
 end subroutine partitioning_algorithm_check
+
 
 subroutine default_partitioning()
     integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
@@ -75,8 +98,8 @@ subroutine default_partitioning()
     ! multiplied by how many elements are expected for that node_type
     total_num_elements = sum(linkI(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
         (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
-    partition_threshold = total_num_elements / real(setting%Partitioning%N_Image)
-    ! print*, total_num_elements, setting%Partitioning%Num_Images_Setting, partition_threshold
+    partition_threshold = total_num_elements / real(setP_N_images)
+    ! print*, total_num_elements, setP_N_images, partition_threshold
 
     ! This loop counts the elements attributed to each link, and assigns the link to an image
     num_attributed_elements = 0
@@ -87,7 +110,7 @@ subroutine default_partitioning()
         if ( num_attributed_elements > partition_threshold) then
             num_attributed_elements = 0
             ! This is a check to make sure that links aren't added to an image that doesn't exist
-            if ( assigning_image /= setting%Partitioning%N_Image ) then 
+            if ( assigning_image /= setP_N_images ) then 
                 assigning_image = assigning_image + 1
             end if
         end if
@@ -112,7 +135,7 @@ subroutine default_partitioning()
         if ( num_attributed_elements > partition_threshold) then
             num_attributed_elements = 0
             ! This is a check to make sure that nodes aren't added to an image that doesn't exist
-            if ( assigning_image /= setting%Partitioning%N_Image ) then 
+            if ( assigning_image /= setP_N_images ) then 
                 assigning_image = assigning_image + 1
             end if
         end if
@@ -136,10 +159,6 @@ subroutine default_partitioning()
             end if
         end do
     end do
-
-    ! This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
-    partition_correct = default_performance_check()
-    print*, partition_correct
 
 end subroutine default_partitioning
 

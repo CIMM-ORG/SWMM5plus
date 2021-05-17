@@ -76,15 +76,8 @@ program main
    call initialize_api()
    call initialize_linknode_arrays()
 
-
-   ! --- Testing Partitioning Module
-   call partitioning_algorithm_check()
-
-   if ( setting%Partitioning%UseDefault .eqv. .true. ) then
-        call default_partitioning
-   else if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then
-        call BIPquick_YJunction_Hardcode()
-   end if
+   ! --- Graph Partitioning
+   call execute_partitioning()
 
    ! --- Finalization
 
