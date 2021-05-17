@@ -581,25 +581,28 @@ contains
         call json%get('Debug.File.inflow', logical_value, found)
         setting%Debug%File%inflow = logical_value
         if (.not. found) stop 69
+        call json%get('Debug.File.coarray_bipquick', logical_value, found)
+        setting%Debug%File%coarray_bipquick = logical_value
+        if (.not. found) stop 70
 
         ! Load BIPQuick settings
         call json%get('Partitioning.UseBIPquick', logical_value, found)
         setting%Partitioning%UseBIPquick = logical_value
-        if (.not. found) stop 70
+        if (.not. found) stop 71
         call json%get('Partitioning.BIPquickTestCase', logical_value, found)
         setting%Partitioning%BIPquickTestCase = logical_value
-        if (.not. found) stop 71
+        if (.not. found) stop 72
         call json%get('Partitioning.UseDefault', logical_value, found)
         setting%Partitioning%UseDefault = logical_value
-        if (.not. found) stop 72
+        if (.not. found) stop 73
 
         ! For element length adjustment
         call json%get("ElementLengthAdjust.LinkShortingFactor", real_value, found)
         setting%ElementLengthAdjust%LinkShortingFactor = real_value
-        if (.not. found) stop 73
+        if (.not. found) stop 74
 
         call json%destroy()
-        if (json%failed()) stop 74
+        if (json%failed()) stop 75
 
     end subroutine load_settings
 end module setting_definition

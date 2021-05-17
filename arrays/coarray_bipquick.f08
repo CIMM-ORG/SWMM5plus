@@ -10,13 +10,12 @@ module coarray_bipquick
     use globals
     use array_index
     use data_keys
-    use setting_definition
+    use setting_definition, only: setting
     
     implicit none
 
-    integer, private :: debuglevel=0
-
     public :: coarray_length_calculation
+
     contains
 
     subroutine get_num_of_images()
@@ -24,11 +23,11 @@ module coarray_bipquick
         !integer, intent(inout) :: nimgs
         character(64) :: subroutine_name = 'get_num_of_images'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%coarray_bipquick) print *, '*** enter ',subroutine_name
 
         nimgs = num_images()
 
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
     end subroutine get_num_of_images
 
 
@@ -42,7 +41,7 @@ module coarray_bipquick
         integer :: ii=0, min_val, max_val
         character(64) :: subroutine_name = 'image_number_calculation'
 
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%coarray_bipquick) print *, '*** enter ',subroutine_name
 
         allocate(img_arr(size(linkI,1)))
         allocate(unique(size(linkI,1)))
@@ -62,7 +61,7 @@ module coarray_bipquick
         
         nimgs_assign = size(unique_imagenum,1) ! The number of images assigned by BIPquick
         
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
     end subroutine image_number_calculation
 
     
@@ -75,7 +74,7 @@ module coarray_bipquick
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'array_length_calculation'
         
-        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%coarray_bipquick) print *, '*** enter ',subroutine_name
 
         call image_number_calculation(nimgs_assign, unique_imagenum)
 
@@ -121,7 +120,7 @@ module coarray_bipquick
         max_caf_elem_N = maxval(temp_elem_N)
         max_caf_face_N = maxval(temp_face_N) ! assign the max value 
 
-        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
 
     end subroutine coarray_length_calculation
 
@@ -133,13 +132,13 @@ module coarray_bipquick
 !        integer, intent(in) :: nimgs_assign, coarray_length
 !        character(64) :: subroutine_name = 'coarray_allocation'
 !
-!        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+!        if (setting%Debug%File%coarray_bipquick) print *, '*** enter ',subroutine_name
 !
 !        allocate(Link_c(coarray_length,2)[*]) ![1:nimgs_assign])
 !        allocate(Node_c(coarray_length,2)[*]) ![1:nimgs_assign])
 !        sync all 
 !
-!        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+!        if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
 !
 !    end subroutine coarray_allocation
 !
@@ -151,7 +150,7 @@ module coarray_bipquick
 !        integer :: ii
 !        character(64) :: subroutine_name = 'coarray_data_assignment'
 !
-!        if (debuglevel > 0) print *, '*** enter ',subroutine_name
+!        if (setting%Debug%File%coarray_bipquick) print *, '*** enter ',subroutine_name
 !
 !
 !        call get_num_of_images(nimgs) ! compute the available image number
@@ -189,7 +188,7 @@ module coarray_bipquick
 !        endif
 !        sync all
 !
-!        if (debuglevel > 0)  print *, '*** leave ',subroutine_name
+!        if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
 !
 !   end subroutine coarray_data_assignment
 
