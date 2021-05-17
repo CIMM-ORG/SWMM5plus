@@ -23,8 +23,8 @@ module partitioning
     public :: execute_partitioning
    
     integer, pointer :: setP_N_images => setting%Partitioning%N_Image
-    logical, pointer :: setP_UseBIPquick => setting%Partitioning%UseBIPquick
-    logical, pointer :: setP_UseDefault => setting%Partitioning%UseDefault
+    ! logical, pointer :: setP_UseBIPquick => setting%Partitioning%UseBIPquick
+    ! logical, pointer :: setP_UseDefault => setting%Partitioning%UseDefault
 
 contains
 
@@ -39,16 +39,16 @@ subroutine execute_partitioning()
 
     ! --------------------------------------------------------
 
-    ! --- Testing Partitioning Module
-   call partitioning_algorithm_check()
-
-   if ( setP_UseDefault .eqv. .true. ) then
+    ! Determine which partitioning method is being used
+    if (setting%Partitioning%PartitioningMethod == P01) then
+        print*, "Using Default Partitioning"
         call default_partitioning()
-   else if ( setP_UseBIPquick .eqv. .true. ) then
-        call BIPquick_YJunction_Hardcode()
-   end if
+    else if (setting%Partitioning%PartitioningMethod == P02) then
+        print*, "Using BIPquick Partitioning"
+        call BIPquick_YJunction_Hardcode
+    end if
 
-   if (setting%Debug%File%partitioning) then
+    if (setting%Debug%File%partitioning) then
         print *, '*** leave ', subroutine_name
 
         ! This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
@@ -59,22 +59,24 @@ subroutine execute_partitioning()
 end subroutine 
 
 
-subroutine partitioning_algorithm_check()
-    ! print*, setting%Partitioning%UseBIPquick, setting%Partitioning%UseDefault
-    if ( (setP_UseBIPquick .eqv. .true.) .and. (setP_UseDefault .eqv. .true.) )  then
-        print*, "There are two partitioning algorithms being used"
-        stop
-    else if ( (setP_UseBIPquick .eqv. .false.) .and. (setP_UseDefault .eqv. .false.) ) then
-        print*, "No partitioning algorithms have been specified, default partitioning will be used"
-        setP_UseDefault = .true.
-    else
-        if ( setP_UseBIPquick .eqv. .true. ) then
-            print*, "Using BIPquick Partitioning"
-        else if ( setP_UseDefault .eqv. .true. ) then
-            print*, "Using Default Partitioning"
-        end if
-    end if
-end subroutine partitioning_algorithm_check
+! subroutine partitioning_algorithm_check()
+!     ! print*, setting%Partitioning%UseBIPquick, setting%Partitioning%UseDefault
+
+
+!     if ( (setP_UseBIPquick .eqv. .true.) .and. (setP_UseDefault .eqv. .true.) )  then
+!         print*, "There are two partitioning algorithms being used"
+!         stop
+!     else if ( (setP_UseBIPquick .eqv. .false.) .and. (setP_UseDefault .eqv. .false.) ) then
+!         print*, "No partitioning algorithms have been specified, default partitioning will be used"
+!         setP_UseDefault = .true.
+!     else
+!         if ( setP_UseBIPquick .eqv. .true. ) then
+!             print*, "Using BIPquick Partitioning"
+!         else if ( setP_UseDefault .eqv. .true. ) then
+!             print*, "Using Default Partitioning"
+!         end if
+!     end if
+! end subroutine partitioning_algorithm_check
 
 
 subroutine default_partitioning()

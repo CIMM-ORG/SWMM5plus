@@ -256,8 +256,7 @@ module setting_definition
     !% setting%PartitioningType
     type PartitioningType
         integer :: N_Image = 3
-        logical :: UseBIPquick = .false.
-        logical :: UseDefault = .true.
+        integer :: PartitioningMethod = P01
         logical :: BIPquickTestCase = .true.
     endtype PartitioningType
 
@@ -586,15 +585,13 @@ contains
         call json%get('Partitioning.N_Image', integer_value, found)
         setting%Partitioning%N_Image = integer_value
         if (.not. found) stop 71
-        call json%get('Partitioning.UseBIPquick', logical_value, found)
-        setting%Partitioning%UseBIPquick = logical_value
+        call json%get('Partitioning.PartitioningMethod', c, found)
+        if (c == 'P01') then
+            setting%Partitioning%PartitioningMethod = P01
+        else if (c == 'P02') then
+            setting%Partitioning%PartitioningMethod = P02
+        end if
         if (.not. found) stop 72
-        call json%get('Partitioning.BIPquickTestCase', logical_value, found)
-        setting%Partitioning%BIPquickTestCase = logical_value
-        if (.not. found) stop 73
-        call json%get('Partitioning.UseDefault', logical_value, found)
-        setting%Partitioning%UseDefault = logical_value
-        if (.not. found) stop 74
 
         call json%destroy()
         if (json%failed()) stop 75

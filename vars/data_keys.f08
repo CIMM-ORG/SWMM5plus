@@ -162,6 +162,12 @@ module data_keys
     integer, parameter :: N_elem_nBCdn = 1 ! Downstream BC nodes are assigned to 1 element
     integer, parameter :: N_elem_nBCup = 1 ! Upstream BC nodes are assigned to 1 element
 
+    ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
+    enum, bind(c)
+        enumerator :: P01 = 1
+        enumerator :: P02
+    end enum
+
     ! data types for Momentum Source type (setting%Solver%MomentumSourceM)
     enum, bind(c)
         enumerator :: T00 = 1

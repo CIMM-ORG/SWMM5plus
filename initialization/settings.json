@@ -108,8 +108,7 @@
     },
     "Partitioning" : {
         "N_Image"  : 3, 
-        "UseBIPquick" : false,
-        "UseDefault"  : true,
+        "PartitioningMethod" : "P01",
         "BIPquickTestCase" : false
     },
     "Debug" : {

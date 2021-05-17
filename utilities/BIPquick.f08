@@ -141,7 +141,7 @@ end subroutine BIPquick_YJunction_Hardcode
      real(8) :: start, intermediate, finish
      call cpu_time(start)
 
-     if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then
+     if ( setting%Partitioning%PartitioningMethod == P02 ) then
 
         ! Allocate and set the temporary arrays. (Multiprocessors - 1) represents the maximum number of phantom nodes
         ! B_node Partition will hold [ni_idx, Partition_No]
