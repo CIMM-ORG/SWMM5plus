@@ -161,6 +161,639 @@ contains
 
 
     end subroutine coarray_storage_allocation
+
+
+    subroutine allocate_columns()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   All the enumerated variables can not be used as pointers. Thus the 
+        !   variables are stored in col_elemX(:) arrays that is a target
+        !
+        !-----------------------------------------------------------------------------
+
+        character(64) :: subroutine_name = 'allocate_columns'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% allocation of the col_elemX and npack_elemX
+        call allocate_col_elemI
+        call allocate_col_elemP
+        call allocate_col_elemPGalltm
+        call allocate_col_elemPGac
+        call allocate_col_elemPGetm
+        call allocate_col_elemR
+        call allocate_col_elemSI
+        call allocate_col_elemSR
+        call allocate_col_elemSGR
+        call allocate_col_elemWDI
+        call allocate_col_elemWDR
+        call allocate_col_elemYN
+        call allocate_col_faceI
+        call allocate_col_faceM
+        call allocate_col_faceP
+        call allocate_col_faceR
+        call allocate_col_faceYN
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_columns
+
+    subroutine allocate_col_elemI()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemI is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated ei_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemI'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        ncol => Ncol_elemI
+
+        !% allocate an array for storing the column 
+        allocate( col_elemI(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemI(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemI
+
+
+    subroutine allocate_col_elemP()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemP is a vector of the columns in the elemP arrays
+        !   that correspond to the enumerated ep_... array_index parameter
+        !
+        !   the npack_elemP(:) vector contains the number of packed elements
+        !   for a given column.
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemP'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemP
+
+        !% allocate an array for storing the size of each packed type
+        allocate( npack_elemP(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% allocate an array for storing the column of each packed type
+        allocate( col_elemP(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemP(:) = [(ii,ii=1,ncol)]
+
+        !% zero the number of packed items (to be defined in the packing)
+        npack_elemP(:) = 0
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemP
+
+
+    subroutine allocate_col_elemPGalltm()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemPGalltm is a vector of the columns in the elemPGalltm array
+        !   that correspond to the enumerated ePG_... array_index parameters
+        !
+        !   the npack_elemPGalltm(:) vector contains the number of packed elements
+        !   for a given column.
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemPGalltm'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemPG !% whatever the last item in the enumerator
+
+        !% allocate an array for storing the size of each packed type
+        allocate( npack_elemPGalltm(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% allocate an array for storing the enum type of each column
+        allocate( col_elemPGalltm(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemPGalltm(:) = [(ii,ii=1,ncol)]
+
+        !% zero the number of packed items (to be defined in the packing)
+        npack_elemPGalltm(:) = 0
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemPGalltm
+
+
+    subroutine allocate_col_elemPGac()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemPGac is a vector of the columns in the elemPGac arrays
+        !   that correspond to the enumerated epg_... array_index parameters
+        !
+        !   the npack_elemPGac(:) vector contains the number of packed elements
+        !   for a given column.
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemPGac'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemPG !% whatever the last item in the enumerator
+
+        !% allocate an array for storing the size of each packed type
+        allocate( npack_elemPGac(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% allocate an array for storing the enum type of each column
+        allocate( col_elemPGac(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemPGac(:) = [(ii,ii=1,ncol)]
+
+        !% zero the number of packed items (to be defined in the packing)
+        npack_elemPGac(:) = 0
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemPGac
+
+
+    subroutine allocate_col_elemPGetm()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemPGetm is a vector of the columns in the elemPGetm arrays
+        !   that correspond to the enumerated epg_... array_index parameters
+        !    
+        !   the npack_elemPGetm(:) vector contains the number of packed elements
+        !   for a given column.
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemPGetm'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemPG !% whatever the last item in the enumerator
+
+        !% allocate an array for storing the size of each packed type
+        allocate( npack_elemPGetm(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% allocate an array for storing the enum type of each column
+        allocate( col_elemPGetm(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemPGetm(:) = [(ii,ii=1,ncol)]
+
+        !% zero the number of packed items (to be defined in the packing)
+        npack_elemPGetm(:) = 0
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemPGetm
+
+
+    subroutine allocate_col_elemR()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemR is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated er_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+        
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemR'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemR
+
+        !% allocate an array for storing the column 
+        allocate( col_elemR(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemR(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemR
+
+
+    subroutine allocate_col_elemSI()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemSI is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated eSI_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemSI'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemSI
+
+        !% allocate an array for storing the column 
+        allocate( col_elemR(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemSI(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemSI
+
+
+    subroutine allocate_col_elemSR()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemSR is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated eSR_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemSR'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemSR
+
+        !% allocate an array for storing the column 
+        allocate( col_elemSR(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemSR(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemSR
+
+
+    subroutine allocate_col_elemSGR()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemSGR is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated eSGR_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemSGR'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemSGR
+
+        !% allocate an array for storing the column 
+        allocate( col_elemSGR(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemSGR(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemSGR
+
+
+    subroutine allocate_col_elemWDI()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemWDI is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated eWDI_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemWDI'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemWDI
+
+        !% allocate an array for storing the column 
+        allocate( col_elemWDI(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemWDI(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemWDI
+
+
+    subroutine allocate_col_elemWDR()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemWDR is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated eWDR_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemWDI'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemWDR
+
+        !% allocate an array for storing the column 
+        allocate( col_elemWDR(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemWDR(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemWDR
+
+
+    subroutine allocate_col_elemYN()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_elemYN is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated eYN_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_elemYN'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_elemYN
+
+        !% allocate an array for storing the column 
+        allocate( col_elemYN(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_elemYN(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_elemYN
+
+
+    subroutine allocate_col_faceI()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_faceI is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated fi_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_faceI'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_faceI
+
+        !% allocate an array for storing the column 
+        allocate( col_faceI(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_faceI(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_faceI
+
+
+    subroutine allocate_col_faceM()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_faceM is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated fM_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_faceM'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_faceM
+
+        !% allocate an array for storing the column 
+        allocate( col_faceM(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_faceM(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_faceM
+
+
+    subroutine allocate_col_faceP()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   packed arrays for faces
+        !   the col_faceP is a vector of the columns in the faceP arrays
+        !   that correspond to the enumerated fp_... array_index parameters
+        !
+        !   the npack_faceP(:) vector contains the number of packed elements
+        !   for a given column.
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_faceP'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_faceP 
+
+        !% allocate an array for storing the size of each packed type
+        allocate( npack_faceP(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% allocate an array for storing the column of each packed type
+        allocate( col_faceP(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_faceP(:) = [(ii,ii=1,ncol)]
+
+        !% zero the number of packed items (to be defined in the packing)
+        npack_faceP(:) = 0
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_faceP
+
+
+    subroutine allocate_col_faceR()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_faceR is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated fr_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_faceR'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_faceR  !global
+
+        !% allocate an array of column indexes that can be used as targets of pointers
+        allocate( col_faceR(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_faceR(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_faceR
+
+
+    subroutine allocate_col_faceYN()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   the col_faceYN is a vector of the columns in the faceR arrays
+        !   that correspond to the enumerated fYN_... array_index parameter
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'allocate_col_faceYN'
+
+        !-----------------------------------------------------------------------------
+        
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_faceYN  !global
+
+        !% allocate an array of column indexes that can be used as targets of pointers
+        allocate( col_faceYN(ncol), stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_faceYN(:) = [(ii,ii=1,ncol)]
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+    end subroutine allocate_col_faceYN
+
     ! subroutine allocate_bc()
     ! !
     ! ! allocate storage for boundary conditions.
