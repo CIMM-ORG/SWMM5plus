@@ -120,7 +120,8 @@
             "allocate_storage" : false,
             "initialization" : true,
             "interface" : false,
-            "BIPquick" : false,
+            "partitioning" : true,
+            "BIPquick"  : false,
             "utility" : false,
             "globals" : false,
             "inflow" : false

@@ -37,7 +37,15 @@ contains
 
 
 subroutine execute_partitioning()
+    ! --------------------------------------------------------
+    !   The purpose of this subroutine is to check which partitioning
+    !   algorithm should be used, then call that algorithm, then 
+    !   check that the output is correct (if debug == true)
     logical :: partition_correct
+    character(64) :: subroutine_name = 'execute_partitioning'
+
+    ! --------------------------------------------------------
+
     ! --- Testing Partitioning Module
    call partitioning_algorithm_check()
 
@@ -47,10 +55,14 @@ subroutine execute_partitioning()
         call BIPquick_YJunction_Hardcode()
    end if
 
-    ! This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
-   partition_correct = default_performance_check()
+   if (setting%Debug%File%partitioning) then
+        print *, '*** leave ', subroutine_name
 
-   print*, "*** partitioning is complete", partition_correct
+        ! This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
+        partition_correct = default_performance_check()
+
+        print*, "*** partitioning is complete", partition_correct
+    end if
 end subroutine 
 
 
