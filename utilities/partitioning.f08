@@ -23,8 +23,6 @@ module partitioning
     public :: execute_partitioning
    
     integer, pointer :: setP_N_images => setting%Partitioning%N_Image
-    ! logical, pointer :: setP_UseBIPquick => setting%Partitioning%UseBIPquick
-    ! logical, pointer :: setP_UseDefault => setting%Partitioning%UseDefault
 
 contains
 
@@ -57,26 +55,6 @@ subroutine execute_partitioning()
         print*, "*** partitioning is complete", partition_correct
     end if
 end subroutine 
-
-
-! subroutine partitioning_algorithm_check()
-!     ! print*, setting%Partitioning%UseBIPquick, setting%Partitioning%UseDefault
-
-
-!     if ( (setP_UseBIPquick .eqv. .true.) .and. (setP_UseDefault .eqv. .true.) )  then
-!         print*, "There are two partitioning algorithms being used"
-!         stop
-!     else if ( (setP_UseBIPquick .eqv. .false.) .and. (setP_UseDefault .eqv. .false.) ) then
-!         print*, "No partitioning algorithms have been specified, default partitioning will be used"
-!         setP_UseDefault = .true.
-!     else
-!         if ( setP_UseBIPquick .eqv. .true. ) then
-!             print*, "Using BIPquick Partitioning"
-!         else if ( setP_UseDefault .eqv. .true. ) then
-!             print*, "Using Default Partitioning"
-!         end if
-!     end if
-! end subroutine partitioning_algorithm_check
 
 
 subroutine default_partitioning()
