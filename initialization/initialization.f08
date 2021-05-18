@@ -55,7 +55,7 @@ contains
 
         ! Allocate storage for link & node tables
         call allocate_linknode_storage ()
-        
+
         nodeI(:,ni_N_link_u) = 0
         nodeI(:,ni_N_link_d) = 0
 
@@ -191,7 +191,7 @@ contains
         
         call coarray_length_calculation()
         
-        call coarray_storage_allocation()  ! once we finish the image flag this is ready to use
+        !call coarray_storage_allocation()  ! once we finish the image flag this is ready to use
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
@@ -217,4 +217,3 @@ contains
     end subroutine count_node_types
 
 end module initialization
-

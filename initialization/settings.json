@@ -117,17 +117,10 @@
     "Debug" : {
         "DebugAPI" : false,
         "File" : {
-            "dynamic_array" : true,
-            "tables" : true,
-            "allocate_storage" : true,
+            "dynamic_array" : false,
+            "tables" : false,
+            "allocate_storage" : false,
             "initialization" : true,
-<<<<<<< HEAD
-            "interface" : true,
-            "BIPquick" : true,
-            "utility" : true,
-            "globals" : true,
-            "inflow" : true
-=======
             "interface" : false,
             "partitioning" : true,
             "BIPquick"  : false,
@@ -135,7 +128,6 @@
             "globals" : false,
             "inflow" : false,
             "coarray_bipquick" : false
->>>>>>> 53-modules-for-converting-bipquick-to-coarray
         },
         "Output" : {
 
