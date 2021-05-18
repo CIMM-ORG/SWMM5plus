@@ -22,7 +22,7 @@ module globals
     !%  links are the building blocks from SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: linkR ! real data for links
     integer, dimension(:,:), allocatable, target :: linkI ! integer data for links
-    integer, dimension(:,:), allocatable, target :: B_linkI ! BIPquick output for links
+    integer, dimension(:,:), allocatable, target :: P_linkI ! Partitioning output for links
     logical, dimension(:,:), allocatable, target :: linkYN ! logical data for links
 
     type(string), dimension(:), allocatable, target :: linkName ! array of character strings
@@ -30,7 +30,7 @@ module globals
     !%  nodes are the building blocks from teh SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: nodeR ! real data for nodes
     integer, dimension(:,:), allocatable, target :: nodeI ! integer data for nodes
-    integer, dimension(:,:), allocatable, target :: B_nodeI ! BIPquick output for nodes
+    integer, dimension(:,:), allocatable, target :: P_nodeI ! Partitioning output for nodes
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
 
     !%  columns of element and face arrays
@@ -115,8 +115,10 @@ module globals
     integer :: max_caf_elem_N ! size of all elem array in coarray
     integer :: max_caf_face_N ! size of all face array in coarray
 
-    ! images information
-    integer :: nimgs
+
+    ! Constants for Junction
+    integer :: J_elem_add = 7 ! Supplement elements for junction
+    integer :: J_face_add = 6 ! Supplement faces    for junction
    
 
     ! useful shortcuts

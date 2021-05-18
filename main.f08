@@ -6,8 +6,9 @@ program main
    use initialization
    use setting_definition, only: setting
    use interface
+   use coarray_partition
    use BIPquick
-   use coarray_bipquick
+   use partitioning
 
    implicit none
 
@@ -77,11 +78,7 @@ program main
    call initialize_api()
    call initialize_linknode_arrays()
 
-
-   ! call BIPquick_YJunction_Hardcode()
-   ! call coarray_length_calculation()
-   !call coarray_storage_allocation()  ! once we finish the image flag this is ready to use
-
+   call execute_partitioning()
 
    ! --- Finalization
 

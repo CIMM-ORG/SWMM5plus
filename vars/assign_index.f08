@@ -179,6 +179,23 @@ module assign_index
     integer, target :: Ncol_linkYN  = lYN_temp1
 
     !%------------------------------------------------------------------------- 
+    !% COLUMN INDEXES FOR INTEGER DATA IN P_nodeI partitioning arrays
+    !%------------------------------------------------------------------------- 
+    enum, bind(c)
+        enumerator :: P_ni_idx_Partition = 1 ! the node index number
+        enumerator :: P_ni_Partition_No ! the Partition number to which that node index belongs
+        enumerator :: P_ni_is_boundary ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
+    end enum
+
+    !%------------------------------------------------------------------------- 
+    !% COLUMN INDEXES FOR INTEGER DATA IN P_linkI partitioning arrays
+    !%------------------------------------------------------------------------- 
+    enum, bind(c)
+        enumerator :: P_li_idx_Partition = 1 ! the link index number
+        enumerator :: P_li_Partition_No ! the Partition number to which that link index belongs
+    end enum
+
+    !%------------------------------------------------------------------------- 
     !% Define the column indexes for elemI(:,:) array   
     !% These are for the full array of all integers
     !%-------------------------------------------------------------------------   

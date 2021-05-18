@@ -107,8 +107,8 @@
         "Volume" : 1e-6
     },
     "Partitioning" : {
-        "UseBIPquick" : true,
-        "UseDefault"  : false,
+        "N_Image"  : 3, 
+        "PartitioningMethod" : "P01",
         "BIPquickTestCase" : false
     },
     "ElementLengthAdjust" : {
@@ -121,11 +121,21 @@
             "tables" : true,
             "allocate_storage" : true,
             "initialization" : true,
+<<<<<<< HEAD
             "interface" : true,
             "BIPquick" : true,
             "utility" : true,
             "globals" : true,
             "inflow" : true
+=======
+            "interface" : false,
+            "partitioning" : true,
+            "BIPquick"  : false,
+            "utility" : false,
+            "globals" : false,
+            "inflow" : false,
+            "coarray_bipquick" : false
+>>>>>>> 53-modules-for-converting-bipquick-to-coarray
         },
         "Output" : {
 
