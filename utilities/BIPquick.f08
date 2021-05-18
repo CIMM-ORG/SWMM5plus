@@ -34,22 +34,22 @@
 
 ! These two subroutines just populate the B_nodeI, B_linkI arrays with hardcoded values that *would* be the output of BIPquick_subroutine (if it worked)
 ! OPTIMAL.inp is the name of the system input file this hardcode subroutine emulates
- subroutine BIPquick_Optimal_Hardcode(nodeI, linkI, B_nodeI, B_linkI) 
-    integer, dimension(:,:), intent(in out)  :: B_nodeI
-    integer, dimension(:,:), intent(in out)   :: B_linkI
-    integer,  dimension(:,:), intent(in out)  :: linkI
-    integer,  dimension(:,:), intent(in out)  :: nodeI
+ subroutine BIPquick_Optimal_Hardcode() 
+    ! integer, dimension(:,:), intent(in out)  :: P_nodeI
+    ! integer, dimension(:,:), intent(in out)   :: P_linkI
+    ! integer,  dimension(:,:), intent(in out)  :: linkI
+    ! integer,  dimension(:,:), intent(in out)  :: nodeI
     integer :: ii
 
-    B_nodeI(:, B_ni_Partition_No) = (/1, 1, 1, 2, 3, 3, 1, 1, 2, 2, 2, 2, 3, 3, 3, 1, 3/)
-    B_linkI(:, B_li_Partition_No) = (/1, 1, 1, 2, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1/)
+    P_nodeI(:, B_ni_Partition_No) = (/1, 1, 1, 2, 3, 3, 1, 1, 2, 2, 2, 2, 3, 3, 3, 1, 3/)
+    P_linkI(:, B_li_Partition_No) = (/1, 1, 1, 2, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1/)
 
     do ii = 1, size(nodeI, 1)
-        B_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
+        P_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
     enddo
 
     do ii = 1, size(linkI, 1)
-        B_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
+        P_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
     enddo
 
 end subroutine BIPquick_Optimal_Hardcode
@@ -58,25 +58,37 @@ end subroutine BIPquick_Optimal_Hardcode
 subroutine BIPquick_YJunction_Hardcode() 
     integer :: ii
 
-    print*, "The YJunction Arrays have been initialized and are size", size(B_nodeI,1), size(B_linkI,1)
+    print*, "The YJunction Arrays have been initialized and are size", size(P_nodeI,1), size(P_linkI,1)
 
-    B_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3/)
-    B_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
-    B_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
-    
+    !B_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3/)
+    !B_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
+    !B_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
+
+
+    P_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3/)
+    P_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
+    P_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
+
+        
     
     linkI(:,li_BQ_image) = (/1, 2, 3/)
     nodeI(:,ni_BQ_image) = (/1, 2, 1, 3/)
     nodeI(:,ni_BQ_edge) = (/0, 0, 1, 0/)
 
+    print*, "The P_nodeI array looks like"
 
     do ii = 1, size(nodeI, 1)
-        B_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
+        P_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
+        print*, P_nodeI(ii, :)
     enddo
 
+    print*, "The P_linkI array looks like"
+
     do ii = 1, size(linkI, 1)
-        B_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
+        P_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
+        print*, P_linkI(ii, :)
     enddo
+
 
 end subroutine BIPquick_YJunction_Hardcode
 
@@ -140,7 +152,7 @@ end subroutine BIPquick_YJunction_Hardcode
      real(8) :: start, intermediate, finish
      call cpu_time(start)
 
-     if ( setting%Partitioning%UseBIPquick .eqv. .true. ) then
+     if ( setting%Partitioning%PartitioningMethod == P02 ) then
 
         ! Allocate and set the temporary arrays. (Multiprocessors - 1) represents the maximum number of phantom nodes
         ! B_node Partition will hold [ni_idx, Partition_No]

@@ -107,8 +107,8 @@
         "Volume" : 1e-6
     },
     "Partitioning" : {
-        "UseBIPquick" : true,
-        "UseDefault"  : false,
+        "N_Image"  : 3, 
+        "PartitioningMethod" : "P01",
         "BIPquickTestCase" : false
     },
     "ElementLengthAdjust" : {
@@ -122,7 +122,8 @@
             "allocate_storage" : false,
             "initialization" : true,
             "interface" : false,
-            "BIPquick" : false,
+            "partitioning" : true,
+            "BIPquick"  : false,
             "utility" : false,
             "globals" : false,
             "inflow" : false,

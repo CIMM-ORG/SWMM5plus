@@ -127,6 +127,7 @@ module setting_definition
         logical :: initialization   = .false.
         logical :: interface        = .false.
         logical :: interface_tests  = .false.
+        logical :: partitioning     = .false.
         logical :: BIPquick         = .false.
         logical :: utility          = .false.
         logical :: globals          = .false.
@@ -253,11 +254,12 @@ module setting_definition
         type(DebugFileType) :: File
     end type DebugType
 
-    type PartitioningFlags
-        logical :: UseBIPquick
-        logical :: UseDefault
-        logical :: BIPquickTestCase
-    end type PartitioningFlags
+    !% setting%PartitioningType
+    type PartitioningType
+        integer :: N_Image = 3
+        integer :: PartitioningMethod = P01
+        logical :: BIPquickTestCase = .true.
+    endtype PartitioningType
 
     !% setting%ElementLengthAdjus
     type ElementLengthType
@@ -282,9 +284,8 @@ module setting_definition
         type(TestCaseType)     :: TestCase
         type(PathType)         :: Paths
         type(DebugType)        :: Debug
-        type(PartitioningFlags) :: Partitioning
         type(ElementLengthType) :: ElementLengthAdjust
-
+        type(PartitioningType) :: Partitioning
     end type settingType
 
     type(settingType), target :: setting
@@ -570,15 +571,18 @@ contains
         call json%get('Debug.File.interface', logical_value, found)
         setting%Debug%File%interface = logical_value
         if (.not. found) stop 65
+        call json%get('Debug.File.partitioning', logical_value, found)
+        setting%Debug%File%partitioning = logical_value
+        if (.not. found) stop 66
         call json%get('Debug.File.BIPquick', logical_value, found)
         setting%Debug%File%BIPquick = logical_value
-        if (.not. found) stop 66
+        if (.not. found) stop 67
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
-        if (.not. found) stop 67
+        if (.not. found) stop 68
         call json%get('Debug.File.globals', logical_value, found)
         setting%Debug%File%globals = logical_value
-        if (.not. found) stop 68
+        if (.not. found) stop 69
         call json%get('Debug.File.inflow', logical_value, found)
         setting%Debug%File%inflow = logical_value
         if (.not. found) stop 69
@@ -586,24 +590,27 @@ contains
         setting%Debug%File%coarray_bipquick = logical_value
         if (.not. found) stop 70
 
-        ! Load BIPQuick settings
-        call json%get('Partitioning.UseBIPquick', logical_value, found)
-        setting%Partitioning%UseBIPquick = logical_value
-        if (.not. found) stop 71
-        call json%get('Partitioning.BIPquickTestCase', logical_value, found)
-        setting%Partitioning%BIPquickTestCase = logical_value
-        if (.not. found) stop 72
-        call json%get('Partitioning.UseDefault', logical_value, found)
-        setting%Partitioning%UseDefault = logical_value
-        if (.not. found) stop 73
-
         ! For element length adjustment
         call json%get("ElementLengthAdjust.LinkShortingFactor", real_value, found)
         setting%ElementLengthAdjust%LinkShortingFactor = real_value
-        if (.not. found) stop 74
+        if (.not. found) stop 71
+
+        
+        ! Load BIPQuick settings
+        call json%get('Partitioning.N_Image', integer_value, found)
+        setting%Partitioning%N_Image = integer_value
+        if (.not. found) stop 72
+        call json%get('Partitioning.PartitioningMethod', c, found)
+        if (c == 'P01') then
+            setting%Partitioning%PartitioningMethod = P01
+        else if (c == 'P02') then
+            setting%Partitioning%PartitioningMethod = P02
+        end if
+        if (.not. found) stop 73
+
 
         call json%destroy()
-        if (json%failed()) stop 75
+        if (json%failed()) stop 74
 
     end subroutine load_settings
 end module setting_definition
