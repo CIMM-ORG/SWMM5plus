@@ -133,6 +133,7 @@ module setting_definition
         logical :: globals          = .false.
         logical :: inflow           = .false.
         logical :: coarray_bipquick = .false.
+        logical :: network_define   = .false.
     end type DebugFileType
 
     ! -
@@ -589,28 +590,31 @@ contains
         call json%get('Debug.File.coarray_bipquick', logical_value, found)
         setting%Debug%File%coarray_bipquick = logical_value
         if (.not. found) stop 70
+        call json%get('Debug.File.network_define', logical_value, found)
+        setting%Debug%File%coarray_bipquick = logical_value
+        if (.not. found) stop 71
 
         ! For element length adjustment
         call json%get("ElementLengthAdjust.LinkShortingFactor", real_value, found)
         setting%ElementLengthAdjust%LinkShortingFactor = real_value
-        if (.not. found) stop 71
+        if (.not. found) stop 72
 
         
         ! Load BIPQuick settings
         call json%get('Partitioning.N_Image', integer_value, found)
         setting%Partitioning%N_Image = integer_value
-        if (.not. found) stop 72
+        if (.not. found) stop 73
         call json%get('Partitioning.PartitioningMethod', c, found)
         if (c == 'P01') then
             setting%Partitioning%PartitioningMethod = P01
         else if (c == 'P02') then
             setting%Partitioning%PartitioningMethod = P02
         end if
-        if (.not. found) stop 73
+        if (.not. found) stop 74
 
 
         call json%destroy()
-        if (json%failed()) stop 74
+        if (json%failed()) stop 75
 
     end subroutine load_settings
 end module setting_definition

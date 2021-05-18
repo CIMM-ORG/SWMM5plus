@@ -9,6 +9,7 @@ program main
    use coarray_partition
    use BIPquick
    use partitioning
+   use network_define
 
    implicit none
 
