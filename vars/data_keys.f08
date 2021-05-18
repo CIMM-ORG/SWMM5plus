@@ -222,21 +222,36 @@ module data_keys
         enumerator :: node_type
         enumerator :: node_invertElev
         enumerator :: node_initDepth
+        enumerator :: node_has_extInflow
+        enumerator :: node_has_dwfInflow
         enumerator :: node_extInflow_tSeries
         enumerator :: node_extInflow_basePat
         enumerator :: node_extInflow_baseline
         enumerator :: node_extInflow_sFactor
-        enumerator :: node_has_extInflow
+        enumerator :: node_dwfInflow_avgvalue
         enumerator :: node_dwfInflow_monthly_pattern
         enumerator :: node_dwfInflow_daily_pattern
         enumerator :: node_dwfInflow_hourly_pattern
         enumerator :: node_dwfInflow_weekend_pattern
-        enumerator :: node_dwfInflow_avgvalue
-        enumerator :: node_has_dwfInflow
         enumerator :: node_inflow
         enumerator :: node_volume
         enumerator :: node_overflow
     end enum
+    integer, parameter :: num_node_attributes = node_overflow
+
+    ! nodeInflow attributes
+    enum, bind(c)
+        enumerator :: nf_extInflow_tSeries
+        enumerator :: nf_extInflow_basePat
+        enumerator :: nf_extInflow_baseline
+        enumerator :: nf_extInflow_sFactor
+        enumerator :: nf_dwfInflow_avgvalue
+        enumerator :: nf_dwfInflow_monthly_pattern
+        enumerator :: nf_dwfInflow_daily_pattern
+        enumerator :: nf_dwfInflow_hourly_pattern
+        enumerator :: nf_dwfInflow_weekend_pattern
+    end enum
+    integer, parameter :: num_nodeInflow_attributes = nf_dwfInflow_weekend_pattern
 
     ! API link attributes
     enum, bind(c)
@@ -260,7 +275,7 @@ module data_keys
         enumerator :: link_geometry
         enumerator :: link_xsect_wMax
         enumerator :: link_xsect_yBot
-    end enum
+        end enum
     integer, parameter :: num_link_attributes = conduit_length
     integer, parameter :: num_link_xsect_attributes = link_xsect_yBot - num_link_attributes
     integer, parameter :: num_total_link_attributes = num_link_attributes + num_link_xsect_attributes

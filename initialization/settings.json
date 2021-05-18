@@ -70,6 +70,10 @@
         "Velocity" : {
             "Maximum" : 10.0,
             "UseLimitMax" : true
+        },
+        "ArraySize" : {
+            "TemporalInflows" : 10,
+            "TotalInflows" : 50
         }
     },
     "SmallVolume" : {
@@ -116,8 +120,8 @@
         "File" : {
             "dynamic_array" : false,
             "tables" : false,
-            "allocate_storage" : false,
-            "initialization" : true,
+            "allocate_storage" : true,
+            "initialization" : false,
             "interface" : false,
             "BIPquick" : false,
             "utility" : false,
