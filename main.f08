@@ -1,11 +1,13 @@
 program main
 
    use globals
+   use array_index
    use initialization
    use setting_definition, only: setting
    use interface
-   use allocate_storage, only: allocate_all, deallocate_all
+   use allocate_storage
    use BIPquick
+   use partitioning
 
    implicit none
 
@@ -77,11 +79,13 @@ program main
    ! --- Allocation
 
    call allocate_all()
-   call allocate_all_temporal()
 
    ! --- Initialization
 
    call initialize_linknode_arrays()
+
+   ! --- Graph Partitioning
+   call execute_partitioning()
 
    ! --- Deallocate Temporal Arrays
 

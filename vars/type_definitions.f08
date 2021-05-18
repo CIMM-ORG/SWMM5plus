@@ -21,7 +21,7 @@ module type_definitions
     end type Array3D
 
 
-
+    type nodeInflow
         integer :: node_id ! index to element thar receives inflow
         ! t_series*sfactor + base_pat*baseline
         real(8), dimension(2) :: ext_t_series = [-1, -1] ! time_series

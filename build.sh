@@ -137,7 +137,8 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           $UTIL_DIR/utility.f08\
           $INIT_DIR/allocate_storage.f08\
           $INIT_DIR/initialization.f08\
-          $UTIL_DIR/BIPquick.f08"
+          $UTIL_DIR/BIPquick.f08\
+          $UTIL_DIR/partitioning.f08"
 
 echo
 echo Compiling SWMM5+ ...

@@ -26,7 +26,7 @@ module initialization
 
     private
 
-    public :: initialize_linknode_arrays
+    public :: initialize_linknode_arrays, count_node_types
 
 contains
 
@@ -38,10 +38,9 @@ contains
     !
     !-----------------------------------------------------------------------------
 
-        integer       :: iii, total_n_links
+        integer       :: ii, total_n_links
+        logical       :: l1, l2
         character(64) :: subroutine_name = 'initialize_arrays'
-        logical       :: l1              = .false.
-        logical       :: l2              = .false.
 
     !-----------------------------------------------------------------------------
 
@@ -63,9 +62,9 @@ contains
             linkI(ii,li_Mnode_d) = get_link_attribute(ii, link_node2) + 1 ! node2 in C starts from 0
 
             nodeI(linkI(ii,li_Mnode_u), ni_N_link_u) = nodeI(linkI(ii,li_Mnode_u), ni_N_link_u) + 1
-            nodeI(linkI(ii,li_Mnode_u), ni_idx_base1 + nodeI(linkI(ii,li_Mnode_u), ni_N_link_u)) = i
+            nodeI(linkI(ii,li_Mnode_u), ni_idx_base1 + nodeI(linkI(ii,li_Mnode_u), ni_N_link_u)) = ii
             nodeI(linkI(ii,li_Mnode_d), ni_N_link_d) = nodeI(linkI(ii,li_Mnode_d), ni_N_link_d) + 1
-            nodeI(linkI(ii,li_Mnode_d), ni_idx_base2 + nodeI(linkI(ii,li_Mnode_d), ni_N_link_d)) = i
+            nodeI(linkI(ii,li_Mnode_d), ni_idx_base2 + nodeI(linkI(ii,li_Mnode_d), ni_N_link_d)) = ii
 
             linkI(ii,li_InitialDepthType) = 1 ! TODO - get from params file
             linkR(ii,lr_Length) = get_link_attribute(ii, conduit_length)
@@ -83,7 +82,7 @@ contains
 
         do ii = 1, N_node
             total_n_links = nodeI(ii,ni_N_link_u) + nodeI(ii,ni_N_link_d)
-            nodeI(ii, ni_idx) = i
+            nodeI(ii, ni_idx) = ii
             if (get_node_attribute(ii, node_type) == 1) then ! OUTFALL
                 nodeI(ii, ni_node_type) = nBCdn
             else if (total_n_links == 2) then
@@ -114,5 +113,23 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
+
+    subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+        integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+        integer :: ii
+    
+        ! This subroutine uses the vectorized count() function to search the array for number of instances of each node type
+        N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
+        N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
+        N_nJm = count(nodeI(:, ni_node_type) == nJM)
+        N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
+        N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
+    
+        ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
+        ! num_nJm_nodes = N_nJm
+        ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
+        ! num_zero_elem_nodes = N_nJ2
+    
+    end subroutine count_node_types
 
 end module initialization

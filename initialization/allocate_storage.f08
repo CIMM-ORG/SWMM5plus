@@ -25,6 +25,7 @@ module allocate_storage
     ! public members
     public :: allocate_all
     public :: deallocate_all
+    public :: deallocate_all_temporal
 
 contains
 
@@ -36,18 +37,18 @@ contains
         ! from allocate_linknode_storage
         deallocate(nodeI)
         deallocate(linkI)
-        deallocate(B_nodeI)
-        deallocate(B_linkI)
+        deallocate(P_nodeI)
+        deallocate(P_linkI)
         deallocate(nodeR)
         deallocate(linkR)
         deallocate(nodeYN)
         deallocate(linkYN)
     end subroutine deallocate_all
 
-    subroutine allocate_all_temporal()
-        deallocate(temporal_nodeInflow)
-        deallocate(total_inflows)
-    end subroutine allocate_all_temporal
+    subroutine deallocate_all_temporal()
+        deallocate(totalInflows%val)
+        deallocate(tempInflows%val)
+    end subroutine deallocate_all_temporal
 
     subroutine allocate_linknode_storage()
     !-----------------------------------------------------------------------------
@@ -78,13 +79,13 @@ contains
         call utility_check_allocation(allocation_status, emsg)
         linkI(:,:) = nullvalueI
 
-        allocate(B_nodeI(N_node, 3), stat=allocation_status, errmsg=emsg)
+        allocate(P_nodeI(N_node, 3), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        B_nodeI(:,:) = nullvalueI
+        P_nodeI(:,:) = nullvalueI
 
-        allocate(B_linkI(N_link, 2), stat=allocation_status, errmsg=emsg)
+        allocate(P_linkI(N_link, 2), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        B_linkI(:,:) = nullvalueI
+        P_linkI(:,:) = nullvalueI
 
         allocate(nodeR(N_node, nr_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
@@ -108,9 +109,9 @@ contains
     subroutine allocate_temporal_arrays()
         type(LimiterArraySizeType), pointer :: a_size => setting%Limiter%ArraySize
 
-        allocate(tempInflows(N_inflow, num_nodeInflow_attributes, a_size%TemporalBC))
+        allocate(tempInflows%val(N_inflow, num_nodeInflow_attributes, a_size%TemporalBC))
         ! 3D array - (node, (time, values))
-        allocate(total_inflows(N_inflow, 2, a_size%TemporalBC))
+        allocate(totalInflows%val(N_inflow, 2, a_size%TemporalBC))
     end subroutine allocate_temporal_arrays
 
     ! subroutine allocate_bc()
