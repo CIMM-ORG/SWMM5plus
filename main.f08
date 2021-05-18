@@ -81,6 +81,8 @@ program main
    call execute_partitioning()
 
    ! --- Finalization
+   print *, max_caf_elem_N
+   print *, max_caf_face_N
 
    call finalize_api() ! closes link with shared library
 

@@ -24,6 +24,7 @@ module allocate_storage
 
     ! public members
     public :: allocate_linknode_storage
+    public :: coarray_storage_allocation
 
 contains
 
