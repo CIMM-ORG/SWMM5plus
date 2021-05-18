@@ -128,7 +128,7 @@
             "globals" : false,
             "inflow" : false,
             "coarray_bipquick" : false,
-            "network_define" : false
+            "network_define" : true
         },
         "Output" : {
 

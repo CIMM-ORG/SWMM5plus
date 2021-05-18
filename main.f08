@@ -81,6 +81,8 @@ program main
 
    call execute_partitioning()
 
+   call network_initiation()
+
    ! --- Finalization
 
    call finalize_api() ! closes link with shared library

@@ -150,7 +150,7 @@ contains
                 temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for downstream M junction
             endif
 
-            linkR(ii,lr_Length) = temp_length
+            linkR(ii,lr_AdjustedLength) = temp_length
         enddo
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
@@ -164,16 +164,16 @@ contains
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
         do ii = 1, N_link
-            remainder = mod(linkR(ii,lr_Length), element_length)
+            remainder = mod(linkR(ii,lr_AdjustedLength), element_length)
             if ( remainder .eq. zeroR ) then
-                linkI(ii, li_N_element) = int(linkR(ii, lr_Length)/element_length)
-                linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
+                linkI(ii, li_N_element) = int(linkR(ii, lr_AdjustedLength)/element_length)
+                linkR(ii, lr_ElementLength) = linkR(ii, lr_AdjustedLength)/linkI(ii, li_N_element)
             elseif ( remainder .ge. onehalfR * element_length ) then
-                linkI(ii, li_N_element) = ceiling(linkR(ii,lr_Length)/element_length)
-                linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
+                linkI(ii, li_N_element) = ceiling(linkR(ii,lr_AdjustedLength)/element_length)
+                linkR(ii, lr_ElementLength) = linkR(ii, lr_AdjustedLength)/linkI(ii, li_N_element)
             else
-                linkI(ii, li_N_element) = floor(linkR(ii,lr_Length)/element_length)
-                linkR(ii, lr_ELementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
+                linkI(ii, li_N_element) = floor(linkR(ii,lr_AdjustedLength)/element_length)
+                linkR(ii, lr_ELementLength) = linkR(ii, lr_AdjustedLength)/linkI(ii, li_N_element)
             endif
         enddo
 

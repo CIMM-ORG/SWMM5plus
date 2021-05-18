@@ -494,7 +494,7 @@ contains
         ncol => Ncol_elemSI
 
         !% allocate an array for storing the column 
-        allocate( col_elemR(ncol)[*], stat=allocation_status, errmsg= emsg)
+        allocate( col_elemSI(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks

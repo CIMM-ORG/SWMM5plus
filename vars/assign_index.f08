@@ -89,8 +89,9 @@ module assign_index
     !%------------------------------------------------------------------------- 
     enum, bind(c)
         enumerator :: lr_Length = 1
-        enumerator :: lr_InletOffset ! Every links should have a inlet and oulet offset
-        enumerator :: lr_OutletOffset ! to make it consistent with SWMM.
+        enumerator :: lr_AdjustedLength ! lenght adjustment if multi-link junction is present
+        enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
+        enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
         enumerator :: lr_BreadthScale
         enumerator :: lr_TopWidth
         enumerator :: lr_ElementLength

@@ -591,7 +591,7 @@ contains
         setting%Debug%File%coarray_bipquick = logical_value
         if (.not. found) stop 70
         call json%get('Debug.File.network_define', logical_value, found)
-        setting%Debug%File%coarray_bipquick = logical_value
+        setting%Debug%File%network_define = logical_value
         if (.not. found) stop 71
 
         ! For element length adjustment
