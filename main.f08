@@ -4,6 +4,7 @@ program main
    use initialization
    use setting_definition, only: setting
    use interface
+   use allocate_storage, only: allocate_all, deallocate_all
    use BIPquick
 
    implicit none
@@ -69,13 +70,24 @@ program main
    call load_settings(setting%Paths%setting)
    call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
 
-   ! --- Initialization
+   ! --- API init
 
    call initialize_api()
+
+   ! --- Allocation
+
+   call allocate_all()
+   call allocate_all_temporal()
+
+   ! --- Initialization
+
    call initialize_linknode_arrays()
 
+   ! --- Deallocate Temporal Arrays
 
+   call deallocate_all_temporal()
 
+   ! Time Loop
 
    ! --- Finalization
 

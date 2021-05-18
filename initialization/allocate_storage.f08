@@ -23,11 +23,33 @@ module allocate_storage
     character(len=99) ::              emsg
 
     ! public members
-    public :: allocate_linknode_storage
+    public :: allocate_all
+    public :: deallocate_all
 
 contains
 
-    subroutine allocate_linknode_storage ()
+    subroutine allocate_all()
+        call allocate_linknode_storage()
+    end subroutine allocate_all
+
+    subroutine deallocate_all()
+        ! from allocate_linknode_storage
+        deallocate(nodeI)
+        deallocate(linkI)
+        deallocate(B_nodeI)
+        deallocate(B_linkI)
+        deallocate(nodeR)
+        deallocate(linkR)
+        deallocate(nodeYN)
+        deallocate(linkYN)
+    end subroutine deallocate_all
+
+    subroutine allocate_all_temporal()
+        deallocate(temporal_nodeInflow)
+        deallocate(total_inflows)
+    end subroutine allocate_all_temporal
+
+    subroutine allocate_linknode_storage()
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -82,6 +104,14 @@ contains
 
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage
+
+    subroutine allocate_temporal_arrays()
+        type(LimiterArraySizeType), pointer :: a_size => setting%Limiter%ArraySize
+
+        allocate(tempInflows(N_inflow, num_nodeInflow_attributes, a_size%TemporalBC))
+        ! 3D array - (node, (time, values))
+        allocate(total_inflows(N_inflow, 2, a_size%TemporalBC))
+    end subroutine allocate_temporal_arrays
 
     ! subroutine allocate_bc()
     ! !

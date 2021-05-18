@@ -16,7 +16,6 @@ done
 
 # Constants
 
-ARRAY_DIR='arrays'
 INIT_DIR='initialization'
 API_DIR='initialization/interface/flibswmm'
 API_TEST_DIR='initialization/interface/tests'
@@ -31,7 +30,8 @@ OUPTFLAGS=-g
 FFLAGS=-O3
 PROGRAM=SWMM
 
-# Update settings
+# Update settings for debugging mode
+
 TOKEN='"DebugAPI" : '
 NEW_VAL="${TOKEN}$DEBUG_API"
 sed -i "s#$TOKEN.*#$NEW_VAL,#" $INIT_DIR/settings.json
