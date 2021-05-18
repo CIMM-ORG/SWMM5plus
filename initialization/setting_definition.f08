@@ -131,6 +131,7 @@ module setting_definition
         logical :: utility          = .false.
         logical :: globals          = .false.
         logical :: inflow           = .false.
+        logical :: coarray_bipquick = .false.
     end type DebugFileType
 
     ! -
@@ -256,12 +257,12 @@ module setting_definition
         logical :: UseBIPquick
         logical :: UseDefault
         logical :: BIPquickTestCase
-    endtype PartitioningFlags
+    end type PartitioningFlags
 
     !% setting%ElementLengthAdjus
     type ElementLengthType
         real(8) :: LinkShortingFactor = 0.33
-    endtype ElementLengthType
+    end type ElementLengthType
     ! -
     ! --
 

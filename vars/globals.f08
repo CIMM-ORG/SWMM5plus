@@ -92,8 +92,10 @@ module globals
     integer :: max_caf_elem_N ! size of all elem array in coarray
     integer :: max_caf_face_N ! size of all face array in coarray
 
-    ! images information
-    integer :: nimgs
+
+    ! Constants for Junction
+    integer :: J_elem_add = 7 ! Supplement elements for junction
+    integer :: J_face_add = 6 ! Supplement faces    for junction
    
 
     ! useful shortcuts

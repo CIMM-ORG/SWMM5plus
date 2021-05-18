@@ -119,7 +119,7 @@ fi
 
 
 # Download Opencoarray
-if ! [ -d $COARRAY_SOURCE ]#[ -x "$(command -v $COARRAY_FC)" ]
+if ! [ -d $COARRAY_SOURCE ]   #[ -x "$(command -v $COARRAY_FC)" ]
 then
     echo "opencoarray is not found in current directory."
     sleep 3.0
@@ -203,9 +203,9 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           $VARS_DIR/array_index.f08\
           $UTIL_DIR/utility.f08\
           $INIT_DIR/allocate_storage.f08\
-          $INIT_DIR/initialization.f08\
           $UTIL_DIR/BIPquick.f08\
-          $ARRAY_DIR/coarray_bipquick.f08"
+          $ARRAY_DIR/coarray_partition.f08\
+          $INIT_DIR/initialization.f08"
 
 echo
 echo Compiling SWMM5+ ...

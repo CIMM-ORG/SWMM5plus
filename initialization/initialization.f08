@@ -4,6 +4,8 @@ module initialization
     use data_keys
     use globals
     use interface
+    use BIPquick
+    use coarray_partition
     use utility, only: utility_export_linknode_csv
     use setting_definition, only: setting
 
@@ -102,6 +104,10 @@ contains
         call link_length_adjust()
         call N_elem_assign()
 
+        
+        call initialize_partition()
+
+
         if (setting%Debug%File%initialization) then
             call utility_export_linknode_csv()
         end if
@@ -148,7 +154,7 @@ contains
             if ( remainder .eq. zeroR ) then
                 linkI(ii, li_N_element) = int(linkR(ii, lr_Length)/element_length)
                 linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
-            elseif ( remainder .ge. onehalfR * linkR(ii,lr_Length) ) then
+            elseif ( remainder .ge. onehalfR * element_length ) then
                 linkI(ii, li_N_element) = ceiling(linkR(ii,lr_Length)/element_length)
                 linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
             else
@@ -161,6 +167,21 @@ contains
 
     end subroutine N_elem_assign
 
+    subroutine initialize_partition()
+        character(64) :: subroutine_name = 'initialize_partition'
+        
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+
+        !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed 
+        call BIPquick_YJunction_Hardcode()
+        
+        call coarray_length_calculation()
+        
+        !call coarray_storage_allocation()  ! once we finish the image flag this is ready to use
+
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+
+    end subroutine initialize_partition
 
 end module initialization
 
