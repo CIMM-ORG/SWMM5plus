@@ -191,8 +191,10 @@ contains
         
         call coarray_length_calculation()
         
-        call coarray_storage_allocation()  ! once we finish the image flag this is ready to use
+        call allocate_elemX_faceX()  ! once we finish the image flag this is ready to use
 
+        call allocate_columns()
+        
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine initialize_partition_coarray

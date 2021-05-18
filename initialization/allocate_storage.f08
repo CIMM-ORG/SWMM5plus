@@ -24,10 +24,14 @@ module allocate_storage
 
     ! public members
     public :: allocate_linknode_storage
-    public :: coarray_storage_allocation
+    public :: allocate_elemX_faceX
+    public :: allocate_columns
 
 contains
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_linknode_storage ()
     !-----------------------------------------------------------------------------
     !
@@ -89,81 +93,89 @@ contains
 
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage
-
-
-    subroutine coarray_storage_allocation()
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine allocate_elemX_faceX ()
         ! the max_caf_elem and max_caf_face are the maximum length of the coarray 
         ! across all employed images
         ! ==========================
         ! This will be excuted at parallel level
         ! ==========================
-
-        character(64) :: subroutine_name = 'coarray_storage_allocation'
+        integer :: ii
+        integer, pointer :: ncol
+        character(64) :: subroutine_name = 'allocate_elemX_faceX'
     
         !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
 
         !==== elem allocation ====
-        !ncol => Ncol_elemR ! the maxmiumu number of columns
-        allocate(elemR_caf(max_caf_elem_N, Ncol_elemR)[*], stat=allocation_status, errmsg=emsg)
+        ncol => Ncol_elemR ! the maxmiumu number of columns
+        allocate(elemR(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemR_caf(:,:) = nullvalueR
+        elemR(:,:) = nullvalueR
 
-        !ncol => Ncol_elemI
-        allocate(elemI_caf(max_caf_elem_N, Ncol_elemI)[*], stat=allocation_status, errmsg=emsg)
+        ncol => Ncol_elemI
+        allocate(elemI(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemI_caf(:,:) = nullvalueI
+        elemI(:,:) = nullvalueI
 
-        !ncol => Ncol_elemYN
-        allocate(elemYN_caf(max_caf_elem_N, Ncol_elemYN)[*], stat=allocation_status, errmsg=emsg)
+        ncol => Ncol_elemYN
+        allocate(elemYN(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemYN_caf(:,:) = nullvalueL
+        elemYN(:,:) = nullvalueL
 
-        !ncol => Ncol_elemP
-        allocate(elemP_caf(max_caf_elem_N, Ncol_elemP)[*], stat=allocation_status, errmsg=emsg)
+        ncol => Ncol_elemP
+        allocate(elemP(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemP_caf(:,:) = nullvalueI
+        elemP(:,:) = nullvalueI
 
-        ! Ncol_elemPG not defined yet. Comment out
-        !ncol => Ncol_elemPG
-        !allocate(elemPG_caf(max_caf_elem_N, Ncol_elemPG)[*], stat=allocation_status, errmsg=emsg)
-        !call utility_check_allocation(allocation_status, emsg)
-        !elemPG_caf(:,:)[:] = nullvalueI
-
-        !ncol => Ncol_elemSI
-        allocate(elemSI_caf(max_caf_elem_N, Ncol_elemSI)[*], stat=allocation_status, errmsg=emsg)
+        ncol => Ncol_elemPG
+        allocate(elemPG(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemSI_caf(:,:) = nullvalueI
+        elemPG(:,:) = nullvalueI
 
-        !ncol => Ncol_elemSR
-        allocate(elemSR_caf(max_caf_elem_N, Ncol_elemSR)[*], stat=allocation_status, errmsg=emsg)
+        ncol => Ncol_elemSI
+        allocate(elemSI(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemSR_caf(:,:) = nullvalueR
+        elemSI(:,:) = nullvalueI
+
+        ncol => Ncol_elemSR
+        allocate(elemSR(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        elemSR(:,:) = nullvalueR
 
         !==== face allocation ====
-        !ncol => Ncol_faceR 
-        allocate(faceR_caf(max_caf_face_N, Ncol_faceR )[*], stat=allocation_status, errmsg=emsg)
+        ncol => Ncol_faceR 
+        allocate(faceR(max_caf_face_N, ncol )[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        faceR_caf(:,:) = nullvalueR
+        faceR(:,:) = nullvalueR
 
-        !ncol=> Ncol_faceI
-        allocate(faceI_caf(max_caf_face_N, Ncol_faceI)[*], stat=allocation_status, errmsg=emsg)
+        ncol=> Ncol_faceI
+        allocate(faceI(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        faceI_caf(:,:) = nullvalueI
+        faceI(:,:) = nullvalueI
 
-        !ncol=> Ncol_faceYN
-        allocate(faceYN_caf(max_caf_face_N, Ncol_faceYN)[*], stat=allocation_status, errmsg=emsg)
+        ncol=> Ncol_faceYN
+        allocate(faceYN(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        faceYN_caf(:,:) = nullvalueL
+        faceYN(:,:) = nullvalueL
 
+        ncol=> Ncol_faceP
+        allocate(faceP(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        faceP(:,:) = nullvalueI
 
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
 
-    end subroutine coarray_storage_allocation
-
-
+    end subroutine allocate_elemX_faceX
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_columns()
         !-----------------------------------------------------------------------------
         !
@@ -201,7 +213,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_columns
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemI()
         !-----------------------------------------------------------------------------
         !
@@ -212,7 +227,7 @@ contains
         !-----------------------------------------------------------------------------
 
         integer, pointer    :: ncol
-        integer             :: ii
+        integer             :: ii, jj
         character(64)       :: subroutine_name = 'allocate_col_elemI'
 
         !-----------------------------------------------------------------------------
@@ -222,17 +237,32 @@ contains
         ncol => Ncol_elemI
 
         !% allocate an array for storing the column 
-        allocate( col_elemI(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemI(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemI(:) = [(ii,ii=1,ncol)]
 
+        !%--------------------------------------------------------------
+        !% the code below is a quick print check to see if 
+        !% the coarray have been set up properly
+        ! if (this_image() == 1) then
+        !     do jj = 1, num_images()
+        !         print*, jj, 'image no'
+        !         print*, col_elemI(:)[jj], 'col_elemI(:)[jj]'
+        !     enddo
+        ! endif
+        ! print*, 'press return to continue'
+        ! read(*,*)
+        !%--------------------------------------------------------------
+
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemI
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemP()
         !-----------------------------------------------------------------------------
         !
@@ -257,11 +287,11 @@ contains
         ncol => Ncol_elemP
 
         !% allocate an array for storing the size of each packed type
-        allocate(npack_elemP(ncol), stat=allocation_status, errmsg= emsg)
+        allocate(npack_elemP(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% allocate an array for storing the column of each packed type
-        allocate( col_elemP(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemP(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -273,8 +303,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemP
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemPGalltm()
         !-----------------------------------------------------------------------------
         !
@@ -299,11 +331,11 @@ contains
         ncol => Ncol_elemPG !% whatever the last item in the enumerator
 
         !% allocate an array for storing the size of each packed type
-        allocate( npack_elemPGalltm(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( npack_elemPGalltm(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% allocate an array for storing the enum type of each column
-        allocate( col_elemPGalltm(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemPGalltm(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -315,8 +347,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemPGalltm
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemPGac()
         !-----------------------------------------------------------------------------
         !
@@ -341,11 +375,11 @@ contains
         ncol => Ncol_elemPG !% whatever the last item in the enumerator
 
         !% allocate an array for storing the size of each packed type
-        allocate( npack_elemPGac(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( npack_elemPGac(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% allocate an array for storing the enum type of each column
-        allocate( col_elemPGac(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemPGac(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -357,8 +391,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemPGac
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemPGetm()
         !-----------------------------------------------------------------------------
         !
@@ -383,11 +419,11 @@ contains
         ncol => Ncol_elemPG !% whatever the last item in the enumerator
 
         !% allocate an array for storing the size of each packed type
-        allocate( npack_elemPGetm(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( npack_elemPGetm(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% allocate an array for storing the enum type of each column
-        allocate( col_elemPGetm(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemPGetm(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -399,8 +435,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemPGetm
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemR()
         !-----------------------------------------------------------------------------
         !
@@ -422,7 +460,7 @@ contains
         ncol => Ncol_elemR
 
         !% allocate an array for storing the column 
-        allocate( col_elemR(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -431,8 +469,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemR
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemSI()
         !-----------------------------------------------------------------------------
         !
@@ -454,7 +494,7 @@ contains
         ncol => Ncol_elemSI
 
         !% allocate an array for storing the column 
-        allocate( col_elemR(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -463,8 +503,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemSI
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemSR()
         !-----------------------------------------------------------------------------
         !
@@ -486,7 +528,7 @@ contains
         ncol => Ncol_elemSR
 
         !% allocate an array for storing the column 
-        allocate( col_elemSR(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemSR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -495,8 +537,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemSR
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemSGR()
         !-----------------------------------------------------------------------------
         !
@@ -518,7 +562,7 @@ contains
         ncol => Ncol_elemSGR
 
         !% allocate an array for storing the column 
-        allocate( col_elemSGR(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemSGR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -527,8 +571,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemSGR
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemWDI()
         !-----------------------------------------------------------------------------
         !
@@ -550,7 +596,7 @@ contains
         ncol => Ncol_elemWDI
 
         !% allocate an array for storing the column 
-        allocate( col_elemWDI(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemWDI(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -559,8 +605,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemWDI
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemWDR()
         !-----------------------------------------------------------------------------
         !
@@ -582,7 +630,7 @@ contains
         ncol => Ncol_elemWDR
 
         !% allocate an array for storing the column 
-        allocate( col_elemWDR(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemWDR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -591,8 +639,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemWDR
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_elemYN()
         !-----------------------------------------------------------------------------
         !
@@ -614,7 +664,7 @@ contains
         ncol => Ncol_elemYN
 
         !% allocate an array for storing the column 
-        allocate( col_elemYN(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_elemYN(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -623,8 +673,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_elemYN
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_faceI()
         !-----------------------------------------------------------------------------
         !
@@ -646,7 +698,7 @@ contains
         ncol => Ncol_faceI
 
         !% allocate an array for storing the column 
-        allocate( col_faceI(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_faceI(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -655,8 +707,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_faceI
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_faceM()
         !-----------------------------------------------------------------------------
         !
@@ -678,7 +732,7 @@ contains
         ncol => Ncol_faceM
 
         !% allocate an array for storing the column 
-        allocate( col_faceM(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_faceM(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -687,8 +741,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_faceM
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_faceP()
         !-----------------------------------------------------------------------------
         !
@@ -714,11 +770,11 @@ contains
         ncol => Ncol_faceP 
 
         !% allocate an array for storing the size of each packed type
-        allocate( npack_faceP(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( npack_faceP(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% allocate an array for storing the column of each packed type
-        allocate( col_faceP(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_faceP(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -730,8 +786,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_faceP
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_faceR()
         !-----------------------------------------------------------------------------
         !
@@ -753,7 +811,7 @@ contains
         ncol => Ncol_faceR  !global
 
         !% allocate an array of column indexes that can be used as targets of pointers
-        allocate( col_faceR(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_faceR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -762,8 +820,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_faceR
-
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine allocate_col_faceYN()
         !-----------------------------------------------------------------------------
         !
@@ -785,7 +845,7 @@ contains
         ncol => Ncol_faceYN  !global
 
         !% allocate an array of column indexes that can be used as targets of pointers
-        allocate( col_faceYN(ncol), stat=allocation_status, errmsg= emsg)
+        allocate( col_faceYN(ncol)[*], stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
@@ -794,7 +854,10 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
     end subroutine allocate_col_faceYN
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     ! subroutine allocate_bc()
     ! !
     ! ! allocate storage for boundary conditions.
