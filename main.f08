@@ -1,10 +1,12 @@
 program main
 
    use globals
+   use array_index
    use initialization
    use setting_definition, only: setting
    use interface
    use BIPquick
+   use partitioning
 
    implicit none
 
@@ -74,8 +76,8 @@ program main
    call initialize_api()
    call initialize_linknode_arrays()
 
-
-
+   ! --- Graph Partitioning
+   call execute_partitioning()
 
    ! --- Finalization
 

@@ -68,6 +68,20 @@ module array_index
         enumerator :: ni_assigned ! given 1 when node has been assigned to face/elem,
         enumerator :: ni_total_inflow ! index to total_inflow (-1 if not total_inflow)
     end enum
+
+    !% COLUMN INDEXES FOR INTEGER DATA IN P_nodeI partitioning arrays
+    enum, bind(c)
+        enumerator :: P_ni_idx_Partition = 1 ! the node index number
+        enumerator :: P_ni_Partition_No ! the Partition number to which that node index belongs
+        enumerator :: P_ni_is_boundary ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
+    end enum
+
+    !% COLUMN INDEXES FOR INTEGER DATA IN P_linkI partitioning arrays
+    enum, bind(c)
+        enumerator :: P_li_idx_Partition = 1 ! the link index number
+        enumerator :: P_li_Partition_No ! the Partition number to which that link index belongs
+    end enum
+
     integer, parameter :: ni_idx_base1 = ni_total_inflow
 
     ! column indexes for multi-branch nodes
