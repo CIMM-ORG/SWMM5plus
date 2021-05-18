@@ -155,8 +155,11 @@ module array_index
 
     !%  nodeYN COLUMN INDEXES FOR LOGICAL DATA ON NODES --------------------------
     ! column index for logical data in nodeYN array
-    integer, parameter :: nYN_temp1 = 1
-    integer, parameter :: nYN_idx_max = 1
+    enum, bind(c)
+        enumerator :: nYN_has_inflow = 1
+        enumerator :: nYN_temp1
+    end enum
+    integer, parameter :: nYN_idx_max = nYN_temp1
 
     !%  linkYN COLUMN INDEXES FOR LOGICAL DATA ON LINKS ---------------------------
     ! column index for logical data in linkYN array
