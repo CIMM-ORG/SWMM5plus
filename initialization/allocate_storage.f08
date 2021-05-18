@@ -1,6 +1,6 @@
 module allocate_storage
 
-    use array_index
+    use assign_index
     use globals
     use utility, only: utility_check_allocation
     use setting_definition, only: setting
@@ -48,11 +48,11 @@ contains
 
         if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
 
-        allocate(nodeI(N_node, ni_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(nodeI(N_node, Ncol_nodeI), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeI(:,:) = nullvalueI
 
-        allocate(linkI(N_link, li_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(linkI(N_link, Ncol_linkI), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkI(:,:) = nullvalueI
 
@@ -64,19 +64,19 @@ contains
         call utility_check_allocation(allocation_status, emsg)
         B_linkI(:,:) = nullvalueI
 
-        allocate(nodeR(N_node, nr_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(nodeR(N_node, Ncol_nodeR), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeR(:,:) = nullvalueR
 
-        allocate(linkR(N_link, lr_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(linkR(N_link, Ncol_linkR), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkR(:,:) = nullvalueR
 
-        allocate(nodeYN(N_node, nYN_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(nodeYN(N_node, Ncol_nodeYN), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeYN(:,:) = nullvalueL
 
-        allocate(linkYN(N_link, lYN_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(linkYN(N_link, Ncol_linkYN), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkYN(:,:) = nullvalueL
 
@@ -256,7 +256,7 @@ contains
         ncol => Ncol_elemP
 
         !% allocate an array for storing the size of each packed type
-        allocate( npack_elemP(ncol), stat=allocation_status, errmsg= emsg)
+        allocate(npack_elemP(ncol), stat=allocation_status, errmsg= emsg)
         call utility_check_allocation (allocation_status, emsg)
 
         !% allocate an array for storing the column of each packed type

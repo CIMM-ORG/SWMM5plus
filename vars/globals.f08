@@ -35,7 +35,7 @@ module globals
 
     !%  columns of element and face arrays
     integer, dimension(:), allocatable, target :: col_elemI                             ! columns of elemI array
-    integer, dimension(:), allocatable, target :: col_elemP, np_elemP                   ! columns and number of packs for elemP array
+    integer, dimension(:), allocatable, target :: col_elemP, npack_elemP                ! columns and number of packs for elemP array
     integer, dimension(:), allocatable, target :: col_elemPGalltm, npack_elemPGalltm    ! columns and number of packs for elemPG array for all tm
     integer, dimension(:), allocatable, target :: col_elemPGac, npack_elemPGac          ! columns and number of packs for elemPG array for ac tm
     integer, dimension(:), allocatable, target :: col_elemPGetm, npack_elemPGetm        ! columns and number of packs for elemPG array for etm
@@ -97,6 +97,10 @@ module globals
     integer, parameter :: oneI = 1
     integer, parameter :: twoI = 2
     integer, parameter :: threeI = 3
+
+    !% Number of maximum branches
+    integer, parameter :: max_us_branch_per_node = 3
+    integer, parameter :: max_ds_branch_per_node = 3
 
     ! Number of objects
     integer :: N_link

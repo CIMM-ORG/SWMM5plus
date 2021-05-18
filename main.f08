@@ -1,6 +1,8 @@
 program main
 
+
    use globals
+   use assign_index
    use initialization
    use setting_definition, only: setting
    use interface
@@ -76,8 +78,8 @@ program main
    call initialize_linknode_arrays()
 
 
-   call BIPquick_YJunction_Hardcode()
-   call coarray_length_calculation()
+   ! call BIPquick_YJunction_Hardcode()
+   ! call coarray_length_calculation()
    !call coarray_storage_allocation()  ! once we finish the image flag this is ready to use
 
 

@@ -200,7 +200,7 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           $ARRAY_DIR/dynamic_array.f08\
           $ARRAY_DIR/tables.f08\
           $API_DIR/interface.f08\
-          $VARS_DIR/array_index.f08\
+          $VARS_DIR/assign_index.f08\
           $UTIL_DIR/utility.f08\
           $INIT_DIR/allocate_storage.f08\
           $INIT_DIR/initialization.f08\

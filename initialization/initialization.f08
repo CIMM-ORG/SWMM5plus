@@ -1,6 +1,6 @@
 module initialization
     use allocate_storage
-    use array_index
+    use assign_index
     use data_keys
     use globals
     use interface
@@ -39,7 +39,7 @@ contains
     !-----------------------------------------------------------------------------
 
         integer       :: i, total_n_links
-        character(64) :: subroutine_name = 'initialize_arrays'
+        character(64) :: subroutine_name = 'initialize_linknode_arrays'
 
     !-----------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ contains
 
         ! Allocate storage for link & node tables
         call allocate_linknode_storage ()
-
+        
         nodeI(:,ni_N_link_u) = 0
         nodeI(:,ni_N_link_d) = 0
 

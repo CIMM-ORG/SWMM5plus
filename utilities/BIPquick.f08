@@ -3,7 +3,7 @@
  module BIPquick ! the module name that is referenced in the main.f08
 
 ! the modules that need to precede BIPquick
- use array_index
+ use assign_index
  use globals
  use setting_definition, only: setting
  
@@ -162,7 +162,7 @@ end subroutine BIPquick_YJunction_Hardcode
         B_nodeR(:,:) = nullValueR
 
         ! B_nodeI will hold [upstream_node1, 2, 3]
-        allocate(B_nodeI(size(nodeI, 1) + multiprocessors - 1, upstream_face_per_elemM))
+        allocate(B_nodeI(size(nodeI, 1) + multiprocessors - 1, max_us_branch_per_node))
         B_nodeI(:,:) = nullValueI
 
         do ii = 1, size(nodeI,1)

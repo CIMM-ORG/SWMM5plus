@@ -7,7 +7,7 @@
 module temp_CFL
 
     use globals
-    use array_index
+    use assign_index
     
     implicit none 
     

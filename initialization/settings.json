@@ -117,15 +117,15 @@
     "Debug" : {
         "DebugAPI" : false,
         "File" : {
-            "dynamic_array" : false,
-            "tables" : false,
-            "allocate_storage" : false,
+            "dynamic_array" : true,
+            "tables" : true,
+            "allocate_storage" : true,
             "initialization" : true,
-            "interface" : false,
-            "BIPquick" : false,
-            "utility" : false,
-            "globals" : false,
-            "inflow" : false
+            "interface" : true,
+            "BIPquick" : true,
+            "utility" : true,
+            "globals" : true,
+            "inflow" : true
         },
         "Output" : {
 

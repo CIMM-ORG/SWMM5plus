@@ -8,7 +8,7 @@
 module coarray_bipquick
     use allocate_storage
     use globals
-    use array_index
+    use assign_index
     use data_keys
     use setting_definition
     
