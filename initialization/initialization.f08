@@ -1,4 +1,5 @@
 module initialization
+
     use allocate_storage
     use array_index
     use data_keys
@@ -9,11 +10,10 @@ module initialization
 
     implicit none
 
-
 !-----------------------------------------------------------------------------
 !
 ! Description:
-!   General initialization of data structures (not including network)
+!    General initialization of data structures (not including network)
 !
 ! Method:
 !    Creates the arrays index structures that are used for accessing data.
@@ -38,8 +38,10 @@ contains
     !
     !-----------------------------------------------------------------------------
 
-        integer       :: i, total_n_links
+        integer       :: iii, total_n_links
         character(64) :: subroutine_name = 'initialize_arrays'
+        logical       :: l1              = .false.
+        logical       :: l2              = .false.
 
     !-----------------------------------------------------------------------------
 
@@ -50,53 +52,62 @@ contains
             stop
         end if
 
-        ! Allocate storage for link & node tables
-        call allocate_linknode_storage ()
-
         nodeI(:,ni_N_link_u) = 0
         nodeI(:,ni_N_link_d) = 0
 
-        do i = 1, N_link
-            linkI(i,li_idx) = i
-            linkI(i,li_link_type) = get_link_attribute(i, link_type)
-            linkI(i,li_geometry) = get_link_attribute(i, link_geometry)
-            linkI(i,li_Mnode_u) = get_link_attribute(i, link_node1) + 1 ! node1 in C starts from 0
-            linkI(i,li_Mnode_d) = get_link_attribute(i, link_node2) + 1 ! node2 in C starts from 0
+        do ii = 1, N_link
+            linkI(ii,li_idx) = ii
+            linkI(ii,li_link_type) = get_link_attribute(ii, link_type)
+            linkI(ii,li_geometry) = get_link_attribute(ii, link_geometry)
+            linkI(ii,li_Mnode_u) = get_link_attribute(ii, link_node1) + 1 ! node1 in C starts from 0
+            linkI(ii,li_Mnode_d) = get_link_attribute(ii, link_node2) + 1 ! node2 in C starts from 0
 
-            nodeI(linkI(i,li_Mnode_u), ni_N_link_u) = nodeI(linkI(i,li_Mnode_u), ni_N_link_u) + 1
-            nodeI(linkI(i,li_Mnode_u), ni_idx_base1 + nodeI(linkI(i,li_Mnode_u), ni_N_link_u)) = i
-            nodeI(linkI(i,li_Mnode_d), ni_N_link_d) = nodeI(linkI(i,li_Mnode_d), ni_N_link_d) + 1
-            nodeI(linkI(i,li_Mnode_d), ni_idx_base2 + nodeI(linkI(i,li_Mnode_d), ni_N_link_d)) = i
+            nodeI(linkI(ii,li_Mnode_u), ni_N_link_u) = nodeI(linkI(ii,li_Mnode_u), ni_N_link_u) + 1
+            nodeI(linkI(ii,li_Mnode_u), ni_idx_base1 + nodeI(linkI(ii,li_Mnode_u), ni_N_link_u)) = i
+            nodeI(linkI(ii,li_Mnode_d), ni_N_link_d) = nodeI(linkI(ii,li_Mnode_d), ni_N_link_d) + 1
+            nodeI(linkI(ii,li_Mnode_d), ni_idx_base2 + nodeI(linkI(ii,li_Mnode_d), ni_N_link_d)) = i
 
-            linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
-            linkR(i,lr_Length) = get_link_attribute(i, conduit_length)
-            ! linkR(i,lr_TopWidth): defined in network_define.f08
-            linkR(i,lr_BreadthScale) = get_link_attribute(i, link_xsect_wMax)
-            ! linkR(i,lr_Slope): defined in network_define.f08
-            linkR(i,lr_LeftSlope) = get_link_attribute(i, link_left_slope)
-            linkR(i,lr_RightSlope) = get_link_attribute(i, link_right_slope)
-            linkR(i,lr_Roughness) = get_link_attribute(i, conduit_roughness)
-            linkR(i,lr_InitialFlowrate) = get_link_attribute(i, link_q0)
-            linkR(i,lr_InitialUpstreamDepth) = get_node_attribute(linkI(i,li_Mnode_u), node_initDepth)
-            linkR(i,lr_InitialDnstreamDepth) = get_node_attribute(linkI(i,li_Mnode_d), node_initDepth)
-            linkR(i,lr_InitialDepth) = (linkR(i,lr_InitialDnstreamDepth) + linkR(i,lr_InitialUpstreamDepth)) / 2.0
+            linkI(ii,li_InitialDepthType) = 1 ! TODO - get from params file
+            linkR(ii,lr_Length) = get_link_attribute(ii, conduit_length)
+            ! linkR(ii,lr_TopWidth): defined in network_define.f08
+            linkR(ii,lr_BreadthScale) = get_link_attribute(ii, link_xsect_wMax)
+            ! linkR(ii,lr_Slope): defined in network_define.f08
+            linkR(ii,lr_LeftSlope) = get_link_attribute(ii, link_left_slope)
+            linkR(ii,lr_RightSlope) = get_link_attribute(ii, link_right_slope)
+            linkR(ii,lr_Roughness) = get_link_attribute(ii, conduit_roughness)
+            linkR(ii,lr_InitialFlowrate) = get_link_attribute(ii, link_q0)
+            linkR(ii,lr_InitialUpstreamDepth) = get_node_attribute(linkI(ii,li_Mnode_u), node_initDepth)
+            linkR(ii,lr_InitialDnstreamDepth) = get_node_attribute(linkI(ii,li_Mnode_d), node_initDepth)
+            linkR(ii,lr_InitialDepth) = (linkR(ii,lr_InitialDnstreamDepth) + linkR(ii,lr_InitialUpstreamDepth)) / 2.0
         end do
 
-        do i = 1, N_node
-            total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
-            nodeI(i, ni_idx) = i
-            if (get_node_attribute(i, node_type) == 1) then ! OUTFALL
-                nodeI(i, ni_node_type) = nBCdn
+        do ii = 1, N_node
+            total_n_links = nodeI(ii,ni_N_link_u) + nodeI(ii,ni_N_link_d)
+            nodeI(ii, ni_idx) = i
+            if (get_node_attribute(ii, node_type) == 1) then ! OUTFALL
+                nodeI(ii, ni_node_type) = nBCdn
             else if (total_n_links == 2) then
-                nodeI(i, ni_node_type) = nJ2
+                nodeI(ii, ni_node_type) = nJ2
             else if (total_n_links > 2) then
-                nodeI(i, ni_node_type) = nJm
+                nodeI(ii, ni_node_type) = nJm
             end if
-            ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
-            nodeR(i,nr_InitialDepth) = get_node_attribute(i, node_initDepth)
-            nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
+
+            ! Determine if node has inflow and is nBCup
+            l1 = get_node_attribute(ii, node_has_extInflow) == 1
+            l2 = get_node_attribute(ii, node_has_dwfInflow) == 1
+            if (l1 .or. l2) then
+                nodeYN(ii, nYN_has_inflow) = .true.
+                if (total_n_links == 1) then
+                    nodeI(ii, ni_node_type) = nBCup
+                end if
+            endif
+
+            nodeR(ii,nr_InitialDepth) = get_node_attribute(ii, node_initDepth)
+            nodeR(ii,nr_Zbottom) = get_node_attribute(ii, node_invertElev)
         end do
 
+        ! Count number of nodes with inflow
+        N_inflow = count(nodeYN(:, nYN_has_inflow))
         if (setting%Debug%File%initialization) then
             call utility_export_linknode_csv()
         end if
