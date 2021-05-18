@@ -14,8 +14,14 @@ module type_definitions
 
     implicit none
 
-    ! EXTERNAL INFLOW OBJECT
-    type totalInflow
+    ! Temporal Array object
+    type Array3D
+        integer :: current_idx
+        real(8), allocatable :: val(:,:,:)
+    end type Array3D
+
+
+
         integer :: node_id ! index to element thar receives inflow
         ! t_series*sfactor + base_pat*baseline
         real(8), dimension(2) :: ext_t_series = [-1, -1] ! time_series
@@ -28,6 +34,16 @@ module type_definitions
         real(8), dimension(2) :: dwf_daily_pattern = [-1, -1]
         real(8), dimension(2) :: dwf_hourly_pattern = [-1, -1]
         real(8), dimension(2) :: dwf_weekend_pattern = [-1, -1]
-    end type totalInflow
+        ! ---------------------------------------------------------
+        ! fetch keeps track of the vars in nodeInflow that need to be
+        ! fetched from SWMM C. If fetch[i] == .true. then the variable
+        ! needs to be updated from SWMM C. Update as more data is needed.
+        ! fetch = [
+        !    ext_t_series, ext_base_pat, ext_baseline, ext_sfactor,
+        !    dwf_avgValue, dwf_monthly_pattern, dwf_daily_pattern,
+        !    dwf_hourly_pattern, dwf_weekend_pattern
+        ! ]
+        logical, dimension(9) :: fetch = .true.
+    end type nodeInflow
 
 end module type_definitions

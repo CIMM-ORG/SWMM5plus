@@ -64,16 +64,16 @@ module globals
     integer :: N_curve
     integer :: N_tseries
     integer :: N_pattern
-    integer :: N_BCupstream
-    integer :: N_BCdnstream
+    integer :: N_inflow
 
     ! useful shortcuts
     real(8), pointer :: dt => setting%time%dt
     real(8), pointer :: grav => setting%constant%gravity
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
 
-    ! Tables
-    type(totalInflow), allocatable :: total_inflows(:)
+    ! 3D Circular Queues
+    type(Array3D), target :: tempInflows
+    type(Array3D), target :: totalInflows
 
     ! Boundary Conditions
 
