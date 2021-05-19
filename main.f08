@@ -85,6 +85,7 @@ program main
 
    ! --- Finalization
 
+
    call finalize_api() ! closes link with shared library
 
 end program main
