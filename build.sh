@@ -89,7 +89,7 @@ then
     rm -r Stormwater*
 fi
 
-if ! [ ! -d "$MPICH_INSTALL/bin"]  #[ -x "$(command -v mpiexec)" ]
+if  [ ! -d "$MPICH_INSTALL/bin" ]  #[ -x "$(command -v mpiexec)" ]
 then
     echo "Installing the prerequisite (mpich) for opencoarray fortran ..."
     sleep 3.0
@@ -109,7 +109,7 @@ then
     #sudo apt-get install openmpi-bin libopenmpi-dev
 fi
 
-if ! [ -d $CMAKE_SOURCE ]  #[ -x "$(command -v cmake)" ]
+if  [ ! -d $CMAKE_SOURCE ]  #[ -x "$(command -v cmake)" ]
 then 
     echo "cmake is not found in current directory."
     echo "Installing cmake - the prerequisite for opencoarray fortran ..."
