@@ -52,6 +52,10 @@ module globals
     integer, dimension(:), allocatable, target :: col_faceR[:]                                  ! columns of faceR array
     integer, dimension(:), allocatable, target :: col_faceYN[:]                                 ! columns of faceYN array
 
+    !%  vector of number of elements and faces across images
+    integer, dimension(:), allocatable, target :: N_elem
+    integer, dimension(:), allocatable, target :: N_face 
+
     !%  elems in coarray
     real(8), allocatable, target :: elemR(:,:)[:]    ! coarray for elements
     integer, allocatable, target :: elemI(:,:)[:]    ! coarray for element Interger

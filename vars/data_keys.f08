@@ -162,6 +162,10 @@ module data_keys
     integer, parameter :: N_elem_nBCdn = 1 ! Downstream BC nodes are assigned to 1 element
     integer, parameter :: N_elem_nBCup = 1 ! Upstream BC nodes are assigned to 1 element
 
+    ! default for edge and non-edge node
+    integer, parameter :: EdgeNode    = 1 ! Edge node of a partition
+    integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element
+
     ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
     enum, bind(c)
         enumerator :: P01 = 1

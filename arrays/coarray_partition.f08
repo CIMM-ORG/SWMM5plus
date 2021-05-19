@@ -56,7 +56,6 @@ module coarray_partition
         integer :: nimgs_assign
         integer, allocatable :: unique_imagenum(:)
         integer :: ii, jj, kk, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
-        integer, allocatable :: temp_elem_N(:), temp_face_N(:)
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'array_length_calculation'
         
@@ -64,8 +63,8 @@ module coarray_partition
 
         call image_number_calculation(nimgs_assign, unique_imagenum)
 
-        allocate(temp_elem_N(size(unique_imagenum,1)))
-        allocate(temp_face_N(size(unique_imagenum,1)))
+        allocate(N_elem(size(unique_imagenum,1)))
+        allocate(N_face(size(unique_imagenum,1)))
 
         do ii=1, size(unique_imagenum,1)
             node_index = PACK([(counter, counter=1,size(nodeI,1))], nodeI(:, ni_BQ_image) .eq. unique_imagenum(ii))
@@ -117,15 +116,23 @@ module coarray_partition
             elem_counter = elem_counter + sum(linkI(link_index, li_N_element))
             face_counter = face_counter + sum(linkI(link_index, li_N_element))
 
-            temp_elem_N(ii) = elem_counter
-            temp_face_N(ii) = face_counter
+            N_elem(ii) = elem_counter
+            N_face(ii) = face_counter
 
             elem_counter = 0 ! reset the counter
             face_counter = 0
         enddo        
-        
-        max_caf_elem_N = maxval(temp_elem_N)
-        max_caf_face_N = maxval(temp_face_N) ! assign the max value 
+
+        max_caf_elem_N = maxval(N_elem)
+        max_caf_face_N = maxval(N_face) ! assign the max value
+
+        if (setting%Debug%File%coarray_bipquick) then
+            do ii = 1, size(unique_imagenum,1)
+                print*, 'Image => ', ii
+                print*, 'Elements expected ', N_elem(ii)
+                print*, 'Faces expected    ', N_face(ii)
+            end do
+        endif 
 
         if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
 

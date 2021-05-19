@@ -44,12 +44,13 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-
+    
         !% get the slope of each link given the node Z values
         call network_get_link_slope()
 
         !% divide the link node networks in elements and faces 
-        ! call network_data_create()
+        call network_data_create()
+        
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -110,378 +111,170 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    ! subroutine network_data_create()
-    ! !-------------------------------------------------------------------------- 
-    ! !
-    ! !% creates the network of elements and faces from nodes and link
-    ! !
-    ! !--------------------------------------------------------------------------
+    subroutine network_data_create()
+    !-------------------------------------------------------------------------- 
+    !
+    !% creates the network of elements and faces from nodes and link
+    !
+    !--------------------------------------------------------------------------
         
-    !     integer :: ii, jj, image
-    !     integer :: ElemGlobalIdx, FaceGlobalIdx 
-    !     integer :: ElemLocallIdx, FacelocallIdx
-    !     integer :: lastElem, lastFace 
-    !     integer, pointer :: N_Images
-    !     integer, dimension(:), allocatable :: pack_links
+        integer :: ii, jj, image, firstIdx
+        integer :: ElemGlobalIdx, FaceGlobalIdx 
+        integer :: ElemLocallIdx, FacelocallIdx
+        integer :: lastElem, lastFace 
+        integer, pointer :: N_Images, P_elem, P_face, Lidx
+        integer, pointer :: NodeUp, NodeDn, NodeUpTyp
+        integer, dimension(:), allocatable, target :: pack_links, pack_nodes
 
-    !     character(64) :: subroutine_name = 'network_data_create'
-    ! !--------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'network_data_create'
+    !--------------------------------------------------------------------------
 
-    !     if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-    !     !% Number of Images
-    !     !% HACK: This is hardcoded for now. We have to come up with a way 
-    !     !% to use it as a user defined parameters
-    !     N_Images => setting%Partitioning%N_Image
-    !     !% initializing global element and face id
-    !     ElemGlobalIdx = first_elem_index
-    !     FaceGlobalIdx = first_face_index
-                        
-    !     do image = 1,  N_Images
+        !% Number of Images
+        !% HACK: This is hardcoded for now. We have to come up with a way 
+        !% to use it as a user defined parameters
+        N_Images => setting%Partitioning%N_Image
 
-    !         !% initializing local element and face id
-    !         ElemLocallIdx = first_elem_index
-    !         FacelocallIdx = first_face_index
-    !         lastElem      = zeroR
-    !         lastFace      = zeroR
+        !% initializing global element and face id
+        ElemGlobalIdx = first_elem_index
+        FaceGlobalIdx = first_face_index
 
-    !         !% pack all the link indexes in a partition
-    !         pack_links = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) == image)
+        !% distribute the network across images
+        do image = 1, num_images()
+
+            !% initializing local element and face id
+            ElemLocallIdx = first_elem_index
+            FacelocallIdx = first_face_index
+            !% initializing the first element number of link elements in a partition
+            firstIdx = oneI
+
+            !% pointer to number of elements and faces to this image
+            P_elem => N_elem(image)
+            P_face => N_face(image)
+
+            !% populating the local element indexes
+            elemI(ElemLocallIdx:P_elem, ei_Lidx)[image] = [(jj,jj=ElemLocallIdx,P_elem)]
+            !% populating the global element indexes 
+            elemI(ElemLocallIdx:P_elem, ei_Gidx)[image] = [(jj,jj=ElemGlobalIdx,P_elem + ElemGlobalIdx - 1)]
+            !% populating the local face indexes
+            faceI(ElemLocallIdx:P_face, fi_Lidx)[image] = [(jj,jj=FacelocallIdx,P_face)]
+            !% populating the global face indexes
+            faceI(ElemLocallIdx:P_face, fi_Gidx)[image] = [(jj,jj=FaceGlobalIdx,P_face + FaceGlobalIdx -1)]
+
+            !% pack all the link indexes in a partition
+            pack_links = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) == image))
+            pack_nodes = pack(nodeI(:,ni_idx), (nodeI(:,ni_BQ_image) == image))
+            print*, 'image = ', image
+            print*, elemI(:,ei_Lidx)[image], 'ei_Lidx'
+            print*, elemI(:,ei_Gidx)[image], 'ei_Gidx'
+            print*, faceI(:,fi_Lidx)[image], 'fi_Lidx'
+            print*, faceI(:,fi_Gidx)[image], 'fi_Gidx'
+
+            ElemGlobalIdx = ElemGlobalIdx + P_elem
+            FaceGlobalIdx = FaceGlobalIdx + P_face
             
-    !         do ii = size(pack_links)
-    !             Lidx    => pack_links(ii)
-                
-    !             ! NodeDn  => linkI(Lidx,li_Mnode_d)
 
-    !             !% handle the upstream node of that link
-    !             call handle_upstream_node &
-    !                 (Nidx, image, ElemLocalIdx, ElemGlobalIdx, FaceLocalIdx, FaceGlobalIdx)
+            ! do ii = 1, size(pack_links)
+            !     !% cycle through link indexs in a partition 
+            !     Lidx    => pack_links(ii)
+            !     NodeUp  => linkI(Lidx,li_Mnode_u)
+            !     NodeDn  => linkI(Lidx,li_Mnode_d)
+            !     NodeUpTyp => nodeI(NodeUp,ni_node_type) 
 
-    !             !% subdivide the link according to number of elements
-    !             call subdivide_link (Lidx, image, ElemLocalIdx, &
-    !                     ElemGlobalIdx, FaceLocalIdx, FaceGlobalIdx)
+            !     !% condition of a specific node to be in that partition
+            !     if (any(pack_nodes .eq. NodeUp)) then
 
-    !             !% handle the downstream node of that link
-    !             call handle_this_node (NodeDn, image, ElemLocalIdx, &
-    !                     ElemGlobalIdx, FaceLocalIdx, FaceGlobalIdx)
+            !         !% if the upstream node is a multi face junction, 
+            !         !% the link element count will change
+            !         if (NodeUpTyp .eq.  nJm) then
+            !             stop
+            !         else
+            !             call subdivide_link (Lidx, image, firstIdx)
+            !         endif
+            !     endif
+           
+            ! enddo
 
+        enddo
 
-    !         enddo
-    !     enddo
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    !     if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+    end subroutine network_data_create
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine subdivide_link (Lidx, image, firstIdx)
+    !-------------------------------------------------------------------------- 
+    !
+    !% subdivides the links into elements
+    !
+    !--------------------------------------------------------------------------
 
-    ! end subroutine network_data_create
-    ! !
-    ! !==========================================================================
-    ! !==========================================================================
-    ! !
-    ! subroutine subdivide_link(Lidx, image, ElemLocalIdx, &
-    !     ElemGlobalIdx, FaceLocalIdx, FaceGlobalIdx)
-    ! !-------------------------------------------------------------------------- 
-    ! !
-    ! !% subdivides the links into elements
-    ! !
-    ! !--------------------------------------------------------------------------
-    !     integer :: ii, LastElemIdx, LastFaceIdx
+        integer, pointer       :: LinkElem, lAssignStatus
+        integer, intent(in)    :: Lidx, image
+        integer, intent(inout) :: firstIdx
+        integer                :: lastIdx
 
-    !     integer, pointer       :: AssignStatus
-    !     integer, intent(in)    :: Lidx
-    !     integer, intent(in)    :: image
-    !     integer, intent(inout) :: ElemLocalIdx, ElemGlobalIdx
-    !     integer, intent(inout) :: FaceLocalIdx, FaceGlobalIdx
+        character(64) :: subroutine_name = 'network_data_create'
 
+    !--------------------------------------------------------------------------
 
-    !     character(64) :: subroutine_name = 'network_data_create'
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-    ! !--------------------------------------------------------------------------
+        LinkElem     => linkI(Lidx,li_N_element)
+        !% if the link is already assigned or not
+        lAssignStatus => linkI(Lidx,li_assigned)
 
-    !     if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        lastIdx = firstIdx + LinkElem - oneI
 
-    !     AssignStatus    => linkI(Lidx, li_assigned)
+        if (this_image() == 1) then 
 
-    !     if (AssignStatus .eq. lUnassigned) then
+            if (lAssignStatus .eq. lUnassigned) then
 
-    !         do ii = 1, linkI(Lidx,li_N_element) 
+                !% populating elemI
+                elemI(firstIdx:lastIdx,ei_elementType)[image]    = linkI(Lidx,li_link_type)
+                elemI(firstIdx:lastIdx,ei_geometryType)[image]   = linkI(Lidx,li_geometry)
+                elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM)[image] = Lidx
+                elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM)[image] = nullvalueI
 
-    !             !% populating elemI
-    !             elem2I(ElemLocalIdx,ei_Lidx)[image]           = ElemLocalIdx
-    !             elem2I(ElemLocalIdx,ei_Gidx)[image]           = ElemGlobalIdx
-    !             elem2I(ElemLocalIdx,ei_elementType)[image]    = linkI(Lidx,li_link_type)
-    !             elem2I(ElemLocalIdx,ei_geometryType)[image]   = linkI(Lidx,li_geometry)
-    !             elem2I(ElemLocalIdx,ei_link_Gidx_SWMM)[image] = Lidx
-    !             elem2I(ElemLocalIdx,ei_Mface_dL)[image]       = FaceLocalIdx
-    !             elem2I(ElemLocalIdx,ei_Mface_uL)[image]       = FaceLocalIdx - oneI
+                ! elemI(firstIdx:lastIdx,ei_Mface_uL)[image]       = FaceLocalIdx
+                ! elemI(firstIdx:lastIdx,ei_Mface_dL)[image]       = FaceLocalIdx + oneI
 
-    !             !% populating faceI
-    !             !% upstream face of an element will always be populated
-    !             !% thus advancing face counter
-    !             FaceLocalIdx  = FaceLocalIdx + oneI
-    !             FaceGlobalIdx = FaceGlobalIdx + oneI
+                ! !% advance element counter
+                ! ElemLocalIdx  = ElemLocalIdx + oneI
+                ! ElemGlobalIdx = ElemGlobalIdx + oneI
 
-    !             faceI(FaceLocalIdx,fi_Lidx)                   = FaceLocalIdx
-    !             faceI(FaceLocalIdx,fi_Gidx)                   = ElemGlobalIdx
-    !             faceI(FaceLocalIdx,fi_Melem_uL)               = ElemLocalIdx
-    !             faceI(FaceLocalIdx,fi_Melem_dL)               = ElemLocalIdx + oneI
+                ! !% populating faceI
+                ! faceI(FaceLocalIdx,fi_Lidx)                  = FaceLocalIdx
+                ! faceI(FaceLocalIdx,fi_Gidx)                  = ElemGlobalIdx
+                ! faceI(FaceLocalIdx,fi_Melem_uL)              = ElemLocalIdx - oneI
+                ! faceI(FaceLocalIdx,fi_Melem_dL)              = ElemLocalIdx
 
-    !             ElemLocalIdx  = ElemLocalIdx + oneI
-    !             ElemGlobalIdx = ElemGlobalIdx + oneI
+                ! !% advance face counter
+                ! FaceLocalIdx  = FaceLocalIdx + oneI
+                ! FaceGlobalIdx = FaceGlobalIdx + oneI
 
+                lAssignStatus =  lAssigned
 
-    !         end do
+                !% set the first element index for next link
+                firstIdx = firstIdx + LinkElem
 
-    !         AssignStatus = setAssigned(Lidx, li_assigned, lUnassigned, lAssigned, linkI)
+                print*,elemI(:,ei_link_Gidx_SWMM)[image], 'ei_link_Gidx_SWMM'
+            endif
 
-    !     endif
-
-    !     if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-
-    ! end subroutine subdivide_link
-    ! !
-    ! !==========================================================================
-    ! !==========================================================================
-    ! !
-    ! subroutine handle_upstream_node &
-    !     (Nidx, image, ElemLocalIdx, ElemGlobalIdx, FaceLocalIdx, FaceGlobalIdx)
-
-    ! !-------------------------------------------------------------------------- 
-    ! !
-    ! !% handels an upstream node of a specific link
-    ! !
-    ! !--------------------------------------------------------------------------
+        endif
         
-    !     integer, intent(in)    :: Lidx 
-    !     integer, intent(in)    :: current_image
-    !     integer, intent(inout) :: ElemLocalIdx, ElemGlobalIdx
-    !     integer, intent(inout) :: FaceLocalIdx, FaceGlobalIdx
 
-    !     integer, pointer :: Nidx, NodeType, AssignStatus, NJelem
-    !     integer, pointer :: LinkU1, LinkU2, LinkU3, LinkD1, LinkD2, LinkD3
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    !     integer :: ii, JMLocalIdx, JMGlobalIdx
-
-    !     character(64) :: subroutine_name = 'handle_upstream_node'
-
-    ! !--------------------------------------------------------------------------
-
-    !     if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
-
-    !     Nidx         => linkI(Lidx,li_Mnode_u)
-    !     NodeType     => nodeI(Nidx,ni_node_type)
-    !     AssignStatus => nodeI(Nidx,ni_assigned)
-    !     LinkU1       => nodeI(Nidx,ni_Mlink_u1)
-    !     LinkU2       => nodeI(Nidx,ni_Mlink_u2)
-    !     LinkU3       => nodeI(Nidx,ni_Mlink_u3)
-    !     LinkD1       => nodeI(Nidx,ni_Mlink_d1)
-    !     LinkD2       => nodeI(Nidx,ni_Mlink_d2)
-    !     LinkD3       => nodeI(Nidx,ni_Mlink_d3)
-
-    !     select case (NodeType)
-
-    !         case (nBCup)
-
-    !             if (AssignStatus .eq. nUnassigned) then
-
-    !                 faceI(FaceLocalIdx, fi_Lidx)[image]     = FaceLocalIdx  !% update local face index in faceI
-    !                 faceI(FaceLocalIdx, fi_Gidx)[image]     = FaceGlobalIdx !% update global face index in faceI
-    !                 faceI(FaceLocalIdx, fi_Melem_uL)[image] = nullvalueI    !% upstream element map of nBCup is nullvalue
-    !                 faceI(FaceLocalIdx, fi_Melem_dL)[image] = ElemLocalIdx
-
-    !                 AssignStatus = setAssigned(Nidx, ni_assigned, nUnassigned, nAssigned, nodeI)
-
-    !             endif
-
-    !         case (nJ2)
-
-    !             if (AssignStatus .eq. nUnassigned) then
-
-    !                 faceI(FaceLocalIdx, fi_Lidx)[image]     = FaceLocalIdx        !% update local face index in faceI
-    !                 faceI(FaceLocalIdx, fi_Gidx)[image]     = FaceGlobalIdx       !% update global face index in faceI
-    !                 faceI(FaceLocalIdx, fi_Melem_uL)[image] = ElemLocalIdx  
-    !                 faceI(FaceLocalIdx, fi_Melem_dL)[image] = ElemLocalIdx + oneI !% downstream element map of nBCup is nullvalue
-
-    !                 AssignStatus = setAssigned(Nidx, ni_assigned, nUnassigned, nAssigned, nodeI)
-    !             endif
-
-    !         case (nJm)
-
-    !             if (AssignStatus .eq. nUnassigned) then
-
-    !                 NJelem => Nelem_in_Junction
-
-    !                 do ii = 1, NJelem
-
-    !                     if (ii .eq. Junction_main) then
-
-    !                         elem2I(ElemLocalIdx,ei_Lidx)[image]           = ElemLocalIdx
-    !                         elem2I(ElemLocalIdx,ei_Gidx)[image]           = ElemGlobalIdx
-    !                         elem2I(ElemLocalIdx,ei_elementType)[image]    = eJunctionMain
-    !                         elem2I(ElemLocalIdx,ei_node_Gidx_SWMM)[image] = Nidx
-    !                         elem2I(ElemLocalIdx,ei_Mface_dL)[image]       = nullvalueI
-    !                         elem2I(ElemLocalIdx,ei_Mface_uL)[image]       = nullvalueI
-
-    !                         ElemLocalIdx  = ElemLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                     elseif (ii .eq. Junction_branch_1_in) then
-
-    !                         elem2I(ElemLocalIdx,ei_Lidx)[image]           = ElemLocalIdx
-    !                         elem2I(ElemLocalIdx,ei_Gidx)[image]           = ElemGlobalIdx
-    !                         elem2I(ElemLocalIdx,ei_elementType)[image]    = eJunctionBranch
-    !                         elem2I(ElemLocalIdx,ei_node_Gidx_SWMM)[image] = Nidx
-    !                         !% an upstream branch doesnot have any donwstream face
-    !                         elem2I(ElemLocalIdx,ei_Mface_dL)[image]       = nullvalueI
-    !                         elem2I(ElemLocalIdx,ei_Mface_uL)[image]       = FaceLocalIdx - oneI
-
-
-
-    !                         !% populating faceI
-    !                         faceI(FaceLocalIdx,fi_Lidx)                   = FaceLocalIdx
-    !                         faceI(FaceLocalIdx,fi_Gidx)                   = ElemGlobalIdx
-    !                         faceI(FaceLocalIdx,fi_Melem_uL)               = ElemLocalIdx
-    !                         faceI(FaceLocalIdx,fi_Melem_dL)               = ElemLocalIdx + oneI
-
-    !                         ElemLocalIdx  = ElemLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                         FaceLocalIdx  = FaceLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                     elseif (ii .eq. Junction_branch_2_out) then
-
-    !                         elem2I(ElemLocalIdx,ei_Lidx)[image]           = ElemLocalIdx
-    !                         elem2I(ElemLocalIdx,ei_Gidx)[image]           = ElemGlobalIdx
-    !                         elem2I(ElemLocalIdx,ei_elementType)[image]    = eJunctionBranch
-    !                         elem2I(ElemLocalIdx,ei_node_Gidx_SWMM)[image] = Nidx
-    !                         elem2I(ElemLocalIdx,ei_Mface_dL)[image]       = FaceLocalIdx - oneI
-    !                         ! an downstream branch doesnot have any upstream face
-    !                         elem2I(ElemLocalIdx,ei_Mface_uL)[image]       = nullvalueI
-
-    !                         ElemLocalIdx  = ElemLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                         FaceLocalIdx  = FaceLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                     elseif (ii .eq. Junction_branch_3_in) then
-
-    !                         elem2I(ElemLocalIdx,ei_Lidx)[image]           = ElemLocalIdx
-    !                         elem2I(ElemLocalIdx,ei_Gidx)[image]           = ElemGlobalIdx
-    !                         elem2I(ElemLocalIdx,ei_elementType)[image]    = eJunctionBranch
-    !                         elem2I(ElemLocalIdx,ei_node_Gidx_SWMM)[image] = Nidx
-    !                         !% an upstream branch doesnot have any donwstream face
-    !                         elem2I(ElemLocalIdx,ei_Mface_dL)[image]       = nullvalueI
-    !                         elem2I(ElemLocalIdx,ei_Mface_uL)[image]       = FaceLocalIdx - oneI
-
-    !                         ElemLocalIdx  = ElemLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                         FaceLocalIdx  = FaceLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                     elseif (ii .eq. Junction_branch_4_out) then
-
-    !                         elem2I(ElemLocalIdx,ei_Lidx)[image]           = ElemLocalIdx
-    !                         elem2I(ElemLocalIdx,ei_Gidx)[image]           = ElemGlobalIdx
-    !                         elem2I(ElemLocalIdx,ei_elementType)[image]    = eJunctionBranch
-    !                         elem2I(ElemLocalIdx,ei_node_Gidx_SWMM)[image] = Nidx
-    !                         elem2I(ElemLocalIdx,ei_Mface_dL)[image]       = FaceLocalIdx - oneI
-    !                         ! an downstream branch doesnot have any upstream face
-    !                         elem2I(ElemLocalIdx,ei_Mface_uL)[image]       = nullvalueI
-
-    !                         ElemLocalIdx  = ElemLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                         FaceLocalIdx  = FaceLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                     elseif (ii .eq. Junction_branch_5_in) then
-
-    !                         elem2I(ElemLocalIdx,ei_Lidx)[image]           = ElemLocalIdx
-    !                         elem2I(ElemLocalIdx,ei_Gidx)[image]           = ElemGlobalIdx
-    !                         elem2I(ElemLocalIdx,ei_elementType)[image]    = eJunctionBranch
-    !                         elem2I(ElemLocalIdx,ei_node_Gidx_SWMM)[image] = Nidx
-    !                         !% an upstream branch doesnot have any donwstream face
-    !                         elem2I(ElemLocalIdx,ei_Mface_dL)[image]       = nullvalueI
-    !                         elem2I(ElemLocalIdx,ei_Mface_uL)[image]       = FaceLocalIdx - oneI
-
-    !                         ElemLocalIdx  = ElemLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                         FaceLocalIdx  = FaceLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                     elseif (ii .eq. Junction_branch_6_out) then
-
-    !                         elem2I(ElemLocalIdx,ei_Lidx)[image]           = ElemLocalIdx
-    !                         elem2I(ElemLocalIdx,ei_Gidx)[image]           = ElemGlobalIdx
-    !                         elem2I(ElemLocalIdx,ei_elementType)[image]    = eJunctionBranch
-    !                         elem2I(ElemLocalIdx,ei_node_Gidx_SWMM)[image] = Nidx
-    !                         elem2I(ElemLocalIdx,ei_Mface_dL)[image]       = FaceLocalIdx - oneI
-    !                         ! an downstream branch doesnot have any upstream face
-    !                         elem2I(ElemLocalIdx,ei_Mface_uL)[image]       = nullvalueI
-
-    !                         ElemLocalIdx  = ElemLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                         FaceLocalIdx  = FaceLocalIdx + oneI
-    !                         ElemGlobalIdx = ElemGlobalIdx + oneI
-
-    !                     else
-    !                         print*, 'error: unexpected numer of junction branch encountered'
-    !                         stop
-    !                     endif
-
-
-    !                 end do
-
-    !                 AssignStatus = setAssigned(Nidx, ni_assigned, nUnassigned, nAssigned, nodeI)
-
-    !             endif
-
-    !         case default
-    !             print *, 'error: unknown node type ',NodeType,' in ',subroutine_name
-    !         stop
-    !     end select
-
-
-    !     if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-
-    ! end subroutine handle_upstream_node
+    end subroutine subdivide_link
     ! !
     ! !==========================================================================
     ! !==========================================================================
     ! !
-    ! !
-    ! !==========================================================================
-    ! !==========================================================================
-    ! !
-    ! function setAssigned &
-    !     (thisX, assigned_idx, unassignedValue, assignedValue, arrayI) &
-    !     result(f_result)
-    !     !
-    !     ! Change the assigned status or stop on error if the node or link is
-    !     ! already assigned.
-    !     !
-    !     character(64) :: subroutine_name = 'setAssigned'
-    !     integer :: f_result
-    !     integer, intent(in) :: thisX, assigned_idx, unassignedValue, assignedValue
-    !     integer, intent(in) :: arrayI(:,:)
-    !     !
-    !     !--------------------------------------------------------------------------
-    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-    !     if (arrayI(thisX,assigned_idx) .eq. unassignedValue) then
-    !         f_result = assignedValue
-    !     else
-    !         print *, thisX, assigned_idx, unassignedValue, assignedValue
-    !         print *, arrayI(thisX,assigned_idx)
-    !         print *, 'error: expected an unassigned node or link in ',subroutine_name
-    !         STOP
-    !     endif
-
-    !     if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    ! end function setAssigned
+ 
     !
     !==========================================================================
     ! END OF MODULE

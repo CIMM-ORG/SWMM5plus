@@ -81,7 +81,13 @@ program main
 
    call execute_partitioning()
 
-   call network_initiation()
+   ! sync all
+   if (this_image() == 1) then
+
+      call network_initiation()
+
+   endif
+   ! sync all
 
    ! --- Finalization
 
