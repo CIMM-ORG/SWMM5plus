@@ -50,7 +50,20 @@ contains
 
         !% divide the link node networks in elements and faces 
         call network_data_create()
-        
+
+        !% print result
+        if (setting%Debug%File%network_define) then
+            do image = 1, num_images()
+                print*, 'image = ', image
+                print*, elemI(:,ei_Lidx)[image], 'ei_Lidx'
+                print*, faceI(:,fi_Lidx)[image], 'fi_Lidx'
+                print*, elemI(:,ei_Gidx)[image], 'ei_Gidx'
+                print*, faceI(:,fi_Gidx)[image], 'fi_Gidx'
+                print*, elemI(:,ei_elementType)[image], 'ei_elementType'
+                print*, elemI(:,ei_geometryType)[image], 'ei_geometryType'
+                print*, elemI(:,ei_link_Gidx_SWMM)[image], 'ei_link_Gidx_SWMM'
+            enddo
+        endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -158,13 +171,6 @@ contains
             faceI(ElemLocallIdx:P_face, fi_Lidx)[image] = [(jj,jj=FacelocallIdx,P_face)]
             faceI(ElemLocallIdx:P_face, fi_Gidx)[image] = [(jj,jj=FaceGlobalIdx,P_face + FaceGlobalIdx -1)]
 
-            ! print*, '========================================'
-            ! print*, 'image = ', image
-            ! print*, elemI(:,ei_Lidx)[image], 'ei_Lidx'
-            ! print*, faceI(:,fi_Lidx)[image], 'fi_Lidx'
-            ! print*, elemI(:,ei_Gidx)[image], 'ei_Gidx'
-            ! print*, faceI(:,fi_Gidx)[image], 'fi_Gidx'
-
             !% pack all the link indexes in a partition
             pack_links = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) == image))
             pack_nodes = pack(nodeI(:,ni_idx), (nodeI(:,ni_BQ_image) == image))
@@ -237,24 +243,32 @@ contains
         ! print*, lastIdx, 'lastIdx'
         ! print*, image, 'image'
 
-        if (lAssignStatus .eq. lUnassigned) then
-            !% populating elemI
-            elemI(firstIdx:lastIdx,ei_elementType)[image]    = linkI(Lidx,li_link_type)
-            
-            elemI(firstIdx:lastIdx,ei_geometryType)[image]   = linkI(Lidx,li_geometry)
-            
-            elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM)[image] = Lidx
-            
-            elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM)[image] = nullvalueI
+        if (image .eq. oneI) then
+            if (lAssignStatus .eq. lUnassigned) then
+                elemI(firstIdx:lastIdx,ei_elementType)    = linkI(Lidx,li_link_type)   
+                elemI(firstIdx:lastIdx,ei_geometryType)   = linkI(Lidx,li_geometry)
+                elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM) = Lidx
+                elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM) = nullvalueI
 
-            lAssignStatus =  lAssigned
+                lAssignStatus =  lAssigned
 
-            !% set the first element index for next link
-            firstIdx = firstIdx + LinkElem
+                !% set the first element index for next link
+                firstIdx = firstIdx + LinkElem
+            endif
+        else
+            if (lAssignStatus .eq. lUnassigned) then
+                !% populating elemI
+                elemI(firstIdx:lastIdx,ei_elementType)[image]    = linkI(Lidx,li_link_type)   
+                elemI(firstIdx:lastIdx,ei_geometryType)[image]   = linkI(Lidx,li_geometry)
+                elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM)[image] = Lidx
+                elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM)[image] = nullvalueI
 
-            ! print*, elemI(:,ei_elementType)[image], 'ei_elementType'
-            ! print*, elemI(:,ei_geometryType)[image], 'ei_geometryType'
-            ! print*, elemI(:,ei_link_Gidx_SWMM)[image], 'ei_link_Gidx_SWMM'
+                lAssignStatus =  lAssigned
+
+                !% set the first element index for next link
+                firstIdx = firstIdx + LinkElem
+            endif
+
         endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
