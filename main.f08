@@ -77,21 +77,27 @@ program main
    ! --- Initialization
 
    call initialize_api()
+
+   sync all
+   
    call initialize_linknode_arrays()
+  
+   sync all
 
    call execute_partitioning()
 
-   ! sync all
-   if (this_image() == 1) then
+   sync all
+   
+   call network_initiation()
 
-      call network_initiation()
-
-   endif
-   ! sync all
-
+   sync all
+   
    ! --- Finalization
-
-
    call finalize_api() ! closes link with shared library
+
+   print*, 'End of main'
+   
+
+   
 
 end program main

@@ -153,48 +153,50 @@ contains
             P_elem => N_elem(image)
             P_face => N_face(image)
 
-            !% populating the local element indexes
             elemI(ElemLocallIdx:P_elem, ei_Lidx)[image] = [(jj,jj=ElemLocallIdx,P_elem)]
-            !% populating the global element indexes 
             elemI(ElemLocallIdx:P_elem, ei_Gidx)[image] = [(jj,jj=ElemGlobalIdx,P_elem + ElemGlobalIdx - 1)]
-            !% populating the local face indexes
             faceI(ElemLocallIdx:P_face, fi_Lidx)[image] = [(jj,jj=FacelocallIdx,P_face)]
-            !% populating the global face indexes
             faceI(ElemLocallIdx:P_face, fi_Gidx)[image] = [(jj,jj=FaceGlobalIdx,P_face + FaceGlobalIdx -1)]
+
+            ! print*, '========================================'
+            ! print*, 'image = ', image
+            ! print*, elemI(:,ei_Lidx)[image], 'ei_Lidx'
+            ! print*, faceI(:,fi_Lidx)[image], 'fi_Lidx'
+            ! print*, elemI(:,ei_Gidx)[image], 'ei_Gidx'
+            ! print*, faceI(:,fi_Gidx)[image], 'fi_Gidx'
 
             !% pack all the link indexes in a partition
             pack_links = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) == image))
             pack_nodes = pack(nodeI(:,ni_idx), (nodeI(:,ni_BQ_image) == image))
-            print*, 'image = ', image
-            print*, elemI(:,ei_Lidx)[image], 'ei_Lidx'
-            print*, elemI(:,ei_Gidx)[image], 'ei_Gidx'
-            print*, faceI(:,fi_Lidx)[image], 'fi_Lidx'
-            print*, faceI(:,fi_Gidx)[image], 'fi_Gidx'
 
             ElemGlobalIdx = ElemGlobalIdx + P_elem
             FaceGlobalIdx = FaceGlobalIdx + P_face
-            
 
-            ! do ii = 1, size(pack_links)
-            !     !% cycle through link indexs in a partition 
-            !     Lidx    => pack_links(ii)
-            !     NodeUp  => linkI(Lidx,li_Mnode_u)
-            !     NodeDn  => linkI(Lidx,li_Mnode_d)
-            !     NodeUpTyp => nodeI(NodeUp,ni_node_type) 
+            do ii = 1, size(pack_links)
+                !% cycle through link indexs in a partition 
+                Lidx    => pack_links(ii)
+                NodeUp  => linkI(Lidx,li_Mnode_u)
+                NodeDn  => linkI(Lidx,li_Mnode_d)
+                NodeUpTyp => nodeI(NodeUp,ni_node_type)
+                ! print*, 'link idx ',  Lidx
+                ! print*, 'image ', image
 
-            !     !% condition of a specific node to be in that partition
-            !     if (any(pack_nodes .eq. NodeUp)) then
+                !% condition of a specific node to be in that partition
+                if (any(pack_nodes .eq. NodeUp)) then
 
-            !         !% if the upstream node is a multi face junction, 
-            !         !% the link element count will change
-            !         if (NodeUpTyp .eq.  nJm) then
-            !             stop
-            !         else
-            !             call subdivide_link (Lidx, image, firstIdx)
-            !         endif
-            !     endif
+                    !% if the upstream node is a multi face junction, 
+                    !% the link element count will change
+                    if (NodeUpTyp .eq.  nJm) then
+                        print*, 'error: upstream junction node in a partition is not handeled yet'
+                        stop
+                    else
+                        call subdivide_link (Lidx, image, firstIdx)
+                    endif
+                else
+                    call subdivide_link (Lidx, image, firstIdx)
+                endif
            
-            ! enddo
+            enddo
 
         enddo
 
@@ -217,7 +219,7 @@ contains
         integer, intent(inout) :: firstIdx
         integer                :: lastIdx
 
-        character(64) :: subroutine_name = 'network_data_create'
+        character(64) :: subroutine_name = 'subdivide_link'
 
     !--------------------------------------------------------------------------
 
@@ -226,46 +228,34 @@ contains
         LinkElem     => linkI(Lidx,li_N_element)
         !% if the link is already assigned or not
         lAssignStatus => linkI(Lidx,li_assigned)
-
         lastIdx = firstIdx + LinkElem - oneI
 
-        if (this_image() == 1) then 
+        ! print*, Lidx, 'Lidx'
+        ! print*, LinkElem, 'LinkElem'
+        ! print*, lAssignStatus, 'lAssignStatus'
+        ! print*, firstIdx,'firstIdx'
+        ! print*, lastIdx, 'lastIdx'
+        ! print*, image, 'image'
 
-            if (lAssignStatus .eq. lUnassigned) then
+        if (lAssignStatus .eq. lUnassigned) then
+            !% populating elemI
+            elemI(firstIdx:lastIdx,ei_elementType)[image]    = linkI(Lidx,li_link_type)
+            
+            elemI(firstIdx:lastIdx,ei_geometryType)[image]   = linkI(Lidx,li_geometry)
+            
+            elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM)[image] = Lidx
+            
+            elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM)[image] = nullvalueI
 
-                !% populating elemI
-                elemI(firstIdx:lastIdx,ei_elementType)[image]    = linkI(Lidx,li_link_type)
-                elemI(firstIdx:lastIdx,ei_geometryType)[image]   = linkI(Lidx,li_geometry)
-                elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM)[image] = Lidx
-                elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM)[image] = nullvalueI
+            lAssignStatus =  lAssigned
 
-                ! elemI(firstIdx:lastIdx,ei_Mface_uL)[image]       = FaceLocalIdx
-                ! elemI(firstIdx:lastIdx,ei_Mface_dL)[image]       = FaceLocalIdx + oneI
+            !% set the first element index for next link
+            firstIdx = firstIdx + LinkElem
 
-                ! !% advance element counter
-                ! ElemLocalIdx  = ElemLocalIdx + oneI
-                ! ElemGlobalIdx = ElemGlobalIdx + oneI
-
-                ! !% populating faceI
-                ! faceI(FaceLocalIdx,fi_Lidx)                  = FaceLocalIdx
-                ! faceI(FaceLocalIdx,fi_Gidx)                  = ElemGlobalIdx
-                ! faceI(FaceLocalIdx,fi_Melem_uL)              = ElemLocalIdx - oneI
-                ! faceI(FaceLocalIdx,fi_Melem_dL)              = ElemLocalIdx
-
-                ! !% advance face counter
-                ! FaceLocalIdx  = FaceLocalIdx + oneI
-                ! FaceGlobalIdx = FaceGlobalIdx + oneI
-
-                lAssignStatus =  lAssigned
-
-                !% set the first element index for next link
-                firstIdx = firstIdx + LinkElem
-
-                print*,elemI(:,ei_link_Gidx_SWMM)[image], 'ei_link_Gidx_SWMM'
-            endif
-
+            ! print*, elemI(:,ei_elementType)[image], 'ei_elementType'
+            ! print*, elemI(:,ei_geometryType)[image], 'ei_geometryType'
+            ! print*, elemI(:,ei_link_Gidx_SWMM)[image], 'ei_link_Gidx_SWMM'
         endif
-        
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 

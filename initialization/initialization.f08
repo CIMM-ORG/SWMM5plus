@@ -121,6 +121,10 @@ contains
         
         call initialize_partition_coarray()
 
+        call allocate_elemX_faceX() 
+    
+        call allocate_columns()
+
 
         if (setting%Debug%File%initialization) then
             call utility_export_linknode_csv()
@@ -190,10 +194,6 @@ contains
         call BIPquick_YJunction_Hardcode()
         
         call coarray_length_calculation()
-        
-        call allocate_elemX_faceX()  ! once we finish the image flag this is ready to use
-
-        call allocate_columns()
         
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 

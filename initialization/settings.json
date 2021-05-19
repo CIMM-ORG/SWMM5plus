@@ -122,13 +122,13 @@
             "allocate_storage" : false,
             "initialization" : false,
             "interface" : false,
-            "partitioning" : false,
+            "partitioning" : true,
             "BIPquick"  : false,
             "utility" : false,
             "globals" : false,
             "inflow" : false,
-            "coarray_bipquick" : true,
-            "network_define" : true
+            "coarray_bipquick" : false,
+            "network_define" : false
         },
         "Output" : {
 

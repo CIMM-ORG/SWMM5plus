@@ -150,7 +150,7 @@ contains
 
         !==== face allocation ====
         ncol => Ncol_faceR 
-        allocate(faceR(max_caf_face_N, ncol )[*], stat=allocation_status, errmsg=emsg)
+        allocate(faceR(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         faceR(:,:) = nullvalueR
 

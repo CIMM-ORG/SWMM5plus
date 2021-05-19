@@ -102,6 +102,8 @@ module globals
     integer, parameter :: twoI = 2
     integer, parameter :: threeI = 3
 
+    ! images control
+    integer :: image
     ! Number of objects
     integer :: N_link
     integer :: N_node
