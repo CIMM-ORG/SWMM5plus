@@ -119,8 +119,8 @@ module globals
 
 
     ! Constants for Junction
-    integer :: J_elem_add = 7 ! Supplement elements for junction
-    integer :: J_face_add = 6 ! Supplement faces    for junction
+    integer, target :: J_elem_add = 7 ! Supplement elements for junction
+    integer, target :: J_face_add = 6 ! Supplement faces    for junction
    
 
     ! useful shortcuts
