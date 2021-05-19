@@ -98,10 +98,6 @@ module globals
     integer, parameter :: twoI = 2
     integer, parameter :: threeI = 3
 
-    !% Number of maximum branches
-    integer, parameter :: max_us_branch_per_node = 3
-    integer, parameter :: max_ds_branch_per_node = 3
-
     ! Number of objects
     integer :: N_link
     integer :: N_node

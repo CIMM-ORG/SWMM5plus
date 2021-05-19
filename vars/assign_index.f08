@@ -25,6 +25,30 @@ module assign_index
     !==========================================================================
     !
     !%-------------------------------------------------------------------------
+    !%  FIRST INDEXES (DO NOT CHANGE) -----------------------------------------
+    !% In theory, we can use different first index values for the arrays.
+    !% This was initially used in debugging, but it seemed the gfortran compiler
+    !% had some behaviors with non-unity starting points that I couldn't figure out.
+    !%-------------------------------------------------------------------------
+    integer, parameter :: first_face_index  = 1
+    integer, parameter :: first_elem_index  = 1
+
+    !%-------------------------------------------------------------------------
+    !% Number of maximum branches
+    integer, parameter :: max_us_branch_per_node = 3
+    integer, parameter :: max_ds_branch_per_node = 3
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator :: Junction_main = 1       
+        enumerator :: Junction_branch_1_in
+        enumerator :: Junction_branch_2_out
+        enumerator :: Junction_branch_3_in
+        enumerator :: Junction_branch_4_out
+        enumerator :: Junction_branch_5_in
+        enumerator :: Junction_branch_6_out
+    end enum
+    integer, target :: Nelem_in_Junction = Junction_branch_6_out
+    !%-------------------------------------------------------------------------
     !% Define the column indexes for nodeI(:,:) arrays
     !% These are the for the full arrays of integer data
     !%-------------------------------------------------------------------------

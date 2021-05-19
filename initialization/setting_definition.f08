@@ -255,7 +255,7 @@ module setting_definition
         type(DebugFileType) :: File
     end type DebugType
 
-    !% setting%PartitioningType
+    !% setting%Partitioning
     type PartitioningType
         integer :: N_Image = 3
         integer :: PartitioningMethod = P01

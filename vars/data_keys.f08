@@ -25,8 +25,8 @@ module data_keys
     enum, bind(c)
         enumerator :: eChannel = 1 ! ID for an open channel element
         enumerator :: ePipe ! ID for an pipe
-        enumerator :: eJunctionChannel ! ID for a junction
-        enumerator :: eJunctionPipe ! ID for a junction
+        enumerator :: eJunctionMain ! ID for a junction
+        enumerator :: eJunctionBranch ! ID for a junction
         enumerator :: eCulvert ! ID for a culvert in an open channel
         enumerator :: ePump ! ID for a pump
         enumerator :: eValve ! ID for a valve
@@ -66,7 +66,7 @@ module data_keys
     integer, parameter :: fWeir = eWeir ! ID for pipe on both sides
     integer, parameter :: fOrifice = eOrifice
     integer, parameter :: fPump = ePump
-    integer, parameter :: fMultiple = eJunctionChannel ! ID for moderation by separate up/dn element types
+    integer, parameter :: fMultiple = eJunctionBranch ! ID for moderation by separate up/dn element types
     integer, parameter :: fBCup = eBCup ! ID for face upstream BC
     integer, parameter :: fBCdn = eBCdn ! ID for face downstream BC
 
