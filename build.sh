@@ -89,7 +89,7 @@ then
     rm -r Stormwater*
 fi
 
-if ! [ ! -d "$MPICH_INSTALL/bin"]  #[ -x "$(command -v mpiexec)" ]
+if ! [ -d "$MPICH_INSTALL/bin"]  #[ -x "$(command -v mpiexec)" ]
 then
     echo "Installing the prerequisite (mpich) for opencoarray fortran ..."
     sleep 3.0
