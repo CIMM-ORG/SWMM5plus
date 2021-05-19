@@ -12,4 +12,5 @@ initialization/interface/flibswmm/src
 json-fortran
 cmake
 opencoarray
+mpich
 debug

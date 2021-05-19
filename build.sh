@@ -27,11 +27,16 @@ TEST_DIR='test_cases'
 UTIL_DIR='utilities'
 VARS_DIR='vars'
 
-# Dependencies paths
+# Dependencies source code
+MPICH_SOURCE="$SWMM5PLUS_DIR/mpich"
 CMAKE_SOURCE="$SWMM5PLUS_DIR/cmake"
-CMAKE_INSTALL="$CMAKE_SOURCE/cmake-install"
 COARRAY_SOURCE="$SWMM5PLUS_DIR/opencoarray"
+
+# Dependencies install
+MPICH_INSTALL="$MPICH_SOURCE/mpich-install"
+CMAKE_INSTALL="$CMAKE_SOURCE/cmake-install"
 COARRAY_INSTALL="$COARRAY_SOURCE/opencoarray-install"
+
 
 
 COARRAY_FC="${COARRAY_INSTALL}/bin/caf"
@@ -84,19 +89,24 @@ then
     rm -r Stormwater*
 fi
 
-if ! [ -x "$(command -v mpiexec)" ]
+if ! [ ! -d "$MPICH_INSTALL/bin"]  #[ -x "$(command -v mpiexec)" ]
 then
-    echo "Installing the prerequisite (openmpi) for opencoarray fortran ..."
-    #wget "http://www.mpich.org/static/downloads/3.4.1/mpich-3.4.1.tar.gz"
-    #tar -xvf *.tar.gz
-    #rm *.tar.gz
-    #cd mpi*/
-    #mkdir /tmp/mpich-build
-    #cd /tmp/mpich-build
-    #sudo /home/cy4782/Desktop/TEST_INSTALL/mpich-3.4.1/configure -prefix=${HOME}/packages 2>&1 | tee c.txt
-    sudo apt update
-    sudo apt-get install openmpi-bin libopenmpi-dev
-    #sudo apt install mpich
+    echo "Installing the prerequisite (mpich) for opencoarray fortran ..."
+    sleep 3.0
+    mkdir $MPICH_SOURCE
+    cd $MPICH_SOURCE
+    mkdir $MPICH_INSTALL
+    wget "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz"
+    tar -xvf *.tar.gz
+    rm *.tar.gz
+    mkdir /tmp/mpich-build
+    cd /tmp/mpich-build
+    $MPICH_SOURCE/mpich-3.2/configure -prefix=$MPICH_INSTALL
+    make
+    make install
+    cd $SWMM5PLUS_DIR
+    #sudo apt update
+    #sudo apt-get install openmpi-bin libopenmpi-dev
 fi
 
 if ! [ -d $CMAKE_SOURCE ]  #[ -x "$(command -v cmake)" ]
@@ -132,7 +142,7 @@ then
     cd OpenCoarrays
     mkdir opencoarrays-build
     cd opencoarrays-build
-    CC=gcc FC=gfortran ${CMAKE_INSTALL}/bin/cmake .. -DCMAKE_INSTALL_PREFIX=$COARRAY_INSTALL
+    CC=gcc FC=gfortran ${CMAKE_INSTALL}/bin/cmake .. -DCMAKE_INSTALL_PREFIX=$COARRAY_INSTALL -DMPI_HOME=$MPICH_INSTALL
     make
     sudo make install
     cd ../../../

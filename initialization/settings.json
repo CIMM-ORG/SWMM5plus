@@ -115,12 +115,12 @@
         "LinkShortingFactor" : 0.33
     },
     "Debug" : {
-        "DebugAPI" : false,
+        "DebugAPI" : ,
         "File" : {
             "dynamic_array" : false,
             "tables" : false,
             "allocate_storage" : false,
-            "initialization" : true,
+            "initialization" : false,
             "interface" : false,
             "partitioning" : true,
             "BIPquick"  : false,

@@ -191,7 +191,7 @@ contains
         
         call coarray_length_calculation()
         
-        !call coarray_storage_allocation()  ! once we finish the image flag this is ready to use
+        call coarray_storage_allocation()  ! once we finish the image flag this is ready to use
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
