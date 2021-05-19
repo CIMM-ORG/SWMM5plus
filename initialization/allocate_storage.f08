@@ -43,47 +43,53 @@ contains
     !-----------------------------------------------------------------------------
 
         character(64) :: subroutine_name = 'allocate_linknode_storage'
+        integer       :: additional_rows = 0
 
     !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
 
-        allocate(nodeI(N_node, ni_idx_max), stat=allocation_status, errmsg=emsg)
+        !% If BIPquick is being used for Partitioning, include additional rows to the link-node arrays
+        if (setting%Partitioning%PartitioningMethod == BIPquick) then
+            additional_rows = setting%Partitioning%N_Image - 1
+        end if
+
+        allocate(nodeI(N_node + additional_rows, ni_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeI(:,:) = nullvalueI
 
-        allocate(linkI(N_link, li_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(linkI(N_link + additional_rows, li_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkI(:,:) = nullvalueI
 
-        allocate(P_nodeI(N_node, 3), stat=allocation_status, errmsg=emsg)
+        allocate(P_nodeI(N_node + additional_rows, 3), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         P_nodeI(:,:) = nullvalueI
 
-        allocate(P_linkI(N_link, 2), stat=allocation_status, errmsg=emsg)
+        allocate(P_linkI(N_link + additional_rows, 2), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         P_linkI(:,:) = nullvalueI
 
-        allocate(nodeR(N_node, nr_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(nodeR(N_node + additional_rows, nr_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeR(:,:) = nullvalueR
 
-        allocate(linkR(N_link, lr_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(linkR(N_link + additional_rows, lr_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkR(:,:) = nullvalueR
 
-        allocate(nodeYN(N_node, nYN_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(nodeYN(N_node + additional_rows, nYN_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeYN(:,:) = nullvalueL
 
-        allocate(linkYN(N_link, lYN_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(linkYN(N_link + additional_rows, lYN_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkYN(:,:) = nullvalueL
 
-        allocate(nodeName(N_node), stat=allocation_status, errmsg=emsg)
+        allocate(nodeName(N_node + additional_rows), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
 
-        allocate(linkName(N_link), stat=allocation_status, errmsg=emsg)
+        allocate(linkName(N_link + additional_rows), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
 
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name

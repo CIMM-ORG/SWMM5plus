@@ -54,15 +54,16 @@
 
 end subroutine BIPquick_Optimal_Hardcode
 
-! Y_Junction_NetworkDefineTest.inp is the name of the system input file this hardcode subroutine emulates
+!% Y_Junction_NetworkDefineTest.inp is the name of the system input file this hardcode subroutine emulates
+!% N_Image = 3 
 subroutine BIPquick_YJunction_Hardcode() 
     integer :: ii
 
     print*, "The YJunction Arrays have been initialized and are size", size(P_nodeI,1), size(P_linkI,1)
 
-    P_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3/)
-    P_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
-    P_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
+    P_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3, -998877, -998877/)
+    P_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0, -998877, -998877/)
+    P_linkI(:, B_li_Partition_No) = (/1, 2, 3, -998877, -998877/)
 
     print*, "The P_nodeI array looks like"
 

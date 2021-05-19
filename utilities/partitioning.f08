@@ -43,10 +43,10 @@ subroutine execute_partitioning()
     !% --------------------------------------------------------
 
     !% Determine which partitioning method is being used
-    if (setting%Partitioning%PartitioningMethod == P01) then
+    if (setting%Partitioning%PartitioningMethod == Default) then
         print*, "Using Default Partitioning"
         call default_partitioning()
-    else if (setting%Partitioning%PartitioningMethod == P02) then
+    else if (setting%Partitioning%PartitioningMethod == BIPquick) then
         print*, "Using BIPquick Partitioning"
         call BIPquick_YJunction_Hardcode
     end if
