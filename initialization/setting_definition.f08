@@ -2,6 +2,7 @@ module setting_definition
 
     use json_module
     use data_keys
+    use string_utils, only: utility_lower_case
 
     implicit none
     public
@@ -262,7 +263,7 @@ module setting_definition
     !% setting%PartitioningType
     type PartitioningType
         integer :: N_Image = 3
-        integer :: PartitioningMethod = P01
+        integer :: PartitioningMethod = Default
         logical :: BIPquickTestCase = .true.
     endtype PartitioningType
 
@@ -286,6 +287,7 @@ module setting_definition
         type(PathType)         :: Paths
         type(DebugType)        :: Debug
         type(PartitioningType) :: Partitioning
+        logical :: Verbose
     end type settingType
 
     type(settingType), target :: setting
@@ -375,12 +377,14 @@ contains
         setting%Adjust%Flowrate%Apply = logical_value
         if (.not. found) stop 19
         call json%get('Adjust.Flowrate.approach', c, found)
+        call utility_lower_case(c)
         if (c == 'vshape') then
             setting%Adjust%Flowrate%approach = vshape
         else if (c == 'smoothall') then
             setting%Adjust%Flowrate%approach = smoothall
         else
             print *, "Error, Adjust.Flowrate.approach not compatible"
+            stop
             stop
         end if
         call json%get('Adjust.Flowrate.Coef', real_value, found)
@@ -391,12 +395,14 @@ contains
         setting%Adjust%Head%Apply = logical_value
         if (.not. found) stop 21
         call json%get('Adjust.Head.approach', c, found)
+        call utility_lower_case(c)
         if (c == 'vshape') then
             setting%Adjust%Head%approach = vshape
         else if (c == 'smoothall') then
             setting%Adjust%Head%approach = smoothall
         else
             print *, "Error, Adjust.Head.approach not compatible"
+            stop
             stop
         end if
         call json%get('Adjust.Head.Coef', real_value, found)
@@ -423,10 +429,12 @@ contains
 
         ! Load Limiter Settings
         call json%get('Limiter.BC.approach', c, found)
-        if (c == 'FroudeNumber') then
+        call utility_lower_case(c)
+        if (c == 'froudenumber') then
             setting%Limiter%BC%approach = FroudeNumber
         else
             print *, "Error, Limiter.BC.approach not compatible"
+            stop
             stop
         end if
         if (.not. found) stop 27
@@ -490,24 +498,32 @@ contains
         setting%Solver%crk2 = real_value
         if (.not. found) stop 44
         call json%get('Solver.MomentumSourceMethod', c, found)
-        if (c == 'T00') then
+        call utility_lower_case(c)
+        if (c == 't00') then
             setting%Solver%MomentumSourceMethod = T00
-        else if (c == 'T10') then
+        else if (c == 't10') then
             setting%Solver%MomentumSourceMethod = T10
-        else if (c == 'T20') then
+        else if (c == 't20') then
             setting%Solver%MomentumSourceMethod = T20
+        else
+            print *, "Error, the setting '" // trim(c) // "' is not supported for MomentumSourceMethod"
+            stop
         end if
         if (.not. found) stop 45
         call json%get('Solver.PreissmanSlot', logical_value, found)
         setting%Solver%PreissmanSlot = logical_value
         if (.not. found) stop 46
         call json%get('Solver.SolverSelect', c, found)
-        if (c == 'SVE') then
+        call utility_lower_case(c)
+        if (c == 'sve') then
             setting%Solver%SolverSelect = SVE
-        else if (c == 'SVE_AC') then
+        else if (c == 'sve_ac') then
             setting%Solver%SolverSelect = SVE_AC
-        else if (c == 'AC') then
+        else if (c == 'ac') then
             setting%Solver%SolverSelect = AC
+        else
+            print *, "Error, the setting '" // trim(c) // "' is not supported for SolverSelect"
+            stop
         end if
         if (.not. found) stop 47
 
@@ -596,11 +612,20 @@ contains
         setting%Partitioning%N_Image = integer_value
         if (.not. found) stop 72
         call json%get('Partitioning.PartitioningMethod', c, found)
-        if (c == 'P01') then
-            setting%Partitioning%PartitioningMethod = P01
-        else if (c == 'P02') then
-            setting%Partitioning%PartitioningMethod = P02
+        call utility_lower_case(c)
+        if (c == 'default') then
+            setting%Partitioning%PartitioningMethod = Default
+        else if (c == 'bquick') then
+            setting%Partitioning%PartitioningMethod = BQuick
+        else
+            print *, "Error, the setting '" // trim(c) // "' is not supported for PartitioningMethod"
+            stop
         end if
+        if (.not. found) stop 73
+
+        ! Load BIPQuick settings
+        call json%get('Verbose', logical_value, found)
+        setting%Verbose = logical_value
         if (.not. found) stop 73
 
         call json%destroy()
