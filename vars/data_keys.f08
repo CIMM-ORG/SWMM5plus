@@ -165,7 +165,7 @@ module data_keys
     ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
     enum, bind(c)
         enumerator :: Default = 1
-        enumerator :: BIPquick
+        enumerator :: BQuick
     end enum
 
     ! data types for Momentum Source type (setting%Solver%MomentumSourceM)
