@@ -107,22 +107,22 @@
         "Volume" : 1e-6
     },
     "Partitioning" : {
-        "N_Image"  : 3, 
-        "PartitioningMethod" : "P01",
+        "N_Image"  : 3,
+        "PartitioningMethod" : "Default",
         "BIPquickTestCase" : false
     },
     "ElementLengthAdjust" : {
         "LinkShortingFactor" : 0.33
     },
     "Debug" : {
-        "DebugAPI" : ,
+        "DebugAPI" : false,
         "File" : {
             "dynamic_array" : false,
             "tables" : false,
             "allocate_storage" : false,
             "initialization" : false,
             "interface" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "BIPquick"  : false,
             "utility" : false,
             "globals" : false,
@@ -132,5 +132,11 @@
         "Output" : {
 
         }
-    }
+    },
+    "Warning" : {
+        "File" : {
+            "partitioning" : false
+        }
+    },
+    "Verbose" : false
 }

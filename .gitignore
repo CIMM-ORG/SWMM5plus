@@ -14,3 +14,4 @@ cmake
 opencoarray
 mpich
 debug
+install.sh
