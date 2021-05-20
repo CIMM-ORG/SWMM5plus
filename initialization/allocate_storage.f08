@@ -90,6 +90,7 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage
 
+    !    !==========================================================================    !==========================================================================    !
 
     subroutine coarray_storage_allocation()
         ! the max_caf_elem and max_caf_face are the maximum length of the coarray 

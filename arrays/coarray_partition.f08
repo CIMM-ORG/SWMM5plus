@@ -50,6 +50,7 @@ module coarray_partition
         if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
     end subroutine image_number_calculation
 
+!    !==========================================================================    !==========================================================================    !
     
     subroutine coarray_length_calculation()
         ! for coarray length determination
@@ -70,11 +71,11 @@ module coarray_partition
         do ii=1, size(unique_imagenum,1)
             node_index = PACK([(counter, counter=1,size(nodeI,1))], nodeI(:, ni_BQ_image) .eq. unique_imagenum(ii))
             link_index = PACK([(counter, counter=1,size(linkI,1))], linkI(:, li_BQ_image) .eq. unique_imagenum(ii))
-            ! create corresponding indices for node and link in this image
+            !% create corresponding indices for node and link in this image
             
-            ! The number of elements and faces is actually decided by the junctions
-            ! So we will calculate the number of junction and base on different scenarios to decided
-            ! how many elem/face are assigned to each image
+            !% The number of elements and faces is actually decided by the junctions
+            !% So we will calculate the number of junction and base on different scenarios to decided
+            !% how many elem/face are assigned to each image
             junction_counter = count(nodeI(node_index, ni_node_type) == nJm) 
             
             !% first calculate the number of nodes in each partition, assign elems/faces for junctions
@@ -85,7 +86,7 @@ module coarray_partition
             do jj = 1, size(node_index,1)
                 idx = node_index(jj)
                 if ( nodeI(idx, ni_node_type) .eq. nJm ) then
-                    face_counter = face_counter + nodeI(idx,ni_N_link_u) ! need face for closing the upstream links
+                    face_counter = face_counter + nodeI(idx,ni_N_link_u) !% need face for closing the upstream links
                 elseif (nodeI(idx, ni_node_type) .eq. nBCdn) then
                     face_counter = face_counter + 1 !% downstream BC face
                 endif 
@@ -106,7 +107,7 @@ module coarray_partition
                     ( nodeI(linkI(idx, li_Mnode_u), ni_BQ_image) .ne. ii) ) then
                     face_counter = face_counter +1
                 endif
-                ! then downstream node
+                !% then downstream node
                 if ( ( nodeI(linkI(idx, li_Mnode_d), ni_BQ_edge) .eq. 1) .and. &
                     ( nodeI(linkI(idx, li_Mnode_d), ni_BQ_image) .ne. ii) ) then
                     face_counter = face_counter +1
@@ -125,7 +126,7 @@ module coarray_partition
         enddo        
         
         max_caf_elem_N = maxval(temp_elem_N)
-        max_caf_face_N = maxval(temp_face_N) ! assign the max value 
+        max_caf_face_N = maxval(temp_face_N) !% assign the max value 
 
         if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
 
