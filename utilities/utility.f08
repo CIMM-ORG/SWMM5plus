@@ -1,6 +1,6 @@
 module utility
 
-    use array_index
+    use assign_index
     use data_keys
     use globals
     use setting_definition, only: setting

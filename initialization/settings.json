@@ -111,19 +111,24 @@
         "PartitioningMethod" : "P01",
         "BIPquickTestCase" : false
     },
+    "ElementLengthAdjust" : {
+        "LinkShortingFactor" : 0.33
+    },
     "Debug" : {
         "DebugAPI" : false,
         "File" : {
             "dynamic_array" : false,
             "tables" : false,
             "allocate_storage" : false,
-            "initialization" : true,
+            "initialization" : false,
             "interface" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "BIPquick"  : false,
             "utility" : false,
             "globals" : false,
-            "inflow" : false
+            "inflow" : false,
+            "coarray_bipquick" : false,
+            "network_define" : true
         },
         "Output" : {
 

@@ -1,12 +1,15 @@
 program main
 
+
    use globals
-   use array_index
+   use assign_index
    use initialization
    use setting_definition, only: setting
    use interface
+   use coarray_partition
    use BIPquick
    use partitioning
+   use network_define
 
    implicit none
    
@@ -74,13 +77,28 @@ program main
    ! --- Initialization
 
    call initialize_api()
-   call initialize_linknode_arrays()
 
-   ! --- Graph Partitioning
+   sync all
+   
+   call initialize_linknode_arrays()
+  
+   sync all
+
    call execute_partitioning()
 
-   ! --- Finalization
+   sync all
+   if (this_image() == oneI) then
+      call network_initiation()
+   endif
 
+   sync all
+   
+   ! --- Finalization
    call finalize_api() ! closes link with shared library
+
+   print*, 'End of main'
+   
+
+   
 
 end program main

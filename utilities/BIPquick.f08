@@ -3,7 +3,7 @@
  module BIPquick ! the module name that is referenced in the main.f08
 
 ! the modules that need to precede BIPquick
- use array_index
+ use assign_index
  use globals
  use setting_definition, only: setting
  
@@ -76,9 +76,20 @@ subroutine BIPquick_YJunction_Hardcode()
 
     print*, "The YJunction Arrays have been initialized and are size", size(P_nodeI,1), size(P_linkI,1)
 
+    !B_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3/)
+    !B_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
+    !B_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
+
+
     P_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3/)
     P_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0/)
     P_linkI(:, B_li_Partition_No) = (/1, 2, 3/)
+
+        
+    
+    linkI(:,li_BQ_image) = (/1, 2, 3/)
+    nodeI(:,ni_BQ_image) = (/1, 2, 1, 3/)
+    nodeI(:,ni_BQ_edge) = (/0, 0, 1, 0/)
 
     print*, "The P_nodeI array looks like"
 
@@ -188,7 +199,7 @@ end subroutine BIPquick_YJunction_Hardcode
         B_nodeR(:,:) = nullValueR
 
         ! B_nodeI will hold [upstream_node1, 2, 3]
-        allocate(B_nodeI(size(nodeI, 1) + multiprocessors - 1, upstream_face_per_elemM))
+        allocate(B_nodeI(size(nodeI, 1) + multiprocessors - 1, max_us_branch_per_node))
         B_nodeI(:,:) = nullValueI
 
         do ii = 1, size(nodeI,1)

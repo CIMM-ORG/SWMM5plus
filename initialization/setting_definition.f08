@@ -132,6 +132,8 @@ module setting_definition
         logical :: utility          = .false.
         logical :: globals          = .false.
         logical :: inflow           = .false.
+        logical :: coarray_bipquick = .false.
+        logical :: network_define   = .false.
     end type DebugFileType
 
     ! -
@@ -253,13 +255,17 @@ module setting_definition
         type(DebugFileType) :: File
     end type DebugType
 
-    !% setting%PartitioningType
+    !% setting%Partitioning
     type PartitioningType
         integer :: N_Image = 3
         integer :: PartitioningMethod = P01
         logical :: BIPquickTestCase = .true.
     endtype PartitioningType
 
+    !% setting%ElementLengthAdjus
+    type ElementLengthType
+        real(8) :: LinkShortingFactor = 0.33
+    end type ElementLengthType
     ! -
     ! --
 
@@ -279,6 +285,7 @@ module setting_definition
         type(TestCaseType)     :: TestCase
         type(PathType)         :: Paths
         type(DebugType)        :: Debug
+        type(ElementLengthType) :: ElementLengthAdjust
         type(PartitioningType) :: Partitioning
     end type settingType
 
@@ -588,19 +595,32 @@ contains
         if (.not. found) stop 69
         call json%get('Debug.File.inflow', logical_value, found)
         setting%Debug%File%inflow = logical_value
+        if (.not. found) stop 69
+        call json%get('Debug.File.coarray_bipquick', logical_value, found)
+        setting%Debug%File%coarray_bipquick = logical_value
         if (.not. found) stop 70
+        call json%get('Debug.File.network_define', logical_value, found)
+        setting%Debug%File%network_define = logical_value
+        if (.not. found) stop 71
 
+        ! For element length adjustment
+        call json%get("ElementLengthAdjust.LinkShortingFactor", real_value, found)
+        setting%ElementLengthAdjust%LinkShortingFactor = real_value
+        if (.not. found) stop 72
+
+        
         ! Load BIPQuick settings
         call json%get('Partitioning.N_Image', integer_value, found)
         setting%Partitioning%N_Image = integer_value
-        if (.not. found) stop 71
+        if (.not. found) stop 73
         call json%get('Partitioning.PartitioningMethod', c, found)
         if (c == 'P01') then
             setting%Partitioning%PartitioningMethod = P01
         else if (c == 'P02') then
             setting%Partitioning%PartitioningMethod = P02
         end if
-        if (.not. found) stop 72
+        if (.not. found) stop 74
+
 
         call json%destroy()
         if (json%failed()) stop 75
