@@ -107,8 +107,8 @@
         "Volume" : 1e-6
     },
     "Partitioning" : {
-        "N_Image"  : 3, 
-        "PartitioningMethod" : "P01",
+        "N_Image"  : 3,
+        "PartitioningMethod" : "Default",
         "BIPquickTestCase" : false
     },
     "ElementLengthAdjust" : {
@@ -133,5 +133,11 @@
         "Output" : {
 
         }
-    }
+    },
+    "Warning" : {
+        "File" : {
+            "partitioning" : false
+        }
+    },
+    "Verbose" : false
 }

@@ -203,6 +203,7 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           $JSON_DIR/json_module.F90\
           $VARS_DIR/data_keys.f08\
           $VARS_DIR/type_definitions.f08\
+          $UTIL_DIR/string_utils.f08\
           $INIT_DIR/setting_definition.f08\
           $VARS_DIR/globals.f08\
           $API_DIR/dll.f08\
