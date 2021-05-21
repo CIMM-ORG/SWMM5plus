@@ -50,7 +50,7 @@ contains
         if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
 
         !% If BIPquick is being used for Partitioning, include additional rows to the link-node arrays
-        if (setting%Partitioning%PartitioningMethod == BIPquick) then
+        if (setting%Partitioning%PartitioningMethod == bquick) then
             additional_rows = setting%Partitioning%N_Image - 1
         end if
 

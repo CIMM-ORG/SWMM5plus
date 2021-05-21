@@ -589,7 +589,7 @@ contains
         if (c == 'Default') then
             setting%Partitioning%PartitioningMethod = Default
         else if (c == 'BIPquick') then
-            setting%Partitioning%PartitioningMethod = BIPquick
+            setting%Partitioning%PartitioningMethod = bquick
         end if
         if (.not. found) stop 72
 
