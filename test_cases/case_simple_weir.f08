@@ -35,9 +35,15 @@ contains
         discharge_coefficient2, full_depth, end_contractions, ManningsN,    &
         roughness_type, idepth_type, linkR, nodeR, linkI, nodeI,linkYN,     &
         nodeYN, linkName, nodeName, bcdataDn, bcdataUp)
+        !-----------------------------------------------------------------------------
         !
-        ! initialize the link-node system and boundary conditions for a simple channel
+        ! Description:
+        !   initialize the link-node system and boundary conditions for a simple channel
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_simple_weir_initialize'
 
         real(8),  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
@@ -133,9 +139,15 @@ contains
         discharge_coefficient2, full_depth, end_contractions, ManningsN,    &
         roughness_type, idepth_type, linkR, nodeR, linkI, nodeI,linkYN,     &
         nodeYN, linkName, nodeName)
+        !-----------------------------------------------------------------------------
         !
-        ! creates a weir in between two rectangular channels
+        ! Description:
+        !   creates a weir in between two rectangular channels
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_simple_weir_and_nodes'
 
         real(8),  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)

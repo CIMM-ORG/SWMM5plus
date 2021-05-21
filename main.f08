@@ -9,8 +9,7 @@ program main
    use partitioning
 
    implicit none
-
-    !testing
+   
    integer :: i
    logical :: arg_param = .false.
    character(len=8) :: param

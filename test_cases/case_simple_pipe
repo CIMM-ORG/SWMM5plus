@@ -33,9 +33,15 @@ contains
         depth_dnstream, ManningsN, roughness_type, idepth_type, full_depth, &
         linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
         bcdataDn, bcdataUp)
+        !-----------------------------------------------------------------------------
         !
-        ! initialize the link-node system and boundary conditions for a simple pipe
+        ! Description:
+        !   initialize the link-node system and boundary conditions for a simple pipe
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_simple_pipe_initialize'
 
         real(8),  intent(in)  :: pipe_length, pipe_breadth
@@ -122,9 +128,15 @@ contains
         lowerZ, upperZ, initial_flowrate, init_depth, depth_upstream,       &
         depth_dnstream, ManningsN, roughness_type, idepth_type, full_depth, &
         linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName)
+        !-----------------------------------------------------------------------------
         !
-        ! creates a simple rectangular pipe with 1 link and 2 nodes
+        ! Description:
+        !   creates a simple rectangular pipe with 1 link and 2 nodes
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_simple_pipe_links_and_nodes'
 
         real(8),  intent(in)  :: pipe_length, pipe_breadth

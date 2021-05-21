@@ -33,6 +33,14 @@ contains
         depth_dnstream, ManningsN, roughness_type, idepth_type,             &
         linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
         bcdataDn, bcdataUp)
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !
+        !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
 
         character(64) :: subroutine_name = 'case_y_channel_initialize'
 
@@ -133,9 +141,15 @@ contains
         lowerZ, upperZ, initial_flowrate, init_depth, depth_upstream, &
         depth_dnstream, ManningsN, roughness_type, idepth_type, &
         linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName)
+        !-----------------------------------------------------------------------------
         !
-        ! creates a simple rectangular channel with 1 link and 2 nodes
+        ! Description:
+        !   creates a simple rectangular channel with 1 link and 2 nodes
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_simple_channel_links_and_nodes'
 
         real(8),  intent(in)  :: channel_length(:), channel_breadth(:)

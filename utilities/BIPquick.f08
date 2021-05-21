@@ -35,6 +35,15 @@
 ! These two subroutines just populate the B_nodeI, B_linkI arrays with hardcoded values that *would* be the output of BIPquick_subroutine (if it worked)
 ! OPTIMAL.inp is the name of the system input file this hardcode subroutine emulates
  subroutine BIPquick_Optimal_Hardcode() 
+    !-----------------------------------------------------------------------------
+	!
+	! Description:
+	!
+	!
+	! Method:
+	!    
+	!
+	!-----------------------------------------------------------------------------
     ! integer, dimension(:,:), intent(in out)  :: P_nodeI
     ! integer, dimension(:,:), intent(in out)   :: P_linkI
     ! integer,  dimension(:,:), intent(in out)  :: linkI
@@ -55,7 +64,14 @@
 end subroutine BIPquick_Optimal_Hardcode
 
 ! Y_Junction_NetworkDefineTest.inp is the name of the system input file this hardcode subroutine emulates
-subroutine BIPquick_YJunction_Hardcode() 
+subroutine BIPquick_YJunction_Hardcode()
+    !-----------------------------------------------------------------------------
+    ! Description:
+    !
+	!
+	! Method:
+	!    
+	!-----------------------------------------------------------------------------
     integer :: ii
 
     print*, "The YJunction Arrays have been initialized and are size", size(P_nodeI,1), size(P_linkI,1)
@@ -81,11 +97,20 @@ subroutine BIPquick_YJunction_Hardcode()
 
 end subroutine BIPquick_YJunction_Hardcode
 
-! This subroutine is the main BIPquick subroutine
-! It uses the link-node arrays initialized in $ call initialize_linknode_arrays() $ in the main.f08
-! It also uses B_nodeI, B_linkI arrays that are initialized in allocate_storage.f08
-! Two dummy arrays, B_nodeI and B_nodeR are used to contain some of the BIPquick specific parameters
+! 
+! 
+! 
+! 
  subroutine BIPquick_subroutine(linkI, nodeI, linkR, nodeR)
+    !-----------------------------------------------------------------------------
+    ! Description:
+    !   This subroutine is the main BIPquick subroutine
+    !   It uses the link-node arrays initialized in $ call initialize_linknode_arrays() $ in the main.f08
+    !   It also uses B_nodeI, B_linkI arrays that are initialized in allocate_storage.f08
+    !   Two dummy arrays, B_nodeI and B_nodeR are used to contain some of the BIPquick specific parameters
+    ! Method:
+    !    
+    !-----------------------------------------------------------------------------
      real(8)    :: lr_target_default = 1.0                         ! for the time being, the target length of an element is a hardcoded parameter
      integer :: n_rows_in_file_node, n_rows_in_file_link    ! counter for the number of rows in the node/link .csv files
      integer :: n_rows_excluding_header_node, n_rows_excluding_header_link  ! number of rows in the node/link .csv files excluding the header, used to determine the size of the arrays
@@ -586,11 +611,15 @@ end subroutine BIPquick_subroutine
 ! !============================================================================ 
 ! ! 
  function weighting_function(lr_target, link_length) result(weight)
+!----------------------------------------------------------------------------
 !
-! the weight attributed to each link (that will ultimately be assigned to the 
-! downstream node) are normalized by lr_Target.  This gives an estimate of 
-! computational complexity. In the future lr_Target can be customized for each 
-! link.
+! Description:
+!   the weight attributed to each link (that will ultimately be assigned to the 
+!   downstream node) are normalized by lr_Target.  This gives an estimate of 
+!   computational complexity. In the future lr_Target can be customized for each 
+!   link.
+!
+!----------------------------------------------------------------------------
  character(64)   :: function_name = 'weighting_function'
  
  real(8), intent(in)  :: lr_target
@@ -608,10 +637,14 @@ end subroutine BIPquick_subroutine
 !============================================================================ 
 ! 
  subroutine null_value_convert(array)
+!----------------------------------------------------------------------------
 !
-! this function is used to convert the null values that are defaulted in the 
-! B_nr_directweight_u and B_nr_totalweight_u columns of the nodes array into float 
-! zeros.
+! Description:
+!   this function is used to convert the null values that are defaulted in the 
+!   B_nr_directweight_u and B_nr_totalweight_u columns of the nodes array into float 
+!   zeros.
+!
+!----------------------------------------------------------------------------
  character(64) :: subroutine_name = 'null_value_convert'
  
  real(8), intent(in out) :: array(:)
@@ -631,11 +664,15 @@ end subroutine BIPquick_subroutine
 !============================================================================ 
 ! 
  subroutine local_node_weighting(nodeI, linkI, nodeR, linkR, B_nodeR, lr_target_default)
+!----------------------------------------------------------------------------
 !
-! this function takes each node index (ni_idx) and finds that ni_idx in the 
-! downstream node column of the links array (li_Mnode_d).  From this row in 
-! links the link weight is grabbed and ascribed to the node-in-questions local 
-! weight (nr_directweight_u).
+! Description:
+!   this function takes each node index (ni_idx) and finds that ni_idx in the 
+!   downstream node column of the links array (li_Mnode_d).  From this row in 
+!   links the link weight is grabbed and ascribed to the node-in-questions local 
+!   weight (nr_directweight_u).
+!
+!----------------------------------------------------------------------------
  character(64) :: subroutine_name = 'local_node_weighting'
  
  real(8)  :: lr_target
@@ -676,10 +713,14 @@ end subroutine BIPquick_subroutine
 !============================================================================ 
 !  
  subroutine network_node_preprocessing(nodeI, linkI, B_nodeI)
+!----------------------------------------------------------------------------
 !
-! This subroutine will be called immediately following the population of the node/linkMatrices
-! The upstream adjacent nodes will be added as additional columns for each node.  This will enhance code speedup,
-! as it will no longer be necessary to jump back and forth between nodeMatrix and linkMatrix
+! Description:
+!   This subroutine will be called immediately following the population of the node/linkMatrices
+!   The upstream adjacent nodes will be added as additional columns for each node.  This will enhance code speedup,
+!   as it will no longer be necessary to jump back and forth between nodeMatrix and linkMatrix
+!
+!----------------------------------------------------------------------------
  character(64) :: subroutine_name = 'network_node_preprocessing'
  
  integer, intent(in) :: nodeI(:,:), linkI(:,:)
@@ -717,7 +758,15 @@ end subroutine BIPquick_subroutine
 !============================================================================ 
 ! 
  recursive subroutine upstream_weight_calculation(weight_index, root, B_nodeR, nodeR, linkR, B_nodeI, nodeI, linkI, & 
-                        B_node_Partition, B_link_Partition, visited_flag_weight, visit_network_mask)
+                        B_node_Partition, B_link_Partition, visited_flag_weight, visit_network_mask)\
+!-----------------------------------------------------------------------------
+!
+! Description:
+!
+!
+! Method:
+!    
+!-----------------------------------------------------------------------------
 
  character(64) :: subroutine_name = 'upstream_weight_calculation'
  
@@ -763,6 +812,14 @@ end subroutine BIPquick_subroutine
 ! 
  subroutine nr_totalweight_assigner(B_nodeR, nodeR, linkR, B_nodeI, nodeI, linkI, B_node_Partition, & 
                 B_link_Partition, weight_index, max_weight, visited_flag_weight, visit_network_mask)
+!-----------------------------------------------------------------------------
+!
+! Description:
+!
+!
+! Method:
+!    
+!-----------------------------------------------------------------------------
 
  character(64) :: subroutine_name = 'nr_totalweight_assigner'
  
@@ -1038,6 +1095,14 @@ end subroutine BIPquick_subroutine
 ! !==========================================================================
 ! ! 
  subroutine phantom_naming_convention(nodeI, linkI, phantom_node_idx, phantom_link_idx)
+!-----------------------------------------------------------------------------
+!
+! Description:
+!
+!
+! Method:
+!    
+!-----------------------------------------------------------------------------
 
  character(64)   :: function_name = 'phantom_naming_convention'
 

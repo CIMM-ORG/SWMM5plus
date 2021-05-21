@@ -30,9 +30,15 @@ contains
         depth_dnstream, ManningsN, roughness_type, idepth_type, full_depth,   &
         N_link, N_node, linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, &
         nodeName, bcdataDn, bcdataUp, zbottom)
+        !-----------------------------------------------------------------------------
         !
-        ! initialize the link-node system and boundary conditions for a simple channel
+        ! Description:
+        !   initialize the link-node system and boundary conditions for a simple channel
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_shashes_initialize'
 
         real(8),  intent(in)  :: channel_length(:), channel_breadth(:)
@@ -124,9 +130,15 @@ contains
         depth_dnstream, ManningsN, roughness_type, idepth_type, full_depth,   &
         linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,       &
         N_link, N_node, zbottom)
+        !-----------------------------------------------------------------------------
         !
-        ! creates swashes test case
+        ! Description:
+        !   creates swashes test case
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_swashes_links_and_nodes'
 
         real(8),  intent(in)  :: channel_length(:), channel_breadth(:), full_depth(:)
