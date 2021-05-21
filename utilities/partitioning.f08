@@ -190,6 +190,7 @@ end subroutine default_partitioning
 !==========================================================================   
 !========================================================================== 
 !
+
 subroutine random_partitioning()
     integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
     integer :: total_num_elements, num_attributed_elements, assigning_image
@@ -305,6 +306,7 @@ subroutine random_partitioning()
     deallocate(image_full)
 
 end subroutine random_partitioning
+
 !    
 !==========================================================================   
 !========================================================================== 
@@ -353,11 +355,17 @@ function partition_diagnostic_partsizebalance() result(part_size_balance)
     !% The maximum and minimum number of elements for an image are determined
     max_elem = maxval(elem_per_image(:))
     min_elem = minval(elem_per_image(:))
+    print*, "Elem_per_image", elem_per_image(:)
 
     !% The difference between the max and min number of elements per image is the part_size_balance objective metric
     part_size_balance = max_elem - min_elem
         
 end function partition_diagnostic_partsizebalance
+
+!    
+!==========================================================================   
+!========================================================================== 
+!
 
 function partition_diagnostic_connectivity() result(connectivity)
     !% This function is used to determine how many boundary nodes exist in this partition set
@@ -367,6 +375,11 @@ function partition_diagnostic_connectivity() result(connectivity)
     !% HACK - I might need to rethink this as some boundary nodes contributed more than 1 connection point
     connectivity = sum(P_nodeI(:, P_ni_is_boundary))
 end function partition_diagnostic_connectivity
+
+!    
+!==========================================================================   
+!========================================================================== 
+!
 
 function default_performance_check() result(partition_correct)
     integer :: ii
