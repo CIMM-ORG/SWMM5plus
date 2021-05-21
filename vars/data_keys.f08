@@ -165,7 +165,7 @@ module data_keys
     ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
     enum, bind(c)
         enumerator :: Default = 1
-        enumerator :: bquick
+        enumerator :: BQuick
         enumerator :: Random
     end enum
 

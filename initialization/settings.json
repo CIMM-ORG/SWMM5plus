@@ -107,7 +107,7 @@
         "Volume" : 1e-6
     },
     "Partitioning" : {
-        "N_Image"  : 3, 
+        "N_Image"  : 3,
         "PartitioningMethod" : "Default",
         "BIPquickTestCase" : false
     },
@@ -117,9 +117,9 @@
             "dynamic_array" : false,
             "tables" : false,
             "allocate_storage" : false,
-            "initialization" : true,
+            "initialization" : false,
             "interface" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "BIPquick"  : false,
             "utility" : false,
             "globals" : false,
@@ -128,5 +128,11 @@
         "Output" : {
 
         }
-    }
+    },
+    "Warning" : {
+        "File" : {
+            "partitioning" : false
+        }
+    },
+    "Verbose" : false
 }

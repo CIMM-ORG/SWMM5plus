@@ -21,20 +21,20 @@ module partitioning
     private
 
     public :: execute_partitioning
-   
+
     integer, pointer :: setP_N_images => setting%Partitioning%N_Image
 
 contains
 
-!    
-!==========================================================================   
-!========================================================================== 
+!
+!==========================================================================
+!==========================================================================
 !
 
 subroutine execute_partitioning()
     !% --------------------------------------------------------
     !%   The purpose of this subroutine is to check which partitioning
-    !%   algorithm should be used, then call that algorithm, then 
+    !%   algorithm should be used, then call that algorithm, then
     !%   check that the output is correct (if debug == true)
     !% --------------------------------------------------------
     logical :: partition_correct
@@ -46,10 +46,10 @@ subroutine execute_partitioning()
 
     !% Determine which partitioning method is being used
     if (setting%Partitioning%PartitioningMethod == Default) then
-        print*, "Using Default Partitioning"
+        if (setting%Verbose) print*, "Using Default Partitioning"
         call default_partitioning()
-    else if (setting%Partitioning%PartitioningMethod == bquick) then
-        print*, "Using BIPquick Partitioning"
+    else if (setting%Partitioning%PartitioningMethod == BQuick) then
+        if (setting%Verbose) print*, "Using BIPquick Partitioning"
         call BIPquick_YJunction_Hardcode
     else if (setting%Partitioning%PartitioningMethod == Random) then
         call random_partitioning()
@@ -72,11 +72,11 @@ subroutine execute_partitioning()
 
         print*, "*** partitioning is complete", connectivity, part_size_balance
     end if
-end subroutine 
+end subroutine
 
-!    
-!==========================================================================   
-!========================================================================== 
+!
+!==========================================================================
+!==========================================================================
 !
 
 subroutine default_partitioning()
@@ -129,7 +129,7 @@ subroutine default_partitioning()
         !% If the number of elements is greater than the partition threshold, reset the number of elements and increment the image
         if ( (num_attributed_elements > partition_threshold) ) then
             !% This is a check to make sure that links aren't added to an image that doesn't exist
-            if ( assigning_image /= setP_N_images ) then 
+            if ( assigning_image /= setP_N_images ) then
                 assigning_image = assigning_image + 1
             end if
             num_attributed_elements = 0
@@ -158,7 +158,7 @@ subroutine default_partitioning()
         if ( num_attributed_elements > partition_threshold) then
             num_attributed_elements = 0
             !% This is a check to make sure that nodes aren't added to an image that doesn't exist
-            if ( assigning_image /= setP_N_images ) then 
+            if ( assigning_image /= setP_N_images ) then
                 assigning_image = assigning_image + 1
             end if
         end if
@@ -186,9 +186,9 @@ subroutine default_partitioning()
 
 end subroutine default_partitioning
 
-!    
-!==========================================================================   
-!========================================================================== 
+!
+!==========================================================================
+!==========================================================================
 !
 
 subroutine random_partitioning()
@@ -393,7 +393,7 @@ function default_performance_check() result(partition_correct)
     allocate(ArraySame_nodeI(size(nodeI,1), P_ni_is_boundary))
     allocate(ArraySame_linkI(size(linkI,1), P_li_Partition_No))
 
-    PartCheck_nodeI(:, P_ni_idx_Partition) = (/1,2,3,4/) 
+    PartCheck_nodeI(:, P_ni_idx_Partition) = (/1,2,3,4/)
     PartCheck_nodeI(:, P_ni_Partition_No) = (/2,2,3,3/)
     PartCheck_nodeI(:, P_ni_is_boundary) = (/1,0,1,1/)
 
@@ -406,8 +406,8 @@ function default_performance_check() result(partition_correct)
     !% Create a logical array of if the two arrays match
     ArraySame_nodeI(:,:) = ( PartCheck_nodeI == P_nodeI )
     ArraySame_linkI(:,:) = ( PartCheck_linkI == P_linkI )
-    
-    if ( all(ArraySame_nodeI) .eqv. .true. ) then 
+
+    if ( all(ArraySame_nodeI) .eqv. .true. ) then
         print*, "The node arrays are partitioned correctly"
     else
         print*, "There is a mistake in the P_nodeI"
@@ -418,7 +418,7 @@ function default_performance_check() result(partition_correct)
        end do
     end if
 
-    if ( all(ArraySame_linkI) .eqv. .true. ) then 
+    if ( all(ArraySame_linkI) .eqv. .true. ) then
         print*, "The link arrays are partitioned correctly"
     else
         print*, "There is a mistake in the P_linkI"
