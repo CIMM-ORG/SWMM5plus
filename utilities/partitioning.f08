@@ -43,15 +43,6 @@ subroutine execute_partitioning()
 
     !% --------------------------------------------------------
 
-    call default_random_partitioning()
-    do ii = 1, size(P_nodeI,1)
-        print*, P_nodeI(ii, :)
-    end do
-    do ii = 1, size(P_linkI,1)
-        print*, P_linkI(ii, :)
-    end do
-    stop
-
     !% Determine which partitioning method is being used
     if (setting%Partitioning%PartitioningMethod == Default) then
         print*, "Using Default Partitioning"
@@ -59,6 +50,8 @@ subroutine execute_partitioning()
     else if (setting%Partitioning%PartitioningMethod == bquick) then
         print*, "Using BIPquick Partitioning"
         call BIPquick_YJunction_Hardcode
+    else if (setting%Partitioning%PartitioningMethod == Random) then
+        call random_partitioning()
     end if
 
     if (setting%Debug%File%partitioning) then
@@ -168,7 +161,7 @@ end subroutine default_partitioning
 !==========================================================================   
 !========================================================================== 
 !
-subroutine default_random_partitioning()
+subroutine random_partitioning()
     integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
     integer :: total_num_elements, num_attributed_elements, assigning_image
     integer :: current_node_image, adjacent_link_image
@@ -264,7 +257,7 @@ subroutine default_random_partitioning()
     end do
     deallocate(adjacent_links)
 
-end subroutine default_random_partitioning
+end subroutine random_partitioning
 !    
 !==========================================================================   
 !========================================================================== 

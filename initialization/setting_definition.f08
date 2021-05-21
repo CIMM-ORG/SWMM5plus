@@ -590,6 +590,8 @@ contains
             setting%Partitioning%PartitioningMethod = Default
         else if (c == 'BIPquick') then
             setting%Partitioning%PartitioningMethod = bquick
+        else if (c == 'Random') then
+            setting%Partitioning%PartitioningMethod = Random
         end if
         if (.not. found) stop 72
 
