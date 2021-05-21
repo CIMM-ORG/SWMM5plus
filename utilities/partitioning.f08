@@ -38,8 +38,9 @@ subroutine execute_partitioning()
     !%   check that the output is correct (if debug == true)
     !% --------------------------------------------------------
     logical :: partition_correct
+    integer :: connectivity
+    real(8) :: part_size_balance
     character(64) :: subroutine_name = 'execute_partitioning'
-    integer :: ii
 
     !% --------------------------------------------------------
 
@@ -58,9 +59,11 @@ subroutine execute_partitioning()
         print *, '*** leave ', subroutine_name
 
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
-        partition_correct = default_performance_check()
+        ! partition_correct = default_performance_check()
+        connectivity = partition_diagnostic_connectivity()
+        part_size_balance = partition_diagnostic_partsizebalance()
 
-        print*, "*** partitioning is complete", partition_correct
+        print*, "*** partitioning is complete", connectivity, part_size_balance
     end if
 end subroutine 
 
@@ -262,6 +265,42 @@ end subroutine random_partitioning
 !==========================================================================   
 !========================================================================== 
 !
+
+function partition_diagnostic_partsizebalance() result(part_size_balance)
+    !% This function is used to determine the discrepancy between the images with the largest and smallest number of elements
+    integer :: part_size_balance
+    integer :: ii, current_image, max_elem, min_elem
+    integer, allocatable, dimension(:) :: elem_per_image
+
+    !% Reallocate the elem_per_image array because not all algorithms use this
+    allocate(elem_per_image(setP_N_images))
+    elem_per_image(:) = 0
+    do ii = 1, size(P_linkI, 1)
+        current_image = P_linkI(ii, P_li_Partition_No)
+        elem_per_image(current_image) = elem_per_image(current_image) + linkI(ii, li_N_element)
+    end do
+    do ii = 1, size(P_nodeI, 1)
+        current_image = P_nodeI(ii, P_ni_Partition_No)
+        if ( (nodeI(ii, ni_node_type) == nBCup) &
+        .or. (nodeI(ii, ni_node_type) == nBCdn) &
+        .or. (nodeI(ii, ni_node_type) == nStorage) ) then
+            elem_per_image(current_image) = elem_per_image(current_image) + 1
+        else if ( nodeI(ii, ni_node_type) == nJm ) then
+            elem_per_image(current_image) = elem_per_image(current_image) + 7
+        end if
+    end do
+
+    max_elem = maxval(elem_per_image(:))
+    min_elem = minval(elem_per_image(:))
+    part_size_balance = max_elem - min_elem
+        
+end function partition_diagnostic_partsizebalance
+
+function partition_diagnostic_connectivity() result(connectivity)
+    integer :: connectivity
+!% This function is used to determine how many boundary nodes exist in this partition set
+    connectivity = count(P_nodeI(:, P_ni_is_boundary) == 1)
+end function partition_diagnostic_connectivity
 
 function default_performance_check() result(partition_correct)
     integer :: ii
