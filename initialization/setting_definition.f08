@@ -607,6 +607,8 @@ contains
             setting%Partitioning%PartitioningMethod = Default
         else if (c == 'bquick') then
             setting%Partitioning%PartitioningMethod = BQuick
+        else if (c == 'random') then
+            setting%Partitioning%PartitioningMethod = Random
         else
             print *, "Error, the setting '" // trim(c) // "' is not supported for PartitioningMethod"
             stop

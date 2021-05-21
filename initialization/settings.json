@@ -108,7 +108,7 @@
     },
     "Partitioning" : {
         "N_Image"  : 3,
-        "PartitioningMethod" : "Default",
+        "PartitioningMethod" : "random",
         "BIPquickTestCase" : false
     },
     "Debug" : {
@@ -134,5 +134,5 @@
             "partitioning" : false
         }
     },
-    "Verbose" : false
+    "Verbose" : true
 }

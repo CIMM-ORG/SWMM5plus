@@ -50,8 +50,9 @@ subroutine execute_partitioning()
         call default_partitioning()
     else if (setting%Partitioning%PartitioningMethod == BQuick) then
         if (setting%Verbose) print*, "Using BIPquick Partitioning"
-        call BIPquick_YJunction_Hardcode
+        call BIPquick_YJunction_Hardcode()
     else if (setting%Partitioning%PartitioningMethod == Random) then
+        if (setting%Verbose) print*, "Using Random Partitioning"
         call random_partitioning()
     end if
 
