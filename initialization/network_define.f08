@@ -51,23 +51,24 @@ contains
         !% divide the link node networks in elements and faces 
         call network_data_create()
 
+        sync all 
         !% print result
         if (setting%Debug%File%network_define) then
-            do image = 1, num_images()
-                print*, '----------------------------------------------------'
-                print*, 'image = ', image
-                print*, '..................elements..........................'
-                print*, elemI(:,ei_Lidx)[image], 'ei_Lidx'
-                print*, elemI(:,ei_Gidx)[image], 'ei_Gidx'
-                print*, elemI(:,ei_elementType)[image], 'ei_elementType'
-                print*, elemI(:,ei_geometryType)[image], 'ei_geometryType'
-                print*, elemI(:,ei_link_Gidx_SWMM)[image], 'ei_link_Gidx_SWMM'
-                print*, elemI(:,ei_node_Gidx_SWMM)[image], 'ei_node_Gidx_SWMM'
-                print*, '..................faces.............................'
-                print*, faceI(:,fi_Lidx)[image], 'fi_Lidx'
-                print*, faceI(:,fi_Gidx)[image], 'fi_Gidx'
-                print*, '----------------------------------------------------'  
-            enddo
+           image = this_image()
+           print*, '----------------------------------------------------'
+           print*, 'image = ', image
+           print*, '..................elements..........................'
+           print*, elemI(:,ei_Lidx)[image], 'ei_Lidx', " |img# = ", image
+           print*, elemI(:,ei_Gidx)[image], 'ei_Gidx', " |img# = ", image
+           print*, elemI(:,ei_elementType)[image], 'ei_elementType', "| img# = ", image
+           print*, elemI(:,ei_geometryType)[image], 'ei_geometryType', "| img# = ", image
+           print*, elemI(:,ei_link_Gidx_SWMM)[image], 'ei_link_Gidx_SWMM', "| img# = ", image
+           print*, elemI(:,ei_node_Gidx_SWMM)[image], 'ei_node_Gidx_SWMM', "| img# = ", image
+           print*, '..................faces.............................'
+           print*, faceI(:,fi_Lidx)[image], 'fi_Lidx', "| img# = ", image
+           print*, faceI(:,fi_Gidx)[image], 'fi_Gidx', "| img# = ", image
+           print*, '----------------------------------------------------'
+           call execute_command_line('')
         endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
@@ -139,8 +140,8 @@ contains
         integer :: ii, jj, image, firstIdx
         integer :: ElemGlobalIdx, FaceGlobalIdx 
         integer :: ElemLocallIdx, FacelocallIdx
-        integer :: lastElem, lastFace 
-        integer, pointer :: N_Images, P_elem, P_face, Lidx
+        integer :: lastElem, lastFace, P_elem, P_face
+        integer, pointer :: N_Images, Lidx
         integer, pointer :: NodeUp, NodeDn, NodeUpTyp, NodeDnTyp
         integer, dimension(:), allocatable, target :: pack_link_idx, pack_node_idx
 
@@ -150,80 +151,89 @@ contains
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
         !% Number of Images
-        !% HACK: This is hardcoded for now. We have to come up with a way 
-        !% to use it as a user defined parameters
+        !% HACK: This is only works on every single image, so we will need to change when we move to a control and computation node structure.
         N_Images => setting%Partitioning%N_Image
 
         !% initializing global element and face id
         ElemGlobalIdx = first_elem_index
         FaceGlobalIdx = first_face_index
 
-        !% distribute the network across images
-        do image = 1, num_images()
+        !% Setting the local image value
+        image = this_image()
+        
+        !% initializing local element and face id
+        ElemLocallIdx = first_elem_index
+        FacelocallIdx = first_face_index
 
-            !% initializing local element and face id
-            ElemLocallIdx = first_elem_index
-            FacelocallIdx = first_face_index
-            !% initializing the first element number of link elements in a partition
-            firstIdx = oneI
+        !% initalizing the global element and face id by looping through N_elem and N_face for images not equal to one
+        
+        if(this_image() /= 1) then
 
-            !% pointer to number of elements and faces to this image
-            P_elem => N_elem(image)
-            P_face => N_face(image)
+           do ii=1, this_image()-1
+              ElemGlobalIdx = ElemGlobalIdx + N_elem(ii)
+              !% we have to subtract one from the global face id such that faces along the image boundaries are shared.
+              FaceGlobalIdx = FaceGlobalIdx + N_face(ii)-1
+           end do
+        end if
+        
+        !% initializing the first element number of link elements in a partition
+        firstIdx = oneI
 
-
-            elemI(ElemLocallIdx:P_elem, ei_Lidx)[image] = [(jj,jj=ElemLocallIdx,P_elem)]
-            elemI(ElemLocallIdx:P_elem, ei_Gidx)[image] = [(jj,jj=ElemGlobalIdx,P_elem + ElemGlobalIdx - 1)]
-            faceI(ElemLocallIdx:P_face, fi_Lidx)[image] = [(jj,jj=FacelocallIdx,P_face)]
-            faceI(ElemLocallIdx:P_face, fi_Gidx)[image] = [(jj,jj=FaceGlobalIdx,P_face + FaceGlobalIdx -1)]
-
-            ElemGlobalIdx = ElemGlobalIdx + P_elem
-            FaceGlobalIdx = FaceGlobalIdx + P_face
-
-            !% pack all the link indexes in a partition to cycle through the links
-            pack_link_idx = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) == image))
-            !% pack all the node indexes in a partition to determine which nodes are in the partition
-            pack_node_idx = pack(nodeI(:,ni_idx), (nodeI(:,ni_BQ_image) == image))
-
-            do ii = 1, size(pack_link_idx)
-                !% cycle through link indexs in a partition 
-                Lidx    => pack_link_idx(ii)
-                NodeUp  => linkI(Lidx,li_Mnode_u)
-                NodeDn  => linkI(Lidx,li_Mnode_d)
-                NodeUpTyp => nodeI(NodeUp,ni_node_type)
-                NodeDnTyp => nodeI(NodeDn,ni_node_type)
-
-                !% THIS IS A HACK CODE:
-                !% the central idea can be more organized
-                !% First populate the elemI array
-                !% only links and multiface junction will contribute to elem arrays
-
-                !% condition of a specific node to be in that partition that is junction
-                if (any(pack_node_idx .eq. NodeUp) .and. (NodeUpTyp .eq.  nJm)) then
-
-                    call handle_multi_branch_node (NodeUp, image, firstIdx)
-
-                    call subdivide_link (Lidx, image, firstIdx)
-
-                else
-
-                    call subdivide_link (Lidx, image, firstIdx)
-                endif
+        !% intializing the number of elements and faces tied to this local image
+        P_elem = N_elem(image)
+        P_face = N_face(image)
 
 
-                if (any(pack_node_idx .eq. NodeDn) .and. (NodeDnTyp .eq.  nJm)) then
+        elemI(ElemLocallIdx:P_elem, ei_Lidx) = [(jj,jj=ElemLocallIdx,P_elem)]
+        elemI(ElemLocallIdx:P_elem, ei_Gidx) = [(jj,jj=ElemGlobalIdx,P_elem + ElemGlobalIdx - 1)]
+        faceI(ElemLocallIdx:P_face, fi_Lidx) = [(jj,jj=FacelocallIdx,P_face)]
+        faceI(ElemLocallIdx:P_face, fi_Gidx) = [(jj,jj=FaceGlobalIdx,P_face + FaceGlobalIdx -1)]
 
-                    call handle_multi_branch_node (NodeDn, image, firstIdx)
+        !% pack all the link indexes in a partition to cycle through the links
+        pack_link_idx = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) == image))
+        !% pack all the node indexes in a partition to determine which nodes are in the partition
+        pack_node_idx = pack(nodeI(:,ni_idx), (nodeI(:,ni_BQ_image) == image))
 
-                endif
+        do ii = 1, size(pack_link_idx)
+           !% cycle through link indexs in a partition 
+           Lidx    => pack_link_idx(ii)
+           NodeUp  => linkI(Lidx,li_Mnode_u)
+           NodeDn  => linkI(Lidx,li_Mnode_d)
+           NodeUpTyp => nodeI(NodeUp,ni_node_type)
+           NodeDnTyp => nodeI(NodeDn,ni_node_type)
 
-                !% at this point we have the information of which elemI array idxs
-                !% are connected to which links/nodes. Now mapping out the faces
-                !% by cycling through the nodes should be simple
+           !% THIS IS A HACK CODE:
+           !% the central idea can be more organized
+           !% First populate the elemI array
+           !% only links and multiface junction will contribute to elem arrays
+
+           !% condition of a specific node to be in that partition that is junction
+           sync all
            
-            enddo
+           if (any(pack_node_idx .eq. NodeUp) .and. (NodeUpTyp .eq.  nJm)) then
+
+              call handle_multi_branch_node (NodeUp, image, firstIdx)
+
+              call subdivide_link (Lidx, image, firstIdx)
+
+           else
+
+              call subdivide_link (Lidx, image, firstIdx)
+           endif
+
+
+           if (any(pack_node_idx .eq. NodeDn) .and. (NodeDnTyp .eq.  nJm)) then
+
+              call handle_multi_branch_node (NodeDn, image, firstIdx)
+
+           endif
+
+           !% at this point we have the information of which elemI array idxs
+           !% are connected to which links/nodes. Now mapping out the faces
+           !% by cycling through the nodes should be simple
 
         enddo
+
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
