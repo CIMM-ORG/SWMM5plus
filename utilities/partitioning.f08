@@ -15,6 +15,7 @@ module partitioning
 !%   This module controls the partitioning algorithm used.  Currently the options are
 !%       - BIPquick
 !%       - Default
+!%       - Random
 !%
 !%***********************************************************************************
 
@@ -25,12 +26,10 @@ module partitioning
     integer, pointer :: setP_N_images => setting%Partitioning%N_Image
 
 contains
-
 !
 !==========================================================================
 !==========================================================================
 !
-
 subroutine execute_partitioning()
     ! --------------------------------------------------------
     !
@@ -47,6 +46,8 @@ subroutine execute_partitioning()
 
     !% --------------------------------------------------------
 
+    call allocate_partitioning_arrays()
+
     !% Determine which partitioning method is being used
     if (setting%Partitioning%PartitioningMethod == Default) then
         if (setting%Verbose) print*, "Using Default Partitioning"
@@ -58,6 +59,8 @@ subroutine execute_partitioning()
         if (setting%Verbose) print*, "Using Random Partitioning"
         call random_partitioning()
     end if
+
+
 
     if (setting%Debug%File%partitioning) then
         print *, '*** leave ', subroutine_name
@@ -76,43 +79,50 @@ subroutine execute_partitioning()
 
         print*, "*** partitioning is complete", connectivity, part_size_balance
     end if
+
+    call deallocate_partitioning_arrays()
 end subroutine
-
 !
 !==========================================================================
 !==========================================================================
 !
-
+subroutine allocate_partitioning_arrays()
+    allocate(adjacent_links(max_us_branch_per_node+max_ds_branch_per_node))
+    allocate(elem_per_image(setP_N_images))
+    allocate(image_full(setP_N_images))
+end subroutine allocate_partitioning_arrays
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine deallocate_partitioning_arrays()
+    deallocate(adjacent_links)
+    deallocate(elem_per_image)
+    deallocate(image_full)
+end subroutine deallocate_partitioning_arrays
+!
+!==========================================================================
+!==========================================================================
+!
 subroutine default_partitioning()
     ! ----------------------------------------------------------------------------------------------------------------
     !
     ! Description:
-    !   This subroutine populates the P_nodeI, P_linkI arrays
-    !   Rather than applying the BIPquick routine, the default partitioning is going to work by
-    !       - Counting the total number of elements expected, using that to calculate the partition threshold
-    !       - Iterating through the nodeI array until the number of elements expected exceeds the partition threshold
-    !       - Iterating through the linkI array until the number of elements expected exceeds the partition threshold
-    !       - Iterating again through the nodeI array to determine if the adjacent links are on different processors
+    !   The default partitioning algorithm populates the partitioning columns of the linkI-nodeI arrays.  Rather than
+    !   assigning links-nodes to images topologically (as in BIPquick), the default partitioning algorithm assigns them
+    !   in the order in which they appear in the link-node arrays.
     !
     ! -----------------------------------------------------------------------------------------------------------------
     integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
     integer :: total_num_elements, num_attributed_elements, assigning_image
     integer :: current_node_image, adjacent_link_image
-    integer, allocatable, dimension(:) :: adjacent_links
     real(8) :: partition_threshold
     logical :: partition_correct
 
 !% ----------------------------------------------------------------------------------------------------------------
-    !% This subroutine populates the P_nodeI, P_linkI arrays
-    !% Rather than applying the BIPquick routine, the default partitioning works by
-    !%   - Counting the total number of elements expected, using that to calculate the partition threshold
-    !%   - Iterating through the nodeI array until the number of elements expected exceeds the partition threshold
-    !%   - Iterating through the linkI array until the number of elements expected exceeds the partition threshold
-    !%   - Iterating again through the nodeI array to determine if the adjacent links are on different processors
-!% -----------------------------------------------------------------------------------------------------------------
+
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
-
 
     !% HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
     !% multiplied by how many elements are expected for that node_type
@@ -153,7 +163,6 @@ subroutine default_partitioning()
 
     !% This loop counts the elements attributed to each node, and assigns the node to an image
     !% It also determines if that node has an adjacent link on a different image
-    allocate(adjacent_links(6))
     do ii = 1, size(nodeI, 1)
 
         !% This if statement increments the num_attributed_elements by the number of elements associated with that node type
@@ -197,31 +206,26 @@ subroutine default_partitioning()
             end if
         end do
     end do
-    deallocate(adjacent_links)
 
 end subroutine default_partitioning
-
 !
 !==========================================================================
 !==========================================================================
 !
-
 subroutine random_partitioning()
+    ! ----------------------------------------------------------------------------------------------------------------
+    !
+    ! Description:
+    !   The random partitioning algorithm populates the partitioning columns of the linkI-nodeI arrays.  An alternative
+    !   to the default partitioning algorithm, the random partitioning algorithm looks at each link and node and assigns
+    !   it to a random image (after checking to ensure that image is not full).
+    !
+    ! -----------------------------------------------------------------------------------------------------------------
     integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
     integer :: total_num_elements, num_attributed_elements, assigning_image
     integer :: current_node_image, adjacent_link_image
-    integer, allocatable, dimension(:) :: adjacent_links, elem_per_image
-    logical, allocatable, dimension(:) :: image_full
     real(8) :: partition_threshold, rand_num
-
     !% ----------------------------------------------------------------------------------------------------------------
-    !% This subroutine populates the P_nodeI, P_linkI arrays
-    !% Rather than applying the BIPquick routine, the default random partitioning works by
-    !%   - Counting the total number of elements expected, using that to calculate the partition threshold
-    !%   - Iterating through the linkI array, randomly assigning links to images and counting the number of elements ascribed to each image
-    !%   - Iterating through the nodeI array, randomly assigning nodes to images and counting the number of elements ascribed to each image
-    !%   - Iterating again through the nodeI array to determine if the adjacent links are on different processors
-    !% -----------------------------------------------------------------------------------------------------------------
 
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
@@ -233,9 +237,7 @@ subroutine random_partitioning()
     partition_threshold = ( total_num_elements / real(setP_N_images) )
 
     !% Initialize the arrays that will hold the number of elements already on an image (and whether that image is full)
-    allocate(elem_per_image(setP_N_images))
     elem_per_image(:) = 0
-    allocate(image_full(setP_N_images))
     image_full(:) = .false.
 
     !% This loop counts the elements attributed to each link, and assigns the link to an image
@@ -316,25 +318,26 @@ subroutine random_partitioning()
             end if
         end do
     end do
-    deallocate(adjacent_links)
-    deallocate(elem_per_image)
-    deallocate(image_full)
 
 end subroutine random_partitioning
-
 !    
 !==========================================================================   
 !========================================================================== 
 !
-
 function partition_diagnostic_partsizebalance() result(part_size_balance)
-    !% This function is used to determine the discrepancy between the images with the largest and smallest number of elements
+    ! ----------------------------------------------------------------------------------------------------------------
+    !
+    ! Description:
+    !   This function is used to calculate the part size balance metric for the given partition set (i.e. the output 
+    !   from any of the partitioning algorithms).  The part size balance metric is equal to the greatest number of 
+    !   elements assigned to a single processor minus the smallest number of elements assigned to a single processor.
+    !
+    ! -----------------------------------------------------------------------------------------------------------------
     integer :: part_size_balance
     integer :: ii, current_image, max_elem, min_elem
-    integer, allocatable, dimension(:) :: elem_per_image
+    ! -----------------------------------------------------------------------------------------------------------------
 
-    !% Reallocate the elem_per_image array because not all algorithms use this
-    allocate(elem_per_image(setP_N_images))
+    !% Reset the elem_per_image array to all zeros
     elem_per_image(:) = 0
 
     !% Iterate through the P_linkI array
@@ -376,26 +379,31 @@ function partition_diagnostic_partsizebalance() result(part_size_balance)
     part_size_balance = max_elem - min_elem
         
 end function partition_diagnostic_partsizebalance
-
 !    
 !==========================================================================   
 !========================================================================== 
 !
-
 function partition_diagnostic_connectivity() result(connectivity)
-    !% This function is used to determine how many boundary nodes exist in this partition set
+    ! ----------------------------------------------------------------------------------------------------------------
+    !
+    ! Description:
+    !   This function is used to calculate the connectivity metric for the given partition set (i.e. the output 
+    !   from any of the partitioning algorithms).  The connectivity metric is equal to the sum of the ni_is_boundary
+    !   column of the nodeI array after the partition has been completed.  Note: the ni_is_boundary column is given a 
+    !   value of 0 when the node is an internal partition node, and is incremented by 1 for each additional partition
+    !   the node touches.
+    !
+    ! -----------------------------------------------------------------------------------------------------------------
     integer :: connectivity
+    ! -----------------------------------------------------------------------------------------------------------------
 
-    !% The number of boundary nodes in P_nodeI is the connectivity objective metric
-    !% HACK - I might need to rethink this as some boundary nodes contributed more than 1 connection point
+    !% The sum of the ni_is_boundary column is the connectivity
     connectivity = sum(P_nodeI(:, P_ni_is_boundary))
 end function partition_diagnostic_connectivity
-
 !    
 !==========================================================================   
 !========================================================================== 
 !
-
 function default_performance_check() result(partition_correct)
     integer :: ii
     logical :: partition_correct

@@ -69,10 +69,10 @@ module assign_index
         enumerator :: li_Mface_d ! face ID of downstream face of link
         enumerator :: li_assigned ! given 1 when link is assigned
         enumerator :: li_InitialDepthType ! 1=uniform, 2= lineary change, 3=exponential decay
-        enumerator :: li_BQ_image ! image number assigned from BIPquick
+        enumerator :: li_P_image ! image number assigned from BIPquick
     end enum
     !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_linkI = li_BQ_image
+    integer, target :: Ncol_linkI = li_P_image
 
     !%------------------------------------------------------------------------- 
     !% Define the column indexes for nodeI(:,:) arrays
@@ -86,10 +86,10 @@ module assign_index
         enumerator :: ni_curve_type ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
         enumerator :: ni_assigned ! given 1 when node has been assigned to face/elem,
         enumerator :: ni_total_inflow ! index to total_inflow (-1 if not total_inflow)
-        enumerator :: ni_BQ_image ! image number assigned from BIPquick
-        enumerator :: ni_BQ_edge  ! 0=this node has nothing to do with image communication; 1=this node is an edge
+        enumerator :: ni_P_image ! image number assigned from BIPquick
+        enumerator :: ni_P_is_boundary  ! 0=this node has nothing to do with image communication; >0=this node is a partition boundary
     end enum
-    integer, parameter :: ni_idx_base1 = ni_BQ_edge
+    integer, parameter :: ni_idx_base1 = ni_P_is_boundary
 
     !% column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
