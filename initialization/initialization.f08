@@ -92,11 +92,11 @@ contains
         do i = 1, N_node
             total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
             nodeI(i, ni_idx) = i
-            if (get_node_attribute(i, node_type) == 1) then ! OUTFALL
+            if (get_node_attribute(i, node_type) == oneI) then ! OUTFALL
                 nodeI(i, ni_node_type) = nBCdn
-            else if (total_n_links == 2) then
+            else if (total_n_links == twoI) then
                 nodeI(i, ni_node_type) = nJ2
-            else if (total_n_links > 2) then
+            else if (total_n_links > twoI) then
                 nodeI(i, ni_node_type) = nJm
             end if
             ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
@@ -132,10 +132,10 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
-
-
-    ! this is a subroutine for adjusting the length of links.
-    ! Put it here for now but can be moved to somewhere else
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
     subroutine link_length_adjust()
         integer :: ii
         real(8) :: temp_length
@@ -159,7 +159,10 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine link_length_adjust
-
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
     subroutine N_elem_assign()
         integer :: ii
         real(8) :: remainder
@@ -184,7 +187,10 @@ contains
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine N_elem_assign
-
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
     subroutine initialize_partition_coarray()
         character(64) :: subroutine_name = 'initialize_partition'
         
@@ -198,8 +204,10 @@ contains
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine initialize_partition_coarray
-
-
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
     subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
         integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
         integer :: ii
@@ -210,11 +218,6 @@ contains
         N_nJm = count(nodeI(:, ni_node_type) == nJM)
         N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
         N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
-    
-        ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
-        ! num_nJm_nodes = N_nJm
-        ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
-        ! num_zero_elem_nodes = N_nJ2
     
     end subroutine count_node_types
 
