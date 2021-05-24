@@ -170,6 +170,7 @@ module data_keys
     enum, bind(c)
         enumerator :: Default = 1
         enumerator :: BQuick
+        enumerator :: Random
     end enum
 
     ! data types for Momentum Source type (setting%Solver%MomentumSourceM)
