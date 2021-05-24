@@ -1,10 +1,10 @@
 !
-! module network_define
+!% module network_define
 !
-! Handles relationship between coarse link-node network and high-resolution
-! element-face network.
+!% Handles relationship between coarse link-node network and high-resolution
+!% element-face network.
 !
-! This module defines all the indexes and mappings
+!% This module defines all the indexes and mappings
 !
 !==========================================================================
 !
@@ -164,6 +164,7 @@ contains
             !% initializing local element and face id
             ElemLocallIdx = first_elem_index
             FacelocallIdx = first_face_index
+
             !% initializing the first element number of link elements in a partition
             firstIdx = oneI
 
@@ -198,21 +199,26 @@ contains
                 !% First populate the elemI array
                 !% only links and multiface junction will contribute to elem arrays
 
-                !% condition of a specific node to be in that partition that is junction
+                !% If the upstream node exists in the packed array (i.e. on the same image) and is an multi-face junction
                 if (any(pack_node_idx .eq. NodeUp) .and. (NodeUpTyp .eq.  nJm)) then
 
+                    !% Discretize the upstream junction node into elements on the current image
                     call handle_multi_branch_node (NodeUp, image, firstIdx)
 
+                    !% Discretize the link into elements on the current image
                     call subdivide_link (Lidx, image, firstIdx)
 
+                !% If the upstream node is on a different image, OR is not a multi-face junction
                 else
 
+                    !% Discretize the link into elements on the current image
                     call subdivide_link (Lidx, image, firstIdx)
                 endif
 
-
+                !% Separately, if the downstream node is in the packed  (i.e. on the same image) and is a multi-face junction
                 if (any(pack_node_idx .eq. NodeDn) .and. (NodeDnTyp .eq.  nJm)) then
 
+                    !% Discretize the downstream junction node into elements on the current image
                     call handle_multi_branch_node (NodeDn, image, firstIdx)
 
                 endif
@@ -250,9 +256,13 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
+        !% A pointer to the number of elements into which the link will be subdivided
         LinkElem     => linkI(Lidx,li_N_element)
-        !% if the link is already assigned or not
+
+        !% Integer marker for if the link has been assigned already, values are detailed in data_keys.f08
         lAssignStatus => linkI(Lidx,li_assigned)
+
+        !% The last index of the elements that will come from the subdivision, used to set the row range
         lastIdx = firstIdx + LinkElem - oneI
 
         ! print*, Lidx, 'Lidx'
@@ -262,26 +272,34 @@ contains
         ! print*, lastIdx, 'lastIdx'
         ! print*, image, 'image'
 
+        !% Eddie - It's not clear to me why there is an if-statement to check the image number here
         if (image .eq. oneI) then
+
+            !% If the link has not already been assigned
             if (lAssignStatus .eq. lUnassigned) then
+
+                !% Assign the elements in rows(firstIdx:lastIdx) to mirror the type from the parent link 
                 elemI(firstIdx:lastIdx,ei_elementType)    = linkI(Lidx,li_link_type)   
                 elemI(firstIdx:lastIdx,ei_geometryType)   = linkI(Lidx,li_geometry)
                 elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM) = Lidx
                 elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM) = nullvalueI
 
+                !% Change the assignment status pointer to ensure link elements aren't duplicated
                 lAssignStatus =  lAssigned
 
-                !% set the first element index for next link
+                !% Reset the firstIdx row for the next element, also equal to lastIdx + 1
                 firstIdx = firstIdx + LinkElem
             endif
         else
             if (lAssignStatus .eq. lUnassigned) then
-                !% populating elemI
+
+                !% Assign the elements in rows(firstIdx:lastIdx) to mirror the type from the parent link 
                 elemI(firstIdx:lastIdx,ei_elementType)[image]    = linkI(Lidx,li_link_type)   
                 elemI(firstIdx:lastIdx,ei_geometryType)[image]   = linkI(Lidx,li_geometry)
                 elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM)[image] = Lidx
                 elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM)[image] = nullvalueI
 
+                !% Change the assignment status pointer to ensure link elements aren't duplicated
                 lAssignStatus =  lAssigned
 
                 !% set the first element index for next link
@@ -300,7 +318,7 @@ contains
     subroutine handle_multi_branch_node (Nidx, image, firstIdx)
     !-------------------------------------------------------------------------- 
     !
-    !% subdivides the links into elements
+    !% subdivides the multi-branch junctions into elements
     !
     !--------------------------------------------------------------------------
 
@@ -315,12 +333,15 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-        NodeElem      => J_elem_add
-        !% if the link is already assigned or not
+        !% The number of nodes being added for a multi-face junction is listed in globals.f08
+        NodeElem      => J_elem_add ! = 7
+
+        !% if the node is already assigned or not
         nAssignStatus => nodeI(Nidx,ni_assigned)
         lastIdx = firstIdx + NodeElem - oneI
 
-
+        !% Very similar to subdivide_link subroutine
+        !% Populate the elemI array rows(firstIdx:lastIdx) with the element type that mirrors the node type
         if (image .eq. oneI) then
             if (nAssignStatus .eq. nUnassigned) then
                 elemI(firstIdx:lastIdx,ei_elementType)    = nodeI(Nidx,ni_node_type)   
