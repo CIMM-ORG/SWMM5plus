@@ -18,11 +18,10 @@ module globals
 
     real(8), parameter :: element_length = 10.0 ! This is a temperory element length
 
-    !% Main Arrays
+    !% Main Arrays - Allocated in allocate_storage.f08
     !%  links are the building blocks from SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: linkR ! real data for links
     integer, dimension(:,:), allocatable, target :: linkI ! integer data for links
-    integer, dimension(:,:), allocatable, target :: P_linkI ! Partitioning output for links
     logical, dimension(:,:), allocatable, target :: linkYN ! logical data for links
 
     type(string), dimension(:), allocatable, target :: linkName ! array of character strings
@@ -30,7 +29,6 @@ module globals
     !%  nodes are the building blocks from teh SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: nodeR ! real data for nodes
     integer, dimension(:,:), allocatable, target :: nodeI ! integer data for nodes
-    integer, dimension(:,:), allocatable, target :: P_nodeI ! Partitioning output for nodes
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
 
     !%  columns of element and face arrays
@@ -142,5 +140,9 @@ module globals
     integer, allocatable, dimension(:) :: adjacent_links
     integer, allocatable, dimension(:) :: elem_per_image
     logical, allocatable, dimension(:) :: image_full
+
+    !% Network Define Module Allocatables - Not yet Allocated
+    integer, allocatable, dimension(:), target :: pack_link_idx, pack_node_idx
+
 
 end module globals

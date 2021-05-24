@@ -142,7 +142,6 @@ contains
         integer :: lastElem, lastFace 
         integer, pointer :: N_Images, P_elem, P_face, Lidx
         integer, pointer :: NodeUp, NodeDn, NodeUpTyp, NodeDnTyp
-        integer, dimension(:), allocatable, target :: pack_link_idx, pack_node_idx
 
         character(64) :: subroutine_name = 'network_data_create'
     !--------------------------------------------------------------------------
