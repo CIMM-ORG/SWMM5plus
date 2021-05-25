@@ -138,4 +138,8 @@ module globals
     real(8), allocatable :: bcdataDn
     real(8), allocatable :: bcdataUp
 
+    !% BIPquick Arrays
+    integer, allocatable, dimension(:,:)    :: B_nodeI
+    real(8), allocatable, dimension(:,:)    :: B_nodeR
+
 end module globals

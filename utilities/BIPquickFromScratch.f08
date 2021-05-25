@@ -44,7 +44,23 @@
 !%      check_is_boundary() - looks at the adjacent links for every node and increments the ni_P_is_boundary column
 
  subroutine BIPquick_partitioning()
- end subroutine
+    call allocate_BIPquick_arrays()
+
+
+    call deallocate_BIPquick_arrays()
+ end subroutine BIPquick_partitioning
+
+ subroutine allocate_BIPquick_arrays()
+    allocate(B_nodeI(size(nodeI), max_us_branch_per_node), stat=allocation_status, errmsg=emsg)
+    B_nodeI(:,:) = nullValueI
+    allocate(B_nodeR(size(nodeR), twoI), stat=allocation_status, errmsg=emsg)
+    B_nodeR(:,:) = nullValueR
+ end subroutine allocate_BIPquick_arrays
+
+ subroutine deallocate_BIPquick_arrays()
+    deallocate(B_nodeI)
+    deallocate(B_nodeR)
+ end subroutine deallocate_BIPquick_arrays
 
  end module BIPquickFromScratch
 !==========================================================================
