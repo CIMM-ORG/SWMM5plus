@@ -4,7 +4,7 @@ module partitioning
     use data_keys
     use globals
     use setting_definition, only: setting
-    use BIPquick
+    use BIPquickFromScratch
     use initialization
 
     implicit none
@@ -15,6 +15,7 @@ module partitioning
 !%   This module controls the partitioning algorithm used.  Currently the options are
 !%       - BIPquick
 !%       - Default
+!%       - Random
 !%
 !%***********************************************************************************
 
@@ -52,8 +53,8 @@ subroutine execute_partitioning()
         if (setting%Verbose) print*, "Using Default Partitioning"
         call default_partitioning()
     else if (setting%Partitioning%PartitioningMethod == BQuick) then
-        if (setting%Verbose) print*, "Using BIPquick Partitioning"
-        call BIPquick_YJunction_Hardcode()
+        if (setting%Verbose) print*, "Using BIPquick Partitioning Check"
+        call BIPquick_partitioning()
     else if (setting%Partitioning%PartitioningMethod == Random) then
         if (setting%Verbose) print*, "Using Random Partitioning"
         call random_partitioning()

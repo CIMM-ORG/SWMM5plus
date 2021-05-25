@@ -108,7 +108,7 @@
     },
     "Partitioning" : {
         "N_Image"  : 3,
-        "PartitioningMethod" : "random",
+        "PartitioningMethod" : "BQuick",
         "BIPquickTestCase" : false
     },
     "ElementLengthAdjust" : {
@@ -136,7 +136,7 @@
     },
     "Warning" : {
         "File" : {
-            "partitioning" : false
+            "partitioning" : true
         }
     },
     "Verbose" : true

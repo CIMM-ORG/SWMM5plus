@@ -7,7 +7,6 @@ program main
    use setting_definition, only: setting
    use interface
    use coarray_partition
-   use BIPquick
    use partitioning
    use network_define
 
