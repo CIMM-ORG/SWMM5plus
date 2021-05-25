@@ -44,6 +44,7 @@ then
     rm -r Stormwater*
 fi
 
+
 if [ ! -d "$MPICH_SOURCE" ]  
 then
     echo "Installing the prerequisite (mpich) for opencoarray fortran ..."
@@ -70,7 +71,6 @@ if [ ! -d $CMAKE_SOURCE ]
 then 
     echo "cmake is not found in current directory."
     echo "Installing cmake - the prerequisite for opencoarray fortran ..."
-    sleep 3.0
     mkdir $CMAKE_SOURCE
     cd $CMAKE_SOURCE
     mkdir $CMAKE_INSTALL
@@ -89,7 +89,6 @@ fi
 if [ ! -d $COARRAY_SOURCE ]   
 then
     echo "opencoarray is not found in current directory."
-    sleep 3.0
     mkdir $COARRAY_SOURCE
     cd $COARRAY_SOURCE
     mkdir $COARRAY_INSTALL
