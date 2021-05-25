@@ -272,31 +272,15 @@ contains
         ! print*, lastIdx, 'lastIdx'
         ! print*, image, 'image'
 
-        if (image .eq. oneI) then
-            if (lAssignStatus .eq. lUnassigned) then
-                elemI(firstIdx:lastIdx,ei_elementType)    = linkI(Lidx,li_link_type)   
-                elemI(firstIdx:lastIdx,ei_geometryType)   = linkI(Lidx,li_geometry)
-                elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM) = Lidx
-                elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM) = nullvalueI
+        if (lAssignStatus .eq. lUnassigned) then
+            elemI(firstIdx:lastIdx,ei_elementType)    = linkI(Lidx,li_link_type)   
+            elemI(firstIdx:lastIdx,ei_geometryType)   = linkI(Lidx,li_geometry)
+            elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM) = Lidx
+            elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM) = nullvalueI
 
-                lAssignStatus =  lAssigned
-
-                !% set the first element index for next link
-                firstIdx = firstIdx + LinkElem
-            endif
-        else
-            if (lAssignStatus .eq. lUnassigned) then
-                !% populating elemI
-                elemI(firstIdx:lastIdx,ei_elementType)[image]    = linkI(Lidx,li_link_type)   
-                elemI(firstIdx:lastIdx,ei_geometryType)[image]   = linkI(Lidx,li_geometry)
-                elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM)[image] = Lidx
-                elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM)[image] = nullvalueI
-
-                lAssignStatus =  lAssigned
-
-                !% set the first element index for next link
-                firstIdx = firstIdx + LinkElem
-            endif
+            lAssignStatus =  lAssigned
+            !% set the first element index for next link
+            firstIdx = firstIdx + LinkElem
 
         endif
 
@@ -331,29 +315,15 @@ contains
         lastIdx = firstIdx + NodeElem - oneI
 
 
-        if (image .eq. oneI) then
-            if (nAssignStatus .eq. nUnassigned) then
-                elemI(firstIdx:lastIdx,ei_elementType)    = nodeI(Nidx,ni_node_type)   
-                elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM) = nullvalueI
-                elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM) = Nidx
+        if (nAssignStatus .eq. nUnassigned) then
+            elemI(firstIdx:lastIdx,ei_elementType)    = nodeI(Nidx,ni_node_type)   
+            elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM) = nullvalueI
+            elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM) = Nidx
 
-                nAssignStatus =  nAssigned
+            nAssignStatus =  nAssigned
 
-                !% set the first element index for next link
-                firstIdx = firstIdx + NodeElem
-            endif
-        else
-            if (nAssignStatus .eq. nUnassigned) then
-                !% populating elemI
-                elemI(firstIdx:lastIdx,ei_elementType)[image]    = nodeI(Nidx,ni_node_type)   
-                elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM)[image] = nullvalueI
-                elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM)[image] = Nidx
-
-                nAssignStatus =  nAssigned
-
-                !% set the first element index for next link
-                firstIdx = firstIdx + NodeElem
-            endif
+            !% set the first element index for next link
+            firstIdx = firstIdx + NodeElem
 
         endif
 
