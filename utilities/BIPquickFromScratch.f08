@@ -51,9 +51,9 @@
  end subroutine BIPquick_partitioning
 
  subroutine allocate_BIPquick_arrays()
-    allocate(B_nodeI(size(nodeI), max_us_branch_per_node), stat=allocation_status, errmsg=emsg)
+    allocate(B_nodeI(size(nodeI), max_us_branch_per_node))
     B_nodeI(:,:) = nullValueI
-    allocate(B_nodeR(size(nodeR), twoI), stat=allocation_status, errmsg=emsg)
+    allocate(B_nodeR(size(nodeR), twoI))
     B_nodeR(:,:) = nullValueR
  end subroutine allocate_BIPquick_arrays
 

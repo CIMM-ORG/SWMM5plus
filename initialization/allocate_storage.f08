@@ -60,35 +60,27 @@ contains
             additional_rows = setting%Partitioning%N_Image - 1
         end if
 
-        allocate(nodeI(N_node + additional_rows, ni_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(nodeI(N_node + additional_rows, Ncol_nodeI), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeI(:,:) = nullvalueI
 
-        allocate(linkI(N_link + additional_rows, li_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(linkI(N_link + additional_rows, Ncol_linkI), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkI(:,:) = nullvalueI
 
-        allocate(P_nodeI(N_node + additional_rows, 3), stat=allocation_status, errmsg=emsg)
-        call utility_check_allocation(allocation_status, emsg)
-        P_nodeI(:,:) = nullvalueI
-
-        allocate(P_linkI(N_link + additional_rows, 2), stat=allocation_status, errmsg=emsg)
-        call utility_check_allocation(allocation_status, emsg)
-        P_linkI(:,:) = nullvalueI
-
-        allocate(nodeR(N_node + additional_rows, nr_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(nodeR(N_node + additional_rows, Ncol_nodeR), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeR(:,:) = nullvalueR
 
-        allocate(linkR(N_link + additional_rows, lr_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(linkR(N_link + additional_rows, Ncol_linkR), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkR(:,:) = nullvalueR
 
-        allocate(nodeYN(N_node + additional_rows, nYN_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(nodeYN(N_node + additional_rows, Ncol_nodeYN), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         nodeYN(:,:) = nullvalueL
 
-        allocate(linkYN(N_link + additional_rows, lYN_idx_max), stat=allocation_status, errmsg=emsg)
+        allocate(linkYN(N_link + additional_rows, Ncol_linkYN), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkYN(:,:) = nullvalueL
 

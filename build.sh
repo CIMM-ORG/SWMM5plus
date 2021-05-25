@@ -109,36 +109,32 @@ then
     #sudo apt-get install openmpi-bin libopenmpi-dev
 fi
 
-if  [ ! -d $CMAKE_SOURCE ]  #[ -x "$(command -v cmake)" ]
+if [ ! -d $CMAKE_SOURCE ] 
 then 
     echo "cmake is not found in current directory."
     echo "Installing cmake - the prerequisite for opencoarray fortran ..."
-    sleep 3.0
     mkdir $CMAKE_SOURCE
     cd $CMAKE_SOURCE
     mkdir $CMAKE_INSTALL
-    wget "https://cmake.org/files/v3.3/cmake-3.3.2.tar.gz"  # use 3.3.2 for now. Versions: https://cmake.org/files/
+    wget "https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz"  # use 3.3.2 for now. Versions: https://cmake.org/files/
     tar -xvf *.tar.gz
     rm *.tar.gz
-    cd cmake-3.3.2
+    cd cmake-3.11.0
     ./configure --prefix=$CMAKE_INSTALL
     make
     make install
     cd ../../
 fi
-
-
 # Download Opencoarray
-if ! [ -d $COARRAY_SOURCE ]   #[ -x "$(command -v $COARRAY_FC)" ]
+if [ ! -d $COARRAY_SOURCE ]   
 then
     echo "opencoarray is not found in current directory."
-    sleep 3.0
     mkdir $COARRAY_SOURCE
     cd $COARRAY_SOURCE
     mkdir $COARRAY_INSTALL
     echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
     sleep 3.0
-    git clone --branch 1.9.3 https://github.com/sourceryinstitute/OpenCoarrays
+    git clone https://github.com/sourceryinstitute/OpenCoarrays 
     cd OpenCoarrays
     mkdir opencoarrays-build
     cd opencoarrays-build
@@ -216,8 +212,8 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           $INIT_DIR/allocate_storage.f08\
           $UTIL_DIR/BIPquickFromScratch.f08\
           $ARRAY_DIR/coarray_partition.f08\
-          $INIT_DIR/initialization.f08\
           $UTIL_DIR/partitioning.f08\
+          $INIT_DIR/initialization.f08\
           $INIT_DIR/network_define.f08"
 
 echo

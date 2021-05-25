@@ -4,7 +4,8 @@ module initialization
     use data_keys
     use globals
     use interface
-    use BIPquick
+    use partitioning
+    use BIPquickFromScratch
     use coarray_partition
     use utility, only: utility_export_linknode_csv
     use setting_definition, only: setting
@@ -28,7 +29,7 @@ module initialization
 
     private
 
-    public :: initialize_linknode_arrays, count_node_types
+    public :: initialize_linknode_arrays
 
 contains
 
@@ -191,31 +192,12 @@ contains
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
         !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed 
-        call BIPquick_YJunction_Hardcode()
+        call execute_partitioning()
         
         call coarray_length_calculation()
         
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine initialize_partition_coarray
-
-
-    subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
-        integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
-        integer :: ii
-    
-        ! This subroutine uses the vectorized count() function to search the array for number of instances of each node type
-        N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
-        N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
-        N_nJm = count(nodeI(:, ni_node_type) == nJM)
-        N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
-        N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
-    
-        ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
-        ! num_nJm_nodes = N_nJm
-        ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
-        ! num_zero_elem_nodes = N_nJ2
-    
-    end subroutine count_node_types
 
 end module initialization
