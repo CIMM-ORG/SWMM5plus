@@ -24,6 +24,15 @@ contains
     end function new_real_table
 
     subroutine tables_add_entry(table, entry, axis)
+    !-----------------------------------------------------------------------------
+	!
+	! Description:
+	!
+	!
+	! Method:
+	!    
+	!
+	!-----------------------------------------------------------------------------
         type(real_table), intent(inout) :: table
         real(8), intent(in) :: entry(:)
         integer, optional, intent(in) :: axis
@@ -54,6 +63,15 @@ contains
     end subroutine tables_add_entry
 
     subroutine free_table(table)
+    !-----------------------------------------------------------------------------
+	!
+	! Description:
+	!
+	!
+	! Method:
+	!    
+	!
+	!-----------------------------------------------------------------------------
         type(real_table), intent(inout) :: table
         integer :: i
         character(64) :: subroutine_name
@@ -90,6 +108,15 @@ contains
     end function find_next_xy_between
 
     subroutine table_resample(tablexy, resolution_type)
+    !-----------------------------------------------------------------------------
+	!
+	! Description:
+	!
+	!
+	! Method:
+	!    
+	!
+	!-----------------------------------------------------------------------------
         type(real_table), intent(inout) :: tablexy
         integer, intent(in) :: resolution_type
         real(8), allocatable :: x(:)

@@ -10,6 +10,15 @@ module dynamic_array
 contains
 
     subroutine dyna_real_append(this, x)
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !
+    !
+    ! Method:
+    !    
+    !
+    !-----------------------------------------------------------------------------
         type(real_array), intent(inout) :: this
         real(8), intent(in) :: x
         real(8), allocatable :: resized_arr(:)
@@ -34,6 +43,15 @@ contains
     end subroutine dyna_real_append
 
     subroutine dyna_real_extend(this, a)
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !
+    !
+    ! Method:
+    !    
+    !
+    !-----------------------------------------------------------------------------
         type(real_array), intent(inout):: this
         type(real_array), intent(in) :: a
         integer :: i
@@ -47,6 +65,15 @@ contains
     end subroutine dyna_real_extend
 
     subroutine dyna_integer_append(this, x)
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !
+    !
+    ! Method:
+    !    
+    !
+    !-----------------------------------------------------------------------------
         type(integer_array), intent(inout) :: this
         integer, intent(in) :: x
         integer, allocatable :: resized_arr(:)
@@ -71,6 +98,15 @@ contains
     end subroutine dyna_integer_append
 
     subroutine dyna_integer_extend(this, a)
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !
+    !
+    ! Method:
+    !    
+    !
+    !-----------------------------------------------------------------------------
         type(integer_array), intent(inout):: this
         type(integer_array), intent(in) :: a
         integer :: i
@@ -106,6 +142,15 @@ contains
     end function dyna_integer_pop
 
     subroutine free_real_array(this)
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !
+    !
+    ! Method:
+    !    
+    !
+    !-----------------------------------------------------------------------------
         type(real_array), intent(inout) :: this
         character(64) :: subroutine_name = 'free_real_array'
 
@@ -115,6 +160,15 @@ contains
     end subroutine
 
     subroutine free_integer_array(this)
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !
+    !
+    ! Method:
+    !    
+    !
+    !-----------------------------------------------------------------------------
         type(integer_array), intent(inout) :: this
         character(64) :: subroutine_name = 'free_integer_array'
 

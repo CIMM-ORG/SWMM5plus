@@ -9,7 +9,7 @@
 module case_waller_creek
     !
     use allocate_storage
-    use array_index
+    use assign_index
     use bc
     use data_keys
     use globals
@@ -39,9 +39,15 @@ contains
         linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName,     &
         bcdataDn, bcdataUp, &
         wdID, wdnumberPairs, wdxDistance, widthDepthData, wdcellType)
+        !-----------------------------------------------------------------------------
         !
-        ! initialize the link-node system and boundary conditions for a simple channel
+        ! Description:
+        !   initialize the link-node system and boundary conditions for a simple channel
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+
         character(64) :: subroutine_name = 'case_waller_creek_initialize'
 
         real(8),  intent(in)  :: channel_length(:), channel_breadth(:)
@@ -144,9 +150,15 @@ contains
         depth_dnstream, ManningsN, roughness_type, idepth_type, &
         linkR, nodeR, linkI, nodeI, linkYN, nodeYN, linkName, nodeName, &
         wdID, wdnumberPairs, wdxDistance, widthDepthData, wdcellType)
-        !
-        ! creates a simple rectangular channel with 1 link and 2 nodes
-        !
+        !-----------------------------------------------------------------------------
+	    !
+	    ! Description:
+	    !   creates a simple rectangular channel with 1 link and 2 nodes
+	    !
+	    ! Method:
+	    !    
+	    !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_waller_creek_links_and_nodes'
 
         real(8),  intent(in)  :: channel_length(:), channel_breadth(:)
@@ -282,9 +294,15 @@ contains
         newID, newNumberPairs, newManningsN, newLength, newZBottom,              &
         newXDistance, newBreadth, newWidthDepthData, newCellType,                &
         subdivide_length_check)
+        !-----------------------------------------------------------------------------
         !
-        ! initialize the link-node system and boundary conditions for a simple channel
+        ! Description:
+        !   initialize the link-node system and boundary conditions for a simple channel
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'nonmonotonic_subdivide'
 
 
@@ -448,9 +466,15 @@ contains
     !==========================================================================
     !
     subroutine face_zbottom (faceZbottom, zBottom, Length, NX)
+        !-----------------------------------------------------------------------------
         !
-        ! initialize the link-node system and boundary conditions for a simple channel
+        ! Description:
+        !   initialize the link-node system and boundary conditions for a simple channel
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'face_zbottom'
 
         real(8), intent(inout) :: faceZbottom(:)
@@ -476,6 +500,14 @@ contains
     !==========================================================================
     !
     subroutine widthdepth_pair_auxiliary (widthDepthData, cellType, numberPairs)
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !
+        !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
 
         character(64) :: subroutine_name = 'widthdepth_pair_auxiliary'
 
@@ -577,6 +609,14 @@ contains
     !==========================================================================
     !
     subroutine widthdepth_pair_consistency (widthDepthData, numberPairs)
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !
+        !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
 
         character(64) :: subroutine_name = 'widthdepth_pair_consistency'
 
@@ -642,6 +682,14 @@ contains
     !==========================================================================
     !
     subroutine widthdepth_pair_fix (widthDepthData)
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !
+        !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
 
         character(64) :: subroutine_name = 'widthdepth_pair_fix'
 

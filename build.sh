@@ -15,6 +15,7 @@ while getopts 'd' flag; do
 done
 
 # Constants
+SWMM5PLUS_DIR=$PWD
 
 ARRAY_DIR='arrays'
 INIT_DIR='initialization'
@@ -26,6 +27,19 @@ TEST_DIR='test_cases'
 UTIL_DIR='utilities'
 VARS_DIR='vars'
 
+# Dependencies source code
+MPICH_SOURCE="$SWMM5PLUS_DIR/mpich"
+CMAKE_SOURCE="$SWMM5PLUS_DIR/cmake"
+COARRAY_SOURCE="$SWMM5PLUS_DIR/opencoarray"
+
+# Dependencies install
+MPICH_INSTALL="$MPICH_SOURCE/mpich-install"
+CMAKE_INSTALL="$CMAKE_SOURCE/cmake-install"
+COARRAY_INSTALL="$COARRAY_SOURCE/opencoarray-install"
+
+
+
+COARRAY_FC="${COARRAY_INSTALL}/bin/caf"
 FC='gfortran'
 OUPTFLAGS=-g
 FFLAGS=-O3
@@ -74,6 +88,67 @@ then
     mv Stormwater*/src "$API_DIR/src"
     rm -r Stormwater*
 fi
+
+if  [ ! -d "$MPICH_INSTALL/bin" ]  #[ -x "$(command -v mpiexec)" ]
+then
+    echo "Installing the prerequisite (mpich) for opencoarray fortran ..."
+    sleep 3.0
+    mkdir $MPICH_SOURCE
+    cd $MPICH_SOURCE
+    mkdir $MPICH_INSTALL
+    wget "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz"
+    tar -xvf *.tar.gz
+    rm *.tar.gz
+    mkdir /tmp/mpich-build
+    cd /tmp/mpich-build
+    $MPICH_SOURCE/mpich-3.2/configure -prefix=$MPICH_INSTALL
+    make
+    make install
+    cd $SWMM5PLUS_DIR
+    #sudo apt update
+    #sudo apt-get install openmpi-bin libopenmpi-dev
+fi
+
+if  [ ! -d $CMAKE_SOURCE ]  #[ -x "$(command -v cmake)" ]
+then 
+    echo "cmake is not found in current directory."
+    echo "Installing cmake - the prerequisite for opencoarray fortran ..."
+    sleep 3.0
+    mkdir $CMAKE_SOURCE
+    cd $CMAKE_SOURCE
+    mkdir $CMAKE_INSTALL
+    wget "https://cmake.org/files/v3.3/cmake-3.3.2.tar.gz"  # use 3.3.2 for now. Versions: https://cmake.org/files/
+    tar -xvf *.tar.gz
+    rm *.tar.gz
+    cd cmake-3.3.2
+    ./configure --prefix=$CMAKE_INSTALL
+    make
+    make install
+    cd ../../
+fi
+
+
+# Download Opencoarray
+if ! [ -d $COARRAY_SOURCE ]   #[ -x "$(command -v $COARRAY_FC)" ]
+then
+    echo "opencoarray is not found in current directory."
+    sleep 3.0
+    mkdir $COARRAY_SOURCE
+    cd $COARRAY_SOURCE
+    mkdir $COARRAY_INSTALL
+    echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
+    sleep 3.0
+    git clone --branch 1.9.3 https://github.com/sourceryinstitute/OpenCoarrays
+    cd OpenCoarrays
+    mkdir opencoarrays-build
+    cd opencoarrays-build
+    CC=gcc FC=gfortran ${CMAKE_INSTALL}/bin/cmake .. -DCMAKE_INSTALL_PREFIX=$COARRAY_INSTALL -DMPI_HOME=$MPICH_INSTALL
+    make
+    sudo make install
+    cd ../../../
+fi
+
+
 
 # Compile SWMM C
 
@@ -136,17 +211,22 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           $ARRAY_DIR/dynamic_array.f08\
           $ARRAY_DIR/tables.f08\
           $API_DIR/interface.f08\
-          $VARS_DIR/array_index.f08\
+          $VARS_DIR/assign_index.f08\
           $UTIL_DIR/utility.f08\
           $INIT_DIR/allocate_storage.f08\
-          $INIT_DIR/initialization.f08\
           $UTIL_DIR/BIPquick.f08\
-          $UTIL_DIR/partitioning.f08"
+          $ARRAY_DIR/coarray_partition.f08\
+          $INIT_DIR/initialization.f08\
+          $UTIL_DIR/partitioning.f08\
+          $INIT_DIR/network_define.f08"
 
 echo
 echo Compiling SWMM5+ ...
 echo
-$FC $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
+
+#caf $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
+$COARRAY_FC $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
+
 
 $clean:
     echo

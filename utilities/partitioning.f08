@@ -1,6 +1,6 @@
 module partitioning
 
-    use array_index
+    use assign_index
     use data_keys
     use globals
     use setting_definition, only: setting
@@ -32,11 +32,14 @@ contains
 !
 
 subroutine execute_partitioning()
-    !% --------------------------------------------------------
-    !%   The purpose of this subroutine is to check which partitioning
-    !%   algorithm should be used, then call that algorithm, then
-    !%   check that the output is correct (if debug == true)
-    !% --------------------------------------------------------
+    ! --------------------------------------------------------
+    !
+    ! Description:
+    !   The purpose of this subroutine is to check which partitioning
+    !   algorithm should be used, then call that algorithm, then 
+    !   check that the output is correct (if debug == true)
+    !
+    !---------------------------------------------------------
     logical :: partition_correct
     integer :: connectivity, ii
     real(8) :: part_size_balance
@@ -81,6 +84,17 @@ end subroutine
 !
 
 subroutine default_partitioning()
+    ! ----------------------------------------------------------------------------------------------------------------
+    !
+    ! Description:
+    !   This subroutine populates the P_nodeI, P_linkI arrays
+    !   Rather than applying the BIPquick routine, the default partitioning is going to work by
+    !       - Counting the total number of elements expected, using that to calculate the partition threshold
+    !       - Iterating through the nodeI array until the number of elements expected exceeds the partition threshold
+    !       - Iterating through the linkI array until the number of elements expected exceeds the partition threshold
+    !       - Iterating again through the nodeI array to determine if the adjacent links are on different processors
+    !
+    ! -----------------------------------------------------------------------------------------------------------------
     integer :: ii, jj, N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
     integer :: total_num_elements, num_attributed_elements, assigning_image
     integer :: current_node_image, adjacent_link_image

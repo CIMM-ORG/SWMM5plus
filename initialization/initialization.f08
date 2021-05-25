@@ -1,9 +1,11 @@
 module initialization
     use allocate_storage
-    use array_index
+    use assign_index
     use data_keys
     use globals
     use interface
+    use BIPquick
+    use coarray_partition
     use utility, only: utility_export_linknode_csv
     use setting_definition, only: setting
 
@@ -40,7 +42,7 @@ contains
 
         integer       :: i, total_n_links
         logical       :: l1, l2
-        character(64) :: subroutine_name = 'initialize_arrays'
+        character(64) :: subroutine_name = 'initialize_linknode_arrays'
 
     !-----------------------------------------------------------------------------
 
@@ -74,6 +76,7 @@ contains
 
             linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
             linkR(i,lr_Length) = get_link_attribute(i, conduit_length)
+
             ! linkR(i,lr_TopWidth): defined in network_define.f08
             linkR(i,lr_BreadthScale) = get_link_attribute(i, link_xsect_wMax)
             ! linkR(i,lr_Slope): defined in network_define.f08
@@ -111,12 +114,91 @@ contains
             nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
         end do
 
+        ! adjust the length and calculate the number/length of elements in each link
+        call link_length_adjust()
+        call N_elem_assign()
+
+        
+        call initialize_partition_coarray()
+
+        call allocate_elemX_faceX() 
+    
+        call allocate_columns()
+
+
         if (setting%Debug%File%initialization) then
             call utility_export_linknode_csv()
         end if
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
+
+
+    ! this is a subroutine for adjusting the length of links.
+    ! Put it here for now but can be moved to somewhere else
+    subroutine link_length_adjust()
+        integer :: ii
+        real(8) :: temp_length
+        character(64) :: subroutine_name = 'link_length_adjust'
+        
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+
+        do ii =1, N_link
+            temp_length = linkR(ii,lr_Length) ! lenght of link ii
+            
+            if ( nodeI(linkI(ii,li_Mnode_u), ni_node_type) .eq. nJm ) then
+                temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for upstream M junction
+            endif
+
+            if ( nodeI(linkI(ii,li_Mnode_d), ni_node_type) .eq. nJm ) then
+                temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for downstream M junction
+            endif
+
+            linkR(ii,lr_AdjustedLength) = temp_length
+        enddo
+
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+    end subroutine link_length_adjust
+
+    subroutine N_elem_assign()
+        integer :: ii
+        real(8) :: remainder
+        character(64) :: subroutine_name = 'N_elem_assign'
+        
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+
+        do ii = 1, N_link
+            remainder = mod(linkR(ii,lr_AdjustedLength), element_length)
+            if ( remainder .eq. zeroR ) then
+                linkI(ii, li_N_element) = int(linkR(ii, lr_AdjustedLength)/element_length)
+                linkR(ii, lr_ElementLength) = linkR(ii, lr_AdjustedLength)/linkI(ii, li_N_element)
+            elseif ( remainder .ge. onehalfR * element_length ) then
+                linkI(ii, li_N_element) = ceiling(linkR(ii,lr_AdjustedLength)/element_length)
+                linkR(ii, lr_ElementLength) = linkR(ii, lr_AdjustedLength)/linkI(ii, li_N_element)
+            else
+                linkI(ii, li_N_element) = floor(linkR(ii,lr_AdjustedLength)/element_length)
+                linkR(ii, lr_ELementLength) = linkR(ii, lr_AdjustedLength)/linkI(ii, li_N_element)
+            endif
+        enddo
+
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+
+    end subroutine N_elem_assign
+
+    subroutine initialize_partition_coarray()
+        character(64) :: subroutine_name = 'initialize_partition'
+        
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+
+        !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed 
+        call BIPquick_YJunction_Hardcode()
+        
+        call coarray_length_calculation()
+        
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+
+    end subroutine initialize_partition_coarray
+
 
     subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
         integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2

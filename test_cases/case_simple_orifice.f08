@@ -8,7 +8,7 @@
 module case_simple_orifice
     !
     use allocate_storage
-    use array_index
+    use assign_index
     use bc
     use data_keys
     use globals
@@ -35,9 +35,15 @@ contains
         discharge_coefficient2, full_depth, end_contractions, ManningsN,    &
         roughness_type, idepth_type, linkR, nodeR, linkI, nodeI,linkYN,     &
         nodeYN, linkName, nodeName, bcdataDn, bcdataUp)
+        !-----------------------------------------------------------------------------
         !
-        ! initialize the link-node system and boundary conditions for a simple orifice
+        ! Description:
+        !   initialize the link-node system and boundary conditions for a simple orifice
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_simple_orifice_initialize'
 
         real(8),  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
@@ -132,9 +138,15 @@ contains
         discharge_coefficient2, full_depth, end_contractions, ManningsN,    &
         roughness_type, idepth_type, linkR, nodeR, linkI, nodeI,linkYN,     &
         nodeYN, linkName, nodeName)
+        !-----------------------------------------------------------------------------
         !
-        ! creates a orifice in between two rectangular channels
+        ! Description:
+        !   creates a orifice in between two rectangular channels
         !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'case_simple_orifice_and_nodes'
 
         real(8),  intent(in)  :: channel_length(:), channel_breadth(:), subdivide_length(:)
