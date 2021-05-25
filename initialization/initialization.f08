@@ -193,7 +193,7 @@ contains
 
         !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed 
         call execute_partitioning()
-        
+        stop
         call coarray_length_calculation()
         
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
