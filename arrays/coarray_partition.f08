@@ -32,7 +32,7 @@ module coarray_partition
         allocate(img_arr(size(linkI,1)))
         allocate(unique(size(linkI,1)))
 
-        img_arr = linkI(:,li_BQ_image) ! original information from BIPquick -- image numbers
+        img_arr = linkI(:,li_P_image) ! original information from BIPquick -- image numbers
 
         min_val = minval(img_arr) - 1
         max_val = maxval(img_arr)
@@ -67,8 +67,8 @@ module coarray_partition
         allocate(N_face(size(unique_imagenum,1)))
 
         do ii=1, size(unique_imagenum,1)
-            node_index = PACK([(counter, counter=1,size(nodeI,1))], nodeI(:, ni_BQ_image) .eq. unique_imagenum(ii))
-            link_index = PACK([(counter, counter=1,size(linkI,1))], linkI(:, li_BQ_image) .eq. unique_imagenum(ii))
+            node_index = PACK([(counter, counter=1,size(nodeI,1))], nodeI(:, ni_P_image) .eq. unique_imagenum(ii))
+            link_index = PACK([(counter, counter=1,size(linkI,1))], linkI(:, li_P_image) .eq. unique_imagenum(ii))
             ! create corresponding indices for node and link in this image
             
             ! The number of elements and faces is actually decided by the junctions
@@ -90,7 +90,7 @@ module coarray_partition
                 endif 
 
                 !% if the cut at the normal junction (1up 1 down) -> make a face space 
-                if ( ( nodeI(idx, ni_BQ_edge) .eq. 1 ) .and. ( nodeI(idx, ni_node_type) .ne. nJm) ) then
+                if ( ( nodeI(idx, ni_P_is_boundary) .eq. 1 ) .and. ( nodeI(idx, ni_node_type) .ne. nJm) ) then
                     face_counter = face_counter + 1
                 endif
             enddo
@@ -101,13 +101,13 @@ module coarray_partition
             do jj = 1, size(link_index,1)
                 idx = link_index(jj)
                 !% check upstream node first
-                if ( ( nodeI(linkI(idx, li_Mnode_u), ni_BQ_edge) .eq. 1) .and. &
-                    ( nodeI(linkI(idx, li_Mnode_u), ni_BQ_image) .ne. ii) ) then
+                if ( ( nodeI(linkI(idx, li_Mnode_u), ni_P_is_boundary) .eq. 1) .and. &
+                    ( nodeI(linkI(idx, li_Mnode_u), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                 endif
                 ! then downstream node
-                if ( ( nodeI(linkI(idx, li_Mnode_d), ni_BQ_edge) .eq. 1) .and. &
-                    ( nodeI(linkI(idx, li_Mnode_d), ni_BQ_image) .ne. ii) ) then
+                if ( ( nodeI(linkI(idx, li_Mnode_d), ni_P_is_boundary) .eq. 1) .and. &
+                    ( nodeI(linkI(idx, li_Mnode_d), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                 endif
                 

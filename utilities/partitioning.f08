@@ -4,6 +4,7 @@ module partitioning
     use data_keys
     use globals
     use setting_definition, only: setting
+    use utility
     use BIPquickFromScratch
 
     implicit none
@@ -396,86 +397,64 @@ end function partition_diagnostic_connectivity
 !==========================================================================   
 !========================================================================== 
 !
+! function default_performance_check() result(partition_correct)
+!     integer :: ii
+!     logical :: partition_correct
+!     integer, allocatable, dimension(:,:) :: PartCheck_nodeI, PartCheck_linkI
+!     logical, allocatable, dimension(:,:) :: ArraySame_nodeI, ArraySame_linkI
 
-subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
-    integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
-    integer :: ii
+!     !% Allocate and initialize the correct partition arrays to be checked against
+!     allocate(PartCheck_nodeI(size(nodeI,1), P_ni_is_boundary))
+!     allocate(PartCheck_linkI(size(linkI,1), P_li_Partition_No))
+!     allocate(ArraySame_nodeI(size(nodeI,1), P_ni_is_boundary))
+!     allocate(ArraySame_linkI(size(linkI,1), P_li_Partition_No))
 
-    ! This subroutine uses the vectorized count() function to search the array for number of instances of each node type
-    N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
-    N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
-    N_nJm = count(nodeI(:, ni_node_type) == nJM)
-    N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
-    N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
+!     PartCheck_nodeI(:, P_ni_idx_Partition) = (/1,2,3,4/)
+!     PartCheck_nodeI(:, P_ni_Partition_No) = (/2,2,3,3/)
+!     PartCheck_nodeI(:, P_ni_is_boundary) = (/1,0,1,1/)
 
-    ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
-    ! num_nJm_nodes = N_nJm
-    ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
-    ! num_zero_elem_nodes = N_nJ2
+!     PartCheck_linkI(:, P_li_idx_Partition) = (/1,2,3/)
+!     PartCheck_linkI(:, P_li_Partition_No) = (/1,2,2/)
 
-end subroutine count_node_types
-!    
-!==========================================================================   
-!========================================================================== 
-!
-function default_performance_check() result(partition_correct)
-    integer :: ii
-    logical :: partition_correct
-    integer, allocatable, dimension(:,:) :: PartCheck_nodeI, PartCheck_linkI
-    logical, allocatable, dimension(:,:) :: ArraySame_nodeI, ArraySame_linkI
+!     !% Assume that the partition arrays are going to be incorrect
+!     partition_correct = .false.
 
-    !% Allocate and initialize the correct partition arrays to be checked against
-    allocate(PartCheck_nodeI(size(nodeI,1), P_ni_is_boundary))
-    allocate(PartCheck_linkI(size(linkI,1), P_li_Partition_No))
-    allocate(ArraySame_nodeI(size(nodeI,1), P_ni_is_boundary))
-    allocate(ArraySame_linkI(size(linkI,1), P_li_Partition_No))
+!     !% Create a logical array of if the two arrays match
+!     ArraySame_nodeI(:,:) = ( PartCheck_nodeI == P_nodeI )
+!     ArraySame_linkI(:,:) = ( PartCheck_linkI == P_linkI )
 
-    PartCheck_nodeI(:, P_ni_idx_Partition) = (/1,2,3,4/)
-    PartCheck_nodeI(:, P_ni_Partition_No) = (/2,2,3,3/)
-    PartCheck_nodeI(:, P_ni_is_boundary) = (/1,0,1,1/)
+!     if ( all(ArraySame_nodeI) .eqv. .true. ) then
+!         print*, "The node arrays are partitioned correctly"
+!     else
+!         print*, "There is a mistake in the P_nodeI"
+!         print*, ArraySame_nodeI(:,:)
+!         do ii = 1, size(P_nodeI, 1)
+!             print*, P_nodeI(ii, :)
+!             print*, PartCheck_nodeI(ii, :)
+!        end do
+!     end if
 
-    PartCheck_linkI(:, P_li_idx_Partition) = (/1,2,3/)
-    PartCheck_linkI(:, P_li_Partition_No) = (/1,2,2/)
+!     if ( all(ArraySame_linkI) .eqv. .true. ) then
+!         print*, "The link arrays are partitioned correctly"
+!     else
+!         print*, "There is a mistake in the P_linkI"
+!         print*, ArraySame_linkI(:,:)
+!         do ii = 1, size(P_linkI, 1)
+!             print*, P_linkI(ii, :)
+!             print*, PartCheck_linkI(ii, :)
+!        end do
+!     end if
 
-    !% Assume that the partition arrays are going to be incorrect
-    partition_correct = .false.
+!     if ( (all(ArraySame_nodeI) .eqv. .true.) .and. (all(ArraySame_linkI) .eqv. .true.) ) then
+!         partition_correct = .true.
+!     end if
 
-    !% Create a logical array of if the two arrays match
-    ArraySame_nodeI(:,:) = ( PartCheck_nodeI == P_nodeI )
-    ArraySame_linkI(:,:) = ( PartCheck_linkI == P_linkI )
+!     deallocate(PartCheck_nodeI)
+!     deallocate(PartCheck_linkI)
+!     deallocate(ArraySame_nodeI)
+!     deallocate(ArraySame_linkI)
 
-    if ( all(ArraySame_nodeI) .eqv. .true. ) then
-        print*, "The node arrays are partitioned correctly"
-    else
-        print*, "There is a mistake in the P_nodeI"
-        print*, ArraySame_nodeI(:,:)
-        do ii = 1, size(P_nodeI, 1)
-            print*, P_nodeI(ii, :)
-            print*, PartCheck_nodeI(ii, :)
-       end do
-    end if
-
-    if ( all(ArraySame_linkI) .eqv. .true. ) then
-        print*, "The link arrays are partitioned correctly"
-    else
-        print*, "There is a mistake in the P_linkI"
-        print*, ArraySame_linkI(:,:)
-        do ii = 1, size(P_linkI, 1)
-            print*, P_linkI(ii, :)
-            print*, PartCheck_linkI(ii, :)
-       end do
-    end if
-
-    if ( (all(ArraySame_nodeI) .eqv. .true.) .and. (all(ArraySame_linkI) .eqv. .true.) ) then
-        partition_correct = .true.
-    end if
-
-    deallocate(PartCheck_nodeI)
-    deallocate(PartCheck_linkI)
-    deallocate(ArraySame_nodeI)
-    deallocate(ArraySame_linkI)
-
-end function default_performance_check
+! end function default_performance_check
 
 
 end module partitioning

@@ -18,6 +18,7 @@ module utility
 
     public :: utility_check_allocation
     public :: utility_export_linknode_csv
+    public :: count_node_types
 
 contains
 
@@ -115,4 +116,22 @@ contains
     !-----------------------------------------------------------------------------
     !-----------------------------------------------------------------------------
     !
+    subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+        integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
+        integer :: ii
+    
+        ! This subroutine uses the vectorized count() function to search the array for number of instances of each node type
+        N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
+        N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
+        N_nJm = count(nodeI(:, ni_node_type) == nJM)
+        N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
+        N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
+    
+        ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
+        ! num_nJm_nodes = N_nJm
+        ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
+        ! num_zero_elem_nodes = N_nJ2
+    
+    end subroutine count_node_types
+    
 end module utility

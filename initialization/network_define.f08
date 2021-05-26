@@ -181,9 +181,9 @@ contains
             FaceGlobalIdx = FaceGlobalIdx + P_face
 
             !% pack all the link indexes in a partition to cycle through the links
-            pack_link_idx = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) == image))
+            pack_link_idx = pack(linkI(:,li_idx), (linkI(:,li_P_image) == image))
             !% pack all the node indexes in a partition to determine which nodes are in the partition
-            pack_node_idx = pack(nodeI(:,ni_idx), (nodeI(:,ni_BQ_image) == image))
+            pack_node_idx = pack(nodeI(:,ni_idx), (nodeI(:,ni_P_image) == image))
 
             do ii = 1, size(pack_link_idx)
                 !% cycle through link indexs in a partition 
