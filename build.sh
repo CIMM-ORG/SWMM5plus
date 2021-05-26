@@ -26,21 +26,20 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           $JSON_DIR/json_module.F90\
           $VARS_DIR/data_keys.f08\
           $VARS_DIR/type_definitions.f08\
-          $UTIL_DIR/string_utils.f08\
+          $UTIL_DIR/string_utility.f08\
           $INIT_DIR/setting_definition.f08\
           $VARS_DIR/globals.f08\
           $API_DIR/dll.f08\
           $UTIL_DIR/datetime.f08\
-          $ARRAY_DIR/dynamic_array.f08\
-          $ARRAY_DIR/tables.f08\
           $API_DIR/interface.f08\
           $VARS_DIR/array_index.f08\
           $UTIL_DIR/utility.f08\
+          $INIT_DIR/discretization.f08\
           $INIT_DIR/allocate_storage.f08\
-          $UTIL_DIR/BIPquick.f08\
-          $ARRAY_DIR/coarray_partition.f08\
+          $PARALLEL_DIR/BIPquick.f08\
+          $PARALLEL_DIR/coarray.f08\
           $INIT_DIR/initialization.f08\
-          $UTIL_DIR/partitioning.f08"
+          $PARALLEL_DIR/partitioning.f08"
 
 echo
 echo Compiling SWMM5+ ...

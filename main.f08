@@ -80,10 +80,10 @@ program main
    call initialize_linknode_arrays()
 
    ! --- Graph Partitioning
+
    call execute_partitioning()
 
    ! --- Finalization
-
 
    call finalize_api() ! closes link with shared library
 

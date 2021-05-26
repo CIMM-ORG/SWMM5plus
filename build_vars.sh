@@ -2,7 +2,7 @@
 
 # Directories
 SWMM5PLUS_DIR=$PWD
-ARRAY_DIR='arrays'
+PARALLEL_DIR='parallel'
 INIT_DIR='initialization'
 API_DIR='initialization/interface/flibswmm'
 API_TEST_DIR='initialization/interface/tests'
