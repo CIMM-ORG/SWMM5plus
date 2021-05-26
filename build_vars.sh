@@ -41,7 +41,7 @@ MPICH_VERSION="0.0.0"
 CMAKE_REQUIRE_VERSION="3.10.0"
 MPICH_REQUIRE_VERSION="3.2.0"
 
-INSTALLATION_LOG="$SWMM5PLUS_DIR/dependencies_installation_log.txt"
+INSTALLATION_LOG="$SWMM5PLUS_DIR/installation_log.txt"
 
 package_executable_array=(
     "cmake:cmake"

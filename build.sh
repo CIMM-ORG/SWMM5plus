@@ -46,7 +46,6 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-#caf $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
 $COARRAY_FC $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
 
 $clean:
