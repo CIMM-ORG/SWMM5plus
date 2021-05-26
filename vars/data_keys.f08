@@ -145,7 +145,7 @@ module data_keys
     integer, parameter :: lCD = eCD ! ID for using drag coefficient for roughness_type
 
     ! data types for linkI(:,li_assigned) for assignment to faces and links
-    integer, parameter :: lUnassigned = 998877
+    integer, parameter :: lUnassigned = nullValueI
     integer, parameter :: lAssigned = 1
     integer, parameter :: lDeferred = -1
 

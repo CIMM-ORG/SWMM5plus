@@ -18,11 +18,10 @@ module globals
 
     real(8), parameter :: element_length = 10.0 ! This is a temperory element length
 
-    ! Main Arrays
+    !% Main Arrays - Allocated in allocate_storage.f08
     !%  links are the building blocks from SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: linkR ! real data for links
     integer, dimension(:,:), allocatable, target :: linkI ! integer data for links
-    integer, dimension(:,:), allocatable, target :: P_linkI ! Partitioning output for links
     logical, dimension(:,:), allocatable, target :: linkYN ! logical data for links
 
     type(string), dimension(:), allocatable, target :: linkName ! array of character strings
@@ -30,7 +29,6 @@ module globals
     !%  nodes are the building blocks from teh SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: nodeR ! real data for nodes
     integer, dimension(:,:), allocatable, target :: nodeI ! integer data for nodes
-    integer, dimension(:,:), allocatable, target :: P_nodeI ! Partitioning output for nodes
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
 
     !%  columns of element and face arrays
@@ -75,7 +73,7 @@ module globals
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
-    ! note that nullvalueI < 0 is required
+    !% note that nullvalueI < 0 is required
     integer, parameter :: nullvalueI = 998877
     real(8), parameter :: nullvalueR = 9.98877e16
     logical, parameter :: nullvalueL = .false.
@@ -102,9 +100,9 @@ module globals
     integer, parameter :: twoI = 2
     integer, parameter :: threeI = 3
 
-    ! images control
+    !% images control
     integer :: image
-    ! Number of objects
+    !% Number of objects
     integer :: N_link
     integer :: N_node
     integer :: N_curve
@@ -113,33 +111,42 @@ module globals
     integer :: N_BCupstream
     integer :: N_BCdnstream
 
-    ! Coarray variables
+    !% Coarray variables
     integer :: max_caf_elem_N ! size of all elem array in coarray
     integer :: max_caf_face_N ! size of all face array in coarray
 
 
-    ! Constants for Junction
+    !% Constants for Junction
     integer, target :: J_elem_add = 7 ! Supplement elements for junction
     integer, target :: J_face_add = 6 ! Supplement faces    for junction
    
 
-    ! useful shortcuts
+    !% useful shortcuts
     real(8), pointer :: dt => setting%time%dt
     real(8), pointer :: grav => setting%constant%gravity
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
     real(8), pointer :: elem_shorten_cof => setting%ElementLengthAdjust%LinkShortingFactor
 
-    ! Tables
+    !% Tables
     type(real_table), allocatable :: all_tseries(:)
     type(pattern), allocatable :: all_patterns(:)
     type(totalInflow), allocatable :: total_inflows(:,:,:)
 
-    ! Boundary Conditions
+    !% Boundary Conditions
     real(8), allocatable :: bcdataDn
     real(8), allocatable :: bcdataUp
 
     !% BIPquick Arrays
     integer, allocatable, dimension(:,:)    :: B_nodeI
     real(8), allocatable, dimension(:,:)    :: B_nodeR
+    
+    !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
+    integer, allocatable, dimension(:) :: adjacent_links
+    integer, allocatable, dimension(:) :: elem_per_image
+    logical, allocatable, dimension(:) :: image_full
+
+    !% Network Define Module Allocatables - Not yet Allocated
+    integer, allocatable, dimension(:), target :: pack_link_idx, pack_node_idx
+
 
 end module globals

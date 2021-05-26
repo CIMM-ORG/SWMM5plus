@@ -93,11 +93,11 @@ contains
         do i = 1, N_node
             total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
             nodeI(i, ni_idx) = i
-            if (get_node_attribute(i, node_type) == 1) then ! OUTFALL
+            if (get_node_attribute(i, node_type) == oneI) then ! OUTFALL
                 nodeI(i, ni_node_type) = nBCdn
-            else if (total_n_links == 2) then
+            else if (total_n_links == twoI) then
                 nodeI(i, ni_node_type) = nJ2
-            else if (total_n_links > 2) then
+            else if (total_n_links > twoI) then
                 nodeI(i, ni_node_type) = nJm
             end if
             ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
@@ -133,15 +133,23 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
-
-
-    ! this is a subroutine for adjusting the length of links.
-    ! Put it here for now but can be moved to somewhere else
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
     subroutine link_length_adjust()
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !   This subroutine loans some of the length of a link to an adjacent nJm node.
+    !   The purpose is to allow the nJm branch elements to have some volume.
+    !
+    !-----------------------------------------------------------------------------
         integer :: ii
         real(8) :: temp_length
         character(64) :: subroutine_name = 'link_length_adjust'
-        
+    !-----------------------------------------------------------------------------
+
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
         do ii =1, N_link
@@ -160,11 +168,22 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine link_length_adjust
-
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
     subroutine N_elem_assign()
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !   This subroutine sets the number of elements per link.  The element length
+    !   is adjusted so that an integer number of elements is assigned to each link.
+    !
+    !-----------------------------------------------------------------------------
         integer :: ii
         real(8) :: remainder
         character(64) :: subroutine_name = 'N_elem_assign'
+    !-----------------------------------------------------------------------------
         
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
@@ -185,9 +204,22 @@ contains
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine N_elem_assign
-
+    ! !
+    ! !==========================================================================
+    ! !==========================================================================
+    ! !
     subroutine initialize_partition_coarray()
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !   This subroutine calls the public subroutine from the utility module, 
+    !   partitioning.f08. It also calls a public subroutine from the temporary
+    !   coarray_partition.f08 utility module that defines how big the coarrays
+    !   must be. 
+    !
+    !-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_partition'
+    !-----------------------------------------------------------------------------
         
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
