@@ -24,7 +24,7 @@ module allocate_storage
 
     ! public members
     public :: allocate_linknode_storage
-    public :: coarray_storage_allocation
+    public :: allocate_coarray_storage
 
 contains
 
@@ -95,42 +95,47 @@ contains
 
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage
+    !
+    !-----------------------------------------------------------------------------
+    !-----------------------------------------------------------------------------
+    !
+    subroutine allocate_coarray_storage()
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !   the max_caf_elem and max_caf_face are the maximum length of the coarray
+    !   across all employed images
+    !   ==========================
+    !   This will be excuted at parallel level
+    !   ==========================
+    !
+    ! Method:
+    !
+    !-----------------------------------------------------------------------------
 
-    !    !==========================================================================    !==========================================================================    !
+        character(64) :: subroutine_name = 'allocate_coarray_storage'
 
-    subroutine coarray_storage_allocation()
-        ! the max_caf_elem and max_caf_face are the maximum length of the coarray 
-        ! across all employed images
-        ! ==========================
-        ! This will be excuted at parallel level
-        ! ==========================
-
-        character(64) :: subroutine_name = 'coarray_storage_allocation'
-    
-        !-----------------------------------------------------------------------------
+    !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
 
-        !==== elem allocation ====
-        !ncol => Ncol_elemR ! the maxmiumu number of columns
-        allocate(elemR_caf(max_caf_elem_N, Ncol_elemR)[*], stat=allocation_status, errmsg=emsg)
-        call utility_check_allocation(allocation_status, emsg)
-        elemR_caf(:,:) = nullvalueR
+        ! --- element arrays allocation ---
 
-        !ncol => Ncol_elemI
-        allocate(elemI_caf(max_caf_elem_N, Ncol_elemI)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemR(max_caf_elem_N, Ncol_elemR)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemI_caf(:,:) = nullvalueI
+        elemR(:,:) = nullvalueR
 
-        !ncol => Ncol_elemYN
-        allocate(elemYN_caf(max_caf_elem_N, Ncol_elemYN)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemI(max_caf_elem_N, Ncol_elemI)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemYN_caf(:,:) = nullvalueL
+        elemI(:,:) = nullvalueI
 
-        !ncol => Ncol_elemP
-        allocate(elemP_caf(max_caf_elem_N, Ncol_elemP)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemYN(max_caf_elem_N, Ncol_elemYN)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemP_caf(:,:) = nullvalueI
+        elemYN(:,:) = nullvalueL
+
+        allocate(elemP(max_caf_elem_N, Ncol_elemP)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        elemP(:,:) = nullvalueI
 
         ! Ncol_elemPG not defined yet. Comment out
         !ncol => Ncol_elemPG
@@ -138,37 +143,32 @@ contains
         !call utility_check_allocation(allocation_status, emsg)
         !elemPG_caf(:,:)[:] = nullvalueI
 
-        !ncol => Ncol_elemSI
-        allocate(elemSI_caf(max_caf_elem_N, Ncol_elemSI)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemSI(max_caf_elem_N, Ncol_elemSI)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemSI_caf(:,:) = nullvalueI
+        elemSI(:,:) = nullvalueI
 
-        !ncol => Ncol_elemSR
-        allocate(elemSR_caf(max_caf_elem_N, Ncol_elemSR)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemSR(max_caf_elem_N, Ncol_elemSR)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        elemSR_caf(:,:) = nullvalueR
+        elemSR(:,:) = nullvalueR
 
         !==== face allocation ====
-        !ncol => Ncol_faceR 
-        allocate(faceR_caf(max_caf_face_N, Ncol_faceR )[*], stat=allocation_status, errmsg=emsg)
+        allocate(faceR(max_caf_face_N, Ncol_faceR )[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        faceR_caf(:,:) = nullvalueR
+        faceR(:,:) = nullvalueR
 
-        !ncol=> Ncol_faceI
-        allocate(faceI_caf(max_caf_face_N, Ncol_faceI)[*], stat=allocation_status, errmsg=emsg)
+        allocate(faceI(max_caf_face_N, Ncol_faceI)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        faceI_caf(:,:) = nullvalueI
+        faceI(:,:) = nullvalueI
 
-        !ncol=> Ncol_faceYN
-        allocate(faceYN_caf(max_caf_face_N, Ncol_faceYN)[*], stat=allocation_status, errmsg=emsg)
+        allocate(faceYN(max_caf_face_N, Ncol_faceYN)[*], stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
-        faceYN_caf(:,:) = nullvalueL
-
+        faceYN(:,:) = nullvalueL
 
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
 
 
-    end subroutine coarray_storage_allocation
+    end subroutine allocate_coarray_storage
+
     ! subroutine allocate_bc()
     ! !
     ! ! allocate storage for boundary conditions.
