@@ -52,6 +52,7 @@ then
 fi
 
 
+
 install_cmake()
 {
     cd $SWMM5PLUS_DIR # make sure we are at the right level
@@ -95,142 +96,53 @@ install_mpich()
 }
 
     
-
-for element in "${package_executable_array[@]}" ; do
-    KEY="${element%%:*}"
-    VALUE="${element##*:}"
+opencoarray_prerequisite()
+{
+    for element in "${package_executable_array[@]}" ; do
+        KEY="${element%%:*}"
+        VALUE="${element##*:}"
     
-    if ! command -v $VALUE &> /dev/null; # if cannot find the command in root (usually usr/bin or usr/local/bin)
-    then
-        case $KEY in 
-            "cmake")
-                echo "${KEY} is not installed in root. Searching in ${CMAKE_SOURCE} ..."
-                if [ -d $CMAKE_SOURCE ] && [ -f $CMAKE_INSTALL/bin/cmake ] # if cmake already in local
-                then
-                    echo "Found cmake in $CMAKE_INSTALL ..."
-
-                    CMAKE_VERSION=$(echo $(${CMAKE_INSTALL}/bin/cmake --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                    if [ "$(printf '%s\n' "$CMAKE_REQUIRE_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRE_VERSION" ]
-                    then
-                        echo "Current cmake version is ${CMAKE_VERSION}, higher than required version (${CMAKE_REQUIRE_VERSION})."
-                        export CMAKE_EXEC=$(which cmake)
-                        echo "cmake path: $CMAKE_EXEC" >> $INSTALLATION_LOG
-                    else # version is outdated
-                        echo "Local cmake is outdated. Installing a newer version of cmake ..."
-                        sudo rm -rf $CMAKE_SOURCE
-                        install_cmake
-                    fi  
-
-                else
-                    echo "No local cmake found ... Installing cmake in ${CMAKE_SOURCE}"
-                    if [ -d $CMAKE_SOURCE ]; then 
-                        sudo rm -rf $CMAKE_SOURCE
-                    fi
-                    install_cmake
-                fi
-                ;;
-
-            "mpich")
-                echo "${KEY} is not installed in root. Searching in ${MPICH_SOURCE} ..."
-                if [ -d $MPICH_SOURCE ] && [ -x $MPICH_INSTALL/bin/mpifort ]
-                then
-                    echo "Found mpich in $MPICH_INSTALL ..."
-                    MPICH_VERSION=$(echo $(${MPICH_INSTALL}/bin/mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                    if [ "$(printf '%s\n' "$MPICH_REQUIRE_VERSION" "$MPICH_VERSION" | sort -V | head -n1)" = "$MPICH_REQUIRE_VERSION" ]
-                    then
-                        echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
-                        export MPICH_PATH=$MPICH_INSTALL # use the mpich in root
-                        echo "mpich path: $MPICH_PATH" >> $INSTALLATION_LOG
-                    else
-                        echo "Local ${KEY} is outdated, install the updated version (mpich 3.2.0) ..."
-                        read -p "Delete the local ${KEY} directory and start the re-installation? [Y/N]:" -n 1 -r
-                        echo    # (optional) move to a new line
-                        if [[ $REPLY =~ ^[Yy]$ ]]
-                        then
-                            sudo rm -rf $MPICH_SOURCE
-                        else
-                            echo "Did not delete the existing ${MPICH_SOURCE}, ${KEY} reinstallation suspended."
-                            echo "[WARNING] mpich is not installed [WARNING]"
-                            exit 0
-                        fi
-                        install_mpich
-                    fi
-                else
-                    echo "No local ${KEY} found .... Installing ${KEY} in ${MPICH_SOURCE}"
-                    if [ -d $MPICH_SOURCE ]
-                    then
-                        sudo rm -rf $MPICH_SOURCE
-                    fi
-                    install_mpich
-                fi
-                ;;
-        esac
-
-    
-
-    elif command -v $VALUE &> /dev/null; # command exists
-    then
-        case $KEY in
-            "cmake")
-                CMAKE_VERSION=$(echo $($VALUE --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                if [ "$(printf '%s\n' "$CMAKE_REQUIRE_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRE_VERSION" ]
-                then
-                    echo "Current ${KEY} version is ${CMAKE_VERSION}, higher than required version (${CMAKE_REQUIRE_VERSION})."
-                    export CMAKE_EXEC=$(which $VALUE)
-                    echo "${KEY} path: $CMAKE_EXEC" >> $INSTALLATION_LOG
-                else
-                    echo "Current ${KEY} version is: ${CMAKE_VERSION}, lower than the required version: ${CMAKE_REQUIRE_VERSION}."
-                    echo "Install local ${KEY} under ${CMAKE_SOURCE} ...."
+        if ! command -v $VALUE &> /dev/null; # if cannot find the command in root (usually usr/bin or usr/local/bin)
+        then
+            case $KEY in 
+                "cmake")
+                    echo "${KEY} is not installed in root. Searching in ${CMAKE_SOURCE} ..."
                     if [ -d $CMAKE_SOURCE ] && [ -f $CMAKE_INSTALL/bin/cmake ] # if cmake already in local
-                    then 
+                    then
+                        echo "Found cmake in $CMAKE_INSTALL ..."
+
                         CMAKE_VERSION=$(echo $(${CMAKE_INSTALL}/bin/cmake --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
                         if [ "$(printf '%s\n' "$CMAKE_REQUIRE_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRE_VERSION" ]
                         then
-                            export CMAKE_EXEC=$CMAKE_INSTALL/bin/cmake
-                        else #the local cmake is also outdated, make install
-                            echo "Local ${KEY} is outdated, install the updated version (cmake 3.11.0) ..."
-                            read -p "Delete the local ${KEY} directory and start the re-installation? [Y/N]:" -n 1 -r
-                            echo    # (optional) move to a new line
-                            if [[ $REPLY =~ ^[Yy]$ ]]
-                            then
-                                sudo rm -rf $CMAKE_SOURCE
-                            else
-                                echo "Did not delete the existing ${CMAKE_SOURCE}, ${KEY} reinstallation suspended."
-                                echo "[WARNING] cmake is not installed [WARNING]"
-                                exit 0
-                            fi
-                            ### cmake installation body
+                            echo "Current cmake version is ${CMAKE_VERSION}, higher than required version (${CMAKE_REQUIRE_VERSION})."
+                            export CMAKE_EXEC=$(which cmake)
+                            echo "cmake path: $CMAKE_EXEC" >> $INSTALLATION_LOG
+                        else # version is outdated
+                            echo "Local cmake is outdated. Installing a newer version of cmake ..."
+                            sudo rm -rf $CMAKE_SOURCE
                             install_cmake
-                        fi
-                    else # no cmake in local -> make the install
-                        if [ -d $CMAKE_SOURCE ]
-                        then
+                        fi  
+
+                    else
+                        echo "No local cmake found ... Installing cmake in ${CMAKE_SOURCE}"
+                        if [ -d $CMAKE_SOURCE ]; then 
                             sudo rm -rf $CMAKE_SOURCE
                         fi
                         install_cmake
                     fi
-                fi
-            ;;
+                    ;;
 
-            "mpich")
-                MPICH_VERSION=$(echo $(mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                if [ "$(printf '%s\n' "$MPICH_REQUIRE_VERSION" "$MPICH_VERSION" | sort -V | head -n1)" = "$MPICH_REQUIRE_VERSION" ]
-                then
-                    echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
-                    export MPICH_PATH="/usr/" # return the mpich path in root
-                    echo "${KEY} path : $MPICH_PATH" >> $INSTALLATION_LOG
-                else
-                    echo "Current ${KEY} version in root is: ${MPICH_VERSION}, lower than the required version: ${MPI_REQUIRE_VERSION}."
-                    echo "Install local ${KEY} under ${MPICH_SOURCE} ...."
-                    if [ -d $MPICH_SOURCE ] && [ -x $MPICH_INSTALL/bin/mpifort ] # if we have mpich in local
+                "mpich")
+                    echo "${KEY} is not installed in root. Searching in ${MPICH_SOURCE} ..."
+                    if [ -d $MPICH_SOURCE ] && [ -x $MPICH_INSTALL/bin/mpifort ]
                     then
-                        echo "Found existing ${KEY} in local directory." 
+                        echo "Found mpich in $MPICH_INSTALL ..."
                         MPICH_VERSION=$(echo $(${MPICH_INSTALL}/bin/mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
                         if [ "$(printf '%s\n' "$MPICH_REQUIRE_VERSION" "$MPICH_VERSION" | sort -V | head -n1)" = "$MPICH_REQUIRE_VERSION" ]
                         then
                             echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
                             export MPICH_PATH=$MPICH_INSTALL # use the mpich in root
-                            echo "${KEY} path: $MPICH_PATH" >> $INSTALLATION_LOG
+                            echo "mpich path: $MPICH_PATH" >> $INSTALLATION_LOG
                         else
                             echo "Local ${KEY} is outdated, install the updated version (mpich 3.2.0) ..."
                             read -p "Delete the local ${KEY} directory and start the re-installation? [Y/N]:" -n 1 -r
@@ -242,45 +154,137 @@ for element in "${package_executable_array[@]}" ; do
                                 echo "Did not delete the existing ${MPICH_SOURCE}, ${KEY} reinstallation suspended."
                                 echo "[WARNING] mpich is not installed [WARNING]"
                                 exit 0
-                            fi 
+                            fi
                             install_mpich
                         fi
-                    else # no mpich in root and local -> make install
+                    else
+                        echo "No local ${KEY} found .... Installing ${KEY} in ${MPICH_SOURCE}"
                         if [ -d $MPICH_SOURCE ]
                         then
                             sudo rm -rf $MPICH_SOURCE
                         fi
                         install_mpich
                     fi
-                fi
-            ;;
+                    ;;
+            esac
 
-        esac
-    fi
     
-done
 
+        elif command -v $VALUE &> /dev/null; # command exists
+        then
+            case $KEY in
+                "cmake")
+                    CMAKE_VERSION=$(echo $($VALUE --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+                    if [ "$(printf '%s\n' "$CMAKE_REQUIRE_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRE_VERSION" ]
+                    then
+                        echo "Current ${KEY} version is ${CMAKE_VERSION}, higher than required version (${CMAKE_REQUIRE_VERSION})."
+                        export CMAKE_EXEC=$(which $VALUE)
+                        echo "${KEY} path: $CMAKE_EXEC" >> $INSTALLATION_LOG
+                    else
+                        echo "Current ${KEY} version is: ${CMAKE_VERSION}, lower than the required version: ${CMAKE_REQUIRE_VERSION}."
+                        echo "Install local ${KEY} under ${CMAKE_SOURCE} ...."
+                        if [ -d $CMAKE_SOURCE ] && [ -f $CMAKE_INSTALL/bin/cmake ] # if cmake already in local
+                        then 
+                            CMAKE_VERSION=$(echo $(${CMAKE_INSTALL}/bin/cmake --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+                            if [ "$(printf '%s\n' "$CMAKE_REQUIRE_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRE_VERSION" ]
+                            then
+                                export CMAKE_EXEC=$CMAKE_INSTALL/bin/cmake
+                            else #the local cmake is also outdated, make install
+                                echo "Local ${KEY} is outdated, install the updated version (cmake 3.11.0) ..."
+                                read -p "Delete the local ${KEY} directory and start the re-installation? [Y/N]:" -n 1 -r
+                                echo    # (optional) move to a new line
+                                if [[ $REPLY =~ ^[Yy]$ ]]
+                                then
+                                    sudo rm -rf $CMAKE_SOURCE
+                                else
+                                    echo "Did not delete the existing ${CMAKE_SOURCE}, ${KEY} reinstallation suspended."
+                                    echo "[WARNING] cmake is not installed [WARNING]"
+                                    exit 0
+                                fi
+                                ### cmake installation body
+                                install_cmake
+                            fi
+                        else # no cmake in local -> make the install
+                            if [ -d $CMAKE_SOURCE ]
+                            then
+                                sudo rm -rf $CMAKE_SOURCE
+                            fi
+                            install_cmake
+                        fi
+                    fi
+                ;;
 
+                "mpich")
+                    MPICH_VERSION=$(echo $(mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+                    if [ "$(printf '%s\n' "$MPICH_REQUIRE_VERSION" "$MPICH_VERSION" | sort -V | head -n1)" = "$MPICH_REQUIRE_VERSION" ]
+                    then
+                        echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
+                        export MPICH_PATH="/usr/" # return the mpich path in root
+                        echo "${KEY} path : $MPICH_PATH" >> $INSTALLATION_LOG
+                    else
+                        echo "Current ${KEY} version in root is: ${MPICH_VERSION}, lower than the required version: ${MPI_REQUIRE_VERSION}."
+                        echo "Install local ${KEY} under ${MPICH_SOURCE} ...."
+                        if [ -d $MPICH_SOURCE ] && [ -x $MPICH_INSTALL/bin/mpifort ] # if we have mpich in local
+                        then
+                            echo "Found existing ${KEY} in local directory." 
+                            MPICH_VERSION=$(echo $(${MPICH_INSTALL}/bin/mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+                            if [ "$(printf '%s\n' "$MPICH_REQUIRE_VERSION" "$MPICH_VERSION" | sort -V | head -n1)" = "$MPICH_REQUIRE_VERSION" ]
+                            then
+                                echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
+                                export MPICH_PATH=$MPICH_INSTALL # use the mpich in root
+                                echo "${KEY} path: $MPICH_PATH" >> $INSTALLATION_LOG
+                            else
+                                echo "Local ${KEY} is outdated, install the updated version (mpich 3.2.0) ..."
+                                read -p "Delete the local ${KEY} directory and start the re-installation? [Y/N]:" -n 1 -r
+                                echo    # (optional) move to a new line
+                                if [[ $REPLY =~ ^[Yy]$ ]]
+                                then
+                                    sudo rm -rf $MPICH_SOURCE
+                                else
+                                    echo "Did not delete the existing ${MPICH_SOURCE}, ${KEY} reinstallation suspended."
+                                    echo "[WARNING] mpich is not installed [WARNING]"
+                                    exit 0
+                                fi 
+                                install_mpich
+                            fi
+                        else # no mpich in root and local -> make install
+                            if [ -d $MPICH_SOURCE ]
+                            then
+                                sudo rm -rf $MPICH_SOURCE
+                            fi
+                            install_mpich
+                        fi
+                    fi
+                ;;
 
-# Download Opencoarray
-if [ ! -d $COARRAY_SOURCE ]   
-then
-    echo "opencoarray is not found in current directory."
-    mkdir $COARRAY_SOURCE
-    cd $COARRAY_SOURCE
-    mkdir $COARRAY_INSTALL
-    echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
-    sleep 3.0
-    git clone https://github.com/sourceryinstitute/OpenCoarrays 
-    cd OpenCoarrays
-    mkdir opencoarrays-build
-    cd opencoarrays-build
-    CC=gcc FC=gfortran ${CMAKE_EXEC} .. -DCMAKE_INSTALL_PREFIX=$COARRAY_INSTALL -DMPI_HOME=$MPICH_PATH
-    make
-    sudo make install
-    cd ../../../
-fi
+            esac
+        fi
+    
+    done
+}
 
+install_opencoarray()
+{
+    # Download Opencoarray
+    if [ ! -d $COARRAY_SOURCE ]   
+    then
+        echo "opencoarray is not found in current directory."
+        mkdir $COARRAY_SOURCE
+        cd $COARRAY_SOURCE
+        mkdir $COARRAY_INSTALL
+        echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
+        sleep 3.0
+        git clone https://github.com/sourceryinstitute/OpenCoarrays 
+        cd OpenCoarrays
+        mkdir opencoarrays-build
+        cd opencoarrays-build
+        CC=gcc FC=gfortran ${CMAKE_EXEC} .. -DCMAKE_INSTALL_PREFIX=$COARRAY_INSTALL -DMPI_HOME=$MPICH_PATH
+            make
+        echo "Installing Opencoarrays ... "
+        sudo make install
+        cd ../../../
+    fi
+}
 
 
 # Download dependencies
@@ -306,6 +310,14 @@ then
     rm *.tar.gz
     mv Stormwater*/src "$API_DIR/src"
     rm -r Stormwater*
+fi
+
+
+
+if [ $COARRAY_FC != "caf" ]
+then
+    opencoarray_prerequisite
+    install_opencoarray
 fi
 
 echo

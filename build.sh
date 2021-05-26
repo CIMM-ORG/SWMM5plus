@@ -75,14 +75,8 @@ then
     #exit 0
 fi
 
-# Download dependencies
-if [ $COARRAY_FC == "caf" ] #since we already found caf in root, no need to install opencoarrays in local
-then
-    echo "opencoarray is already installed in /usr/bin/"
-    echo "Use /usr/bin/caf as default compiler"
-else # caf not found in root
-    source ./install.sh
-fi
+# install the dependencies
+source ./install.sh
 
 
 # Compile SWMM C
