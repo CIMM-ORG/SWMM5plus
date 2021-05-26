@@ -111,8 +111,9 @@
         "PartitioningMethod" : "Default",
         "BIPquickTestCase" : false
     },
-    "ElementLengthAdjust" : {
-        "LinkShortingFactor" : 0.33
+    "Discretization" : {
+        "NominalElemLength" : 10.0,
+        "BranchFactor" : 0.33
     },
     "Debug" : {
         "DebugAPI" : false,

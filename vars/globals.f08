@@ -16,8 +16,6 @@ module globals
 
     public
 
-    real(8), parameter :: element_length = 10.0 ! This is a temperory element length
-
     ! Main Arrays
     !%  links are the building blocks from SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: linkR ! real data for links
@@ -34,21 +32,21 @@ module globals
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
 
     !% elems in coarray
-    real(8), allocatable :: elemR_caf(:,:)[:]   ! coarray for elements
-    integer, allocatable :: elemI_caf(:,:)[:]    ! coarray for element Interger
-    logical, allocatable :: elemYN_caf(:,:)[:]   ! coarray for element logical
-    integer, allocatable :: elemP_caf(:,:)[:]    ! coarray for element pack array
-    !integer, allocatable, target :: elemPG_caf(:,:)[:]   ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
-    integer, allocatable :: elemSI_caf(:,:)[:]   ! coarray for special element Integer
-    real(8), allocatable :: elemSR_caf(:,:)[:]   ! coarray for special elemen Real
-    real(8), allocatable :: elemSGR_caf(:,:)[:]  ! coarray for special element geometry Real
+    real(8), allocatable :: elemR(:,:)[:]   ! coarray for elements
+    integer, allocatable :: elemI(:,:)[:]    ! coarray for element Interger
+    logical, allocatable :: elemYN(:,:)[:]   ! coarray for element logical
+    integer, allocatable :: elemP(:,:)[:]    ! coarray for element pack array
+    !integer, allocatable, target :: elemPG(:,:)[:]   ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
+    integer, allocatable :: elemSI(:,:)[:]   ! coarray for special element Integer
+    real(8), allocatable :: elemSR(:,:)[:]   ! coarray for special elemen Real
+    real(8), allocatable :: elemSGR(:,:)[:]  ! coarray for special element geometry Real
 
     !% faces in coarray
-    real(8), allocatable, target :: faceR_caf(:,:)[:]    ! coarray for faces real data
-    integer, allocatable, target :: faceI_caf(:,:)[:]    ! coarray for faces integer data
-    logical, allocatable, target :: faceYN_caf(:,:)[:]   ! coarray for faces logical data
-    integer, allocatable, target :: faceP_caf(:,:)[:]    ! coarray for faces pack array
-    
+    real(8), allocatable, target :: faceR(:,:)[:]    ! coarray for faces real data
+    integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
+    logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data
+    integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array
+
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
@@ -87,22 +85,26 @@ module globals
     integer :: N_pattern
     integer :: N_BCupstream
     integer :: N_BCdnstream
+    integer :: N_nBCup
+    integer :: N_nBCdn
+    integer :: N_nJm
+    integer :: N_nStorage
+    integer :: N_nJ2
 
     ! Coarray variables
     integer :: max_caf_elem_N ! size of all elem array in coarray
     integer :: max_caf_face_N ! size of all face array in coarray
 
-
     ! Constants for Junction
     integer :: J_elem_add = 7 ! Supplement elements for junction
-    integer :: J_face_add = 6 ! Supplement faces    for junction
-   
+    integer :: J_face_add = 6 ! Supplement faces for junction
 
     ! useful shortcuts
     real(8), pointer :: dt => setting%time%dt
     real(8), pointer :: grav => setting%constant%gravity
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
-    real(8), pointer :: elem_shorten_cof => setting%ElementLengthAdjust%LinkShortingFactor
+    real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
+    real(8), pointer :: elem_branch_factor => setting%Discretization%BranchFactor
 
     ! Tables
     type(real_table), allocatable :: all_tseries(:)
