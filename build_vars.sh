@@ -32,3 +32,18 @@ COARRAY_FC="${COARRAY_INSTALL}/bin/caf"
 # Debugging
 DEBUG_API=false
 DEBUG_SOURCES=""
+
+CAF_VERSION="0.0.0"
+CMAKE_VERSION="0.0.0" #initialize by using 0.0.0, not version can lower than 0.0.0
+MPICH_VERSION="0.0.0"
+
+#GCC_REQUIRE_VERSION="10.1.0"
+CMAKE_REQUIRE_VERSION="3.10.0"
+MPICH_REQUIRE_VERSION="3.2.0"
+
+INSTALLATION_LOG="$SWMM5PLUS_DIR/dependencies_installation_log.txt"
+
+package_executable_array=(
+    "cmake:cmake"
+    "mpich:mpifort"
+)
