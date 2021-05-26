@@ -6,11 +6,11 @@ module initialization
     use interface
     use BIPquick
     use coarray_partition
+    use discretization
     use utility, only: utility_export_linknode_csv
     use setting_definition, only: setting
 
     implicit none
-
 
 !-----------------------------------------------------------------------------
 !
@@ -28,7 +28,7 @@ module initialization
 
     private
 
-    public :: initialize_linknode_arrays, count_node_types
+    public :: initialize_linknode_arrays
 
 contains
 
@@ -99,28 +99,25 @@ contains
             else if (total_n_links > 2) then
                 nodeI(i, ni_node_type) = nJm
             end if
-            ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
             l1 = get_node_attribute(i, node_has_extInflow) == 1
             l2 = get_node_attribute(i, node_has_dwfInflow) == 1
             if (l1 .or. l2) then
-                !nodeYN(i, nYN_has_inflow) = .true.
+                nodeYN(i, nYN_has_inflow) = .true.
                 if (total_n_links == 1) then
                     nodeI(i, ni_node_type) = nBCup
                 end if
             end if
 
-
             nodeR(i,nr_InitialDepth) = get_node_attribute(i, node_initDepth)
             nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
         end do
 
-        ! adjust the length and calculate the number/length of elements in each link
-        call link_length_adjust()
-        call N_elem_assign()
-
-        
-        call initialize_partition_coarray()
-
+        ! Count number of instances of each node type
+        N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
+        N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
+        N_nJm = count(nodeI(:, ni_node_type) == nJM)
+        N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
+        N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
 
         if (setting%Debug%File%initialization) then
             call utility_export_linknode_csv()
@@ -129,92 +126,22 @@ contains
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
 
-
-    ! this is a subroutine for adjusting the length of links.
-    ! Put it here for now but can be moved to somewhere else
-    subroutine link_length_adjust()
-        integer :: ii
-        real(8) :: temp_length
-        character(64) :: subroutine_name = 'link_length_adjust'
-        
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-
-        do ii =1, N_link
-            temp_length = linkR(ii,lr_Length) ! lenght of link ii
-            
-            if ( nodeI(linkI(ii,li_Mnode_u), ni_node_type) .eq. nJm ) then
-                temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for upstream M junction
-            endif
-
-            if ( nodeI(linkI(ii,li_Mnode_d), ni_node_type) .eq. nJm ) then
-                temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for downstream M junction
-            endif
-
-            linkR(ii,lr_Length) = temp_length
-        enddo
-
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
-    end subroutine link_length_adjust
-
-    subroutine N_elem_assign()
-        integer :: ii
-        real(8) :: remainder
-        character(64) :: subroutine_name = 'N_elem_assign'
-        
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-
-        do ii = 1, N_link
-            remainder = mod(linkR(ii,lr_Length), element_length)
-            if ( remainder .eq. zeroR ) then
-                linkI(ii, li_N_element) = int(linkR(ii, lr_Length)/element_length)
-                linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
-            elseif ( remainder .ge. onehalfR * element_length ) then
-                linkI(ii, li_N_element) = ceiling(linkR(ii,lr_Length)/element_length)
-                linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
-            else
-                linkI(ii, li_N_element) = floor(linkR(ii,lr_Length)/element_length)
-                linkR(ii, lr_ELementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
-            endif
-        enddo
-
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
-
-    end subroutine N_elem_assign
-
-    subroutine initialize_partition_coarray()
+    subroutine initialize_coarrays()
         character(64) :: subroutine_name = 'initialize_partition'
-        
+
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
-        !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed 
+        !% Discretize the network
+
+        !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed
         call BIPquick_YJunction_Hardcode()
-        
+
         call coarray_length_calculation()
-        
-        call coarray_storage_allocation()  ! once we finish the image flag this is ready to use
+
+        call allocate_coarray_storage()  ! once we finish the image flag this is ready to use
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
-    end subroutine initialize_partition_coarray
-
-
-    subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
-        integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
-        integer :: ii
-    
-        ! This subroutine uses the vectorized count() function to search the array for number of instances of each node type
-        N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
-        N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
-        N_nJm = count(nodeI(:, ni_node_type) == nJM)
-        N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
-        N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
-    
-        ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
-        ! num_nJm_nodes = N_nJm
-        ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
-        ! num_zero_elem_nodes = N_nJ2
-    
-    end subroutine count_node_types
+    end subroutine initialize_coarrays
 
 end module initialization
-
