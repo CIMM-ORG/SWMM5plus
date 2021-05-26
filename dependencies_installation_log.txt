@@ -1,0 +1,2 @@
+cmake path: /usr/bin/cmake
+mpich path : /usr/
