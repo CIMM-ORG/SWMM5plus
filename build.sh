@@ -64,8 +64,25 @@ then
 
 fi
 
+
+
+if [[ -x "/usr/bin/caf" && -x "usr/bin/cafrun" ]]
+then
+    echo "Opencoarray is already installed in /usr/bin ..."
+    # set the compiler path =caf/cafrun
+    export COARRAY_FC='caf'
+    echo "coarray path: /usr/bin/caf" >> $INSTALLATION_LOG
+    #exit 0
+fi
+
 # Download dependencies
-./install.sh
+if [ $COARRAY_FC == "caf" ] #since we already found caf in root, no need to install opencoarrays in local
+then
+    echo "opencoarray is already installed in /usr/bin/"
+    echo "Use /usr/bin/caf as default compiler"
+else # caf not found in root
+    source ./install.sh
+fi
 
 
 # Compile SWMM C
@@ -140,6 +157,9 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
 echo
 echo Compiling SWMM5+ ...
 echo
+
+
+
 
 #caf $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
 $COARRAY_FC $SOURCESF $DEBUG_SOURCES main.f08 -ldl -o $PROGRAM
