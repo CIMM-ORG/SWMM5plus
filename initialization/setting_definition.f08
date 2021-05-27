@@ -615,7 +615,6 @@ contains
         setting%Discretization%NominalElemLength = real_value
         if (.not. found) stop 72
 
-
         ! Load BIPQuick settings
         call json%get('Partitioning.N_Image', integer_value, found)
         setting%Partitioning%N_Image = integer_value
@@ -631,7 +630,6 @@ contains
             stop
         end if
         if (.not. found) stop 74
-
 
         ! Load BIPQuick settings
         call json%get('Verbose', logical_value, found)

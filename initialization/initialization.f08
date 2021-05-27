@@ -1,4 +1,5 @@
 module initialization
+
     use allocate_storage
     use array_index
     use data_keys
@@ -126,12 +127,15 @@ contains
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
 
-    subroutine initialize_coarrays()
-        character(64) :: subroutine_name = 'initialize_partition'
+    subroutine initialize_elemface_coarrays()
+        character(64) :: subroutine_name = 'initialize_elemface_coarrays'
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
         !% Discretize the network
+        !% adjust the length and calculate the number/length of elements in each link
+        call adjust_link_length()
+        call nominal_discretization()
 
         !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed
         call BIPquick_YJunction_Hardcode()
@@ -142,6 +146,6 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
-    end subroutine initialize_coarrays
+    end subroutine initialize_elemface_coarrays
 
 end module initialization

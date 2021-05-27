@@ -31,7 +31,7 @@ module globals
     integer, dimension(:,:), allocatable, target :: P_nodeI ! Partitioning output for nodes
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
 
-    !% elems in coarray
+    !% element coarrays
     real(8), allocatable :: elemR(:,:)[:]   ! coarray for elements
     integer, allocatable :: elemI(:,:)[:]    ! coarray for element Interger
     logical, allocatable :: elemYN(:,:)[:]   ! coarray for element logical
@@ -41,7 +41,7 @@ module globals
     real(8), allocatable :: elemSR(:,:)[:]   ! coarray for special elemen Real
     real(8), allocatable :: elemSGR(:,:)[:]  ! coarray for special element geometry Real
 
-    !% faces in coarray
+    !% face coarrays
     real(8), allocatable, target :: faceR(:,:)[:]    ! coarray for faces real data
     integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
     logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data

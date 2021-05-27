@@ -10,10 +10,10 @@ contains
 
     ! this is a subroutine for adjusting the length of links.
     ! Put it here for now but can be moved to somewhere else
-    subroutine link_length_adjust()
+    subroutine adjust_link_length()
         integer :: ii
         real(8) :: temp_length
-        character(64) :: subroutine_name = 'link_length_adjust'
+        character(64) :: subroutine_name = 'adjust_link_length'
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
@@ -32,7 +32,7 @@ contains
         enddo
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
-    end subroutine link_length_adjust
+    end subroutine adjust_link_length
 
     subroutine nominal_discretization()
         integer :: ii
@@ -61,9 +61,5 @@ contains
 
     subroutine cfl_discretization()
     end subroutine cfl_discretization
-
-    ! adjust the length and calculate the number/length of elements in each link
-    ! call link_length_adjust()
-    ! call N_elem_assign()
 
 end module discretization
