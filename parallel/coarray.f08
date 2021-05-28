@@ -27,7 +27,7 @@ module coarray
         integer :: ii=0, min_val, max_val
         character(64) :: subroutine_name = 'image_number_calculation'
 
-        if (setting%Debug%File%coarray_bipquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%coarray) print *, '*** enter ',subroutine_name
 
         allocate(img_arr(size(linkI,1)))
         allocate(unique(size(linkI,1)))
@@ -47,7 +47,7 @@ module coarray
 
         nimgs_assign = size(unique_imagenum,1) ! The number of images assigned by BIPquick
 
-        if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%coarray)  print *, '*** leave ',subroutine_name
     end subroutine image_number_calculation
 
 !    !==========================================================================    !==========================================================================    !
@@ -61,7 +61,7 @@ module coarray
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'array_length_calculation'
 
-        if (setting%Debug%File%coarray_bipquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%coarray) print *, '*** enter ',subroutine_name
 
         call image_number_calculation(nimgs_assign, unique_imagenum)
 
@@ -128,7 +128,7 @@ module coarray
         max_caf_elem_N = maxval(temp_elem_N)
         max_caf_face_N = maxval(temp_face_N) !% assign the max value
 
-        if (setting%Debug%File%coarray_bipquick)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%coarray)  print *, '*** leave ',subroutine_name
 
     end subroutine coarray_length_calculation
 

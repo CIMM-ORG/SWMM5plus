@@ -5,6 +5,7 @@ program main
    use initialization
    use setting_definition, only: setting
    use interface
+   use allocate_storage
    use coarray
    use BIPquick
    use partitioning

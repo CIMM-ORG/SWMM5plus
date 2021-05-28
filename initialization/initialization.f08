@@ -104,8 +104,8 @@ contains
                 end if
             end if
 
-            nodeR(i,nr_InitialDepth) = get_node_attribute(i, node_initDepth)
-            nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
+            nodeR(ii,nr_InitialDepth) = get_node_attribute(ii, node_initDepth)
+            nodeR(ii,nr_Zbottom) = get_node_attribute(ii, node_invertElev)
         end do
 
         ! Count number of instances of each node type

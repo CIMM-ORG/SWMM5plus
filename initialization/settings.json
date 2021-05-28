@@ -122,9 +122,8 @@
     "Debug" : {
         "DebugAPI" : false,
         "File" : {
-            "dynamic_array" : false,
-            "tables" : false,
             "allocate_storage" : false,
+            "discretization" : false,
             "initialization" : false,
             "interface" : false,
             "partitioning" : false,
@@ -132,7 +131,7 @@
             "utility" : false,
             "globals" : false,
             "inflow" : false,
-            "coarray_bipquick" : false
+            "coarray" : false
         },
         "Output" : {
 

@@ -14,6 +14,10 @@ module type_definitions
 
     implicit none
 
+    type string
+        character(len=:), allocatable :: str
+    end type string
+
     ! Temporal Array object
     type Array3D
         integer :: current_idx

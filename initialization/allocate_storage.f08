@@ -23,8 +23,9 @@ module allocate_storage
     character(len=99) ::              emsg
 
     ! public members
-    public :: allocate_linknode_storage
+    public :: allocate_all
     public :: allocate_coarray_storage
+    public :: deallocate_all_temporal
 
 contains
 
