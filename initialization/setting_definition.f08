@@ -2,7 +2,7 @@ module setting_definition
 
     use json_module
     use data_keys
-    use string_utils, only: utility_lower_case
+    use string_utility, only: utility_lower_case
 
     implicit none
     public

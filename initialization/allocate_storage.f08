@@ -46,8 +46,8 @@ contains
     end subroutine deallocate_all
 
     subroutine deallocate_all_temporal()
-        deallocate(totalInflows%val)
-        deallocate(tempInflows%val)
+        ! deallocate(totalInflows%val)
+        ! deallocate(tempInflows%val)
     end subroutine deallocate_all_temporal
 
     subroutine allocate_linknode_storage()
@@ -108,12 +108,6 @@ contains
         allocate(linkYN(N_link + additional_rows, lYN_idx_max), stat=allocation_status, errmsg=emsg)
         call utility_check_allocation(allocation_status, emsg)
         linkYN(:,:) = nullvalueL
-
-        allocate(nodeName(N_node + additional_rows), stat=allocation_status, errmsg=emsg)
-        call utility_check_allocation(allocation_status, emsg)
-
-        allocate(linkName(N_link + additional_rows), stat=allocation_status, errmsg=emsg)
-        call utility_check_allocation(allocation_status, emsg)
 
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage

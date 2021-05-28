@@ -1,4 +1,4 @@
-module string_utils
+module string_utility
 
 contains
 
@@ -22,4 +22,4 @@ contains
 
     end subroutine utility_lower_case
 
-end module string_utils
+end module string_utility
