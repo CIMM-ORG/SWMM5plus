@@ -115,6 +115,10 @@
         "PartitioningMethod" : "Default",
         "BIPquickTestCase" : false
     },
+    "Discretization" : {
+        "NominalElemLength" : 10.0,
+        "BranchFactor" : 0.33
+    },
     "Debug" : {
         "DebugAPI" : false,
         "File" : {
@@ -127,7 +131,8 @@
             "BIPquick"  : false,
             "utility" : false,
             "globals" : false,
-            "inflow" : false
+            "inflow" : false,
+            "coarray_bipquick" : false
         },
         "Output" : {
 

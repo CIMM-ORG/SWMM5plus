@@ -82,9 +82,6 @@ subroutine default_partitioning()
     !%   - Iterating through the linkI array until the number of elements expected exceeds the partition threshold
     !%   - Iterating again through the nodeI array to determine if the adjacent links are on different processors
 !% -----------------------------------------------------------------------------------------------------------------
-    !% Determines the number of nodes of each type for the purpose of calculating partition threshold
-    call count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
-
 
     !% HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
     !% multiplied by how many elements are expected for that node_type

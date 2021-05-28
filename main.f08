@@ -5,7 +5,7 @@ program main
    use initialization
    use setting_definition, only: setting
    use interface
-   use allocate_storage
+   use coarray
    use BIPquick
    use partitioning
 
@@ -87,6 +87,7 @@ program main
    call initialize_linknode_arrays()
 
    ! --- Graph Partitioning
+
    call execute_partitioning()
 
    ! --- Deallocate Temporal Arrays

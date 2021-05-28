@@ -2,7 +2,7 @@ module setting_definition
 
     use json_module
     use data_keys
-    use string_utility, only: utility_lower_case
+    use string_utility, only: lower_case
 
     implicit none
     public
@@ -127,9 +127,8 @@ module setting_definition
 
     ! setting%Debug%File
     type DebugFileType
-        logical :: dynamic_array    = .false.
-        logical :: tables           = .false.
         logical :: allocate_storage = .false.
+        logical :: discretization   = .false.
         logical :: initialization   = .false.
         logical :: interface        = .false.
         logical :: interface_tests  = .false.
@@ -138,6 +137,7 @@ module setting_definition
         logical :: utility          = .false.
         logical :: globals          = .false.
         logical :: inflow           = .false.
+        logical :: coarray          = .false.
     end type DebugFileType
 
     ! -
@@ -267,6 +267,11 @@ module setting_definition
         logical :: BIPquickTestCase = .true.
     endtype PartitioningType
 
+    !% setting%Discretization
+    type DiscretizationType
+        real(8) :: NominalElemLength  = 10.0
+        real(8) :: BranchFactor = 0.33
+    end type DiscretizationType
     ! -
     ! --
 
@@ -286,6 +291,7 @@ module setting_definition
         type(TestCaseType)     :: TestCase
         type(PathType)         :: Paths
         type(DebugType)        :: Debug
+        type(DiscretizationType) :: Discretization
         type(PartitioningType) :: Partitioning
         logical :: Verbose
     end type settingType
@@ -377,7 +383,7 @@ contains
         setting%Adjust%Flowrate%Apply = logical_value
         if (.not. found) stop 19
         call json%get('Adjust.Flowrate.approach', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'vshape') then
             setting%Adjust%Flowrate%approach = vshape
         else if (c == 'smoothall') then
@@ -395,7 +401,7 @@ contains
         setting%Adjust%Head%Apply = logical_value
         if (.not. found) stop 21
         call json%get('Adjust.Head.approach', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'vshape') then
             setting%Adjust%Head%approach = vshape
         else if (c == 'smoothall') then
@@ -429,7 +435,7 @@ contains
 
         ! Load Limiter Settings
         call json%get('Limiter.BC.approach', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'froudenumber') then
             setting%Limiter%BC%approach = FroudeNumber
         else
@@ -498,7 +504,7 @@ contains
         setting%Solver%crk2 = real_value
         if (.not. found) stop 44
         call json%get('Solver.MomentumSourceMethod', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 't00') then
             setting%Solver%MomentumSourceMethod = T00
         else if (c == 't10') then
@@ -514,7 +520,7 @@ contains
         setting%Solver%PreissmanSlot = logical_value
         if (.not. found) stop 46
         call json%get('Solver.SolverSelect', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'sve') then
             setting%Solver%SolverSelect = SVE
         else if (c == 'sve_ac') then
@@ -576,43 +582,51 @@ contains
         call json%get('Debug.DebugAPI', logical_value, found)
         setting%Debug%DebugAPI = logical_value
         if (.not. found) stop 61
-        call json%get('Debug.File.dynamic_array', logical_value, found)
-        setting%Debug%File%dynamic_array = logical_value
-        if (.not. found) stop 62
-        call json%get('Debug.File.tables', logical_value, found)
-        setting%Debug%File%tables = logical_value
-        if (.not. found) stop 63
         call json%get('Debug.File.allocate_storage', logical_value, found)
         setting%Debug%File%allocate_storage = logical_value
-        if (.not. found) stop 64
+        if (.not. found) stop 62
+        call json%get('Debug.File.discretization', logical_value, found)
+        setting%Debug%File%discretization = logical_value
+        if (.not. found) stop 63
         call json%get('Debug.File.initialization', logical_value, found)
         setting%Debug%File%initialization = logical_value
-        if (.not. found) stop 65
+        if (.not. found) stop 64
         call json%get('Debug.File.interface', logical_value, found)
         setting%Debug%File%interface = logical_value
-        if (.not. found) stop 66
+        if (.not. found) stop 65
         call json%get('Debug.File.partitioning', logical_value, found)
         setting%Debug%File%partitioning = logical_value
-        if (.not. found) stop 67
+        if (.not. found) stop 66
         call json%get('Debug.File.BIPquick', logical_value, found)
         setting%Debug%File%BIPquick = logical_value
-        if (.not. found) stop 68
+        if (.not. found) stop 67
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
-        if (.not. found) stop 69
+        if (.not. found) stop 68
         call json%get('Debug.File.globals', logical_value, found)
         setting%Debug%File%globals = logical_value
-        if (.not. found) stop 70
+        if (.not. found) stop 69
         call json%get('Debug.File.inflow', logical_value, found)
         setting%Debug%File%inflow = logical_value
+        if (.not. found) stop 70
+        call json%get('Debug.File.coarray', logical_value, found)
+        setting%Debug%File%coarray = logical_value
         if (.not. found) stop 71
+
+        ! Load Discretization settings
+        call json%get("Discretization.BranchFactor", real_value, found)
+        setting%Discretization%BranchFactor = real_value
+        if (.not. found) stop 72
+        call json%get("Discretization.NominalElemLength", real_value, found)
+        setting%Discretization%NominalElemLength = real_value
+        if (.not. found) stop 73
 
         ! Load BIPQuick settings
         call json%get('Partitioning.N_Image', integer_value, found)
         setting%Partitioning%N_Image = integer_value
-        if (.not. found) stop 72
+        if (.not. found) stop 74
         call json%get('Partitioning.PartitioningMethod', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'default') then
             setting%Partitioning%PartitioningMethod = Default
         else if (c == 'bquick') then
@@ -621,15 +635,15 @@ contains
             print *, "Error, the setting '" // trim(c) // "' is not supported for PartitioningMethod"
             stop
         end if
-        if (.not. found) stop 73
+        if (.not. found) stop 75
 
         ! Load BIPQuick settings
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 73
+        if (.not. found) stop 76
 
         call json%destroy()
-        if (json%failed()) stop 74
+        if (json%failed()) stop 77
 
     end subroutine load_settings
 end module setting_definition

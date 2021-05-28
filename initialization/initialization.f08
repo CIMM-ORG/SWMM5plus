@@ -5,6 +5,9 @@ module initialization
     use data_keys
     use globals
     use interface
+    use BIPquick
+    use coarray
+    use discretization
     use utility, only: utility_export_linknode_csv
     use setting_definition, only: setting
 
@@ -26,7 +29,7 @@ module initialization
 
     private
 
-    public :: initialize_linknode_arrays, count_node_types
+    public :: initialize_linknode_arrays
 
 contains
 
@@ -99,14 +102,19 @@ contains
                 if (total_n_links == 1) then
                     nodeI(ii, ni_node_type) = nBCup
                 end if
-            endif
+            end if
 
-            nodeR(ii,nr_InitialDepth) = get_node_attribute(ii, node_initDepth)
-            nodeR(ii,nr_Zbottom) = get_node_attribute(ii, node_invertElev)
+            nodeR(i,nr_InitialDepth) = get_node_attribute(i, node_initDepth)
+            nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
         end do
 
-        ! Count number of nodes with inflow
-        N_inflow = count(nodeYN(:, nYN_has_inflow))
+        ! Count number of instances of each node type
+        N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
+        N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
+        N_nJm = count(nodeI(:, ni_node_type) == nJM)
+        N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
+        N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
+
         if (setting%Debug%File%initialization) then
             call utility_export_linknode_csv()
         end if
@@ -114,22 +122,25 @@ contains
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
 
-    subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
-        integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
-        integer :: ii
-    
-        ! This subroutine uses the vectorized count() function to search the array for number of instances of each node type
-        N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
-        N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
-        N_nJm = count(nodeI(:, ni_node_type) == nJM)
-        N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
-        N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
-    
-        ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
-        ! num_nJm_nodes = N_nJm
-        ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
-        ! num_zero_elem_nodes = N_nJ2
-    
-    end subroutine count_node_types
+    subroutine initialize_elemface_coarrays()
+        character(64) :: subroutine_name = 'initialize_elemface_coarrays'
+
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+
+        !% Discretize the network
+        !% adjust the length and calculate the number/length of elements in each link
+        call adjust_link_length()
+        call nominal_discretization()
+
+        !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed
+        call BIPquick_YJunction_Hardcode()
+
+        call coarray_length_calculation()
+
+        call allocate_coarray_storage()  ! once we finish the image flag this is ready to use
+
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+
+    end subroutine initialize_elemface_coarrays
 
 end module initialization

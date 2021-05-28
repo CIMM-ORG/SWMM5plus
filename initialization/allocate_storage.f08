@@ -23,9 +23,8 @@ module allocate_storage
     character(len=99) ::              emsg
 
     ! public members
-    public :: allocate_all
-    public :: deallocate_all
-    public :: deallocate_all_temporal
+    public :: allocate_linknode_storage
+    public :: allocate_coarray_storage
 
 contains
 
@@ -111,6 +110,79 @@ contains
 
         if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
     end subroutine allocate_linknode_storage
+    !
+    !-----------------------------------------------------------------------------
+    !-----------------------------------------------------------------------------
+    !
+    subroutine allocate_coarray_storage()
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !   the max_caf_elem and max_caf_face are the maximum length of the coarray
+    !   across all employed images
+    !   ==========================
+    !   This will be excuted at parallel level
+    !   ==========================
+    !
+    ! Method:
+    !
+    !-----------------------------------------------------------------------------
+
+        character(64) :: subroutine_name = 'allocate_coarray_storage'
+
+    !-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%allocate_storage) print *, '*** enter ',subroutine_name
+
+        ! --- element arrays allocation ---
+
+        allocate(elemR(max_caf_elem_N, Ncol_elemR)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        elemR(:,:) = nullvalueR
+
+        allocate(elemI(max_caf_elem_N, Ncol_elemI)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        elemI(:,:) = nullvalueI
+
+        allocate(elemYN(max_caf_elem_N, Ncol_elemYN)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        elemYN(:,:) = nullvalueL
+
+        allocate(elemP(max_caf_elem_N, Ncol_elemP)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        elemP(:,:) = nullvalueI
+
+        ! Ncol_elemPG not defined yet. Comment out
+        !ncol => Ncol_elemPG
+        !allocate(elemPG_caf(max_caf_elem_N, Ncol_elemPG)[*], stat=allocation_status, errmsg=emsg)
+        !call utility_check_allocation(allocation_status, emsg)
+        !elemPG_caf(:,:)[:] = nullvalueI
+
+        allocate(elemSI(max_caf_elem_N, Ncol_elemSI)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        elemSI(:,:) = nullvalueI
+
+        allocate(elemSR(max_caf_elem_N, Ncol_elemSR)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        elemSR(:,:) = nullvalueR
+
+        !==== face allocation ====
+        allocate(faceR(max_caf_face_N, Ncol_faceR )[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        faceR(:,:) = nullvalueR
+
+        allocate(faceI(max_caf_face_N, Ncol_faceI)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        faceI(:,:) = nullvalueI
+
+        allocate(faceYN(max_caf_face_N, Ncol_faceYN)[*], stat=allocation_status, errmsg=emsg)
+        call utility_check_allocation(allocation_status, emsg)
+        faceYN(:,:) = nullvalueL
+
+        if (setting%Debug%File%allocate_storage) print *, '*** leave ',subroutine_name
+
+
+    end subroutine allocate_coarray_storage
 
     subroutine allocate_temporal_arrays()
         type(LimiterArraySizeType), pointer :: a_size => setting%Limiter%ArraySize
