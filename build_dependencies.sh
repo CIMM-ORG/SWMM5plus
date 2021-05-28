@@ -158,7 +158,9 @@ opencoarray_prerequisite()
                         echo "Found cmake in $CMAKE_INSTALL ..."
 
                         CMAKE_VERSION=$(echo $(${CMAKE_INSTALL}/bin/cmake --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                        if [ "$(printf '%s\n' "$CMAKE_REQUIRE_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRE_VERSION" ]
+                        vercomp $CMAKE_REQUIRE_VERSION $CMAKE_VERSION
+                        result=$?
+                        if [[ $result = 0 ]] || [[ $result = 2 ]]
                         then
                             echo "Current cmake version is ${CMAKE_VERSION}, higher than required version (${CMAKE_REQUIRE_VERSION})."
                             export CMAKE_EXEC=$(which cmake)
@@ -184,7 +186,9 @@ opencoarray_prerequisite()
                     then
                         echo "Found mpich in $MPICH_INSTALL ..."
                         MPICH_VERSION=$(echo $(${MPICH_INSTALL}/bin/mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                        if [ "$(printf '%s\n' "$MPICH_REQUIRE_VERSION" "$MPICH_VERSION" | sort -V | head -n1)" = "$MPICH_REQUIRE_VERSION" ]
+                        vercomp $MPICH_REQUIRE_VERSION $MPICH_VERSION
+                        result=$?
+                        if [[ $result = 0 ]] || [[ $result = 2 ]]
                         then
                             echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
                             export MPICH_PATH=$MPICH_INSTALL # use the mpich in root
@@ -221,7 +225,9 @@ opencoarray_prerequisite()
             case $KEY in
                 "cmake")
                     CMAKE_VERSION=$(echo $($VALUE --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                    if [ "$(printf '%s\n' "$CMAKE_REQUIRE_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRE_VERSION" ]
+                    vercomp $CMAKE_REQUIRE_VERSION $CMAKE_VERSION
+                    result=$?
+                    if [[ $result = 0 ]] || [[ $result = 2 ]]
                     then
                         echo "Current ${KEY} version is ${CMAKE_VERSION}, higher than required version (${CMAKE_REQUIRE_VERSION})."
                         export CMAKE_EXEC=$(which $VALUE)
@@ -232,7 +238,9 @@ opencoarray_prerequisite()
                         if [ -d $CMAKE_SOURCE ] && [ -f $CMAKE_INSTALL/bin/cmake ] # if cmake already in local
                         then
                             CMAKE_VERSION=$(echo $(${CMAKE_INSTALL}/bin/cmake --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                            if [ "$(printf '%s\n' "$CMAKE_REQUIRE_VERSION" "$CMAKE_VERSION" | sort -V | head -n1)" = "$CMAKE_REQUIRE_VERSION" ]
+                            vercomp $CMAKE_REQUIRE_VERSION $CMAKE_VERSION
+                            result=$?
+                            if [[ $result = 0 ]] || [[ $result = 2 ]]
                             then
                                 export CMAKE_EXEC=$CMAKE_INSTALL/bin/cmake
                             else #the local cmake is also outdated, make install
@@ -262,7 +270,9 @@ opencoarray_prerequisite()
 
                 "mpich")
                     MPICH_VERSION=$(echo $(mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                    if [ "$(printf '%s\n' "$MPICH_REQUIRE_VERSION" "$MPICH_VERSION" | sort -V | head -n1)" = "$MPICH_REQUIRE_VERSION" ]
+                    vercomp $MPICH_REQUIRE_VERSION $MPICH_VERSION
+                    result=$?
+                    if [[ $result = 0 ]] || [[ $result = 2 ]]
                     then
                         echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
                         export MPICH_PATH="/usr/" # return the mpich path in root
@@ -274,7 +284,9 @@ opencoarray_prerequisite()
                         then
                             echo "Found existing ${KEY} in local directory."
                             MPICH_VERSION=$(echo $(${MPICH_INSTALL}/bin/mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                            if [ "$(printf '%s\n' "$MPICH_REQUIRE_VERSION" "$MPICH_VERSION" | sort -V | head -n1)" = "$MPICH_REQUIRE_VERSION" ]
+                            vercomp $MPICH_REQUIRE_VERSION $MPICH_VERSION
+                            result=$?
+                            if [[ $result = 0 ]] || [[ $result = 2 ]]
                             then
                                 echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
                                 export MPICH_PATH=$MPICH_INSTALL # use the mpich in root
