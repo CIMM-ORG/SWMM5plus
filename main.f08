@@ -81,6 +81,32 @@ program main
    sync all
    
    call initialize_linknode_arrays()
+
+   if(this_image()==1) then
+     print*,'----------------------------------------------------------------'
+     print*, 'upstream links to node 3'
+     print*, nodeI(3,ni_Mlink_u1), 'Upstream link 1'
+     print*, nodeI(3,ni_Mlink_u2), 'Upstream link 2'
+     print*, nodeI(3,ni_Mlink_u3), 'Upstream link 3'
+     print*, nodeI(3,ni_N_link_u), 'number of us link'
+     print*
+     print*, 'downstream links to node 3'
+     print*
+     print*, nodeI(3,ni_Mlink_d1), 'Downstream link 1'
+     print*, nodeI(3,ni_Mlink_d2), 'Downstream link 2'
+     print*, nodeI(3,ni_Mlink_d3), 'Downstream link 3'
+     print*, nodeI(3,ni_N_link_d), 'number of ds link'
+     print*,'----------------------------------------------------------------'
+     print*, 'node types to understand how many us and ds boundary conditions'
+     print*, nodeI(1,ni_node_type), '<== node 1 Typ'
+     print*, nodeI(2,ni_node_type), '<== node 2 Typ'
+     print*, nodeI(3,ni_node_type), '<== node 3 Typ'
+     print*, nodeI(4,ni_node_type), '<== node 4 Typ'
+     print*,'Up bc = 5, Dn bc = 4, nJm = 2'
+     stop
+    endif
+
+
   
    sync all
 

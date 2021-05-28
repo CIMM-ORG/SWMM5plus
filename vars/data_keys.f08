@@ -172,6 +172,15 @@ module data_keys
         enumerator :: P02
     end enum
 
+    ! data types for link lengths adjustments
+    enum, bind(c)
+        enumerator :: NoAdjust = 1
+        enumerator :: OneSideAdjust
+        enumerator :: BothSideAdjust
+    end enum
+
+
+
     ! data types for Momentum Source type (setting%Solver%MomentumSourceM)
     enum, bind(c)
         enumerator :: T00 = 1

@@ -69,10 +69,10 @@ contains
             ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
             linkI(i, li_N_element) = 10
 
-            nodeI(linkI(i,li_Mnode_u), ni_N_link_u) = nodeI(linkI(i,li_Mnode_u), ni_N_link_u) + 1
-            nodeI(linkI(i,li_Mnode_u), ni_idx_base1 + nodeI(linkI(i,li_Mnode_u), ni_N_link_u)) = i
-            nodeI(linkI(i,li_Mnode_d), ni_N_link_d) = nodeI(linkI(i,li_Mnode_d), ni_N_link_d) + 1
-            nodeI(linkI(i,li_Mnode_d), ni_idx_base2 + nodeI(linkI(i,li_Mnode_d), ni_N_link_d)) = i
+            nodeI(linkI(i,li_Mnode_d), ni_N_link_u) = nodeI(linkI(i,li_Mnode_d), ni_N_link_u) + 1
+            nodeI(linkI(i,li_Mnode_d), ni_idx_base1 + nodeI(linkI(i,li_Mnode_d), ni_N_link_u)) = i
+            nodeI(linkI(i,li_Mnode_u), ni_N_link_d) = nodeI(linkI(i,li_Mnode_u), ni_N_link_d) + 1
+            nodeI(linkI(i,li_Mnode_u), ni_idx_base2 + nodeI(linkI(i,li_Mnode_u), ni_N_link_d)) = i
 
             linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
             linkR(i,lr_Length) = get_link_attribute(i, conduit_length)
@@ -137,7 +137,7 @@ contains
     ! this is a subroutine for adjusting the length of links.
     ! Put it here for now but can be moved to somewhere else
     subroutine link_length_adjust()
-        integer :: ii
+        integer :: ii, Adjustment_flag
         real(8) :: temp_length
         character(64) :: subroutine_name = 'link_length_adjust'
         
@@ -145,16 +145,20 @@ contains
 
         do ii =1, N_link
             temp_length = linkR(ii,lr_Length) ! lenght of link ii
+            Adjustment_flag = oneI
             
             if ( nodeI(linkI(ii,li_Mnode_u), ni_node_type) .eq. nJm ) then
                 temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for upstream M junction
+                Adjustment_flag = Adjustment_flag + oneI
             endif
 
             if ( nodeI(linkI(ii,li_Mnode_d), ni_node_type) .eq. nJm ) then
                 temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for downstream M junction
+                Adjustment_flag = Adjustment_flag + oneI
             endif
 
             linkR(ii,lr_AdjustedLength) = temp_length
+            linkI(ii,li_length_adjusted) = Adjustment_flag
         enddo
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name

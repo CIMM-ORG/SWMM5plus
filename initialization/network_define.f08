@@ -54,21 +54,31 @@ contains
         sync all 
         !% print result
         if (setting%Debug%File%network_define) then
-           image = this_image()
-           print*, '----------------------------------------------------'
-           print*, 'image = ', image
-           print*, '..................elements..........................'
-           print*, elemI(:,ei_Lidx)[image], 'ei_Lidx', " |img# = ", image
-           print*, elemI(:,ei_Gidx)[image], 'ei_Gidx', " |img# = ", image
-           print*, elemI(:,ei_elementType)[image], 'ei_elementType', "| img# = ", image
-           print*, elemI(:,ei_geometryType)[image], 'ei_geometryType', "| img# = ", image
-           print*, elemI(:,ei_link_Gidx_SWMM)[image], 'ei_link_Gidx_SWMM', "| img# = ", image
-           print*, elemI(:,ei_node_Gidx_SWMM)[image], 'ei_node_Gidx_SWMM', "| img# = ", image
-           print*, '..................faces.............................'
-           print*, faceI(:,fi_Lidx)[image], 'fi_Lidx', "| img# = ", image
-           print*, faceI(:,fi_Gidx)[image], 'fi_Gidx', "| img# = ", image
-           print*, '----------------------------------------------------'
-           call execute_command_line('')
+           ! image = this_image()
+           if (this_image() == 1) then
+
+            do image = 1,3
+               print*, '----------------------------------------------------'
+               print*, 'image = ', image
+               print*, '..................elements..........................'
+               print*, elemI(:,ei_Lidx)[image], 'Lidx'
+               print*, elemI(:,ei_Gidx)[image], 'Gidx'
+               print*, elemI(:,ei_elementType)[image], 'elementType'
+               print*, elemI(:,ei_geometryType)[image], 'geometryType'
+               print*, elemI(:,ei_link_Gidx_SWMM)[image], 'link_Gidx_SWMM'
+               print*, elemI(:,ei_node_Gidx_SWMM)[image], 'node_Gidx_SWMM'
+               print*, elemI(:,ei_Mface_uL)[image],'Mface_uL'
+               print*, elemI(:,ei_Mface_dL)[image],'Mface_dL'
+               print*, '..................faces.............................'
+               print*, faceI(:,fi_Lidx)[image], 'face Lidx'
+               print*, faceI(:,fi_Gidx)[image], 'face Gidx'
+               print*, faceI(:,fi_Melem_dL)[image], 'face Melem_dL'
+               print*, faceI(:,fi_Melem_uL)[image], 'face Melem_uL'
+               print*, faceYN(:,fYN_isnull)[image], 'face is_null'
+               print*, '----------------------------------------------------'
+               call execute_command_line('')
+           enddo
+            endif
         endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
@@ -137,7 +147,7 @@ contains
     !
     !--------------------------------------------------------------------------
         
-        integer :: ii, jj, image, firstIdx
+        integer :: ii, image, pLink, pNode
         integer :: ElemGlobalIdx, FaceGlobalIdx 
         integer :: ElemLocallIdx, FacelocallIdx
         integer :: lastElem, lastFace, P_elem, P_face
@@ -158,12 +168,12 @@ contains
         ElemGlobalIdx = first_elem_index
         FaceGlobalIdx = first_face_index
 
-        !% Setting the local image value
-        image = this_image()
-        
         !% initializing local element and face id
         ElemLocallIdx = first_elem_index
         FacelocallIdx = first_face_index
+
+        !% Setting the local image value
+        image = this_image()
 
         !% initalizing the global element and face id by looping through N_elem and N_face for images not equal to one
         
@@ -174,58 +184,45 @@ contains
               !% we have to subtract one from the global face id such that faces along the image boundaries are shared.
               FaceGlobalIdx = FaceGlobalIdx + N_face(ii)-1
            end do
-        end if
-        
-        !% initializing the first element number of link elements in a partition
-        firstIdx = oneI
-
-        !% intializing the number of elements and faces tied to this local image
-        P_elem = N_elem(image)
-        P_face = N_face(image)
-
-
-        elemI(ElemLocallIdx:P_elem, ei_Lidx) = [(jj,jj=ElemLocallIdx,P_elem)]
-        elemI(ElemLocallIdx:P_elem, ei_Gidx) = [(jj,jj=ElemGlobalIdx,P_elem + ElemGlobalIdx - 1)]
-        faceI(ElemLocallIdx:P_face, fi_Lidx) = [(jj,jj=FacelocallIdx,P_face)]
-        faceI(ElemLocallIdx:P_face, fi_Gidx) = [(jj,jj=FaceGlobalIdx,P_face + FaceGlobalIdx -1)]
+        end if        
 
         !% pack all the link indexes in a partition to cycle through the links
         pack_link_idx = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) == image))
+
+        !% number of links in a partition
+        pLink = size(pack_link_idx)
+
         !% pack all the node indexes in a partition to determine which nodes are in the partition
         pack_node_idx = pack(nodeI(:,ni_idx), (nodeI(:,ni_BQ_image) == image))
+        
+        !% number of nodes in a partition
+        pNode = size(pack_node_idx)
 
-        do ii = 1, size(pack_link_idx)
+        do ii = 1, pLink
            !% cycle through link indexs in a partition 
-           Lidx    => pack_link_idx(ii)
-           NodeUp  => linkI(Lidx,li_Mnode_u)
-           NodeDn  => linkI(Lidx,li_Mnode_d)
+           Lidx      => pack_link_idx(ii)
+           NodeUp    => linkI(Lidx,li_Mnode_u)
+           NodeDn    => linkI(Lidx,li_Mnode_d)
            NodeUpTyp => nodeI(NodeUp,ni_node_type)
            NodeDnTyp => nodeI(NodeDn,ni_node_type)
-
-           !% THIS IS A HACK CODE:
-           !% the central idea can be more organized
-           !% First populate the elemI array
-           !% only links and multiface junction will contribute to elem arrays
-
-           !% condition of a specific node to be in that partition that is junction
-           sync all
            
-           if (any(pack_node_idx .eq. NodeUp) .and. (NodeUpTyp .eq.  nJm)) then
+           sync all
 
-              call handle_multi_branch_node (NodeUp, image, firstIdx)
+            !% Search if the link in a partition has a upstream node
+            if (any(pack_node_idx .eq. NodeUp)) then
 
-              call subdivide_link (Lidx, image, firstIdx)
+                call handle_upstream_node &
+                    (NodeUp, NodeUpTyp, ElemLocallIdx, FacelocallIdx, &
+                    ElemGlobalIdx, FaceGlobalIdx)
+            endif
 
-           else
+            call subdivide_link_going_downstream &
+                    (Lidx, ElemLocallIdx, FacelocallIdx, ElemGlobalIdx, FaceGlobalIdx)
 
-              call subdivide_link (Lidx, image, firstIdx)
-           endif
-
-
-           if (any(pack_node_idx .eq. NodeDn) .and. (NodeDnTyp .eq.  nJm)) then
-
-              call handle_multi_branch_node (NodeDn, image, firstIdx)
-
+           if (any(pack_node_idx .eq. NodeDn)) then
+              call handle_downstream_node &
+                    (NodeDn, NodeDnTyp, ElemLocallIdx, FacelocallIdx, &
+                    ElemGlobalIdx, FaceGlobalIdx)
            endif
 
            !% at this point we have the information of which elemI array idxs
@@ -233,7 +230,7 @@ contains
            !% by cycling through the nodes should be simple
 
         enddo
-
+        sync all
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -242,95 +239,533 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine subdivide_link (Lidx, image, firstIdx)
+    subroutine handle_upstream_node &
+        (NodeIdx, NodeTyp, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, FaceGlobalCounter)
     !-------------------------------------------------------------------------- 
     !
-    !% subdivides the links into elements
+    !% handle the node upstream of a link
     !
     !--------------------------------------------------------------------------
 
-        integer, pointer       :: LinkElem, lAssignStatus
-        integer, intent(in)    :: Lidx, image
-        integer, intent(inout) :: firstIdx
-        integer                :: lastIdx
+        integer, pointer       :: nAssignStatus, usBranch, dsBranch
+        integer, intent(in)    :: NodeIdx, NodeTyp
+        integer, intent(inout) :: ElemLocalCounter, FaceLocalCounter
+        integer, intent(inout) :: ElemGlobalCounter, FaceGlobalCounter
+        integer                :: ii, jj, kk
 
-        character(64) :: subroutine_name = 'subdivide_link'
+        character(64) :: subroutine_name = 'handle_upstream_node'
 
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-        LinkElem     => linkI(Lidx,li_N_element)
-        !% if the link is already assigned or not
+        !% node assign status
+        nAssignStatus => nodeI(NodeIdx,ni_assigned)
+
+        select case (NodeTyp)
+
+            case (nBCup)
+                !% check if the node has already been assigned
+                if (nAssignStatus .eq. nUnassigned) then
+                    !% integer data
+                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                    faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                    faceI(FaceLocalCounter,fi_Melem_uL) = nullvalueI
+                    faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                    faceI(FaceLocalCounter,fi_BCtype)   = fBCup
+
+                    !% change the node assignmebt value
+                    nAssignStatus =  nAssigned
+
+                    !% advance the face counters
+                    FaceLocalCounter = FaceLocalCounter + oneI
+                    FaceGlobalCounter = FaceGlobalCounter + oneI
+
+                endif
+
+            case (nJ2)
+                !% check if the node has already been assigned
+                if (nAssignStatus .eq. nUnassigned) then
+                    !% integer data
+                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                    faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                    !%-----------------------------------------------------------
+                    !% HACK: we still dont know the upstream element to this face
+                    !%-----------------------------------------------------------
+                    faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+
+                    !% change the node assignmebt value
+                    nAssignStatus =  nAssigned
+
+                    !% advance the face counters
+                    FaceLocalCounter = FaceLocalCounter + oneI
+                    FaceGlobalCounter = FaceGlobalCounter + oneI 
+                else
+                    !% figure out a way to map the upstream element
+                    stop
+                endif
+
+            case (nJm)
+                !% check if the node has already been assigned
+                if (nAssignStatus .eq. nUnassigned) then
+                    !%-----------------------------------------------------------------
+                    !% Junction main 
+                    !% integer data
+                    elemI(ElemLocalCounter,ei_Lidx) = ElemLocalCounter
+                    elemI(ElemLocalCounter,ei_Gidx) = ElemGlobalCounter
+                    elemI(ElemLocalCounter,ei_elementType) = eJunctionMain
+                    elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = NodeIdx
+
+                    !% real data
+                    elemR(ElemLocalCounter,er_Zbottom) = nodeR(NodeIdx,nr_zbottom)
+
+                    !% Advance the element counter to 1st upstream branch
+                    ElemLocalCounter = ElemLocalCounter + oneI
+                    ElemGlobalCounter = ElemGlobalCounter + oneI
+
+                    !%-----------------------------------------------------------------
+                    !% Handling all the junction branches
+                    !%-----------------------------------------------------------------
+                    jj = 0
+                    kk = 0
+                    do ii = 1,max_branch_per_node
+                        !% condition for upstrem branches
+                        if ((ii .eq. 1) .or. (ii .eq. 2) .or. (ii .eq. 3)) then
+                            jj = jj + 1
+                            usBranch => nodeI(NodeIdx,ni_idx_base1 + jj)
+
+                            !%-----------------------------------------------------------------
+                            !% Junction Upstream Branch 
+                            !%-----------------------------------------------------------------
+                            elemI(ElemLocalCounter,ei_Lidx)         = ElemLocalCounter
+                            elemI(ElemLocalCounter,ei_Gidx)         = ElemGlobalCounter
+                            elemI(ElemLocalCounter,ei_elementType)  = eJunctionBranch
+                            elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = NodeIdx
+
+                            !% face data
+                            faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                            faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                            faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                            
+                            !% right now, we dont know any information about the upstream
+                            !% element of this branch
+                            if (usBranch .ne. nullvalueI) then
+                                !% integer data
+                                !% HACK: Not sure about this. Needs furtehr testing
+                                elemI(ElemLocalCounter,ei_Mface_uL)                 = FaceLocalCounter
+                                elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
+
+                                !% real data
+                                elemR(ElemLocalCounter,er_Zbottom) = nodeR(NodeIdx,nr_zbottom)
+
+                                !% find the length of the junction branch
+                                if (linkI(usBranch,li_length_adjusted) .eq. OneSideAdjust) then
+                                    elemR(ElemLocalCounter,er_Length) = linkR(usBranch,lr_Length) - &
+                                                linkR(usBranch,lr_AdjustedLength)
+                                elseif (linkI(usBranch,li_length_adjusted) .eq. BothSideAdjust) then
+                                    elemR(ElemLocalCounter,er_Length) = (linkR(usBranch,lr_Length) - &
+                                                linkR(usBranch,lr_AdjustedLength))/twoR
+                                else
+                                    print*, 'error in, ', subroutine_name
+                                    print*, 'link connected to junction has not been shortened'
+                                    stop
+                                endif
+
+                            else
+                                !% set everything to zero for a non existant branch
+                                elemR(ElemLocalCounter,:) = zeroR
+                                elemSR(ElemLocalCounter,:) = zeroR
+                                elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists) = zeroI
+                                faceR(FaceLocalCounter,:) = zeroR
+                                faceYN(FaceLocalCounter,fYN_isnull) = .true.
+                            endif
+
+                            !% Advance the element counter to 2nd downstream branch
+                            ElemLocalCounter = ElemLocalCounter + oneI
+                            ElemGlobalCounter = ElemGlobalCounter + oneI 
+
+                            !% advance the face counters
+                            FaceLocalCounter = FaceLocalCounter + oneI
+                            FaceGlobalCounter = FaceGlobalCounter + oneI
+
+                        !% condition for downstream branch
+                        else      
+                            kk = kk + 1
+                            dsBranch => nodeI(NodeIdx,ni_idx_base2 + kk)
+
+                            !%-----------------------------------------------------------------
+                            !% Junction Downstream Branch
+                            !%-----------------------------------------------------------------
+                            elemI(ElemLocalCounter,ei_Lidx) = ElemLocalCounter
+                            elemI(ElemLocalCounter,ei_Gidx) = ElemGlobalCounter
+                            elemI(ElemLocalCounter,ei_elementType) = eJunctionBranch
+                            elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = NodeIdx
+
+                            !% face data
+                            faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                            faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                            faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+
+                            !% right now, we dont know any information about the downstream
+                            !% element of this branch
+                            if (dsBranch .ne. nullvalueI) then
+                                !% integer data
+                                !% HACK: Not sure about this. Needs furtehr testing
+                                elemI(ElemLocalCounter,ei_Mface_dL)                 = FaceLocalCounter
+                                elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
+                                !% real data
+                                elemR(ElemLocalCounter,er_Zbottom) = nodeR(NodeIdx,nr_zbottom)
+                                !% find the length of the junction branch
+                                if (linkI(dsBranch,li_length_adjusted) .eq. OneSideAdjust) then
+                                    elemR(ElemLocalCounter,er_Length) = linkR(dsBranch,lr_Length) - &
+                                            linkR(dsBranch,lr_AdjustedLength)
+                                elseif (linkI(dsBranch,li_length_adjusted) .eq. BothSideAdjust) then
+                                    elemR(ElemLocalCounter,er_Length) = (linkR(dsBranch,lr_Length) - &
+                                            linkR(dsBranch,lr_AdjustedLength))/twoR
+                                else
+                                    print*, 'error in, ', subroutine_name
+                                    print*, 'link connected to junction has not been shortened'
+                                    stop
+                                endif
+
+                            else
+                                !% set everything to zero for a non existant branch
+                                elemR(ElemLocalCounter,:) = zeroR
+                                elemSR(ElemLocalCounter,:) = zeroR
+                                elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists) = zeroI
+                                faceR(FaceLocalCounter,:) = zeroR
+                                faceYN(FaceLocalCounter,fYN_isnull) = .true.
+                            endif
+
+                            !% change the node assignmebt value
+                            nAssignStatus =  nAssigned
+
+                            !% Advance the element counter to 3rd upstream branch
+                            ElemLocalCounter = ElemLocalCounter + oneI
+                            ElemGlobalCounter = ElemGlobalCounter + oneI 
+
+                            !% advance the face counters
+                            FaceLocalCounter = FaceLocalCounter + oneI
+                            FaceGlobalCounter = FaceGlobalCounter + oneI
+
+                        endif
+                    enddo
+                                                  
+                endif
+
+            case default
+                print*, 'error: unexpected node, ', NodeTyp,'  at upstream boundary'
+                stop
+        end select
+
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+
+    end subroutine handle_upstream_node
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine subdivide_link_going_downstream &
+        (Lidx, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, FaceGlobalCounter)
+    !-------------------------------------------------------------------------- 
+    !
+    !% subdivides the links into elements going downstream
+    !
+    !--------------------------------------------------------------------------
+
+        integer, pointer        :: NlinkElem, lAssignStatus, NodeUp
+        integer, intent(in)     :: Lidx
+        integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
+        integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
+        integer                 :: ii
+
+        real                    :: zUpstream, zCenter
+
+        character(64) :: subroutine_name = 'subdivide_link_going_downstream'
+
+    !--------------------------------------------------------------------------
+
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+
+        !% necessary pointers
+        NlinkElem  => linkI(Lidx,li_N_element)
+        ! LinkTyp       => linkI(Lidx,li_link_type)
+        nodeUp     => linkI(Lidx,li_Mnode_u)
+        zUpstream  =  nodeR(NodeUp,nr_Zbottom)
+
+        !% link assign status
         lAssignStatus => linkI(Lidx,li_assigned)
-        lastIdx = firstIdx + LinkElem - oneI
 
-        ! print*, Lidx, 'Lidx'
-        ! print*, LinkElem, 'LinkElem'
-        ! print*, lAssignStatus, 'lAssignStatus'
-        ! print*, firstIdx,'firstIdx'
-        ! print*, lastIdx, 'lastIdx'
-        ! print*, image, 'image'
+        !%  store the ID of the first (upstream) element in this link
+        linkI(Lidx,li_Melem_u) = ElemLocalCounter - oneI ! the new element is the 1st (downstream)
+        linkI(Lidx,li_Mface_u) = FaceLocalCounter - oneI ! the old face is the 1st
 
-        if (lAssignStatus .eq. lUnassigned) then
-            elemI(firstIdx:lastIdx,ei_elementType)    = linkI(Lidx,li_link_type)   
-            elemI(firstIdx:lastIdx,ei_geometryType)   = linkI(Lidx,li_geometry)
-            elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM) = Lidx
-            elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM) = nullvalueI
+        !%  reference elevations at cell center and cell face
+        zCenter = zUpstream - 0.5 * linkR(Lidx,lr_ElementLength) * linkR(Lidx,lr_Slope)
 
-            lAssignStatus =  lAssigned
-            !% set the first element index for next link
-            firstIdx = firstIdx + LinkElem
+        do ii = 1,NlinkElem
+            !% integer data
+            elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
+            elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
+            elemI(ElemLocalCounter,ei_geometryType)     = linkI(Lidx,li_geometry)
+            elemI(ElemLocalCounter,ei_elementType)      = linkI(Lidx,li_link_type)
+            elemI(ElemLocalCounter,ei_link_Gidx_SWMM)   = Lidx
+            elemI(ElemLocalCounter,ei_Mface_uL)         = FaceLocalCounter - oneI
+            elemI(ElemLocalCounter,ei_Mface_dL)         = FaceLocalCounter
 
-        endif
+            !% real data
+            elemR(ElemLocalCounter,er_Length) = linkR(Lidx,lr_ElementLength)
+            elemR(ElemLocalCounter,er_Zcrown) = zCenter
+
+            !% face integer data
+            faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+            faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+            faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter + oneI
+            faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+            
+
+            !% face logical data
+            faceYN(FaceLocalCounter,fYN_isnull) = .false.
+
+            !% counter for element z bottom calculation
+            zCenter = zCenter - linkR(Lidx,lr_ElementLength) * linkR(Lidx,lr_Slope)
+
+            !% Advance the element counter to 3rd upstream branch
+            ElemLocalCounter = ElemLocalCounter + oneI
+            ElemGlobalCounter = ElemGlobalCounter + oneI 
+
+            !% advance the face counters
+            FaceLocalCounter = FaceLocalCounter + oneI
+            FaceGlobalCounter = FaceGlobalCounter + oneI
+        end do
+
+        lAssignStatus = lAssigned
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine subdivide_link
-    ! !
-    ! !==========================================================================
-    ! !==========================================================================
-    ! !
-    subroutine handle_multi_branch_node (Nidx, image, firstIdx)
+    end subroutine subdivide_link_going_downstream
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine handle_downstream_node &
+        (NodeIdx, NodeTyp, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, FaceGlobalCounter)
     !-------------------------------------------------------------------------- 
     !
-    !% subdivides the links into elements
+    !% handle the node dwonstream of a link
     !
     !--------------------------------------------------------------------------
 
-        integer, pointer       :: NodeElem, nAssignStatus
-        integer, intent(in)    :: Nidx, image
-        integer, intent(inout) :: firstIdx
-        integer                :: lastIdx
+        integer, pointer       :: nAssignStatus, usBranch, dsBranch
+        integer, intent(in)    :: NodeIdx, NodeTyp
+        integer, intent(inout) :: ElemLocalCounter, FaceLocalCounter
+        integer, intent(inout) :: ElemGlobalCounter, FaceGlobalCounter
+        integer                :: ii, jj, kk
 
-        character(64) :: subroutine_name = 'handle_multi_branch_node'
+        character(64) :: subroutine_name = 'handle_downstream_node'
 
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-        NodeElem      => J_elem_add
-        !% if the link is already assigned or not
-        nAssignStatus => nodeI(Nidx,ni_assigned)
-        lastIdx = firstIdx + NodeElem - oneI
+        nAssignStatus => nodeI(NodeIdx,ni_assigned)
 
+        select case (NodeTyp)
 
-        if (nAssignStatus .eq. nUnassigned) then
-            elemI(firstIdx:lastIdx,ei_elementType)    = nodeI(Nidx,ni_node_type)   
-            elemI(firstIdx:lastIdx,ei_link_Gidx_SWMM) = nullvalueI
-            elemI(firstIdx:lastIdx,ei_node_Gidx_SWMM) = Nidx
+            case (nBCdn)
+                !% check if the node has already been assigned
+                if (nAssignStatus .eq. nUnassigned) then
+                    !% integer data
+                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                    faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                    faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
+                    faceI(FaceLocalCounter,fi_Melem_dL) = nullvalueI
+                    faceI(FaceLocalCounter,fi_BCtype)   = fBCup
 
-            nAssignStatus =  nAssigned
+                    !% change the node assignmebt value
+                    nAssignStatus =  nAssigned
 
-            !% set the first element index for next link
-            firstIdx = firstIdx + NodeElem
+                    !% advance the face counters
+                    FaceLocalCounter  = FaceLocalCounter + oneI
+                    FaceGlobalCounter = FaceGlobalCounter + oneI 
+                endif
 
-        endif
+            case (nJ2)
+                !% check if the node has already been assigned
+                if (nAssignStatus .eq. nUnassigned) then
+                    !% integer data
+                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                    faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                    !%-----------------------------------------------------------
+                    !% HACK: we still dont know the upstream element to this face
+                    !%-----------------------------------------------------------
+                    faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
+
+                    !% change the node assignmebt value
+                    nAssignStatus =  nAssigned
+
+                    !% advance the face counters
+                    FaceLocalCounter = FaceLocalCounter + oneI
+                    FaceGlobalCounter = FaceGlobalCounter + oneI 
+                else
+                    !% figure out a way to map the upstream element
+                    stop
+                endif
+
+            case (nJm)
+                !% check if the node has already been assigned
+                if (nAssignStatus .eq. nUnassigned) then
+                    !%-----------------------------------------------------------------
+                    !% Junction main 
+                    !% integer data
+                    elemI(ElemLocalCounter,ei_Lidx) = ElemLocalCounter
+                    elemI(ElemLocalCounter,ei_Gidx) = ElemGlobalCounter
+                    elemI(ElemLocalCounter,ei_elementType) = eJunctionMain
+                    elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = NodeIdx
+
+                    !% real data
+                    elemR(ElemLocalCounter,er_Zbottom) = nodeR(NodeIdx,nr_zbottom)
+
+                    !% Advance the element counter to 1st upstream branch
+                    ElemLocalCounter = ElemLocalCounter + oneI
+                    ElemGlobalCounter = ElemGlobalCounter + oneI
+
+                    !%-----------------------------------------------------------------
+                    !% Handling all the junction branches
+                    !%-----------------------------------------------------------------
+                    jj = 0
+                    kk = 0
+                    do ii = 1,max_branch_per_node
+                        !% condition for upstrem branches
+                        if ((ii .eq. 1) .or. (ii .eq. 3) .or. (ii .eq. 5)) then
+                            jj = jj + 1
+                            print*, 'jj', jj
+                            print*, 'BRANCH', usBranch
+                            usBranch => nodeI(NodeIdx,ni_idx_base1 + jj)
+
+                            !%-----------------------------------------------------------------
+                            !% Junction Upstream Branch 
+                            !%-----------------------------------------------------------------
+                            elemI(ElemLocalCounter,ei_Lidx)           = ElemLocalCounter
+                            elemI(ElemLocalCounter,ei_Gidx)           = ElemGlobalCounter
+                            elemI(ElemLocalCounter,ei_elementType)    = eJunctionBranch
+                            elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = NodeIdx
+                            elemI(ElemLocalCounter,ei_Mface_uL)       = ElemLocalCounter - oneI
+
+                            !% face data
+                            faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                            faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                            faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                            
+                            !% right now, we dont know any information about the upstream
+                            !% element of this branch
+                            if (usBranch .ne. nullvalueI) then
+                                
+                                !% integer data
+                                !% HACK: Not sure about this. Needs furtehr testing
+                                
+                                elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
+
+                                !% real data
+                                elemR(ElemLocalCounter,er_Zbottom) = nodeR(NodeIdx,nr_zbottom)
+
+                                !% find the length of the junction branch
+                                if (linkI(usBranch,li_length_adjusted) .eq. OneSideAdjust) then
+                                    elemR(ElemLocalCounter,er_Length) = linkR(usBranch,lr_Length) - &
+                                                linkR(usBranch,lr_AdjustedLength)
+                                elseif (linkI(usBranch,li_length_adjusted) .eq. BothSideAdjust) then
+                                    elemR(ElemLocalCounter,er_Length) = (linkR(usBranch,lr_Length) - &
+                                                linkR(usBranch,lr_AdjustedLength))/twoR
+                                else
+                                    print*, 'error in, ', subroutine_name
+                                    print*, 'link connected to junction has not been shortened'
+                                endif
+
+                            else
+                                !% set everything to zero for a non existant branch
+                                elemR(ElemLocalCounter,:) = zeroR
+                                elemSR(ElemLocalCounter,:) = zeroR
+                                elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists) = zeroI
+                                faceR(FaceLocalCounter,:) = zeroR
+                                faceYN(FaceLocalCounter,fYN_isnull) = .true.
+                            endif
+
+                            !% Advance the element counter to 2nd downstream branch
+                            ElemLocalCounter = ElemLocalCounter + oneI
+                            ElemGlobalCounter = ElemGlobalCounter + oneI 
+
+                            !% advance the face counters
+                            FaceLocalCounter = FaceLocalCounter + oneI
+                            FaceGlobalCounter = FaceGlobalCounter + oneI
+
+                        else 
+                            !% condition for downstream branch
+                            kk = kk + 1
+                            dsBranch => nodeI(NodeIdx,ni_idx_base2 + kk)
+
+                            !%-----------------------------------------------------------------
+                            !% Junction Downstream Branch
+                            !%-----------------------------------------------------------------
+                            elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
+                            elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
+                            elemI(ElemLocalCounter,ei_elementType)      = eJunctionBranch
+                            elemI(ElemLocalCounter,ei_node_Gidx_SWMM)   = NodeIdx
+                            elemI(ElemLocalCounter,ei_Mface_dL)         = ElemLocalCounter - oneI
+
+                            !% face data
+                            faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                            faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                            faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+
+                            !% right now, we dont know any information about the downstream
+                            !% element of this branch
+                            if (dsBranch .ne. nullvalueI) then
+                                !% integer data
+                                !% HACK: Not sure about this. Needs furtehr testing
+                                elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
+                                !% real data
+                                elemR(ElemLocalCounter,er_Zbottom) = nodeR(NodeIdx,nr_zbottom)
+                                !% find the length of the junction branch
+                                if (linkI(dsBranch,li_length_adjusted) .eq. OneSideAdjust) then
+                                    elemR(ElemLocalCounter,er_Length) = linkR(dsBranch,lr_Length) - &
+                                                linkR(dsBranch,lr_AdjustedLength)
+                                elseif (linkI(dsBranch,li_length_adjusted) .eq. BothSideAdjust) then
+                                    elemR(ElemLocalCounter,er_Length) = (linkR(dsBranch,lr_Length) - &
+                                                linkR(dsBranch,lr_AdjustedLength))/twoR
+                                else
+                                    print*, 'error in, ', subroutine_name
+                                    print*, 'link connected to junction has not been shortened'
+                                endif
+
+                            else
+                                !% set everything to zero for a non existant branch
+                                elemR(ElemLocalCounter,:) = zeroR
+                                elemSR(ElemLocalCounter,:) = zeroR
+                                elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists) = zeroI
+                                faceR(FaceLocalCounter,:) = zeroR
+                                faceYN(FaceLocalCounter,fYN_isnull) = .true.
+                            endif
+
+                            !% Advance the element counter to 3rd upstream branch
+                            ElemLocalCounter = ElemLocalCounter + oneI
+                            ElemGlobalCounter = ElemGlobalCounter + oneI 
+
+                            !% advance the face counters
+                            FaceLocalCounter = FaceLocalCounter + oneI
+                            FaceGlobalCounter = FaceGlobalCounter + oneI
+                        endif
+                    enddo
+                                                  
+                endif
+
+            case default
+                print*, 'error: unexpected node, ', NodeTyp,'  at upstream boundary'
+                stop
+        end select
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine handle_multi_branch_node
- 
+    end subroutine handle_downstream_node
     !
     !==========================================================================
     ! END OF MODULE

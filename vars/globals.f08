@@ -101,6 +101,9 @@ module globals
     integer, parameter :: oneI = 1
     integer, parameter :: twoI = 2
     integer, parameter :: threeI = 3
+    integer, parameter :: fourI = 4
+    integer, parameter :: fiveI = 5
+    integer, parameter :: sixI = 6
 
     ! images control
     integer :: image
