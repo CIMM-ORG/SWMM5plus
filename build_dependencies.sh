@@ -44,7 +44,18 @@ then
     echo
     echo "Downloading SWMM 5.1.13"
     echo
-    wget "https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz"
+    if [[ $machine = "linux" ]]
+    then
+        wget "https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz"
+    elif [[ $machine = "mac" ]]
+    then
+        curl -L "https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz" > v5.1.13.tar.gz
+    else
+        echo
+        echo "OS is not supported (only mac, linux)"
+        echo
+        exit
+    fi
     tar -xvf *.tar.gz
     rm *.tar.gz
     mv Stormwater*/src "$API_DIR/src"
@@ -68,7 +79,18 @@ install_mpich()
     mkdir $MPICH_SOURCE
     cd $MPICH_SOURCE
     mkdir $MPICH_INSTALL
-    wget "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz"
+    if [[ $machine = "linux" ]]
+    then
+        wget "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz"
+    elif [[ $machine = "mac" ]]
+    then
+        curl -L "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz" > mpich-3.2.tar.gz
+    else
+        echo
+        echo "OS is not supported (only mac, linux)"
+        echo
+        exit
+    fi
     tar -xvf *.tar.gz
     rm *.tar.gz
     if [ -d "/tmp/mpich-build" ]
@@ -94,7 +116,18 @@ install_cmake()
     mkdir $CMAKE_SOURCE
     cd $CMAKE_SOURCE
     mkdir $CMAKE_INSTALL
-    wget "https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz"  # Versions: https://cmake.org/files/
+    if [[ $machine = "linux" ]]
+    then
+        wget "https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz"  # Versions: https://cmake.org/files/
+    elif [[ $machine = "mac" ]]
+    then
+        curl -L "https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz" > cmake-3.11.0.tar.gz
+    else
+        echo
+        echo "OS is not supported (only mac, linux)"
+        echo
+        exit
+    fi
     tar -xvf *.tar.gz
     rm *.tar.gz
     cd cmake-3.11.0
@@ -235,7 +268,7 @@ opencoarray_prerequisite()
                         export MPICH_PATH="/usr/" # return the mpich path in root
                         echo "${KEY} path : $MPICH_PATH" >> $INSTALLATION_LOG
                     else
-                        echo "Current ${KEY} version in root is: ${MPICH_VERSION}, lower than the required version: ${MPI_REQUIRE_VERSION}."
+                        echo "Current ${KEY} version in root is: ${MPICH_VERSION}, lower than the required version: ${MPICH_REQUIRE_VERSION}."
                         echo "Install local ${KEY} under ${MPICH_SOURCE} ...."
                         if [ -d $MPICH_SOURCE ] && [ -x $MPICH_INSTALL/bin/mpifort ] # if we have mpich in local
                         then

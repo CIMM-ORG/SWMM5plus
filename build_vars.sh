@@ -47,3 +47,14 @@ package_executable_array=(
     "cmake:cmake"
     "mpich:mpifort"
 )
+
+# Check OS
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine=linux;;
+    Darwin*)    machine=mac;;
+    CYGWIN*)    machine=cygwin;;
+    MINGW*)     machine=mingw;;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+echo ${machine}
