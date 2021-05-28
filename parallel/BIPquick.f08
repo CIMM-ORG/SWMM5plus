@@ -59,32 +59,41 @@ end subroutine BIPquick_Optimal_Hardcode
 subroutine BIPquick_YJunction_Hardcode()
     integer :: ii
 
-    print*, "The YJunction Arrays have been initialized and are size", size(P_nodeI,1), size(P_linkI,1)
+    if (setting%Debug%File%BIPquick) then
+        print*, "The YJunction Arrays have been initialized and are size", size(P_nodeI,1), size(P_linkI,1)
+    end if
 
     P_nodeI(:, B_ni_Partition_No) = (/1, 2, 1, 3, -998877, -998877/)
     P_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0, -998877, -998877/)
     P_linkI(:, B_li_Partition_No) = (/1, 2, 3, -998877, -998877/)
 
-        
-    
+
+
     linkI(:,li_BQ_image) = (/1, 2, 3/)
     nodeI(:,ni_BQ_image) = (/1, 2, 1, 3/)
     nodeI(:,ni_BQ_edge) = (/0, 0, 1, 0/)
 
-    print*, "The P_nodeI array looks like"
-
     do ii = 1, size(nodeI, 1)
         P_nodeI(ii, B_ni_idx_Partition) = nodeI(ii, ni_idx)
-        print*, P_nodeI(ii, :)
-    enddo
+    end do
 
-    print*, "The P_linkI array looks like"
+    if (setting%Debug%File%BIPquick) then
+        print*, "The P_nodeI array looks like"
+        do ii = 1, size(nodeI, 1)
+            print*, P_nodeI(ii, :)
+        end do
+    end if
 
     do ii = 1, size(linkI, 1)
         P_linkI(ii, B_li_idx_Partition) = linkI(ii, ni_idx)
-        print*, P_linkI(ii, :)
-    enddo
+    end do
 
+    if (setting%Debug%File%BIPquick) then
+        print*, "The P_linkI array looks like"
+        do ii = 1, size(linkI, 1)
+            print*, P_linkI(ii, :)
+        end do
+    end if
 
 end subroutine BIPquick_YJunction_Hardcode
 

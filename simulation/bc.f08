@@ -30,7 +30,6 @@ module bc
 
 contains
 
-    
     subroutine free_bc(bcdataDn, bcdataUp)
         type(bcType), dimension(:), allocatable, intent(inout)   :: bcdataUp, bcdataDn
         integer :: ii

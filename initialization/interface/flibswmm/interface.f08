@@ -172,12 +172,12 @@ contains
 
     ! --- Simulation
 
-    subroutine initialize_api()
+    subroutine api_init()
 
         integer :: ppos, num_args
         character(64) :: subroutine_name
 
-        subroutine_name = 'initialize_api'
+        subroutine_name = 'api_init'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -236,10 +236,10 @@ contains
             print *, "N_pattern", N_pattern
             print *, '*** leave ', subroutine_name
         end if
-    end subroutine initialize_api
+    end subroutine api_init
 
-    subroutine finalize_api()
-        character(64) :: subroutine_name = 'finalize_api'
+    subroutine api_close()
+        character(64) :: subroutine_name = 'api_close'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -253,7 +253,7 @@ contains
         call ptr_api_finalize(api)
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
-    end subroutine finalize_api
+    end subroutine api_close
 
     subroutine free_api()
         integer :: i

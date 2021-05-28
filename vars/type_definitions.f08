@@ -24,7 +24,6 @@ module type_definitions
         real(8), allocatable :: val(:,:,:)
     end type Array3D
 
-
     type nodeInflow
         integer :: node_id ! index to element thar receives inflow
         ! t_series*sfactor + base_pat*baseline

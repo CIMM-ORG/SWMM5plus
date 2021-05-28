@@ -6,6 +6,7 @@ module initialization
     use globals
     use interface
     use BIPquick
+    use partitioning
     use coarray
     use discretization
     use utility, only: utility_export_linknode_csv
@@ -29,9 +30,15 @@ module initialization
 
     private
 
-    public :: initialize_linknode_arrays
+    public :: initialize_all
 
 contains
+
+    subroutine initialize_all()
+        call initialize_linknode_arrays()
+        call execute_partitioning()
+        call initialize_elemface_coarrays()
+    end subroutine initialize_all
 
     subroutine initialize_linknode_arrays()
     !-----------------------------------------------------------------------------
@@ -134,9 +141,7 @@ contains
 
         !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed
         call BIPquick_YJunction_Hardcode()
-
         call coarray_length_calculation()
-
         call allocate_coarray_storage()  ! once we finish the image flag this is ready to use
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name

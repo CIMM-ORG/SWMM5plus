@@ -38,8 +38,8 @@ SOURCESF="$JSON_DIR/json_kinds.F90\
           $INIT_DIR/allocate_storage.f08\
           $PARALLEL_DIR/BIPquick.f08\
           $PARALLEL_DIR/coarray.f08\
-          $INIT_DIR/initialization.f08\
-          $PARALLEL_DIR/partitioning.f08"
+          $PARALLEL_DIR/partitioning.f08\
+          $INIT_DIR/initialization.f08"
 
 echo
 echo Compiling SWMM5+ ...

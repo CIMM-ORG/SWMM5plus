@@ -22,12 +22,14 @@ module globals
     integer, dimension(:,:), allocatable, target :: linkI ! integer data for links
     integer, dimension(:,:), allocatable, target :: P_linkI ! Partitioning output for links
     logical, dimension(:,:), allocatable, target :: linkYN ! logical data for links
+    type(string), dimension(:), allocatable, target :: linkName ! array of character strings
 
     !%  nodes are the building blocks from teh SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: nodeR ! real data for nodes
     integer, dimension(:,:), allocatable, target :: nodeI ! integer data for nodes
     integer, dimension(:,:), allocatable, target :: P_nodeI ! Partitioning output for nodes
     logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
+    type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
     !% element coarrays
     real(8), allocatable :: elemR(:,:)[:]   ! coarray for elements
@@ -44,9 +46,6 @@ module globals
     integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
     logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data
     integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array
-
-
-    type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
     ! note that nullvalueI < 0 is required
     integer, parameter :: nullvalueI = 998877

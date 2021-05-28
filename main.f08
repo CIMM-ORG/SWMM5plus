@@ -77,28 +77,14 @@ program main
 
    ! --- Initialization
 
-   call initialize_api()
-
-   ! --- Allocation
-
+   call api_init()
    call allocate_all()
+   call initialize_all()
 
-   ! --- Initialization
+   ! --- Time Loop
 
-   call initialize_linknode_arrays()
+   ! --- Output
 
-   ! --- Graph Partitioning
-
-   call execute_partitioning()
-
-   ! --- Deallocate Temporal Arrays
-
-   call deallocate_all_temporal()
-
-   ! Time Loop
-
-   ! --- Finalization
-
-   call finalize_api() ! closes link with shared library
+   call api_close() ! closes link with shared library
 
 end program main

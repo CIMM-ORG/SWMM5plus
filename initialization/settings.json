@@ -122,12 +122,12 @@
     "Debug" : {
         "DebugAPI" : false,
         "File" : {
-            "allocate_storage" : false,
-            "discretization" : false,
-            "initialization" : false,
+            "allocate_storage" : true,
+            "discretization" : true,
+            "initialization" : true,
             "interface" : false,
             "partitioning" : false,
-            "BIPquick"  : false,
+            "BIPquick"  : true,
             "utility" : false,
             "globals" : false,
             "inflow" : false,

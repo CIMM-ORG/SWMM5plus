@@ -5,7 +5,6 @@ module partitioning
     use globals
     use setting_definition, only: setting
     use BIPquick
-    use initialization
 
     implicit none
 
