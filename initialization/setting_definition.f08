@@ -2,7 +2,7 @@ module setting_definition
 
     use json_module
     use data_keys
-    use string_utils, only: utility_lower_case
+    use string_utility, only: lower_case
 
     implicit none
     public
@@ -133,6 +133,7 @@ module setting_definition
         logical :: utility          = .false.
         logical :: globals          = .false.
         logical :: inflow           = .false.
+        logical :: coarray_bipquick = .false.
     end type DebugFileType
 
     ! -
@@ -261,6 +262,11 @@ module setting_definition
         logical :: BIPquickTestCase = .true.
     endtype PartitioningType
 
+    !% setting%Discretization
+    type DiscretizationType
+        real(8) :: NominalElemLength  = 10.0
+        real(8) :: BranchFactor = 0.33
+    end type DiscretizationType
     ! -
     ! --
 
@@ -280,6 +286,7 @@ module setting_definition
         type(TestCaseType)     :: TestCase
         type(PathType)         :: Paths
         type(DebugType)        :: Debug
+        type(DiscretizationType) :: Discretization
         type(PartitioningType) :: Partitioning
         logical :: Verbose
     end type settingType
@@ -371,7 +378,7 @@ contains
         setting%Adjust%Flowrate%Apply = logical_value
         if (.not. found) stop 19
         call json%get('Adjust.Flowrate.approach', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'vshape') then
             setting%Adjust%Flowrate%approach = vshape
         else if (c == 'smoothall') then
@@ -389,7 +396,7 @@ contains
         setting%Adjust%Head%Apply = logical_value
         if (.not. found) stop 21
         call json%get('Adjust.Head.approach', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'vshape') then
             setting%Adjust%Head%approach = vshape
         else if (c == 'smoothall') then
@@ -423,7 +430,7 @@ contains
 
         ! Load Limiter Settings
         call json%get('Limiter.BC.approach', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'froudenumber') then
             setting%Limiter%BC%approach = FroudeNumber
         else
@@ -488,7 +495,7 @@ contains
         setting%Solver%crk2 = real_value
         if (.not. found) stop 43
         call json%get('Solver.MomentumSourceMethod', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 't00') then
             setting%Solver%MomentumSourceMethod = T00
         else if (c == 't10') then
@@ -504,7 +511,7 @@ contains
         setting%Solver%PreissmanSlot = logical_value
         if (.not. found) stop 45
         call json%get('Solver.SolverSelect', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'sve') then
             setting%Solver%SolverSelect = SVE
         else if (c == 'sve_ac') then
@@ -595,14 +602,25 @@ contains
         if (.not. found) stop 69
         call json%get('Debug.File.inflow', logical_value, found)
         setting%Debug%File%inflow = logical_value
+        if (.not. found) stop 69
+        call json%get('Debug.File.coarray_bipquick', logical_value, found)
+        setting%Debug%File%coarray_bipquick = logical_value
         if (.not. found) stop 70
+
+        ! Load Discretization settings
+        call json%get("Discretization.BranchFactor", real_value, found)
+        setting%Discretization%BranchFactor = real_value
+        if (.not. found) stop 71
+        call json%get("Discretization.NominalElemLength", real_value, found)
+        setting%Discretization%NominalElemLength = real_value
+        if (.not. found) stop 72
 
         ! Load BIPQuick settings
         call json%get('Partitioning.N_Image', integer_value, found)
         setting%Partitioning%N_Image = integer_value
-        if (.not. found) stop 71
+        if (.not. found) stop 73
         call json%get('Partitioning.PartitioningMethod', c, found)
-        call utility_lower_case(c)
+        call lower_case(c)
         if (c == 'default') then
             setting%Partitioning%PartitioningMethod = Default
         else if (c == 'bquick') then
@@ -611,7 +629,7 @@ contains
             print *, "Error, the setting '" // trim(c) // "' is not supported for PartitioningMethod"
             stop
         end if
-        if (.not. found) stop 72
+        if (.not. found) stop 74
 
         ! Load BIPQuick settings
         call json%get('Verbose', logical_value, found)

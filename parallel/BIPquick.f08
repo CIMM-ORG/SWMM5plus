@@ -65,6 +65,12 @@ subroutine BIPquick_YJunction_Hardcode()
     P_nodeI(:, B_ni_is_boundary) = (/0, 0, 1, 0, -998877, -998877/)
     P_linkI(:, B_li_Partition_No) = (/1, 2, 3, -998877, -998877/)
 
+        
+    
+    linkI(:,li_BQ_image) = (/1, 2, 3/)
+    nodeI(:,ni_BQ_image) = (/1, 2, 1, 3/)
+    nodeI(:,ni_BQ_edge) = (/0, 0, 1, 0/)
+
     print*, "The P_nodeI array looks like"
 
     do ii = 1, size(nodeI, 1)
