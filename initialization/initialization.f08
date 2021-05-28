@@ -6,7 +6,7 @@ module initialization
     use globals
     use interface
     use BIPquick
-    use coarray_partition
+    use coarray
     use discretization
     use utility, only: utility_export_linknode_csv
     use setting_definition, only: setting
