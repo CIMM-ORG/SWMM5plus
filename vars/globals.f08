@@ -55,6 +55,7 @@ module globals
     !%  vector of number of elements and faces across images
     integer, dimension(:), allocatable, target :: N_elem
     integer, dimension(:), allocatable, target :: N_face 
+    integer, dimension(:), allocatable, target :: N_unique_face
 
     !%  elems in coarray
     real(8), allocatable, target :: elemR(:,:)[:]    ! coarray for elements

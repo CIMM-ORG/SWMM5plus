@@ -72,9 +72,11 @@ module assign_index
         enumerator :: li_InitialDepthType ! 1=uniform, 2= lineary change, 3=exponential decay
         enumerator :: li_length_adjusted  ! 0 = length was not adjusted, 1 = one side was adjusted, 2 = both side was adjusted
         enumerator :: li_BQ_image ! image number assigned from BIPquick
+        enumerator :: li_first_elem_idx
+        enumerator :: li_last_elem_idx
     end enum
     !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_linkI = li_BQ_image
+    integer, target :: Ncol_linkI = li_last_elem_idx
 
     !%------------------------------------------------------------------------- 
     !% Define the column indexes for nodeI(:,:) arrays
@@ -589,6 +591,7 @@ module assign_index
     !%-------------------------------------------------------------------------  
     enum, bind(c)
         enumerator :: fYN_isAC_adjacent = 1
+        enumerator :: fYN_isSharedFace
         enumerator :: fYN_isnull    
 
         !% HACK: The following might not be needed

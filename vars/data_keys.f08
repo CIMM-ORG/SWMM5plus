@@ -180,7 +180,6 @@ module data_keys
     end enum
 
 
-
     ! data types for Momentum Source type (setting%Solver%MomentumSourceM)
     enum, bind(c)
         enumerator :: T00 = 1

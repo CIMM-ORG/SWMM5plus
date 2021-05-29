@@ -56,6 +56,7 @@ module coarray_partition
         integer :: nimgs_assign
         integer, allocatable :: unique_imagenum(:)
         integer :: ii, jj, kk, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
+        integer :: duplicated_face_counter=0
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'array_length_calculation'
         
@@ -65,6 +66,7 @@ module coarray_partition
 
         allocate(N_elem(size(unique_imagenum,1)))
         allocate(N_face(size(unique_imagenum,1)))
+        allocate(N_unique_face(size(unique_imagenum,1)))
 
         do ii=1, size(unique_imagenum,1)
             node_index = PACK([(counter, counter=1,size(nodeI,1))], nodeI(:, ni_BQ_image) .eq. unique_imagenum(ii))
@@ -106,21 +108,25 @@ module coarray_partition
                 if ( ( nodeI(linkI(idx, li_Mnode_u), ni_BQ_edge) .eq. 1) .and. &
                     ( nodeI(linkI(idx, li_Mnode_u), ni_BQ_image) .ne. ii) ) then
                     face_counter = face_counter +1
+                    duplicated_face_counter = duplicated_face_counter + 1
                 endif
                 ! then downstream node
                 if ( ( nodeI(linkI(idx, li_Mnode_d), ni_BQ_edge) .eq. 1) .and. &
                     ( nodeI(linkI(idx, li_Mnode_d), ni_BQ_image) .ne. ii) ) then
                     face_counter = face_counter +1
+                    duplicated_face_counter = duplicated_face_counter + 1
                 endif
                 
             enddo
 
             N_elem(ii) = elem_counter
             N_face(ii) = face_counter
+            N_unique_face(ii) = face_counter - duplicated_face_counter
             
             elem_counter = zeroI ! reset the counter
             face_counter = zeroI
             junction_counter = zeroI
+            duplicated_face_counter = zeroI
         enddo        
 
         max_caf_elem_N = maxval(N_elem)
