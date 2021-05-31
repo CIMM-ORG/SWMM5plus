@@ -74,6 +74,7 @@ contains
                print*, faceI(:,fi_Gidx)[image], 'face Gidx'
                print*, faceI(:,fi_Melem_dL)[image], 'face Melem_dL'
                print*, faceI(:,fi_Melem_uL)[image], 'face Melem_uL'
+               print*, faceI(:,fi_Connected_image)[image], 'fi_Connected_image'
                print*, faceYN(:,fYN_isSharedFace)[image], 'face is shared face'
                print*, '----------------------------------------------------'
                call execute_command_line('')
@@ -175,29 +176,27 @@ contains
         !% Setting the local image value
         image = this_image()
 
-
-
         !% initalizing the global element and face id by looping through N_elem and N_face for images not equal to one
         
         if(this_image() /= 1) then
-
            do ii=1, this_image()-1
               ElemGlobalIdx = ElemGlobalIdx + N_elem(ii)
               !% we have to subtract one from the global face id such that faces along the image boundaries are shared.
               FaceGlobalIdx = FaceGlobalIdx + N_unique_face(ii)
-              print*, '--------------------------------------'
-              print*, image, 'image'
-              print*, ii, 'ii'
-              print*, FaceGlobalIdx, 'FaceGlobalIdx'
-              print*, '--------------------------------------'
            end do
         end if        
 
         sync all
 
         !% handle all the links and nodes in a partition
-        call handle_partition &
+        call handle_link_nodes &
             (image, ElemLocalIdx, FacelocalIdx, ElemGlobalIdx, FaceGlobalIdx)
+
+        sync all
+
+        !% finish mapping all the junction branch and faces that were not 
+        !% handeled in handle_link_nodes subroutine
+        call map_multi_branch_junction_nodes(image)
 
         sync all
 
@@ -208,12 +207,13 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine handle_partition &
+    subroutine handle_link_nodes &
         (image, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, FaceGlobalCounter)
     !    
     !-------------------------------------------------------------------------- 
     !
-    !% Handle all the links in a partition
+    !% Traverse through all the links and nodes in a partition and creates
+    !% elements and faces.
     !
     !--------------------------------------------------------------------------
     ! 
@@ -227,19 +227,19 @@ contains
 
 
 
-        character(64) :: subroutine_name = 'handle_partition'
+        character(64) :: subroutine_name = 'handle_link_nodes'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
         !% pack all the link indexes in an image
-        packed_link_idx = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) == image))
+        packed_link_idx = pack(linkI(:,li_idx), (linkI(:,li_BQ_image) .eq. image))
 
         !% find the number of links in an image
         pLink = size(packed_link_idx)
 
         !% pack all the node indexes in a partition to determine which nodes are in the partition
-        packed_node_idx = pack(nodeI(:,ni_idx), (nodeI(:,ni_BQ_image) == image))
+        packed_node_idx = pack(nodeI(:,ni_idx), (nodeI(:,ni_BQ_image) .eq. image))
         
         !% number of nodes in a partition
         pNode = size(packed_node_idx)
@@ -266,7 +266,56 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine handle_partition
+    end subroutine handle_link_nodes
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine map_multi_branch_junction_nodes (image)
+    !    
+    !-------------------------------------------------------------------------- 
+    !
+    !% map all the multi branch junction faces in an image
+    !
+    !--------------------------------------------------------------------------
+    ! 
+        integer, intent(in)    :: image
+
+        integer :: ii, pnJm
+        integer, pointer :: thisJunctionNode
+        integer, dimension(:), allocatable, target :: packed_nJm_idx, JunctionElementIdx
+
+
+
+        character(64) :: subroutine_name = 'map_multi_branch_junction_nodes'
+    !--------------------------------------------------------------------------
+
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+
+
+        !% pack all the nJm node indexes in a partition to find face maps
+        packed_nJm_idx = pack(nodeI(:,ni_idx),                       &
+                             ((nodeI(:,ni_BQ_image) .eq. image) .and. &
+                              (nodeI(:,ni_node_type) .eq. nJm ) ) )
+        
+        !% number of nodes in a partition
+        pnJm = size(packed_nJm_idx)
+
+        !% cycle through the nJm nodes to find the face maps
+        do ii = 1,pnJm
+            thisJunctionNode => packed_nJm_idx(ii)
+            JunctionElementIdx = pack( elemI(:,ei_Lidx), &
+                                     ( elemI(:,ei_node_Gidx_SWMM) .eq. thisJunctionNode) )
+
+
+            call map_junction_branch_elemnt (image, thisJunctionNode, JunctionElementIdx)
+
+
+        end do
+
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+
+    end subroutine map_multi_branch_junction_nodes
     !
     !==========================================================================
     !==========================================================================
@@ -285,7 +334,7 @@ contains
         integer, intent(inout) :: ElemLocalCounter, FaceLocalCounter 
         integer, intent(inout) :: ElemGlobalCounter, FaceGlobalCounter
 
-        integer, pointer :: nAssignStatus, nodeType
+        integer, pointer :: nAssignStatus, nodeType, linkUp
 
         integer :: ii
         
@@ -331,6 +380,11 @@ contains
 
                             !% logical data
                             faceYN(FaceLocalCounter,fYN_isSharedFace) = .true.
+
+                            !% find the connecting image to this face
+                            linkUp  => nodeI(thisNode,ni_Mlink_u1)
+
+                            faceI(FaceLocalCounter, fi_Connected_image) = linkI(linkUp,li_BQ_image) 
                         else
                             !% if the node is not an edge node, there is an upstream
                             !% local link element which has already been handeled
@@ -357,12 +411,14 @@ contains
 
 
         else
+
             !% if the upstream node is not in the partiton,
             !% the face map to upstream nullvalue 
 
             !% integer data
             faceI(FacelocalCounter,fi_Lidx) = FacelocalCounter
             faceI(FacelocalCounter,fi_Gidx) = nullvalueI
+            faceI(FacelocalCounter,fi_Connected_image) = nodeI(thisNode,ni_BQ_image)
 
             !% since no upstream node indicates start of a partiton,
             !% the downstream element will be initialized elem idx
@@ -477,7 +533,9 @@ contains
 
             lAssignStatus = lAssigned
 
+
             linkI(thisLink,li_last_elem_idx)    = ElemLocalCounter - oneI
+
             ! linkI(thisLink,li_Melem_d)          = ElemLocalCounter        ! HACK: This may not be right in some cases
             ! linkI(thisLink,li_Mface_d)          = FaceLocalCounter + oneI ! HACK: This may not be right in some cases
             !% HACK:
@@ -496,7 +554,7 @@ contains
         FaceGlobalCounter)
     !-------------------------------------------------------------------------- 
     !
-    !% handle the node dwonstream of a link
+    !% handle the node downstream of a link
     !
     !--------------------------------------------------------------------------
     ! 
@@ -504,7 +562,7 @@ contains
         integer, intent(inout) :: ElemLocalCounter, FaceLocalCounter 
         integer, intent(inout) :: ElemGlobalCounter, FaceGlobalCounter
 
-        integer, pointer :: nAssignStatus, nodeType
+        integer, pointer :: nAssignStatus, nodeType, linkDn
         integer, pointer :: upBranchIdx, dnBranchIdx
 
         integer :: ii, upBranchSelector, dnBranchSelector
@@ -558,6 +616,11 @@ contains
 
                             !% logical data
                             faceYN(FaceLocalCounter,fYN_isSharedFace) = .true.
+
+                            !% find the connecting image to this face
+                            linkDn  => nodeI(thisNode,ni_Mlink_d1)
+
+                            faceI(FaceLocalCounter, fi_Connected_image) = linkI(linkDn,li_BQ_image)  
                         endif
 
                         !% change the node assignmebt value
@@ -634,19 +697,28 @@ contains
                                          (linkI(upBranchIdx,li_BQ_image) .ne. image) )  then
 
                                         !% HACK:
-                                        !% faces are always advanced by link elements
-                                        !% however, if there aren't any link element
-                                        !% connected to the junction branch in a partition,
-                                        !% the face is advanced
+                                        !% face counters are always advanced by link 
+                                        !% elements unless a branch does not have any
+                                        !% elements associated with it. if the links 
+                                        !% connected to the junction branch is in a different
+                                        !% partition, the local face count will not be advanced.
+                                        !% thus to keep the count consistant, face is advanced
 
                                         !% advance the face counters for next branch
                                         FaceLocalCounter  = FaceLocalCounter  + oneI
                                         FaceGlobalCounter = FaceGlobalCounter + oneI
 
-                                        !% integer data
-                                        faceI(FaceLocalCounter,fi_Lidx) = FaceLocalCounter
-                                        faceI(FacelocalCounter,fi_Gidx) = FaceGlobalCounter
+                                        !% elem array
+                                        elemI(ElemLocalCounter,ei_Mface_uL) = FaceLocalCounter
 
+                                        !% face array
+                                        !% integer data
+                                        faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                                        faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
+                                        faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                                        faceI(FaceLocalCounter,fi_Connected_image) = linkI(upBranchIdx,li_BQ_image)
+
+                                    
                                         !% logical data
                                         faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
 
@@ -654,18 +726,24 @@ contains
                                 else
 
                                     !% HACK:
-                                    !% faces are always advanced by link elements
-                                    !% however, for null branches, no links are 
-                                    !% connected to the junction branch. To keep
-                                    !% the count consistant, face is advanced
+                                    !% face counters are always advanced by link 
+                                    !% elements unless a branch does not have any
+                                    !% elements associated with it. for null branches, 
+                                    !% no links are connected to the junction branch.
+                                    !% to keep the count consistant, face is advanced
 
                                     !% advance the face counters for next branch
                                     FaceLocalCounter  = FaceLocalCounter  + oneI
                                     FaceGlobalCounter = FaceGlobalCounter + oneI
 
+                                    !% elem array
+                                    elemI(ElemLocalCounter,ei_Mface_uL) = FaceLocalCounter
+
+                                    !% face array
                                     !% integer data
-                                    faceI(FaceLocalCounter,fi_Lidx) = FaceLocalCounter
-                                    faceI(FacelocalCounter,fi_Gidx) = FaceGlobalCounter
+                                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                                    faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
+                                    faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
 
                                     call nullify_junction_branch &
                                         (ElemLocalCounter, FaceLocalCounter)
@@ -700,9 +778,16 @@ contains
                                         FaceLocalCounter  = FaceLocalCounter  + oneI
                                         FaceGlobalCounter = FaceGlobalCounter + oneI
 
+                                        !% elem array 
                                         !% integer data
-                                        faceI(FaceLocalCounter,fi_Lidx) = FaceLocalCounter
-                                        faceI(FacelocalCounter,fi_Gidx) = FaceGlobalCounter
+                                        elemI(ElemLocalCounter,ei_Mface_dL) = FaceLocalCounter
+
+                                        !% face array
+                                        !% integer data
+                                        faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                                        faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
+                                        faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                                        faceI(FaceLocalCounter,fi_Connected_image) = linkI(dnBranchIdx,li_BQ_image)
 
                                         !% logical data
                                         faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
@@ -720,9 +805,15 @@ contains
                                     FaceLocalCounter  = FaceLocalCounter  + oneI
                                     FaceGlobalCounter = FaceGlobalCounter + oneI
 
+                                    !% elem array 
                                     !% integer data
-                                    faceI(FaceLocalCounter,fi_Lidx) = FaceLocalCounter
-                                    faceI(FacelocalCounter,fi_Gidx) = FaceGlobalCounter
+                                    elemI(ElemLocalCounter,ei_Mface_dL) = FaceLocalCounter
+
+                                    !% face array
+                                    !% integer data
+                                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                                    faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
+                                    faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
 
                                     call nullify_junction_branch &
                                         (ElemLocalCounter, FaceLocalCounter)
@@ -754,6 +845,7 @@ contains
             !% integer data
             faceI(FaceLocalCounter,fi_Melem_dL) = nullvalueI
             faceI(FacelocalCounter,fi_Gidx)     = nullvalueI
+            faceI(FacelocalCounter,fi_Connected_image) = nodeI(thisNode,ni_BQ_image)
 
             !% logical data
             faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
@@ -762,6 +854,133 @@ contains
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
     end subroutine handle_downstream_node
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine map_junction_branch_elemnt (image, thisJNode, JelemIdx)
+    !    
+    !-------------------------------------------------------------------------- 
+    !
+    !% map all the multi branch junction elements
+    !
+    !--------------------------------------------------------------------------
+    !   
+        integer, intent(in)                       :: image, thisJNode
+        integer, dimension(:), target, intent(in) :: JelemIdx
+
+        integer          :: ii, upBranchSelector, dnBranchSelector 
+        integer          :: LinkFirstElem, LinkLastElem
+        integer, pointer :: upBranchIdx, dnBranchIdx 
+        integer, pointer :: eIdx, fLIdx
+
+        character(64) :: subroutine_name = 'map_junction_branch_elemnt'
+    !--------------------------------------------------------------------------
+
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+
+
+        !% initialize selecteros for upstream and downstream branches
+        upBranchSelector = zeroI
+        dnBranchSelector = zeroI
+
+        !% cycle through the junction elements of map faces
+        do ii = 1,Nelem_in_Junction
+
+            !% now we are considering all the junction elements including
+            !% junction main.
+
+            !% all the even numbers are upstream branch elements
+            !% condition for upstream branch elements
+            if ((ii .eq. 2) .or. (ii .eq. 4) .or. (ii .eq. 6)) then
+                
+                upBranchSelector = upBranchSelector + oneI
+                !% pointer to upstream branch
+                upBranchIdx => nodeI(thisJNode,ni_idx_base1 + upBranchSelector)
+
+                !% condition for a link connecting this branch is valid and
+                !% included in this partition. 
+                if ( (upBranchIdx .ne. nullvalueI)   .and.       &
+                     (linkI(upBranchIdx,li_BQ_image) .eq. image) ) then
+
+                    !% find the last element index of the link
+                    LinkLastElem = linkI(upBranchIdx,li_last_elem_idx)
+
+                    !% find the downstream face index of that last element
+                    fLidx => elemI(LinkLastElem,ei_Mface_dL)
+
+                    !% pointer to the specific branch element
+                    eIdx => JelemIdx(ii)
+
+                    !% if the face is a shared face across images,
+                    !% it will not have any upstream local element
+                    if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
+
+                        !% the upstream face of the upstream branch will be the
+                        !% last downstream face of the connected link
+                        !% here, one important thing to remember is that 
+                        !% the upstrem branch elements does not have any 
+                        !% downstream faces.
+
+                        !% local map to upstream face for elemI
+                        elemI(eIdx,ei_Mface_uL) = fLidx
+
+                        !% local downstream element of the face
+                        faceI(fLidx,fi_Melem_dL) = eIdx
+
+                    endif
+
+                endif
+
+            !% all odd numbers starting from 3 are downstream branch elements
+            !% condition for downsteam branch elements
+            elseif ((ii .eq. 3) .or. (ii .eq. 5) .or. (ii .eq. 7)) then
+
+                dnBranchSelector = dnBranchSelector + oneI
+                !% pointer to upstream branch
+                dnBranchIdx => nodeI(thisJNode,ni_idx_base2 + dnBranchSelector)
+
+                !% condition for a link connecting this branch is valid and
+                !% included in this partition. 
+                if ( (dnBranchIdx .ne. nullvalueI)   .and.       &
+                     (linkI(dnBranchIdx,li_BQ_image) .eq. image) ) then
+
+                    !% find the last element index of the link
+                    LinkFirstElem = linkI(dnBranchIdx,li_first_elem_idx)
+
+                    !% find the downstream face index of that last element
+                    fLIdx => elemI(LinkFirstElem,ei_Mface_dL)
+
+                    !% pointer to the specific branch element
+                    eIdx => JelemIdx(ii)
+
+                    !% if the face is a shared face across images,
+                    !% it will not have any upstream local element
+                    if ( .not. faceYN(fLIdx,fYN_isSharedFace)) then
+
+                        !% the downstream face of the downstream branch will be the
+                        !% first upstream face of the connected link
+                        !% here, one important thing to remember is that 
+                        !% the downstream branch elements does not have any 
+                        !% upstream faces.
+
+                        !% local map to upstream face for elemI
+                        elemI(eIdx,ei_Mface_dL) = fLIdx
+
+                        !% local downstream element of the face
+                        faceI(fLIdx,fi_Melem_uL) = eIdx
+
+                    endif
+
+                endif
+
+            endif
+
+        enddo
+
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+
+    end subroutine map_junction_branch_elemnt
     !
     !==========================================================================
     !==========================================================================
@@ -818,10 +1037,6 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
     end subroutine nullify_junction_branch
-    !
-    !==========================================================================
-    !==========================================================================
-    !
     !
     !==========================================================================
     ! END OF MODULE
