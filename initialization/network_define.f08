@@ -196,7 +196,12 @@ contains
 
         !% finish mapping all the junction branch and faces that were not 
         !% handeled in handle_link_nodes subroutine
-        call map_multi_branch_junction_nodes(image)
+        call map_multi_branch_junction_nodes (image)
+
+        sync all
+
+        !% finally set the same global face idx for shared faces
+        call map_shared_faces_across_images (image)
 
         sync all
 
@@ -307,15 +312,71 @@ contains
             JunctionElementIdx = pack( elemI(:,ei_Lidx), &
                                      ( elemI(:,ei_node_Gidx_SWMM) .eq. thisJunctionNode) )
 
-
             call map_junction_branch_elemnt (image, thisJunctionNode, JunctionElementIdx)
-
 
         end do
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
     end subroutine map_multi_branch_junction_nodes
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine map_shared_faces_across_images (image)
+    !    
+    !-------------------------------------------------------------------------- 
+    !
+    !% set the global indexes for shared faces across images
+    !
+    !--------------------------------------------------------------------------
+    ! 
+        integer, intent(in)    :: image
+
+        integer :: ii, jj, targetImage, NsharedFaces, fGidx
+        integer, pointer :: fLidx
+        integer, dimension(:), allocatable, target ::  sharedFaces       
+
+        character(64) :: subroutine_name = 'map_shared_faces_across_images'
+    !--------------------------------------------------------------------------
+
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+
+        !% pack the shared faces in an image 
+        sharedFaces = pack(faceI(:,fi_Lidx), faceYN(:,fYN_isSharedFace))
+
+        !% fid the size of the pack
+        NsharedFaces = size(sharedFaces)
+
+
+        !% HACK: this is absolutely rubbish code
+        !% it can be written in a better way
+        !% but it works for now
+
+        do ii = 1,NsharedFaces
+            fLidx => sharedFaces(ii)
+            !% find the target image
+            targetImage = faceI(fLidx,fi_Connected_image)
+
+            !% find the global index and set to target image
+            if(faceI(fLidx,fi_Gidx) .ne. nullvalueI) then
+
+                fGidx = faceI(fLidx,fi_Gidx)
+
+                do jj = 1, size(faceI(:,fi_Lidx))
+                    
+                    if (faceI(jj,fi_Connected_image)[targetImage] .eq. image) then
+                        faceI(jj,fi_Gidx)[targetImage] = fGidx                    
+                    endif
+                enddo
+            endif
+        enddo
+
+        print*, sharedFaces, 'sharedFaces'
+
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+
+    end subroutine map_shared_faces_across_images
     !
     !==========================================================================
     !==========================================================================
@@ -872,7 +933,7 @@ contains
         integer          :: ii, upBranchSelector, dnBranchSelector 
         integer          :: LinkFirstElem, LinkLastElem
         integer, pointer :: upBranchIdx, dnBranchIdx 
-        integer, pointer :: eIdx, fLIdx
+        integer, pointer :: eIdx, fLidx
 
         character(64) :: subroutine_name = 'map_junction_branch_elemnt'
     !--------------------------------------------------------------------------
@@ -949,14 +1010,14 @@ contains
                     LinkFirstElem = linkI(dnBranchIdx,li_first_elem_idx)
 
                     !% find the downstream face index of that last element
-                    fLIdx => elemI(LinkFirstElem,ei_Mface_dL)
+                    fLidx => elemI(LinkFirstElem,ei_Mface_dL)
 
                     !% pointer to the specific branch element
                     eIdx => JelemIdx(ii)
 
                     !% if the face is a shared face across images,
                     !% it will not have any upstream local element
-                    if ( .not. faceYN(fLIdx,fYN_isSharedFace)) then
+                    if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
 
                         !% the downstream face of the downstream branch will be the
                         !% first upstream face of the connected link
@@ -965,10 +1026,10 @@ contains
                         !% upstream faces.
 
                         !% local map to upstream face for elemI
-                        elemI(eIdx,ei_Mface_dL) = fLIdx
+                        elemI(eIdx,ei_Mface_dL) = fLidx
 
                         !% local downstream element of the face
-                        faceI(fLIdx,fi_Melem_uL) = eIdx
+                        faceI(fLidx,fi_Melem_uL) = eIdx
 
                     endif
 
