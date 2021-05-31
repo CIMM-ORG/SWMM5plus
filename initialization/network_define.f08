@@ -318,7 +318,7 @@ contains
             JunctionElementIdx = pack( elemI(:,ei_Lidx), &
                                      ( elemI(:,ei_node_Gidx_SWMM) .eq. thisJunctionNode) )
 
-            call map_junction_branch_elemnt (image, thisJunctionNode, JunctionElementIdx)
+            call map_junction_branch_elemnts (image, thisJunctionNode, JunctionElementIdx)
 
         end do
 
@@ -466,7 +466,7 @@ contains
                     !% check if the node has already been assigned
                     if (nAssignStatus .eq. nUnassigned) then
 
-                        call subdivide_multi_branch_junctions &
+                        call subdivide_multi_branch_junction_node &
                             (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                             FaceGlobalCounter, nAssignStatus)
 
@@ -700,7 +700,7 @@ contains
                     !% check if the node has already been assigned
                     if (nAssignStatus .eq. nUnassigned) then
 
-                        call subdivide_multi_branch_junctions &
+                        call subdivide_multi_branch_junction_node &
                             (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                             FaceGlobalCounter, nAssignStatus)
 
@@ -734,7 +734,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine subdivide_multi_branch_junctions &
+    subroutine subdivide_multi_branch_junction_node &
         (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
         FaceGlobalCounter, nAssignStatus)
     !-------------------------------------------------------------------------- 
@@ -752,7 +752,7 @@ contains
 
         integer :: ii, upBranchSelector, dnBranchSelector
         
-        character(64) :: subroutine_name = 'handle_downstream_node'
+        character(64) :: subroutine_name = 'subdivide_multi_branch_junction_node'
 
     !--------------------------------------------------------------------------
 
@@ -958,12 +958,12 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine subdivide_multi_branch_junctions
+    end subroutine subdivide_multi_branch_junction_node
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine map_junction_branch_elemnt (image, thisJNode, JelemIdx)
+    subroutine map_junction_branch_elemnts (image, thisJNode, JelemIdx)
     !    
     !-------------------------------------------------------------------------- 
     !
@@ -979,7 +979,7 @@ contains
         integer, pointer :: upBranchIdx, dnBranchIdx 
         integer, pointer :: eIdx, fLidx
 
-        character(64) :: subroutine_name = 'map_junction_branch_elemnt'
+        character(64) :: subroutine_name = 'map_junction_branch_elemnts'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
@@ -1084,7 +1084,7 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine map_junction_branch_elemnt
+    end subroutine map_junction_branch_elemnts
     !
     !==========================================================================
     !==========================================================================
