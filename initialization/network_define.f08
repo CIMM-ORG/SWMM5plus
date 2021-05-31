@@ -56,31 +56,33 @@ contains
         sync all 
         !% print result
         if (setting%Debug%File%network_define) then
-           ! image = this_image()
-           if (this_image() == 1) then
 
-            do ii = 1,num_images()
-               print*, '----------------------------------------------------'
-               print*, 'image = ', ii
-               print*, '..................elements..........................'
-               print*, elemI(:,ei_Lidx)[ii], 'Lidx'
-               print*, elemI(:,ei_Gidx)[ii], 'Gidx'
-               print*, elemI(:,ei_elementType)[ii], 'elementType'
-               print*, elemI(:,ei_geometryType)[ii], 'geometryType'
-               print*, elemI(:,ei_link_Gidx_SWMM)[ii], 'link_Gidx_SWMM'
-               print*, elemI(:,ei_node_Gidx_SWMM)[ii], 'node_Gidx_SWMM'
-               print*, elemI(:,ei_Mface_uL)[ii],'Mface_uL'
-               print*, elemI(:,ei_Mface_dL)[ii],'Mface_dL'
-               print*, '..................faces.............................'
-               print*, faceI(:,fi_Lidx)[ii], 'face Lidx'
-               print*, faceI(:,fi_Gidx)[ii], 'face Gidx'
-               print*, faceI(:,fi_Melem_dL)[ii], 'face Melem_dL'
-               print*, faceI(:,fi_Melem_uL)[ii], 'face Melem_uL'
-               print*, faceI(:,fi_Connected_image)[ii], 'fi_Connected_image'
-               print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared face'
-               print*, '----------------------------------------------------'
-               call execute_command_line('')
-           enddo
+            !% only using the first processor to print results
+            if (this_image() == 1) then
+
+                do ii = 1,num_images()
+                   print*, '----------------------------------------------------'
+                   print*, 'image = ', ii
+                   print*, '..................elements..........................'
+                   print*, elemI(:,ei_Lidx)[ii], 'Lidx'
+                   print*, elemI(:,ei_Gidx)[ii], 'Gidx'
+                   print*, elemI(:,ei_elementType)[ii], 'elementType'
+                   print*, elemI(:,ei_geometryType)[ii], 'geometryType'
+                   print*, elemI(:,ei_link_Gidx_SWMM)[ii], 'link_Gidx_SWMM'
+                   print*, elemI(:,ei_node_Gidx_SWMM)[ii], 'node_Gidx_SWMM'
+                   print*, elemI(:,ei_Mface_uL)[ii],'Mface_uL'
+                   print*, elemI(:,ei_Mface_dL)[ii],'Mface_dL'
+                   print*, '..................faces.............................'
+                   print*, faceI(:,fi_Lidx)[ii], 'face Lidx'
+                   print*, faceI(:,fi_Gidx)[ii], 'face Gidx'
+                   print*, faceI(:,fi_Melem_dL)[ii], 'face Melem_dL'
+                   print*, faceI(:,fi_Melem_uL)[ii], 'face Melem_uL'
+                   print*, faceI(:,fi_Connected_image)[ii], 'fi_Connected_image'
+                   print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared face'
+                   print*, '----------------------------------------------------'
+                   call execute_command_line('')
+                enddo
+
             endif
         endif
 
@@ -353,7 +355,7 @@ contains
         NsharedFaces = size(sharedFaces)
 
 
-        !% HACK: this is absolutely rubbish code
+        !% HACK: bellow is absolutely rubbish code
         !% it can be written in a better way
         !% but it works for now
 
@@ -956,7 +958,6 @@ contains
             !% junction main.
 
             !% all the even numbers are upstream branch elements
-            !% condition for upstream branch elements
             if ((ii .eq. 2) .or. (ii .eq. 4) .or. (ii .eq. 6)) then
                 
                 upBranchSelector = upBranchSelector + oneI
@@ -998,7 +999,6 @@ contains
                 endif
 
             !% all odd numbers starting from 3 are downstream branch elements
-            !% condition for downsteam branch elements
             elseif ((ii .eq. 3) .or. (ii .eq. 5) .or. (ii .eq. 7)) then
 
                 dnBranchSelector = dnBranchSelector + oneI
@@ -1021,6 +1021,7 @@ contains
 
                     !% if the face is a shared face across images,
                     !% it will not have any upstream local element
+                    !% (not sure if we need this condition)
                     if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
 
                         !% the downstream face of the downstream branch will be the
