@@ -463,9 +463,14 @@ contains
 
                 case (nJm)
 
-                    print*, 'In ', subroutine_name
-                    print*, 'Upstream multi branch junction node will be coded later'
-                    stop
+                    !% check if the node has already been assigned
+                    if (nAssignStatus .eq. nUnassigned) then
+
+                        call subdivide_multi_branch_junctions &
+                            (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
+                            FaceGlobalCounter, nAssignStatus)
+
+                    endif
 
                 case default
 
@@ -630,9 +635,6 @@ contains
         integer, intent(inout) :: ElemGlobalCounter, FaceGlobalCounter
 
         integer, pointer :: nAssignStatus, nodeType, linkDn
-        integer, pointer :: upBranchIdx, dnBranchIdx
-
-        integer :: ii, upBranchSelector, dnBranchSelector
         
         character(64) :: subroutine_name = 'handle_downstream_node'
     !--------------------------------------------------------------------------
@@ -698,202 +700,9 @@ contains
                     !% check if the node has already been assigned
                     if (nAssignStatus .eq. nUnassigned) then
 
-                        !%................................................................
-                        !% Junction main 
-                        !%................................................................
-                        !% Element Arrays
-                        !% integer data
-                        elemI(ElemLocalCounter,ei_Lidx) = ElemLocalCounter
-                        elemI(ElemLocalCounter,ei_Gidx) = ElemGlobalCounter
-                        elemI(ElemLocalCounter,ei_elementType) = eJunctionMain
-                        elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
-
-                        !% real data
-                        elemR(ElemLocalCounter,er_Zbottom) = nodeR(thisNode,nr_zbottom)
-
-                        !% Advance the element counter to 1st upstream branch
-                        ElemLocalCounter  = ElemLocalCounter  + oneI
-                        ElemGlobalCounter = ElemGlobalCounter + oneI
-
-                        !%................................................................
-                        !% Handle Junctin Branches
-                        !%................................................................
-
-                        !% initialize selecteros for upstream and downstream branches
-                        upBranchSelector = zeroI
-                        dnBranchSelector = zeroI
-
-                        !% loopthrough all the branches
-                        do ii = 1,max_branch_per_node
-
-                            !% common junction branch data
-                            !% element arrays
-                            !% integer data
-                            elemI(ElemLocalCounter,ei_Lidx)           = ElemLocalCounter
-                            elemI(ElemLocalCounter,ei_Gidx)           = ElemGlobalCounter
-                            elemI(ElemLocalCounter,ei_elementType)    = eJunctionBranch
-                            elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
-
-                            !% real data
-                            elemR(ElemLocalCounter,er_Zbottom) = nodeR(thisNode,nr_zbottom)
-
-                            !% face arrays
-                            !% integer data
-                            !% HACK: for non-edge node, the first face indexes
-                            !% should already be updated 
-
-                            !% Now moving into branch specific calculations
-
-                            !%......................................................
-                            !% Upstream Branches
-                            !%......................................................
-                            if ((ii .eq. 1) .or. (ii .eq. 3) .or. (ii .eq. 5)) then 
-                            !% all the odd numbers are upstream branches
-                                upBranchSelector = upBranchSelector + oneI
-                                !% pointer to upstream branch
-                                upBranchIdx => nodeI(thisNode,ni_idx_base1 + upBranchSelector)
-
-                                if (upBranchIdx .ne. nullvalueI) then
-                                    !% integer data
-                                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
-                                    elemR(ElemLocalCounter,er_Length) = get_junction_length(upBranchIdx)
-
-                                    !% check if the link connecting this branch 
-                                    !% is a part of this partition
-                                    if ( (nodeI(thisNode,ni_BQ_edge) .eq. EdgeNode)  .and. &
-                                         (linkI(upBranchIdx,li_BQ_image) .ne. image) )  then
-
-                                        !% HACK:
-                                        !% face counters are always advanced by link 
-                                        !% elements unless a branch does not have any
-                                        !% elements associated with it. if the links 
-                                        !% connected to the junction branch is in a different
-                                        !% partition, the local face count will not be advanced.
-                                        !% thus to keep the count consistant, face is advanced
-
-                                        !% advance the face counters for next branch
-                                        FaceLocalCounter  = FaceLocalCounter  + oneI
-                                        FaceGlobalCounter = FaceGlobalCounter + oneI
-
-                                        !% elem array
-                                        elemI(ElemLocalCounter,ei_Mface_uL) = FaceLocalCounter
-
-                                        !% face array
-                                        !% integer data
-                                        faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
-                                        faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
-                                        faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
-                                        faceI(FaceLocalCounter,fi_Connected_image) = linkI(upBranchIdx,li_BQ_image)
-
-                                    
-                                        !% logical data
-                                        faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
-
-                                    endif
-                                else
-
-                                    !% HACK:
-                                    !% face counters are always advanced by link 
-                                    !% elements unless a branch does not have any
-                                    !% elements associated with it. for null branches, 
-                                    !% no links are connected to the junction branch.
-                                    !% to keep the count consistant, face is advanced
-
-                                    !% advance the face counters for next branch
-                                    FaceLocalCounter  = FaceLocalCounter  + oneI
-                                    FaceGlobalCounter = FaceGlobalCounter + oneI
-
-                                    !% elem array
-                                    elemI(ElemLocalCounter,ei_Mface_uL) = FaceLocalCounter
-
-                                    !% face array
-                                    !% integer data
-                                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
-                                    faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
-                                    faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
-
-                                    call nullify_junction_branch &
-                                        (ElemLocalCounter, FaceLocalCounter)
-
-                                endif
-                            !%......................................................
-                            !% Downstream Branches
-                            !%......................................................
-                            else
-                                !% all the even numbers are downstream branches
-                                dnBranchSelector = dnBranchSelector + oneI
-                                !% pointer to upstream branch
-                                dnBranchIdx => nodeI(thisNode,ni_idx_base2 + dnBranchSelector)
-
-                                if (dnBranchIdx .ne. nullvalueI) then
-                                    !% integer data
-                                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
-                                    elemR(ElemLocalCounter,er_Length) = get_junction_length(dnBranchIdx)
-
-                                    !% check if the link connecting this branch 
-                                    !% is a part of this partition
-                                    if ( (nodeI(thisNode,ni_BQ_edge) .eq. EdgeNode)  .and. &
-                                         (linkI(dnBranchIdx,li_BQ_image) .ne. image) )  then
-
-                                        !% HACK:
-                                        !% faces are always advanced by link elements
-                                        !% however, if there aren't any link element
-                                        !% connected to the junction branch in a partition,
-                                        !% the face is advances
-
-                                        !% advance the face counters for next branch
-                                        FaceLocalCounter  = FaceLocalCounter  + oneI
-                                        FaceGlobalCounter = FaceGlobalCounter + oneI
-
-                                        !% elem array 
-                                        !% integer data
-                                        elemI(ElemLocalCounter,ei_Mface_dL) = FaceLocalCounter
-
-                                        !% face array
-                                        !% integer data
-                                        faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
-                                        faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
-                                        faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
-                                        faceI(FaceLocalCounter,fi_Connected_image) = linkI(dnBranchIdx,li_BQ_image)
-
-                                        !% logical data
-                                        faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
-
-                                    endif
-
-                                else
-                                    !% HACK:
-                                    !% faces are always advanced by link elements
-                                    !% however, for null branches, no links are 
-                                    !% connected to the junction branch. To keep
-                                    !% the count consistant, face is advanced
-
-                                    !% advance the face counters for next branch
-                                    FaceLocalCounter  = FaceLocalCounter  + oneI
-                                    FaceGlobalCounter = FaceGlobalCounter + oneI
-
-                                    !% elem array 
-                                    !% integer data
-                                    elemI(ElemLocalCounter,ei_Mface_dL) = FaceLocalCounter
-
-                                    !% face array
-                                    !% integer data
-                                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
-                                    faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
-                                    faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
-
-                                    call nullify_junction_branch &
-                                        (ElemLocalCounter, FaceLocalCounter)
-                                endif
-                            endif
-                            
-                            !% Advance the element counter for next branch
-                            ElemLocalCounter  = ElemLocalCounter  + oneI
-                            ElemGlobalCounter = ElemGlobalCounter + oneI 
-                        end do
-
-                        !% set status to assigned
-                        nAssignStatus = nAssigned
+                        call subdivide_multi_branch_junctions &
+                            (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
+                            FaceGlobalCounter, nAssignStatus)
 
                     endif
 
@@ -921,6 +730,235 @@ contains
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
     end subroutine handle_downstream_node
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine subdivide_multi_branch_junctions &
+        (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
+        FaceGlobalCounter, nAssignStatus)
+    !-------------------------------------------------------------------------- 
+    !
+    !% subdivides the links into elements going downstream
+    !
+    !--------------------------------------------------------------------------
+        
+        integer, intent(in)    :: image, thisNode
+        integer, intent(inout) :: ElemLocalCounter, FaceLocalCounter 
+        integer, intent(inout) :: ElemGlobalCounter, FaceGlobalCounter
+        integer, intent(inout) :: nAssignStatus
+
+        integer, pointer :: upBranchIdx, dnBranchIdx
+
+        integer :: ii, upBranchSelector, dnBranchSelector
+        
+        character(64) :: subroutine_name = 'handle_downstream_node'
+
+    !--------------------------------------------------------------------------
+
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+
+        !%................................................................
+        !% Junction main 
+        !%................................................................
+        !% Element Arrays
+        !% integer data
+        elemI(ElemLocalCounter,ei_Lidx) = ElemLocalCounter
+        elemI(ElemLocalCounter,ei_Gidx) = ElemGlobalCounter
+        elemI(ElemLocalCounter,ei_elementType) = eJunctionMain
+        elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
+
+        !% real data
+        elemR(ElemLocalCounter,er_Zbottom) = nodeR(thisNode,nr_zbottom)
+
+        !% Advance the element counter to 1st upstream branch
+        ElemLocalCounter  = ElemLocalCounter  + oneI
+        ElemGlobalCounter = ElemGlobalCounter + oneI
+
+        !%................................................................
+        !% Handle Junctin Branches
+        !%................................................................
+
+        !% initialize selecteros for upstream and downstream branches
+        upBranchSelector = zeroI
+        dnBranchSelector = zeroI
+
+        !% loopthrough all the branches
+        do ii = 1,max_branch_per_node
+
+            !% common junction branch data
+            !% element arrays
+            !% integer data
+            elemI(ElemLocalCounter,ei_Lidx)           = ElemLocalCounter
+            elemI(ElemLocalCounter,ei_Gidx)           = ElemGlobalCounter
+            elemI(ElemLocalCounter,ei_elementType)    = eJunctionBranch
+            elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
+
+            !% real data
+            elemR(ElemLocalCounter,er_Zbottom) = nodeR(thisNode,nr_zbottom)
+
+            !% face arrays
+            !% integer data
+            !% HACK: for non-edge node, the first face indexes
+            !% should already be updated 
+
+            !% Now moving into branch specific calculations
+
+            !%......................................................
+            !% Upstream Branches
+            !%......................................................
+            if ((ii .eq. 1) .or. (ii .eq. 3) .or. (ii .eq. 5)) then 
+            !% all the odd numbers are upstream branches
+                upBranchSelector = upBranchSelector + oneI
+                !% pointer to upstream branch
+                upBranchIdx => nodeI(thisNode,ni_idx_base1 + upBranchSelector)
+
+                if (upBranchIdx .ne. nullvalueI) then
+                    !% integer data
+                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
+                    elemR(ElemLocalCounter,er_Length) = get_junction_length(upBranchIdx)
+
+                    !% check if the link connecting this branch 
+                    !% is a part of this partition
+                    if ( (nodeI(thisNode,ni_BQ_edge) .eq. EdgeNode)  .and. &
+                         (linkI(upBranchIdx,li_BQ_image) .ne. image) )  then
+
+                        !% HACK:
+                        !% face counters are always advanced by link 
+                        !% elements unless a branch does not have any
+                        !% elements associated with it. if the links 
+                        !% connected to the junction branch is in a different
+                        !% partition, the local face count will not be advanced.
+                        !% thus to keep the count consistant, face is advanced
+
+                        !% advance the face counters for next branch
+                        FaceLocalCounter  = FaceLocalCounter  + oneI
+                        FaceGlobalCounter = FaceGlobalCounter + oneI
+
+                        !% elem array
+                        elemI(ElemLocalCounter,ei_Mface_uL) = FaceLocalCounter
+
+                        !% face array
+                        !% integer data
+                        faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                        faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
+                        faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                        faceI(FaceLocalCounter,fi_Connected_image) = linkI(upBranchIdx,li_BQ_image)
+
+                    
+                        !% logical data
+                        faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
+
+                    endif
+                else
+
+                    !% HACK:
+                    !% face counters are always advanced by link 
+                    !% elements unless a branch does not have any
+                    !% elements associated with it. for null branches, 
+                    !% no links are connected to the junction branch.
+                    !% to keep the count consistant, face is advanced
+
+                    !% advance the face counters for next branch
+                    FaceLocalCounter  = FaceLocalCounter  + oneI
+                    FaceGlobalCounter = FaceGlobalCounter + oneI
+
+                    !% elem array
+                    elemI(ElemLocalCounter,ei_Mface_uL) = FaceLocalCounter
+
+                    !% face array
+                    !% integer data
+                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                    faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
+                    faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+
+                    call nullify_junction_branch &
+                        (ElemLocalCounter, FaceLocalCounter)
+
+                endif
+            !%......................................................
+            !% Downstream Branches
+            !%......................................................
+            else
+                !% all the even numbers are downstream branches
+                dnBranchSelector = dnBranchSelector + oneI
+                !% pointer to upstream branch
+                dnBranchIdx => nodeI(thisNode,ni_idx_base2 + dnBranchSelector)
+
+                if (dnBranchIdx .ne. nullvalueI) then
+                    !% integer data
+                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
+                    elemR(ElemLocalCounter,er_Length) = get_junction_length(dnBranchIdx)
+
+                    !% check if the link connecting this branch 
+                    !% is a part of this partition
+                    if ( (nodeI(thisNode,ni_BQ_edge) .eq. EdgeNode)  .and. &
+                         (linkI(dnBranchIdx,li_BQ_image) .ne. image) )  then
+
+                        !% HACK:
+                        !% faces are always advanced by link elements
+                        !% however, if there aren't any link element
+                        !% connected to the junction branch in a partition,
+                        !% the face is advances
+
+                        !% advance the face counters for next branch
+                        FaceLocalCounter  = FaceLocalCounter  + oneI
+                        FaceGlobalCounter = FaceGlobalCounter + oneI
+
+                        !% elem array 
+                        !% integer data
+                        elemI(ElemLocalCounter,ei_Mface_dL) = FaceLocalCounter
+
+                        !% face array
+                        !% integer data
+                        faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                        faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
+                        faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                        faceI(FaceLocalCounter,fi_Connected_image) = linkI(dnBranchIdx,li_BQ_image)
+
+                        !% logical data
+                        faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
+
+                    endif
+
+                else
+                    !% HACK:
+                    !% faces are always advanced by link elements
+                    !% however, for null branches, no links are 
+                    !% connected to the junction branch. To keep
+                    !% the count consistant, face is advanced
+
+                    !% advance the face counters for next branch
+                    FaceLocalCounter  = FaceLocalCounter  + oneI
+                    FaceGlobalCounter = FaceGlobalCounter + oneI
+
+                    !% elem array 
+                    !% integer data
+                    elemI(ElemLocalCounter,ei_Mface_dL) = FaceLocalCounter
+
+                    !% face array
+                    !% integer data
+                    faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                    faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
+                    faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+
+                    call nullify_junction_branch &
+                        (ElemLocalCounter, FaceLocalCounter)
+                endif
+            endif
+            
+            !% Advance the element counter for next branch
+            ElemLocalCounter  = ElemLocalCounter  + oneI
+            ElemGlobalCounter = ElemGlobalCounter + oneI 
+        end do
+
+        !% set status to assigned
+        nAssignStatus = nAssigned
+
+
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+
+    end subroutine subdivide_multi_branch_junctions
     !
     !==========================================================================
     !==========================================================================
