@@ -38,6 +38,8 @@ contains
     !
     !--------------------------------------------------------------------------
 
+        integer :: ii
+
         character(64) :: subroutine_name = 'network_initiation'
 
     !--------------------------------------------------------------------------
@@ -57,30 +59,32 @@ contains
            ! image = this_image()
            if (this_image() == 1) then
 
-            do image = 1,3
+            do ii = 1,num_images()
                print*, '----------------------------------------------------'
-               print*, 'image = ', image
+               print*, 'image = ', ii
                print*, '..................elements..........................'
-               print*, elemI(:,ei_Lidx)[image], 'Lidx'
-               print*, elemI(:,ei_Gidx)[image], 'Gidx'
-               print*, elemI(:,ei_elementType)[image], 'elementType'
-               print*, elemI(:,ei_geometryType)[image], 'geometryType'
-               print*, elemI(:,ei_link_Gidx_SWMM)[image], 'link_Gidx_SWMM'
-               print*, elemI(:,ei_node_Gidx_SWMM)[image], 'node_Gidx_SWMM'
-               print*, elemI(:,ei_Mface_uL)[image],'Mface_uL'
-               print*, elemI(:,ei_Mface_dL)[image],'Mface_dL'
+               print*, elemI(:,ei_Lidx)[ii], 'Lidx'
+               print*, elemI(:,ei_Gidx)[ii], 'Gidx'
+               print*, elemI(:,ei_elementType)[ii], 'elementType'
+               print*, elemI(:,ei_geometryType)[ii], 'geometryType'
+               print*, elemI(:,ei_link_Gidx_SWMM)[ii], 'link_Gidx_SWMM'
+               print*, elemI(:,ei_node_Gidx_SWMM)[ii], 'node_Gidx_SWMM'
+               print*, elemI(:,ei_Mface_uL)[ii],'Mface_uL'
+               print*, elemI(:,ei_Mface_dL)[ii],'Mface_dL'
                print*, '..................faces.............................'
-               print*, faceI(:,fi_Lidx)[image], 'face Lidx'
-               print*, faceI(:,fi_Gidx)[image], 'face Gidx'
-               print*, faceI(:,fi_Melem_dL)[image], 'face Melem_dL'
-               print*, faceI(:,fi_Melem_uL)[image], 'face Melem_uL'
-               print*, faceI(:,fi_Connected_image)[image], 'fi_Connected_image'
-               print*, faceYN(:,fYN_isSharedFace)[image], 'face is shared face'
+               print*, faceI(:,fi_Lidx)[ii], 'face Lidx'
+               print*, faceI(:,fi_Gidx)[ii], 'face Gidx'
+               print*, faceI(:,fi_Melem_dL)[ii], 'face Melem_dL'
+               print*, faceI(:,fi_Melem_uL)[ii], 'face Melem_uL'
+               print*, faceI(:,fi_Connected_image)[ii], 'fi_Connected_image'
+               print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared face'
                print*, '----------------------------------------------------'
                call execute_command_line('')
            enddo
             endif
         endif
+
+        sync all
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -200,7 +204,7 @@ contains
 
         sync all
 
-        !% finally set the same global face idx for shared faces
+        !% finally set the same global face idx for shared faces across images
         call map_shared_faces_across_images (image)
 
         sync all
@@ -372,8 +376,6 @@ contains
             endif
         enddo
 
-        print*, sharedFaces, 'sharedFaces'
-
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
     end subroutine map_shared_faces_across_images
@@ -491,6 +493,8 @@ contains
             !% the global face counter without considering this update 
             !% later. Thus, this index should be adjusted by subtracting 
             !% one from the FaceGlobalCounter
+
+            !% HACK: i dont know if it will work for different networks
 
             FaceGlobalCounter = FaceGlobalCounter - oneI
             
