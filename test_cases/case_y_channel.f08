@@ -7,7 +7,7 @@
 module case_y_channel
     !
     use allocate_storage
-    use assign_index
+    use array_index
     use bc
     use data_keys
     use globals

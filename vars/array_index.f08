@@ -1,4 +1,4 @@
-! module assign_index
+! module array_index
 !
 ! The following is based on the ontology outlined in Google Sheet
 ! https://docs.google.com/spreadsheets/d/126yXPLGS9F-jz6I9kuMcW_up87TurdYftQiwQTvJWSU/edit#gid=0
@@ -14,7 +14,7 @@
 ! 20200411
 !
 
-module assign_index
+module array_index
 
     use globals
     use iso_c_binding
@@ -607,4 +607,4 @@ module assign_index
     ! END OF MODULE
     !==========================================================================
     !
-end module assign_index
+end module array_index

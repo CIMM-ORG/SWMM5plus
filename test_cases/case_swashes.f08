@@ -5,7 +5,7 @@
 module case_swashes
     !
     use allocate_storage
-    use assign_index
+    use array_index
     use bc
     use data_keys
     use globals

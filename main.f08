@@ -2,7 +2,7 @@ program main
 
 
    use globals
-   use assign_index
+   use array_index
    use initialization
    use setting_definition, only: setting
    use interface

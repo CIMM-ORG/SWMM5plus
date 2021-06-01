@@ -8,7 +8,7 @@
 module coarray_partition
     use allocate_storage
     use globals
-    use assign_index
+    use array_index
     use data_keys
     use setting_definition, only: setting
     

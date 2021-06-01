@@ -11,7 +11,7 @@
 module network_define
     !
     use allocate_storage
-    use assign_index
+    use array_index
     use initialization
     use data_keys
     use globals

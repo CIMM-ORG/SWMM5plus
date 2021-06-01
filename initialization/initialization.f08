@@ -1,6 +1,6 @@
 module initialization
     use allocate_storage
-    use assign_index
+    use array_index
     use data_keys
     use globals
     use interface

@@ -9,7 +9,7 @@
 module case_waller_creek
     !
     use allocate_storage
-    use assign_index
+    use array_index
     use bc
     use data_keys
     use globals

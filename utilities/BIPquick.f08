@@ -3,7 +3,7 @@
  module BIPquick ! the module name that is referenced in the main.f08
 
 ! the modules that need to precede BIPquick
- use assign_index
+ use array_index
  use globals
  use setting_definition, only: setting
  

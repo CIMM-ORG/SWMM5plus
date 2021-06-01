@@ -1,6 +1,6 @@
 module allocate_storage
 
-    use assign_index
+    use array_index
     use globals
     use utility, only: utility_check_allocation
     use setting_definition, only: setting
