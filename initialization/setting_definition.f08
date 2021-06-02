@@ -258,7 +258,6 @@ module setting_definition
 
     !% setting%Partitioning
     type PartitioningType
-        integer :: N_Image = 3
         integer :: PartitioningMethod = Default
         logical :: BIPquickTestCase = .true.
     endtype PartitioningType
@@ -312,6 +311,10 @@ contains
         logical :: logical_value
         logical :: found
         type(json_file) :: json
+
+        ! ---  Define paths
+        call getcwd(setting%Paths%project)
+        setting%Paths%setting = trim(setting%Paths%project) // '/initialization/settings.json'
 
         call json%initialize()
         call json%load(filename = fpath)
@@ -611,24 +614,21 @@ contains
         if (.not. found) stop 69
         call json%get('Debug.File.inflow', logical_value, found)
         setting%Debug%File%inflow = logical_value
-        if (.not. found) stop 69
+        if (.not. found) stop 70
         call json%get('Debug.File.coarray_bipquick', logical_value, found)
         setting%Debug%File%coarray_bipquick = logical_value
-        if (.not. found) stop 70
+        if (.not. found) stop 71
         call json%get('Debug.File.network_define', logical_value, found)
         setting%Debug%File%network_define = logical_value
-        if (.not. found) stop 71
+        if (.not. found) stop 72
 
         ! For element length adjustment
         call json%get("ElementLengthAdjust.LinkShortingFactor", real_value, found)
         setting%ElementLengthAdjust%LinkShortingFactor = real_value
-        if (.not. found) stop 72
+        if (.not. found) stop 73
 
         
         ! Load BIPQuick settings
-        call json%get('Partitioning.N_Image', integer_value, found)
-        setting%Partitioning%N_Image = integer_value
-        if (.not. found) stop 73
         call json%get('Partitioning.PartitioningMethod', c, found)
         call utility_lower_case(c)
         if (c == 'default') then
@@ -637,6 +637,8 @@ contains
             setting%Partitioning%PartitioningMethod = BQuick
         else if (c == 'random') then
             setting%Partitioning%PartitioningMethod = Random
+        else if (c == 'blink') then
+            setting%Partitioning%PartitioningMethod = BLink
         else
             print *, "Error, the setting '" // trim(c) // "' is not supported for PartitioningMethod"
             stop
@@ -647,10 +649,10 @@ contains
         ! Load BIPQuick settings
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 73
+        if (.not. found) stop 75
 
         call json%destroy()
-        if (json%failed()) stop 74
+        if (json%failed()) stop 76
 
     end subroutine load_settings
 end module setting_definition

@@ -107,8 +107,7 @@
         "Volume" : 1e-6
     },
     "Partitioning" : {
-        "N_Image"  : 3,
-        "PartitioningMethod" : "BQuick",
+        "PartitioningMethod" : "blink",
         "BIPquickTestCase" : false
     },
     "ElementLengthAdjust" : {

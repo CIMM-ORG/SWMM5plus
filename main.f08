@@ -1,33 +1,30 @@
 program main
 
 
-   use globals
-   use assign_index
-   use initialization
-   use setting_definition, only: setting
-   use interface
-   use coarray_partition
-   use partitioning
-   use network_define
+    use globals
+    use assign_index
+    use initialization
+    use setting_definition, only: setting
+    use interface
+    use coarray_partition
+    use partitioning
+    use network_define
 
-   implicit none
+    implicit none
 
-   integer :: ii
-   logical :: arg_param = .false.
-   character(len=8) :: param
-   character(len=256) :: arg
+    integer :: ii
+    logical :: arg_param = .false.
+    character(len=8) :: param
+    character(len=256) :: arg
 
-   ! ---  Define paths
+    ! --- Load Settings
 
-   call getcwd(setting%Paths%project)
-   setting%Paths%setting = trim(setting%Paths%project) // '/initialization/settings.json'
+    call load_settings(setting%Paths%setting)
+    if (this_image() == 1) then
+        call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
+    end if
 
-   ! --- Load Settings
-
-   call load_settings(setting%Paths%setting)
-   call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
-
-   ! --- Read args
+    ! --- Read args
 
     do ii = 1, iargc()
         call getarg(ii, arg)
@@ -75,31 +72,25 @@ program main
         end if
     end do
 
-   ! --- Initialization
+    ! --- Initialization
 
-   call initialize_api()
+    call initialize_api()
+    call initialize_linknode_arrays()
 
-   sync all
-   
-   call initialize_linknode_arrays()
-  
-   sync all
+    if (this_image() == 1) then
+        print *, linkI(:, li_P_image)
+        print *, nodeI(:, ni_P_image)
+    end if
 
-   call execute_partitioning()
+    sync all
+    if (this_image() == oneI) then
+       call network_initiation()
+    endif
+    sync all
 
-   sync all
-   if (this_image() == oneI) then
-      call network_initiation()
-   endif
+    ! --- Finalization
+    call finalize_api() ! closes link with shared library
 
-   sync all
-   
-   ! --- Finalization
-   call finalize_api() ! closes link with shared library
-
-   print*, 'End of main'
-   
-
-   
+    print*, 'End of main'
 
 end program main

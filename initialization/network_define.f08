@@ -140,18 +140,13 @@ contains
         integer :: ElemGlobalIdx, FaceGlobalIdx 
         integer :: ElemLocallIdx, FacelocallIdx
         integer :: lastElem, lastFace 
-        integer, pointer :: N_Images, P_elem, P_face, Lidx
+        integer, pointer :: P_elem, P_face, Lidx
         integer, pointer :: NodeUp, NodeDn, NodeUpTyp, NodeDnTyp
 
         character(64) :: subroutine_name = 'network_data_create'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
-
-        !% Number of Images
-        !% HACK: This is hardcoded for now. We have to come up with a way 
-        !% to use it as a user defined parameters
-        N_Images => setting%Partitioning%N_Image
 
         !% initializing global element and face id
         ElemGlobalIdx = first_elem_index

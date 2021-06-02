@@ -119,16 +119,14 @@ contains
         call link_length_adjust()
         call N_elem_assign()
 
-        
         call initialize_partition_coarray()
-
-        call allocate_elemX_faceX() 
-    
+        call allocate_elemX_faceX()
         call allocate_columns()
 
-
         if (setting%Debug%File%initialization) then
-            call utility_export_linknode_csv()
+            if (this_image() == 1) then
+                call utility_export_linknode_csv()
+            end if
         end if
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
@@ -154,7 +152,7 @@ contains
 
         do ii =1, N_link
             temp_length = linkR(ii,lr_Length) ! lenght of link ii
-            
+
             if ( nodeI(linkI(ii,li_Mnode_u), ni_node_type) .eq. nJm ) then
                 temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for upstream M junction
             endif
@@ -184,7 +182,7 @@ contains
         real(8) :: remainder
         character(64) :: subroutine_name = 'N_elem_assign'
     !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
         do ii = 1, N_link
@@ -212,22 +210,21 @@ contains
     !-----------------------------------------------------------------------------
     !
     ! Description:
-    !   This subroutine calls the public subroutine from the utility module, 
+    !   This subroutine calls the public subroutine from the utility module,
     !   partitioning.f08. It also calls a public subroutine from the temporary
     !   coarray_partition.f08 utility module that defines how big the coarrays
-    !   must be. 
+    !   must be.
     !
     !-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_partition'
     !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
-        !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed 
+        !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed
         call execute_partitioning()
-        stop
         call coarray_length_calculation()
-        
+
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine initialize_partition_coarray

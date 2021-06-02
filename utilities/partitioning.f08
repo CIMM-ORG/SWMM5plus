@@ -23,8 +23,6 @@ module partitioning
 
     public :: execute_partitioning, count_node_types
 
-    integer, pointer :: setP_N_images => setting%Partitioning%N_Image
-
 contains
 !
 !==========================================================================
@@ -35,7 +33,7 @@ subroutine execute_partitioning()
     !
     ! Description:
     !   The purpose of this subroutine is to check which partitioning
-    !   algorithm should be used, then call that algorithm, then 
+    !   algorithm should be used, then call that algorithm, then
     !   check that the output is correct (if debug == true)
     !
     !---------------------------------------------------------
@@ -58,8 +56,10 @@ subroutine execute_partitioning()
     else if (setting%Partitioning%PartitioningMethod == Random) then
         if (setting%Verbose) print*, "Using Random Partitioning"
         call random_partitioning()
+    else if (setting%Partitioning%PartitioningMethod == BLink) then
+        if (setting%Verbose) print*, "Using Balanced Link Partitioning"
+        call balanced_link_partitioning()
     end if
-
     if (setting%Debug%File%partitioning) then
         print *, '*** leave ', subroutine_name
 
@@ -86,8 +86,8 @@ end subroutine
 !
 subroutine allocate_partitioning_arrays()
     allocate(adjacent_links(max_us_branch_per_node+max_ds_branch_per_node))
-    allocate(elem_per_image(setP_N_images))
-    allocate(image_full(setP_N_images))
+    allocate(elem_per_image(num_images()))
+    allocate(image_full(num_images()))
 end subroutine allocate_partitioning_arrays
 !
 !==========================================================================
@@ -126,7 +126,7 @@ subroutine default_partitioning()
     !% multiplied by how many elements are expected for that node_type
     total_num_elements = sum(linkI(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
         (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
-    partition_threshold = total_num_elements / real(setP_N_images)
+    partition_threshold = total_num_elements / real(num_images())
 
     !% This loop counts the elements attributed to each link, and assigns the link to an image
     num_attributed_elements = 0
@@ -140,7 +140,7 @@ subroutine default_partitioning()
         linkI(ii, li_P_image) = assigning_image
 
         !% If the link is the last link, we need to not reset the num_attributed_elem going into the nodes loop
-        if ( ii == size(linkI, 1) ) then 
+        if ( ii == size(linkI, 1) ) then
 
             !% The last link is assigned to the current image and the link do-loop is exited
             linkI(ii, li_P_image) = assigning_image
@@ -150,7 +150,7 @@ subroutine default_partitioning()
         !% If the number of elements is greater than the partition threshold, reset the number of elements and increment the image
         if ( (num_attributed_elements > partition_threshold) ) then
             !% This is a check to make sure that links aren't added to an image that doesn't exist
-            if ( assigning_image /= setP_N_images ) then
+            if ( assigning_image /= num_images() ) then
                 assigning_image = assigning_image + 1
             end if
             num_attributed_elements = 0
@@ -178,7 +178,7 @@ subroutine default_partitioning()
         if ( num_attributed_elements > partition_threshold) then
             num_attributed_elements = 0
             !% This is a check to make sure that nodes aren't added to an image that doesn't exist
-            if ( assigning_image /= setP_N_images ) then
+            if ( assigning_image /= num_images() ) then
                 assigning_image = assigning_image + 1
             end if
         end if
@@ -229,7 +229,7 @@ subroutine random_partitioning()
     !% multiplied by how many elements are expected for that node_type
     total_num_elements = sum(linkI(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
         (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
-    partition_threshold = ( total_num_elements / real(setP_N_images) )
+    partition_threshold = ( total_num_elements / real(num_images()) )
 
     !% Initialize the arrays that will hold the number of elements already on an image (and whether that image is full)
     elem_per_image(:) = 0
@@ -240,12 +240,12 @@ subroutine random_partitioning()
 
         !% Calculates a random number and maps it onto an image number
         call random_number(rand_num)
-        assigning_image = int(rand_num*setP_N_images) + 1
+        assigning_image = int(rand_num*num_images()) + 1
 
         !% If the image number selected is already full, pick a new number
         do while ( image_full(assigning_image) .eqv. .true. )
             call random_number(rand_num)
-            assigning_image = int(rand_num*setP_N_images) + 1
+            assigning_image = int(rand_num*num_images()) + 1
         end do
 
         !% elem_per_image is incremented by li_N_element for the current link
@@ -266,12 +266,12 @@ subroutine random_partitioning()
 
         !% Calculates a random number and maps it onto an image number
         call random_number(rand_num)
-        assigning_image = int(rand_num*setP_N_images) + 1
+        assigning_image = int(rand_num*num_images()) + 1
 
         !% If the image number selected is already full, pick a new number
         do while ( image_full(assigning_image) .eqv. .true. )
             call random_number(rand_num)
-            assigning_image = int(rand_num*setP_N_images) + 1
+            assigning_image = int(rand_num*num_images()) + 1
         end do
 
         !% elem_per_image is incremented by the number of elements associated with each node type
@@ -286,9 +286,9 @@ subroutine random_partitioning()
         else if ( nodeI(ii, ni_node_type) == nJm ) then
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
         end if
-        
+
         !% If the number of elements is greater than the partition threshold, that image number is closed
-        !% Note, this check after the assigning_image has been selected allows for images be over-filled 
+        !% Note, this check after the assigning_image has been selected allows for images be over-filled
         if ( elem_per_image(assigning_image) > partition_threshold ) then
             image_full(assigning_image) = .true.
         end if
@@ -313,16 +313,60 @@ subroutine random_partitioning()
     end do
 
 end subroutine random_partitioning
-!    
-!==========================================================================   
-!========================================================================== 
+!
+!==========================================================================
+!==========================================================================
+!
+subroutine balanced_link_partitioning()
+    integer :: ii, jj
+    integer :: clink, clink_image, assigned_image
+    integer :: start_id, end_id
+    integer :: count, remainder, rank
+
+    if (N_link < num_images()) then
+        call default_partitioning()
+    else
+        do rank = 0, num_images()-1
+            count = N_link / num_images()
+            remainder = mod(N_link, num_images())
+
+            if (rank < remainder) then
+                ! The first 'remainder' ranks get 'count + 1' tasks each
+                start_id = rank * (count + 1)
+                end_id = start_id + count
+            else
+                ! The remaining 'size - remainder' ranks get 'count' task each
+                start_id = rank * count + remainder
+                end_id = start_id + (count - 1)
+            end if
+
+            linkI(start_id+1:end_id+1, li_P_image) = rank+1
+        end do
+        do ii = 1, N_node
+            assigned_image = nullvalueI
+            do jj = 1, (max_us_branch_per_node + max_ds_branch_per_node)
+                clink = nodeI(ii, ni_idx_base1+jj)
+                if (clink /= nullvalueI) then
+                    clink_image = linkI(clink, li_P_image)
+                    if (clink_image < assigned_image) then
+                        assigned_image = clink_image
+                    end if
+                end if
+            end do
+            nodeI(ii, ni_P_image) = assigned_image
+        end do
+    end if
+end subroutine balanced_link_partitioning
+!
+!==========================================================================
+!==========================================================================
 !
 function partition_diagnostic_partsizebalance() result(part_size_balance)
     ! ----------------------------------------------------------------------------------------------------------------
     !
     ! Description:
-    !   This function is used to calculate the part size balance metric for the given partition set (i.e. the output 
-    !   from any of the partitioning algorithms).  The part size balance metric is equal to the greatest number of 
+    !   This function is used to calculate the part size balance metric for the given partition set (i.e. the output
+    !   from any of the partitioning algorithms).  The part size balance metric is equal to the greatest number of
     !   elements assigned to a single processor minus the smallest number of elements assigned to a single processor.
     !
     ! -----------------------------------------------------------------------------------------------------------------
@@ -338,7 +382,7 @@ function partition_diagnostic_partsizebalance() result(part_size_balance)
 
         !% The current image is the one to which the current link has been assigned
         current_image = linkI(ii, li_P_image)
-        
+
         !% Iterate the number of elements for the current image by li_N_element for that link
         elem_per_image(current_image) = elem_per_image(current_image) + linkI(ii, li_N_element)
     end do
@@ -370,19 +414,19 @@ function partition_diagnostic_partsizebalance() result(part_size_balance)
 
     !% The difference between the max and min number of elements per image is the part_size_balance objective metric
     part_size_balance = max_elem - min_elem
-        
+
 end function partition_diagnostic_partsizebalance
-!    
-!==========================================================================   
-!========================================================================== 
+!
+!==========================================================================
+!==========================================================================
 !
 function partition_diagnostic_connectivity() result(connectivity)
     ! ----------------------------------------------------------------------------------------------------------------
     !
     ! Description:
-    !   This function is used to calculate the connectivity metric for the given partition set (i.e. the output 
+    !   This function is used to calculate the connectivity metric for the given partition set (i.e. the output
     !   from any of the partitioning algorithms).  The connectivity metric is equal to the sum of the ni_is_boundary
-    !   column of the nodeI array after the partition has been completed.  Note: the ni_is_boundary column is given a 
+    !   column of the nodeI array after the partition has been completed.  Note: the ni_is_boundary column is given a
     !   value of 0 when the node is an internal partition node, and is incremented by 1 for each additional partition
     !   the node touches.
     !
@@ -393,9 +437,9 @@ function partition_diagnostic_connectivity() result(connectivity)
     !% The sum of the ni_is_boundary column is the connectivity
     connectivity = sum(nodeI(:, ni_P_is_boundary))
 end function partition_diagnostic_connectivity
-!    
-!==========================================================================   
-!========================================================================== 
+!
+!==========================================================================
+!==========================================================================
 !
 ! function default_performance_check() result(partition_correct)
 !     integer :: ii
