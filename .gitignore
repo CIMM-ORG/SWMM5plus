@@ -7,10 +7,12 @@
 *.so
 *.png
 *.mod
+
 SWMM
 initialization/interface/flibswmm/src
 json-fortran
-cmake
-opencoarray
-mpich
+cmake*
+opencoarray*
+mpich*
 debug
+installation_log.txt
