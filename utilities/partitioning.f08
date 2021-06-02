@@ -342,6 +342,7 @@ subroutine balanced_link_partitioning()
 
             linkI(start_id+1:end_id+1, li_P_image) = rank+1
         end do
+        nodeI(:, ni_P_is_boundary) = 0
         do ii = 1, N_node
             assigned_image = nullvalueI
             do jj = 1, (max_us_branch_per_node + max_ds_branch_per_node)
@@ -349,6 +350,9 @@ subroutine balanced_link_partitioning()
                 if (clink /= nullvalueI) then
                     clink_image = linkI(clink, li_P_image)
                     if (clink_image < assigned_image) then
+                        if ((assigned_image /= nullValueI) .and. (nodeI(ii, ni_P_is_boundary) == 0)) then
+                            nodeI(ii, ni_P_is_boundary) = 1
+                        end if
                         assigned_image = clink_image
                     end if
                 end if

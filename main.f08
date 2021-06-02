@@ -78,8 +78,9 @@ program main
     call initialize_linknode_arrays()
 
     if (this_image() == 1) then
-        print *, linkI(:, li_P_image)
-        print *, nodeI(:, ni_P_image)
+        print *, linkI(:, li_P_image), "linkI(:, li_P_image)"
+        print *, nodeI(:, ni_P_image), "nodeI(:, ni_P_image)"
+        print *, nodeI(:, ni_P_is_boundary), "nodeI(:, ni_P_is_boundary)"
     end if
 
     sync all
