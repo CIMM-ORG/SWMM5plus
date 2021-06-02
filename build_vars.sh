@@ -11,6 +11,7 @@ SIM_DIR='simulation'
 TEST_DIR='test_cases'
 UTIL_DIR='utilities'
 VARS_DIR='vars'
+ARRAY_DIR='arrays'
 
 # Compiler vars
 FC='gfortran'

@@ -218,8 +218,6 @@ opencoarray_prerequisite()
                     ;;
             esac
 
-
-
         elif command -v $VALUE &> /dev/null; # command exists
         then
             case $KEY in
