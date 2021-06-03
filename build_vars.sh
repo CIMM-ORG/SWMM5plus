@@ -25,7 +25,7 @@ INIT_DIR='initialization'
 API_DIR='interface'
 UTIL_DIR='utility'
 DEF_DIR='definitions'
-DDIR='dependencies'
+DDIR="$SWMM5PLUS_DIR/dependencies"
 FIN_DIR='finalization'
 TEST_DIR='tests'
 
