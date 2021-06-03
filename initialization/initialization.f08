@@ -67,13 +67,10 @@ contains
             linkI(i,li_Mnode_u) = get_link_attribute(i, link_node1) + 1 ! node1 in C starts from 0
             linkI(i,li_Mnode_d) = get_link_attribute(i, link_node2) + 1 ! node2 in C starts from 0
 
-            ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
-            linkI(i, li_N_element) = 10
-
-            nodeI(linkI(i,li_Mnode_u), ni_N_link_u) = nodeI(linkI(i,li_Mnode_u), ni_N_link_u) + 1
-            nodeI(linkI(i,li_Mnode_u), ni_idx_base1 + nodeI(linkI(i,li_Mnode_u), ni_N_link_u)) = i
-            nodeI(linkI(i,li_Mnode_d), ni_N_link_d) = nodeI(linkI(i,li_Mnode_d), ni_N_link_d) + 1
-            nodeI(linkI(i,li_Mnode_d), ni_idx_base2 + nodeI(linkI(i,li_Mnode_d), ni_N_link_d)) = i
+            nodeI(linkI(i,li_Mnode_d), ni_N_link_u) = nodeI(linkI(i,li_Mnode_d), ni_N_link_u) + 1
+            nodeI(linkI(i,li_Mnode_d), ni_idx_base1 + nodeI(linkI(i,li_Mnode_d), ni_N_link_u)) = i
+            nodeI(linkI(i,li_Mnode_u), ni_N_link_d) = nodeI(linkI(i,li_Mnode_u), ni_N_link_d) + 1
+            nodeI(linkI(i,li_Mnode_u), ni_idx_base2 + nodeI(linkI(i,li_Mnode_u), ni_N_link_u)) = i
 
             linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
             linkR(i,lr_Length) = get_link_attribute(i, conduit_length)

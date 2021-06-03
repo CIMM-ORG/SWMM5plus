@@ -1,3 +1,4 @@
+# Files
 *.o
 *.rpt
 *.out
@@ -7,11 +8,19 @@
 *.so
 *.png
 *.mod
-SWMM
-initialization/interface/flibswmm/src
-json-fortran
-cmake
-opencoarray
-mpich
-debug
+*.mod0
 installation_log.txt
+_*
+
+# Dependencies
+cmake*
+opencoarray*
+mpich*
+json-fortran
+
+# Executable
+SWMM
+
+# Directories
+interface/src
+debug

@@ -27,7 +27,7 @@ program main
    call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
 
    ! --- Read args
-
+    ! -- TODO - pull to subroutine (Code Narration)
     do ii = 1, iargc()
         call getarg(ii, arg)
         if (.not. arg_param) then
@@ -82,6 +82,7 @@ program main
    ! --- Graph Partitioning
 
    call execute_partitioning()
+    call initialize_elemface_coarrays()
 
    ! --- Finalization
 
