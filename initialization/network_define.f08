@@ -2,9 +2,9 @@
 !% module network_define
 !
 !% Handles relationship between coarse link-node network and high-resolution
-!% element-face network.
+!% element-face network. This module defines all the indexes and mappings
 !
-!% This module defines all the indexes and mappings
+!% Sazzad Sharior 06/01/2021
 !
 !==========================================================================
 !
@@ -187,24 +187,20 @@ contains
            end do
         end if
 
-        sync all
-
         !% handle all the links and nodes in a partition
         call handle_link_nodes &
             (image, ElemLocalIdx, FacelocalIdx, ElemGlobalIdx, FaceGlobalIdx)
-
-        sync all
 
         !% finish mapping all the junction branch and faces that were not
         !% handeled in handle_link_nodes subroutine
         call map_multi_branch_junction_nodes (image)
 
+        !% shared faces are mapped by copying data from different images
+        !% thus a sync all is needed
         sync all
 
         !% finally set the same global face idx for shared faces across images
         call map_shared_faces_across_images (image)
-
-        sync all
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -219,7 +215,7 @@ contains
     !--------------------------------------------------------------------------
     !
     !% Traverse through all the links and nodes in a partition and creates
-    !% elements and faces.
+    !%   elements and faces.
     !
     !--------------------------------------------------------------------------
     !
@@ -230,8 +226,6 @@ contains
         integer :: ii, pLink, pNode
         integer, pointer :: thisLink, upNode, dnNode
         integer, dimension(:), allocatable, target :: packed_link_idx, packed_node_idx
-
-
 
         character(64) :: subroutine_name = 'handle_link_nodes'
     !--------------------------------------------------------------------------

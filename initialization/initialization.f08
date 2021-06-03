@@ -32,7 +32,11 @@ module initialization
     public :: initialize_all
 
 contains
-
+    !
+    !==========================================================================
+    ! PUBLIC
+    !==========================================================================
+    !
     subroutine initialize_all()
 
         call load_settings(setting%Paths%setting)
@@ -47,15 +51,22 @@ contains
         if (setting%Verbose) print *, "Simulation Starts"
 
         call initialize_api()
+
         call initialize_linknode_arrays()
+
         call initialize_partition_coarray()
 
-        if (this_image() == oneI) then
-           call network_initiation()
-        endif
+        sync all 
+        !% HACK: this sync call is probably not needed
+
+        call network_initiation()
 
     end subroutine initialize_all
-
+    !
+    !==========================================================================
+    ! PRIVATE
+    !==========================================================================
+    !
     subroutine initialize_linknode_arrays()
     !-----------------------------------------------------------------------------
     !
@@ -64,7 +75,7 @@ contains
     !
     !-----------------------------------------------------------------------------
 
-        integer       :: i, total_n_links
+        integer       :: ii, total_n_links
         logical       :: l1, l2
         character(64) :: subroutine_name = 'initialize_linknode_arrays'
 
@@ -83,59 +94,59 @@ contains
         nodeI(:,ni_N_link_u) = 0
         nodeI(:,ni_N_link_d) = 0
 
-        do i = 1, N_link
-            linkI(i,li_idx) = i
-            linkI(i,li_link_type) = get_link_attribute(i, link_type)
-            linkI(i,li_geometry) = get_link_attribute(i, link_geometry)
-            linkI(i,li_Mnode_u) = get_link_attribute(i, link_node1) + 1 ! node1 in C starts from 0
-            linkI(i,li_Mnode_d) = get_link_attribute(i, link_node2) + 1 ! node2 in C starts from 0
+        do ii = 1, N_link
+            linkI(ii,li_idx) = ii
+            linkI(ii,li_link_type) = get_link_attribute(ii, link_type)
+            linkI(ii,li_geometry) = get_link_attribute(ii, link_geometry)
+            linkI(ii,li_Mnode_u) = get_link_attribute(ii, link_node1) + 1 ! node1 in C starts from 0
+            linkI(ii,li_Mnode_d) = get_link_attribute(ii, link_node2) + 1 ! node2 in C starts from 0
 
             ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
-            linkI(i, li_N_element) = 10
+            linkI(ii, li_N_element) = 10
 
-            nodeI(linkI(i,li_Mnode_d), ni_N_link_u) = nodeI(linkI(i,li_Mnode_d), ni_N_link_u) + 1
-            nodeI(linkI(i,li_Mnode_d), ni_idx_base1 + nodeI(linkI(i,li_Mnode_d), ni_N_link_u)) = i
-            nodeI(linkI(i,li_Mnode_u), ni_N_link_d) = nodeI(linkI(i,li_Mnode_u), ni_N_link_d) + 1
-            nodeI(linkI(i,li_Mnode_u), ni_idx_base2 + nodeI(linkI(i,li_Mnode_u), ni_N_link_d)) = i
+            nodeI(linkI(ii,li_Mnode_d), ni_N_link_u) = nodeI(linkI(ii,li_Mnode_d), ni_N_link_u) + 1
+            nodeI(linkI(ii,li_Mnode_d), ni_idx_base1 + nodeI(linkI(ii,li_Mnode_d), ni_N_link_u)) = ii
+            nodeI(linkI(ii,li_Mnode_u), ni_N_link_d) = nodeI(linkI(ii,li_Mnode_u), ni_N_link_d) + 1
+            nodeI(linkI(ii,li_Mnode_u), ni_idx_base2 + nodeI(linkI(ii,li_Mnode_u), ni_N_link_d)) = ii
 
-            linkI(i,li_InitialDepthType) = 1 ! TODO - get from params file
-            linkR(i,lr_Length) = get_link_attribute(i, conduit_length)
+            linkI(ii,li_InitialDepthType) = 1 ! TODO - get from params file
+            linkR(ii,lr_Length) = get_link_attribute(ii, conduit_length)
 
-            ! linkR(i,lr_TopWidth): defined in network_define.f08
-            linkR(i,lr_BreadthScale) = get_link_attribute(i, link_xsect_wMax)
-            ! linkR(i,lr_Slope): defined in network_define.f08
-            linkR(i,lr_LeftSlope) = get_link_attribute(i, link_left_slope)
-            linkR(i,lr_RightSlope) = get_link_attribute(i, link_right_slope)
-            linkR(i,lr_Roughness) = get_link_attribute(i, conduit_roughness)
-            linkR(i,lr_InitialFlowrate) = get_link_attribute(i, link_q0)
-            linkR(i,lr_InitialUpstreamDepth) = get_node_attribute(linkI(i,li_Mnode_u), node_initDepth)
-            linkR(i,lr_InitialDnstreamDepth) = get_node_attribute(linkI(i,li_Mnode_d), node_initDepth)
-            linkR(i,lr_InitialDepth) = (linkR(i,lr_InitialDnstreamDepth) + linkR(i,lr_InitialUpstreamDepth)) / 2.0
+            ! linkR(ii,lr_TopWidth): defined in network_define.f08
+            linkR(ii,lr_BreadthScale) = get_link_attribute(ii, link_xsect_wMax)
+            ! linkR(ii,lr_Slope): defined in network_define.f08
+            linkR(ii,lr_LeftSlope) = get_link_attribute(ii, link_left_slope)
+            linkR(ii,lr_RightSlope) = get_link_attribute(ii, link_right_slope)
+            linkR(ii,lr_Roughness) = get_link_attribute(ii, conduit_roughness)
+            linkR(ii,lr_InitialFlowrate) = get_link_attribute(ii, link_q0)
+            linkR(ii,lr_InitialUpstreamDepth) = get_node_attribute(linkI(ii,li_Mnode_u), node_initDepth)
+            linkR(ii,lr_InitialDnstreamDepth) = get_node_attribute(linkI(ii,li_Mnode_d), node_initDepth)
+            linkR(ii,lr_InitialDepth) = (linkR(ii,lr_InitialDnstreamDepth) + linkR(ii,lr_InitialUpstreamDepth)) / 2.0
         end do
 
-        do i = 1, N_node
-            total_n_links = nodeI(i,ni_N_link_u) + nodeI(i,ni_N_link_d)
-            nodeI(i, ni_idx) = i
-            if (get_node_attribute(i, node_type) == oneI) then ! OUTFALL
-                nodeI(i, ni_node_type) = nBCdn
+        do ii = 1, N_node
+            total_n_links = nodeI(ii,ni_N_link_u) + nodeI(ii,ni_N_link_d)
+            nodeI(ii, ni_idx) = ii
+            if (get_node_attribute(ii, node_type) == oneI) then ! OUTFALL
+                nodeI(ii, ni_node_type) = nBCdn
             else if (total_n_links == twoI) then
-                nodeI(i, ni_node_type) = nJ2
+                nodeI(ii, ni_node_type) = nJ2
             else if (total_n_links > twoI) then
-                nodeI(i, ni_node_type) = nJm
+                nodeI(ii, ni_node_type) = nJm
             end if
             ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
-            l1 = get_node_attribute(i, node_has_extInflow) == 1
-            l2 = get_node_attribute(i, node_has_dwfInflow) == 1
+            l1 = get_node_attribute(ii, node_has_extInflow) == 1
+            l2 = get_node_attribute(ii, node_has_dwfInflow) == 1
             if (l1 .or. l2) then
                 !nodeYN(i, nYN_has_inflow) = .true.
                 if (total_n_links == 1) then
-                    nodeI(i, ni_node_type) = nBCup
+                    nodeI(ii, ni_node_type) = nBCup
                 end if
             end if
 
 
-            nodeR(i,nr_InitialDepth) = get_node_attribute(i, node_initDepth)
-            nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
+            nodeR(ii,nr_InitialDepth) = get_node_attribute(ii, node_initDepth)
+            nodeR(ii,nr_Zbottom) = get_node_attribute(ii, node_invertElev)
         end do
 
         if (setting%Debug%File%initialization) then
@@ -164,19 +175,34 @@ contains
     !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-        ! adjust the length and calculate the number/length of elements in each link
-        call link_length_adjust()
+        
+        !% find the number of elements in a link based on nominal element length   
         call nominal_discretization()
-        !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed
+
+        !% in order to keep the main() clean, move the following two subroutines here, BIPquick can be removed
         call execute_partitioning()
+
+        !% adjust the link lenghts by cutting off a certain portion for the junction branch
+        !% this subroutine is called here to correctly estimate the number of elements and faces
+        !% to allocate the coarrays. HACK: it can be moved someplace more suitable
+        call link_length_adjust()
+
+        !% calculate the largest number of elements and faces to allocate the coarrays
         call coarray_length_calculation()
+
+        !% allocate elem and face coarrays
         call allocate_elemX_faceX()
+
+        !% allocate colum idxs of elem and face arrays for pointer operation
         call allocate_columns()
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine initialize_partition_coarray
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine read_arguments()
         integer :: ii
         logical :: arg_param = .false.
@@ -226,5 +252,9 @@ contains
             end if
         end do
     end subroutine read_arguments
-
+    !
+    !==========================================================================
+    ! END OF MODULE
+    !==========================================================================
+    !
 end module initialization

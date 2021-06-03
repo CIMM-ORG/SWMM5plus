@@ -349,7 +349,7 @@ subroutine balanced_link_partitioning()
                 if (clink /= nullvalueI) then
                     clink_image = linkI(clink, li_P_image)
                     if (clink_image < assigned_image) then
-                        if ((assigned_image /= nullValueI) .and. (nodeI(ii, ni_P_is_boundary) == 0)) then
+                        if ((assigned_image == nullValueI) .and. (nodeI(ii, ni_P_is_boundary) == 0)) then
                             nodeI(ii, ni_P_is_boundary) = 1
                         end if
                         assigned_image = clink_image

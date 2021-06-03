@@ -7,9 +7,11 @@ module discretization
     implicit none
 
 contains
-
-    ! this is a subroutine for adjusting the length of links.
-    ! Put it here for now but can be moved to somewhere else
+    
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine link_length_adjust()
     !-----------------------------------------------------------------------------
     !
@@ -17,9 +19,14 @@ contains
     !   This subroutine loans some of the length of a link to an adjacent nJm node.
     !   The purpose is to allow the nJm branch elements to have some volume.
     !
+    ! HACK:
+    !   this is a subroutine for adjusting the length of links.
+    !   Put it here for now but can be moved to somewhere else
+    !
     !-----------------------------------------------------------------------------
-        integer :: ii
+        integer :: ii, Adjustment_flag
         real(8) :: temp_length
+
         character(64) :: subroutine_name = 'link_length_adjust'
     !-----------------------------------------------------------------------------
 
@@ -27,21 +34,28 @@ contains
 
         do ii =1, N_link
             temp_length = linkR(ii,lr_Length) ! lenght of link ii
+            Adjustment_flag = oneI
 
             if ( nodeI(linkI(ii,li_Mnode_u), ni_node_type) .eq. nJm ) then
                 temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for upstream M junction
+                Adjustment_flag = Adjustment_flag + oneI
             endif
 
             if ( nodeI(linkI(ii,li_Mnode_d), ni_node_type) .eq. nJm ) then
                 temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for downstream M junction
+                Adjustment_flag = Adjustment_flag + oneI
             endif
 
-            linkR(ii,lr_Length) = temp_length
+            linkR(ii,lr_AdjustedLength) = temp_length
+            linkI(ii,li_length_adjusted) = Adjustment_flag
         enddo
 
         if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name
     end subroutine link_length_adjust
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine nominal_discretization()
     !-----------------------------------------------------------------------------
     !
@@ -74,8 +88,15 @@ contains
         if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name
 
     end subroutine nominal_discretization
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine cfl_discretization()
     end subroutine cfl_discretization
-
+    !
+    !==========================================================================
+    ! END OF MODULE
+    !==========================================================================
+    !
 end module discretization
