@@ -60,7 +60,7 @@ $clean:
     echo Clean Object files ...
     echo
     rm -rf *.o *.mod *.out
-    rm -r debug
+    if [[ -d debug ]]; then rm -r debug; fi
     mkdir debug
 
 echo
