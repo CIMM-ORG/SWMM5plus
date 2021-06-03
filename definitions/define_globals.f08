@@ -53,6 +53,7 @@ module define_globals
     !%  vector of number of elements and faces across images
     integer, dimension(:), allocatable, target :: N_elem
     integer, dimension(:), allocatable, target :: N_face 
+    integer, dimension(:), allocatable, target :: N_unique_face
 
     !%  elems in coarray
     real(8), allocatable, target :: elemR(:,:)[:]    ! coarray for elements
@@ -99,6 +100,9 @@ module define_globals
     integer, parameter :: oneI = 1
     integer, parameter :: twoI = 2
     integer, parameter :: threeI = 3
+    integer, parameter :: fourI = 4
+    integer, parameter :: fiveI = 5
+    integer, parameter :: sixI = 6
 
     !% images control
     integer :: image

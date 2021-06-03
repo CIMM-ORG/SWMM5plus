@@ -37,6 +37,7 @@ module define_indexes
     !% Number of maximum branches
     integer, parameter :: max_us_branch_per_node = 3
     integer, parameter :: max_ds_branch_per_node = 3
+    integer, parameter :: max_branch_per_node = max_us_branch_per_node + max_ds_branch_per_node
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: Junction_main = 1
@@ -69,10 +70,13 @@ module define_indexes
         enumerator :: li_Mface_d ! face ID of downstream face of link
         enumerator :: li_assigned ! given 1 when link is assigned
         enumerator :: li_InitialDepthType ! 1=uniform, 2= lineary change, 3=exponential decay
+        enumerator :: li_length_adjusted  ! 0 = length was not adjusted, 1 = one side was adjusted, 2 = both side was adjusted
         enumerator :: li_P_image ! image number assigned from BIPquick
+        enumerator :: li_first_elem_idx
+        enumerator :: li_last_elem_idx
     end enum
     !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_linkI = li_P_image
+    integer, target :: Ncol_linkI = li_last_elem_idx
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for nodeI(:,:) arrays
@@ -518,6 +522,7 @@ module define_indexes
         enumerator ::  fi_jump_type                 !% Type of hydraulic jump
         enumerator ::  fi_Melem_uL                  !% map to element upstream (local index)
         enumerator ::  fi_Melem_dL                  !% map to element downstream (local index)
+        enumerator ::  fi_Connected_image           !% image number a shared face connected to 
 
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
@@ -529,7 +534,7 @@ module define_indexes
 
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceI =  fi_Melem_dL
+    integer, target :: Ncol_faceI =  fi_Connected_image
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceM(:,:) arrays
@@ -587,7 +592,8 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: fYN_isAC_adjacent = 1
-        enumerator :: fYN_isnull
+        enumerator :: fYN_isSharedFace
+        enumerator :: fYN_isnull    
 
         !% HACK: The following might not be needed
         ! enumerator :: fYN_isDiag_adjacent

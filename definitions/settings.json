@@ -123,7 +123,7 @@
             "define_types" : false,
             "discretization"  : false,
             "initialization" : false,
-            "network_define" : false,
+            "network_define" : true,
             "partitioning" : false,
             "interface" : false,
             "utility" : false,

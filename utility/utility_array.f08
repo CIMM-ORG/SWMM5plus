@@ -56,6 +56,7 @@ module utility_array
         integer :: nimgs_assign
         integer, allocatable :: unique_imagenum(:)
         integer :: ii, jj, kk, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
+        integer :: duplicated_face_counter=0
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'array_length_calculation'
 
@@ -65,6 +66,7 @@ module utility_array
 
         allocate(N_elem(size(unique_imagenum,1)))
         allocate(N_face(size(unique_imagenum,1)))
+        allocate(N_unique_face(size(unique_imagenum,1)))
 
         do ii=1, size(unique_imagenum,1)
             node_index = PACK([(counter, counter=1,size(nodeI,1))], nodeI(:, ni_P_image) .eq. unique_imagenum(ii))
@@ -80,47 +82,51 @@ module utility_array
             elem_counter = elem_counter + J_elem_add * junction_counter
             face_counter = face_counter + J_face_add * junction_counter
 
-            !% loop through the links in the parition ->
-            do jj = 1, size(node_index,1)
-                idx = node_index(jj)
-                if ( nodeI(idx, ni_node_type) .eq. nJm ) then
-                    face_counter = face_counter + nodeI(idx,ni_N_link_u) ! need face for closing the upstream links
-                elseif (nodeI(idx, ni_node_type) .eq. nBCdn) then
-                    face_counter = face_counter + 1 !% downstream BC face
-                endif
-
-                !% if the cut at the normal junction (1up 1 down) -> make a face space
-                if ( ( nodeI(idx, ni_P_is_boundary) .eq. 1 ) .and. ( nodeI(idx, ni_node_type) .ne. nJm) ) then
-                    face_counter = face_counter + 1
-                endif
+            !% loop through the links and calculate the internal faces between elements
+            do jj = 1, size(link_index,1)
+                idx = link_index(jj)
+                face_counter = face_counter + linkI(idx, li_N_element) - 1 !% internal faces between elems, e.g. 5 elements have 4 internal faces
+                elem_counter = elem_counter + linkI(idx, li_N_element) ! number of elements
             enddo
 
-            !% this loop is for handling duplicated faces, we check the up/dn node of a link
-            !% if the node is edge, but does not belong to this image -> make a face space for
-            !% duplicating the face
+            !% now we loop through the nodes and count the node faces
+            do jj = 1, size(node_index,1)
+                idx = node_index(jj)
+                if (nodeI(idx, ni_node_type) .eq. nJ2) then
+                    face_counter = face_counter + 1 !% add the face of 1-to-1 junction between 2 links
+                elseif (nodeI(idx, ni_node_type) .eq. nBCup) then
+                    face_counter = face_counter +1 !% add the upstream faces
+                elseif (nodeI(idx, ni_node_type) .eq. nBCdn) then
+                    face_counter = face_counter +1 !% add the downstream faces
+                endif !% multiple junction faces already counted
+            enddo
+
+            !% Now we count the space for duplicated faces
             do jj = 1, size(link_index,1)
                 idx = link_index(jj)
                 !% check upstream node first
                 if ( ( nodeI(linkI(idx, li_Mnode_u), ni_P_is_boundary) .eq. 1) .and. &
                     ( nodeI(linkI(idx, li_Mnode_u), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
+                    duplicated_face_counter = duplicated_face_counter + 1
                 endif
                 ! then downstream node
                 if ( ( nodeI(linkI(idx, li_Mnode_d), ni_P_is_boundary) .eq. 1) .and. &
                     ( nodeI(linkI(idx, li_Mnode_d), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
+                    duplicated_face_counter = duplicated_face_counter + 1
                 endif
 
             enddo
 
-            elem_counter = elem_counter + sum(linkI(link_index, li_N_element))
-            face_counter = face_counter + sum(linkI(link_index, li_N_element))
-
             N_elem(ii) = elem_counter
             N_face(ii) = face_counter
+            N_unique_face(ii) = face_counter - duplicated_face_counter
 
-            elem_counter = 0 ! reset the counter
-            face_counter = 0
+            elem_counter = zeroI ! reset the counter
+            face_counter = zeroI
+            junction_counter = zeroI
+            duplicated_face_counter = zeroI
         enddo
 
         max_caf_elem_N = maxval(N_elem)
