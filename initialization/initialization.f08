@@ -1,17 +1,18 @@
 module initialization
-    use allocate_storage
-    use assign_index
-    use data_keys
-    use globals
+
     use interface
     use partitioning
-    use BIPquickFromScratch
-    use coarray_partition
+    use discretization
+    use utility_allocate
+    use utility_array
+    use define_indexes
+    use define_keys
+    use define_globals
+    use network_define
     use utility, only: utility_export_linknode_csv
-    use setting_definition, only: setting
+    use define_settings, only: setting
 
     implicit none
-
 
 !-----------------------------------------------------------------------------
 !
@@ -29,9 +30,32 @@ module initialization
 
     private
 
-    public :: initialize_linknode_arrays
+    public :: initialize_all
 
 contains
+
+    subroutine initialize_all()
+
+        call load_settings(setting%Paths%setting)
+        if (this_image() == 1) then
+            call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
+        end if
+
+        sync all
+
+        call read_arguments()
+
+        if (setting%Verbose) print *, "Simulation Starts"
+
+        call initialize_api()
+        call initialize_linknode_arrays()
+        call initialize_partition_coarray()
+
+        if (this_image() == oneI) then
+           call network_initiation()
+        endif
+
+    end subroutine initialize_all
 
     subroutine initialize_linknode_arrays()
     !-----------------------------------------------------------------------------
@@ -55,7 +79,7 @@ contains
         end if
 
         ! Allocate storage for link & node tables
-        call allocate_linknode_storage ()
+        call allocate_linknode_storage()
 
         nodeI(:,ni_N_link_u) = 0
         nodeI(:,ni_N_link_d) = 0
@@ -115,14 +139,6 @@ contains
             nodeR(i,nr_Zbottom) = get_node_attribute(i, node_invertElev)
         end do
 
-        ! adjust the length and calculate the number/length of elements in each link
-        call link_length_adjust()
-        call N_elem_assign()
-
-        call initialize_partition_coarray()
-        call allocate_elemX_faceX()
-        call allocate_columns()
-
         if (setting%Debug%File%initialization) then
             if (this_image() == 1) then
                 call utility_export_linknode_csv()
@@ -131,81 +147,10 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_linknode_arrays
-    ! !
-    ! !==========================================================================
-    ! !==========================================================================
-    ! !
-    subroutine link_length_adjust()
-    !-----------------------------------------------------------------------------
     !
-    ! Description:
-    !   This subroutine loans some of the length of a link to an adjacent nJm node.
-    !   The purpose is to allow the nJm branch elements to have some volume.
+    !==========================================================================
+    !==========================================================================
     !
-    !-----------------------------------------------------------------------------
-        integer :: ii
-        real(8) :: temp_length
-        character(64) :: subroutine_name = 'link_length_adjust'
-    !-----------------------------------------------------------------------------
-
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-
-        do ii =1, N_link
-            temp_length = linkR(ii,lr_Length) ! lenght of link ii
-
-            if ( nodeI(linkI(ii,li_Mnode_u), ni_node_type) .eq. nJm ) then
-                temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for upstream M junction
-            endif
-
-            if ( nodeI(linkI(ii,li_Mnode_d), ni_node_type) .eq. nJm ) then
-                temp_length = temp_length - elem_shorten_cof * element_length ! make a cut for downstream M junction
-            endif
-
-            linkR(ii,lr_AdjustedLength) = temp_length
-        enddo
-
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
-    end subroutine link_length_adjust
-    ! !
-    ! !==========================================================================
-    ! !==========================================================================
-    ! !
-    subroutine N_elem_assign()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   This subroutine sets the number of elements per link.  The element length
-    !   is adjusted so that an integer number of elements is assigned to each link.
-    !
-    !-----------------------------------------------------------------------------
-        integer :: ii
-        real(8) :: remainder
-        character(64) :: subroutine_name = 'N_elem_assign'
-    !-----------------------------------------------------------------------------
-
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-
-        do ii = 1, N_link
-            remainder = mod(linkR(ii,lr_AdjustedLength), element_length)
-            if ( remainder .eq. zeroR ) then
-                linkI(ii, li_N_element) = int(linkR(ii, lr_AdjustedLength)/element_length)
-                linkR(ii, lr_ElementLength) = linkR(ii, lr_AdjustedLength)/linkI(ii, li_N_element)
-            elseif ( remainder .ge. onehalfR * element_length ) then
-                linkI(ii, li_N_element) = ceiling(linkR(ii,lr_AdjustedLength)/element_length)
-                linkR(ii, lr_ElementLength) = linkR(ii, lr_AdjustedLength)/linkI(ii, li_N_element)
-            else
-                linkI(ii, li_N_element) = floor(linkR(ii,lr_AdjustedLength)/element_length)
-                linkR(ii, lr_ELementLength) = linkR(ii, lr_AdjustedLength)/linkI(ii, li_N_element)
-            endif
-        enddo
-
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
-
-    end subroutine N_elem_assign
-    ! !
-    ! !==========================================================================
-    ! !==========================================================================
-    ! !
     subroutine initialize_partition_coarray()
     !-----------------------------------------------------------------------------
     !
@@ -220,13 +165,67 @@ contains
     !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-
+        ! adjust the length and calculate the number/length of elements in each link
+        call link_length_adjust()
+        call nominal_discretization()
         !% In order to keep the main() clean, move the following two subroutines here, BIPquick can be removed
         call execute_partitioning()
         call coarray_length_calculation()
+        call allocate_elemX_faceX()
+        call allocate_columns()
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine initialize_partition_coarray
+
+    subroutine read_arguments()
+        integer :: ii
+        logical :: arg_param = .false.
+        character(len=8) :: param
+        character(len=256) :: arg
+
+        do ii = 1, iargc()
+            call getarg(ii, arg)
+            if (.not. arg_param) then
+                param = arg
+                if (ii == 1) then
+                    if (arg(:1) == '-') then
+                        print *, "ERROR: it is necessary to define the path to the .inp file"
+                        stop
+                    end if
+                    setting%Paths%inp = arg
+                elseif ((trim(arg) == "-s") .or. & ! user provides settings file
+                        ((trim(arg) == "--test") .or. (trim(arg) == "-t"))) then  ! hard coded test case
+                    arg_param = .true.
+                elseif ((trim(arg) == '--verbose') .or. (trim(arg) == "-v")) then
+                    setting%Verbose = .true.
+                elseif ((trim(arg) == '--warnings-off') .or. (trim(arg) == "-woff")) then
+                    setting%Warning = .false.
+                else
+                    write(*, *) 'The argument ' // trim(arg) // ' is unsupported'
+                    stop
+                end if
+            else
+                arg_param = .false.
+                if (trim(param) == '-s') then
+                    setting%Paths%setting = arg
+                elseif ((trim(arg) == "--test") .or. (trim(arg) == "-t")) then
+                    setting%TestCase%UseTestCase = .true.
+                    setting%TestCase%TestName = trim(arg)
+                    if (trim(arg) == 'simple_channel') then
+                    else if (trim(arg) == 'simple_orifice') then
+                    else
+                        write(*, *) 'The test case ' // trim(arg) // ' is unsupported. Please use one of the following:'
+                        print *, new_line('')
+                        print *, "simple_channel, simple_orifice, simple_pipe"
+                        print *, "simple_weir, swashes, waller_creek"
+                        print *, "y_channel, y_storage_channel"
+                        stop
+                    end if
+                elseif (trim(param) == '--run-tests') then
+                end if
+            end if
+        end do
+    end subroutine read_arguments
 
 end module initialization

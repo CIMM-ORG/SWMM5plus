@@ -10,13 +10,13 @@
 !
 module network_define
     !
-    use allocate_storage
-    use assign_index
-    use initialization
-    use data_keys
-    use globals
     use interface
-    use setting_definition
+    use utility_allocate
+    use discretization
+    use define_indexes
+    use define_keys
+    use define_globals
+    use define_settings
 
     implicit none
 
