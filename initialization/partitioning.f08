@@ -317,10 +317,22 @@ end subroutine random_partitioning
 !==========================================================================
 !
 subroutine balanced_link_partitioning()
+!-----------------------------------------------------------------------------
+!
+! Description:
+!   a balanced partitioning algorithm which distriutes all the links equally 
+!   to the available number of processors
+!
+!-----------------------------------------------------------------------------
     integer :: ii, jj
     integer :: clink, clink_image, assigned_image
     integer :: start_id, end_id
     integer :: count, remainder, rank
+
+    character(64) :: subroutine_name = 'balanced_link_partitioning'
+
+!-----------------------------------------------------------------------------
+    if (setting%Debug%File%partitioning) print *, '*** enter ', subroutine_name
 
     if (N_link < num_images()) then
         call default_partitioning()
@@ -354,9 +366,6 @@ subroutine balanced_link_partitioning()
                         nodeI(ii, ni_P_is_boundary) = 1
                     end if
                     if (clink_image < assigned_image) then
-                        if ((assigned_image == nullValueI) .and. (nodeI(ii, ni_P_is_boundary) == 0)) then
-                            nodeI(ii, ni_P_is_boundary) = 1
-                        end if
                         assigned_image = clink_image
                     end if
                 end if
@@ -368,8 +377,9 @@ subroutine balanced_link_partitioning()
         print *, linkI(:, li_P_image), "nodeI(:, li_P_image)"
         print *, nodeI(:, ni_P_image), "nodeI(:, ni_P_image)"
         print *, nodeI(:, ni_P_is_boundary), "nodeI(:, ni_P_is_boundary)"
-        stop
     end if
+
+    if (setting%Debug%File%partitioning)  print *, '*** leave ', subroutine_name
 end subroutine balanced_link_partitioning
 !
 !==========================================================================

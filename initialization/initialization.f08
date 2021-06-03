@@ -38,6 +38,18 @@ contains
     !==========================================================================
     !
     subroutine initialize_all()
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !   a public subroutine that calls all the private initialization subroutines
+    !
+    !-----------------------------------------------------------------------------
+
+        character(64) :: subroutine_name = 'initialize_all'
+
+    !-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
         call load_settings(setting%Paths%setting)
         if (this_image() == 1) then
@@ -59,6 +71,7 @@ contains
 
         call network_initiation()
 
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all
     !
     !==========================================================================
@@ -75,6 +88,7 @@ contains
 
         integer       :: ii, total_n_links
         logical       :: l1, l2
+        
         character(64) :: subroutine_name = 'initialize_linknode_arrays'
 
     !-----------------------------------------------------------------------------
