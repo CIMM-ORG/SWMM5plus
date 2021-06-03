@@ -40,8 +40,6 @@ contains
             call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
 
-        sync all
-
         call read_arguments()
 
         if (setting%Verbose) print *, "Simulation Starts"
@@ -50,9 +48,9 @@ contains
         call initialize_linknode_arrays()
         call initialize_partition_coarray()
 
-        if (this_image() == oneI) then
-           call network_initiation()
-        endif
+        sync all
+        call network_initiation()
+        sync all
 
     end subroutine initialize_all
 

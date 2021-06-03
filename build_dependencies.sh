@@ -345,8 +345,11 @@ install_opencoarray()
 
 # --------------------------------------------------------------------------------------
 
-opencoarray_prerequisite
-install_opencoarray
+if [[ ! -f $CAF ]]
+then
+    opencoarray_prerequisite
+    install_opencoarray
+fi
 
 # --------------------------------------------------------------------------------------
 
