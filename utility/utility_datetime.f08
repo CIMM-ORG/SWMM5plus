@@ -1,4 +1,4 @@
-module datetime
+module utility_datetime
 
     implicit none
 
@@ -62,6 +62,13 @@ module datetime
     end function isleapyear
 
     subroutine divmod(n, d, result, remainder)
+        !-----------------------------------------------------------------------------
+	    ! Description:
+	    !
+        !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
         integer, intent(in) :: n, d
         integer, intent(inout) :: result, remainder
 
@@ -105,6 +112,13 @@ module datetime
     end function datetime_encodetime
 
     subroutine datetime_decodedate(date_in_days, year, month, day)
+        !-----------------------------------------------------------------------------
+        ! Description:
+        !
+        !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
         real(8), intent(in) :: date_in_days
         integer, intent(inout) :: year, month, day
         integer :: d1, d4, d100, d400
@@ -156,6 +170,13 @@ module datetime
     end subroutine
 
     subroutine datetime_decodetime(time_in_days, h, m, s)
+        !-----------------------------------------------------------------------------
+        ! Description:
+        !
+        !
+        ! Method:
+        !    
+        !-----------------------------------------------------------------------------
         real(8), intent(in) :: time_in_days
         integer, intent(inout) :: h, m, s
         integer :: secs, mins
@@ -229,4 +250,4 @@ module datetime
         endif
     end function datetime_get_next_weekendday_hour
 
-end module datetime
+end module utility_datetime

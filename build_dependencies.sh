@@ -20,20 +20,28 @@
 
 shopt -s extglob
 
+# Create directory for dependencies
+if [[ ! -d $DDIR ]]
+then
+    mkdir $DDIR
+fi
+
 # Download json-fortran
 # --------------------------------------------------------------------------------------
-if [ ! -d 'json-fortran' ]
+
+if [ ! -d "$JSON_DIR" ]
 then
     echo
     echo "Downloading json-fortran"
     echo
+    cd $DDIR
     git clone 'https://github.com/jacobwilliams/json-fortran.git'
     cd json-fortran
     rm -r -v !('src'|'LICENSE')
     sudo rm -r .*
     mv src/*.* .
     rm -r src
-    cd ..
+    cd $SWMM5PLUS_DIR
 fi
 # --------------------------------------------------------------------------------------
 
@@ -63,22 +71,14 @@ then
 fi
 # --------------------------------------------------------------------------------------
 
-# Installation log
-# --------------------------------------------------------------------------------------
-if [ -f $INSTALLATION_LOG ]
-then
-    rm $INSTALLATION_LOG # make sure we create a new one everytime
-fi
-
 # Install MPICH (required for OpenCAF)
 # --------------------------------------------------------------------------------------
 install_mpich()
 {
     echo "Installing the prerequisite (mpich) for opencoarray fortran ..."
-    sleep 3.0
-    mkdir $MPICH_SOURCE
+    mkdir -p $MPICH_SOURCE
     cd $MPICH_SOURCE
-    mkdir $MPICH_INSTALL
+    mkdir -p $MPICH_INSTALL
     if [[ $machine = "linux" ]]
     then
         wget "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz"
@@ -113,9 +113,9 @@ install_mpich()
 install_cmake()
 {
     cd $SWMM5PLUS_DIR # make sure we are at the right level
-    mkdir $CMAKE_SOURCE
+    mkdir -p $CMAKE_SOURCE
     cd $CMAKE_SOURCE
-    mkdir $CMAKE_INSTALL
+    mkdir -p $CMAKE_INSTALL
     if [[ $machine = "linux" ]]
     then
         wget "https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz"  # Versions: https://cmake.org/files/
@@ -217,8 +217,6 @@ opencoarray_prerequisite()
                     fi
                     ;;
             esac
-
-
 
         elif command -v $VALUE &> /dev/null; # command exists
         then
@@ -326,12 +324,10 @@ install_opencoarray()
     # Download Opencoarray
     if [ ! -d $COARRAY_SOURCE ]
     then
-        echo "opencoarray is not found in current directory."
-        mkdir $COARRAY_SOURCE
+        echo "opencoarray is not found in $COARRAY_SOURCE"
+        mkdir -p $COARRAY_INSTALL
         cd $COARRAY_SOURCE
-        mkdir $COARRAY_INSTALL
         echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
-        sleep 3.0
         git clone https://github.com/sourceryinstitute/OpenCoarrays
         cd OpenCoarrays
         mkdir opencoarrays-build
@@ -340,17 +336,59 @@ install_opencoarray()
             make
         echo "Installing Opencoarrays ... "
         sudo make install
-        cd ../../../
+        cd $SWMM5PLUS_DIR
     fi
+    echo "opencoarray path: $COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 }
+
 # --------------------------------------------------------------------------------------
 
-if [[ $COARRAY_FC != "caf" ]]
+if [[ ! -f $CAF ]]
 then
     opencoarray_prerequisite
     install_opencoarray
 fi
+# --------------------------------------------------------------------------------------
+
+# Compile SWMM C
 
 echo
-echo Dependencies Installation Complete!
+echo Compiling SWMM 5.13 ...
+echo
+
+cp -f "$API_DIR/interface.h" "$API_DIR/src/"
+cp -f "$API_DIR/interface.c" "$API_DIR/src/"
+
+# Insert new files in SWMM C Makefile
+
+SCRIPTS="interface.o"
+OBJECTS="interface.o   : headers.h interface.h\n"
+
+API_TEST_FILES=""
+for fname in $(find $TEST_DIR -name '*.c')
+do
+    F=$(basename -- "$fname")
+    F="${F%.*}"
+    SCRIPTS="$SCRIPTS $F.o"
+    if [[ -f "${fname%.*}.h" ]]
+    then
+        OBJECTS="${OBJECTS}$F.o       : headers.h $F.h\n"
+        cp -f "$TEST_DIR/$F.h" "$API_DIR/src/"
+    else
+        OBJECTS="${OBJECTS}$F.o       : headers.h\n"
+    fi
+    cp -f "$TEST_DIR/$F.c" "$API_DIR/src/"
+done
+
+sed "s#{{SCRIPTS}}#$SCRIPTS#" "$API_DIR/Makefile" > "$API_DIR/src/Makefile"
+sed -i "s#{{OBJECTS}}#$OBJECTS#" "$API_DIR/src/Makefile"
+
+cd "$API_DIR/src" && make
+cd $SWMM5PLUS_DIR
+cp $API_DIR/src/libswmm5.so $SWMM5PLUS_DIR/libswmm5.so
+
+# --------------------------------------------------------------------------------------
+
+echo
+echo Completed Installation of Dependencies!
 echo

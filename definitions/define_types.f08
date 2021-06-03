@@ -1,4 +1,4 @@
-! module type_definitions
+! module define_types
 !
 ! These are derived type definitions that are used in globals, setting, and
 ! elsewhere.
@@ -10,7 +10,7 @@
 ! be confined to the module in which they are defined.
 !
 !==========================================================================
-module type_definitions
+module define_types
 
     implicit none
 
@@ -163,4 +163,4 @@ module type_definitions
         real(8) :: depth
         real(8) :: froude
     end type steady_state_record
-end module type_definitions
+end module define_types

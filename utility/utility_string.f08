@@ -1,8 +1,8 @@
-module string_utility
+module utility_string
 
 contains
 
-    elemental subroutine lower_case(word)
+    elemental subroutine utility_lower_case(word)
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -20,6 +20,6 @@ contains
             if (ic >= 65 .and. ic < 90) word(ii:ii) = char(ic+32)
         end do
 
-    end subroutine lower_case
+    end subroutine utility_lower_case
 
-end module string_utility
+end module utility_string

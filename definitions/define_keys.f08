@@ -1,4 +1,4 @@
-! module data_keys
+! module define_keys
 !
 ! Provides relationship between integers and keys used for different
 ! data types.
@@ -8,7 +8,7 @@
 ! provided below as eChannel, ePipe, etc.
 !
 !==========================================================================
-module data_keys
+module define_keys
 
     implicit none
 
@@ -25,8 +25,8 @@ module data_keys
     enum, bind(c)
         enumerator :: eChannel = 1 ! ID for an open channel element
         enumerator :: ePipe ! ID for an pipe
-        enumerator :: eJunctionChannel ! ID for a junction
-        enumerator :: eJunctionPipe ! ID for a junction
+        enumerator :: eJunctionMain ! ID for a junction
+        enumerator :: eJunctionBranch ! ID for a junction
         enumerator :: eCulvert ! ID for a culvert in an open channel
         enumerator :: ePump ! ID for a pump
         enumerator :: eValve ! ID for a valve
@@ -66,7 +66,7 @@ module data_keys
     integer, parameter :: fWeir = eWeir ! ID for pipe on both sides
     integer, parameter :: fOrifice = eOrifice
     integer, parameter :: fPump = ePump
-    integer, parameter :: fMultiple = eJunctionChannel ! ID for moderation by separate up/dn element types
+    integer, parameter :: fMultiple = eJunctionBranch ! ID for moderation by separate up/dn element types
     integer, parameter :: fBCup = eBCup ! ID for face upstream BC
     integer, parameter :: fBCdn = eBCdn ! ID for face downstream BC
 
@@ -145,7 +145,7 @@ module data_keys
     integer, parameter :: lCD = eCD ! ID for using drag coefficient for roughness_type
 
     ! data types for linkI(:,li_assigned) for assignment to faces and links
-    integer, parameter :: lUnassigned = 998877
+    integer, parameter :: lUnassigned = 998877  ! Can't use the nullValueI because it causes a circular condition
     integer, parameter :: lAssigned = 1
     integer, parameter :: lDeferred = -1
 
@@ -162,11 +162,25 @@ module data_keys
     integer, parameter :: N_elem_nBCdn = 1 ! Downstream BC nodes are assigned to 1 element
     integer, parameter :: N_elem_nBCup = 1 ! Upstream BC nodes are assigned to 1 element
 
+    ! default for edge and non-edge node
+    integer, parameter :: EdgeNode    = 1 ! Edge node of a partition
+    integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element
+
     ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
     enum, bind(c)
         enumerator :: Default = 1
         enumerator :: BQuick
+        enumerator :: Random
+        enumerator :: BLink
     end enum
+
+    ! data types for link lengths adjustments
+    enum, bind(c)
+        enumerator :: NoAdjust = 1
+        enumerator :: OneSideAdjust
+        enumerator :: BothSideAdjust
+    end enum
+
 
     ! data types for Momentum Source type (setting%Solver%MomentumSourceM)
     enum, bind(c)
@@ -284,4 +298,4 @@ module data_keys
         enumerator :: curve_table
         enumerator :: tinflow
     end enum
-end module data_keys
+end module define_keys

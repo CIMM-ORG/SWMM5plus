@@ -2,10 +2,10 @@ module interface
 
     use iso_c_binding
     use dll
-    use setting_definition, only: setting
-    use datetime
-    use data_keys
-    use globals
+    use utility_datetime
+    use define_keys
+    use define_globals
+    use define_settings, only: setting
 
     implicit none
 
@@ -226,9 +226,6 @@ contains
         setting%time%starttime = 0
         setting%time%endtime = (swmm_end_time - swmm_start_time) * real(secsperday)
 
-        ! if (N_tseries > 0) call load_all_tseries()
-        ! if (N_pattern > 0) call load_all_patterns()
-
         print *, new_line("")
         if (setting%Debug%File%interface) then
             print *, "N_link", N_link
@@ -256,21 +253,6 @@ contains
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
     end subroutine finalize_api
-
-    subroutine free_api()
-        integer :: i
-
-        ! if (allocated(all_tseries)) then
-        !     do i = 1, N_tseries
-        !         call free_table(all_tseries(i))
-        !     end do
-        !     deallocate(all_tseries)
-        ! end if
-
-        ! if (allocated(all_patterns)) then
-        !     deallocate(all_patterns)
-        ! end if
-    end subroutine free_api
 
     ! --- Property-extraction
 
@@ -311,50 +293,6 @@ contains
         get_end_datetime = ptr_api_get_end_datetime()
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
     end function get_end_datetime
-
-    ! subroutine load_all_tseries()
-    !     integer :: i
-    !     integer :: success
-    !     real(8), dimension(2) :: entries
-    !     character(64) :: subroutine_name = 'load_all_tseries'
-
-    !     if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
-
-    !     if (N_tseries == 0) return
-
-    !     allocate(all_tseries(N_tseries))
-    !     do i = 1, N_tseries
-    !         all_tseries(i) = new_real_table(SWMM_TSERIES, 2)
-    !         success = get_first_table_entry(i, SWMM_TSERIES, entries)
-    !         if (success == 0) then
-    !             print *, new_line("")
-    !             print *, "ERROR: API can't get Tseries"
-    !             stop
-    !         end if
-    !         call tables_add_entry(all_tseries(i), entries)
-    !         do while (.true.)
-    !             success = get_next_table_entry(i, SWMM_TSERIES, entries)
-    !             if (success == 0) exit
-    !             if (entries(1) < swmm_start_time) cycle
-    !             if (entries(1) > swmm_end_time) exit
-    !             call tables_add_entry(all_tseries(i), entries)
-    !         end do
-    !     end do
-    !     if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
-    ! end subroutine load_all_tseries
-
-    ! subroutine load_all_patterns()
-    !     integer :: i = 1
-    !     integer :: success
-    !     real(8), dimension(2) :: entries
-
-    !     if (N_pattern == 0) return
-
-    !     allocate(all_patterns(N_pattern))
-    !     do i = 1, N_pattern
-    !         all_patterns(i) = get_pattern(i)
-    !     end do
-    ! end subroutine load_all_patterns
 
     function get_node_attribute(node_idx, attr)
 
