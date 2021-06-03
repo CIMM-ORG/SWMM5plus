@@ -348,6 +348,11 @@ subroutine balanced_link_partitioning()
                 clink = nodeI(ii, ni_idx_base1+jj)
                 if (clink /= nullvalueI) then
                     clink_image = linkI(clink, li_P_image)
+                    if ((assigned_image /= nullValueI) .and. &
+                        (assigned_image /= clink_image) .and. &
+                        (nodeI(ii, ni_P_is_boundary) == 0)) then
+                        nodeI(ii, ni_P_is_boundary) = 1
+                    end if
                     if (clink_image < assigned_image) then
                         if ((assigned_image == nullValueI) .and. (nodeI(ii, ni_P_is_boundary) == 0)) then
                             nodeI(ii, ni_P_is_boundary) = 1
@@ -358,6 +363,12 @@ subroutine balanced_link_partitioning()
             end do
             nodeI(ii, ni_P_image) = assigned_image
         end do
+    end if
+    if (setting%Debug%File%partitioning) then
+        print *, linkI(:, li_P_image), "nodeI(:, li_P_image)"
+        print *, nodeI(:, ni_P_image), "nodeI(:, ni_P_image)"
+        print *, nodeI(:, ni_P_is_boundary), "nodeI(:, ni_P_is_boundary)"
+        stop
     end if
 end subroutine balanced_link_partitioning
 !

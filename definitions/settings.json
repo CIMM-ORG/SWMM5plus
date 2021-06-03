@@ -124,7 +124,7 @@
             "discretization"  : false,
             "initialization" : false,
             "network_define" : true,
-            "partitioning" : false,
+            "partitioning" : true,
             "interface" : false,
             "utility" : false,
             "utility_allocate" : false,
