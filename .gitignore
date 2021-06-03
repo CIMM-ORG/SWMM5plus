@@ -8,9 +8,10 @@
 *.png
 *.mod
 SWMM
-initialization/interface/flibswmm/src
+interface/src
 json-fortran
 cmake
 opencoarray
 mpich
 debug
+installation_log.txt
