@@ -22,7 +22,8 @@ shopt -s extglob
 
 # Download json-fortran
 # --------------------------------------------------------------------------------------
-if [ ! -d 'json-fortran' ]
+
+if [ ! -d "$JSON_DIR" ]
 then
     echo
     echo "Downloading json-fortran"
@@ -62,13 +63,6 @@ then
     rm -r Stormwater*
 fi
 # --------------------------------------------------------------------------------------
-
-# Installation log
-# --------------------------------------------------------------------------------------
-if [ -f $INSTALLATION_LOG ]
-then
-    rm $INSTALLATION_LOG # make sure we create a new one everytime
-fi
 
 # Install MPICH (required for OpenCAF)
 # --------------------------------------------------------------------------------------
@@ -340,15 +334,56 @@ install_opencoarray()
         sudo make install
         cd ../../../
     fi
+    echo "opencoarray path: $COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 }
+
 # --------------------------------------------------------------------------------------
 
-if [[ $COARRAY_FC != "caf" ]]
-then
-    opencoarray_prerequisite
-    install_opencoarray
-fi
+opencoarray_prerequisite
+install_opencoarray
+
+# --------------------------------------------------------------------------------------
+
+# Compile SWMM C
 
 echo
-echo Dependencies Installation Complete!
+echo Compiling SWMM 5.13 ...
 echo
+
+cp -f "$API_DIR/interface.h" "$API_DIR/src/"
+cp -f "$API_DIR/interface.c" "$API_DIR/src/"
+
+# Insert new files in SWMM C Makefile
+
+SCRIPTS="interface.o"
+OBJECTS="interface.o   : headers.h interface.h\n"
+
+API_TEST_FILES=""
+for fname in $(find $TEST_DIR -name '*.c')
+do
+    F=$(basename -- "$fname")
+    F="${F%.*}"
+    SCRIPTS="$SCRIPTS $F.o"
+    if [[ -f "${fname%.*}.h" ]]
+    then
+        OBJECTS="${OBJECTS}$F.o       : headers.h $F.h\n"
+        cp -f "$TEST_DIR/$F.h" "$API_DIR/src/"
+    else
+        OBJECTS="${OBJECTS}$F.o       : headers.h\n"
+    fi
+    cp -f "$TEST_DIR/$F.c" "$API_DIR/src/"
+done
+
+sed "s#{{SCRIPTS}}#$SCRIPTS#" "$API_DIR/Makefile" > "$API_DIR/src/Makefile"
+sed -i "s#{{OBJECTS}}#$OBJECTS#" "$API_DIR/src/Makefile"
+
+cd "$API_DIR/src" && make
+cd $SWMM5PLUS_DIR
+cp $API_DIR/src/libswmm5.so $SWMM5PLUS_DIR/libswmm5.so
+
+# --------------------------------------------------------------------------------------
+
+echo
+echo Completed Installation of Dependencies!
+echo
+
