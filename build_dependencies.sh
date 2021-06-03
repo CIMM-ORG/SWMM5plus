@@ -20,6 +20,12 @@
 
 shopt -s extglob
 
+# Create directory for dependencies
+if [[ ! -d $DDIR ]]
+then
+    mkdir $DDIR
+fi
+
 # Download json-fortran
 # --------------------------------------------------------------------------------------
 
