@@ -29,6 +29,11 @@ DDIR='dependencies'
 FIN_DIR='finalization'
 TEST_DIR='tests'
 
+if [[ ! -d $TEST_DIR ]]
+then
+    mkdir $TEST_DIR
+fi
+
 # Compiler vars
 FC='gfortran'
 OUPTFLAGS=-g
