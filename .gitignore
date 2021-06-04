@@ -1,5 +1,5 @@
+# Files
 *.o
-# *.inp
 *.rpt
 *.out
 *.csv
@@ -7,9 +7,20 @@
 *.out
 *.so
 *.png
-OutputThreaded
-debugoutputA
-SWMM
-SWMMwrapper
 *.mod
-brazos
+*.mod0
+installation_log.txt
+_*
+
+# Dependencies
+cmake*
+opencoarray*
+mpich*
+json-fortran
+
+# Executable
+SWMM
+
+# Directories
+interface/src
+debug
