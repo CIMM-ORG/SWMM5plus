@@ -805,7 +805,7 @@ contains
                 if (upBranchIdx .ne. nullvalueI) then
                     !% integer data
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
-                    elemR(ElemLocalCounter,er_Length) = get_junction_length(upBranchIdx)
+                    elemR(ElemLocalCounter,er_Length) = init_network_nJm_length(upBranchIdx)
 
                     !% check if the link connecting this branch
                     !% is a part of this partition
@@ -861,7 +861,7 @@ contains
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
 
-                    call nullify_junction_branch &
+                    call init_network_nJm_nullify &
                         (ElemLocalCounter, FaceLocalCounter)
 
                 endif
@@ -877,7 +877,7 @@ contains
                 if (dnBranchIdx .ne. nullvalueI) then
                     !% integer data
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
-                    elemR(ElemLocalCounter,er_Length) = get_junction_length(dnBranchIdx)
+                    elemR(ElemLocalCounter,er_Length) = init_network_nJm_length(dnBranchIdx)
 
                     !% check if the link connecting this branch
                     !% is a part of this partition
@@ -931,7 +931,7 @@ contains
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
 
-                    call nullify_junction_branch &
+                    call init_network_nJm_nullify &
                         (ElemLocalCounter, FaceLocalCounter)
                 endif
             endif
@@ -1078,7 +1078,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    function get_junction_length (LinkIdx) result (BranchLength)
+    function init_network_nJm_length (LinkIdx) result (BranchLength)
     !--------------------------------------------------------------------------
     !
     !% compute the length of a junction branch
@@ -1088,7 +1088,7 @@ contains
         integer, intent(in)  :: LinkIdx
         real(8)              :: BranchLength
 
-        character(64) :: subroutine_name = 'get_junction_length'
+        character(64) :: subroutine_name = 'init_network_nJm_length'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -1103,12 +1103,12 @@ contains
         endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-    end function get_junction_length
+    end function init_network_nJm_length
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine nullify_junction_branch (ElemIdx, FaceIdx)
+    subroutine init_network_nJm_nullify (ElemIdx, FaceIdx)
     !--------------------------------------------------------------------------
     !
     !% set all the values to zero for a null junction
@@ -1117,7 +1117,7 @@ contains
 
         integer, intent(in)  :: ElemIdx, FaceIdx
 
-        character(64) :: subroutine_name = 'nullify_junction_branch'
+        character(64) :: subroutine_name = 'init_network_nJm_nullify'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -1129,7 +1129,7 @@ contains
         faceYN(FaceIdx,fYN_isnull)                  = .true.
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-    end subroutine nullify_junction_branch
+    end subroutine init_network_nJm_nullify
     !
     !==========================================================================
     ! END OF MODULE

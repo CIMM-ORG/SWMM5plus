@@ -443,66 +443,7 @@ function init_partitioning_metric_connectivity() result(connectivity)
 end function init_partitioning_metric_connectivity
 !
 !==========================================================================
+!   End Module
 !==========================================================================
 !
-! function default_performance_check() result(partition_correct)
-!     integer :: ii
-!     logical :: partition_correct
-!     integer, allocatable, dimension(:,:) :: PartCheck_nodeI, PartCheck_linkI
-!     logical, allocatable, dimension(:,:) :: ArraySame_nodeI, ArraySame_linkI
-
-!     !% Allocate and initialize the correct partition arrays to be checked against
-!     allocate(PartCheck_nodeI(size(nodeI,1), P_ni_is_boundary))
-!     allocate(PartCheck_linkI(size(linkI,1), P_li_Partition_No))
-!     allocate(ArraySame_nodeI(size(nodeI,1), P_ni_is_boundary))
-!     allocate(ArraySame_linkI(size(linkI,1), P_li_Partition_No))
-
-!     PartCheck_nodeI(:, P_ni_idx_Partition) = (/1,2,3,4/)
-!     PartCheck_nodeI(:, P_ni_Partition_No) = (/2,2,3,3/)
-!     PartCheck_nodeI(:, P_ni_is_boundary) = (/1,0,1,1/)
-
-!     PartCheck_linkI(:, P_li_idx_Partition) = (/1,2,3/)
-!     PartCheck_linkI(:, P_li_Partition_No) = (/1,2,2/)
-
-!     !% Assume that the partition arrays are going to be incorrect
-!     partition_correct = .false.
-
-!     !% Create a logical array of if the two arrays match
-!     ArraySame_nodeI(:,:) = ( PartCheck_nodeI == P_nodeI )
-!     ArraySame_linkI(:,:) = ( PartCheck_linkI == P_linkI )
-
-!     if ( all(ArraySame_nodeI) .eqv. .true. ) then
-!         print*, "The node arrays are partitioned correctly"
-!     else
-!         print*, "There is a mistake in the P_nodeI"
-!         print*, ArraySame_nodeI(:,:)
-!         do ii = 1, size(P_nodeI, 1)
-!             print*, P_nodeI(ii, :)
-!             print*, PartCheck_nodeI(ii, :)
-!        end do
-!     end if
-
-!     if ( all(ArraySame_linkI) .eqv. .true. ) then
-!         print*, "The link arrays are partitioned correctly"
-!     else
-!         print*, "There is a mistake in the P_linkI"
-!         print*, ArraySame_linkI(:,:)
-!         do ii = 1, size(P_linkI, 1)
-!             print*, P_linkI(ii, :)
-!             print*, PartCheck_linkI(ii, :)
-!        end do
-!     end if
-
-!     if ( (all(ArraySame_nodeI) .eqv. .true.) .and. (all(ArraySame_linkI) .eqv. .true.) ) then
-!         partition_correct = .true.
-!     end if
-
-!     deallocate(PartCheck_nodeI)
-!     deallocate(PartCheck_linkI)
-!     deallocate(ArraySame_nodeI)
-!     deallocate(ArraySame_linkI)
-
-! end function default_performance_check
-
-
 end module partitioning

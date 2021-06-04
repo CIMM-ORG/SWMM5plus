@@ -16,42 +16,15 @@ module utility
 
     private
 
-    public :: utility_check_allocation
-    public :: utility_export_linknode_csv
+    public :: util_export_linknode_csv
     public :: util_count_node_types
 
 contains
-
-    subroutine utility_check_allocation(allocation_status, emsg)
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   Checks allocation status and stops if there is an error
-    !
-    !-----------------------------------------------------------------------------
-
-        integer,           intent(in   ) :: allocation_status
-        character(len=*),  intent(in   ) :: emsg
-
-        character(64):: subroutine_name = 'utility_check_allocation'
-
-    !-----------------------------------------------------------------------------
-
-        if (setting%Debug%File%utility) print *, '*** enter ',subroutine_name
-
-        if (allocation_status > 0) then
-            print *, trim(emsg)
-            stop
-        end if
-
-        if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
-
-    end subroutine utility_check_allocation
     !
     !-----------------------------------------------------------------------------
     !-----------------------------------------------------------------------------
     !
-    subroutine utility_export_linknode_csv()
+    subroutine util_export_linknode_csv()
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -111,7 +84,7 @@ contains
         close(3)
         close(4)
 
-    end subroutine utility_export_linknode_csv
+    end subroutine util_export_linknode_csv
     !
     !-----------------------------------------------------------------------------
     !-----------------------------------------------------------------------------

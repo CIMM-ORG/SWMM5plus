@@ -8,7 +8,7 @@ module initialization
     use define_keys
     use define_globals
     use network_define
-    use utility, only: utility_export_linknode_csv
+    use utility, only: util_export_linknode_csv
     use utility_array
     use define_settings, only: setting
 
@@ -52,6 +52,7 @@ contains
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
+        !% def_load_settings is one of the few subroutines in the Definition modules
         call def_load_settings(setting%Paths%setting)
         if (this_image() == 1) then
             call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
@@ -109,10 +110,10 @@ contains
 
         do ii = 1, N_link
             linkI(ii,li_idx) = ii
-            linkI(ii,li_link_type) = get_link_attribute(ii, link_type)
-            linkI(ii,li_geometry) = get_link_attribute(ii, link_geometry)
-            linkI(ii,li_Mnode_u) = get_link_attribute(ii, link_node1) + 1 ! node1 in C starts from 0
-            linkI(ii,li_Mnode_d) = get_link_attribute(ii, link_node2) + 1 ! node2 in C starts from 0
+            linkI(ii,li_link_type) = interface_get_link_attribute(ii, link_type)
+            linkI(ii,li_geometry) = interface_get_link_attribute(ii, link_geometry)
+            linkI(ii,li_Mnode_u) = interface_get_link_attribute(ii, link_node1) + 1 ! node1 in C starts from 0
+            linkI(ii,li_Mnode_d) = interface_get_link_attribute(ii, link_node2) + 1 ! node2 in C starts from 0
 
             ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
             linkI(ii, li_N_element) = 10
@@ -123,24 +124,24 @@ contains
             nodeI(linkI(ii,li_Mnode_u), ni_idx_base2 + nodeI(linkI(ii,li_Mnode_u), ni_N_link_d)) = ii
 
             linkI(ii,li_InitialDepthType) = 1 ! TODO - get from params file
-            linkR(ii,lr_Length) = get_link_attribute(ii, conduit_length)
+            linkR(ii,lr_Length) = interface_get_link_attribute(ii, conduit_length)
 
             ! linkR(ii,lr_TopWidth): defined in network_define.f08
-            linkR(ii,lr_BreadthScale) = get_link_attribute(ii, link_xsect_wMax)
+            linkR(ii,lr_BreadthScale) = interface_get_link_attribute(ii, link_xsect_wMax)
             ! linkR(ii,lr_Slope): defined in network_define.f08
-            linkR(ii,lr_LeftSlope) = get_link_attribute(ii, link_left_slope)
-            linkR(ii,lr_RightSlope) = get_link_attribute(ii, link_right_slope)
-            linkR(ii,lr_Roughness) = get_link_attribute(ii, conduit_roughness)
-            linkR(ii,lr_InitialFlowrate) = get_link_attribute(ii, link_q0)
-            linkR(ii,lr_InitialUpstreamDepth) = get_node_attribute(linkI(ii,li_Mnode_u), node_initDepth)
-            linkR(ii,lr_InitialDnstreamDepth) = get_node_attribute(linkI(ii,li_Mnode_d), node_initDepth)
+            linkR(ii,lr_LeftSlope) = interface_get_link_attribute(ii, link_left_slope)
+            linkR(ii,lr_RightSlope) = interface_get_link_attribute(ii, link_right_slope)
+            linkR(ii,lr_Roughness) = interface_get_link_attribute(ii, conduit_roughness)
+            linkR(ii,lr_InitialFlowrate) = interface_get_link_attribute(ii, link_q0)
+            linkR(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(linkI(ii,li_Mnode_u), node_initDepth)
+            linkR(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(linkI(ii,li_Mnode_d), node_initDepth)
             linkR(ii,lr_InitialDepth) = (linkR(ii,lr_InitialDnstreamDepth) + linkR(ii,lr_InitialUpstreamDepth)) / 2.0
         end do
 
         do ii = 1, N_node
             total_n_links = nodeI(ii,ni_N_link_u) + nodeI(ii,ni_N_link_d)
             nodeI(ii, ni_idx) = ii
-            if (get_node_attribute(ii, node_type) == oneI) then ! OUTFALL
+            if (interface_get_node_attribute(ii, node_type) == oneI) then ! OUTFALL
                 nodeI(ii, ni_node_type) = nBCdn
             else if (total_n_links == twoI) then
                 nodeI(ii, ni_node_type) = nJ2
@@ -148,8 +149,8 @@ contains
                 nodeI(ii, ni_node_type) = nJm
             end if
             ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
-            l1 = get_node_attribute(ii, node_has_extInflow) == 1
-            l2 = get_node_attribute(ii, node_has_dwfInflow) == 1
+            l1 = interface_get_node_attribute(ii, node_has_extInflow) == 1
+            l2 = interface_get_node_attribute(ii, node_has_dwfInflow) == 1
             if (l1 .or. l2) then
                 nodeYN(ii, nYN_has_inflow) = .true.
                 if (total_n_links == 1) then
@@ -157,13 +158,13 @@ contains
                 end if
             end if
 
-            nodeR(ii,nr_InitialDepth) = get_node_attribute(ii, node_initDepth)
-            nodeR(ii,nr_Zbottom) = get_node_attribute(ii, node_invertElev)
+            nodeR(ii,nr_InitialDepth) = interface_get_node_attribute(ii, node_initDepth)
+            nodeR(ii,nr_Zbottom) = interface_get_node_attribute(ii, node_invertElev)
         end do
 
         if (setting%Debug%File%initialization) then
             if (this_image() == 1) then
-                call utility_export_linknode_csv()
+                call util_export_linknode_csv()
             end if
         end if
 
@@ -204,10 +205,10 @@ contains
         call init_coarray_length()
 
         !% allocate elem and face coarrays
-        call allocate_elemX_faceX()
+        call util_allocate_elemX_faceX()
 
         !% allocate colum idxs of elem and face arrays for pointer operation
-        call allocate_columns()
+        call util_allocate_columns()
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 

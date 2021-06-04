@@ -2,6 +2,7 @@ module interface
 
     use iso_c_binding
     use dll
+    use utility
     use utility_datetime
     use define_keys
     use define_globals
@@ -210,16 +211,16 @@ contains
         call c_f_procpointer(dll%procaddr, ptr_api_initialize)
         api = ptr_api_initialize(setting%Paths%inp, setting%Paths%rpt, setting%Paths%out)
 
-        N_link = get_num_objects(SWMM_LINK)
-        N_node = get_num_objects(SWMM_NODE)
-        N_curve = get_num_objects(SWMM_CURVES)
-        N_tseries = get_num_objects(SWMM_TSERIES)
-        N_pattern = get_num_objects(SWMM_TIMEPATTERN)
+        N_link = interface_get_num_objects(SWMM_LINK)
+        N_node = interface_get_num_objects(SWMM_NODE)
+        N_curve = interface_get_num_objects(SWMM_CURVES)
+        N_tseries = interface_get_num_objects(SWMM_TSERIES)
+        N_pattern = interface_get_num_objects(SWMM_TIMEPATTERN)
 
         api_is_initialized = .true.
 
-        swmm_start_time = get_start_datetime()
-        swmm_end_time = get_end_datetime()
+        swmm_start_time = interface_get_start_datetime()
+        swmm_end_time = interface_get_end_datetime()
 
         setting%time%starttime = 0
         setting%time%endtime = (swmm_end_time - swmm_start_time) * real(secsperday)
@@ -235,8 +236,8 @@ contains
         end if
     end subroutine init_interface
 
-    subroutine final_interface()
-        character(64) :: subroutine_name = 'final_interface'
+    subroutine interface_finalize()
+        character(64) :: subroutine_name = 'interface_finalize'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -250,15 +251,15 @@ contains
         call ptr_api_finalize(api)
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
-    end subroutine final_interface
+    end subroutine interface_finalize
 
     ! --- Property-extraction
 
     ! * After Initialization
 
-    function get_start_datetime()
-        real(8) :: get_start_datetime
-        character(64) :: subroutine_name = 'get_start_datetime'
+    function interface_get_start_datetime()
+        real(8) :: interface_get_start_datetime
+        character(64) :: subroutine_name = 'interface_get_start_datetime'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -269,15 +270,15 @@ contains
             stop
         end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_start_datetime)
-        get_start_datetime = ptr_api_get_start_datetime()
+        interface_get_start_datetime = ptr_api_get_start_datetime()
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
-    end function get_start_datetime
+    end function interface_get_start_datetime
 
-    function get_end_datetime()
-        real(8) :: get_end_datetime
+    function interface_get_end_datetime()
+        real(8) :: interface_get_end_datetime
         character(64) :: subroutine_name
 
-        subroutine_name = 'get_end_datetime'
+        subroutine_name = 'interface_get_end_datetime'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -288,17 +289,17 @@ contains
             stop
         end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_end_datetime)
-        get_end_datetime = ptr_api_get_end_datetime()
+        interface_get_end_datetime = ptr_api_get_end_datetime()
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
-    end function get_end_datetime
+    end function interface_get_end_datetime
 
-    function get_node_attribute(node_idx, attr)
+    function interface_get_node_attribute(node_idx, attr)
 
         integer :: node_idx, attr, error
-        real(8) :: get_node_attribute
+        real(8) :: interface_get_node_attribute
         type(c_ptr) :: cptr_value
         real(c_double), target :: node_value
-        character(64) :: subroutine_name = 'get_node_attr'
+        character(64) :: subroutine_name = 'interface_get_node_attr'
 
         cptr_value = c_loc(node_value)
 
@@ -326,30 +327,30 @@ contains
         error = ptr_api_get_node_attribute(api, node_idx-1, attr, cptr_value)
         call print_swmm_error_code(error)
 
-        get_node_attribute = node_value
+        interface_get_node_attribute = node_value
 
         ! Fortran index correction
         if ((attr == node_extInflow_tSeries) .or. (attr == node_extInflow_basePat)) then
-            if (node_value /= -1) get_node_attribute = get_node_attribute + 1
+            if (node_value /= -1) interface_get_node_attribute = interface_get_node_attribute + 1
         end if
 
         if (setting%Debug%File%interface)  then
             print *, '*** leave ', subroutine_name
             ! print *, "NODE", node_value, attr
         end if
-    end function get_node_attribute
+    end function interface_get_node_attribute
 
-    function get_link_attribute(link_idx, attr)
+    function interface_get_link_attribute(link_idx, attr)
 
         integer :: link_idx, attr, error
-        real(8) :: get_link_attribute
+        real(8) :: interface_get_link_attribute
         character(64) :: subroutine_name
         type(c_ptr) :: cptr_value
         real(c_double), target :: link_value
 
         cptr_value = c_loc(link_value)
 
-        subroutine_name = 'get_link_attribute'
+        subroutine_name = 'interface_get_link_attribute'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -375,88 +376,88 @@ contains
             ! Fortran index starts in 1, whereas in C starts in 0
             error = ptr_api_get_link_attribute(api, link_idx-1, attr, cptr_value)
             call print_swmm_error_code(error)
-            get_link_attribute = link_value
+            interface_get_link_attribute = link_value
         else
             error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_type, cptr_value)
             call print_swmm_error_code(error)
-            get_link_attribute = link_value
+            interface_get_link_attribute = link_value
             if (link_value == SWMM_RECT_CLOSED) then
                 if (attr == link_geometry) then
-                    get_link_attribute = lRectangular
+                    interface_get_link_attribute = lRectangular
                 else if (attr == link_type) then
-                    get_link_attribute = lpipe
+                    interface_get_link_attribute = lpipe
                 else if (attr == link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
                     call print_swmm_error_code(error)
-                    get_link_attribute = link_value
+                    interface_get_link_attribute = link_value
                 else
-                    get_link_attribute = nullvalueR
+                    interface_get_link_attribute = nullvalueR
                 end if
             else if (link_value == SWMM_RECT_OPEN) then
                 if (attr == link_geometry) then
-                    get_link_attribute = lRectangular
+                    interface_get_link_attribute = lRectangular
                 else if (attr == link_type) then
-                    get_link_attribute = lchannel
+                    interface_get_link_attribute = lchannel
                 else if (attr == link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
                     call print_swmm_error_code(error)
-                    get_link_attribute = link_value
+                    interface_get_link_attribute = link_value
                 else
-                    get_link_attribute = nullvalueR
+                    interface_get_link_attribute = nullvalueR
                 end if
             else if (link_value == SWMM_TRAPEZOIDAL) then
                 if (attr == link_geometry) then
-                    get_link_attribute = lTrapezoidal
+                    interface_get_link_attribute = lTrapezoidal
                 else if (attr == link_type) then
-                    get_link_attribute = lchannel
+                    interface_get_link_attribute = lchannel
                 else if (attr == link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_yBot, cptr_value)
                     call print_swmm_error_code(error)
-                    get_link_attribute = link_value
+                    interface_get_link_attribute = link_value
                 else
-                    get_link_attribute = nullvalueR
+                    interface_get_link_attribute = nullvalueR
                 end if
             else if (link_value == SWMM_TRIANGULAR) then
                 if (attr == link_geometry) then
-                    get_link_attribute = lTriangular
+                    interface_get_link_attribute = lTriangular
                 else if (attr == link_type) then
-                    get_link_attribute = lchannel
+                    interface_get_link_attribute = lchannel
                 else if (attr == link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
                     call print_swmm_error_code(error)
-                    get_link_attribute = link_value
+                    interface_get_link_attribute = link_value
                 else
-                    get_link_attribute = nullvalueR
+                    interface_get_link_attribute = nullvalueR
                 end if
             else if (link_value == SWMM_PARABOLIC) then
                 if (attr == link_geometry) then
-                    get_link_attribute = lParabolic
+                    interface_get_link_attribute = lParabolic
                 else if (attr == link_type) then
-                    get_link_attribute = lchannel
+                    interface_get_link_attribute = lchannel
                 else if (attr == link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
                     call print_swmm_error_code(error)
-                    get_link_attribute = link_value
+                    interface_get_link_attribute = link_value
                 else
-                    get_link_attribute = nullvalueR
+                    interface_get_link_attribute = nullvalueR
                 end if
             else
-                get_link_attribute = nullvalueR
+                interface_get_link_attribute = nullvalueR
             end if
         end if
         if (setting%Debug%File%interface)  then
             print *, '*** leave ', subroutine_name
             ! print *, "LINK", link_value, attr
         end if
-    end function get_link_attribute
+    end function interface_get_link_attribute
 
-    function get_num_objects(obj_type)
+    function interface_get_num_objects(obj_type)
 
         integer :: obj_type
-        integer :: get_num_objects
+        integer :: interface_get_num_objects
         character(64) :: subroutine_name
 
-        subroutine_name = 'get_num_objects'
+        subroutine_name = 'interface_get_num_objects'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -467,16 +468,16 @@ contains
             stop
         end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_num_objects)
-        get_num_objects = ptr_api_get_num_objects(api, obj_type)
+        interface_get_num_objects = ptr_api_get_num_objects(api, obj_type)
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
-    end function get_num_objects
+    end function interface_get_num_objects
 
-    function get_first_table_entry(k, table_type, entries)
+    function interface_get_first_table_entry(k, table_type, entries)
         integer, intent(in) :: k ! table id
         integer, intent(in) :: table_type
         real(8), dimension(2), intent(inout) :: entries
-        integer :: get_first_table_entry
+        integer :: interface_get_first_table_entry
         type(c_ptr) :: cptr_x, cptr_y
         real(c_double), target :: x, y
 
@@ -490,17 +491,17 @@ contains
             stop
         end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_first_table_entry)
-        get_first_table_entry = ptr_api_get_first_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
+        interface_get_first_table_entry = ptr_api_get_first_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
 
         entries(1) = x
         entries(2) = y
-    end function get_first_table_entry
+    end function interface_get_first_table_entry
 
-    function get_next_table_entry(k, table_type, entries)
+    function interface_get_next_table_entry(k, table_type, entries)
         integer, intent(in) :: k ! table id
         integer, intent(in) :: table_type
         real(8), dimension(2), intent(inout) :: entries
-        integer :: get_next_table_entry
+        integer :: interface_get_next_table_entry
         type(c_ptr) :: cptr_x, cptr_y
         real(c_double), target :: x, y
 
@@ -514,16 +515,16 @@ contains
             stop
         end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_next_table_entry)
-        get_next_table_entry = ptr_api_get_next_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
+        interface_get_next_table_entry = ptr_api_get_next_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
 
         entries(1) = x
         entries(2) = y
-    end function get_next_table_entry
+    end function interface_get_next_table_entry
 
-    function get_pattern(k)
+    function interface_get_pattern(k)
         integer, intent(in) :: k
         type(pattern) :: pfactors
-        type(pattern) :: get_pattern
+        type(pattern) :: interface_get_pattern
         integer :: i, count
 
         if (k /= -1) then
@@ -534,7 +535,7 @@ contains
                 stop
             end if
             call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_count)
-            get_pattern%count = ptr_api_get_pattern_count(k-1)
+            interface_get_pattern%count = ptr_api_get_pattern_count(k-1)
 
             dll%procname = "api_get_pattern_factor"
             call load_dll(dll, errstat, errmsg)
@@ -544,7 +545,7 @@ contains
             end if
             call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factor)
             do i = 1, 24
-                get_pattern%factor(i) = ptr_api_get_pattern_factor(k-1, i-1) ! index starts at 0 in C
+                interface_get_pattern%factor(i) = ptr_api_get_pattern_factor(k-1, i-1) ! index starts at 0 in C
             end do
 
             dll%procname = "api_get_pattern_type"
@@ -554,11 +555,11 @@ contains
                 stop
             end if
             call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_type) ! index starts at 0 in C
-            get_pattern%ptype = ptr_api_get_pattern_type(k-1)
+            interface_get_pattern%ptype = ptr_api_get_pattern_type(k-1)
         end if
-    end function get_pattern
+    end function interface_get_pattern
 
-    ! --- Utils
+    ! Utility functions that need this dll type
 
     subroutine print_object_name(k, object_type)
         integer, intent(in) :: k
@@ -581,5 +582,6 @@ contains
             stop
         end if
     end subroutine print_swmm_error_code
+
 
 end module interface
