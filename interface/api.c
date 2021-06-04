@@ -8,7 +8,7 @@
 
 #include "swmm5.h"
 #include "headers.h"
-#include "interface.h"
+#include "api.h"
 
 //-----------------------------------------------------------------------------
 //  Imported variables
