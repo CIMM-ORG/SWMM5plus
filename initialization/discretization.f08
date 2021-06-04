@@ -12,7 +12,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine link_length_adjust()
+    subroutine init_discretization_adjustlinklength()
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -27,7 +27,7 @@ contains
         integer :: ii, Adjustment_flag
         real(8) :: temp_length
 
-        character(64) :: subroutine_name = 'link_length_adjust'
+        character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%discretization) print *, '*** enter ', subroutine_name
@@ -51,12 +51,12 @@ contains
         enddo
 
         if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name
-    end subroutine link_length_adjust
+    end subroutine init_discretization_adjustlinklength
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine nominal_discretization()
+    subroutine init_discretization_nominal()
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -66,7 +66,7 @@ contains
     !-----------------------------------------------------------------------------
         integer :: ii
         real(8) :: remainder
-        character(64) :: subroutine_name = 'nominal_discretization'
+        character(64) :: subroutine_name = 'init_discretization_nominal'
     !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%discretization) print *, '*** enter ', subroutine_name
@@ -87,13 +87,13 @@ contains
 
         if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name
 
-    end subroutine nominal_discretization
+    end subroutine init_discretization_nominal
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine cfl_discretization()
-    end subroutine cfl_discretization
+    subroutine init_discretization_cfl()
+    end subroutine init_discretization_cfl
     !
     !==========================================================================
     ! END OF MODULE

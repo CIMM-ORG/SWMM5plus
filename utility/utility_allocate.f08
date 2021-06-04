@@ -24,6 +24,7 @@ module utility_allocate
 
     ! public members
     public :: util_allocate_linknode
+    public :: util_allocate_partitioning_arrays, util_deallocate_partitioning_arrays
     public :: allocate_elemX_faceX
     public :: allocate_columns
 
@@ -92,6 +93,24 @@ contains
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
     end subroutine util_allocate_linknode
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine util_allocate_partitioning_arrays()
+        allocate(adjacent_links(max_us_branch_per_node + max_ds_branch_per_node))
+        allocate(elem_per_image(num_images()))
+        allocate(image_full(num_images()))
+    end subroutine util_allocate_partitioning_arrays
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine util_deallocate_partitioning_arrays()
+        deallocate(adjacent_links)
+        deallocate(elem_per_image)
+        deallocate(image_full)
+    end subroutine util_deallocate_partitioning_arrays
     !
     !==========================================================================
     !==========================================================================
