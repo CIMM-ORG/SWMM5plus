@@ -111,27 +111,30 @@
         "Volume" : 1e-6
     },
     "Partitioning" : {
-        "N_Image"  : 3,
-        "PartitioningMethod" : "Default",
-        "BIPquickTestCase" : false
+        "PartitioningMethod" : "blink"
     },
     "Discretization" : {
         "NominalElemLength" : 10.0,
-        "BranchFactor" : 0.33
+        "LinkShortingFactor" : 0.33
     },
     "Debug" : {
-        "DebugAPI" : true,
+        "Tests" : true,
         "File" : {
-            "allocate_storage" : true,
-            "discretization" : true,
-            "initialization" : true,
+            "define_globals" : false,
+            "define_indexes" : false,
+            "define_keys" : false,
+            "define_settings" : false,
+            "define_types" : false,
+            "discretization"  : false,
+            "initialization" : false,
+            "network_define" : true,
+            "partitioning" : true,
             "interface" : false,
-            "partitioning" : false,
-            "BIPquick"  : true,
             "utility" : false,
-            "globals" : false,
-            "inflow" : false,
-            "coarray" : false
+            "utility_allocate" : false,
+            "utility_array" : false,
+            "utility_datetime" : false,
+            "utility_string" : false
         },
         "Output" : {
 

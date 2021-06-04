@@ -2,10 +2,10 @@ module interface
 
     use iso_c_binding
     use dll
-    use setting_definition, only: setting
-    use datetime
-    use data_keys
-    use globals
+    use utility_datetime
+    use define_keys
+    use define_globals
+    use define_settings, only: setting
 
     implicit none
 
@@ -152,6 +152,8 @@ module interface
     real(8) :: swmm_start_time ! in days
     real(8) :: swmm_end_time ! in days
 
+    integer, parameter :: num_node_attributes = node_overflow
+
     procedure(api_initialize), pointer, private :: ptr_api_initialize
     procedure(api_finalize), pointer, private :: ptr_api_finalize
     procedure(api_get_node_attribute), pointer, private :: ptr_api_get_node_attribute
@@ -172,12 +174,12 @@ contains
 
     ! --- Simulation
 
-    subroutine api_init()
-
+    subroutine initialize_api()
+    
         integer :: ppos, num_args
         character(64) :: subroutine_name
 
-        subroutine_name = 'api_init'
+        subroutine_name = 'initialize_api'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -224,9 +226,6 @@ contains
         setting%time%starttime = 0
         setting%time%endtime = (swmm_end_time - swmm_start_time) * real(secsperday)
 
-        ! if (N_tseries > 0) call load_all_tseries()
-        ! if (N_pattern > 0) call load_all_patterns()
-
         print *, new_line("")
         if (setting%Debug%File%interface) then
             print *, "N_link", N_link
@@ -236,10 +235,10 @@ contains
             print *, "N_pattern", N_pattern
             print *, '*** leave ', subroutine_name
         end if
-    end subroutine api_init
+    end subroutine initialize_api
 
-    subroutine api_close()
-        character(64) :: subroutine_name = 'api_close'
+    subroutine finalize_api()
+        character(64) :: subroutine_name = 'finalize_api'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -253,22 +252,7 @@ contains
         call ptr_api_finalize(api)
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
-    end subroutine api_close
-
-    subroutine free_api()
-        integer :: i
-
-        ! if (allocated(all_tseries)) then
-        !     do i = 1, N_tseries
-        !         call free_table(all_tseries(i))
-        !     end do
-        !     deallocate(all_tseries)
-        ! end if
-
-        ! if (allocated(all_patterns)) then
-        !     deallocate(all_patterns)
-        ! end if
-    end subroutine free_api
+    end subroutine finalize_api
 
     ! --- Property-extraction
 
@@ -309,50 +293,6 @@ contains
         get_end_datetime = ptr_api_get_end_datetime()
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
     end function get_end_datetime
-
-    ! subroutine load_all_tseries()
-    !     integer :: i
-    !     integer :: success
-    !     real(8), dimension(2) :: entries
-    !     character(64) :: subroutine_name = 'load_all_tseries'
-
-    !     if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
-
-    !     if (N_tseries == 0) return
-
-    !     allocate(all_tseries(N_tseries))
-    !     do i = 1, N_tseries
-    !         all_tseries(i) = new_real_table(SWMM_TSERIES, 2)
-    !         success = get_first_table_entry(i, SWMM_TSERIES, entries)
-    !         if (success == 0) then
-    !             print *, new_line("")
-    !             print *, "ERROR: API can't get Tseries"
-    !             stop
-    !         end if
-    !         call tables_add_entry(all_tseries(i), entries)
-    !         do while (.true.)
-    !             success = get_next_table_entry(i, SWMM_TSERIES, entries)
-    !             if (success == 0) exit
-    !             if (entries(1) < swmm_start_time) cycle
-    !             if (entries(1) > swmm_end_time) exit
-    !             call tables_add_entry(all_tseries(i), entries)
-    !         end do
-    !     end do
-    !     if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
-    ! end subroutine load_all_tseries
-
-    ! subroutine load_all_patterns()
-    !     integer :: i = 1
-    !     integer :: success
-    !     real(8), dimension(2) :: entries
-
-    !     if (N_pattern == 0) return
-
-    !     allocate(all_patterns(N_pattern))
-    !     do i = 1, N_pattern
-    !         all_patterns(i) = get_pattern(i)
-    !     end do
-    ! end subroutine load_all_patterns
 
     function get_node_attribute(node_idx, attr)
 
@@ -581,6 +521,44 @@ contains
         entries(1) = x
         entries(2) = y
     end function get_next_table_entry
+
+    function get_pattern(k)
+        integer, intent(in) :: k
+        type(pattern) :: pfactors
+        type(pattern) :: get_pattern
+        integer :: i, count
+
+        if (k /= -1) then
+            dll%procname = "api_get_pattern_count"
+            call load_dll(dll, errstat, errmsg)
+            if (errstat /= 0) then
+                print *, "ERROR: " // trim(errmsg)
+                stop
+            end if
+            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_count)
+            get_pattern%count = ptr_api_get_pattern_count(k-1)
+
+            dll%procname = "api_get_pattern_factor"
+            call load_dll(dll, errstat, errmsg)
+            if (errstat /= 0) then
+                print *, "ERROR: " // trim(errmsg)
+                stop
+            end if
+            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factor)
+            do i = 1, 24
+                get_pattern%factor(i) = ptr_api_get_pattern_factor(k-1, i-1) ! index starts at 0 in C
+            end do
+
+            dll%procname = "api_get_pattern_type"
+            call load_dll(dll, errstat, errmsg)
+            if (errstat /= 0) then
+                print *, "ERROR: " // trim(errmsg)
+                stop
+            end if
+            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_type) ! index starts at 0 in C
+            get_pattern%ptype = ptr_api_get_pattern_type(k-1)
+        end if
+    end function get_pattern
 
     ! --- Utils
 

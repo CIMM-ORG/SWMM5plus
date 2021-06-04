@@ -16,6 +16,7 @@ _*
 cmake*
 opencoarray*
 mpich*
+dependencies
 json-fortran
 
 # Executable
