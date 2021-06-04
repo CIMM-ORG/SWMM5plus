@@ -1,5 +1,7 @@
 module interface_tests
 
+    use BIPQuick
+
     implicit none
 
 contains

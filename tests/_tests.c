@@ -8,7 +8,7 @@
 
 #include "swmm5.h"
 #include "headers.h"
-#include "tests.h"
+#include "_tests.h"
 
 void DLLEXPORT interface_print_inflow(char* node_name)
 {

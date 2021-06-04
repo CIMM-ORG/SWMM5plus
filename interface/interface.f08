@@ -152,8 +152,6 @@ module interface
     real(8) :: swmm_start_time ! in days
     real(8) :: swmm_end_time ! in days
 
-    integer, parameter :: num_node_attributes = node_overflow
-
     procedure(api_initialize), pointer, private :: ptr_api_initialize
     procedure(api_finalize), pointer, private :: ptr_api_finalize
     procedure(api_get_node_attribute), pointer, private :: ptr_api_get_node_attribute
@@ -175,7 +173,7 @@ contains
     ! --- Simulation
 
     subroutine initialize_api()
-    
+
         integer :: ppos, num_args
         character(64) :: subroutine_name
 
