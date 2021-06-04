@@ -7,7 +7,7 @@ module finalization
 contains
 
     subroutine finalize_all()
-        call final_interface()
+        call interface_finalize()
     end subroutine finalize_all
 
 end module finalization

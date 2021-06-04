@@ -3,7 +3,7 @@ module utility_allocate
     use define_indexes
     use define_globals
     use define_settings, only: setting
-    use utility, only: util_check_allocation
+    ! use utility, only: utility_check_allocation
 
     implicit none
 
@@ -24,6 +24,7 @@ module utility_allocate
 
     ! public members
     public :: util_allocate_linknode
+    public :: util_allocate_partitioning_arrays, util_deallocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
     public :: util_allocate_columns
 
@@ -43,7 +44,7 @@ contains
     ! Method:
     !   The tables nodeI, linkI, nodeR, linkR, nodeYN, linkYN, are allocated
     !   These are defined in globals.f08). Every time memory is allocated, the
-    !   util_check_allocation functionality (from utility.f08) is used to
+    !   util_allocate_check functionality (from utility.f08) is used to
     !   determine wheter or not there was an error during the allocation.
     !
     !-----------------------------------------------------------------------------
@@ -61,37 +62,55 @@ contains
         end if
 
         allocate(nodeI(N_node + additional_rows, Ncol_nodeI), stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         nodeI(:,:) = nullvalueI
 
         allocate(linkI(N_link + additional_rows, Ncol_linkI), stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         linkI(:,:) = nullvalueI
 
         allocate(nodeR(N_node + additional_rows, Ncol_nodeR), stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         nodeR(:,:) = nullvalueR
 
         allocate(linkR(N_link + additional_rows, Ncol_linkR), stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         linkR(:,:) = nullvalueR
 
         allocate(nodeYN(N_node + additional_rows, Ncol_nodeYN), stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         nodeYN(:,:) = nullvalueL
 
         allocate(linkYN(N_link + additional_rows, Ncol_linkYN), stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         linkYN(:,:) = nullvalueL
 
         allocate(nodeName(N_node + additional_rows), stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
 
         allocate(linkName(N_link + additional_rows), stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
     end subroutine util_allocate_linknode
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine util_allocate_partitioning_arrays()
+        allocate(adjacent_links(max_us_branch_per_node + max_ds_branch_per_node))
+        allocate(elem_per_image(num_images()))
+        allocate(image_full(num_images()))
+    end subroutine util_allocate_partitioning_arrays
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine util_deallocate_partitioning_arrays()
+        deallocate(adjacent_links)
+        deallocate(elem_per_image)
+        deallocate(image_full)
+    end subroutine util_deallocate_partitioning_arrays
     !
     !==========================================================================
     !==========================================================================
@@ -113,58 +132,58 @@ contains
         !==== elem allocation ====
         ncol => Ncol_elemR ! the maxmiumu number of columns
         allocate(elemR(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         elemR(:,:) = nullvalueR
 
         ncol => Ncol_elemI
         allocate(elemI(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         elemI(:,:) = nullvalueI
 
         ncol => Ncol_elemYN
         allocate(elemYN(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         elemYN(:,:) = nullvalueL
 
         ncol => Ncol_elemP
         allocate(elemP(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         elemP(:,:) = nullvalueI
 
         ncol => Ncol_elemPG
         allocate(elemPG(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         elemPG(:,:) = nullvalueI
 
         ncol => Ncol_elemSI
         allocate(elemSI(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         elemSI(:,:) = nullvalueI
 
         ncol => Ncol_elemSR
         allocate(elemSR(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         elemSR(:,:) = nullvalueR
 
         !==== face allocation ====
         ncol => Ncol_faceR 
         allocate(faceR(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         faceR(:,:) = nullvalueR
 
         ncol=> Ncol_faceI
         allocate(faceI(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         faceI(:,:) = nullvalueI
 
         ncol=> Ncol_faceYN
         allocate(faceYN(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         faceYN(:,:) = nullvalueL
 
         ncol=> Ncol_faceP
         allocate(faceP(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_check_allocation(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg)
         faceP(:,:) = nullvalueI
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
@@ -211,7 +230,7 @@ contains
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
 
-    end subroutine allocate_columns
+    end subroutine util_allocate_columns
     !
     !==========================================================================
     !==========================================================================
@@ -237,7 +256,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_elemI(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemI(:) = [(ii,ii=1,ncol)]
@@ -287,11 +306,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate(npack_elemP(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% allocate an array for storing the column of each packed type
         allocate( col_elemP(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemP(:) = [(ii,ii=1,ncol)]
@@ -331,11 +350,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGalltm(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% allocate an array for storing the enum type of each column
         allocate( col_elemPGalltm(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemPGalltm(:) = [(ii,ii=1,ncol)]
@@ -375,11 +394,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGac(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% allocate an array for storing the enum type of each column
         allocate( col_elemPGac(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemPGac(:) = [(ii,ii=1,ncol)]
@@ -419,11 +438,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGetm(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% allocate an array for storing the enum type of each column
         allocate( col_elemPGetm(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemPGetm(:) = [(ii,ii=1,ncol)]
@@ -460,7 +479,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_elemR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemR(:) = [(ii,ii=1,ncol)]
@@ -494,7 +513,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_elemSI(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemSI(:) = [(ii,ii=1,ncol)]
@@ -528,7 +547,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_elemSR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemSR(:) = [(ii,ii=1,ncol)]
@@ -562,7 +581,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_elemSGR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemSGR(:) = [(ii,ii=1,ncol)]
@@ -596,7 +615,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_elemWDI(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemWDI(:) = [(ii,ii=1,ncol)]
@@ -630,7 +649,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_elemWDR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemWDR(:) = [(ii,ii=1,ncol)]
@@ -664,7 +683,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_elemYN(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_elemYN(:) = [(ii,ii=1,ncol)]
@@ -698,7 +717,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_faceI(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_faceI(:) = [(ii,ii=1,ncol)]
@@ -732,7 +751,7 @@ contains
 
         !% allocate an array for storing the column 
         allocate( col_faceM(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_faceM(:) = [(ii,ii=1,ncol)]
@@ -770,11 +789,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_faceP(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% allocate an array for storing the column of each packed type
         allocate( col_faceP(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_faceP(:) = [(ii,ii=1,ncol)]
@@ -784,7 +803,7 @@ contains
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
 
-    end subroutine allocate_col_faceP
+    end subroutine util_allocate_col_faceP
     !
     !==========================================================================
     !==========================================================================
@@ -811,7 +830,7 @@ contains
 
         !% allocate an array of column indexes that can be used as targets of pointers
         allocate( col_faceR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_faceR(:) = [(ii,ii=1,ncol)]
@@ -845,7 +864,7 @@ contains
 
         !% allocate an array of column indexes that can be used as targets of pointers
         allocate( col_faceYN(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
 
         !% this array can be used as a pointer target in defining masks
         col_faceYN(:) = [(ii,ii=1,ncol)]
@@ -857,13 +876,13 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    ! subroutine allocate_bc()
+    ! subroutine util_allocate_bc()
     ! !
     ! ! allocate storage for boundary conditions.
     ! !
     ! !-----------------------------------------------------------------------------
 
-    !     character(64)      :: subroutine_name = 'allocate_bc'
+    !     character(64)      :: subroutine_name = 'util_allocate_bc'
     !     integer            :: ii
     !     integer            :: allocation_status
     !     character(len=99)  :: emsg
@@ -874,10 +893,10 @@ contains
 
     !     !% the Upstream and Downstream bc structure
     !     allocate(bcdataUp(N_BCupstream), stat=allocation_status, errmsg=emsg)
-    !     call util_check_allocation (allocation_status, emsg)
+    !     call util_allocate_check (allocation_status, emsg)
 
     !     allocate(bcdataDn(N_BCdnstream), stat=allocation_status, errmsg=emsg)
-    !     call util_check_allocation (allocation_status, emsg)
+    !     call util_allocate_check (allocation_status, emsg)
 
     !     !% the downstream arrays - HACK default downstream is elevation
     !     do ii=1,N_BCdnstream
@@ -912,6 +931,32 @@ contains
     !     end do
 
     !     if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
-    ! end subroutine allocate_bc
+    ! end subroutine util_allocate_bc
+
+    subroutine util_allocate_check(allocation_status, emsg)
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   Checks allocation status and stops if there is an error
+        !
+        !-----------------------------------------------------------------------------
+    
+            integer,           intent(in   ) :: allocation_status
+            character(len=*),  intent(in   ) :: emsg
+    
+            character(64):: subroutine_name = 'util_allocate_check'
+    
+        !-----------------------------------------------------------------------------
+    
+            if (setting%Debug%File%utility) print *, '*** enter ',subroutine_name
+    
+            if (allocation_status > 0) then
+                print *, trim(emsg)
+                stop
+            end if
+    
+            if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
+    
+        end subroutine util_allocate_check
 
 end module utility_allocate

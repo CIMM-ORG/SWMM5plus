@@ -22,7 +22,7 @@ module network_define
 
     private
 
-    public :: network_initiation
+    public :: init_network
 
 contains
     !
@@ -30,7 +30,7 @@ contains
     ! PUBLIC
     !==========================================================================
     !
-    subroutine network_initiation ()
+    subroutine init_network ()
     !--------------------------------------------------------------------------
     !
     !% Initializes a element-face network from a link-node network.
@@ -40,7 +40,7 @@ contains
 
         integer :: ii
 
-        character(64) :: subroutine_name = 'network_initiation'
+        character(64) :: subroutine_name = 'init_network'
 
     !--------------------------------------------------------------------------
 
@@ -48,10 +48,10 @@ contains
 
 
         !% get the slope of each link given the node Z values
-        call network_get_link_slope()
+        call init_network_linkslope()
 
         !% divide the link node networks in elements and faces
-        call network_data_create()
+        call init_network_datacreate()
 
         sync all
         !% print result
@@ -90,20 +90,20 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine network_initiation
+    end subroutine init_network
     !
     !==========================================================================
     ! PRIVATE
     !==========================================================================
     !
-    subroutine network_get_link_slope
+    subroutine init_network_linkslope()
     !--------------------------------------------------------------------------
     !
     !% compute the slope across each link
     !
     !--------------------------------------------------------------------------
 
-        character(64) :: subroutine_name = 'network_get_link_slope'
+        character(64) :: subroutine_name = 'init_network_linkslope'
 
         integer, pointer :: NodeUp, NodeDn
         real(8), pointer :: zUp, zDn, Slope, Length
@@ -142,12 +142,12 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine network_get_link_slope
+    end subroutine init_network_linkslope
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine network_data_create()
+    subroutine init_network_datacreate()
     !--------------------------------------------------------------------------
     !
     !% creates the network of elements and faces from nodes and link
@@ -161,7 +161,7 @@ contains
         integer, pointer :: N_Images, Lidx
         integer, pointer :: NodeUp, NodeDn, NodeUpTyp, NodeDnTyp
 
-        character(64) :: subroutine_name = 'network_data_create'
+        character(64) :: subroutine_name = 'init_network_datacreate'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
@@ -188,28 +188,28 @@ contains
         end if
 
         !% handle all the links and nodes in a partition
-        call handle_link_nodes &
+        call init_network_map_linknode &
             (image, ElemLocalIdx, FacelocalIdx, ElemGlobalIdx, FaceGlobalIdx)
 
         !% finish mapping all the junction branch and faces that were not
         !% handeled in handle_link_nodes subroutine
-        call map_multi_branch_junction_nodes (image)
+        call init_network_map_nJm (image)
 
         !% shared faces are mapped by copying data from different images
         !% thus a sync all is needed
         sync all
 
         !% finally set the same global face idx for shared faces across images
-        call map_shared_faces_across_images (image)
+        call init_network_map_shared_faces (image)
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine network_data_create
+    end subroutine init_network_datacreate
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine handle_link_nodes &
+    subroutine init_network_map_linknode &
         (image, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, FaceGlobalCounter)
     !
     !--------------------------------------------------------------------------
@@ -227,7 +227,7 @@ contains
         integer, pointer :: thisLink, upNode, dnNode
         integer, dimension(:), allocatable, target :: packed_link_idx, packed_node_idx
 
-        character(64) :: subroutine_name = 'handle_link_nodes'
+        character(64) :: subroutine_name = 'init_network_map_linknode'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
@@ -251,27 +251,27 @@ contains
             upNode   => linkI(thisLink,li_Mnode_u)
             dnNode   => linkI(thisLink,li_Mnode_d)
 
-            call handle_upstream_node &
+            call init_network_map_upstreamnode &
                 (image, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                 FaceGlobalCounter)
 
-            call subdivide_link_going_downstream &
+            call init_network_map_subdividelink &
                 (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                 FaceGlobalCounter)
 
-            call handle_downstream_node &
+            call init_network_map_downstreamnode &
                 (image, dnNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                 FaceGlobalCounter)
         end do
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine handle_link_nodes
+    end subroutine init_network_map_linknode
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine map_multi_branch_junction_nodes (image)
+    subroutine init_network_map_nJm (image)
     !
     !--------------------------------------------------------------------------
     !
@@ -287,7 +287,7 @@ contains
 
 
 
-        character(64) :: subroutine_name = 'map_multi_branch_junction_nodes'
+        character(64) :: subroutine_name = 'init_network_map_nJm'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
@@ -307,18 +307,18 @@ contains
             JunctionElementIdx = pack( elemI(:,ei_Lidx), &
                                      ( elemI(:,ei_node_Gidx_SWMM) .eq. thisJunctionNode) )
 
-            call map_junction_branch_elemnts (image, thisJunctionNode, JunctionElementIdx)
+            call init_network_map_nJm_branches (image, thisJunctionNode, JunctionElementIdx)
 
         end do
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine map_multi_branch_junction_nodes
+    end subroutine init_network_map_nJm
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine map_shared_faces_across_images (image)
+    subroutine init_network_map_shared_faces (image)
     !
     !--------------------------------------------------------------------------
     !
@@ -332,7 +332,7 @@ contains
         integer, pointer :: fLidx
         integer, dimension(:), allocatable, target ::  sharedFaces
 
-        character(64) :: subroutine_name = 'map_shared_faces_across_images'
+        character(64) :: subroutine_name = 'init_network_map_shared_faces'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
@@ -369,12 +369,12 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine map_shared_faces_across_images
+    end subroutine init_network_map_shared_faces
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine handle_upstream_node &
+    subroutine init_network_map_upstreamnode &
         (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
         FaceGlobalCounter)
     !
@@ -392,7 +392,7 @@ contains
 
         integer :: ii
 
-        character(64) :: subroutine_name = 'handle_upstream_node'
+        character(64) :: subroutine_name = 'init_network_map_upstreamnode'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
@@ -455,7 +455,7 @@ contains
                     !% check if the node has already been assigned
                     if (nAssignStatus .eq. nUnassigned) then
 
-                        call subdivide_multi_branch_junction_node &
+                        call init_network_map_subdivide_nJm &
                             (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                             FaceGlobalCounter, nAssignStatus)
 
@@ -500,12 +500,12 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine handle_upstream_node
+    end subroutine init_network_map_upstreamnode
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine subdivide_link_going_downstream &
+    subroutine init_network_map_subdividelink &
         (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, FaceGlobalCounter)
     !--------------------------------------------------------------------------
     !
@@ -521,7 +521,7 @@ contains
         integer, pointer        :: lAssignStatus, NodeUp
         real                    :: zUpstream, zCenter
 
-        character(64) :: subroutine_name = 'subdivide_link_going_downstream'
+        character(64) :: subroutine_name = 'init_network_map_subdividelink'
 
     !--------------------------------------------------------------------------
 
@@ -605,12 +605,12 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine subdivide_link_going_downstream
+    end subroutine init_network_map_subdividelink
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine handle_downstream_node &
+    subroutine init_network_map_downstreamnode &
         (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
         FaceGlobalCounter)
     !--------------------------------------------------------------------------
@@ -625,7 +625,7 @@ contains
 
         integer, pointer :: nAssignStatus, nodeType, linkDn
 
-        character(64) :: subroutine_name = 'handle_downstream_node'
+        character(64) :: subroutine_name = 'init_network_map_downstreamnode'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
@@ -689,7 +689,7 @@ contains
                     !% check if the node has already been assigned
                     if (nAssignStatus .eq. nUnassigned) then
 
-                        call subdivide_multi_branch_junction_node &
+                        call init_network_map_subdivide_nJm &
                             (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                             FaceGlobalCounter, nAssignStatus)
 
@@ -718,12 +718,12 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine handle_downstream_node
+    end subroutine init_network_map_downstreamnode
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine subdivide_multi_branch_junction_node &
+    subroutine init_network_map_subdivide_nJm &
         (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
         FaceGlobalCounter, nAssignStatus)
     !--------------------------------------------------------------------------
@@ -741,7 +741,7 @@ contains
 
         integer :: ii, upBranchSelector, dnBranchSelector
 
-        character(64) :: subroutine_name = 'subdivide_multi_branch_junction_node'
+        character(64) :: subroutine_name = 'init_network_map_subdivide_nJm'
 
     !--------------------------------------------------------------------------
 
@@ -805,7 +805,7 @@ contains
                 if (upBranchIdx .ne. nullvalueI) then
                     !% integer data
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
-                    elemR(ElemLocalCounter,er_Length) = get_junction_length(upBranchIdx)
+                    elemR(ElemLocalCounter,er_Length) = init_network_nJm_length(upBranchIdx)
 
                     !% check if the link connecting this branch
                     !% is a part of this partition
@@ -861,7 +861,7 @@ contains
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
 
-                    call nullify_junction_branch &
+                    call init_network_nJm_nullify &
                         (ElemLocalCounter, FaceLocalCounter)
 
                 endif
@@ -877,7 +877,7 @@ contains
                 if (dnBranchIdx .ne. nullvalueI) then
                     !% integer data
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
-                    elemR(ElemLocalCounter,er_Length) = get_junction_length(dnBranchIdx)
+                    elemR(ElemLocalCounter,er_Length) = init_network_nJm_length(dnBranchIdx)
 
                     !% check if the link connecting this branch
                     !% is a part of this partition
@@ -931,7 +931,7 @@ contains
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
 
-                    call nullify_junction_branch &
+                    call init_network_nJm_nullify &
                         (ElemLocalCounter, FaceLocalCounter)
                 endif
             endif
@@ -947,12 +947,12 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine subdivide_multi_branch_junction_node
+    end subroutine init_network_map_subdivide_nJm
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine map_junction_branch_elemnts (image, thisJNode, JelemIdx)
+    subroutine init_network_map_nJm_branches (image, thisJNode, JelemIdx)
     !
     !--------------------------------------------------------------------------
     !
@@ -968,7 +968,7 @@ contains
         integer, pointer :: upBranchIdx, dnBranchIdx
         integer, pointer :: eIdx, fLidx
 
-        character(64) :: subroutine_name = 'map_junction_branch_elemnts'
+        character(64) :: subroutine_name = 'init_network_map_nJm_branches'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
@@ -1073,12 +1073,12 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
-    end subroutine map_junction_branch_elemnts
+    end subroutine init_network_map_nJm_branches
     !
     !==========================================================================
     !==========================================================================
     !
-    function get_junction_length (LinkIdx) result (BranchLength)
+    function init_network_nJm_length (LinkIdx) result (BranchLength)
     !--------------------------------------------------------------------------
     !
     !% compute the length of a junction branch
@@ -1088,7 +1088,7 @@ contains
         integer, intent(in)  :: LinkIdx
         real(8)              :: BranchLength
 
-        character(64) :: subroutine_name = 'get_junction_length'
+        character(64) :: subroutine_name = 'init_network_nJm_length'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -1103,12 +1103,12 @@ contains
         endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-    end function get_junction_length
+    end function init_network_nJm_length
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine nullify_junction_branch (ElemIdx, FaceIdx)
+    subroutine init_network_nJm_nullify (ElemIdx, FaceIdx)
     !--------------------------------------------------------------------------
     !
     !% set all the values to zero for a null junction
@@ -1117,7 +1117,7 @@ contains
 
         integer, intent(in)  :: ElemIdx, FaceIdx
 
-        character(64) :: subroutine_name = 'nullify_junction_branch'
+        character(64) :: subroutine_name = 'init_network_nJm_nullify'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -1129,7 +1129,7 @@ contains
         faceYN(FaceIdx,fYN_isnull)                  = .true.
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-    end subroutine nullify_junction_branch
+    end subroutine init_network_nJm_nullify
     !
     !==========================================================================
     ! END OF MODULE

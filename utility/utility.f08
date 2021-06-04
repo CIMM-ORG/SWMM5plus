@@ -16,37 +16,10 @@ module utility
 
     private
 
-    public :: util_check_allocation
     public :: util_export_linknode_csv
     public :: util_count_node_types
 
 contains
-
-    subroutine util_check_allocation(allocation_status, emsg)
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   Checks allocation status and stops if there is an error
-    !
-    !-----------------------------------------------------------------------------
-
-        integer,           intent(in   ) :: allocation_status
-        character(len=*),  intent(in   ) :: emsg
-
-        character(64):: subroutine_name = 'util_check_allocation'
-
-    !-----------------------------------------------------------------------------
-
-        if (setting%Debug%File%utility) print *, '*** enter ',subroutine_name
-
-        if (allocation_status > 0) then
-            print *, trim(emsg)
-            stop
-        end if
-
-        if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
-
-    end subroutine util_check_allocation
     !
     !-----------------------------------------------------------------------------
     !-----------------------------------------------------------------------------
@@ -126,11 +99,6 @@ contains
         N_nJm = count(nodeI(:, ni_node_type) == nJM)
         N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
         N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
-    
-        ! The nodes that correspond to having 7, 1, and 0 attributed elements are summed together
-        ! num_nJm_nodes = N_nJm
-        ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
-        ! num_zero_elem_nodes = N_nJ2
     
     end subroutine util_count_node_types
     

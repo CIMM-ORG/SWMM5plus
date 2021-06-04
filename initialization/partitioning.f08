@@ -5,6 +5,7 @@ module partitioning
     use define_globals
     use define_settings, only: setting
     use utility
+    use utility_allocate
 
     implicit none
 
@@ -20,14 +21,14 @@ module partitioning
 
     private
 
-    public :: execute_partitioning, util_count_node_types
+    public :: init_partitioning_method
 
 contains
 !
 !==========================================================================
 !==========================================================================
 !
-subroutine execute_partitioning()
+subroutine init_partitioning_method()
     ! --------------------------------------------------------
     !
     ! Description:
@@ -39,22 +40,22 @@ subroutine execute_partitioning()
     logical :: partition_correct
     integer :: connectivity, ii
     real(8) :: part_size_balance
-    character(64) :: subroutine_name = 'execute_partitioning'
+    character(64) :: subroutine_name = 'init_partitioning_method'
 
     !% --------------------------------------------------------
 
-    call allocate_partitioning_arrays()
+    call util_allocate_partitioning_arrays()
 
     !% Determine which partitioning method is being used
     if (setting%Partitioning%PartitioningMethod == Default) then
         if (setting%Verbose) print*, "Using Default Partitioning"
-        call default_partitioning()
+        call init_partitioning_default()
     else if (setting%Partitioning%PartitioningMethod == Random) then
         if (setting%Verbose) print*, "Using Random Partitioning"
-        call random_partitioning()
+        call init_partitioning_random()
     else if (setting%Partitioning%PartitioningMethod == BLink) then
         if (setting%Verbose) print*, "Using Balanced Link Partitioning"
-        call balanced_link_partitioning()
+        call init_partitioning_linkbalance()
     else
         print *, "Error, partitioning method not supported"
         stop
@@ -71,37 +72,19 @@ subroutine execute_partitioning()
 
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
         ! partition_correct = default_performance_check()
-        connectivity = partition_diagnostic_connectivity()
-        part_size_balance = partition_diagnostic_partsizebalance()
+        connectivity = init_partitioning_metric_connectivity()
+        part_size_balance = init_partitioning_metric_partsizebalance()
 
         print*, "*** partitioning is complete", connectivity, part_size_balance
     end if
 
-    call deallocate_partitioning_arrays()
-end subroutine
+    call util_deallocate_partitioning_arrays()
+end subroutine init_partitioning_method
 !
 !==========================================================================
 !==========================================================================
 !
-subroutine allocate_partitioning_arrays()
-    allocate(adjacent_links(max_us_branch_per_node+max_ds_branch_per_node))
-    allocate(elem_per_image(num_images()))
-    allocate(image_full(num_images()))
-end subroutine allocate_partitioning_arrays
-!
-!==========================================================================
-!==========================================================================
-!
-subroutine deallocate_partitioning_arrays()
-    deallocate(adjacent_links)
-    deallocate(elem_per_image)
-    deallocate(image_full)
-end subroutine deallocate_partitioning_arrays
-!
-!==========================================================================
-!==========================================================================
-!
-subroutine default_partitioning()
+subroutine init_partitioning_default()
     ! ----------------------------------------------------------------------------------------------------------------
     !
     ! Description:
@@ -198,12 +181,12 @@ subroutine default_partitioning()
         end do
     end do
 
-end subroutine default_partitioning
+end subroutine init_partitioning_default
 !
 !==========================================================================
 !==========================================================================
 !
-subroutine random_partitioning()
+subroutine init_partitioning_random()
     ! ----------------------------------------------------------------------------------------------------------------
     !
     ! Description:
@@ -308,12 +291,12 @@ subroutine random_partitioning()
         end do
     end do
 
-end subroutine random_partitioning
+end subroutine init_partitioning_random
 !
 !==========================================================================
 !==========================================================================
 !
-subroutine balanced_link_partitioning()
+subroutine init_partitioning_linkbalance()
 !-----------------------------------------------------------------------------
 !
 ! Description:
@@ -326,13 +309,13 @@ subroutine balanced_link_partitioning()
     integer :: start_id, end_id
     integer :: count, remainder, rank
 
-    character(64) :: subroutine_name = 'balanced_link_partitioning'
+    character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
     if (setting%Debug%File%partitioning) print *, '*** enter ', subroutine_name
 
     if (N_link < num_images()) then
-        call default_partitioning()
+        call init_partitioning_default()
     else
         do rank = 0, num_images()-1
             count = N_link / num_images()
@@ -377,12 +360,12 @@ subroutine balanced_link_partitioning()
     end if
 
     if (setting%Debug%File%partitioning)  print *, '*** leave ', subroutine_name
-end subroutine balanced_link_partitioning
+end subroutine init_partitioning_linkbalance
 !
 !==========================================================================
 !==========================================================================
 !
-function partition_diagnostic_partsizebalance() result(part_size_balance)
+function init_partitioning_metric_partsizebalance() result(part_size_balance)
     ! ----------------------------------------------------------------------------------------------------------------
     !
     ! Description:
@@ -436,12 +419,12 @@ function partition_diagnostic_partsizebalance() result(part_size_balance)
     !% The difference between the max and min number of elements per image is the part_size_balance objective metric
     part_size_balance = max_elem - min_elem
 
-end function partition_diagnostic_partsizebalance
+end function init_partitioning_metric_partsizebalance
 !
 !==========================================================================
 !==========================================================================
 !
-function partition_diagnostic_connectivity() result(connectivity)
+function init_partitioning_metric_connectivity() result(connectivity)
     ! ----------------------------------------------------------------------------------------------------------------
     !
     ! Description:
@@ -457,69 +440,10 @@ function partition_diagnostic_connectivity() result(connectivity)
 
     !% The sum of the ni_is_boundary column is the connectivity
     connectivity = sum(nodeI(:, ni_P_is_boundary))
-end function partition_diagnostic_connectivity
+end function init_partitioning_metric_connectivity
 !
 !==========================================================================
+!   End Module
 !==========================================================================
 !
-! function default_performance_check() result(partition_correct)
-!     integer :: ii
-!     logical :: partition_correct
-!     integer, allocatable, dimension(:,:) :: PartCheck_nodeI, PartCheck_linkI
-!     logical, allocatable, dimension(:,:) :: ArraySame_nodeI, ArraySame_linkI
-
-!     !% Allocate and initialize the correct partition arrays to be checked against
-!     allocate(PartCheck_nodeI(size(nodeI,1), P_ni_is_boundary))
-!     allocate(PartCheck_linkI(size(linkI,1), P_li_Partition_No))
-!     allocate(ArraySame_nodeI(size(nodeI,1), P_ni_is_boundary))
-!     allocate(ArraySame_linkI(size(linkI,1), P_li_Partition_No))
-
-!     PartCheck_nodeI(:, P_ni_idx_Partition) = (/1,2,3,4/)
-!     PartCheck_nodeI(:, P_ni_Partition_No) = (/2,2,3,3/)
-!     PartCheck_nodeI(:, P_ni_is_boundary) = (/1,0,1,1/)
-
-!     PartCheck_linkI(:, P_li_idx_Partition) = (/1,2,3/)
-!     PartCheck_linkI(:, P_li_Partition_No) = (/1,2,2/)
-
-!     !% Assume that the partition arrays are going to be incorrect
-!     partition_correct = .false.
-
-!     !% Create a logical array of if the two arrays match
-!     ArraySame_nodeI(:,:) = ( PartCheck_nodeI == P_nodeI )
-!     ArraySame_linkI(:,:) = ( PartCheck_linkI == P_linkI )
-
-!     if ( all(ArraySame_nodeI) .eqv. .true. ) then
-!         print*, "The node arrays are partitioned correctly"
-!     else
-!         print*, "There is a mistake in the P_nodeI"
-!         print*, ArraySame_nodeI(:,:)
-!         do ii = 1, size(P_nodeI, 1)
-!             print*, P_nodeI(ii, :)
-!             print*, PartCheck_nodeI(ii, :)
-!        end do
-!     end if
-
-!     if ( all(ArraySame_linkI) .eqv. .true. ) then
-!         print*, "The link arrays are partitioned correctly"
-!     else
-!         print*, "There is a mistake in the P_linkI"
-!         print*, ArraySame_linkI(:,:)
-!         do ii = 1, size(P_linkI, 1)
-!             print*, P_linkI(ii, :)
-!             print*, PartCheck_linkI(ii, :)
-!        end do
-!     end if
-
-!     if ( (all(ArraySame_nodeI) .eqv. .true.) .and. (all(ArraySame_linkI) .eqv. .true.) ) then
-!         partition_correct = .true.
-!     end if
-
-!     deallocate(PartCheck_nodeI)
-!     deallocate(PartCheck_linkI)
-!     deallocate(ArraySame_nodeI)
-!     deallocate(ArraySame_linkI)
-
-! end function default_performance_check
-
-
 end module partitioning
