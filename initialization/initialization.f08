@@ -233,7 +233,7 @@ contains
 
         if (setting%Debug%File%utility_array) print *, '*** enter ',subroutine_name
 
-        call image_number_calculation(nimgs_assign, unique_imagenum)
+        call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
         allocate(N_elem(size(unique_imagenum,1)))
         allocate(N_face(size(unique_imagenum,1)))

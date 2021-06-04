@@ -14,7 +14,7 @@ module utility_array
 
     implicit none
 
-    public :: image_number_calculation
+    public :: util_image_number_calculation
 
     contains
     !
