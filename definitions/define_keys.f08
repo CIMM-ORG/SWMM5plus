@@ -264,6 +264,21 @@ module define_keys
         enumerator :: node_volume
         enumerator :: node_overflow
     end enum
+    integer, parameter :: num_node_attributes = node_overflow
+
+    ! nodeInflow attributes
+    enum, bind(c)
+        enumerator :: nf_extInflow_tSeries
+        enumerator :: nf_extInflow_basePat
+        enumerator :: nf_extInflow_baseline
+        enumerator :: nf_extInflow_sFactor
+        enumerator :: nf_dwfInflow_avgvalue
+        enumerator :: nf_dwfInflow_monthly_pattern
+        enumerator :: nf_dwfInflow_daily_pattern
+        enumerator :: nf_dwfInflow_hourly_pattern
+        enumerator :: nf_dwfInflow_weekend_pattern
+    end enum
+    integer, parameter :: num_nodeInflow_attributes = nf_dwfInflow_weekend_pattern
 
     ! API link attributes
     enum, bind(c)
@@ -298,4 +313,13 @@ module define_keys
         enumerator :: curve_table
         enumerator :: tinflow
     end enum
+    
+    ! Datetime resolution types
+    enum, bind(c)
+        enumerator :: monthly = 1
+        enumerator :: daily
+        enumerator :: hourly
+        enumerator :: weekend
+    end enum
+
 end module define_keys

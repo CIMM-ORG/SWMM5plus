@@ -1,6 +1,5 @@
 program main
 
-
     use define_globals
     use define_indexes
     use initialization

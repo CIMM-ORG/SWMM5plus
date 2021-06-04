@@ -16,7 +16,7 @@ module initialization
 !-----------------------------------------------------------------------------
 !
 ! Description:
-!   General initialization of data structures (not including network)
+!    General initialization of data structures (not including network)
 !
 ! Method:
 !    Creates the arrays index structures that are used for accessing data.

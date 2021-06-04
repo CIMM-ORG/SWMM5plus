@@ -70,6 +70,10 @@
         "Velocity" : {
             "Maximum" : 10.0,
             "UseLimitMax" : true
+        },
+        "ArraySize" : {
+            "TemporalInflows" : 10,
+            "TotalInflows" : 50
         }
     },
     "SmallVolume" : {
@@ -135,5 +139,11 @@
         "Output" : {
 
         }
-    }
+    },
+    "Warning" : {
+        "File" : {
+            "partitioning" : false
+        }
+    },
+    "Verbose" : false
 }

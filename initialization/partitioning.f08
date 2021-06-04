@@ -116,8 +116,6 @@ subroutine default_partitioning()
     real(8) :: partition_threshold
     logical :: partition_correct
 
-!% ----------------------------------------------------------------------------------------------------------------
-
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
 
@@ -181,7 +179,6 @@ subroutine default_partitioning()
                 assigning_image = assigning_image + 1
             end if
         end if
-
         !% Fills in the nodeI array P columns
         nodeI(ii, ni_P_image) = assigning_image
         nodeI(ii, ni_P_is_boundary) = 0

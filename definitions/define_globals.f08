@@ -69,8 +69,7 @@ module define_globals
     real(8), allocatable, target :: faceR(:,:)[:]    ! coarray for faces real data
     integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
     logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data
-    integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array
-    
+    integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array    
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
@@ -112,20 +111,24 @@ module define_globals
     integer :: N_curve
     integer :: N_tseries
     integer :: N_pattern
+    integer :: N_inflow
     integer :: N_BCupstream
     integer :: N_BCdnstream
+    integer :: N_nBCup
+    integer :: N_nBCdn
+    integer :: N_nJm
+    integer :: N_nStorage
+    integer :: N_nJ2
 
-    !% Coarray variables
+    ! Coarray variables
     integer :: max_caf_elem_N ! size of all elem array in coarray
     integer :: max_caf_face_N ! size of all face array in coarray
 
+    ! Constants for Junction
+    integer :: J_elem_add = 7 ! Supplement elements for junction
+    integer :: J_face_add = 6 ! Supplement faces for junction
 
-    !% Constants for Junction
-    integer, target :: J_elem_add = 7 ! Supplement elements for junction
-    integer, target :: J_face_add = 6 ! Supplement faces    for junction
-   
-
-    !% useful shortcuts
+    ! useful shortcuts
     real(8), pointer :: dt => setting%time%dt
     real(8), pointer :: grav => setting%constant%gravity
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls

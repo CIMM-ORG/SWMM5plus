@@ -13,6 +13,9 @@ installation_log.txt
 _*
 
 # Dependencies
+cmake*
+opencoarray*
+mpich*
 dependencies
 json-fortran
 
