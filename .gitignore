@@ -9,7 +9,7 @@
 *.png
 *.mod
 *.mod0
-installation_log.txt
+*log*
 
 # Dependencies
 cmake*
