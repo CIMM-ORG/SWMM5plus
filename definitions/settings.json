@@ -125,16 +125,26 @@
             "define_keys" : false,
             "define_settings" : false,
             "define_types" : false,
+            "finalization" : false,
             "discretization"  : false,
             "initialization" : false,
-            "network_define" : true,
-            "partitioning" : true,
+            "network_define" : false,
+            "partitioning" : false,
             "interface" : false,
             "utility" : false,
             "utility_allocate" : false,
             "utility_array" : false,
             "utility_datetime" : false,
             "utility_string" : false
+        },
+        "FileGroup" : {
+            "all" : false,
+            "definitions" : false,
+            "finalization" : false,
+            "initialization" : true,
+            "interface" : false,
+            "time_loop" : false,
+            "utility" : false
         },
         "Output" : {
 

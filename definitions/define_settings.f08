@@ -134,6 +134,7 @@ module define_settings
         logical :: define_settings  = .false.
         logical :: define_types     = .false.
         logical :: discretization   = .false.
+        logical :: finalization     = .false.
         logical :: initialization   = .false.
         logical :: network_define   = .false.
         logical :: partitioning     = .false.
@@ -144,6 +145,17 @@ module define_settings
         logical :: utility_datetime = .false.
         logical :: utility_string   = .false.
     end type DebugFileType
+
+    ! setting%Debug%FileGroup
+    type DebugFileGroupType
+        logical :: all              = .false.
+        logical :: definitions      = .false.
+        logical :: finalization     = .false.
+        logical :: initialization   = .false.
+        logical :: interface        = .false.
+        logical :: time_loop        = .false.
+        logical :: utility          = .false.
+    end type DebugFileGroupType
 
     ! -
     ! --
@@ -263,6 +275,7 @@ module define_settings
     type DebugType
         logical :: Tests = .false.
         type(DebugFileType) :: File
+        type(DebugFileGroupType) :: FileGroup
     end type DebugType
 
     !% setting%Partitioning
@@ -646,14 +659,34 @@ contains
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
         if (.not. found) stop 75
+        call json%get('Debug.FileGroup.all', logical_value, found)
+        setting%Debug%FileGroup%all = logical_value
+        if (.not. found) stop 76
+        call json%get('Debug.FileGroup.definitions', logical_value, found)
+        setting%Debug%FileGroup%definitions = logical_value
+        if (.not. found) stop 77
+        call json%get('Debug.FileGroup.finalization', logical_value, found)
+        setting%Debug%FileGroup%finalization = logical_value
+        if (.not. found) stop 78
+        call json%get('Debug.FileGroup.initialization', logical_value, found)
+        setting%Debug%FileGroup%initialization = logical_value
+        if (.not. found) stop 79
+        call json%get('Debug.FileGroup.interface', logical_value, found)
+        setting%Debug%FileGroup%interface = logical_value
+        if (.not. found) stop 80
+        call json%get('Debug.FileGroup.utility', logical_value, found)
+        setting%Debug%FileGroup%interface = logical_value
+        if (.not. found) stop 81
+        call def_update_debug_options()
+
 
         ! For element length adjustment
         call json%get("Discretization.NominalElemLength", real_value, found)
         setting%Discretization%NominalElemLength = real_value
-        if (.not. found) stop 76
+        if (.not. found) stop 82
         call json%get("Discretization.LinkShortingFactor", real_value, found)
         setting%Discretization%LinkShortingFactor = real_value
-        if (.not. found) stop 77
+        if (.not. found) stop 83
 
         ! Load BIPQuick settings
         call json%get('Partitioning.PartitioningMethod', c, found)
@@ -670,17 +703,52 @@ contains
             print *, "Error, the setting '" // trim(c) // "' is not supported for PartitioningMethod"
             stop
         end if
-        if (.not. found) stop 78
+        if (.not. found) stop 84
 
         ! Load BIPQuick settings
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 79
+        if (.not. found) stop 85
 
         call json%destroy()
-        if (json%failed()) stop 80
-        
+        if (json%failed()) stop 86
+
         if (setting%Debug%File%define_settings) print *, '*** leave ', subroutine_name
     end subroutine def_load_settings
-    
+
+    subroutine def_update_debug_options()
+        if (setting%Debug%FileGroup%all) then
+            setting%Debug%FileGroup%definitions = .true.
+            setting%Debug%FileGroup%finalization = .true.
+            setting%Debug%FileGroup%initialization = .true.
+            setting%Debug%FileGroup%interface = .true.
+            setting%Debug%FileGroup%utility = .true.
+        end if
+        if (setting%Debug%FileGroup%definitions) then
+            setting%Debug%File%define_globals = .true.
+            setting%Debug%File%define_indexes = .true.
+            setting%Debug%File%define_keys = .true.
+            setting%Debug%File%define_settings = .true.
+            setting%Debug%File%define_types = .true.
+        end if
+        if (setting%Debug%FileGroup%finalization) then
+            setting%Debug%File%finalization = .true.
+        end if
+        if (setting%Debug%FileGroup%initialization) then
+            setting%Debug%File%discretization = .true.
+            setting%Debug%File%initialization = .true.
+            setting%Debug%File%network_define = .true.
+            setting%Debug%File%partitioning = .true.
+        end if
+        if (setting%Debug%FileGroup%interface) then
+            setting%Debug%File%interface = .true.
+        end if
+        if (setting%Debug%FileGroup%utility) then
+            setting%Debug%File%utility_allocate = .true.
+            setting%Debug%File%utility_array = .true.
+            setting%Debug%File%utility_datetime = .true.
+            setting%Debug%File%utility_string = .true.
+            setting%Debug%File%utility = .true.
+        end if
+    end subroutine def_update_debug_options
 end module define_settings
