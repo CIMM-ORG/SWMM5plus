@@ -23,7 +23,7 @@ module utility_allocate
     character(len=99) ::              emsg
 
     ! public members
-    public :: allocate_linknode_storage
+    public :: util_allocate_linknode
     public :: allocate_elemX_faceX
     public :: allocate_columns
 
@@ -33,7 +33,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine allocate_linknode_storage ()
+    subroutine util_allocate_linknode()
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -48,7 +48,7 @@ contains
     !
     !-----------------------------------------------------------------------------
 
-        character(64) :: subroutine_name = 'allocate_linknode_storage'
+        character(64) :: subroutine_name = 'util_allocate_linknode'
         integer       :: additional_rows = 0
 
     !-----------------------------------------------------------------------------
@@ -91,7 +91,7 @@ contains
         call utility_check_allocation(allocation_status, emsg)
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
-    end subroutine allocate_linknode_storage
+    end subroutine util_allocate_linknode
     !
     !==========================================================================
     !==========================================================================

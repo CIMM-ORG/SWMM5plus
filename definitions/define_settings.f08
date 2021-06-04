@@ -305,7 +305,7 @@ module define_settings
 
 contains
 
-    subroutine load_settings(fpath)
+    subroutine def_load_settings(fpath)
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -323,7 +323,7 @@ contains
         logical :: found
         type(json_file) :: json
 
-        character(64) :: subroutine_name = 'load_settings'
+        character(64) :: subroutine_name = 'def_load_settings'
 
         if (setting%Debug%File%define_settings) print *, '*** enter ', subroutine_name
 
@@ -681,6 +681,6 @@ contains
         if (json%failed()) stop 80
         
         if (setting%Debug%File%define_settings) print *, '*** leave ', subroutine_name
-    end subroutine load_settings
+    end subroutine def_load_settings
     
 end module define_settings
