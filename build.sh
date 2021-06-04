@@ -51,7 +51,8 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
+#$CAF 
+/Users/chengweiyu/Desktop/SWMM5_mac_Test/opencoarray/OpenCoarrays/prerequisites/installations/opencoarrays/2.9.2/bin/caf $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
 
 # --------------------------------------------------------------------------------------
 

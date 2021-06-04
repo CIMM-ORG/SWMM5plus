@@ -50,8 +50,15 @@ COARRAY_SOURCE="$DDIR/opencoarray"
 MPICH_INSTALL="$MPICH_SOURCE/mpich-install"
 CMAKE_INSTALL="$CMAKE_SOURCE/cmake-install"
 COARRAY_INSTALL="$COARRAY_SOURCE/opencoarray-install"
-CAF="$COARRAY_INSTALL/bin/caf"
-echo "export CAFRUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
+
+if [[ $machine = "linux" ]]
+then
+    CAF="$COARRAY_INSTALL/bin/caf"
+    echo "export CAFRUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
+elif [[ $machine = "mac" ]]
+then
+    CAF="$COARRAY_INSTALL/bin/caf" #"caf"
+fi
 
 CAF_VERSION="0.0.0"
 CMAKE_VERSION="0.0.0" #initialize by using 0.0.0, not version can lower than 0.0.0
