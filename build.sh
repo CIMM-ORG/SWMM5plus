@@ -39,7 +39,7 @@ for i in $(find $TEST_DIR -name '*.f08')
 do
     fname=$(basename -- "$i")
     fname="${fname%.*}"
-    if [[ $fname != __* ]]
+    if [[ $fname != _* ]]
     then
         TEST_FILES="$TEST_FILES $i"
     fi

@@ -10,7 +10,6 @@
 *.mod
 *.mod0
 installation_log.txt
-_*
 
 # Dependencies
 cmake*
@@ -25,3 +24,5 @@ SWMM
 # Directories
 interface/src
 debug
+tests/*
+!tests/test*
