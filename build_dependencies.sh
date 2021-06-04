@@ -415,13 +415,13 @@ echo
 echo Compiling SWMM 5.13 ...
 echo
 
-cp -f "$API_DIR/interface.h" "$API_DIR/src/"
-cp -f "$API_DIR/interface.c" "$API_DIR/src/"
+cp -f "$API_DIR/api.h" "$API_DIR/src/"
+cp -f "$API_DIR/api.c" "$API_DIR/src/"
 
 # Insert new files in SWMM C Makefile
 
-SCRIPTS="interface.o"
-OBJECTS="interface.o   : headers.h interface.h\n"
+SCRIPTS="api.o"
+OBJECTS="api.o   : headers.h api.h\n"
 
 API_TEST_FILES=""
 for fname in $(find $TEST_DIR -name '*.c')
