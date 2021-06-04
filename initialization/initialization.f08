@@ -8,7 +8,7 @@ module initialization
     use define_keys
     use define_globals
     use network_define
-    use utility, only: utility_export_linknode_csv
+    use utility, only: util_export_linknode_csv
     use define_settings, only: setting
 
     implicit none
@@ -162,7 +162,7 @@ contains
 
         if (setting%Debug%File%initialization) then
             if (this_image() == 1) then
-                call utility_export_linknode_csv()
+                call util_export_linknode_csv()
             end if
         end if
 
@@ -200,13 +200,13 @@ contains
         call link_length_adjust()
 
         !% calculate the largest number of elements and faces to allocate the coarrays
-        call coarray_length_calculation()
+        call util_coarray_length_calculation()
 
         !% allocate elem and face coarrays
-        call allocate_elemX_faceX()
+        call util_allocate_elemX_faceX()
 
         !% allocate colum idxs of elem and face arrays for pointer operation
-        call allocate_columns()
+        call util_allocate_columns()
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 

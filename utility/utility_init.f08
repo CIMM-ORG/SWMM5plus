@@ -3,7 +3,7 @@ module utility_init
     use define_indexes
     use define_globals
     use define_settings, only: setting
-    use utility, only: utility_check_allocation
+    use utility, only: util_check_allocation
 
     implicit none
 

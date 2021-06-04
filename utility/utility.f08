@@ -16,13 +16,13 @@ module utility
 
     private
 
-    public :: utility_check_allocation
-    public :: utility_export_linknode_csv
-    public :: count_node_types
+    public :: util_check_allocation
+    public :: util_export_linknode_csv
+    public :: util_count_node_types
 
 contains
 
-    subroutine utility_check_allocation(allocation_status, emsg)
+    subroutine util_check_allocation(allocation_status, emsg)
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -33,7 +33,7 @@ contains
         integer,           intent(in   ) :: allocation_status
         character(len=*),  intent(in   ) :: emsg
 
-        character(64):: subroutine_name = 'utility_check_allocation'
+        character(64):: subroutine_name = 'util_check_allocation'
 
     !-----------------------------------------------------------------------------
 
@@ -46,12 +46,12 @@ contains
 
         if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
 
-    end subroutine utility_check_allocation
+    end subroutine util_check_allocation
     !
     !-----------------------------------------------------------------------------
     !-----------------------------------------------------------------------------
     !
-    subroutine utility_export_linknode_csv()
+    subroutine util_export_linknode_csv()
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -111,12 +111,12 @@ contains
         close(3)
         close(4)
 
-    end subroutine utility_export_linknode_csv
+    end subroutine util_export_linknode_csv
     !
     !-----------------------------------------------------------------------------
     !-----------------------------------------------------------------------------
     !
-    subroutine count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+    subroutine util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
         integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
         integer :: ii
     
@@ -132,6 +132,6 @@ contains
         ! num_one_elem_nodes = N_nBCup + N_nBCdn + N_nStorage
         ! num_zero_elem_nodes = N_nJ2
     
-    end subroutine count_node_types
+    end subroutine util_count_node_types
     
 end module utility

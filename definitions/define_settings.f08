@@ -2,7 +2,7 @@ module define_settings
 
     use json_module
     use define_keys
-    use utility_string, only: utility_lower_case
+    use utility_string, only: util_lower_case
 
     implicit none
     public
@@ -405,7 +405,7 @@ contains
         setting%Adjust%Flowrate%Apply = logical_value
         if (.not. found) stop 19
         call json%get('Adjust.Flowrate.approach', c, found)
-        call utility_lower_case(c)
+        call util_lower_case(c)
         if (c == 'vshape') then
             setting%Adjust%Flowrate%approach = vshape
         else if (c == 'smoothall') then
@@ -423,7 +423,7 @@ contains
         setting%Adjust%Head%Apply = logical_value
         if (.not. found) stop 21
         call json%get('Adjust.Head.approach', c, found)
-        call utility_lower_case(c)
+        call util_lower_case(c)
         if (c == 'vshape') then
             setting%Adjust%Head%approach = vshape
         else if (c == 'smoothall') then
@@ -457,7 +457,7 @@ contains
 
         ! Load Limiter Settings
         call json%get('Limiter.BC.approach', c, found)
-        call utility_lower_case(c)
+        call util_lower_case(c)
         if (c == 'froudenumber') then
             setting%Limiter%BC%approach = FroudeNumber
         else
@@ -526,7 +526,7 @@ contains
         setting%Solver%crk2 = real_value
         if (.not. found) stop 44
         call json%get('Solver.MomentumSourceMethod', c, found)
-        call utility_lower_case(c)
+        call util_lower_case(c)
         if (c == 't00') then
             setting%Solver%MomentumSourceMethod = T00
         else if (c == 't10') then
@@ -542,7 +542,7 @@ contains
         setting%Solver%PreissmanSlot = logical_value
         if (.not. found) stop 46
         call json%get('Solver.SolverSelect', c, found)
-        call utility_lower_case(c)
+        call util_lower_case(c)
         if (c == 'sve') then
             setting%Solver%SolverSelect = SVE
         else if (c == 'sve_ac') then
@@ -657,7 +657,7 @@ contains
 
         ! Load BIPQuick settings
         call json%get('Partitioning.PartitioningMethod', c, found)
-        call utility_lower_case(c)
+        call util_lower_case(c)
         if (c == 'default') then
             setting%Partitioning%PartitioningMethod = Default
         else if (c == 'bquick') then

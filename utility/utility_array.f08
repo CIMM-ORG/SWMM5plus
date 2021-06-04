@@ -14,7 +14,7 @@ module utility_array
 
     implicit none
 
-    public :: coarray_length_calculation
+    public :: util_coarray_length_calculation
 
     contains
     !
@@ -22,7 +22,7 @@ module utility_array
     ! PUBLIC
     !==========================================================================
     !
-    subroutine coarray_length_calculation()
+    subroutine util_coarray_length_calculation()
         ! for coarray length determination
         integer :: nimgs_assign
         integer, allocatable :: unique_imagenum(:)
@@ -30,11 +30,11 @@ module utility_array
 
         integer :: duplicated_face_counter=0
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
-        character(64) :: subroutine_name = 'array_length_calculation'
+        character(64) :: subroutine_name = 'util_coarray_length_calculation'
 
         if (setting%Debug%File%utility_array) print *, '*** enter ',subroutine_name
 
-        call image_number_calculation(nimgs_assign, unique_imagenum)
+        call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
         allocate(N_elem(size(unique_imagenum,1)))
         allocate(N_face(size(unique_imagenum,1)))
@@ -114,20 +114,20 @@ module utility_array
 
         if (setting%Debug%File%utility_array)  print *, '*** leave ',subroutine_name
 
-    end subroutine coarray_length_calculation
+    end subroutine util_coarray_length_calculation
     !
     !==========================================================================
     ! PRIVATE
     !==========================================================================
     !
-    subroutine image_number_calculation(nimgs_assign, unique_imagenum)
+    subroutine util_image_number_calculation(nimgs_assign, unique_imagenum)
         ! Get the unique list of images from partitioning modules
 
         integer, intent(inout), allocatable :: unique_imagenum(:)
         integer, intent(inout) :: nimgs_assign
         integer, allocatable :: img_arr(:), unique(:)
         integer :: ii=0, min_val, max_val
-        character(64) :: subroutine_name = 'image_number_calculation'
+        character(64) :: subroutine_name = 'util_image_number_calculation'
 
         if (setting%Debug%File%utility_array) print *, '*** enter ',subroutine_name
 
@@ -150,7 +150,7 @@ module utility_array
         nimgs_assign = size(unique_imagenum,1) ! The number of images assigned by BIPquick
 
         if (setting%Debug%File%utility_array)  print *, '*** leave ',subroutine_name
-    end subroutine image_number_calculation
+    end subroutine util_image_number_calculation
     !
     !==========================================================================
     ! END OF MODULE
