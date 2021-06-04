@@ -173,12 +173,12 @@ contains
 
     ! --- Simulation
 
-    subroutine init_interface()
+    subroutine interface_init()
 
         integer :: ppos, num_args
         character(64) :: subroutine_name
 
-        subroutine_name = 'init_interface'
+        subroutine_name = 'interface_init'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -234,7 +234,7 @@ contains
             print *, "N_pattern", N_pattern
             print *, '*** leave ', subroutine_name
         end if
-    end subroutine init_interface
+    end subroutine interface_init
 
     subroutine interface_finalize()
         character(64) :: subroutine_name = 'interface_finalize'

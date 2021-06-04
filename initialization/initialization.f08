@@ -66,7 +66,7 @@ contains
 
         if (setting%Verbose) print *, "Simulation Starts"
 
-        call init_interface()
+        call interface_init()
 
         call init_linknode_arrays()
 
