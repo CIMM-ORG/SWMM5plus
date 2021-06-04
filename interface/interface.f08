@@ -172,12 +172,12 @@ contains
 
     ! --- Simulation
 
-    subroutine initialize_api()
+    subroutine init_interface()
 
         integer :: ppos, num_args
         character(64) :: subroutine_name
 
-        subroutine_name = 'initialize_api'
+        subroutine_name = 'init_interface'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -233,10 +233,10 @@ contains
             print *, "N_pattern", N_pattern
             print *, '*** leave ', subroutine_name
         end if
-    end subroutine initialize_api
+    end subroutine init_interface
 
-    subroutine finalize_api()
-        character(64) :: subroutine_name = 'finalize_api'
+    subroutine final_interface()
+        character(64) :: subroutine_name = 'final_interface'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -250,7 +250,7 @@ contains
         call ptr_api_finalize(api)
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
-    end subroutine finalize_api
+    end subroutine final_interface
 
     ! --- Property-extraction
 

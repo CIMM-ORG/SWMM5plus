@@ -51,18 +51,18 @@ contains
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
-        call load_settings(setting%Paths%setting)
+        call def_load_settings(setting%Paths%setting)
         if (this_image() == 1) then
             call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
 
-        call read_arguments()
+        call init_read_arguments()
 
         if (setting%Verbose) print *, "Simulation Starts"
 
-        call initialize_api()
+        call init_interface()
 
-        call initialize_linknode_arrays()
+        call init_linknode_arrays()
 
         call initialize_partition_coarray()
         
@@ -78,7 +78,7 @@ contains
     ! PRIVATE
     !==========================================================================
     !
-    subroutine initialize_linknode_arrays()
+    subroutine init_linknode_arrays()
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -89,7 +89,7 @@ contains
         integer       :: ii, total_n_links
         logical       :: l1, l2
         
-        character(64) :: subroutine_name = 'initialize_linknode_arrays'
+        character(64) :: subroutine_name = 'init_linknode_arrays'
 
     !-----------------------------------------------------------------------------
 
@@ -101,7 +101,7 @@ contains
         end if
 
         ! Allocate storage for link & node tables
-        call allocate_linknode_storage()
+        call util_allocate_linknode()
 
         nodeI(:,ni_N_link_u) = 0
         nodeI(:,ni_N_link_d) = 0
@@ -167,11 +167,12 @@ contains
         end if
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
-    end subroutine initialize_linknode_arrays
+    end subroutine init_linknode_arrays
     !
     !==========================================================================
     !==========================================================================
     !
+
     subroutine initialize_partition_coarray()
     !-----------------------------------------------------------------------------
     !
@@ -214,7 +215,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine read_arguments()
+    subroutine init_read_arguments()
         integer :: ii
         logical :: arg_param = .false.
         character(len=8) :: param
@@ -262,7 +263,7 @@ contains
                 end if
             end if
         end do
-    end subroutine read_arguments
+    end subroutine init_read_arguments
     !
     !==========================================================================
     ! END OF MODULE
