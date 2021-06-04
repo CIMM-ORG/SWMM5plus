@@ -73,19 +73,6 @@ module array_index
     end enum
     integer, parameter :: ni_idx_base1 = ni_BQ_edge
 
-    !% COLUMN INDEXES FOR INTEGER DATA IN P_nodeI partitioning arrays
-    enum, bind(c)
-        enumerator :: P_ni_idx_Partition = 1 ! the node index number
-        enumerator :: P_ni_Partition_No ! the Partition number to which that node index belongs
-        enumerator :: P_ni_is_boundary ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
-    end enum
-
-    !% COLUMN INDEXES FOR INTEGER DATA IN P_linkI partitioning arrays
-    enum, bind(c)
-        enumerator :: P_li_idx_Partition = 1 ! the link index number
-        enumerator :: P_li_Partition_No ! the Partition number to which that link index belongs
-    end enum
-
     ! column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
     integer, parameter :: ni_Mlink_u2   = ni_idx_base1+2 ! map to link up dowstream branch 1
@@ -100,6 +87,19 @@ module array_index
     ! storage for link index for upstream and downstream links
     integer, dimension(upstream_face_per_elemM) :: ni_MlinkUp = nullvalueI
     integer, dimension(dnstream_face_per_elemM) :: ni_MlinkDn = nullvalueI
+
+    !% COLUMN INDEXES FOR INTEGER DATA IN P_nodeI partitioning arrays
+    enum, bind(c)
+        enumerator :: P_ni_idx_Partition = 1 ! the node index number
+        enumerator :: P_ni_Partition_No ! the Partition number to which that node index belongs
+        enumerator :: P_ni_is_boundary ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
+    end enum
+
+    !% COLUMN INDEXES FOR INTEGER DATA IN P_linkI partitioning arrays
+    enum, bind(c)
+        enumerator :: P_li_idx_Partition = 1 ! the link index number
+        enumerator :: P_li_Partition_No ! the Partition number to which that link index belongs
+    end enum
 
     !%  linkR COLUMN INDEXES FOR REAL DATA OF LINKS IN LINK/NODE SYSTEM  --------
     ! column index for real data in the linkR array

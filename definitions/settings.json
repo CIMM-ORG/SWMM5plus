@@ -120,7 +120,7 @@
         "BranchFactor" : 0.33
     },
     "Debug" : {
-        "DebugAPI" : false,
+        "DebugAPI" : true,
         "File" : {
             "allocate_storage" : true,
             "discretization" : true,
