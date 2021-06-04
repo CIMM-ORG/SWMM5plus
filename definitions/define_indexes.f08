@@ -192,7 +192,8 @@ module define_indexes
     !% These are the for the full arrays of logical
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: nYN_temp1 = 1
+        enumerator :: nYN_has_inflow = 1
+        enumerator :: nYN_temp1
     end enum
     !% note, this must be changed to whatever the last enum element is
     integer, target :: Ncol_nodeYN  = nYN_temp1

@@ -150,12 +150,11 @@ contains
             l1 = get_node_attribute(ii, node_has_extInflow) == 1
             l2 = get_node_attribute(ii, node_has_dwfInflow) == 1
             if (l1 .or. l2) then
-                !nodeYN(i, nYN_has_inflow) = .true.
+                nodeYN(ii, nYN_has_inflow) = .true.
                 if (total_n_links == 1) then
                     nodeI(ii, ni_node_type) = nBCup
                 end if
             end if
-
 
             nodeR(ii,nr_InitialDepth) = get_node_attribute(ii, node_initDepth)
             nodeR(ii,nr_Zbottom) = get_node_attribute(ii, node_invertElev)
