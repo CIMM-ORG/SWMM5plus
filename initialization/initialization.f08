@@ -26,6 +26,10 @@ module initialization
 !    using parameters we reduce the possibility of accidentally changing a
 !    column definition.
 !
+! Note on naming:
+!    The driver subroutine is named after the driver module (in this case,
+!    initialization).  Subsequent subroutines are name such that the subroutine
+!    name is essentially a path "init_<module>_<subroutine_name>"
 !-----------------------------------------------------------------------------
 
     private
