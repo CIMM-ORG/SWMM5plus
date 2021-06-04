@@ -12,7 +12,7 @@ module postProcessing
 
     integer :: debuglevel = 0
     integer :: debuglevelall = 0
-    integer :: nullvalueI = -998877
+    integer :: nullvalueR = -998877.00
 
 contains
 !
@@ -27,7 +27,8 @@ contains
 subroutine get_specific_link_data &
     (iunit, n_cells, n_links, n_linkItems, max_linkItems, n_timeSteps, &
     time_steps, data_idx, length_idx, link_lengths, link_data, &
-    specific_link, specific_linkData)
+    specific_link, specific_linkData, link_long_data, link_long_lengths, &
+    z_bottoms)
 
     character(64) :: subroutine_name = 'get_specific_link_data'
 
@@ -41,9 +42,11 @@ subroutine get_specific_link_data &
     integer, dimension(:), allocatable,intent(inout):: time_steps, data_idx
     integer, dimension(:), allocatable,intent(inout):: n_linkItems
     integer, dimension(:), allocatable,intent(inout):: length_idx 
-    real, dimension(:,:), allocatable, intent(inout):: link_data
-    real, dimension(:,:), allocatable, intent(inout):: link_lengths        
-    real, dimension(:,:), allocatable, intent(out)  :: specific_linkData
+    real(8), dimension(:,:), allocatable, intent(inout):: link_data
+    real(8), dimension(:), allocatable, intent(inout)  :: link_lengths        
+    real(8), dimension(:,:), allocatable, intent(out)  :: specific_linkData
+    real(8), dimension(:,:), allocatable, intent(inout)  :: link_long_data
+    real(8), dimension(:),   allocatable, intent(inout)  :: link_long_lengths, z_bottoms
 
     integer :: allocation_status
     character(len=99) :: emsg
@@ -57,61 +60,167 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
     call get_time_steps &
         (iunit, n_cells, n_links, n_timeSteps, time_steps)
     call get_link_items &
-        (iunit, n_cells, n_links, n_linkItems, max_linkItems)
+        (iunit, n_cells, n_links, specific_link, n_linkItems, max_linkItems)
     call get_data_index &
-        (iunit, max_linkItems, length_idx, data_idx)
+        (iunit, max_linkItems, length_idx, data_idx, n_cells,n_timeSteps)
     call get_link_lengths &
-        (iunit, n_links, max_linkItems, length_idx, link_lengths)    
+        (iunit, n_links, max_linkItems, length_idx, specific_link, link_lengths)    
     call get_all_link_data &
-        (iunit, n_cells, max_linkItems, data_idx, link_data)
+        (iunit, n_cells, max_linkItems, data_idx, link_data, specific_link, n_links)
+    call get_longitudinal_link_data &
+        (iunit, n_cells, max_linkItems, data_idx, n_links,link_long_data, link_long_lengths, z_bottoms)
     
     ! All the link data is saved here in a single array
     allocate(specific_linkData(n_timeSteps, max_linkItems))
-    specific_linkData(:,:) = nullvalueI
+    specific_linkData(:,:) = nullvalueR
     
-    jj = 0
-    do ii = 1, n_timeSteps
-        jj = jj + specific_link
-        !T1 Link1: |Element1Data Element2Data ... ... ...|
-        !T2 Link1: |Element1Data Element2Data ... ... ...|
-        !.................................................
-        specific_linkData(ii,:) = link_data(jj,:)
-    end do
+    specific_linkData(:,:) = link_data(:,:)
+
 if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
 end subroutine get_specific_link_data
 !
 !==========================================================================
 !==========================================================================
 !
-! This function get the specified data of the link items
-subroutine get_all_link_data &
-    (iunit, n_cells, max_linkItems, data_idx, link_data)
+! This function is hard coded to get longitudinal profile of the simple
+! weir and orifice test case. This part is hard coded.
+subroutine get_longitudinal_link_data &
+    (iunit, n_cells, max_linkItems, data_idx, n_links,link_long_data, link_long_lengths, z_bottoms)
 
-    character(64) :: subroutine_name = 'get_all_link_data'
+    character(64) :: subroutine_name = 'get_longitudinal_link_data'
 
     integer, intent(in)                             :: iunit, n_cells
-    integer, intent(in)                             :: max_linkItems
+    integer, intent(in)                             :: max_linkItems, n_links
     integer, dimension(:), intent(in)               :: data_idx     
-    integer                                         :: istat
-    real, dimension(:), allocatable                 :: link_data_temp
-    real, dimension(:,:), allocatable, intent(out)  :: link_data
+    integer                                         :: istat, nn, mm
+    character(len=512)                              :: tmp
+    real(8), dimension(:), allocatable                 :: link_long_data_temp
+    real(8), dimension(:), allocatable                 :: link_data_temp1, link_data_temp2
+    real(8), dimension(:,:), allocatable, intent(out)  :: link_long_data
+    real(8), dimension(:),   allocatable, intent(out)  :: link_long_lengths, z_bottoms
 
     integer :: allocation_status
     character(len=99) :: emsg
 
-    integer :: ii, jj, kk
+    integer :: ii, jj, kk, ll, pp
 
 !--------------------------------------------------------------------------
 if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
-    
-    allocate(link_data_temp (max_linkItems))
-    allocate(link_data(n_cells, max_linkItems))
+    nn = 19
+    mm = n_cells/n_links
 
-    link_data_temp(:) = nullvalueI
-    link_data(:,:) = nullvalueI
+    allocate(link_long_data_temp (nn))
+    allocate(link_long_lengths (nn))
+    allocate(z_bottoms(nn))
+    allocate(link_long_data(mm, nn))
+    allocate(link_data_temp1 (12))
+    allocate(link_data_temp2 (9))
+
+    link_long_data_temp(:) = nullvalueR
+    link_data_temp1(:) = nullvalueR
+    link_data_temp2(:) = nullvalueR
+    link_long_data(:,:) = nullvalueR
+    link_long_lengths = (/-500.0, 0.0 , 1.0, 250.0, 500.0, 501.0, 750.0 , 1000.0, 1001.0,  &
+                          1002.0, 1003.0, 1004.0, 1253.0, 1503.0, 1504.0, 1753.0, &
+                          2003.0, 2004.0, 2503.0/)
+    z_bottoms = (/4.92885780, 4.65990210, 4.65990210, 4.39094639, 4.12199116, 4.12199116, 3.85303521, &
+                  3.58407974, 3.58407974, 3.58407974, 3.58407974, 3.58407974, 2.93805981, 2.29203987, &
+                  2.29203987, 1.64601994, 1.00000000, 1.00000000, 0.35398006/)
+
+    ii = 0
+    kk = 1
+    ll = 1
+    pp = 1
+    jj = data_idx(kk)
+    ! This is the same algorithm as the 'get_link_lengths'
+    rewind(iunit)
+    do ii = 1, data_idx(n_cells)
+            if (ii .lt. jj) then
+                read(iunit, *)
+            else
+                if (ll .eq. 1) then
+                    read(iunit, *)link_data_temp1
+                    link_long_data_temp(19) = link_data_temp1(2)
+                    link_long_data_temp(18) = link_data_temp1(3)
+                    link_long_data_temp(17) = link_data_temp1(4)
+                    link_long_data_temp(16) = link_data_temp1(5)
+                    link_long_data_temp(15) = link_data_temp1(6)
+                    link_long_data_temp(14) = link_data_temp1(7)
+                    link_long_data_temp(13) = link_data_temp1(8)
+                    link_long_data_temp(12) = link_data_temp1(9)
+                    kk = kk + 1
+                    ll = 2
+                    jj = data_idx(kk)
+                elseif (ll .eq. 2) then
+                    read(iunit, *)link_data_temp2
+                    link_long_data_temp(11) = link_data_temp2(4)
+                    link_long_data_temp(10) = link_data_temp2(5)
+                    link_long_data_temp(9)  = link_data_temp2(6)
+                    kk = kk + 1
+                    ll = 3
+                    jj = data_idx(kk)
+                elseif (ll .eq. 3) then
+                    read(iunit, *)link_data_temp1
+                    link_long_data_temp(8) = link_data_temp1(4)
+                    link_long_data_temp(7) = link_data_temp1(5)
+                    link_long_data_temp(6) = link_data_temp1(6)
+                    link_long_data_temp(5) = link_data_temp1(7)
+                    link_long_data_temp(4) = link_data_temp1(8)
+                    link_long_data_temp(3) = link_data_temp1(9)
+                    link_long_data_temp(2) = link_data_temp1(10)
+                    link_long_data_temp(1) = link_data_temp1(11)
+                    kk = kk + 1
+                    ll = 1
+                    jj = data_idx(kk)
+                    link_long_data(pp,:) = link_long_data_temp
+                    pp = pp + 1
+
+                    if (kk .gt. n_cells) Then
+                        exit
+                    end if
+
+                end if
+            end if
+    end do
+    rewind(iunit)
+
+if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
+end subroutine get_longitudinal_link_data
+!
+!==========================================================================
+!==========================================================================
+!
+! This function get the specified data of the link items
+subroutine get_all_link_data &
+    (iunit, n_cells, max_linkItems, data_idx, link_data, specific_link, n_links)
+
+    character(64) :: subroutine_name = 'get_all_link_data'
+
+    integer, intent(in)                             :: iunit, n_cells, specific_link
+    integer, intent(in)                             :: max_linkItems, n_links
+    integer, dimension(:), intent(in)               :: data_idx     
+    integer                                         :: istat, nn
+    real(8), dimension(:), allocatable                 :: link_data_temp
+    real(8), dimension(:,:), allocatable, intent(out)  :: link_data
+
+    integer :: allocation_status
+    character(len=99) :: emsg
+
+    integer :: ii, jj, kk, ll
+
+!--------------------------------------------------------------------------
+if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
+    nn = n_cells/n_links
+
+    allocate(link_data_temp (max_linkItems))
+    allocate(link_data(nn, max_linkItems))
+
+    link_data_temp(:) = nullvalueR
+    link_data(:,:) = nullvalueR
 
     jj = 1
-    kk = 1
+    kk = specific_link
+    ll = 1
     rewind(iunit)
     ! This is the same algorithm as the 'get_link_lengths'
     do ii = 1, data_idx(n_cells)
@@ -127,12 +236,16 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
             !   Link2: |Element1Data Element2Data ... ... ...|
             !   Link3: |Element1Data Element2Data ... ... ...|
             !.................................................
-            link_data(kk,:) = link_data_temp
+            link_data(ll,:) = link_data_temp
             if (kk .le. n_cells) then
-                kk = kk + 1
+                kk = kk + n_links
+                ll = ll + 1
+                if (kk .gt. n_cells) Then
+                    exit
+                end if
             else
                 exit
-            end if
+            endif
         end if
     end do
     rewind(iunit)
@@ -144,17 +257,17 @@ end subroutine get_all_link_data
 !==========================================================================
 ! This function get the lenghts of the link items
 subroutine get_link_lengths &
-    (iunit, n_links, max_linkItems, length_idx, link_lengths)
+    (iunit, n_links, max_linkItems, length_idx, specific_link, link_lengths)
 
-    character(64) :: subroutine_name = 'get_data_index'
+    character(64) :: subroutine_name = 'get_link_lengths'
 
-    integer, intent(in)                             :: iunit, n_links
+    integer, intent(in)                             :: iunit, n_links, specific_link
     integer, intent(in)                             :: max_linkItems
     integer, dimension(:), intent(in)               :: length_idx   
     integer                                         :: istat
     integer, dimension(:), allocatable              :: length_idx_short
-    real, dimension(:), allocatable                 :: link_lengths_temp
-    real, dimension(:,:), allocatable, intent(out)  :: link_lengths
+    real(8), dimension(:), allocatable                 :: link_lengths_temp
+    real(8), dimension(:), allocatable, intent(out)    :: link_lengths
 
     integer :: allocation_status
     character(len=99) :: emsg
@@ -165,16 +278,16 @@ subroutine get_link_lengths &
 if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
    
     allocate(link_lengths_temp (max_linkItems))
-    allocate(link_lengths(n_links, max_linkItems))
+    allocate(link_lengths(max_linkItems))
     allocate(length_idx_short(n_links))
 
-    link_lengths_temp(:) = nullvalueI
-    link_lengths(:,:) = nullvalueI
+    link_lengths_temp(:) = nullvalueR
+    link_lengths(:) = nullvalueR
     ! As the lengths are repeated, only the first 'n_links' indexes are used
     length_idx_short(:) = length_idx(1:n_links)
 
     jj = 1
-    kk = 1
+    kk = specific_link
     rewind(iunit)
     ! The first do loop is ran till the last index of saved data
     do ii = 1, length_idx_short(n_links)
@@ -186,18 +299,11 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
             !saved data
             ! Then it reads the data in that index and saves in a 
             !temp array
-            read(iunit, *)link_lengths_temp
+            read(iunit, *)link_lengths
             ! Saves the link lenght in an array
-            ! [Link1Lenghts ... ... ...;
-            !  Link2Lenghts ... ... ...;
-            !  Link3LEnghts ... ... ...]
-            link_lengths(kk,:) = link_lengths_temp
-            if (kk .le. n_links) then
-                kk = kk + 1
-                if (kk .gt. n_links) then
-                    exit
-                end if
-            end if
+            ! [Link1Lenghts ... ... ...]
+            exit
+
         end if
     end do
     rewind(iunit)
@@ -210,11 +316,11 @@ end subroutine get_link_lengths
 !
 ! This function gets the index of saved link data
 subroutine get_data_index &
-    (iunit, max_linkItems, length_idx, data_idx)
+    (iunit, max_linkItems, length_idx, data_idx, n_cells,n_timeSteps)
 
     character(64) :: subroutine_name = 'get_data_index'
 
-    integer, intent(in)                             :: iunit, max_linkItems
+    integer, intent(in)                             :: iunit, max_linkItems, n_timeSteps, n_cells
     integer, dimension(:), allocatable              :: n_linkItems
     character(len=512)                              :: tmp
     integer                                         :: istat
@@ -229,13 +335,13 @@ subroutine get_data_index &
 !--------------------------------------------------------------------------
 if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name 
     
-    allocate(temp_idx(max_linkItems))
-    allocate(length_idx(max_linkItems))
-    allocate(data_idx(max_linkItems))
+    allocate(temp_idx(n_cells))
+    allocate(length_idx(n_cells))
+    allocate(data_idx(n_cells))
 
-    temp_idx(:) = nullvalueI
-    length_idx(:) = nullvalueI
-    data_idx(:) = nullvalueI
+    temp_idx(:) = nullvalueR
+    length_idx(:) = nullvalueR
+    data_idx(:) = nullvalueR
 
     ii = 0
     jj = 0
@@ -252,11 +358,11 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
             temp_idx(jj) = ii
         end if
     end do
+    rewind(iunit)
     ! The line after '=rows_this_link_X_data' is link lenghts. 
     length_idx = temp_idx + 1
     ! The 2nd line after '=rows_this_link_X_data' is link data. 
     data_idx = temp_idx + 2
-    rewind(iunit)
 
 if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
 end subroutine get_data_index
@@ -266,11 +372,11 @@ end subroutine get_data_index
 !
 ! This function gets the number of elements of a link
 subroutine get_link_items &
-    (iunit, n_cells, n_links, n_linkItems, max_linkItems)
+    (iunit, n_cells, n_links, specific_link, n_linkItems, max_linkItems)
 
     character(64) :: subroutine_name = 'get_link_items'
 
-    integer,intent(in)                              :: iunit
+    integer,intent(in)                              :: iunit, specific_link
     integer, intent(in out)                         :: n_cells, n_links 
     character(len=512)                              :: tmp
     integer                                         :: istat
@@ -292,8 +398,8 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
     allocate(n_linkItems_tmp(n_cells))
     allocate(n_linkItems(n_links))
 
-    n_linkItems_tmp(:) = nullvalueI
-    n_linkItems(:) = nullvalueI
+    n_linkItems_tmp(:) = nullvalueR
+    n_linkItems(:) = nullvalueR
 
     ii = 0
     rewind(iunit)
@@ -311,8 +417,8 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
     end do
     ! Takes the first 'n_links' values of n_linkItems_tmp array
     ! [LinkItem1 LinkItem2 LinkItem3]
-    n_linkItems(:) = n_linkItems_tmp(n_links)
-    max_linkItems = maxval(n_linkItems)
+    n_linkItems(:) = n_linkItems_tmp(1:n_links)
+    max_linkItems = n_linkItems_tmp(specific_link)
     rewind(iunit)
 
 if ((debuglevel > 0) .or. (debuglevelall > 0))  print *, '*** leave ',subroutine_name
@@ -349,8 +455,8 @@ if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_
     allocate(time_steps_tmp(n_cells))
     n_timeSteps = n_cells/n_links
     allocate(time_steps(n_timeSteps))
-    time_steps_tmp(:) = nullvalueI
-    time_steps(:) = nullvalueI
+    time_steps_tmp(:) = nullvalueR
+    time_steps(:) = nullvalueR
 
     ii = 0
     rewind(iunit)
