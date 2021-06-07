@@ -650,7 +650,7 @@ contains
 
                         !% integer data
                         faceI(FaceLocalCounter,fi_Melem_dL) = nullvalueI
-                        faceI(FaceLocalCounter,fi_BCtype)   = fBCup
+                        faceI(FaceLocalCounter,fi_BCtype)   = fBCdn
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
