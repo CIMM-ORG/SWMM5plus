@@ -157,9 +157,12 @@ contains
             l2 = interface_get_node_attribute(ii, node_has_dwfInflow) == 1
             if (l1 .or. l2) then
                 nodeYN(ii, nYN_has_inflow) = .true.
-                if (total_n_links == 1) then
+                ! if (total_n_links == 1) then
+                !     nodeI(ii, ni_node_type) = nBCup
+                ! end if
+                if (nodeI(ii,ni_N_link_u) == zeroI) then
                     nodeI(ii, ni_node_type) = nBCup
-                end if
+                end if   
             end if
 
             nodeR(ii,nr_InitialDepth) = interface_get_node_attribute(ii, node_initDepth)
