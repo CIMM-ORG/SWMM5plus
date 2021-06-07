@@ -440,7 +440,8 @@ do
 done
 
 sed "s#{{SCRIPTS}}#$SCRIPTS#" "$API_DIR/Makefile" > "$API_DIR/src/Makefile"
-sed -i "s#{{OBJECTS}}#$OBJECTS#" "$API_DIR/src/Makefile"
+sed -i'.original' -e "s#{{OBJECTS}}#$OBJECTS#" "$API_DIR/src/Makefile"
+rm "$API_DIR/src/Makefile.original"
 
 cd "$API_DIR/src" && make
 cd $SWMM5PLUS_DIR
