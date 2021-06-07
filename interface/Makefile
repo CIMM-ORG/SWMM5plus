@@ -10,7 +10,7 @@ objs = swmm5.o climate.o controls.o culvert.o datetime.o dwflow.o dynwave.o erro
        {{SCRIPTS}}
 
 swmm5 : $(objs)
-	cc -o libswmm5.so $(objs) -fopenmp -lm -lpthread -shared
+	cc -o libswmm5.so $(objs) -lm -lpthread -shared
 
 swmm5.o       : consts.h macros.h enums.h error.h datetime.h objects.h funcs.h text.h globals.h swmm5.h
 climate.o     : headers.h
