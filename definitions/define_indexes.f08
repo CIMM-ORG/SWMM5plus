@@ -72,6 +72,7 @@ module define_indexes
         enumerator :: li_InitialDepthType ! 1=uniform, 2= lineary change, 3=exponential decay
         enumerator :: li_length_adjusted  ! 1 = length was not adjusted, 2 = one side was adjusted, 3 = both side was adjusted
         enumerator :: li_P_image ! image number assigned from BIPquick
+        enumerator :: li_weir_EndContrations
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
     end enum
@@ -136,7 +137,6 @@ module define_indexes
         enumerator :: lr_DischargeCoeff1 ! discharge coefficient for triangular weir part or orifice element
         enumerator :: lr_DischargeCoeff2 ! discharge coefficient for rectangular weir part
         enumerator :: lr_FullDepth ! vertical opening of pipe, weir, orifice
-        enumerator :: lr_EndContractions
         enumerator :: lr_Flowrate
         enumerator :: lr_Depth
         enumerator :: lr_DepthUp
