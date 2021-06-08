@@ -58,6 +58,7 @@ then
 elif [[ $machine = "mac" ]]
 then
     CAF="$COARRAY_INSTALL/bin/caf" #"caf"
+    echo "export CAFRUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 fi
 
 CAF_VERSION="0.0.0"

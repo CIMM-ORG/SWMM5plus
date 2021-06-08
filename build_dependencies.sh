@@ -71,28 +71,6 @@ then
 fi
 # --------------------------------------------------------------------------------------
 
-# Download homebrew for mac
-# --------------------------------------------------------------------------------------
-install_homebrew()
-{
-    echo "Homebrw does not exist in this mac machine ....."
-    echo "Installaing Homebrew for Mac ...."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" # mirror from github and install homebrew in root. 
-    # Note: this is for now, we need to find out alternative ways to do it.
-
-    if command -v brew &> /dev/null;
-    then
-        echo "Homebrew installed."
-    else
-        echo "There is something wrong in Homebrew installation."
-        echo 
-        exit
-    fi
-}
-
-
-
-
 # Install MPICH (required for OpenCAF)
 # --------------------------------------------------------------------------------------
 install_mpich()
@@ -392,19 +370,7 @@ then
     then
         install_opencoarray_mac
         FC=$COARRAY_INSTALL/bin/caf
-        echo "export CAFRUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG 
-        #if ! command -v brew &> /dev/null; # if this machine does not have brew, install brew
-        #then
-        #    install_homebrew
-        #fi
-        #Cellar=$(brew --prefix)/Cellar # get the path of our Cellar
-        #if [ ! -d $Cellar/opencoarrays ] # check if we have opencoarrays in the cellar
-        #then
-        #    brew update
-        #    brew install opencoarrays # brew the caf and cafrun in Cellar/opencoarray
-        #    CAF=$Cellar/opencoarrays/2.*/bin/caf # we use version 2.* to specify the location but this need some touch in the future.
-        #    echo "export CAFRUN=$Cellar/opencoarrays/*/bin/cafrun" >> $INSTALLATION_LOG # export the cafrun path in the Cellar
-        #fi
+        echo "export CAFRUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
     fi
 fi
 # --------------------------------------------------------------------------------------
@@ -420,8 +386,9 @@ cp -f "$API_DIR/api.c" "$API_DIR/src/"
 
 # Insert new files in SWMM C Makefile
 
-SCRIPTS="api.o"
-OBJECTS="api.o   : headers.h api.h\n"
+SCRIPTS='api.o'
+OBJECTS='api.o   : headers.h api.h\
+'
 
 API_TEST_FILES=""
 for fname in $(find $TEST_DIR -name '*.c')
@@ -431,10 +398,12 @@ do
     SCRIPTS="$SCRIPTS $F.o"
     if [[ -f "${fname%.*}.h" ]]
     then
-        OBJECTS="${OBJECTS}$F.o       : headers.h $F.h\n"
+        OBJECTS="${OBJECTS}$F.o       : headers.h $F.h\
+        "
         cp -f "$TEST_DIR/$F.h" "$API_DIR/src/"
     else
-        OBJECTS="${OBJECTS}$F.o       : headers.h\n"
+        OBJECTS="${OBJECTS}$F.o       : headers.h\
+        "
     fi
     cp -f "$TEST_DIR/$F.c" "$API_DIR/src/"
 done

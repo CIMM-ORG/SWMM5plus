@@ -562,7 +562,7 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
             lr_Length[i] = Conduit[li_sub_idx].length * length_units;
             lr_Roughness[i] = Conduit[li_sub_idx].roughness * manning_units;
             h = (Node[li_Mnode_u[i]].invertElev - Node[li_Mnode_d[i]].invertElev) * length_units;
-            lr_Slope[i] = -SSIGN(h)*lr_Length[i]/(pow(lr_Length[i],2) - pow(abs(h),2));
+            lr_Slope[i] = -SSIGN(h)*lr_Length[i]/(pow(lr_Length[i],2) - pow(fabsf(h),2));
         } else {
             lr_Length[i] = 0;
             lr_Roughness[i] = 0;
