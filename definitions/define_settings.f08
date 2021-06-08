@@ -82,7 +82,7 @@ module define_settings
 
     ! setting%Adjust%Head
     type AdjustHeadType
-        logical :: Apply = .true.
+        logical :: Apply = .false.
         real(8) :: Coef = 1.0
         integer :: Approach = vshape
     end type AdjustHeadType
@@ -126,6 +126,17 @@ module define_settings
         integer :: TotallInflows = 50
     end type LimiterArraySizeType
 
+    ! setting%Time%Hydrology or Hydraulics
+    type HydrologyHydraulicsTimeType
+        real(8) :: Dt = 100  !% time step (seconds)
+        real(8) :: timeNow = 0.0 !% the time at the start of the present step
+        real(8) :: timeNext = 0.0 !% the time af the end of the present step
+        real(8) :: timeFinal = 1.0  !% the time this loop ends
+        integer :: stepNow = 0 !% the present time step
+        integer :: stepNext = 1 !% the next time step
+        integer :: stepFinal = 1 !% the maximum number of steps allowed in this loop
+    end type HydrologyHydraulicsTimeType  
+
     ! setting%Debug%File
     type DebugFileType
         logical :: define_globals   = .false.
@@ -139,6 +150,7 @@ module define_settings
         logical :: network_define   = .false.
         logical :: partitioning     = .false.
         logical :: interface        = .false.
+        logical :: timeloop         = .false.
         logical :: utility          = .false.
         logical :: utility_allocate = .false.
         logical :: utility_array    = .false.
@@ -153,7 +165,7 @@ module define_settings
         logical :: finalization     = .false.
         logical :: initialization   = .false.
         logical :: interface        = .false.
-        logical :: time_loop        = .false.
+        logical :: timeloop         = .false.
         logical :: utility          = .false.
     end type DebugFileGroupType
 
@@ -193,6 +205,12 @@ module define_settings
         real(8) :: gravity = 9.81 ! m^2/s
     end type ConstantType
 
+    !% setting%Discretization
+    type DiscretizationType
+        real(8) :: NominalElemLength  = 10.0
+        real(8) :: LinkShortingFactor = 0.33
+    end type DiscretizationType
+
     ! setting%Eps
     type EpsilonType
         ! +- small non-dimensional range for hyd jump discrimination
@@ -209,6 +227,17 @@ module define_settings
         type(LimiterVelocityType) :: Velocity
         type(LimiterArraySizeType) :: ArraySize
     end type LimiterType
+
+    !% setting%Partitioning
+    type PartitioningType
+        integer :: PartitioningMethod = BLink
+    endtype PartitioningType
+
+    !% setting%Simulation
+    type SimulationType
+        logical :: useHydrology = .true.
+        logical :: useHydraulics = .false.
+    end type SimulationType
 
     ! setting%SmallVolume
     type SmallVolumeType
@@ -231,21 +260,42 @@ module define_settings
         integer :: SolverSelect = SVE
     end type SolverType
 
-    ! setting%Step
-    type StepType
-        integer :: First
-        integer :: Current
-        integer :: Final
-    end type StepType
+    !% REMOVED 20210607 brh -- rolled into setting%Time
+    ! ! setting%Step
+    ! type StepType
+    !     integer :: First
+    !     integer :: Current
+    !     integer :: Final
+    ! end type StepType
+    !%  setting%TestCase
+
+    type TestCaseType
+        logical       :: UseTestCase = .false.
+        character(64) :: TestName
+    end type TestCaseType
 
     ! setting%Time
     type TimeType
         character(14) :: DateTimeStamp
-        real(8) :: Dt ! s
+        ! real(8) :: Dt ! s !% REMOVED 20210607 brh -- rolled into setting%Time
         real(8) :: StartTime
-        real(8) :: NextTime
+        ! real(8) :: NextTime !% REMOVED 20210607 brh -- rolled into setting%Time
         real(8) :: EndTime
+        type(HydrologyHydraulicsTimeType) :: Hydrology
+        type(HydrologyHydraulicsTimeType) :: Hydraulics     
     end type TimeType
+
+    !% setting%VariableDT
+    type VariableDTType
+        logical :: Apply = .true.
+        real(8) :: CFL_hi_max = 0.7
+        real(8) :: CFL_target = 0.45
+        real(8) :: CFL_lo_max = 0.3
+        real(8) :: decreaseFactor = 0.8
+        real(8) :: increaseFactor = 1.2
+        integer :: NstepsForCheck = 10
+        integer :: LastCheckStep = 0
+    end type VariableDTType
 
     ! setting%ZeroValue
     type ZerovalueType
@@ -256,11 +306,12 @@ module define_settings
         real(8) :: Volume = 1.0e-6 ! m^3
     end type ZerovalueType
 
-    !%  setting%TestCase
-    type TestCaseType
-        logical       :: UseTestCase = .false.
-        character(64) :: TestName
-    end type TestCaseType
+    !% setting%Debug
+    type DebugType
+        logical :: Tests = .false.
+        type(DebugFileType) :: File
+        type(DebugFileGroupType) :: FileGroup
+    end type DebugType
 
     !% setting%Paths
     type PathType
@@ -271,24 +322,6 @@ module define_settings
         character(len=256) :: out ! path to SWMM output (.out) file
     end type PathType
 
-    !% setting%Debug
-    type DebugType
-        logical :: Tests = .false.
-        type(DebugFileType) :: File
-        type(DebugFileGroupType) :: FileGroup
-    end type DebugType
-
-    !% setting%Partitioning
-    type PartitioningType
-        integer :: PartitioningMethod = Default
-    endtype PartitioningType
-
-    !% setting%Discretization
-    type DiscretizationType
-        real(8) :: NominalElemLength  = 10.0
-        real(8) :: LinkShortingFactor = 0.33
-    end type DiscretizationType
-
     ! -
     ! --
 
@@ -298,18 +331,20 @@ module define_settings
         type(AdjustType)         :: Adjust
         type(BCPropertiesType)   :: BC
         type(ConstantType)       :: Constant ! Constants
+        type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
         type(LimiterType)        :: Limiter ! maximum and minimum limiters
+        type(PartitioningType)   :: Partitioning
+        type(SimulationType)     :: Simulation    
         type(SmallVolumeType)    :: SmallVolume ! controls for small volumes
         type(SolverType)         :: Solver ! switch for solver
-        type(StepType)           :: Step ! controls over simulation time stepping
+    !rm 20210607 brh    type(StepType)           :: Step ! controls over simulation time stepping
         type(TimeType)           :: Time ! controls of time step
+        type(VariableDTType)     :: VariableDT
         type(ZeroValueType)      :: ZeroValue ! finite values to represent small or negative values
         type(TestCaseType)       :: TestCase
         type(PathType)           :: Paths
         type(DebugType)          :: Debug
-        type(DiscretizationType) :: Discretization
-        type(PartitioningType)   :: Partitioning
         logical                  :: Verbose
         logical                  :: Warning = .true.
     end type settingType
@@ -460,6 +495,14 @@ contains
         setting%Constant%gravity = real_value
         if (.not. found) stop 24
 
+        ! For element length adjustment
+        call json%get("Discretization.NominalElemLength", real_value, found)
+        setting%Discretization%NominalElemLength = real_value
+        if (.not. found) stop 82
+        call json%get("Discretization.LinkShortingFactor", real_value, found)
+        setting%Discretization%LinkShortingFactor = real_value
+        if (.not. found) stop 83
+
         ! Load Eps Settings
         call json%get('Eps.FroudeJump', real_value, found)
         setting%Eps%FroudeJump = real_value
@@ -507,9 +550,30 @@ contains
         setting%Limiter%Velocity%UseLimitMax = logical_value
         if (.not. found) stop 35
 
-        call json%get('BC.BCSlots', integer_value, found)
-        setting%BC%BCSlots = integer_value
-        if (.not. found) stop 36
+
+        ! Load BIPQuick settings
+        call json%get('Partitioning.PartitioningMethod', c, found)
+        call util_lower_case(c)
+        if (c == 'default') then
+            setting%Partitioning%PartitioningMethod = Default
+        else if (c == 'bquick') then
+            setting%Partitioning%PartitioningMethod = BQuick
+        else if (c == 'random') then
+            setting%Partitioning%PartitioningMethod = Random
+        else if (c == 'blink') then
+            setting%Partitioning%PartitioningMethod = BLink
+        else
+            print *, "Error, the setting '" // trim(c) // "' is not supported for PartitioningMethod"
+            stop
+        end if
+        if (.not. found) stop 84
+
+        call json%get("Simulation.useHydrology", logical_value, found)
+        setting%Simulation%useHydrology = logical_value
+        if (.not. found) stop 8501
+        call json%get("Simulation.useHydraulics", logical_value, found)
+        setting%Simulation%useHydraulics = logical_value
+        if (.not. found) stop 8502
 
         ! Load SmallVolume Settings
         call json%get('SmallVolume.DepthCutoff', real_value, found)
@@ -569,32 +633,97 @@ contains
         if (.not. found) stop 47
 
         ! Load Step Settings
-        call json%get('Step.Current', real_value, found)
-        setting%Step%Current = real_value
-        if (.not. found) stop 48
-        call json%get('Step.Final', real_value, found)
-        setting%Step%Final = real_value
-        if (.not. found) stop 49
-        call json%get('Step.First', real_value, found)
-        setting%Step%First = real_value
-        if (.not. found) stop 50
+        !rm 20210607 brh call json%get('Step.Current', real_value, found)
+        !rm 20210607 brh setting%Step%Current = real_value
+        !rm 20210607 brh if (.not. found) stop 48
+        !rm 20210607 brh call json%get('Step.Final', real_value, found)
+        !rm 20210607 brh setting%Step%Final = real_value
+        !rm 20210607 brh if (.not. found) stop 49
+        !rm 20210607 brh call json%get('Step.First', real_value, found)
+        !rm 20210607 brh setting%Step%First = real_value
+        !rm 20210607 brh if (.not. found) stop 50
 
         ! Load Time Settings
         call json%get('Time.DateTimeStamp', c, found)
         setting%Time%DateTimeStamp = c
-        if (.not. found) stop 51
-        call json%get('Time.Dt', real_value, found)
-        setting%Time%Dt = real_value
-        if (.not. found) stop 52
+        if (.not. found) stop 4801
+        !rm 20210607 brh call json%get('Time.Dt', real_value, found)
+        !rm 20210607 brh setting%Time%Dt = real_value
+        !rm 20210607 brh if (.not. found) stop 52
         call json%get('Time.EndTime', real_value, found)
         setting%Time%EndTime = real_value
-        if (.not. found) stop 53
-        call json%get('Time.NextTime', real_value, found)
-        setting%Time%NextTime = real_value
-        if (.not. found) stop 54
+        !rm 20210607 brh if (.not. found) stop 49
+        !rm 20210607 brh call json%get('Time.NextTime', real_value, found)
+        !rm 20210607 brh setting%Time%NextTime = real_value
+        if (.not. found) stop 50
         call json%get('Time.StartTime', real_value, found)
         setting%Time%StartTime = real_value
+        if (.not. found) stop 51
+        call json%get('Time.Hydrology.Dt', real_value, found)
+        setting%Time%Hydrology%Dt = real_value
+        if (.not. found) stop 52
+        call json%get('Time.Hydrology.timeNow', real_value, found)
+        setting%Time%Hydrology%timeNow = real_value
+        if (.not. found) stop 53
+        call json%get('Time.Hydrology.timeNext', real_value, found)
+        setting%Time%Hydrology%timeNext = real_value
+        if (.not. found) stop 54
+        call json%get('Time.Hydrology.timeFinal', real_value, found)
+        setting%Time%Hydrology%timeFinal = real_value
+        if (.not. found) stop 5401    
+        call json%get('Time.Hydrology.stepNow', integer_value, found)
+        setting%Time%Hydrology%stepNow = integer_value
         if (.not. found) stop 55
+        call json%get('Time.Hydrology.stepNext', integer_value, found)
+        setting%Time%Hydrology%stepNext = integer_value
+        if (.not. found) stop 5501      
+        call json%get('Time.Hydrology.stepFinal', integer_value, found)
+        setting%Time%Hydrology%stepFinal = integer_value
+        if (.not. found) stop 5502   
+        call json%get('Time.Hydraulics.Dt', real_value, found)
+        setting%Time%Hydraulics%Dt = real_value
+        if (.not. found) stop 5503
+        call json%get('Time.Hydraulics.timeNow', real_value, found)
+        setting%Time%Hydraulics%timeNow = real_value
+        if (.not. found) stop 5504
+        call json%get('Time.Hydraulics.timeNext', real_value, found)
+        setting%Time%Hydraulics%timeNext = real_value
+        if (.not. found) stop 5505
+        call json%get('Time.Hydraulics.timeFinal', real_value, found)
+        setting%Time%Hydraulics%timeFinal = real_value
+        if (.not. found) stop 5506  
+        call json%get('Time.Hydraulics.stepNow', integer_value, found)
+        setting%Time%Hydraulics%stepNow = integer_value
+        if (.not. found) stop 5507
+        call json%get('Time.Hydraulics.stepNext', integer_value, found)
+        setting%Time%Hydraulics%stepNext = integer_value
+        if (.not. found) stop 5508     
+        call json%get('Time.Hydraulics.stepFinal', integer_value, found)
+        setting%Time%Hydraulics%stepFinal = integer_value
+        if (.not. found) stop 5509  
+
+        !% load variable time step settings
+        call json%get("VariableDT.Apply", logical_value, found)
+        setting%VariableDT%Apply = logical_value
+        if (.not. found) stop 8401
+        call json%get("VariableDT.CFL_hi_max", real_value, found)
+        setting%VariableDT%CFL_hi_max = real_value
+        if (.not. found) stop 8402
+        call json%get("VariableDT.CFL_target", real_value, found)
+        setting%VariableDT%CFL_target = real_value
+        if (.not. found) stop 8407
+        call json%get("VariableDT.CFL_lo_max", real_value, found)
+        setting%VariableDT%CFL_lo_max = real_value
+        if (.not. found) stop 8403
+        call json%get("VariableDT.decreaseFactor", real_value, found)
+        setting%VariableDT%decreaseFactor = real_value
+        if (.not. found) stop 8404
+        call json%get("VariableDT.increaseFactor", real_value, found)
+        setting%VariableDT%increaseFactor = real_value
+        if (.not. found) stop 8405
+        call json%get("VariableDT.NstepsForCheck", integer_value, found)
+        setting%VariableDT%NstepsForCheck = integer_value
+        if (.not. found) stop 8406
 
         ! Load ZeroValue Settings
         call json%get('ZeroValue.Area', real_value, found)
@@ -679,33 +808,7 @@ contains
         if (.not. found) stop 81
         call def_update_debug_options()
 
-
-        ! For element length adjustment
-        call json%get("Discretization.NominalElemLength", real_value, found)
-        setting%Discretization%NominalElemLength = real_value
-        if (.not. found) stop 82
-        call json%get("Discretization.LinkShortingFactor", real_value, found)
-        setting%Discretization%LinkShortingFactor = real_value
-        if (.not. found) stop 83
-
-        ! Load BIPQuick settings
-        call json%get('Partitioning.PartitioningMethod', c, found)
-        call util_lower_case(c)
-        if (c == 'default') then
-            setting%Partitioning%PartitioningMethod = Default
-        else if (c == 'bquick') then
-            setting%Partitioning%PartitioningMethod = BQuick
-        else if (c == 'random') then
-            setting%Partitioning%PartitioningMethod = Random
-        else if (c == 'blink') then
-            setting%Partitioning%PartitioningMethod = BLink
-        else
-            print *, "Error, the setting '" // trim(c) // "' is not supported for PartitioningMethod"
-            stop
-        end if
-        if (.not. found) stop 84
-
-        ! Load BIPQuick settings
+        ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
         if (.not. found) stop 85

@@ -83,6 +83,7 @@ module define_globals
     real(8), parameter :: twoR = 2.0
     real(8), parameter :: threeR = 3.0
     real(8), parameter :: fourR = 4.0
+    real(8), parameter :: fiveR = 5.0
     real(8), parameter :: sixR = 6.0
     real(8), parameter :: eightR = 8.0
     real(8), parameter :: tenR = 10.0
@@ -129,9 +130,11 @@ module define_globals
     integer :: J_face_add = 6 ! Supplement faces for junction
 
     ! useful shortcuts
-    real(8), pointer :: dt => setting%time%dt
+    !rm 20210607 brh real(8), pointer :: dt => setting%time%dt  !% need different Hydrology and Hydraulics dt
     real(8), pointer :: grav => setting%constant%gravity
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
+
+    !% FUTURE 20210607 brh Remove these from globals and put in Discretization
     real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
     real(8), pointer :: elem_shorten_cof => setting%Discretization%LinkShortingFactor
 

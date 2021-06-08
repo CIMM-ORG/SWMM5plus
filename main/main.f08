@@ -4,6 +4,7 @@ program main
     use define_indexes
     use initialization
     use interface
+    use timeloop
     use finalization
     use define_settings, only: setting
 
@@ -13,6 +14,7 @@ program main
     call initialize_all()
 
     ! --- Time Loop
+    call timeloop_toplevel()
 
     ! --- Finalization
     call finalize_all()

@@ -10,6 +10,12 @@
 !==========================================================================
 module define_keys
 
+    !% BRH 20210608 New data keyes needed for identifiying time loops
+    enum, bind(c)
+        enumerator :: hydrology = 1 !% indicates hydrology loop
+        enumerator :: hydraulics    !% indicates hydraulics loop
+    end enum
+
     implicit none
 
     ! data types for elemI(:,ei_meta_elem_type).

@@ -26,6 +26,7 @@ API_DIR='interface'
 UTIL_DIR='utility'
 DEF_DIR='definitions'
 DDIR="$SWMM5PLUS_DIR/dependencies"
+TL_DIR='timeloop'
 FIN_DIR='finalization'
 TEST_DIR='tests'
 

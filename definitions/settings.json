@@ -4,12 +4,12 @@
             "DensityLowCutoff" : 1e-10,
             "FullPipeFactor" : 1.0,
             "OpenPipeFactor" : 1.0,
-            "UseDensityCorrection" : true,
+            "UseDensityCorrection" : false,
             "DensityHighCutoff" : 0.1
         },
         "CFL" : {
-            "CFLmax" : 0.7,
-            "CFLsmall" : 0.2
+            "CFLmax" : 2.0,
+            "CFLsmall" : 0.05
         },
         "Celerity" : {
             "RC" : 1.0
@@ -41,6 +41,9 @@
             "Apply" : false,
             "approach" : "vshape",
             "Coef" : 1.0
+        },
+        "WidthDepth" :{
+            "Apply" : true
         }
     },
     "BC" : {
@@ -49,6 +52,10 @@
     "Constant" : {
         "gravity" : 9.81
     },
+    "Discretization" : {
+        "NominalElemLength" : 10.0,
+        "LinkShortingFactor" : 0.33
+    },   
     "Eps" : {
         "FroudeJump" : 0.1,
         "InflowDepthIncreaseFroudeLimit" : 0.1
@@ -76,6 +83,13 @@
             "TotalInflows" : 50
         }
     },
+    "Partitioning" : {
+        "PartitioningMethod" : "BLink"   
+    },
+    "Simulation" : {
+        "useHydrology" : true,
+        "useHydraulics" : true
+    },
     "SmallVolume" : {
         "DepthCutoff" : 0.01,
         "ManningsN" : 0.01,
@@ -91,17 +105,42 @@
         "PreissmanSlot" : false,
         "SolverSelect" : "SVE"
     },
-    "Step" : {
-        "Current" : 0.0,
-        "Final" : 0.0,
-        "First" : 0.0
-    },
+    "TestCase" : {
+        "UseTestCase" : false,
+        "TestName" : "testcase"
+    }, 
     "Time" : {
         "DateTimeStamp" : 0.0,
-        "Dt" : 0.0,
         "EndTime" : 0.0,
-        "NextTime" : 0.0,
-        "StartTime" : 0.0
+        "StartTime" : 0.0,
+        "Hydrology" : {
+            "Dt" : 100.0,
+            "timeNow" : 0.0,
+            "timeNext" : 1.0,
+            "timeFinal" : 1.0,
+            "stepNow"  : 0,
+            "stepNext"  : 1,
+            "stepFinal" : 1
+        },
+        "Hydraulics" : {
+            "Dt" : 100.0,
+            "timeNow" : 0.0,
+            "timeNext" : 1.0,
+            "timeFinal" : 1.0,
+            "stepNow"  : 0,
+            "stepNext"  : 1,
+            "stepFinal" : 1
+        }        
+    },
+    "VariableDT" : {
+        "Apply" : true,
+        "CFL_hi_max" : 0.7,
+        "CFL_target" : 0.5,
+        "CFL_lo_max" : 0.3,
+        "decreaseFactor" : 0.8,
+        "increaseFactor" : 1.2,
+        "NstepsForCheck" : 10,
+        "LastCheckStep"  : 0
     },
     "ZeroValue" : {
         "Area" : 1e-6,
@@ -109,13 +148,6 @@
         "Topwidth" : 1e-4,
         "UseZeroValues" : true,
         "Volume" : 1e-6
-    },
-    "Partitioning" : {
-        "PartitioningMethod" : "blink"
-    },
-    "Discretization" : {
-        "NominalElemLength" : 10.0,
-        "LinkShortingFactor" : 0.33
     },
     "Debug" : {
         "Tests" : true,
@@ -131,6 +163,7 @@
             "network_define" : false,
             "partitioning" : false,
             "interface" : false,
+            "timeloop" : false,
             "utility" : false,
             "utility_allocate" : false,
             "utility_array" : false,
@@ -143,17 +176,10 @@
             "finalization" : false,
             "initialization" : true,
             "interface" : false,
-            "time_loop" : false,
+            "timeloop" : false,
             "utility" : false
         },
-        "Output" : {
-
-        }
     },
-    "Warning" : {
-        "File" : {
-            "partitioning" : false
-        }
-    },
+    "Warning"  : false,
     "Verbose" : false
 }
