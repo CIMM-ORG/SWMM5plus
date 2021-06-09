@@ -13,6 +13,7 @@ module initial_condition
     use define_keys
     use define_globals
     use define_settings
+    !use pack_mask_arrays
 
     implicit none
 
@@ -55,7 +56,8 @@ contains
         !% update all the auxiliary variables
         ! call update_auxiliary_variables
 
-
+        sync all
+        
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
