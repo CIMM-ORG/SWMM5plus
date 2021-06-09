@@ -40,7 +40,21 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
-        call initial_condition_from_linkdata()
+        !% get data that can be extracted from links
+        call initial_condition_from_linkdata ()
+
+        !% get data that can be extracted from nodes
+        ! call initial_condition_from_nodedata ()
+
+        !% set up all the static packs and masks
+        ! call pack_mask_arrays_all ()
+
+        !% set up all the dynamic packs and masks
+        ! call pack_dynamic_arrays ()
+
+        !% update all the auxiliary variables
+        ! call update_auxiliary_variables
+
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -154,7 +168,6 @@ contains
                         if (DepthUp - DepthDn > zeroR) then
                             where ( (elemI(:,ei_link_Pos)       .eq. mm      ) .and. &
                                     (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) )
-
                                 elemR(:,er_Depth) = DepthUp - (DepthUp - DepthDn) * exp(-kappa)
                             endwhere
 
@@ -162,7 +175,6 @@ contains
                         elseif (DepthUp - DepthDn < zeroR) then
                             where ( (elemI(:,ei_link_Pos)       .eq. mm      ) .and. &
                                     (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) )
-
                                 elemR(:,er_Depth) = DepthUp + (DepthDn - DepthUp) * exp(-kappa)
                             endwhere
 
@@ -170,7 +182,6 @@ contains
                         else
                             where ( (elemI(:,ei_link_Pos)       .eq. mm      ) .and. &
                                     (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) )
-
                                 elemR(:,er_Depth) = DepthUp
                             endwhere
                         endif
