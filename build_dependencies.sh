@@ -370,7 +370,7 @@ then
     then
         install_opencoarray_mac
         FC=$COARRAY_INSTALL/bin/caf
-        echo "export CAFRUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
+        echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
     fi
 fi
 # --------------------------------------------------------------------------------------
