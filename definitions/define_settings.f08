@@ -139,23 +139,25 @@ module define_settings
 
     ! setting%Debug%File
     type DebugFileType
-        logical :: define_globals   = .false.
-        logical :: define_indexes   = .false.
-        logical :: define_keys      = .false.
-        logical :: define_settings  = .false.
-        logical :: define_types     = .false.
-        logical :: discretization   = .false.
-        logical :: finalization     = .false.
-        logical :: initialization   = .false.
-        logical :: network_define   = .false.
-        logical :: partitioning     = .false.
-        logical :: interface        = .false.
-        logical :: timeloop         = .false.
-        logical :: utility          = .false.
-        logical :: utility_allocate = .false.
-        logical :: utility_array    = .false.
-        logical :: utility_datetime = .false.
-        logical :: utility_string   = .false.
+        logical :: define_globals    = .false.
+        logical :: define_indexes    = .false.
+        logical :: define_keys       = .false.
+        logical :: define_settings   = .false.
+        logical :: define_types      = .false.
+        logical :: discretization    = .false.
+        logical :: finalization      = .false.
+        logical :: initial_condition = .false.
+        logical :: initialization    = .false.
+        logical :: network_define    = .false.
+        logical :: pack_mask_arrays  = .false.
+        logical :: partitioning      = .false.
+        logical :: interface         = .false.
+        logical :: timeloop          = .false.
+        logical :: utility           = .false.
+        logical :: utility_allocate  = .false.
+        logical :: utility_array     = .false.
+        logical :: utility_datetime  = .false.
+        logical :: utility_string    = .false.
     end type DebugFileType
 
     ! setting%Debug%FileGroup
@@ -362,7 +364,7 @@ contains
     ! Method:
     !
     !
-  	!-----------------------------------------------------------------------------
+    !-----------------------------------------------------------------------------
         character(len=254), intent(in) :: fpath
         character(kind=json_CK, len=:), allocatable :: c
         real(8) :: real_value
@@ -761,51 +763,57 @@ contains
         call json%get('Debug.File.discretization', logical_value, found)
         setting%Debug%File%discretization = logical_value
         if (.not. found) stop 66
+        call json%get('Debug.File.initial_condition', logical_value, found)
+        setting%Debug%File%initial_condition = logical_value
+        if (.not. found) stop 67
         call json%get('Debug.File.initialization', logical_value, found)
         setting%Debug%File%initialization = logical_value
-        if (.not. found) stop 67
+        if (.not. found) stop 68
         call json%get('Debug.File.network_define', logical_value, found)
         setting%Debug%File%network_define = logical_value
-        if (.not. found) stop 68
+        if (.not. found) stop 69
+        call json%get('Debug.File.pack_mask_arrays', logical_value, found)
+        setting%Debug%File%pack_mask_arrays = logical_value
+        if (.not. found) stop 70
         call json%get('Debug.File.partitioning', logical_value, found)
         setting%Debug%File%partitioning = logical_value
-        if (.not. found) stop 69
+        if (.not. found) stop 71
         call json%get('Debug.File.interface', logical_value, found)
         setting%Debug%File%interface = logical_value
-        if (.not. found) stop 70
+        if (.not. found) stop 72
         call json%get('Debug.File.utility_allocate', logical_value, found)
         setting%Debug%File%utility_allocate = logical_value
-        if (.not. found) stop 71
+        if (.not. found) stop 73
         call json%get('Debug.File.utility_array', logical_value, found)
         setting%Debug%File%utility_array = logical_value
-        if (.not. found) stop 72
+        if (.not. found) stop 74
         call json%get('Debug.File.utility_datetime', logical_value, found)
         setting%Debug%File%utility_datetime = logical_value
-        if (.not. found) stop 73
+        if (.not. found) stop 75
         call json%get('Debug.File.utility_string', logical_value, found)
         setting%Debug%File%utility_string = logical_value
-        if (.not. found) stop 74
+        if (.not. found) stop 76
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
-        if (.not. found) stop 75
+        if (.not. found) stop 77
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
-        if (.not. found) stop 76
+        if (.not. found) stop 78
         call json%get('Debug.FileGroup.definitions', logical_value, found)
         setting%Debug%FileGroup%definitions = logical_value
-        if (.not. found) stop 77
+        if (.not. found) stop 79
         call json%get('Debug.FileGroup.finalization', logical_value, found)
         setting%Debug%FileGroup%finalization = logical_value
-        if (.not. found) stop 78
+        if (.not. found) stop 80
         call json%get('Debug.FileGroup.initialization', logical_value, found)
         setting%Debug%FileGroup%initialization = logical_value
-        if (.not. found) stop 79
+        if (.not. found) stop 81
         call json%get('Debug.FileGroup.interface', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 80
+        if (.not. found) stop 82
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 81
+        if (.not. found) stop 83
         call def_update_debug_options()
 
         ! Load verbose or non-verbose run
@@ -839,9 +847,11 @@ contains
         end if
         if (setting%Debug%FileGroup%initialization) then
             setting%Debug%File%discretization = .true.
+            setting%Debug%File%initial_condition = .true.
             setting%Debug%File%initialization = .true.
             setting%Debug%File%network_define = .true.
             setting%Debug%File%partitioning = .true.
+            setting%Debug%File%pack_mask_arrays = .true.
         end if
         if (setting%Debug%FileGroup%interface) then
             setting%Debug%File%interface = .true.

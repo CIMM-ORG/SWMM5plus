@@ -7,6 +7,7 @@ module initialization
     use define_indexes
     use define_keys
     use define_globals
+    use initial_condition
     use network_define
     use utility, only: util_export_linknode_csv
     use utility_array
@@ -76,6 +77,8 @@ contains
         !% HACK: this sync call is probably not needed
 
         call init_network()
+
+        call initial_condition_setup ()
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all
