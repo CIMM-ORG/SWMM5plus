@@ -14,6 +14,7 @@ module define_keys
     enum, bind(c)
         enumerator :: hydrology = 1 !% indicates hydrology loop
         enumerator :: hydraulics    !% indicates hydraulics loop
+        enumerator :: ALLtm         !% indictes all time marching types
     end enum
 
     implicit none
@@ -197,8 +198,8 @@ module define_keys
 
     ! data types for solver (setting%Solver%SolverSelect)
     enum, bind(c)
-        enumerator :: SVE = 1
-        enumerator :: SVE_AC
+        enumerator :: ETM = 1
+        enumerator :: ETM_AC
         enumerator :: AC
     end enum
 

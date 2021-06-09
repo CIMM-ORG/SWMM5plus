@@ -103,7 +103,9 @@
         "crk2" : 1.0,
         "MomentumSourceMethod" : "T00",
         "PreissmanSlot" : false,
-        "SolverSelect" : "SVE"
+        "SolverSelect" : "ETM_AC",
+        "SwitchFractionDn" : 0.8,
+        "SwitchFractionUp" : 0.9
     },
     "TestCase" : {
         "UseTestCase" : false,

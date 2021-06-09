@@ -121,6 +121,10 @@ module define_globals
     integer :: N_nStorage
     integer :: N_nJ2
 
+    integer :: N_diag 
+    integer :: N_ac 
+    integer :: N_etm 
+
     ! Coarray variables
     integer :: max_caf_elem_N ! size of all elem array in coarray
     integer :: max_caf_face_N ! size of all face array in coarray

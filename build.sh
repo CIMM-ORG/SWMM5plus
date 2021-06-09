@@ -30,6 +30,10 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $INIT_DIR/partitioning.f08\
               $INIT_DIR/network_define.f08\
               $INIT_DIR/initialization.f08\
+              $TL_DIR/adjust.f08\
+              $TL_DIR/update.f08\
+              $TL_DIR/face.f08\
+              $TL_DIR/runge_kutta2.f08\
               $TL_DIR/timeloop.f08\
               $FIN_DIR/finalization.f08"
 

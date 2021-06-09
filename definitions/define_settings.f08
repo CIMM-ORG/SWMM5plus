@@ -257,7 +257,9 @@ module define_settings
         real(8), dimension(2) :: crk2 = [0.5, 1.0]
         integer :: MomentumSourceMethod = T00
         logical :: PreissmanSlot = .true.
-        integer :: SolverSelect = SVE
+        integer :: SolverSelect = ETM_AC
+        real(8) :: SwitchFractionDn = 0.8
+        real(8) :: SwitchFractionUp = 0.9
     end type SolverType
 
     !% REMOVED 20210607 brh -- rolled into setting%Time
@@ -620,10 +622,10 @@ contains
         if (.not. found) stop 46
         call json%get('Solver.SolverSelect', c, found)
         call util_lower_case(c)
-        if (c == 'sve') then
-            setting%Solver%SolverSelect = SVE
-        else if (c == 'sve_ac') then
-            setting%Solver%SolverSelect = SVE_AC
+        if (c == 'etm') then
+            setting%Solver%SolverSelect = ETM
+        else if (c == 'etm_ac') then
+            setting%Solver%SolverSelect = ETM_AC
         else if (c == 'ac') then
             setting%Solver%SolverSelect = AC
         else
@@ -631,6 +633,12 @@ contains
             stop
         end if
         if (.not. found) stop 47
+        call json%get('Solver.SwitchFractionDn', real_value, found)
+        setting%Solver%SwitchFractionDn = real_value
+        if (.not. found) stop 4701
+        call json%get('Solver.SwitchFractionUp', real_value, found)
+        setting%Solver%SwitchFractionUp = real_value
+        if (.not. found) stop 4702       
 
         ! Load Step Settings
         !rm 20210607 brh call json%get('Step.Current', real_value, found)

@@ -4,6 +4,7 @@ module timeloop
     use define_globals
     use define_indexes
     use define_keys
+    use runge_kutta2
 
     implicit none
 
@@ -40,38 +41,43 @@ module timeloop
         !% Combined hydrology and hydraulics simulation
         !%
         !% HACK 20210608 BRH commented out until further testing
-        ! if (useHydrology .and. useHydraulics) then
-        !     !% set the counters used for outer loop iteration
-        !     call tl_setup_counters(hydrology)     
-        !     !% outer loop (Hydrology) time stepping
-        !     do while (.not. isTLfinished)
-        !         !% Perform 1 time step of hydrology
-        !         call tl_hydrology()
-        !         !% Call inner loop (multiple subtime steps) of hydraulics
-        !         call tl_hydraulics()
-        !         call tl_increment_counters(hydrology)
-        !         call tl_check_finish_status(isTLfinished)
-        !     end do !% (while not isTLfinished)
-        ! !%    
-        ! !% Hydrology only simulation    
-        ! !%   
-        ! elseif (useHydrology .and. .not. useHydraulics) then
-        !     call tl_setup_counters(hydrology)   
-        !     do while (.not. isTLfinished)
-        !         !% Perform 1 time step of hydrology
-        !         call tl_hydrology()
-        !         call tl_increment_counters(hydrology)
-        !         call tl_check_finish_status(isTLfinished)
-        !     end do !% (while not isTLfinished)
-        ! !%
-        ! !% Hydraulics only simulation
-        ! !%    
-        ! elseif (useHydraulics .and. .not. useHydrology) then
-        !     !% time-loop for hydraulics is self-contained
-        !     call tl_hydraulics()
-        ! else
-        !     print *, 'error, condition that should not occur.'  
-        ! endif  
+        if (useHydrology .and. useHydraulics) then
+            !% set the counters used for outer loop iteration
+            call tl_setup_counters(hydrology)     
+            !% outer loop (Hydrology) time stepping
+
+            do while (.not. isTLfinished)
+                !% Perform 1 time step of hydrology
+                call tl_hydrology()
+                !% Call inner loop (multiple subtime steps) of hydraulics
+                call tl_hydraulics()
+                call tl_increment_counters(hydrology)
+                call tl_check_finish_status(isTLfinished)
+            !% HACK to prevent infinite loop in testing
+            isTLfinished = .true.                
+            end do !% (while not isTLfinished)
+        !%    
+        !% Hydrology only simulation    
+        !%   
+        elseif (useHydrology .and. .not. useHydraulics) then
+            call tl_setup_counters(hydrology)   
+            do while (.not. isTLfinished)
+                !% Perform 1 time step of hydrology
+                call tl_hydrology()
+                call tl_increment_counters(hydrology)
+                call tl_check_finish_status(isTLfinished)
+            !% HACK to prevent infinite loop in testing
+            isTLfinished = .true.                    
+            end do !% (while not isTLfinished)
+        !%
+        !% Hydraulics only simulation
+        !%    
+        elseif (useHydraulics .and. .not. useHydrology) then
+            !% time-loop for hydraulics is self-contained
+            call tl_hydraulics()
+        else
+            print *, 'error, condition that should not occur.'  
+        endif  
     end subroutine timeloop_toplevel
     !%
     !%==========================================================================
@@ -134,7 +140,7 @@ module timeloop
     !
     !%==========================================================================  
     !%==========================================================================  
-    
+    !%
     subroutine tl_hydrology()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -165,12 +171,18 @@ module timeloop
         !% set the expected number of substeps for hydraulics given the present CFL
         call tl_set_hydraulic_substep()
 
+        !% setup for checking volume conservation during the hydraulic steps.
+        ! FUTURE 20210609 brh need to decide where to place this and pull code from old version
+        ! call diagnostic_volume_conservation
+
         !% these are hydraulics substeps within a single hydrology step
         do while (timeNext <= timeFinal)
-            !% HACK 20210608 brh -- the tl_hydraulic_solver is the top level single time step for SVE and AC
-            !call tl_hydraulic_solver()
+            call tl_update_hydraulic_BC()
+            call tl_hydraulic_solver()
             call tl_increment_counters(hydraulics)
             call tl_set_hydraulic_substep()
+        !% HACK to prevent infinite loop in testing
+        timeNext = timeFinal+1.0            
         end do
 
     end subroutine tl_hydraulics        
@@ -279,6 +291,59 @@ module timeloop
     !%==========================================================================  
     !%==========================================================================  
     !%
+    subroutine tl_update_hydraulic_BC()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Updates (if needed) BC to hydraulic solver, including upstream, downstream
+        !% and lateral inflows. 
+        !%-----------------------------------------------------------------------------
+
+
+    end subroutine tl_update_hydraulic_BC
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine tl_hydraulic_solver()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Top level hydraulic solver for a single time step  
+        !%-----------------------------------------------------------------------------
+
+        !% check for where solver needs to switch
+        if (setting%Solver%SolverSelect == ETM_AC) then
+            call tl_solver_select ()
+        endif    
+        
+        !% repack all the dynamic arrays
+        !% FUTURE 20210609 brh need to decide where this goes
+        !call pack_dynamic_arrays
+        
+        !%  push the old values down the stack for AC solver
+        call tl_save_previous_values ()
+        
+        !%  Reset the flowrate adhoc detection before flowrates are updated.
+        !%  Note that we do not reset the small volume detection here -- that should
+        !%  be in geometry routines.
+        elemYN(:,eYN_IsAdhocFlowrate) = .false.
+        
+        select case (setting%Solver%SolverSelect)
+            case (ETM_AC)
+                call rk2_ETMAC_toplevel ()
+                call rk2_AC_toplevel ()
+            case (ETM)
+                call rk2_ETM_toplevel ()
+            case (AC)
+                call rk2_AC_toplevel ()
+            case DEFAULT
+                print *, 'error, code should not be reached.'
+                STOP 1001 !% need error statement
+        end select
+    end subroutine tl_hydraulic_solver
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
     subroutine tl_increment_counters(timeloop_type)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -320,7 +385,71 @@ module timeloop
     !%
     !%==========================================================================  
     !%==========================================================================  
+    !%
+    subroutine tl_solver_select()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% For ETM_AC dual method, this sets the elemI(:,ei_tmType) to the type of solver
+        !% needed depending on the volume and the volume cutoffs.
+        !% Should only be called if setting%Solver%SolverSelect == ETM_AC
+        !%-----------------------------------------------------------------------------
+        integer :: thisCol 
+        integer, pointer :: Npack, tmType(:), thisP(:)
+        real(8), pointer :: sfup, sfdn
+        real(8), pointer :: volume(:), FullVolume(:)
+        !%-----------------------------------------------------------------------------
+        thiscol = ep_ALLtm
+        Npack => npack_elemP(thisCol)
+        thisP => elemP(1:Npack,thisCol)
+
+        tmType     => elemI(:,ei_tmType)
+        volume     => elemR(:,er_Volume)
+        FullVolume => elemR(:,er_FullVolume)
+
+        sfup => setting%Solver%SwitchFractionUp
+        sfdn => setting%Solver%SwitchFractionDn
+        !%-----------------------------------------------------------------------------
+        !% Look for ETM elements that are above the cutoff for going to AC and set
+        !% these to AC
+        where ( ( (volume(thisP) / FullVolume(thisP) ) > sfup ) .and. (tmType(thisP) == ETM) )
+            tmType(thisP) = AC    
+        endwhere
+
+        !% Look for AC elements that are below the cutoff for going back to ETM and
+        !% set these to ETM
+        where ( ( (volume(thisP) / FullVolume(thisP) ) < sfdn) .and. (tmType(thisP) == AC) )
+            tmType(thisP) = ETM   
+        endwhere
+
+    end subroutine tl_solver_select
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
     !%   
+    subroutine tl_save_previous_values ()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Pushes the time N values into time N-1 storage, and the time N+1 values into
+        !% the time N storage. 
+        !% HACK -- 20210809 brh This would be better done by changing the indexes without
+        !% moving the data, but we will wait on doing this until we have the code
+        !% debugged.
+        !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !%  push the old values down the stack
+        !%  N values is the present, N0 is the last time step, and N1
+        !%  is the timestep before (needed only for backwards 3rd in velocity and volume)
+        elemR(:,er_Flowrate_N0)  = elemR(:,er_Flowrate)
+        elemR(:,er_Head_N0)      = elemR(:,er_Head)
+        elemR(:,er_Velocity_N1)  = elemR(:,er_Velocity_N0)
+        elemR(:,er_Velocity_N0)  = elemR(:,er_Velocity)
+        elemR(:,er_Volume_N1)    = elemR(:,er_Volume_N0)
+        elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+    end subroutine tl_save_previous_values
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
     subroutine tl_check_finish_status(isTLfinished)
         !%-----------------------------------------------------------------------------
         !% Description:
