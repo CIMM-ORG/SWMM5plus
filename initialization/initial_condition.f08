@@ -56,8 +56,11 @@ contains
         !% update all the auxiliary variables
         ! call update_auxiliary_variables
 
+        !% update faces
+        ! call face_update()
+
         sync all
-        
+
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
