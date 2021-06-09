@@ -180,6 +180,13 @@ module define_keys
         enumerator :: BLink
     end enum
 
+    ! data types from initial depth type in links
+    enum, bind(c)
+        enumerator :: Uniform = 1
+        enumerator :: LinearlyVarying
+        enumerator :: ExponentialDecay
+    end enum
+
     ! data types for link lengths adjustments
     enum, bind(c)
         enumerator :: NoAdjust = 1
