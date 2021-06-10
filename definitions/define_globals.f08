@@ -9,7 +9,6 @@
 !==========================================================================
 module define_globals
 
-    use define_settings
     use define_types
 
     implicit none
@@ -90,11 +89,14 @@ module define_globals
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
     real(8), parameter :: oneeighthR = oneR / eightR
+    real(8), parameter :: onesixthR = oneR / sixR
     real(8), parameter :: onefourthR = oneR / fourR
     real(8), parameter :: onethirdR = oneR / threeR
     real(8), parameter :: onehalfR = oneR / twoR
     real(8), parameter :: twothirdR = twoR / threeR
     real(8), parameter :: threefourthR = threeR / fourR
+    real(8), parameter :: threehalfR = threeR / twoR
+    real(8), parameter :: fourthirdsR = fourR / threeR
 
     integer, parameter :: zeroI = 0
     integer, parameter :: oneI = 1
@@ -134,13 +136,14 @@ module define_globals
     integer :: J_face_add = 6 ! Supplement faces for junction
 
     ! useful shortcuts
+    !% NOTE: don't use setting%... structure in define_globals to prevent linking problems
     !rm 20210607 brh real(8), pointer :: dt => setting%time%dt  !% need different Hydrology and Hydraulics dt
-    real(8), pointer :: grav => setting%constant%gravity
+    !rm 20210610 brh real(8), pointer :: grav => setting%constant%gravity
     integer, parameter :: debuglevelall = 0 ! set to 1 to get print of subroutine calls
 
-    !% FUTURE 20210607 brh Remove these from globals and put in Discretization
-    real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
-    real(8), pointer :: elem_shorten_cof => setting%Discretization%LinkShortingFactor
+    !% 20210607 brh Moved these from globals and put in Discretization
+    !real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
+    !real(8), pointer :: elem_shorten_cof => setting%Discretization%LinkShortingFactor
 
     !% Tables
     type(real_table), allocatable :: all_tseries(:)

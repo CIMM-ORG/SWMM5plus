@@ -15,6 +15,9 @@ module define_keys
         enumerator :: hydrology = 1 !% indicates hydrology loop
         enumerator :: hydraulics    !% indicates hydraulics loop
         enumerator :: ALLtm         !% indictes all time marching types
+        enumerator :: ETM
+        enumerator :: ETM_AC
+        enumerator :: AC
     end enum
 
     implicit none
@@ -196,17 +199,18 @@ module define_keys
         enumerator :: T20
     end enum
 
-    ! data types for solver (setting%Solver%SolverSelect)
-    enum, bind(c)
-        enumerator :: ETM = 1
-        enumerator :: ETM_AC
-        enumerator :: AC
-    end enum
+    !% rm 20210610 brh because of issues with ALLtm key
+    ! ! data types for solver (setting%Solver%SolverSelect)
+    ! enum, bind(c)
+    !     enumerator :: ETM = 1
+    !     enumerator :: ETM_AC
+    !     enumerator :: AC
+    ! end enum
 
     ! data types for adjust approach (setting%Adjust)
     enum, bind(c)
         enumerator :: vshape = 1
-        enumerator :: smoothall
+        enumerator :: vshape_surcharge_only
     end enum
 
     ! data types for limiter BC approach (setting%Limiter%BC%approach)

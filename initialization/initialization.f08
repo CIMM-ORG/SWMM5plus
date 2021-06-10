@@ -1,16 +1,17 @@
 module initialization
+    use define_keys
+    use define_globals
+    use define_settings
     use interface
     use partitioning
     use discretization
     use utility_allocate
     use utility_array
     use define_indexes
-    use define_keys
-    use define_globals
     use network_define
     use utility, only: util_export_linknode_csv
     use utility_array
-    use define_settings, only: setting
+
 
     implicit none
 

@@ -40,12 +40,10 @@ module timeloop
         !%
         !% Combined hydrology and hydraulics simulation
         !%
-        !% HACK 20210608 BRH commented out until further testing
         if (useHydrology .and. useHydraulics) then
             !% set the counters used for outer loop iteration
             call tl_setup_counters(hydrology)     
             !% outer loop (Hydrology) time stepping
-
             do while (.not. isTLfinished)
                 !% Perform 1 time step of hydrology
                 call tl_hydrology()
@@ -53,8 +51,10 @@ module timeloop
                 call tl_hydraulics()
                 call tl_increment_counters(hydrology)
                 call tl_check_finish_status(isTLfinished)
+
             !% HACK to prevent infinite loop in testing
-            isTLfinished = .true.                
+            isTLfinished = .true.    
+
             end do !% (while not isTLfinished)
         !%    
         !% Hydrology only simulation    
@@ -66,8 +66,10 @@ module timeloop
                 call tl_hydrology()
                 call tl_increment_counters(hydrology)
                 call tl_check_finish_status(isTLfinished)
+
             !% HACK to prevent infinite loop in testing
-            isTLfinished = .true.                    
+            isTLfinished = .true.          
+
             end do !% (while not isTLfinished)
         !%
         !% Hydraulics only simulation
@@ -78,6 +80,7 @@ module timeloop
         else
             print *, 'error, condition that should not occur.'  
         endif  
+
     end subroutine timeloop_toplevel
     !%
     !%==========================================================================
@@ -181,8 +184,10 @@ module timeloop
             call tl_hydraulic_solver()
             call tl_increment_counters(hydraulics)
             call tl_set_hydraulic_substep()
+
         !% HACK to prevent infinite loop in testing
-        timeNext = timeFinal+1.0            
+        timeNext = timeFinal+1.0  
+
         end do
 
     end subroutine tl_hydraulics        
@@ -329,12 +334,11 @@ module timeloop
         
         select case (setting%Solver%SolverSelect)
             case (ETM_AC)
-                call rk2_ETMAC_toplevel ()
-                call rk2_AC_toplevel ()
+                call rk2_toplevel_ETMAC ()
             case (ETM)
-                call rk2_ETM_toplevel ()
+                call rk2_toplevel_ETM ()
             case (AC)
-                call rk2_AC_toplevel ()
+                call rk2_toplevel_AC ()
             case DEFAULT
                 print *, 'error, code should not be reached.'
                 STOP 1001 !% need error statement

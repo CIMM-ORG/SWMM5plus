@@ -2,9 +2,13 @@ module discretization
 
     use define_globals
     use define_indexes
+    use define_keys
     use define_settings, only: setting
 
     implicit none
+
+    real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
+    real(8), pointer :: elem_shorten_cof    => setting%Discretization%LinkShortingFactor
 
 contains
     
@@ -67,6 +71,7 @@ contains
         integer :: ii
         real(8) :: remainder
         character(64) :: subroutine_name = 'init_discretization_nominal'
+               
     !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%discretization) print *, '*** enter ', subroutine_name

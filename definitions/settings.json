@@ -1,11 +1,17 @@
 {
     "ACmethod" : {
+        "dtau" : 1.0,
         "Anomaly" : {
             "DensityLowCutoff" : 1e-10,
             "FullPipeFactor" : 1.0,
             "OpenPipeFactor" : 1.0,
             "UseDensityCorrection" : false,
             "DensityHighCutoff" : 0.1
+        },
+        "ImplicitCoef" : {
+            "a1" : 1.5,
+            "a2" : -2.0,
+            "a3" : 0.5
         },
         "CFL" : {
             "CFLmax" : 2.0,
@@ -38,8 +44,8 @@
             "Coef" : 1.0
         },
         "Head" : {
-            "Apply" : false,
-            "approach" : "vshape",
+            "Apply" : true,
+            "approach" : "vshape_surcharge_only",
             "Coef" : 1.0
         },
         "WidthDepth" :{
