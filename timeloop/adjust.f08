@@ -36,7 +36,6 @@ module adjust
         
         !% ad hoc adjustments to flowrate 
         if (setting%Adjust%Flowrate%Apply) then   
-              
             select case (setting%Adjust%Flowrate%Approach)
                 case (vshape)
                     !% suppress v-shape over face/element/face

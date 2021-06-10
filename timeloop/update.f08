@@ -4,15 +4,13 @@ module update
     use define_globals
     use define_indexes
     use define_keys
+    use geometry
 
     implicit none
 
     !%----------------------------------------------------------------------------- 
     !% Description:
     !% Updates values during timeloop of hydraulics.
-    !%
-    !% METHOD:
-    !% 
     !%
 
     private
@@ -34,7 +32,7 @@ module update
         !%-----------------------------------------------------------------------------
         !%  
         !% update the head (non-surcharged) and geometry
-        !call geometry_update (whichTM)
+        call geometry_toplevel (whichTM)
 
         !% adjust velocity with limiters and small volume treatment
         !call adjust_velocity (whichTM)

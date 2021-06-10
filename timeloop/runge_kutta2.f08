@@ -1,9 +1,9 @@
 module runge_kutta2
 
-    use define_settings, only: setting
     use define_globals
     use define_indexes
     use define_keys
+    use define_settings, only: setting
     use adjust
     use update
     use face
@@ -31,7 +31,7 @@ module runge_kutta2
         !% Description:
         !% single RK2 step for explicit time advance of SVE
         !%-----------------------------------------------------------------------------
-        integer :: istep, whichTM  
+        integer :: istep
         ! !%-----------------------------------------------------------------------------
         ! !% RK2 solution step 1   
         istep=1
@@ -76,7 +76,7 @@ module runge_kutta2
         endif
 
         !% RK2 solution step X -- make ad hoc adjustments
-        call adjust_values (whichTM=ETM)
+        call adjust_values (ETM)
     
     end subroutine rk2_toplevel_ETM
     !%
@@ -100,7 +100,7 @@ module runge_kutta2
         !% Description:
         !% Performs a single hydrology step 
         !%-----------------------------------------------------------------------------
-        integer :: istep, whichTM, faceMaskCol, thisCol
+        integer :: istep, faceMaskCol, thisCol
         integer, pointer :: Npack
         !%-----------------------------------------------------------------------------    
         !% step 1 -- RK2 step 1 for ETM
@@ -120,7 +120,7 @@ module runge_kutta2
         endif
 
         !% step 3 -- all aux variables for non-diagnostic
-        call update_auxiliary_variables(whichTM=ALLtm)
+        call update_auxiliary_variables(ALLtm)
         
         !% step 4 -- all face interpolation
         if (num_images() == 1) then
@@ -136,7 +136,7 @@ module runge_kutta2
         endif
         
         !% step X -- make ad hoc adjustments
-        call adjust_values (whichTM=ALLtm)
+        call adjust_values (ALLtm)
         
         !% step 6 -- RK2 step 2 for AC
         istep=2
@@ -150,7 +150,7 @@ module runge_kutta2
                 call rk2_interpolate_to_halfstep_AC()
             endif
             !% step 6(e)
-            call update_auxiliary_variables(whichTM=AC)      
+            call update_auxiliary_variables (AC)      
             !% step 6(f,g) -- update faces for AC elements
             if (num_images() == 1) then 
                 thisCol = fp_AC
@@ -180,7 +180,7 @@ module runge_kutta2
             endif
             
             !% step 8(c)
-            call update_auxiliary_variables(whichTM=ETM)
+            call update_auxiliary_variables(ETM)
             
             !% step 8(d,e) -- update all faces
             if (num_images() == 1) then      
@@ -197,7 +197,7 @@ module runge_kutta2
         endif
 
         !% step X -- make ad hoc adjustments
-        call adjust_values (whichTM=ALLtm)
+        call adjust_values (ALLtm)
                 
         !%-----------------------------------------------------------------------------
     end subroutine rk2_toplevel_ETMAC    
@@ -416,12 +416,13 @@ module runge_kutta2
             
         if (Npack > 0) then
             !% temporary storage of n+1/2 data
-     !       call store_in_temporary (thisCol, Npack)
+            call ll_store_in_temporary (thisCol, Npack)
             
             !% extrapolation
-     !       call extrapolate_values (thisCol, Npack)
+            call ll_extrapolate_values (thisCol, Npack)
             
-     !       call update_auxiliary_variables_byPack (thisCol, Npack)
+            !% update aux for extrapolated variables
+    !        call update_auxiliary_variables_byPack (thisCol, Npack)
         endif
 
     end subroutine rk2_extrapolate_to_fullstep_ETM      
@@ -432,39 +433,78 @@ module runge_kutta2
     subroutine rk2_restore_to_midstep_ETM ()
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% reverses the effect of ETM_extrapolate_to_fullstep
+        !% Finds ETM elements at time n+1/2 that are adjacent to fAC 
+        !% restsores data of Q, H, V at n+1/2
         !%-----------------------------------------------------------------------------
-    
+        integer, pointer ::  thisCol, Npack
         !%-----------------------------------------------------------------------------
         !%   
-        !%
-    end subroutine rk2_restore_to_midstep_ETM
+        thisCol => col_elemP(ep_CCJB_eETM_i_fAC)
+        Npack   => npack_elemP(thisCol)
 
+        if (Npack > 0) then
+            !% temporary storage of n+1/2 data
+            call ll_restore_from_temporary (thisCol, Npack)
+
+            !% update aux for restored variables
+    !        call update_auxiliary_variables_byPack (thisPackCol, Npack)
+        endif
+
+    end subroutine rk2_restore_to_midstep_ETM
+    !%
     !%==========================================================================  
     !%==========================================================================  
     !%
-    subroutine rk2_interpolate_to_halfstep_AC()
+    subroutine rk2_interpolate_to_halfstep_AC ()
         !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Performs a single hydrology step 
+        !% Description: 
+        !% Finds AC and Diag elements at time n+1/2 that are adjacent to fETM 
+        !% Makes temporary store of data for Q, H, V at n+1(*)
+        !% overwrites the Q, H, V location with an interpolation to n+1/1.
         !%-----------------------------------------------------------------------------
-    
+        integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
         !%   
-        !%
+        thisCol => col_elemP( ep_CCJB_eAC_i_fETM)
+        Npack => npack_elemP(thisCol)
+            
+        if (Npack > 0) then
+            !% temporary storage of n+1 data
+            call ll_store_in_temporary (thisCol, Npack)
+            
+            !% interpolation to half step
+            call ll_interpolate_values (thisCol, Npack)
+            
+            !% update aux for interpolated variables
+      !     call update_auxiliary_variables_byPack (thisPackCol, Npack)
+        endif
+
     end subroutine rk2_interpolate_to_halfstep_AC
-    
+    !%
     !%==========================================================================  
     !%==========================================================================  
     !%
     subroutine rk2_restore_to_fullstep_AC()
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% reverses the effect of AC_interpolate_to_halfstep
+        !% Finds AC elements at time n+1/2 that are adjacent to fETM 
+        !% restsores data of Q, H, V at n+1/2
         !%-----------------------------------------------------------------------------
-    
+        integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
-        !%   
+        thisCol = col_elemP(ep_CCJB_eAC_i_fETM)
+        Npack => npack_elemP(thisCol)
+
+        if (Npack > 0) then
+            !% temporary storage of n+1 data
+            call ll_restore_from_temporary (thisCol, Npack)
+
+            !% update aux for restored data
+     !       call update_auxiliary_variables_byPack (thisPackCol, Npack)
+        endif
+
     end subroutine rk2_restore_to_fullstep_AC
     !%
     !%==========================================================================  
@@ -472,7 +512,7 @@ module runge_kutta2
     !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !%  
         !%-----------------------------------------------------------------------------
     
         !%-----------------------------------------------------------------------------

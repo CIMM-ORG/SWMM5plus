@@ -34,6 +34,10 @@ module lowlevel_rk2
     public :: ll_momentum_velocity_CC
     public :: ll_momentum_add_gamma_CC_AC
     public :: ll_momentum_add_source_CC_AC
+    public :: ll_store_in_temporary
+    public :: ll_restore_from_temporary
+    public :: ll_extrapolate_values
+    public :: ll_interpolate_values
 
     contains
     !%==========================================================================
@@ -486,6 +490,7 @@ module lowlevel_rk2
         real(8), pointer :: a1, dt, GammaM(:)    
         !%-----------------------------------------------------------------------------
         !%   
+        thisP => elemP(1:Npack,thisCol)
         a1 => setting%ACmethod%ImplicitCoef%a1
         dt => setting%Time%Hydraulics%Dt
         GammaM => elemR(:,er_GammaM) ! used and updated
@@ -529,18 +534,115 @@ module lowlevel_rk2
     !%==========================================================================  
     !%==========================================================================  
     !%
+    subroutine ll_store_in_temporary (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% Copies data to a temporary storage space.
+        !% Used in RK2 with ETM/AC to handle time n+1/2 and n+1* communication issues
         !%-----------------------------------------------------------------------------
-    
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer :: thisP(:)
+        integer :: er_store(3), er_data(3)       
         !%-----------------------------------------------------------------------------
-        !%             
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================    
-    
-    
+        !%   
+        !% elements in pack
+        thisP => elemP(1:Npack,thisCol)
+        
+        !% locations for storage
+        !% HACK these should be temporary storage that can be re-used outside of
+        !% the particular portion of the timeloop. However, this could be tricky 
+        !% because they need to be not written over!
+        er_store= [er_FlowrateStore, er_VolumeStore, er_HeadStore]
+        
+        !% locations of data to store
+        er_data= [er_Flowrate, er_Volume, er_Head]
+        
+        !% copy data to storage
+        elemR(thisP,er_store) = elemR(thisP,er_data)
+            
+    end subroutine ll_store_in_temporary    
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine ll_restore_from_temporary (thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% restores data that was temporarily moved in ll_store_in_temporary
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer :: thisP(:)
+        integer :: er_store(3), er_data(3)    
+        !%-----------------------------------------------------------------------------
+        !% elements in pack
+        thisP => elemP(1:Npack,thisCol)
+        
+        !% locations of storage
+        er_store= [er_FlowrateStore, er_VolumeStore, er_HeadStore]
+        
+        !% locations of data to be overwritten
+        er_data= [er_Flowrate, er_Volume, er_Head]
+        
+        !% overwrite data with storage
+        elemR(thisP,er_data) = elemR(thisP,er_store)
+         
+    end subroutine ll_restore_from_temporary
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine ll_extrapolate_values (thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Extrapolates from time 0 to time 1 using difference  (time 1/2 - time 0)
+        !% Used for matching RK2 time levels between AC and ETM methods.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer :: thisP(:)
+        integer :: eN0(3), eNow(3)
+        !%----------------------------------------------------------------------------- 
+        !% elements in pack
+        thisP => elemP(1:Npack,thisCol)   
+
+        !% NOTE eN0 and eNow should probably be in settings.
+        !% values at time n
+        eN0 = [er_Flowrate_N0, er_Volume_N0, er_Head_N0]
+
+        !% values at time n+1/2
+        eNow = [er_Flowrate, er_Volume, er_Head]
+
+        !% linear extrapolation to n+1
+        elemR(thisP,eNow) = elemR(thisP,eN0) &
+                + twoR * ( elemR(thisP,eNow) - elemR(thisP,eN0) )
+            
+    end subroutine ll_extrapolate_values
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine ll_interpolate_values (thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Interpolates to time n+1/2 from time n=0 and time n+1 data
+        !% Used for matching RK2 time levels between AC and ETM methods
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer :: thisP(:)
+        integer :: eN0(3), eNow(3)   
+        !%-----------------------------------------------------------------------------
+        !% elements in pack
+        thisP => elemP(1:Npack,thisCol)   
+        
+        !% values at time n
+        eN0 = [er_Flowrate_N0, er_Volume_N0, er_Head_N0]
+        
+        !% values at time n+1
+        eNow = [er_Flowrate, er_Volume, er_Head]
+        
+        !% linear interpolation to n+1/2
+        elemR(thisP,eNow) = onehalfR * ( elemR(thisP,eN0) + elemR(thisP,eNow) )
+
+    end subroutine ll_interpolate_values
     !%
     !%==========================================================================  
     !%==========================================================================  
@@ -554,7 +656,7 @@ module lowlevel_rk2
         !%   
 
     
-    
+        
     !%
     !%==========================================================================  
     !%==========================================================================  
@@ -570,4 +672,8 @@ module lowlevel_rk2
     !%==========================================================================
     !% END OF MODULE
     !%+=========================================================================
+    !%==========================================================================
+    !% PRIVATE
+    !%==========================================================================    
+
 end module lowlevel_rk2

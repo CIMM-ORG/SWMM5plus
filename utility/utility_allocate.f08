@@ -151,10 +151,20 @@ contains
         call util_allocate_check(allocation_status, emsg)
         elemP(:,:) = nullvalueI
 
-        ncol => Ncol_elemPG
-        allocate(elemPG(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        ncol => Ncol_elemPGalltm
+        allocate(elemPGalltm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
-        elemPG(:,:) = nullvalueI
+        elemPGalltm(:,:) = nullvalueI
+
+        ncol => Ncol_elemPGetm
+        allocate(elemPGetm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        elemPGetm(:,:) = nullvalueI
+
+        ncol => Ncol_elemPGac
+        allocate(elemPGac(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        elemPGac(:,:) = nullvalueI
 
         ncol => Ncol_elemSI
         allocate(elemSI(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
@@ -347,7 +357,7 @@ contains
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
-        ncol => Ncol_elemPG !% whatever the last item in the enumerator
+        ncol => Ncol_elemPGalltm !% whatever the last item in the enumerator
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGalltm(ncol)[*], stat=allocation_status, errmsg= emsg)
@@ -389,9 +399,9 @@ contains
         !-----------------------------------------------------------------------------
         
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
-
+ 
         !% define the maximum number of columns as
-        ncol => Ncol_elemPG !% whatever the last item in the enumerator
+        ncol => Ncol_elemPGac!% whatever the last item in the enumerator
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGac(ncol)[*], stat=allocation_status, errmsg= emsg)
@@ -435,7 +445,7 @@ contains
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
-        ncol => Ncol_elemPG !% whatever the last item in the enumerator
+        ncol => Ncol_elemPGetm   !% whatever the last item in the enumerator
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGetm(ncol)[*], stat=allocation_status, errmsg= emsg)

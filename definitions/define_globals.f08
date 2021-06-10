@@ -55,14 +55,17 @@ module define_globals
     integer, dimension(:), allocatable, target :: N_unique_face
 
     !%  elems in coarray
-    real(8), allocatable, target :: elemR(:,:)[:]    ! coarray for elements
-    integer, allocatable, target :: elemI(:,:)[:]    ! coarray for element Interger
-    logical, allocatable, target :: elemYN(:,:)[:]   ! coarray for element logical
-    integer, allocatable, target :: elemP(:,:)[:]    ! coarray for element pack array
-    integer, allocatable, target :: elemPG(:,:)[:]   ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
-    integer, allocatable, target :: elemSI(:,:)[:]   ! coarray for special element Integer
-    real(8), allocatable, target :: elemSR(:,:)[:]   ! coarray for special elemen Real
-    real(8), allocatable, target :: elemSGR(:,:)[:]  ! coarray for special element geometry Real
+    real(8), allocatable, target :: elemR(:,:)[:]         ! coarray for elements
+    integer, allocatable, target :: elemI(:,:)[:]         ! coarray for element Interger
+    logical, allocatable, target :: elemYN(:,:)[:]        ! coarray for element logical
+    integer, allocatable, target :: elemP(:,:)[:]         ! coarray for element pack array
+    !integer, allocatable, target :: elemPG(:,:)[:]   ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
+    integer, allocatable, target :: elemPGac(:,:)[:]      ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
+    integer, allocatable, target :: elemPGetm(:,:)[:]     ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
+    integer, allocatable, target :: elemPGalltm(:,:)[:]   ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
+    integer, allocatable, target :: elemSI(:,:)[:]        ! coarray for special element Integer
+    real(8), allocatable, target :: elemSR(:,:)[:]        ! coarray for special elemen Real
+    real(8), allocatable, target :: elemSGR(:,:)[:]       ! coarray for special element geometry Real
 
     !%  faces in coarray
     real(8), allocatable, target :: faceR(:,:)[:]    ! coarray for faces real data

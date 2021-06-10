@@ -359,7 +359,7 @@ module define_settings
         type(ZeroValueType)      :: ZeroValue ! finite values to represent small or negative values
         type(TestCaseType)       :: TestCase
         type(PathType)           :: Paths
-        type(DebugType)         :: Debug
+        type(DebugType)          :: Debug
         logical                  :: Verbose
         logical                  :: Warning = .true.
     end type settingType

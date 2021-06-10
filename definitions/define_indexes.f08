@@ -354,9 +354,10 @@ module define_indexes
         enumerator :: ep_Surcharged_ETM             !% all surcharged with ETM
         enumerator :: ep_CCJM_H_AC_surcharged       !% all CCJM surcharged for H and AC solution
         enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
+        enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemP = ep_Surcharged_ETM
+    integer, target :: Ncol_elemP = ep_CCJB_eAC_i_fETM 
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemPGalltm(:,:), elemPGetm(:,:),
@@ -368,8 +369,10 @@ module define_indexes
         enumerator :: epg_CCJM_rectangular_nonsurcharged = 1 !% CC and JM rectangular channels without surcharge
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemPG =  epg_CCJM_rectangular_nonsurcharged
-
+    integer, target :: Ncol_elemPGalltm =  epg_CCJM_rectangular_nonsurcharged
+    integer, target :: Ncol_elemPGetm   =  epg_CCJM_rectangular_nonsurcharged
+    integer, target :: Ncol_elemPGac    =  epg_CCJM_rectangular_nonsurcharged    
+    
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemYN(:,:) arrays
     !% These are the for the full arrays of logical
