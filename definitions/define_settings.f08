@@ -776,45 +776,48 @@ contains
         call json%get('Debug.File.utility_allocate', logical_value, found)
         setting%Debug%File%utility_allocate = logical_value
         if (.not. found) stop 71
+        call json%get('Debug.File.utility_deallocate', logical_value, found)
+        setting%Debug%File%utility_deallocate = logical_value
+        if (.not. found) stop 72
         call json%get('Debug.File.utility_array', logical_value, found)
         setting%Debug%File%utility_array = logical_value
-        if (.not. found) stop 72
+        if (.not. found) stop 73
         call json%get('Debug.File.utility_datetime', logical_value, found)
         setting%Debug%File%utility_datetime = logical_value
-        if (.not. found) stop 73
+        if (.not. found) stop 74
         call json%get('Debug.File.utility_string', logical_value, found)
         setting%Debug%File%utility_string = logical_value
-        if (.not. found) stop 74
+        if (.not. found) stop 75
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
-        if (.not. found) stop 75
+        if (.not. found) stop 76
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
-        if (.not. found) stop 76
+        if (.not. found) stop 77
         call json%get('Debug.FileGroup.definitions', logical_value, found)
         setting%Debug%FileGroup%definitions = logical_value
-        if (.not. found) stop 77
+        if (.not. found) stop 78
         call json%get('Debug.FileGroup.finalization', logical_value, found)
         setting%Debug%FileGroup%finalization = logical_value
-        if (.not. found) stop 78
+        if (.not. found) stop 79
         call json%get('Debug.FileGroup.initialization', logical_value, found)
         setting%Debug%FileGroup%initialization = logical_value
-        if (.not. found) stop 79
+        if (.not. found) stop 80
         call json%get('Debug.FileGroup.interface', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 80
+        if (.not. found) stop 81
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 81
+        if (.not. found) stop 82
         call def_update_debug_options()
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 85
+        if (.not. found) stop 86
 
         call json%destroy()
-        if (json%failed()) stop 86
+        if (json%failed()) stop 87
 
         if (setting%Debug%File%define_settings) print *, '*** leave ', subroutine_name
     end subroutine def_load_settings
@@ -848,6 +851,7 @@ contains
         end if
         if (setting%Debug%FileGroup%utility) then
             setting%Debug%File%utility_allocate = .true.
+            setting%Debug%File%utility_deallocate = .true.
             setting%Debug%File%utility_array = .true.
             setting%Debug%File%utility_datetime = .true.
             setting%Debug%File%utility_string = .true.

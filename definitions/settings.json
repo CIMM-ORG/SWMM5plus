@@ -166,6 +166,7 @@
             "timeloop" : false,
             "utility" : false,
             "utility_allocate" : false,
+            "utility_deallocate" : false,
             "utility_array" : false,
             "utility_datetime" : false,
             "utility_string" : false
