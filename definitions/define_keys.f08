@@ -14,6 +14,10 @@ module define_keys
     enum, bind(c)
         enumerator :: hydrology = 1 !% indicates hydrology loop
         enumerator :: hydraulics    !% indicates hydraulics loop
+        enumerator :: ALLtm         !% indictes all time marching types
+        enumerator :: ETM
+        enumerator :: ETM_AC
+        enumerator :: AC
     end enum
 
     implicit none
@@ -172,6 +176,13 @@ module define_keys
     integer, parameter :: EdgeNode    = 1 ! Edge node of a partition
     integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element
 
+    ! data types from initial depth type in links
+    enum, bind(c)
+        enumerator :: Uniform = 1
+        enumerator :: LinearlyVarying
+        enumerator :: ExponentialDecay
+    end enum
+    
     ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
     enum, bind(c)
         enumerator :: Default = 1
@@ -179,6 +190,8 @@ module define_keys
         enumerator :: Random
         enumerator :: BLink
     end enum
+
+    
 
     ! data types for link lengths adjustments
     enum, bind(c)
@@ -195,17 +208,18 @@ module define_keys
         enumerator :: T20
     end enum
 
-    ! data types for solver (setting%Solver%SolverSelect)
-    enum, bind(c)
-        enumerator :: SVE = 1
-        enumerator :: SVE_AC
-        enumerator :: AC
-    end enum
+    !% rm 20210610 brh because of issues with ALLtm key
+    ! ! data types for solver (setting%Solver%SolverSelect)
+    ! enum, bind(c)
+    !     enumerator :: ETM = 1
+    !     enumerator :: ETM_AC
+    !     enumerator :: AC
+    ! end enum
 
     ! data types for adjust approach (setting%Adjust)
     enum, bind(c)
         enumerator :: vshape = 1
-        enumerator :: smoothall
+        enumerator :: vshape_surcharge_only
     end enum
 
     ! data types for limiter BC approach (setting%Limiter%BC%approach)

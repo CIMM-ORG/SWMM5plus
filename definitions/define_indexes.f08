@@ -17,7 +17,7 @@
 module define_indexes
 
     use define_globals
-    use iso_c_binding
+    !use iso_c_binding
 
     implicit none
     !
@@ -237,6 +237,7 @@ module define_indexes
          enumerator :: ei_HeqType                   !% type of head equation (static)
          enumerator :: ei_link_Gidx_SWMM            !% link index from global SWMM network  (static)
          enumerator :: ei_link_Gidx_BIPquick        !% link index from global BIPquick network  (static)
+         enumerator :: ei_link_pos                  !% position (elem from upstream = 1 to downstream = n) in link
          enumerator :: ei_Mface_uL                  !% map to upstream face local index  (static)
          enumerator :: ei_Mface_dL                  !% map to downstream face local index  (static)
          enumerator :: ei_node_Gidx_SWMM            !% node index from global SWMM network  (static)
@@ -351,6 +352,8 @@ module define_indexes
         enumerator :: ep_Surcharged_AC              !% all surcharged with AC
         enumerator :: ep_Surcharged_ALLtm           !% all time march surcharged
         enumerator :: ep_Surcharged_ETM             !% all surcharged with ETM
+        enumerator :: ep_CCJM_H_AC_surcharged       !% all CCJM surcharged for H and AC solution
+        enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_elemP = ep_Surcharged_ETM
@@ -377,6 +380,7 @@ module define_indexes
         enumerator :: eYN_isAdhocFlowrate               !% TRUE is use of ad hoc flowrate algorithm
         enumerator :: eYN_isSmallVolume                 !% TRUE is use small volume algorithm
         enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged conduit, FALSE is open channel flow
+        enumerator :: eYN_isNearZeroVolume              !% TRUE if volume qualifies as "near zero"
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_elemYN = eYN_isSurcharged
@@ -557,6 +561,7 @@ module define_indexes
         enumerator :: fr_Flowrate               !% flowrate through face (latest)
         enumerator :: fr_Flowrate_N0            !% flowrate through face (time N)    enumerator :: fr_Head_d  !% Piezometric head on downstream side of face
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
+        enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
         enumerator :: fr_HydDepth_d             !% hydraulic Depth on downstream side of face
         enumerator :: fr_HydDepth_u             !% hydraulic Depth on upstream side of face
         enumerator :: fr_Topwidth_d             !% topwidth on downstream side of face

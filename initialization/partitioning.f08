@@ -1,12 +1,11 @@
 module partitioning
 
-    use define_indexes
     use define_keys
     use define_globals
+    use define_indexes
     use define_settings, only: setting
     use utility
     use utility_allocate
-    use utility_deallocate
 
     implicit none
 

@@ -47,28 +47,28 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
 
         deallocate(nodeI, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
 
         deallocate(linkI, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
 
         deallocate(nodeR, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
 
         deallocate(linkR, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
 
         deallocate(nodeYN, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
 
         deallocate(linkYN, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
 
         deallocate(nodeName, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
 
         deallocate(linkName, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
 
@@ -77,7 +77,7 @@ contains
     !-----------------------------------------------------------------------------
     !-----------------------------------------------------------------------------
     
-    subroutine util_deallocate_partitioning_arrays()
+    subroutine util_deallocate_partitioning_arrays ()
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -90,13 +90,13 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
     
         deallocate(adjacent_links, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
     
         deallocate(elem_per_image, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
     
         deallocate(image_full, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, errmsg)
+        call utility_check_deallocation(deallocation_status, emsg)
     
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_partitioning_arrays
@@ -157,8 +157,8 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_elemX_faceX
 
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
+    -----------------------------------------------------------------------------
+    -----------------------------------------------------------------------------
     
     subroutine util_deallocate_columns()
     !-----------------------------------------------------------------------------

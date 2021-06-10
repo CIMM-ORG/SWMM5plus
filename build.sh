@@ -16,10 +16,10 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $JSON_DIR/json_module.F90\
               $UTIL_DIR/utility_string.f08\
               $UTIL_DIR/utility_datetime.f08\
-              $DEF_DIR/define_keys.f08\
               $DEF_DIR/define_types.f08\
-              $DEF_DIR/define_settings.f08\
               $DEF_DIR/define_globals.f08\
+              $DEF_DIR/define_keys.f08\
+              $DEF_DIR/define_settings.f08\
               $DEF_DIR/define_indexes.f08\
               $UTIL_DIR/utility.f08\
               $UTIL_DIR/utility_allocate.f08\
@@ -29,8 +29,15 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/partitioning.f08\
               $INIT_DIR/network_define.f08\
+              $INIT_DIR/initial_condition.f08\
               $INIT_DIR/initialization.f08\
+              $TL_DIR/lowlevel_rk2.f08\
+              $TL_DIR/adjust.f08\
+              $TL_DIR/update.f08\
+              $TL_DIR/face.f08\
+              $TL_DIR/runge_kutta2.f08\
               $TL_DIR/timeloop.f08\
+              $UTIL_DIR/utility_deallocate.f08\
               $FIN_DIR/finalization.f08"
 
 # --------------------------------------------------------------------------------------

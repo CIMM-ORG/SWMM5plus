@@ -18,25 +18,22 @@ module utility
 
     public :: util_export_linknode_csv
     public :: util_count_node_types
+    public :: util_sign_with_ones
 
-contains
-    !
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
-    !
+    contains
+    !%
+    !%==========================================================================  
+    !% PUBLIC
+    !%==========================================================================  
+    !%
     subroutine util_export_linknode_csv()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   Exports link and node tables as CSV files
-    !
-    !-----------------------------------------------------------------------------
-
-        integer :: i
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Exports link and node tables as CSV files
+        !%-----------------------------------------------------------------------------
+        integer :: ii
         logical :: ex
-
-    !-----------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------------------
         open(unit=1,file='debug/linkR.csv',status='new')
         open(unit=2,file='debug/linkI.csv',status='new')
 
@@ -55,9 +52,9 @@ contains
             "li_Melem_d,li_Mface_u,li_Mface_d,li_assigned,li_InitialDepthType," // &
             "li_length_adjusted,li_P_image,li_first_elem_idx,li_last_elem_idx"
 
-        do i = 1, N_link
-            write(1,'(*(G0.6,:,","))') linkR(i,:)
-            write(2,'(*(G0.6,:,","))') linkI(i,:)
+        do ii = 1, N_link
+            write(1,'(*(G0.6,:,","))') linkR(ii,:)
+            write(2,'(*(G0.6,:,","))') linkI(ii,:)
         end do
 
         close(1)
@@ -78,24 +75,28 @@ contains
             "ni_P_image,ni_P_is_boundary,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,"           // &
             "ni_Mlink_d2,ni_Mlink_d3"
 
-        do i = 1, N_node
-            write(3,'(*(G0.6,:,","))') nodeR(i,:)
-            write(4,'(*(G0.6,:,","))') nodeI(i,:)
+        do ii = 1, N_node
+            write(3,'(*(G0.6,:,","))') nodeR(ii,:)
+            write(4,'(*(G0.6,:,","))') nodeI(ii,:)
         end do
 
         close(3)
         close(4)
 
     end subroutine util_export_linknode_csv
-    !
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
-    !
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
     subroutine util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% This subroutine uses the vectorized count() function to search the array for 
+        !% numberof instances of each node type
+        !%-----------------------------------------------------------------------------
         integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
         integer :: ii
-    
-        ! This subroutine uses the vectorized count() function to search the array for number of instances of each node type
+        !%-----------------------------------------------------------------------------
         N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
         N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
         N_nJm = count(nodeI(:, ni_node_type) == nJM)
@@ -103,5 +104,24 @@ contains
         N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
     
     end subroutine util_count_node_types
-    
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    pure elemental real(8) function util_sign_with_ones &
+        (inarray) result (outarray)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% returns is an array of real ones with the sign of the inarray argument
+        !%-----------------------------------------------------------------------------
+        real(8),      intent(in)    :: inarray
+        !%-----------------------------------------------------------------------------
+        outarray = oneR
+        outarray = sign(outarray,inarray)
+
+    end function util_sign_with_ones  
+    !%      
+    !%==========================================================================
+    !% END OF MODULE
+    !%+=========================================================================    
 end module utility
