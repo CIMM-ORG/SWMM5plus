@@ -18,5 +18,6 @@ program main
 
     ! --- Finalization
     call finalize_all()
+    call release_memory_all()
 
 end program main

@@ -14,15 +14,63 @@ module utility_deallocate
 !
 !-----------------------------------------------------------------------------
 
+    private 
+    
     integer           :: deallocation_status
     character(len=99) ::              emsg
 
-    public :: util_deallocate_linknode
+    public :: util_deallocate_network_data
+    public :: util_deallocate_api_data
     public :: util_deallocate_partitioning_arrays
-    public :: util_deallocate_columns
-    public :: util_deallocate_elemX_faceX
 
 contains
+
+    subroutine util_deallocate_network_data()
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !   deallocate all the data relate to defined network, including:
+    !   linkX, nodeX, elemX, faceX
+    !-----------------------------------------------------------------------------
+        
+        character(64) :: subroutine_name = 'util_deallocate_network_data'
+
+    !-----------------------------------------------------------------------------
+        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
+
+        call util_deallocate_linknode()
+        call util_deallocate_elemX_faceX()
+        call util_deallocate_columns()
+        call util_deallocate_bc()
+
+        if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
+    end subroutine util_deallocate_network_data
+!
+!==========================================================================
+!==========================================================================
+!
+
+    subroutine util_deallocate_api_data()
+    !-----------------------------------------------------------------------------
+    !
+    ! Description:
+    !   deallocate all the api data 
+    !-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'util_deallocate_api_data'
+    !-----------------------------------------------------------------------------
+        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
+
+        call util_deallocate_api_patterns()
+        call util_deallocate_api_inflows()
+        call util_deallocate_api_tseries()
+
+        if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
+    end subroutine util_deallocate_api_data
+
+!
+!==========================================================================
+!==========================================================================
+!
 
     subroutine util_deallocate_linknode()
     !-----------------------------------------------------------------------------
@@ -47,37 +95,39 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
 
         deallocate(nodeI, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
 
         deallocate(linkI, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
 
         deallocate(nodeR, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
 
         deallocate(linkR, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
 
         deallocate(nodeYN, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
 
         deallocate(linkYN, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
 
         deallocate(nodeName, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
 
         deallocate(linkName, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
 
     end subroutine util_deallocate_linknode
 
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
+!
+!==========================================================================
+!==========================================================================
+!
     
-    subroutine util_deallocate_partitioning_arrays ()
+    subroutine util_deallocate_partitioning_arrays()
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -90,19 +140,21 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
     
         deallocate(adjacent_links, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
     
         deallocate(elem_per_image, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
     
         deallocate(image_full, stat=deallocation_status, errmsg=emsg)
-        call utility_check_deallocation(deallocation_status, emsg)
+        call util_deallocate_check(deallocation_status, emsg)
     
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_partitioning_arrays
         
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
+!
+!==========================================================================
+!==========================================================================
+!
     
     
     subroutine util_deallocate_elemX_faceX ()
@@ -157,8 +209,10 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_elemX_faceX
 
-    -----------------------------------------------------------------------------
-    -----------------------------------------------------------------------------
+!
+!==========================================================================
+!==========================================================================
+!
     
     subroutine util_deallocate_columns()
     !-----------------------------------------------------------------------------
@@ -246,8 +300,10 @@ contains
     end subroutine util_deallocate_columns
 
 
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
+!
+!==========================================================================
+!==========================================================================
+!
 
     subroutine util_deallocate_bc()
         
@@ -272,8 +328,10 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_api_patterns
 
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
+!
+!==========================================================================
+!==========================================================================
+!
 
     subroutine util_deallocate_api_tseries()
 
@@ -286,8 +344,10 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_api_tseries
 
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
+!
+!==========================================================================
+!==========================================================================
+!
 
     subroutine util_deallocate_api_inflows()
 
@@ -299,8 +359,10 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_api_inflows
 
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
+!
+!==========================================================================
+!==========================================================================
+!
 
     subroutine util_deallocate_all_api()
         
@@ -314,8 +376,10 @@ contains
 
     end subroutine util_deallocate_all_api
     
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
+!
+!==========================================================================
+!==========================================================================
+!
     
     
     subroutine util_deallocate_check(deallocation_status, emsg)

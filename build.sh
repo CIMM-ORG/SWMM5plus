@@ -23,6 +23,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $DEF_DIR/define_indexes.f08\
               $UTIL_DIR/utility.f08\
               $UTIL_DIR/utility_allocate.f08\
+              $UTIL_DIR/utility_deallocate.f08\
               $UTIL_DIR/utility_array.f08\
               $API_DIR/dll.f08\
               $API_DIR/interface.f08\
@@ -37,7 +38,6 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/face.f08\
               $TL_DIR/runge_kutta2.f08\
               $TL_DIR/timeloop.f08\
-              $UTIL_DIR/utility_deallocate.f08\
               $FIN_DIR/finalization.f08"
 
 # --------------------------------------------------------------------------------------
