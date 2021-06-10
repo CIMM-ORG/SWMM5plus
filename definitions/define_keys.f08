@@ -176,6 +176,13 @@ module define_keys
     integer, parameter :: EdgeNode    = 1 ! Edge node of a partition
     integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element
 
+    ! data types from initial depth type in links
+    enum, bind(c)
+        enumerator :: Uniform = 1
+        enumerator :: LinearlyVarying
+        enumerator :: ExponentialDecay
+    end enum
+    
     ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
     enum, bind(c)
         enumerator :: Default = 1
@@ -183,6 +190,8 @@ module define_keys
         enumerator :: Random
         enumerator :: BLink
     end enum
+
+    
 
     ! data types for link lengths adjustments
     enum, bind(c)

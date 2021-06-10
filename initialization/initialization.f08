@@ -2,12 +2,13 @@ module initialization
     use define_keys
     use define_globals
     use define_settings
+    use define_indexes
     use interface
     use partitioning
     use discretization
     use utility_allocate
     use utility_array
-    use define_indexes
+    use initial_condition
     use network_define
     use utility, only: util_export_linknode_csv
     use utility_array
@@ -77,6 +78,8 @@ contains
         !% HACK: this sync call is probably not needed
 
         call init_network()
+
+        call initial_condition_setup ()
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all
@@ -148,9 +151,11 @@ contains
             nodeI(ii, ni_idx) = ii
             if (interface_get_node_attribute(ii, node_type) == oneI) then ! OUTFALL
                 nodeI(ii, ni_node_type) = nBCdn
-            else if (total_n_links == twoI) then
+            else if ((total_n_links == twoI)         .and. &
+                     (nodeI(ii,ni_N_link_u) == oneI) .and. &
+                     (nodeI(ii,ni_N_link_d) == oneI) )then
                 nodeI(ii, ni_node_type) = nJ2
-            else if (total_n_links > twoI) then
+            else if (total_n_links >= twoI) then
                 nodeI(ii, ni_node_type) = nJm
             end if
             ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
@@ -158,12 +163,12 @@ contains
             l2 = interface_get_node_attribute(ii, node_has_dwfInflow) == 1
             if (l1 .or. l2) then
                 nodeYN(ii, nYN_has_inflow) = .true.
-                ! if (total_n_links == 1) then
-                !     nodeI(ii, ni_node_type) = nBCup
-                ! end if
-                if (nodeI(ii,ni_N_link_u) == zeroI) then
+                if (total_n_links == 1) then
                     nodeI(ii, ni_node_type) = nBCup
-                end if   
+                end if
+                ! if (nodeI(ii,ni_N_link_u) == zeroI) then
+                !     nodeI(ii, ni_node_type) = nBCup
+                ! end if   
             end if
 
             nodeR(ii,nr_InitialDepth) = interface_get_node_attribute(ii, node_initDepth)

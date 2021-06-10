@@ -29,6 +29,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/partitioning.f08\
               $INIT_DIR/network_define.f08\
+              $INIT_DIR/initial_condition.f08\
               $INIT_DIR/initialization.f08\
               $TL_DIR/lowlevel_rk2.f08\
               $TL_DIR/adjust.f08\

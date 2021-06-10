@@ -55,11 +55,11 @@ COARRAY_INSTALL="$COARRAY_SOURCE/opencoarray-install"
 if [[ $machine = "linux" ]]
 then
     CAF="$COARRAY_INSTALL/bin/caf"
-    echo "export CAFRUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
+    echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 elif [[ $machine = "mac" ]]
 then
     CAF="$COARRAY_INSTALL/bin/caf" #"caf"
-    echo "export CAFRUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
+    echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 fi
 
 CAF_VERSION="0.0.0"

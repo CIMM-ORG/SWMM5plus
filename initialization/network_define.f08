@@ -997,6 +997,7 @@ contains
             elemI(ElemLocalCounter,ei_link_Gidx_SWMM)   = thisLink
             elemI(ElemLocalCounter,ei_Mface_uL)         = FaceLocalCounter
             elemI(ElemLocalCounter,ei_Mface_dL)         = FaceLocalCounter + oneI
+            elemI(ElemLocalCounter,ei_link_pos)         = ii
 
             !% real data
             elemR(ElemLocalCounter,er_Length)           = linkR(thisLink,lr_ElementLength)

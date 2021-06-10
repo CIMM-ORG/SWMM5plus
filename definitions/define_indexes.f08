@@ -237,6 +237,7 @@ module define_indexes
          enumerator :: ei_HeqType                   !% type of head equation (static)
          enumerator :: ei_link_Gidx_SWMM            !% link index from global SWMM network  (static)
          enumerator :: ei_link_Gidx_BIPquick        !% link index from global BIPquick network  (static)
+         enumerator :: ei_link_pos                  !% position (elem from upstream = 1 to downstream = n) in link
          enumerator :: ei_Mface_uL                  !% map to upstream face local index  (static)
          enumerator :: ei_Mface_dL                  !% map to downstream face local index  (static)
          enumerator :: ei_node_Gidx_SWMM            !% node index from global SWMM network  (static)

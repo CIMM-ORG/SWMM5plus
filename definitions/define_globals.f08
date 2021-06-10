@@ -106,8 +106,6 @@ module define_globals
     integer, parameter :: fiveI = 5
     integer, parameter :: sixI = 6
 
-    !% images control
-    integer :: image
     !% Number of objects
     integer :: N_link
     integer :: N_node
@@ -162,9 +160,5 @@ module define_globals
     integer, allocatable, dimension(:) :: adjacent_links
     integer, allocatable, dimension(:) :: elem_per_image
     logical, allocatable, dimension(:) :: image_full
-
-    !% Network Define Module Allocatables - Not yet Allocated
-    integer, allocatable, dimension(:), target :: pack_link_idx, pack_node_idx
-
 
 end module define_globals

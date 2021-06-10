@@ -412,7 +412,7 @@ module runge_kutta2
         integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
         thisCol => col_elemP(ep_CCJB_eETM_i_fAC)
-        Npack => npack_elemP(thisPackCol)
+        Npack => npack_elemP(thisCol)
             
         if (Npack > 0) then
             !% temporary storage of n+1/2 data

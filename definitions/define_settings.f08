@@ -155,8 +155,10 @@ module define_settings
         logical :: define_types     = .false.
         logical :: discretization   = .false.
         logical :: finalization     = .false.
+        logical :: initial_condition = .false.
         logical :: initialization   = .false.
         logical :: network_define   = .false.
+        logical :: pack_mask_arrays = .false.
         logical :: partitioning     = .false.
         logical :: interface        = .false.
         logical :: timeloop         = .false.
@@ -375,7 +377,7 @@ contains
     ! Method:
     !
     !
-  	!-----------------------------------------------------------------------------
+    !-----------------------------------------------------------------------------
         character(len=254), intent(in) :: fpath
         character(kind=json_CK, len=:), allocatable :: c
         real(8) :: real_value
@@ -788,12 +790,18 @@ contains
         call json%get('Debug.File.discretization', logical_value, found)
         setting%Debug%File%discretization = logical_value
         if (.not. found) stop 940
+        call json%get('Debug.File.initial_condition', logical_value, found)
+        setting%Debug%File%initial_condition = logical_value
+        if (.not. found) stop 945
         call json%get('Debug.File.initialization', logical_value, found)
         setting%Debug%File%initialization = logical_value
         if (.not. found) stop 950
         call json%get('Debug.File.network_define', logical_value, found)
         setting%Debug%File%network_define = logical_value
         if (.not. found) stop 960
+        call json%get('Debug.File.pack_mask_arrays', logical_value, found)
+        setting%Debug%File%pack_mask_arrays = logical_value
+        if (.not. found) stop 965
         call json%get('Debug.File.partitioning', logical_value, found)
         setting%Debug%File%partitioning = logical_value
         if (.not. found) stop 970
@@ -866,9 +874,11 @@ contains
         end if
         if (setting%Debug%FileGroup%initialization) then
             setting%Debug%File%discretization = .true.
+            setting%Debug%File%initial_condition = .true.
             setting%Debug%File%initialization = .true.
             setting%Debug%File%network_define = .true.
             setting%Debug%File%partitioning = .true.
+            setting%Debug%File%pack_mask_arrays = .true.
         end if
         if (setting%Debug%FileGroup%interface) then
             setting%Debug%File%interface = .true.
