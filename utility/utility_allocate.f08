@@ -166,6 +166,11 @@ contains
         call util_allocate_check(allocation_status, emsg)
         elemSR(:,:) = nullvalueR
 
+        ncol => Ncol_elemSGR
+        allocate(elemSGR(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        elemSGR(:,:) = nullvalueR
+
         !==== face allocation ====
         ncol => Ncol_faceR 
         allocate(faceR(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)

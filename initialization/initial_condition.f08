@@ -69,7 +69,12 @@ contains
                    print*, '----------------------------------------------------'
                    print*, 'image = ', ii
                    print*, '..................elements..........................'
+                   print*, elemI(:,ei_geometryType)[ii], 'Geometry'
                    print*, elemR(:,er_Depth)[ii], 'Depth'
+                   print*, elemR(:,er_Area)[ii], 'Area'
+                   print*, elemR(:,er_Volume)[ii],'Volume'
+                   print*, elemR(:,er_Flowrate)[ii], 'Flowrate'
+                   print*, elemR(:,er_Velocity)[ii], 'Velocity'
                    call execute_command_line('')
                 enddo
 
@@ -117,6 +122,10 @@ contains
             call init_IC_get_flow_roughness_from_linkdata (thisLink)
 
             call init_IC_get_geometry_from_linkdata (thisLink)
+
+            !% we need a small/zero volume adjustment here 
+
+            call init_IC_get_channel_pipe_velocity (thisLink)
 
             !% we need another call here to set the type of 
             !% time march to be used.
@@ -345,29 +354,29 @@ contains
 
         select case (geometryType)
 
-        case (lRectangular)
+            case (lRectangular)
 
-            where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
 
-                elemI(:,ei_geometryType) = eRectangular
-                elemR(:,er_BreadthMax)   = linkR(thisLink,lr_BreadthScale)
-                elemR(:,er_Area)         = elemR(:,er_BreadthMax) * elemR(:,er_Depth)
-                elemR(:,er_Area_N0)      = elemR(:,er_Area)
-                elemR(:,er_Area_N1)      = elemR(:,er_Area)
-                elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                elemR(:,er_ZbreadthMax)  = linkR(thisLink,lr_FullDepth)
+                    elemI(:,ei_geometryType) = eRectangular
+                    elemR(:,er_BreadthMax)   = linkR(thisLink,lr_BreadthScale)
+                    elemR(:,er_Area)         = elemR(:,er_BreadthMax) * elemR(:,er_Depth)
+                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
+                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
+                    elemR(:,er_ZbreadthMax)  = linkR(thisLink,lr_FullDepth)
 
-                !% store geometry specific data
-                elemSGR(:,eSGR_Rectangular_Breadth) = linkR(thisLink,lr_BreadthScale)
-            endwhere
+                    !% store geometry specific data
+                    elemSGR(:,eSGR_Rectangular_Breadth) = linkR(thisLink,lr_BreadthScale)
+                endwhere
 
-        case default
+            case default
 
-            print*, 'In, ', subroutine_name
-            print*, 'Only rectangular channel geometry is handeled at this moment'
-            stop
+                print*, 'In, ', subroutine_name
+                print*, 'Only rectangular channel geometry is handeled at this moment'
+                stop
 
         end select
 
@@ -550,7 +559,46 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine init_IC_get_channel_pipe_velocity (thisLink)
+    !--------------------------------------------------------------------------
+    !
+    !% get the velocity of channel and pipes
+    !% and sell all other velocity to zero
+    !
+    !--------------------------------------------------------------------------
 
+        integer, intent(in) :: thisLink
+        integer, pointer    :: specificWeirType 
+
+        character(64) :: subroutine_name = 'init_IC_get_channel_pipe_velocity'
+    !--------------------------------------------------------------------------
+
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+
+        !% HACK: this might not be right
+        where ( (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) .and. &
+                (elemR(:,er_area)           .gt. zeroR   ) .and. &
+                ( (elemI(:,ei_elementType)  .eq. eChannel) .or.  &
+                  (elemI(:,ei_elementType)  .eq. ePipe   ) ) )
+
+            elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
+            elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
+            elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
+
+        elsewhere ( (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) .and. &
+                    (elemR(:,er_area)           .le. zeroR   ) .and. &
+                    ( (elemI(:,ei_elementType)  .eq. eChannel) .or.  &
+                      (elemI(:,ei_elementType)  .eq. ePipe   ) ) )
+
+            elemR(:,er_Velocity)    = zeroR
+            elemR(:,er_Velocity_N0) = zeroR
+            elemR(:,er_Velocity_N1) = zeroR
+
+        endwhere
+        
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+
+    end subroutine init_IC_get_channel_pipe_velocity
     !
     !==========================================================================
     !==========================================================================
