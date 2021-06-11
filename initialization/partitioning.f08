@@ -6,7 +6,7 @@ module partitioning
     use define_settings, only: setting
     use utility
     use utility_allocate
-    ! use BIPquickFromScratch
+    use BIPquick
 
     implicit none
 
@@ -57,9 +57,9 @@ subroutine init_partitioning_method()
     else if (setting%Partitioning%PartitioningMethod == BLink) then
         if (setting%Verbose) print*, "Using Balanced Link Partitioning"
         call init_partitioning_linkbalance()
-    ! else if (setting%Partitioning%PartitioningMethod == BQuick) then
-    !     if (setting%Verbose) print*, "Using BIPquick Partitioning"
-    !     call init_partitioning_BIPquick()
+    else if (setting%Partitioning%PartitioningMethod == BQuick) then
+        if (setting%Verbose) print*, "Using BIPquick Partitioning"
+        call init_partitioning_BIPquick()
     else
         print *, "Error, partitioning method not supported"
         stop
@@ -70,9 +70,12 @@ subroutine init_partitioning_method()
         do ii = 1, size(nodeI, 1)
             print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image:ni_P_is_boundary)
         end do
+        print*, "-----------------------------------------------------------"
         do ii = 1, size(linkI, 1)
             print*, linkI(ii, li_idx), linkI(ii, li_P_image)
         end do
+
+        stop
 
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
         ! partition_correct = default_performance_check()

@@ -27,6 +27,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $API_DIR/dll.f08\
               $API_DIR/interface.f08\
               $INIT_DIR/discretization.f08\
+              $INIT_DIR/BIPquick.f08\
               $INIT_DIR/partitioning.f08\
               $INIT_DIR/network_define.f08\
               $INIT_DIR/initial_condition.f08\
