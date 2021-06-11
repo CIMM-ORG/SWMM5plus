@@ -20,7 +20,6 @@ module utility_deallocate
     character(len=99) ::              emsg
 
     public :: util_deallocate_network_data
-    public :: util_deallocate_api_data
     public :: util_deallocate_partitioning_arrays
 
 contains
@@ -45,28 +44,6 @@ contains
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_network_data
-!
-!==========================================================================
-!==========================================================================
-!
-
-    subroutine util_deallocate_api_data()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   deallocate all the api data 
-    !-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'util_deallocate_api_data'
-    !-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
-
-        call util_deallocate_api_patterns()
-        call util_deallocate_api_inflows()
-        call util_deallocate_api_tseries()
-
-        if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
-    end subroutine util_deallocate_api_data
-
 !
 !==========================================================================
 !==========================================================================
@@ -315,67 +292,7 @@ contains
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_bc
 
-    !-----------------------------------------------------------------------------
-    !-----------------------------------------------------------------------------
 
-    subroutine util_deallocate_api_patterns()
-        
-        character(64) :: subroutine_name = 'util_deallocate_api_patterns'
-
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
-        
-        
-        if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
-    end subroutine util_deallocate_api_patterns
-
-!
-!==========================================================================
-!==========================================================================
-!
-
-    subroutine util_deallocate_api_tseries()
-
-        character(64) :: subroutine_name = 'util_deallocate_api_tseries'
-
-
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
-        
-        
-        if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
-    end subroutine util_deallocate_api_tseries
-
-!
-!==========================================================================
-!==========================================================================
-!
-
-    subroutine util_deallocate_api_inflows()
-
-        character(64) :: subroutine_name = 'util_deallocate_api_inflows'
-
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
-        
-        
-        if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
-    end subroutine util_deallocate_api_inflows
-
-!
-!==========================================================================
-!==========================================================================
-!
-
-    subroutine util_deallocate_all_api()
-        
-        character(64) :: subroutine_name = 'util_deallocate_all_api'
-
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
-        
-        
-        if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
-
-
-    end subroutine util_deallocate_all_api
-    
 !
 !==========================================================================
 !==========================================================================
