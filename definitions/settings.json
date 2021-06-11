@@ -90,7 +90,7 @@
         }
     },
     "Partitioning" : {
-        "PartitioningMethod" : "BLink"   
+        "PartitioningMethod" : "bquick"   
     },
     "Simulation" : {
         "useHydrology" : true,

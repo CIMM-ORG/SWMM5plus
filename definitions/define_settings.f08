@@ -160,6 +160,7 @@ module define_settings
         logical :: network_define   = .false.
         logical :: pack_mask_arrays = .false.
         logical :: partitioning     = .false.
+        logical :: BIPquick         = .true.
         logical :: interface        = .false.
         logical :: timeloop         = .false.
         logical :: utility          = .false.

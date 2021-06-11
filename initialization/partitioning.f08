@@ -6,6 +6,7 @@ module partitioning
     use define_settings, only: setting
     use utility
     use utility_allocate
+    ! use BIPquickFromScratch
 
     implicit none
 
@@ -56,6 +57,9 @@ subroutine init_partitioning_method()
     else if (setting%Partitioning%PartitioningMethod == BLink) then
         if (setting%Verbose) print*, "Using Balanced Link Partitioning"
         call init_partitioning_linkbalance()
+    ! else if (setting%Partitioning%PartitioningMethod == BQuick) then
+    !     if (setting%Verbose) print*, "Using BIPquick Partitioning"
+    !     call init_partitioning_BIPquick()
     else
         print *, "Error, partitioning method not supported"
         stop
