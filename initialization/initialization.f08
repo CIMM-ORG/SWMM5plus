@@ -79,7 +79,7 @@ contains
 
         call init_network()
 
-        call initial_condition_setup ()
+        call init_IC_setup ()
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all
