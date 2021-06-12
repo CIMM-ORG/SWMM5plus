@@ -151,10 +151,21 @@ contains
         call util_allocate_check(allocation_status, emsg)
         elemP(:,:) = nullvalueI
 
+
         ncol => Ncol_elemPG
-        allocate(elemPG(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
-        elemPG(:,:) = nullvalueI
+        allocate(elemPGalltm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+        elemPGalltm(:,:) = nullvalueI
+
+        ncol => Ncol_elemPG
+        allocate(elemPGac(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+        elemPGac(:,:) = nullvalueI
+
+        ncol => Ncol_elemPG
+        allocate(elemPGetm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg= emsg)
+        call utility_check_allocation (allocation_status, emsg)
+        elemPGetm(:,:) = nullvalueI
 
         ncol => Ncol_elemSI
         allocate(elemSI(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
@@ -191,6 +202,11 @@ contains
         allocate(faceP(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         faceP(:,:) = nullvalueI
+
+        ncol=> Ncol_faceM
+        allocate(faceM(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        faceM(:,:) = nullvalueL
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
 

@@ -13,7 +13,7 @@ module initial_condition
     use define_keys
     use define_globals
     use define_settings
-    !use pack_mask_arrays
+    use pack_mask_arrays
 
     implicit none
 
@@ -48,10 +48,10 @@ contains
         ! call initial_condition_from_nodedata ()
 
         !% set up all the static packs and masks
-        ! call pack_mask_arrays_all ()
+        call pack_mask_arrays_all ()
 
         !% set up all the dynamic packs and masks
-        ! call pack_dynamic_arrays ()
+        call pack_dynamic_arrays ()
 
         !% update all the auxiliary variables
         ! call update_auxiliary_variables

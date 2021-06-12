@@ -59,7 +59,10 @@ module define_globals
     integer, allocatable, target :: elemI(:,:)[:]    ! coarray for element Interger
     logical, allocatable, target :: elemYN(:,:)[:]   ! coarray for element logical
     integer, allocatable, target :: elemP(:,:)[:]    ! coarray for element pack array
-    integer, allocatable, target :: elemPG(:,:)[:]   ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
+
+    integer, allocatable, target :: elemPGalltm(:,:)[:] ! coarray for element pack geometry array
+    integer, allocatable, target :: elemPGac(:,:)[:]    ! coarray for element pack geometry array
+    integer, allocatable, target :: elemPGetm(:,:)[:]   ! coarray for element pack geometry array
     integer, allocatable, target :: elemSI(:,:)[:]   ! coarray for special element Integer
     real(8), allocatable, target :: elemSR(:,:)[:]   ! coarray for special elemen Real
     real(8), allocatable, target :: elemSGR(:,:)[:]  ! coarray for special element geometry Real
@@ -68,7 +71,8 @@ module define_globals
     real(8), allocatable, target :: faceR(:,:)[:]    ! coarray for faces real data
     integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
     logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data
-    integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array    
+    integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array
+    logical, allocatable, target :: faceM(:,:)[:]    ! coarray for faces mask array 
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
