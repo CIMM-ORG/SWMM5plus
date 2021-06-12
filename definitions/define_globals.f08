@@ -133,6 +133,34 @@ module define_globals
     integer :: J_elem_add = 7 ! Supplement elements for junction
     integer :: J_face_add = 6 ! Supplement faces for junction
 
+    ! assign status parameters for nodes
+    integer, parameter :: nUnassigned = 998877
+    integer, parameter :: nAssigned = 1
+    integer, parameter :: nDeferred = -1
+
+
+    ! assign status parameters for links
+    integer, parameter :: lUnassigned = 998877
+    integer, parameter :: lAssigned = 1
+    integer, parameter :: lDeferred = -1
+
+    ! default number of elements for different node types
+    integer, parameter :: N_elem_nJ2 = 0 ! 2-link nodes are assigned to a single face
+    integer, parameter :: N_elem_nJm = 7 ! M-link nodes are assigned a maximum of 7 elements
+    integer, parameter :: N_elem_nStorage = 1 ! Storage nodes are assigned to 1 element
+    integer, parameter :: N_elem_nBCdn = 0 ! Downstream BC nodes are assigned to 0 element (only a face)
+    integer, parameter :: N_elem_nBCup = 0 ! Upstream BC nodes are assigned to 0 element (only a face)
+
+    ! default for edge and non-edge node
+    integer, parameter :: EdgeNode    = 1 ! Edge node of a partition
+    integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element
+
+    ! defaults from initial depth type in links 
+    integer, parameter :: Uniform           = 1
+    integer, parameter :: LinearlyVarying   = 2
+    integer, parameter :: ExponentialDecay  = 3
+
+
     ! useful shortcuts
     !% NOTE: don't use setting%... structure in define_globals to prevent linking problems
     !rm 20210607 brh real(8), pointer :: dt => setting%time%dt  !% need different Hydrology and Hydraulics dt

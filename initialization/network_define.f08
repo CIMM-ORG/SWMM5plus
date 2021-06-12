@@ -66,7 +66,6 @@ contains
                    print*, '..................elements..........................'
                    print*, elemI(:,ei_Lidx)[ii], 'Lidx'
                    print*, elemI(:,ei_Gidx)[ii], 'Gidx'
-                   print*, elemI(:,ei_elementType)[ii], 'elementType'
                    print*, elemI(:,ei_link_Gidx_SWMM)[ii], 'link_Gidx_SWMM'
                    print*, elemI(:,ei_node_Gidx_SWMM)[ii], 'node_Gidx_SWMM'
                    print*, elemI(:,ei_Mface_uL)[ii],'Mface_uL'
@@ -412,7 +411,7 @@ contains
                         faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
                         faceI(FaceLocalCounter,fi_Melem_uL) = nullvalueI
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
-                        faceI(FaceLocalCounter,fi_BCtype)   = fBCup
+                        faceI(FaceLocalCounter,fi_BCtype)   = BCup
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
@@ -424,6 +423,7 @@ contains
                         !% integer data
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                        faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                         if (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode) then
 
@@ -574,10 +574,11 @@ contains
                 FaceGlobalCounter = FaceGlobalCounter + oneI
 
                 !% face integer data
-                faceI(FaceLocalCounter,fi_Lidx)             = FaceLocalCounter
-                faceI(FaceLocalCounter,fi_Gidx)             = FaceGlobalCounter
-                faceI(FaceLocalCounter,fi_Melem_dL)         = ElemLocalCounter + oneI
-                faceI(FaceLocalCounter,fi_Melem_uL)         = ElemLocalCounter
+                faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter + oneI
+                faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                 !% counter for element z bottom calculation
                 zCenter = zCenter - linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
@@ -644,7 +645,7 @@ contains
 
                         !% integer data
                         faceI(FaceLocalCounter,fi_Melem_dL) = nullvalueI
-                        faceI(FaceLocalCounter,fi_BCtype)   = fBCdn
+                        faceI(FaceLocalCounter,fi_BCtype)   = BCdn
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
@@ -658,7 +659,7 @@ contains
                         !% subdivide_link_going_downstream. only the map
                         !% to downstream element is needed to be fixed if
                         !% the node is an edge node.
-
+                        faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         !% integer data
                         if (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode) then
 
@@ -751,10 +752,10 @@ contains
         !%................................................................
         !% Element Arrays
         !% integer data
-        elemI(ElemLocalCounter,ei_Lidx) = ElemLocalCounter
-        elemI(ElemLocalCounter,ei_Gidx) = ElemGlobalCounter
-        elemI(ElemLocalCounter,ei_elementType) = eJunctionMain
-        elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
+        elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
+        elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
+        elemI(ElemLocalCounter,ei_elementType)      = JM
+        elemI(ElemLocalCounter,ei_node_Gidx_SWMM)   = thisNode
 
         !% real data
         elemR(ElemLocalCounter,er_Zbottom) = nodeR(thisNode,nr_zbottom)
@@ -780,7 +781,7 @@ contains
             !% integer data
             elemI(ElemLocalCounter,ei_Lidx)           = ElemLocalCounter
             elemI(ElemLocalCounter,ei_Gidx)           = ElemGlobalCounter
-            elemI(ElemLocalCounter,ei_elementType)    = eJunctionBranch
+            elemI(ElemLocalCounter,ei_elementType)    = JB
             elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
 
             !% real data
@@ -811,7 +812,7 @@ contains
                     !% check if the link connecting this branch
                     !% is a part of this partition
                     if ( (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode)  .and. &
-                         (linkI(upBranchIdx,li_P_image) .ne. image) )  then
+                         (linkI(upBranchIdx,li_P_image)    .ne. image   ) )  then
 
                         !% HACK:
                         !% face counters are always advanced by link
@@ -833,7 +834,9 @@ contains
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                        faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         faceI(FaceLocalCounter,fi_Connected_image) = linkI(upBranchIdx,li_P_image)
+
 
 
                         !% logical data
@@ -861,6 +864,7 @@ contains
                     faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                    faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                     call init_network_nullify_nJm_branch &
                         (ElemLocalCounter, FaceLocalCounter)
@@ -883,7 +887,7 @@ contains
                     !% check if the link connecting this branch
                     !% is a part of this partition
                     if ( (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode)  .and. &
-                         (linkI(dnBranchIdx,li_P_image) .ne. image) )  then
+                         (linkI(dnBranchIdx,li_P_image)    .ne. image   ) )  then
 
                         !% HACK:
                         !% faces are always advanced by link elements
@@ -904,6 +908,7 @@ contains
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                         faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                        faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         faceI(FaceLocalCounter,fi_Connected_image) = linkI(dnBranchIdx,li_P_image)
 
                         !% logical data
@@ -931,6 +936,7 @@ contains
                     faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                    faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                     call init_network_nullify_nJm_branch &
                         (ElemLocalCounter, FaceLocalCounter)

@@ -69,6 +69,7 @@ contains
                    print*, '----------------------------------------------------'
                    print*, 'image = ', ii
                    print*, '..................elements..........................'
+                   print*, elemI(:,ei_elementType)[ii], 'elementType'
                    print*, elemI(:,ei_geometryType)[ii], 'Geometry'
                    print*, elemR(:,er_Depth)[ii], 'Depth'
                    print*, elemR(:,er_Area)[ii], 'Area'
@@ -120,6 +121,8 @@ contains
             call init_IC_get_depth_from_linkdata (thisLink)
 
             call init_IC_get_flow_roughness_from_linkdata (thisLink)
+
+            call init_IC_get_elemtype_from_linkdata(thisLink)
 
             call init_IC_get_geometry_from_linkdata (thisLink)
 
@@ -276,6 +279,80 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine init_IC_get_elemtype_from_linkdata (thisLink)
+    !--------------------------------------------------------------------------
+    !
+    !% get the geometry data from links
+    !
+    !--------------------------------------------------------------------------
+
+        integer, intent(in) :: thisLink
+        integer, pointer    :: linkType 
+
+        character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+
+        !% necessary pointers
+        linkType      => linkI(thisLink,li_link_type)
+
+        select case (linkType)
+
+            case (lChannel)
+
+                where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+                    elemI(:,ei_elementType)     = CC
+                    elemI(:,ei_HeqType)         = time_march
+                    elemI(:,ei_QeqType)         = time_march  
+                endwhere
+                
+
+            case (lpipe)
+                
+                where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+                    elemI(:,ei_elementType)     = CC
+                    elemI(:,ei_HeqType)         = time_march
+                    elemI(:,ei_QeqType)         = time_march
+
+                    elemYN(:,eYN_canSurcharge)  =  .true.      
+                endwhere
+                
+
+            case (lweir)
+                
+                where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+                    elemI(:,ei_elementType)     = weir
+                    elemI(:,ei_QeqType)         = diagnostic
+                    elemYN(:,eYN_canSurcharge)  = linkYN(thisLink,lYN_CanSurcharge)     
+                endwhere
+
+            case (lOrifice)
+
+                print*, 'In ', subroutine_name
+                print*, 'orifices are not handeled yet'
+                stop
+
+            case (lPump)
+
+                print*, 'In ', subroutine_name
+                print*, 'pumps are not handeled yet'
+                stop
+
+            case default
+
+                print*, 'In ', subroutine_name
+                print*, 'error: unexpected link, ', linkType,'  in the network'
+                stop
+
+        end select
+        
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_get_elemtype_from_linkdata
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine init_IC_get_geometry_from_linkdata (thisLink)
     !--------------------------------------------------------------------------
     !
@@ -358,7 +435,8 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
 
-                    elemI(:,ei_geometryType) = eRectangular
+                    elemI(:,ei_geometryType) = rectangular
+
                     elemR(:,er_BreadthMax)   = linkR(thisLink,lr_BreadthScale)
                     elemR(:,er_Area)         = elemR(:,er_BreadthMax) * elemR(:,er_Depth)
                     elemR(:,er_Area_N0)      = elemR(:,er_Area)
@@ -410,7 +488,7 @@ contains
 
             where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
 
-                elemI(:,ei_geometryType)    = eRectangular
+                elemI(:,ei_geometryType)    = rectangular
                 
                 elemR(:,er_BreadthMax)      = linkR(thisLink,lr_BreadthScale)
                 elemR(:,er_Area)            = elemR(:,er_BreadthMax) * elemR(:,er_Depth)
@@ -423,8 +501,6 @@ contains
                 elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                 elemR(:,er_FullArea)        = elemR(:,er_BreadthMax) * elemR(:,er_FullDepth)
                 elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
-
-                elemYN(:,eYN_canSurcharge)  =  .true.
 
                 !% store geometry specific data
                 elemSGR(:,eSGR_Rectangular_Breadth) = linkR(thisLink,lr_BreadthScale)
@@ -469,8 +545,7 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemI(:,ei_geometryType)                 = eTrapezoidal
-                    elemSI(:,eSi_Weir_SpecificType)          = eTrapezoidalWeir
+                    elemSI(:,eSi_Weir_SpecificType)          = trapezoidal_weir
 
                     !% real data
                     elemSR(:,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
@@ -489,8 +564,7 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemI(:,ei_geometryType)                 = eRectangular
-                    elemSI(:,eSi_Weir_SpecificType)          = eSideFlowWeir
+                    elemSI(:,eSi_Weir_SpecificType)          = side_flow
                     elemSI(:,eSi_Weir_EndContractions)       = linkI(thisLink,li_weir_EndContrations)
 
                     !% real data
@@ -513,8 +587,7 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemI(:,ei_geometryType)                 = eTriangular
-                    elemSI(:,eSi_Weir_SpecificType)          = eVnotchWeir
+                    elemSI(:,eSi_Weir_SpecificType)          = vnotch_weir
 
                     !% real data
                     elemSR(:,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
@@ -530,8 +603,7 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemI(:,ei_geometryType)                 = eRectangular
-                    elemSI(:,eSi_Weir_SpecificType)          = eTransverseWeir
+                    elemSI(:,eSi_Weir_SpecificType)          = transverse_weir
                     elemSI(:,eSi_Weir_EndContractions)       = linkI(thisLink,li_weir_EndContrations)
 
                     !% real data
@@ -578,8 +650,7 @@ contains
         !% HACK: this might not be right
         where ( (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) .and. &
                 (elemR(:,er_area)           .gt. zeroR   ) .and. &
-                ( (elemI(:,ei_elementType)  .eq. eChannel) .or.  &
-                  (elemI(:,ei_elementType)  .eq. ePipe   ) ) )
+                (elemI(:,ei_elementType)    .eq. CC      ) )
 
             elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
             elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
@@ -587,8 +658,7 @@ contains
 
         elsewhere ( (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) .and. &
                     (elemR(:,er_area)           .le. zeroR   ) .and. &
-                    ( (elemI(:,ei_elementType)  .eq. eChannel) .or.  &
-                      (elemI(:,ei_elementType)  .eq. ePipe   ) ) )
+                    (elemI(:,ei_elementType)    .eq. CC      ) )
 
             elemR(:,er_Velocity)    = zeroR
             elemR(:,er_Velocity_N0) = zeroR
