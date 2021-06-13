@@ -50,9 +50,6 @@ contains
         !% set up all the static packs and masks
         call pack_mask_arrays_all ()
 
-        !% set up all the dynamic packs and masks
-        call pack_dynamic_arrays ()
-
         !% update all the auxiliary variables
         ! call update_auxiliary_variables
 
@@ -303,7 +300,7 @@ contains
                 where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
-                    elemI(:,ei_QeqType)         = time_march  
+                    elemI(:,ei_QeqType)         = time_march 
                 endwhere
                 
 

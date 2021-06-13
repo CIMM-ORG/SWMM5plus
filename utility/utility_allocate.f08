@@ -154,17 +154,17 @@ contains
 
         ncol => Ncol_elemPG
         allocate(elemPGalltm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg= emsg)
-        call utility_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
         elemPGalltm(:,:) = nullvalueI
 
         ncol => Ncol_elemPG
         allocate(elemPGac(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg= emsg)
-        call utility_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
         elemPGac(:,:) = nullvalueI
 
         ncol => Ncol_elemPG
         allocate(elemPGetm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg= emsg)
-        call utility_check_allocation (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg)
         elemPGetm(:,:) = nullvalueI
 
         ncol => Ncol_elemSI
