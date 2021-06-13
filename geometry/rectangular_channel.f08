@@ -1,4 +1,4 @@
-module rectangular
+module rectangular_channel
 
     use define_settings, only: setting
     use define_globals
@@ -327,4 +327,4 @@ module rectangular
     !%==========================================================================
     !% END OF MODULE
     !%+=========================================================================
-end module rectangular
+end module rectangular_channel

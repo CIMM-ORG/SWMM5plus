@@ -170,7 +170,7 @@ module face
 
         !% cycle through each element in the set.
         do ii=1,size(fset)
-            where (faceM(:,faceMaskCol) .ne. nullvalueI)
+            where (faceM(:,faceMaskCol))
                 faceR(:,fset(ii)) = &
                     (+elemR(eup(:),eset(ii)) * elemR(edn(:),eWup) &
                      +elemR(edn(:),eset(ii)) * elemR(eup(:),eWdn) &
@@ -196,7 +196,7 @@ module face
         !%-----------------------------------------------------------------------------
 
         do ii=1,size(downstreamset)
-            where (faceM(:,faceMaskCol) .ne. nullvalueI )
+            where (faceM(:,faceMaskCol))
                 faceR(:,downstreamSet(ii)) = faceR(:,upstreamSet(ii))
             endwhere
         enddo

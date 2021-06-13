@@ -4,7 +4,7 @@ module geometry
     use define_indexes
     use define_keys
     use define_settings, only: setting
-    use rectangular
+    use rectangular_channel
     use adjust
 
 
@@ -361,7 +361,7 @@ module geometry
                             else
                                 !% not surcharged and non-negligible depth
                                 select case (elemI(tB,ei_geometryType))
-                                    case (eRectangular)
+                                    case (rectangular)
                                         area(tB)     = rectangular_area_from_depth_singular (tB)
                                         topwidth(tB) = rectangular_topwidth_from_depth_singular (tB)
                                         hydDepth(tB) = rectangular_hyddepth_from_depth_singular (tB)
@@ -369,7 +369,7 @@ module geometry
                                         hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
                                         ell(tB)      = geo_ell_singular (tB)
                                         dHdA(tB)     = oneR / topwidth(tB)
-                                    !case (eTrapezoidal)
+                                    !case (trapezoidal)
                                     case default
                                         print *, 'error, case default should not be reached'
                                         stop 3998

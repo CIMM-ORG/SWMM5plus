@@ -203,7 +203,8 @@ module define_indexes
     !% These are the for the full arrays of logical
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: lYN_temp1 = 1
+        enumerator :: lYN_CanSurcharge = 1
+        enumerator :: lYN_temp1
     end enum
     !% note, this must be changed to whatever the last enum element is
     integer, target :: Ncol_linkYN  = lYN_temp1

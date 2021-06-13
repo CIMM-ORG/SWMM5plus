@@ -9,7 +9,7 @@ module runge_kutta2
     use face
     use lowlevel_rk2
     use adjust
-    use diagnostic
+    use diagnostic_elements
 
     implicit none
 

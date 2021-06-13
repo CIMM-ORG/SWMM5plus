@@ -1,4 +1,4 @@
-module diagnostic
+module diagnostic_elements
 
     use define_globals
     use define_keys
@@ -40,7 +40,7 @@ module diagnostic
         Npack   => npack_elemP(thisCol)
 
         if (Npack > 0) then
-            call diagnostic_elements (thisCol, Npack)        
+            call diagnostic_by_type (thisCol, Npack)        
             call face_interpolation (fp_Diag, .false.) 
         endif
     end subroutine diagnostic_toplevel
@@ -49,7 +49,7 @@ module diagnostic
     !% PRIVATE
     !%==========================================================================   
     !%  
-    subroutine diagnostic_elements (thisCol, Npack)
+    subroutine diagnostic_by_type (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Solves for flow/head on all the diagnostic elements.
@@ -92,7 +92,7 @@ module diagnostic
         !% The weir geometry is set in weir routines, as is flowrate, head, and velocity
         call diagnostic_auxiliary_variables (thisCol, Npack)
     
-    end subroutine diagnostic_elements
+    end subroutine diagnostic_by_type
     !% 
     !%========================================================================== 
     !%==========================================================================    
@@ -161,4 +161,4 @@ module diagnostic
     !%==========================================================================
     !% END OF MODULE
     !%+=========================================================================
-end module diagnostic
+end module diagnostic_elements

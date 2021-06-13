@@ -180,7 +180,7 @@ module weir_elements
         SubCorrectionRectangular = oneR
     
         select case (SpecificWeirType)
-            case (TRANSVERSE_WEIR)
+            case (transverse_weir)
                 WeirExponent          => Setting%Weir%Transverse%WeirExponent
                 WeirContractionFactor => Setting%Weir%Transverse%WeirContractionFactor
                 !WeirCrestExponent     => Setting%Weir%Transverse%SideFlowWeirCrestExponent
@@ -203,7 +203,7 @@ module weir_elements
                 Flowrate = FlowDirection * SubCorrectionRectangular * CrestLength * &
                         CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
                 
-            case (SIDEFLOW_WEIR)
+            case (side_flow)
                 WeirExponent          => Setting%Weir%SideFlow%WeirExponent
                 WeirContractionFactor => Setting%Weir%SideFlow%WeirContractionFactor
                 WeirCrestExponent     => Setting%Weir%SideFlow%SideFlowWeirCrestExponent
@@ -244,7 +244,7 @@ module weir_elements
 
                 endif  
 
-            case (TRAPEZOIDAL_WEIR)
+            case (trapezoidal_weir)
                 WeirExponentVNotch    => Setting%Weir%VNotch%WeirExponent
                 WeirExponent          => Setting%Weir%Trapezoidal%WeirExponent
                 WeirContractionFactor => Setting%Weir%Trapezoidal%WeirContractionFactor
@@ -273,7 +273,7 @@ module weir_elements
                         SubCorrectionRectangular * CoeffRectangular * CrestLength * &
                         (EffectiveHeadDelta ** WeirExponent))
             
-            case (VNOTCH_WEIR)
+            case (vnotch_weir)
                 WeirExponent          => Setting%Weir%VNotch%WeirExponent
                 WeirContractionFactor => Setting%Weir%VNotch%WeirContractionFactor
                 WeirCrestExponent     => Setting%Weir%VNotch%SideFlowWeirCrestExponent
@@ -346,7 +346,7 @@ module weir_elements
         
         !% set geometry variables for weir types
         select case (SpecificWeirType) 
-            case (TRANSVERSE_WEIR)
+            case (transverse_weir)
                 Area      =  RectangularBreadth * Depth
                 Volume    = Area * Length
                 Topwidth  = RectangularBreadth
@@ -354,7 +354,7 @@ module weir_elements
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
                 
-            case (SIDEFLOW_WEIR)
+            case (side_flow)
                 Area      =  RectangularBreadth * Depth
                 Volume    = Area * Length
                 Topwidth  = RectangularBreadth
@@ -362,7 +362,7 @@ module weir_elements
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
             
-            case (TRAPEZOIDAL_WEIR)
+            case (trapezoidal_weir)
                 Area      =  (TrapezoidalBreadth + onehalfR * &
                              (TrapezoidalLeftSlope + TrapezoidalRightSlope) * Depth) * Depth 
                 Volume    = Area * Length
@@ -374,7 +374,7 @@ module weir_elements
                                 + sqrt(oneR + (TrapezoidalRightSlope**twoR)))
                 HydRadius = Area / Perimeter
                 
-            case (VNOTCH_WEIR)
+            case (vnotch_weir)
                 Area      =  TriangularSideSlope * Depth ** twoR
                 Volume    = Area * Length
                 Topwidth  = twoR * TriangularSideSlope * Depth

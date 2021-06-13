@@ -26,6 +26,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_array.f08\
               $API_DIR/dll.f08\
               $API_DIR/interface.f08\
+              $INIT_DIR/pack_mask_arrays.f08\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/partitioning.f08\
               $INIT_DIR/network_define.f08\
@@ -36,12 +37,12 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/weir_elements.f08\
               $TL_DIR/orifice_elements.f08\
               $TL_DIR/pump_elements.f08\
-              $GEO_DIR/rectangular.f08\
+              $GEO_DIR/rectangular_channel.f08\
               $GEO_DIR/geometry.f08\
               $TL_DIR/lowlevel_rk2.f08\
               $TL_DIR/update.f08\
               $TL_DIR/face.f08\
-              $TL_DIR/diagnostic.f08\
+              $TL_DIR/diagnostic_elements.f08\
               $TL_DIR/runge_kutta2.f08\
               $TL_DIR/timeloop.f08\
               $FIN_DIR/finalization.f08"
