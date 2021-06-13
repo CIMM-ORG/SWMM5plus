@@ -25,7 +25,7 @@ module utility_allocate
 
     ! public members
     public :: util_allocate_linknode
-    public :: util_allocate_partitioning_arrays, util_deallocate_partitioning_arrays
+    public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
     public :: util_allocate_columns
 
@@ -106,16 +106,7 @@ contains
     !
     !==========================================================================
     !==========================================================================
-    !
-    subroutine util_deallocate_partitioning_arrays()
-        deallocate(adjacent_links)
-        deallocate(elem_per_image)
-        deallocate(image_full)
-    end subroutine util_deallocate_partitioning_arrays
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    
     subroutine util_allocate_elemX_faceX ()
         ! the max_caf_elem and max_caf_face are the maximum length of the coarray 
         ! across all employed images
@@ -978,6 +969,6 @@ contains
     
             if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
     
-        end subroutine util_allocate_check
+    end subroutine util_allocate_check
 
 end module utility_allocate

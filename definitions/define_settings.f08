@@ -171,6 +171,7 @@ module define_settings
         logical :: timeloop         = .false.
         logical :: utility          = .false.
         logical :: utility_allocate = .false.
+        logical :: utility_deallocate = .false.
         logical :: utility_array    = .false.
         logical :: utility_datetime = .false.
         logical :: utility_string   = .false.
@@ -880,45 +881,48 @@ contains
         call json%get('Debug.File.utility_allocate', logical_value, found)
         setting%Debug%File%utility_allocate = logical_value
         if (.not. found) stop 990
+        call json%get('Debug.File.utility_deallocate', logical_value, found)
+        setting%Debug%File%utility_deallocate = logical_value
+        if (.not. found) stop 1000
         call json%get('Debug.File.utility_array', logical_value, found)
         setting%Debug%File%utility_array = logical_value
-        if (.not. found) stop 1000
+        if (.not. found) stop 1010
         call json%get('Debug.File.utility_datetime', logical_value, found)
         setting%Debug%File%utility_datetime = logical_value
-        if (.not. found) stop 1010
+        if (.not. found) stop 1020
         call json%get('Debug.File.utility_string', logical_value, found)
         setting%Debug%File%utility_string = logical_value
-        if (.not. found) stop 1020
+        if (.not. found) stop 1030
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
-        if (.not. found) stop 1030
+        if (.not. found) stop 1040
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
-        if (.not. found) stop 1040
+        if (.not. found) stop 1050
         call json%get('Debug.FileGroup.definitions', logical_value, found)
         setting%Debug%FileGroup%definitions = logical_value
-        if (.not. found) stop 1050
+        if (.not. found) stop 1060
         call json%get('Debug.FileGroup.finalization', logical_value, found)
         setting%Debug%FileGroup%finalization = logical_value
-        if (.not. found) stop 1060
+        if (.not. found) stop 1070
         call json%get('Debug.FileGroup.initialization', logical_value, found)
         setting%Debug%FileGroup%initialization = logical_value
-        if (.not. found) stop 1070
+        if (.not. found) stop 1080
         call json%get('Debug.FileGroup.interface', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 1080
+        if (.not. found) stop 1090
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 1090
+        if (.not. found) stop 1100
         call def_update_debug_options()
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 1100
+        if (.not. found) stop 1200
 
         call json%destroy()
-        if (json%failed()) stop 1110
+        if (json%failed()) stop 1210
 
         if (setting%Debug%File%define_settings) print *, '*** leave ', subroutine_name
     end subroutine def_load_settings
@@ -954,6 +958,7 @@ contains
         end if
         if (setting%Debug%FileGroup%utility) then
             setting%Debug%File%utility_allocate = .true.
+            setting%Debug%File%utility_deallocate = .true.
             setting%Debug%File%utility_array = .true.
             setting%Debug%File%utility_datetime = .true.
             setting%Debug%File%utility_string = .true.
