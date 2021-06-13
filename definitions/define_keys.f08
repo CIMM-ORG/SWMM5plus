@@ -18,6 +18,18 @@ module define_keys
         enumerator :: ETM
         enumerator :: ETM_AC
         enumerator :: AC
+        enumerator :: JB
+        enumerator :: JM
+        enumerator :: CC 
+        enumerator :: CCJM 
+        enumerator :: ALL
+        enumerator :: weir
+        enumerator :: orifice
+        enumerator :: pump
+        enumerator :: TRANSVERSE_WEIR
+        enumerator :: SIDEFLOW_WEIR
+        enumerator :: TRAPEZOIDAL_WEIR
+        enumerator :: VNOTCH_WEIR
     end enum
 
     implicit none
@@ -99,8 +111,8 @@ module define_keys
     ! data types for faceI(:,jump_type)
     enum, bind(c)
         enumerator :: jump_none = 0 ! ID for no jump
-        enumerator :: jump_downstream ! ID for jump in nominal downstream direction
-        enumerator :: jump_upstream ! ID for jump in nominal upstream direction
+        enumerator :: jump_from_downstream ! ID for jump from nominal downstream (supercritical) to upstream (subcritical)
+        enumerator :: jump_from_upstream ! ID for jump from nominal upstream (supercritical) to downstream (subcritical)
     end enum
 
     ! data types for nodeI(:,ni_node_type)

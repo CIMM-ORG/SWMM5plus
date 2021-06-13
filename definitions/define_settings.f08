@@ -117,11 +117,11 @@ module define_settings
         real(8) :: FaceVolumeTransport = 0.5
     end type LimiterFlowrateType
 
-    ! setting%Limiter%Timescale
-    type LimiterTimescaleType
+    ! setting%Limiter%InterpWeight
+    type LimiterInterpWeightType
         real(8) :: Maximum = 1e6
         real(8) :: Minimum = 1e-6
-    end type LimiterTimescaleType
+    end type LimiterInterpWeightType
 
     ! setting%Limiter%Velocity
     type LimiterVelocityType
@@ -145,6 +145,13 @@ module define_settings
         integer :: stepNext = 1 !% the next time step
         integer :: stepFinal = 1 !% the maximum number of steps allowed in this loop
     end type HydrologyHydraulicsTimeType  
+
+    type WeirConstantType
+        real(8) :: WeirExponent
+        real(8) :: WeirContractionFactor
+        real(8) :: SideFlowWeirCrestExponent
+        real(8) :: VillemonteCorrectionExponent
+    endtype WeirConstantType
 
     ! setting%Debug%File
     type DebugFileYNType
@@ -234,11 +241,11 @@ module define_settings
 
     ! setting%Limiter
     type LimiterType
-        type(LimiterBCType) :: BC
-        type(LimiterFlowrateType) :: Flowrate
-        type(LimiterTimescaleType) :: Timescale
-        type(LimiterVelocityType) :: Velocity
-        type(LimiterArraySizeType) :: ArraySize
+        type(LimiterBCType)           :: BC
+        type(LimiterFlowrateType)     :: Flowrate
+        type(LimiterInterpWeightType) :: InterpWeight
+        type(LimiterVelocityType)     :: Velocity
+        type(LimiterArraySizeType)    :: ArraySize
     end type LimiterType
 
     !% setting%Partitioning
@@ -300,6 +307,13 @@ module define_settings
         type(HydrologyHydraulicsTimeType) :: Hydraulics     
     end type TimeType
 
+    type WeirType
+        type(WeirConstantType) :: Transverse
+        type(WeirConstantType) :: SideFlow
+        type(WeirConstantType) :: VNotch
+        type(WeirConstantType) :: Trapezoidal
+    end type WeirType
+
     !% setting%VariableDT
     type VariableDTType
         logical :: Apply = .true.
@@ -313,12 +327,13 @@ module define_settings
     end type VariableDTType
 
     ! setting%ZeroValue
+    ! Note that zerovalue.depth = zerovalue.area/zerovalue.topwidth
     type ZerovalueType
         logical :: UseZeroValues = .true.
         real(8) :: Area = 1.0e-6 ! m^2
         real(8) :: Depth = 1.0e-4 ! m
-        real(8) :: Topwidth = 1.0e-4 ! m
-        real(8) :: Volume = 1.0e-6 ! m^3
+        real(8) :: Topwidth = 1.0e-2 ! m
+        real(8) :: Volume = 1.0e-4 ! m^3
     end type ZerovalueType
 
     !% setting%Debug
@@ -356,6 +371,7 @@ module define_settings
     !rm 20210607 brh    type(StepType)           :: Step ! controls over simulation time stepping
         type(TimeType)           :: Time ! controls of time step
         type(VariableDTType)     :: VariableDT
+        type(WeirType)           :: Weir
         type(ZeroValueType)      :: ZeroValue ! finite values to represent small or negative values
         type(TestCaseType)       :: TestCase
         type(PathType)           :: Paths
@@ -559,11 +575,11 @@ contains
         setting%Limiter%Flowrate%UseFaceVolumeTransport = logical_value
         if (.not. found) stop 360
 
-        call json%get('Limiter.Timescale.Maximum', real_value, found)
-        setting%Limiter%Timescale%Maximum = real_value
+        call json%get('Limiter.InterpWeight.Maximum', real_value, found)
+        setting%Limiter%InterpWeight%Maximum = real_value
         if (.not. found) stop 370
-        call json%get('Limiter.Timescale.Minimum', real_value, found)
-        setting%Limiter%Timescale%Minimum = real_value
+        call json%get('Limiter.InterpWeight.Minimum', real_value, found)
+        setting%Limiter%InterpWeight%Minimum = real_value
         if (.not. found) stop 380
 
         call json%get('Limiter.Velocity.Maximum', real_value, found)
@@ -730,6 +746,59 @@ contains
         call json%get('Time.Hydraulics.stepFinal', integer_value, found)
         setting%Time%Hydraulics%stepFinal = integer_value
         if (.not. found) stop 760  
+
+        call json%get("Weir.Transverse.WeirExponent", real_value, found)
+        setting%Weir%Transverse%WeirExponent = real_value
+        if (.not. found) stop 7601
+        call json%get("Weir.Transverse.WeirContractionFactor", real_value, found)
+        setting%Weir%Transverse%WeirContractionFactor = real_value
+        if (.not. found) stop 7602
+        call json%get("Weir.Transverse.SideFlowWeirCrestExponent", real_value, found)
+        setting%Weir%Transverse%SideFlowWeirCrestExponent = real_value
+        if (.not. found) stop 7603
+        call json%get("Weir.Transverse.VillemonteCorrectionExponent", real_value, found)
+        setting%Weir%Transverse%VillemonteCorrectionExponent = real_value
+        if (.not. found) stop 7604
+
+        call json%get("Weir.SideFlow.WeirExponent", real_value, found)
+        setting%Weir%SideFlow%WeirExponent = real_value
+        if (.not. found) stop 7611
+        call json%get("Weir.SideFlow.WeirContractionFactor", real_value, found)
+        setting%Weir%SideFlow%WeirContractionFactor = real_value
+        if (.not. found) stop 7612
+        call json%get("Weir.SideFlow.SideFlowWeirCrestExponent", real_value, found)
+        setting%Weir%SideFlow%SideFlowWeirCrestExponent = real_value
+        if (.not. found) stop 7613
+        call json%get("Weir.SideFlow.VillemonteCorrectionExponent", real_value, found)
+        setting%Weir%SideFlow%VillemonteCorrectionExponent = real_value
+        if (.not. found) stop 7614
+
+        call json%get("Weir.VNotch.WeirExponent", real_value, found)
+        setting%Weir%VNotch%WeirExponent = real_value
+        if (.not. found) stop 7621
+        call json%get("Weir.VNotch.WeirContractionFactor", real_value, found)
+        setting%Weir%VNotch%WeirContractionFactor = real_value
+        if (.not. found) stop 7622
+        call json%get("Weir.VNotch.SideFlowWeirCrestExponent", real_value, found)
+        setting%Weir%VNotch%SideFlowWeirCrestExponent = real_value
+        if (.not. found) stop 7623
+        call json%get("Weir.VNotch.VillemonteCorrectionExponent", real_value, found)
+        setting%Weir%VNotch%VillemonteCorrectionExponent = real_value
+        if (.not. found) stop 7624
+
+
+        call json%get("Weir.Trapezoidal.WeirExponent", real_value, found)
+        setting%Weir%Trapezoidal%WeirExponent = real_value
+        if (.not. found) stop 7631
+        call json%get("Weir.Trapezoidal.WeirContractionFactor", real_value, found)
+        setting%Weir%Trapezoidal%WeirContractionFactor = real_value
+        if (.not. found) stop 7632
+        call json%get("Weir.Trapezoidal.SideFlowWeirCrestExponent", real_value, found)
+        setting%Weir%Trapezoidal%SideFlowWeirCrestExponent = real_value
+        if (.not. found) stop 7633
+        call json%get("Weir.Trapezoidal.VillemonteCorrectionExponent", real_value, found)
+        setting%Weir%Trapezoidal%VillemonteCorrectionExponent = real_value
+        if (.not. found) stop 7634
 
         !% load variable time step settings
         call json%get("VariableDT.Apply", logical_value, found)

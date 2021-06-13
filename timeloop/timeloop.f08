@@ -189,7 +189,6 @@ module timeloop
         timeNext = timeFinal+1.0  
 
         end do
-
     end subroutine tl_hydraulics        
 
     !%==========================================================================  
@@ -330,8 +329,7 @@ module timeloop
         !%  Reset the flowrate adhoc detection before flowrates are updated.
         !%  Note that we do not reset the small volume detection here -- that should
         !%  be in geometry routines.
-        elemYN(:,eYN_IsAdhocFlowrate) = .false.
-        
+        elemYN(:,eYN_IsAdhocFlowrate) = .false.    
         select case (setting%Solver%SolverSelect)
             case (ETM_AC)
                 call rk2_toplevel_ETMAC ()

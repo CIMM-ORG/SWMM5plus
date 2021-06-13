@@ -76,7 +76,7 @@
             "FaceVolumeTransport" : 0.5,
             "UseFaceVolumeTransport" : true
         },
-        "Timescale" : {
+        "InterpWeight" : {
             "Maximum" : 1e6,
             "Minimum" : 1e-6
         },
@@ -139,6 +139,32 @@
             "stepNext"  : 1,
             "stepFinal" : 1
         }        
+    },
+    "Weir" : {
+        "Transverse" : {
+            "WeirExponent" : 1.0,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 1.0
+        },
+        "SideFlow" : {
+            "WeirExponent" : 1.0,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 1.0
+        },
+        "VNotch" : {
+            "WeirExponent" : 1.0,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 1.0
+        },    
+        "Trapezoidal" : {
+            "WeirExponent" : 1.0,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 1.0
+        }    
     },
     "VariableDT" : {
         "Apply" : true,

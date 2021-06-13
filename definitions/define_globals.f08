@@ -72,6 +72,7 @@ module define_globals
     integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
     logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data
     integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array    
+    integer, allocatable, target :: faceM(:,:)[:]    ! coarray for faces masc array    
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 

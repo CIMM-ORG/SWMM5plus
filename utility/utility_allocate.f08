@@ -197,6 +197,11 @@ contains
         call util_allocate_check(allocation_status, emsg)
         faceP(:,:) = nullvalueI
 
+        ncol=> Ncol_faceM
+        allocate(faceM(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        faceM(:,:) = nullvalueI        
+
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
 
 
