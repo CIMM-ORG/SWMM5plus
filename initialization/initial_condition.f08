@@ -45,7 +45,10 @@ contains
         call init_IC_from_linkdata ()
 
         !% get data that can be extracted from nodes
-        ! call initial_condition_from_nodedata ()
+        call init_IC_from_nodedata ()
+
+        !% update time marching type
+        !% call select_solver()
 
         !% set up all the static packs and masks
         call pack_mask_arrays_all ()
@@ -126,9 +129,6 @@ contains
             !% we need a small/zero volume adjustment here 
 
             call init_IC_get_channel_pipe_velocity (thisLink)
-
-            !% we need another call here to set the type of 
-            !% time march to be used.
 
         end do
 
@@ -670,12 +670,67 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine init_IC_from_nodedata ()
+    !--------------------------------------------------------------------------
+    !
+    !% get the initial depth, and geometry data from nJm nodes
+    !
+    !--------------------------------------------------------------------------
 
+        integer                                     :: ii, image, pJunction
+        integer, pointer                            :: thisJunctionNode
+        integer, dimension(:), allocatable, target  :: packed_nJm_idx
+
+        character(64) :: subroutine_name = 'init_IC_from_nodedata'
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+
+        !% Setting the local image value
+        image = this_image()
+
+        !% pack all the link indexes in an image
+        packed_nJm_idx = pack(nodeI(:,ni_idx), &
+                             ((nodeI(:,ni_P_image) .eq. image) .and. &
+                              (nodeI(:,ni_node_type) .eq. nJm) ) )
+
+        !% find the number of links in an image
+        pJunction = size(packed_nJm_idx)
+
+        !% cycle through the links in an image
+        do ii = 1,pJunction
+            !% necessary pointers
+            thisJunctionNode    => packed_nJm_idx(ii)
+
+            where (elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
+                elemI(:,ei_HeqType) = time_march
+            endwhere
+
+        end do
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_from_nodedata
     !
     !==========================================================================
     !==========================================================================
     !
+    subroutine init_IC_get_junction_data (thisJunctionNode)
+    !--------------------------------------------------------------------------
+    !
+    !% get the initial depth, and geometry data from nJm nodes
+    !
+    !--------------------------------------------------------------------------
 
+        integer, intent(in) :: thisJunctionNode 
+
+        character(64) :: subroutine_name = 'init_IC_get_junction_data'
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+
+        !% initialize selecteros for upstream and downstream branches
+        
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_get_junction_data
     !
     !==========================================================================
     !==========================================================================
