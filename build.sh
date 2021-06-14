@@ -17,8 +17,8 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_string.f08\
               $UTIL_DIR/utility_datetime.f08\
               $DEF_DIR/define_types.f08\
-              $DEF_DIR/define_globals.f08\
               $DEF_DIR/define_api_keys.f08\
+              $DEF_DIR/define_globals.f08\
               $DEF_DIR/define_keys.f08\
               $DEF_DIR/define_settings.f08\
               $DEF_DIR/define_indexes.f08\
@@ -26,7 +26,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_allocate.f08\
               $UTIL_DIR/utility_deallocate.f08\
               $UTIL_DIR/utility_array.f08\
-              $API_DIR/dll.f08\
+              $API_DIR/c_library.f08\
               $API_DIR/interface.f08\
               $INIT_DIR/pack_mask_arrays.f08\
               $INIT_DIR/discretization.f08\

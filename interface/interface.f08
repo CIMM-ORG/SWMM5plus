@@ -1,7 +1,7 @@
 module interface
 
     use iso_c_binding
-    use dll
+    use c_library
     use utility
     use utility_datetime
     use define_keys
@@ -135,19 +135,12 @@ module interface
             implicit none
             real(c_double) :: api_get_end_datetime
         end function api_get_end_datetime
-
-        subroutine api_print_object_name(k, object_type)
-            use, intrinsic :: iso_c_binding
-            implicit none
-            integer(c_int), value :: k
-            integer(c_int), value :: object_type
-        end subroutine api_print_object_name
     end interface
 
+    type(c_lib_type) :: c_lib
+    type(c_ptr) :: api
     character(len = 1024), private :: errmsg
     integer, private :: errstat
-    type(dll_type), private :: dll
-    type(c_ptr) :: api
     logical :: api_is_initialized = .false.
 
     ! Time constants
@@ -168,7 +161,6 @@ module interface
     procedure(api_get_end_datetime), pointer, private :: ptr_api_get_end_datetime
     procedure(api_get_object_name_len), pointer, private :: ptr_api_get_object_name_len
     procedure(api_get_object_name), pointer, private :: ptr_api_get_object_name
-    procedure(api_print_object_name), pointer, private :: ptr_api_print_object_name
 
 contains
 
@@ -200,16 +192,16 @@ contains
         setting%Paths%rpt = trim(setting%Paths%rpt) // c_null_char
         setting%Paths%out = trim(setting%Paths%out) // c_null_char
 
-        dll%filename = trim(setting%Paths%project) // "/libswmm5.so"
+        c_lib%filename = trim(setting%Paths%project) // "/libswmm5.so"
 
         ! Initialize API
-        dll%procname = "api_initialize"
-        call load_dll(dll, errstat, errmsg)
+        c_lib%procname = "api_initialize"
+        call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(dll%procaddr, ptr_api_initialize)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
         api = ptr_api_initialize(setting%Paths%inp, setting%Paths%rpt, setting%Paths%out)
 
         N_link = interface_get_num_objects(API_LINK)
@@ -242,13 +234,13 @@ contains
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
-        dll%procname = "api_finalize"
-        call load_dll(dll, errstat, errmsg)
+        c_lib%procname = "api_finalize"
+        call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(dll%procaddr, ptr_api_finalize)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
         call ptr_api_finalize(api)
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
@@ -264,13 +256,13 @@ contains
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
-        dll%procname = "api_get_start_datetime"
-        call load_dll(dll, errstat, errmsg)
+        c_lib%procname = "api_get_start_datetime"
+        call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(dll%procaddr, ptr_api_get_start_datetime)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_start_datetime)
         interface_get_start_datetime = ptr_api_get_start_datetime()
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
     end function interface_get_start_datetime
@@ -283,13 +275,13 @@ contains
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
-        dll%procname = "api_get_end_datetime"
-        call load_dll(dll, errstat, errmsg)
+        c_lib%procname = "api_get_end_datetime"
+        call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(dll%procaddr, ptr_api_get_end_datetime)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_end_datetime)
         interface_get_end_datetime = ptr_api_get_end_datetime()
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
     end function interface_get_end_datetime
@@ -317,16 +309,16 @@ contains
             stop
         end if
 
-        dll%procname = "api_get_node_attribute"
-        call load_dll(dll, errstat, errmsg)
+        c_lib%procname = "api_get_node_attribute"
+        call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(dll%procaddr, ptr_api_get_node_attribute)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_node_attribute)
         ! Fortran index starts in 1, whereas in C starts in 0
         error = ptr_api_get_node_attribute(api, node_idx-1, attr, cptr_value)
-        call print_swmm_error_code(error)
+        call interface_print_error(error)
 
         interface_get_node_attribute = node_value
 
@@ -365,22 +357,22 @@ contains
             stop
         end if
 
-        dll%procname = "api_get_link_attribute"
-        call load_dll(dll, errstat, errmsg)
+        c_lib%procname = "api_get_link_attribute"
+        call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(dll%procaddr, ptr_api_get_link_attribute)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_link_attribute)
 
         if (attr <= N_api_link_attributes) then
             ! Fortran index starts in 1, whereas in C starts in 0
             error = ptr_api_get_link_attribute(api, link_idx-1, attr, cptr_value)
-            call print_swmm_error_code(error)
+            call interface_print_error(error)
             interface_get_link_attribute = link_value
         else
             error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_type, cptr_value)
-            call print_swmm_error_code(error)
+            call interface_print_error(error)
             interface_get_link_attribute = link_value
             if (link_value == API_RECT_CLOSED) then
                 if (attr == api_link_geometry) then
@@ -389,7 +381,7 @@ contains
                     interface_get_link_attribute = lpipe
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_swmm_error_code(error)
+                    call interface_print_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -401,7 +393,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_swmm_error_code(error)
+                    call interface_print_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -413,7 +405,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yBot, cptr_value)
-                    call print_swmm_error_code(error)
+                    call interface_print_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -425,7 +417,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_swmm_error_code(error)
+                    call interface_print_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -437,7 +429,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_swmm_error_code(error)
+                    call interface_print_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -462,13 +454,13 @@ contains
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
-        dll%procname = "api_get_num_objects"
-        call load_dll(dll, errstat, errmsg)
+        c_lib%procname = "api_get_num_objects"
+        call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(dll%procaddr, ptr_api_get_num_objects)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_objects)
         interface_get_num_objects = ptr_api_get_num_objects(api, obj_type)
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
@@ -485,13 +477,13 @@ contains
         cptr_x = c_loc(x)
         cptr_y = c_loc(y)
 
-        dll%procname = "api_get_first_table_entry"
-        call load_dll(dll, errstat, errmsg)
+        c_lib%procname = "api_get_first_table_entry"
+        call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(dll%procaddr, ptr_api_get_first_table_entry)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_first_table_entry)
         interface_get_first_table_entry = ptr_api_get_first_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
 
         entries(1) = x
@@ -509,13 +501,13 @@ contains
         cptr_x = c_loc(x)
         cptr_y = c_loc(y)
 
-        dll%procname = "api_get_next_table_entry"
-        call load_dll(dll, errstat, errmsg)
+        c_lib%procname = "api_get_next_table_entry"
+        call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(dll%procaddr, ptr_api_get_next_table_entry)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_table_entry)
         interface_get_next_table_entry = ptr_api_get_next_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
 
         entries(1) = x
@@ -529,60 +521,42 @@ contains
         integer :: i, count
 
         if (k /= -1) then
-            dll%procname = "api_get_pattern_count"
-            call load_dll(dll, errstat, errmsg)
+            c_lib%procname = "api_get_pattern_count"
+            call c_lib_load(c_lib, errstat, errmsg)
             if (errstat /= 0) then
                 print *, "ERROR: " // trim(errmsg)
                 stop
             end if
-            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_count)
+            call c_f_procpointer(c_lib%procaddr, ptr_api_get_pattern_count)
             interface_get_pattern%count = ptr_api_get_pattern_count(k-1)
 
-            dll%procname = "api_get_pattern_factor"
-            call load_dll(dll, errstat, errmsg)
+            c_lib%procname = "api_get_pattern_factor"
+            call c_lib_load(c_lib, errstat, errmsg)
             if (errstat /= 0) then
                 print *, "ERROR: " // trim(errmsg)
                 stop
             end if
-            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_factor)
+            call c_f_procpointer(c_lib%procaddr, ptr_api_get_pattern_factor)
             do i = 1, 24
                 interface_get_pattern%factor(i) = ptr_api_get_pattern_factor(k-1, i-1) ! index starts at 0 in C
             end do
 
-            dll%procname = "api_get_pattern_type"
-            call load_dll(dll, errstat, errmsg)
+            c_lib%procname = "api_get_pattern_type"
+            call c_lib_load(c_lib, errstat, errmsg)
             if (errstat /= 0) then
                 print *, "ERROR: " // trim(errmsg)
                 stop
             end if
-            call c_f_procpointer(dll%procaddr, ptr_api_get_pattern_type) ! index starts at 0 in C
+            call c_f_procpointer(c_lib%procaddr, ptr_api_get_pattern_type) ! index starts at 0 in C
             interface_get_pattern%ptype = ptr_api_get_pattern_type(k-1)
         end if
     end function interface_get_pattern
 
-    ! Utility functions that need this dll type
-
-    subroutine print_object_name(k, object_type)
-        integer, intent(in) :: k
-        integer, intent(in) :: object_type
-
-        dll%procname = "api_print_object_name"
-        call load_dll(dll, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop
-        end if
-        call c_f_procpointer(dll%procaddr, ptr_api_print_object_name) ! index starts at 0 in C
-        call ptr_api_print_object_name(k-1, object_type)
-    end subroutine print_object_name
-
-    subroutine print_swmm_error_code(error)
+    subroutine interface_print_error(error)
         integer, intent(in) :: error
         if (error /= 0) then
             print *, "SWMM Error Code: " , error
             stop
         end if
-    end subroutine print_swmm_error_code
-
-
+    end subroutine interface_print_error
 end module interface
