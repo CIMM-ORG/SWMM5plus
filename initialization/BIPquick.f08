@@ -286,9 +286,13 @@ subroutine local_node_weighting()
  !
  !----------------------------------------------------------------------------
   character(64) :: subroutine_name = 'local_node_weighting'
+  real(8)       :: weighting_function_output ! HACK
  !--------------------------------------------------------------------------
   if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
 
+  call null_value_convert()
+
+  weighting_function_output = weighting_function()
 
   if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
 end subroutine local_node_weighting
