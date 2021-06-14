@@ -106,44 +106,25 @@ use define_settings
 !==========================================================================   
 !========================================================================== 
 !
-! !  subroutine network_node_preprocessing()
-!     ! ----------------------------------------------------------------------------------------------------------------
-!     !
-!     ! Description:
-!     !   This subroutine is a preprocessing step.
-!     !   The network is traversed once and the B_nodeI array is populated with the adjacent upstream nodes.  This
-!     !   step eliminates the need to continuously jump back and forth between the nodeI/linkI arrays during subsequent
-!     !   network traversals.
-!     !
-!     ! ----------------------------------------------------------------------------------------------------------------
-!     character(64) :: subroutine_name = 'network_node_preprocessing'
-!     integer :: upstream_link, upstream_node, uplink_counter, root_node
-!     integer ii, jj, uplinks
-!     ! ----------------------------------------------------------------------------------------------------------------
-!      if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+   subroutine network_node_preprocessing()
+    ! ----------------------------------------------------------------------------------------------------------------
+    !
+    ! Description:
+    !   This subroutine is a preprocessing step.
+    !   The network is traversed once and the B_nodeI array is populated with the adjacent upstream nodes.  This
+    !   step eliminates the need to continuously jump back and forth between the nodeI/linkI arrays during subsequent
+    !   network traversals.
+    !
+    ! ----------------------------------------------------------------------------------------------------------------
+    character(64) :: subroutine_name = 'network_node_preprocessing'
+    integer :: upstream_link, upstream_node, uplink_counter, root_node
+    integer ii, jj, uplinks
+    ! ----------------------------------------------------------------------------------------------------------------
+     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
     
-!      do ii= 1,size(nodeI,1)
-!         if ( mod(ii, 1) == 0 ) then
-!             print*, "processing upstream nodes of ni_idx:", ii
-!         endif
-!         root_node = nodeI(ii, ni_idx)
-!         uplink_counter = nodeI(ii, ni_N_link_u)
-!         print*, nodeI(ii, ni_idx), "has", nodeI(ii, ni_N_link_u), "upstream links"
-!         do uplinks= 1, uplink_counter
-!             if ( nodeI(ii, ni_idx_base1 + uplinks) /= nullValueI ) then
-!                 upstream_link = nodeI(ii, ni_idx_base1 + uplinks)
-!                 do jj= 1,size(linkI,1)
-!                     if ( linkI(jj, li_idx) == upstream_link ) then
-!                         upstream_node = linkI(jj, li_Mnode_u)
-!                         B_nodeI(ii, uplinks) = upstream_node
-!                     endif
-!                 enddo
-!             endif
-!         enddo
-!      enddo
     
-!      if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
-!      end subroutine network_node_preprocessing
+     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+   end subroutine network_node_preprocessing
     !
     !============================================================================ 
     !============================================================================ 
