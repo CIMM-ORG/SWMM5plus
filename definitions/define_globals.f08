@@ -10,6 +10,7 @@
 module define_globals
 
     use define_types
+    use define_api_keys
 
     implicit none
 
@@ -51,7 +52,7 @@ module define_globals
 
     !%  vector of number of elements and faces across images
     integer, dimension(:), allocatable, target :: N_elem
-    integer, dimension(:), allocatable, target :: N_face 
+    integer, dimension(:), allocatable, target :: N_face
     integer, dimension(:), allocatable, target :: N_unique_face
 
     !%  elems in coarray
@@ -68,7 +69,7 @@ module define_globals
     real(8), allocatable, target :: faceR(:,:)[:]    ! coarray for faces real data
     integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
     logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data
-    integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array    
+    integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
@@ -121,9 +122,15 @@ module define_globals
     integer :: N_nStorage
     integer :: N_nJ2
 
-    integer :: N_diag 
-    integer :: N_ac 
-    integer :: N_etm 
+    integer :: N_diag
+    integer :: N_ac
+    integer :: N_etm
+
+    !% Number of API parameters
+    integer, parameter :: N_api_node_attributes = api_node_overflow
+    integer, parameter :: N_api_link_attributes = api_conduit_length
+    integer, parameter :: N_api_link_xsect_attributes = api_link_xsect_yBot - N_api_link_attributes
+    integer, parameter :: N_api_total_link_attributes = N_api_link_attributes + N_api_link_xsect_attributes
 
     ! Coarray variables
     integer :: max_caf_elem_N ! size of all elem array in coarray
@@ -155,7 +162,7 @@ module define_globals
     !% BIPquick Arrays
     integer, allocatable, dimension(:,:)    :: B_nodeI
     real(8), allocatable, dimension(:,:)    :: B_nodeR
-    
+
     !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable, dimension(:) :: adjacent_links
     integer, allocatable, dimension(:) :: elem_per_image

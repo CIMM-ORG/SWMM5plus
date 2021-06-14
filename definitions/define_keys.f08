@@ -200,7 +200,6 @@ module define_keys
         enumerator :: BothSideAdjust
     end enum
 
-
     ! data types for Momentum Source type (setting%Solver%MomentumSourceM)
     enum, bind(c)
         enumerator :: T00 = 1
@@ -225,121 +224,6 @@ module define_keys
     ! data types for limiter BC approach (setting%Limiter%BC%approach)
     enum, bind(c)
         enumerator :: FroudeNumber = 1
-    end enum
-
-    ! SWMM objects
-    enum, bind(c)
-        enumerator :: SWMM_NODE = 2
-        enumerator :: SWMM_LINK
-    end enum
-
-    ! SWMM Table types
-    enum, bind(c)
-        enumerator :: SWMM_TIMEPATTERN = 6
-        enumerator :: SWMM_CURVES
-        enumerator :: SWMM_TSERIES
-    end enum
-
-    ! API VARS
-    enum, bind(c)
-        enumerator :: API_NODES_WITH_EXTINFLOW = 1000
-        enumerator :: API_NODES_WITH_DWFINFLOW
-    end enum
-
-    ! SWMM XSECT_TYPES
-    enum, bind(c)
-        enumerator :: SWMM_RECT_CLOSED = 3
-        enumerator :: SWMM_RECT_OPEN
-        enumerator :: SWMM_TRAPEZOIDAL
-        enumerator :: SWMM_TRIANGULAR
-        enumerator :: SWMM_PARABOLIC
-    end enum
-
-    ! SWMM PATTERN TYPES
-    enum, bind(c)
-        enumerator :: SWMM_MONTHLY_PATTERN = 0
-        enumerator :: SWMM_DAILY_PATTERN
-        enumerator :: SWMM_HOURLY_PATTERN
-        enumerator :: SWMM_WEEKEND_PATTERN
-    end enum
-
-    ! API Node Attributes
-    enum, bind(c)
-        enumerator :: node_ID = 1
-        enumerator :: node_type
-        enumerator :: node_invertElev
-        enumerator :: node_initDepth
-        enumerator :: node_extInflow_tSeries
-        enumerator :: node_extInflow_basePat
-        enumerator :: node_extInflow_baseline
-        enumerator :: node_extInflow_sFactor
-        enumerator :: node_has_extInflow
-        enumerator :: node_dwfInflow_monthly_pattern
-        enumerator :: node_dwfInflow_daily_pattern
-        enumerator :: node_dwfInflow_hourly_pattern
-        enumerator :: node_dwfInflow_weekend_pattern
-        enumerator :: node_dwfInflow_avgvalue
-        enumerator :: node_has_dwfInflow
-        enumerator :: node_inflow
-        enumerator :: node_volume
-        enumerator :: node_overflow
-    end enum
-    integer, parameter :: num_node_attributes = node_overflow
-
-    ! nodeInflow attributes
-    enum, bind(c)
-        enumerator :: nf_extInflow_tSeries
-        enumerator :: nf_extInflow_basePat
-        enumerator :: nf_extInflow_baseline
-        enumerator :: nf_extInflow_sFactor
-        enumerator :: nf_dwfInflow_avgvalue
-        enumerator :: nf_dwfInflow_monthly_pattern
-        enumerator :: nf_dwfInflow_daily_pattern
-        enumerator :: nf_dwfInflow_hourly_pattern
-        enumerator :: nf_dwfInflow_weekend_pattern
-    end enum
-    integer, parameter :: num_nodeInflow_attributes = nf_dwfInflow_weekend_pattern
-
-    ! API link attributes
-    enum, bind(c)
-        enumerator :: link_ID = 1
-        enumerator :: link_subIndex
-        enumerator :: link_node1
-        enumerator :: link_node2
-        enumerator :: link_q0
-        enumerator :: link_flow
-        enumerator :: link_depth
-        enumerator :: link_volume
-        enumerator :: link_froude
-        enumerator :: link_setting
-        enumerator :: link_left_slope
-        enumerator :: link_right_slope
-        enumerator :: conduit_roughness
-        enumerator :: conduit_length
-        ! --- xsect attributes
-        enumerator :: link_type
-        enumerator :: link_xsect_type
-        enumerator :: link_geometry
-        enumerator :: link_xsect_wMax
-        enumerator :: link_xsect_yBot
-    end enum
-    integer, parameter :: num_link_attributes = conduit_length
-    integer, parameter :: num_link_xsect_attributes = link_xsect_yBot - num_link_attributes
-    integer, parameter :: num_total_link_attributes = num_link_attributes + num_link_xsect_attributes
-
-    ! Table types
-    enum, bind(c)
-        enumerator :: tseries_table = 1
-        enumerator :: curve_table
-        enumerator :: tinflow
-    end enum
-    
-    ! Datetime resolution types
-    enum, bind(c)
-        enumerator :: monthly = 1
-        enumerator :: daily
-        enumerator :: hourly
-        enumerator :: weekend
     end enum
 
 end module define_keys

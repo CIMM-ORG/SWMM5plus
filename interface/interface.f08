@@ -5,6 +5,7 @@ module interface
     use utility
     use utility_datetime
     use define_keys
+    use define_api_keys
     use define_globals
     use define_settings, only: setting
 
@@ -211,11 +212,11 @@ contains
         call c_f_procpointer(dll%procaddr, ptr_api_initialize)
         api = ptr_api_initialize(setting%Paths%inp, setting%Paths%rpt, setting%Paths%out)
 
-        N_link = interface_get_num_objects(SWMM_LINK)
-        N_node = interface_get_num_objects(SWMM_NODE)
-        N_curve = interface_get_num_objects(SWMM_CURVES)
-        N_tseries = interface_get_num_objects(SWMM_TSERIES)
-        N_pattern = interface_get_num_objects(SWMM_TIMEPATTERN)
+        N_link = interface_get_num_objects(API_LINK)
+        N_node = interface_get_num_objects(API_NODE)
+        N_curve = interface_get_num_objects(API_CURVES)
+        N_tseries = interface_get_num_objects(API_TSERIES)
+        N_pattern = interface_get_num_objects(API_TIMEPATTERN)
 
         api_is_initialized = .true.
 
@@ -306,7 +307,7 @@ contains
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
-        if ((attr > num_node_attributes) .or. (attr < 1)) then
+        if ((attr > N_api_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
             stop
         end if
@@ -330,7 +331,7 @@ contains
         interface_get_node_attribute = node_value
 
         ! Fortran index correction
-        if ((attr == node_extInflow_tSeries) .or. (attr == node_extInflow_basePat)) then
+        if ((attr == api_node_extInflow_tSeries) .or. (attr == api_node_extInflow_basePat)) then
             if (node_value /= -1) interface_get_node_attribute = interface_get_node_attribute + 1
         end if
 
@@ -354,7 +355,7 @@ contains
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
-        if ((attr > num_total_link_attributes) .or. (attr < 1)) then
+        if ((attr > N_api_total_link_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
             stop
         end if
@@ -372,70 +373,70 @@ contains
         end if
         call c_f_procpointer(dll%procaddr, ptr_api_get_link_attribute)
 
-        if (attr <= num_link_attributes) then
+        if (attr <= N_api_link_attributes) then
             ! Fortran index starts in 1, whereas in C starts in 0
             error = ptr_api_get_link_attribute(api, link_idx-1, attr, cptr_value)
             call print_swmm_error_code(error)
             interface_get_link_attribute = link_value
         else
-            error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_type, cptr_value)
+            error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_type, cptr_value)
             call print_swmm_error_code(error)
             interface_get_link_attribute = link_value
-            if (link_value == SWMM_RECT_CLOSED) then
-                if (attr == link_geometry) then
+            if (link_value == API_RECT_CLOSED) then
+                if (attr == api_link_geometry) then
                     interface_get_link_attribute = lRectangular
-                else if (attr == link_type) then
+                else if (attr == api_link_type) then
                     interface_get_link_attribute = lpipe
-                else if (attr == link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
+                else if (attr == api_link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_swmm_error_code(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
                 end if
-            else if (link_value == SWMM_RECT_OPEN) then
-                if (attr == link_geometry) then
+            else if (link_value == API_RECT_OPEN) then
+                if (attr == api_link_geometry) then
                     interface_get_link_attribute = lRectangular
-                else if (attr == link_type) then
+                else if (attr == api_link_type) then
                     interface_get_link_attribute = lchannel
-                else if (attr == link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
+                else if (attr == api_link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_swmm_error_code(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
                 end if
-            else if (link_value == SWMM_TRAPEZOIDAL) then
-                if (attr == link_geometry) then
+            else if (link_value == API_TRAPEZOIDAL) then
+                if (attr == api_link_geometry) then
                     interface_get_link_attribute = lTrapezoidal
-                else if (attr == link_type) then
+                else if (attr == api_link_type) then
                     interface_get_link_attribute = lchannel
-                else if (attr == link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_yBot, cptr_value)
+                else if (attr == api_link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yBot, cptr_value)
                     call print_swmm_error_code(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
                 end if
-            else if (link_value == SWMM_TRIANGULAR) then
-                if (attr == link_geometry) then
+            else if (link_value == API_TRIANGULAR) then
+                if (attr == api_link_geometry) then
                     interface_get_link_attribute = lTriangular
-                else if (attr == link_type) then
+                else if (attr == api_link_type) then
                     interface_get_link_attribute = lchannel
-                else if (attr == link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
+                else if (attr == api_link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_swmm_error_code(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
                 end if
-            else if (link_value == SWMM_PARABOLIC) then
-                if (attr == link_geometry) then
+            else if (link_value == API_PARABOLIC) then
+                if (attr == api_link_geometry) then
                     interface_get_link_attribute = lParabolic
-                else if (attr == link_type) then
+                else if (attr == api_link_type) then
                     interface_get_link_attribute = lchannel
-                else if (attr == link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, link_xsect_wMax, cptr_value)
+                else if (attr == api_link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_swmm_error_code(error)
                     interface_get_link_attribute = link_value
                 else

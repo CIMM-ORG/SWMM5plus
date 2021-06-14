@@ -118,10 +118,10 @@ contains
 
         do ii = 1, N_link
             linkI(ii,li_idx) = ii
-            linkI(ii,li_link_type) = interface_get_link_attribute(ii, link_type)
-            linkI(ii,li_geometry) = interface_get_link_attribute(ii, link_geometry)
-            linkI(ii,li_Mnode_u) = interface_get_link_attribute(ii, link_node1) + 1 ! node1 in C starts from 0
-            linkI(ii,li_Mnode_d) = interface_get_link_attribute(ii, link_node2) + 1 ! node2 in C starts from 0
+            linkI(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
+            linkI(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
+            linkI(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
+            linkI(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
 
             ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
             linkI(ii, li_N_element) = 10
@@ -132,24 +132,24 @@ contains
             nodeI(linkI(ii,li_Mnode_u), ni_idx_base2 + nodeI(linkI(ii,li_Mnode_u), ni_N_link_d)) = ii
 
             linkI(ii,li_InitialDepthType) = 1 ! TODO - get from params file
-            linkR(ii,lr_Length) = interface_get_link_attribute(ii, conduit_length)
+            linkR(ii,lr_Length) = interface_get_link_attribute(ii, api_conduit_length)
 
             ! linkR(ii,lr_TopWidth): defined in network_define.f08
-            linkR(ii,lr_BreadthScale) = interface_get_link_attribute(ii, link_xsect_wMax)
+            linkR(ii,lr_BreadthScale) = interface_get_link_attribute(ii, api_link_xsect_wMax)
             ! linkR(ii,lr_Slope): defined in network_define.f08
-            linkR(ii,lr_LeftSlope) = interface_get_link_attribute(ii, link_left_slope)
-            linkR(ii,lr_RightSlope) = interface_get_link_attribute(ii, link_right_slope)
-            linkR(ii,lr_Roughness) = interface_get_link_attribute(ii, conduit_roughness)
-            linkR(ii,lr_InitialFlowrate) = interface_get_link_attribute(ii, link_q0)
-            linkR(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(linkI(ii,li_Mnode_u), node_initDepth)
-            linkR(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(linkI(ii,li_Mnode_d), node_initDepth)
+            linkR(ii,lr_LeftSlope) = interface_get_link_attribute(ii, api_link_left_slope)
+            linkR(ii,lr_RightSlope) = interface_get_link_attribute(ii, api_link_right_slope)
+            linkR(ii,lr_Roughness) = interface_get_link_attribute(ii, api_conduit_roughness)
+            linkR(ii,lr_InitialFlowrate) = interface_get_link_attribute(ii, api_link_q0)
+            linkR(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(linkI(ii,li_Mnode_u), api_node_initDepth)
+            linkR(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(linkI(ii,li_Mnode_d), api_node_initDepth)
             linkR(ii,lr_InitialDepth) = (linkR(ii,lr_InitialDnstreamDepth) + linkR(ii,lr_InitialUpstreamDepth)) / 2.0
         end do
 
         do ii = 1, N_node
             total_n_links = nodeI(ii,ni_N_link_u) + nodeI(ii,ni_N_link_d)
             nodeI(ii, ni_idx) = ii
-            if (interface_get_node_attribute(ii, node_type) == oneI) then ! OUTFALL
+            if (interface_get_node_attribute(ii, api_node_type) == oneI) then ! OUTFALL
                 nodeI(ii, ni_node_type) = nBCdn
             else if ((total_n_links == twoI)         .and. &
                      (nodeI(ii,ni_N_link_u) == oneI) .and. &
@@ -159,8 +159,8 @@ contains
                 nodeI(ii, ni_node_type) = nJm
             end if
             ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
-            l1 = interface_get_node_attribute(ii, node_has_extInflow) == 1
-            l2 = interface_get_node_attribute(ii, node_has_dwfInflow) == 1
+            l1 = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
+            l2 = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
             if (l1 .or. l2) then
                 nodeYN(ii, nYN_has_inflow) = .true.
                 if (total_n_links == 1) then
@@ -171,8 +171,8 @@ contains
                 ! end if   
             end if
 
-            nodeR(ii,nr_InitialDepth) = interface_get_node_attribute(ii, node_initDepth)
-            nodeR(ii,nr_Zbottom) = interface_get_node_attribute(ii, node_invertElev)
+            nodeR(ii,nr_InitialDepth) = interface_get_node_attribute(ii, api_node_initDepth)
+            nodeR(ii,nr_Zbottom) = interface_get_node_attribute(ii, api_node_invertElev)
         end do
 
         if (setting%Debug%File%initialization) then
