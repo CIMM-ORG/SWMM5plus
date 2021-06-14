@@ -14,6 +14,7 @@ module initial_condition
     use define_globals
     use define_settings
     use pack_mask_arrays
+    use update
 
     implicit none
 
@@ -34,24 +35,29 @@ contains
     !
     !--------------------------------------------------------------------------
 
-        integer         :: ii
-
-        character(64)   :: subroutine_name = 'init_IC_setup'
+        integer          :: ii
+        integer, pointer :: solver
+        character(64)    :: subroutine_name = 'init_IC_setup'
 
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+
+        solver => setting%Solver%SolverSelect
 
         !% get data that can be extracted from links
         call init_IC_from_linkdata ()
 
         !% get data that can be extracted from nodes
-        ! call initial_condition_from_nodedata ()
+        call init_IC_from_nodedata ()
+
+        !% update time marching type
+        call init_IC_solver_select(solver)
 
         !% set up all the static packs and masks
         call pack_mask_arrays_all ()
 
         !% update all the auxiliary variables
-        ! call update_auxiliary_variables
+        call update_auxiliary_variables (solver)
 
         !% update faces
         ! call face_update()
@@ -66,13 +72,20 @@ contains
                    print*, '----------------------------------------------------'
                    print*, 'image = ', ii
                    print*, '..................elements..........................'
+                   print*, 'GEOMETRY DATA'
                    print*, elemI(:,ei_elementType)[ii], 'elementType'
                    print*, elemI(:,ei_geometryType)[ii], 'Geometry'
                    print*, elemR(:,er_Depth)[ii], 'Depth'
                    print*, elemR(:,er_Area)[ii], 'Area'
+                   print*, elemR(:,er_Head)[ii], 'Head'
+                   print*, elemR(:,er_Topwidth)[ii], 'Topwidth'
                    print*, elemR(:,er_Volume)[ii],'Volume'
+                   print*, 'DYNAMICS DATA'
                    print*, elemR(:,er_Flowrate)[ii], 'Flowrate'
                    print*, elemR(:,er_Velocity)[ii], 'Velocity'
+                   print*, elemR(:,er_FroudeNumber)[ii], 'Froude Number'
+                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'TImescale Q up'
+                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'TImescale Q dn'
                    call execute_command_line('')
                 enddo
 
@@ -126,9 +139,6 @@ contains
             !% we need a small/zero volume adjustment here 
 
             call init_IC_get_channel_pipe_velocity (thisLink)
-
-            !% we need another call here to set the type of 
-            !% time march to be used.
 
         end do
 
@@ -670,17 +680,117 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine init_IC_from_nodedata ()
+    !--------------------------------------------------------------------------
+    !
+    !% get the initial depth, and geometry data from nJm nodes
+    !
+    !--------------------------------------------------------------------------
 
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+        integer                                     :: ii, image, pJunction
+        integer, pointer                            :: thisJunctionNode
+        integer, dimension(:), allocatable, target  :: packed_nJm_idx
 
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+        character(64) :: subroutine_name = 'init_IC_from_nodedata'
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
+        !% Setting the local image value
+        image = this_image()
+
+        !% pack all the link indexes in an image
+        packed_nJm_idx = pack(nodeI(:,ni_idx), &
+                             ((nodeI(:,ni_P_image) .eq. image) .and. &
+                              (nodeI(:,ni_node_type) .eq. nJm) ) )
+
+        !% find the number of links in an image
+        pJunction = size(packed_nJm_idx)
+
+        !% cycle through the links in an image
+        do ii = 1,pJunction
+            !% necessary pointers
+            thisJunctionNode    => packed_nJm_idx(ii)
+
+            where (elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
+                elemI(:,ei_HeqType) = time_march
+            endwhere
+
+        end do
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_from_nodedata
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_IC_get_junction_data (thisJunctionNode)
+    !--------------------------------------------------------------------------
+    !
+    !% get the initial depth, and geometry data from nJm nodes
+    !
+    !--------------------------------------------------------------------------
+
+        integer, intent(in) :: thisJunctionNode 
+
+        character(64) :: subroutine_name = 'init_IC_get_junction_data'
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+
+        !% initialize selecteros for upstream and downstream branches
+        
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_get_junction_data
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_IC_solver_select (solver)
+    !--------------------------------------------------------------------------
+    !
+    !% select the solver based on depth for all the elements
+    !
+    !--------------------------------------------------------------------------
+
+        integer, intent(in) :: solver
+        character(64)       :: subroutine_name = 'init_IC_solver_select'
+
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+
+
+        select case (solver)
+
+            case (ETM)
+
+                where ( (elemI(:,ei_HeqType) .eq. time_march) .or. &
+                        (elemI(:,ei_QeqType) .eq. time_march) )
+
+                    elemI(:,ei_tmType) = ETM
+
+                endwhere
+
+            case (AC)
+
+                print*, 'In, ', subroutine_name
+                print*, 'AC solver is not handeled at this moment'
+
+            case (ETM_AC)
+
+                print*, 'In, ', subroutine_name
+                print*, 'ETM-AC solver is not handeled at this moment'
+            case default
+
+                print*, 'In, ', subroutine_name
+                print*, 'error: unknown solver, ', solver
+                stop
+
+        end select
+
+
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_solver_select
     !
     !==========================================================================
     !==========================================================================

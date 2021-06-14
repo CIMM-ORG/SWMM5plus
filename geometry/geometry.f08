@@ -38,7 +38,11 @@ module geometry
         integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
         integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, thisColP_all
         integer, pointer :: thisColP_JM, thisColP_JB
+
+        character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         !% set the packed geometry element array (elemPG) to use and columns of the
         !% packed elemP to use
         select case (whichTM)
@@ -134,7 +138,8 @@ module geometry
         if (whichTM .ne. ETM) then
             call geo_dHdA (ep_NonSurcharged_AC)
         endif
-  
+        
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geometry_toplevel
 
     !%==========================================================================   
@@ -152,9 +157,13 @@ module geometry
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
         integer, pointer :: Npack ,thisP(:)
+
+        character(64) :: subroutine_name = 'geo_surcharged'
         !%-----------------------------------------------------------------------------
         Npack => npack_elemP(thisColP)    
         !%-------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisColP)
             elemR(thisP,er_Volume)    = elemR(thisP,er_FullVolume)
@@ -166,6 +175,7 @@ module geometry
             elemR(thisP,er_Topwidth)  = setting%ZeroValue%Topwidth
         endif
 
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_surcharged
     !%
     !%==========================================================================  
@@ -179,7 +189,10 @@ module geometry
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
         integer, pointer :: Npack, thisCol
+
+        character(64) :: subroutine_name = 'geo_depth_from_volume'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
         !% cycle through different geometries
         !% RECTANGULAR
         thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
@@ -190,7 +203,7 @@ module geometry
 
         !HACK Needs additional geometries, including surcharged rectangular conduits
         ! with and without Preissman slot.
-
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_depth_from_volume
     !%
     !%==========================================================================   
@@ -204,11 +217,14 @@ module geometry
         integer, intent(in) :: thisColP, geocol, fullcol
         integer, pointer :: Npack, thisP(:)
         real(8), pointer :: geovalue(:), fullvalue(:)
+
+        character(64) :: subroutine_name = 'geo_limit_incipient_surcharge'
         !%-----------------------------------------------------------------------------
         Npack      => npack_elemP(thisColP)
         geovalue   => elemR(:,geocol)
         fullvalue  => elemR(:,fullcol)       
         !%-----------------------------------------------------------------------------  
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
 
         if (Npack > 0) then
             thisP      => elemP(1:Npack,thisColP)
@@ -217,7 +233,8 @@ module geometry
             endwhere
         endif
 
-    end subroutine geo_limit_incipient_surcharge 
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+    end subroutine geo_limit_incipient_surcharge
     !%   
     !%==========================================================================
     !%==========================================================================  
@@ -230,6 +247,8 @@ module geometry
         integer, intent(in) :: thisColP
         integer, pointer :: Npack, thisP(:)
         real(8), pointer :: depth(:), fulldepth(:), head(:), Zbtm(:)
+
+        character(64) :: subroutine_name = 'geo_head_from_depth'
         !%-----------------------------------------------------------------------------
         Npack     => npack_elemP(thisColP)
         depth     => elemR(:,er_Depth)
@@ -238,11 +257,14 @@ module geometry
         Zbtm      => elemR(:,er_Zbottom)
         !%-----------------------------------------------------------------------------
         !%  
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         if (Npack > 0) then
             thisP     => elemP(1:Npack,thisColP)
             head(thisP) = depth(thisP) + Zbtm(thisP)
         endif
 
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_head_from_depth
     !% 
     !%==========================================================================
@@ -278,8 +300,12 @@ module geometry
         !% branchsign assume branches are ordered as nominal inflow, outflow, inflow...
         real(8) :: branchsign(6) = [+oneR,-oneR,+oneR,-oneR,+oneR,-oneR]
         !% thisColP_JM is the column for the junction mains of a particular 
-        !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC       
+        !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC    
+
+        character(64) :: subroutine_name = 'geo_assign_JB'   
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         Npack         => npack_elemP(thisColP_JM)  
         area          => elemR(:,er_Area)
         depth         => elemR(:,er_Depth)
@@ -385,6 +411,7 @@ module geometry
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code 
         !% difficult to read.
 
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_assign_JB
     !%
     !%==========================================================================  
@@ -399,17 +426,22 @@ module geometry
         integer, intent(in) :: thisColP
         integer, pointer :: thisP(:), Npack
         real(8), pointer :: area(:), volume(:), length(:)
+
+        character(64) :: subroutine_name = 'geo_area_from_volume' 
         !%-----------------------------------------------------------------------------
         Npack  => npack_elemP(thisColP)
         area   => elemR(:,er_Area)
         volume => elemR(:,er_Volume)
         length => elemR(:,er_Length)
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         if (Npack > 0) then
             thisP  => elemP(1:Npack,thisColP)
             area(thisP) = volume(thisP) / length(thisP)
         endif
 
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_area_from_volume
     !%
     !%==========================================================================  
@@ -424,8 +456,12 @@ module geometry
         integer, intent(in) :: elemPGx(:,:)
         integer, target, intent(in) :: npack_elemPGx(:), col_elemPGx(:)
         integer, pointer :: Npack, thisCol
+
+        character(64) :: subroutine_name = 'geo_topwidth_from_depth' 
         !%-----------------------------------------------------------------------------
         !% cycle through different geometries
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
@@ -433,6 +469,7 @@ module geometry
         endif    
         
         !% HACK NEED OTHER GEOMETRIES
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_topwidth_from_depth
     !%
     !%==========================================================================  
@@ -447,7 +484,11 @@ module geometry
         integer, intent(in) :: elemPGx(:,:)
         integer, target, intent(in) :: npack_elemPGx(:), col_elemPGx(:)
         integer, pointer :: Npack, thisCol
+
+        character(64) :: subroutine_name = 'geo_perimeter_from_depth'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        
         !% cycle through different geometries
         Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
         if (Npack > 0) then
@@ -456,6 +497,7 @@ module geometry
         endif    
         
         !% HACK NEED OTHER GEOMETRIES
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_perimeter_from_depth
     !%
     !%==========================================================================  
@@ -471,7 +513,11 @@ module geometry
         integer, intent(in) :: elemPGx(:,:)
         integer, target, intent(in) :: npack_elemPGx(:), col_elemPGx(:)
         integer, pointer :: Npack, thisCol
+
+        character(64) :: subroutine_name = 'geo_hyddepth_from_depth'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         !% cycle through different geometries
         Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
         if (Npack > 0) then
@@ -480,7 +526,7 @@ module geometry
         endif    
         
         !% HACK need other geometries
-
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_hyddepth_from_depth
     !%
     !%==========================================================================  
@@ -495,7 +541,11 @@ module geometry
         integer, intent(in) :: thisColP
         integer, pointer :: thisP(:), Npack
         real(8), pointer :: area(:), hydradius(:), perimeter(:)
+
+        character(64) :: subroutine_name = 'geo_hydradius_from_area_perimeter'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         Npack     => npack_elemP(thisColP)
         area      => elemR(:,er_Area)
         hydradius => elemR(:,er_HydRadius)
@@ -507,6 +557,7 @@ module geometry
             hydradius(thisP) = area(thisP) / perimeter(thisP)
         endif
 
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_hydradius_from_area_perimeter
     !%
     !%========================================================================== 
@@ -521,7 +572,11 @@ module geometry
         integer, pointer :: thisP(:), Npack
         real(8), pointer :: ell(:), head(:), area(:), topwidth(:)
         real(8), pointer :: ZbreadthMax(:), breadthMax(:), areaBelowBreadthMax(:)
+
+        character(64) :: subroutine_name = 'geo_ell'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         Npack               => npack_elemP(thisColP)
         ell                 => elemR(:,er_ell)
         head                => elemR(:,er_Head)
@@ -542,7 +597,7 @@ module geometry
             endwhere
         endif
 
-            
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name          
     end subroutine geo_ell
     !%
     !%==========================================================================
@@ -557,7 +612,11 @@ module geometry
         integer, intent(in) :: indx
         real(8), pointer :: head(:), area(:), topwidth(:)
         real(8), pointer :: ZbreadthMax(:), breadthMax(:), areaBelowBreadthMax(:)
+
+        character(64) :: subroutine_name = 'geo_ell_singular'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         head                => elemR(:,er_Head)
         area                => elemR(:,er_Area)
         topwidth            => elemR(:,er_Topwidth)
@@ -571,7 +630,8 @@ module geometry
             outvalue = ( (head(indx) - ZbreadthMax(indx)) * breadthMax(indx) &
                             + areaBelowBreadthMax(indx) ) / breadthMax(indx)
         endif
-        
+
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name  
     end function geo_ell_singular
     !%
     !%==========================================================================    
@@ -587,7 +647,11 @@ module geometry
         integer, intent(in) :: thisColP
         integer, pointer :: thisP(:), Npack
         real(8), pointer :: dHdA(:), topwidth(:)
+
+        character(64) :: subroutine_name = 'geo_dHdA'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+
         Npack    => npack_elemP(thisColP)
         dHdA     => elemR(:,er_dHdA)
         topwidth => elemR(:,er_Topwidth)
@@ -598,6 +662,7 @@ module geometry
             dHdA(thisP) = oneR / topwidth(thisP)
         endif
 
+        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_dHdA
     !%  
     !%==========================================================================  

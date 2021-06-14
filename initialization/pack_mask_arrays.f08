@@ -58,8 +58,9 @@ contains
                    print*, 'image = ', ii
                    print*, '..........packed local element indexes of...........'
                    print*, elemP(:,ep_ALLtm)[ii], 'all ETM, AC elements'
+                   print*, elemP(:,ep_ETM)[ii], 'all ETM elements'
+                   print*, elemP(:,ep_CC_ETM)[ii], 'all CC elements that are ETM'
                    print*, elemP(:,ep_Diag)[ii], 'all diagnostic elements'
-                   print*, elemP(:,ep_AC)[ii], 'all AC elements'
                    print*, '.................face logicals......................'
                    print*, faceM(:,fm_all)[ii], 'all the faces except boundary and null faces'
                    call execute_command_line('')
