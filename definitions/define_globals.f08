@@ -155,6 +155,11 @@ module define_globals
     !% BIPquick Arrays
     integer, allocatable, dimension(:,:)    :: B_nodeI
     real(8), allocatable, dimension(:,:)    :: B_nodeR
+    real(8), allocatable, dimension(:,:)    :: weight_range
+    logical, allocatable, dimension(:)      :: visited_flag_weight
+    logical, allocatable, dimension(:)      :: visit_network_mask
+    logical, allocatable, dimension(:)      :: partition_boolean
+
     
     !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable, dimension(:) :: adjacent_links
