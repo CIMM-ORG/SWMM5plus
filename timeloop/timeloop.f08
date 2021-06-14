@@ -33,9 +33,13 @@ module timeloop
         logical :: isTLfinished
         logical, pointer :: useHydrology, useHydraulics
         !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'timeloop_toplevel'
+        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
         useHydrology  => setting%Simulation%useHydrology
         useHydraulics => setting%simulation%useHydraulics
         !%-----------------------------------------------------------------------------
+
         isTLfinished = .false.
         !%
         !% Combined hydrology and hydraulics simulation
@@ -81,6 +85,7 @@ module timeloop
             print *, 'error, condition that should not occur.'  
         endif  
 
+        if (setting%Debug%File%timeloop)  print *, '*** leave ', subroutine_name
     end subroutine timeloop_toplevel
     !%
     !%==========================================================================
@@ -189,7 +194,6 @@ module timeloop
         timeNext = timeFinal+1.0  
 
         end do
-
     end subroutine tl_hydraulics        
 
     !%==========================================================================  
@@ -330,8 +334,7 @@ module timeloop
         !%  Reset the flowrate adhoc detection before flowrates are updated.
         !%  Note that we do not reset the small volume detection here -- that should
         !%  be in geometry routines.
-        elemYN(:,eYN_IsAdhocFlowrate) = .false.
-        
+        elemYN(:,eYN_IsAdhocFlowrate) = .false.    
         select case (setting%Solver%SolverSelect)
             case (ETM_AC)
                 call rk2_toplevel_ETMAC ()

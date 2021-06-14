@@ -245,6 +245,7 @@ module define_indexes
          enumerator :: ei_node_Gidx_BIPquick        !% node index from global BIPquick network  (static)
          enumerator :: ei_QeqType                   !% type of flow equation (static)
          enumerator :: ei_specificType              !% specific element type (static)
+         enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_tmType                    !% time march type (dynamic)
     end enum
     !% note, this must be changed to whatever the last enum element is
@@ -271,6 +272,7 @@ module define_indexes
         enumerator :: er_FroudeNumber               !% froude number of flow
         enumerator :: er_FullArea                   !% cross-sectional area of a full conduit (static)
         enumerator :: er_FullDepth                  !% maximum possible flow depth in full conduit (static)
+        enumerator :: er_FullHydDepth               !% hydraulic (average) depth of full conduit (static)
         enumerator :: er_FullPerimeter              !% wetted perimeter of full conduit (static)
         enumerator :: er_FullVolume                 !% Volume of a full conduit (static)
         enumerator :: er_GammaC                     !% gamma continuity source term for AC solver
@@ -299,6 +301,7 @@ module define_indexes
         enumerator :: er_SmallVolumeRatio           !% blending ad hoc and solved velocity for small volume.
         enumerator :: er_SourceContinuity           !% source term for continuity equation
         enumerator :: er_SourceMomentum             !% source term for momentum equation
+        enumerator :: er_Temp01                     !% temporary array (use and set to null in a single procedure)
         enumerator :: er_Topwidth                   !% topwidth of flow at free surface
         enumerator :: er_Velocity                   !% velocity (latest)
         enumerator :: er_Velocity_N0                !% velocity time N
@@ -344,6 +347,9 @@ module define_indexes
         enumerator :: ep_JM_AC                      !% junction mains using AC method
         enumerator :: ep_JM_ALLtm                   !% Junction mains with any time march (static)
         enumerator :: ep_JM_ETM                     !% junction mains using ETM method
+        enumerator :: ep_JB_AC                      !% junction branches using AC method
+        enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
+        enumerator :: ep_JB_ETM                     !% junction branches using ETM method        
         enumerator :: ep_NonSurcharged_AC           !% all surcharged with AC
         enumerator :: ep_NonSurcharged_ALLtm        !% all time march nonsurcharged
         enumerator :: ep_NonSurcharged_ETM          !% all surcharged with ETM
@@ -355,9 +361,10 @@ module define_indexes
         enumerator :: ep_Surcharged_ETM             !% all surcharged with ETM
         enumerator :: ep_CCJM_H_AC_surcharged       !% all CCJM surcharged for H and AC solution
         enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
+        enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemP = ep_Surcharged_ETM
+    integer, target :: Ncol_elemP = ep_CCJB_eAC_i_fETM 
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemPGalltm(:,:), elemPGetm(:,:),
@@ -366,11 +373,16 @@ module define_indexes
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        enumerator :: epg_CCJM_rectangular_nonsurcharged = 1 !% CC and JM rectangular channels without surcharge
-    end enum
+        enumerator :: epg_CCJM_rectangular_nonsurcharged = 1 !% CC and JM rectangular channels that are not surcharged
+        enumerator :: epg_CCJM_trapezoidal_nonsurcharged   
+        enumerator :: epg_JB_rectangular                     !% all JB rectangular channels
+        enumerator :: epg_JB_trapezoidal                     
+        end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemPG =  epg_CCJM_rectangular_nonsurcharged
-
+    integer, target :: Ncol_elemPGalltm =  epg_JB_trapezoidal
+    integer, target :: Ncol_elemPGetm   =  epg_JB_trapezoidal
+    integer, target :: Ncol_elemPGac    =  epg_JB_trapezoidal 
+    
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemYN(:,:) arrays
     !% These are the for the full arrays of logical
@@ -422,7 +434,7 @@ module define_indexes
         enumerator ::  eSr_Weir_DischargeCoeff1 = 1     !% discharge coefficient for triangular weir
         enumerator ::  eSr_Weir_DischargeCoeff2         !% discharge coefficient for rectangular weir part
         enumerator ::  eSr_Weir_EffectiveFullDepth      !% effective full depth after control intervention
-        enumerator ::  eSr_Weir_EffectiveHead           !% effective head on weir
+        enumerator ::  eSr_Weir_EffectiveHeadDelta      !% effective head delta across weir
         enumerator ::  eSr_Weir_NominalDownstreamHead   !% nominal downstream head
         enumerator ::  eSr_Weir_RectangularBreadth      !% rectangular weir breadth
         enumerator ::  eSr_Weir_TrapezoidalBreadth      !% trapezoidal weir breadth
@@ -548,9 +560,10 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: fm_all = 1
+        enumerator :: fm_dummy
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceM =  fm_all
+    integer, target :: Ncol_faceM =  fm_dummy
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceR(:,:) arrays

@@ -25,7 +25,7 @@ module utility_allocate
 
     ! public members
     public :: util_allocate_linknode
-    public :: util_allocate_partitioning_arrays, util_deallocate_partitioning_arrays
+    public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
     public :: util_allocate_columns
 
@@ -106,16 +106,7 @@ contains
     !
     !==========================================================================
     !==========================================================================
-    !
-    subroutine util_deallocate_partitioning_arrays()
-        deallocate(adjacent_links)
-        deallocate(elem_per_image)
-        deallocate(image_full)
-    end subroutine util_deallocate_partitioning_arrays
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    
     subroutine util_allocate_elemX_faceX ()
         ! the max_caf_elem and max_caf_face are the maximum length of the coarray 
         ! across all employed images
@@ -151,21 +142,20 @@ contains
         call util_allocate_check(allocation_status, emsg)
         elemP(:,:) = nullvalueI
 
-
-        ncol => Ncol_elemPG
-        allocate(elemPGalltm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        ncol => Ncol_elemPGalltm
+        allocate(elemPGalltm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
         elemPGalltm(:,:) = nullvalueI
 
-        ncol => Ncol_elemPG
-        allocate(elemPGac(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
-        elemPGac(:,:) = nullvalueI
-
-        ncol => Ncol_elemPG
-        allocate(elemPGetm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        ncol => Ncol_elemPGetm
+        allocate(elemPGetm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
         elemPGetm(:,:) = nullvalueI
+
+        ncol => Ncol_elemPGac
+        allocate(elemPGac(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        elemPGac(:,:) = nullvalueI
 
         ncol => Ncol_elemSI
         allocate(elemSI(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
@@ -368,7 +358,7 @@ contains
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
-        ncol => Ncol_elemPG !% whatever the last item in the enumerator
+        ncol => Ncol_elemPGalltm !% whatever the last item in the enumerator
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGalltm(ncol)[*], stat=allocation_status, errmsg= emsg)
@@ -410,9 +400,9 @@ contains
         !-----------------------------------------------------------------------------
         
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
-
+ 
         !% define the maximum number of columns as
-        ncol => Ncol_elemPG !% whatever the last item in the enumerator
+        ncol => Ncol_elemPGac!% whatever the last item in the enumerator
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGac(ncol)[*], stat=allocation_status, errmsg= emsg)
@@ -456,7 +446,7 @@ contains
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
-        ncol => Ncol_elemPG !% whatever the last item in the enumerator
+        ncol => Ncol_elemPGetm   !% whatever the last item in the enumerator
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGetm(ncol)[*], stat=allocation_status, errmsg= emsg)
@@ -979,6 +969,6 @@ contains
     
             if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
     
-        end subroutine util_allocate_check
+    end subroutine util_allocate_check
 
 end module utility_allocate

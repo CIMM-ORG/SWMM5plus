@@ -20,6 +20,8 @@ module define_keys
         enumerator :: ETM               !% Explicit time march
         enumerator :: ETM_AC            !% Explicit time march and AC
         enumerator :: AC                !% AC
+        enumerator :: CCJM              !% channel, conduit or junction main
+        enumerator :: ALL               !% all elements
         !% different link and their geometry types (HACK: probably could be consolidated to element types)
         enumerator :: lchannel          !% channel link  
         enumerator :: lpipe             !% pipe link
