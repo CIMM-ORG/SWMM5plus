@@ -76,7 +76,7 @@
             "FaceVolumeTransport" : 0.5,
             "UseFaceVolumeTransport" : true
         },
-        "Timescale" : {
+        "InterpWeight" : {
             "Maximum" : 1e6,
             "Minimum" : 1e-6
         },
@@ -109,7 +109,7 @@
         "crk2" : 1.0,
         "MomentumSourceMethod" : "T00",
         "PreissmanSlot" : false,
-        "SolverSelect" : "ETM_AC",
+        "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9
     },
@@ -140,6 +140,32 @@
             "stepFinal" : 1
         }        
     },
+    "Weir" : {
+        "Transverse" : {
+            "WeirExponent" : 1.0,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 1.0
+        },
+        "SideFlow" : {
+            "WeirExponent" : 1.0,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 1.0
+        },
+        "VNotch" : {
+            "WeirExponent" : 1.0,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 1.0
+        },    
+        "Trapezoidal" : {
+            "WeirExponent" : 1.0,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 1.0
+        }    
+    },
     "VariableDT" : {
         "Apply" : true,
         "CFL_hi_max" : 0.7,
@@ -160,33 +186,47 @@
     "Debug" : {
         "Tests" : true,
         "File" : {
+            "adjust" : false,
             "define_globals" : false,
             "define_indexes" : false,
             "define_keys" : false,
             "define_settings" : false,
             "define_types" : false,
+            "diagnostic_elements" : false,
+            "face" : false,
             "finalization" : false,
+            "geometry" : false,
             "discretization"  : false,
             "initial_condition" : false,
             "initialization" : false,
+            "interface" : false,
+            "jump" : false,
+            "lowlevel_rk2" : false,
             "network_define" : false,
+            "orifice_elements" : false,
             "pack_mask_arrays" : false,
             "partitioning" : false,
-            "interface" : false,
+            "pump_elements" : false,
+            "rectangular_channel" : false,
+            "runge_kutta2" : false,
             "timeloop" : false,
+            "update" : false,
             "utility" : false,
             "utility_allocate" : false,
+            "utility_deallocate" : false,
             "utility_array" : false,
             "utility_datetime" : false,
-            "utility_string" : false
+            "utility_string" : false,
+            "weir_elements" : false
         },
         "FileGroup" : {
             "all" : false,
             "definitions" : false,
             "finalization" : false,
+            "geometry" : false,
             "initialization" : true,
             "interface" : false,
-            "timeloop" : false,
+            "timeloop" : true,
             "utility" : false
         },
     },

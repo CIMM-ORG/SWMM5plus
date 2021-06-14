@@ -66,8 +66,6 @@ contains
                    print*, '..................elements..........................'
                    print*, elemI(:,ei_Lidx)[ii], 'Lidx'
                    print*, elemI(:,ei_Gidx)[ii], 'Gidx'
-                   print*, elemI(:,ei_elementType)[ii], 'elementType'
-                   print*, elemI(:,ei_geometryType)[ii], 'geometryType'
                    print*, elemI(:,ei_link_Gidx_SWMM)[ii], 'link_Gidx_SWMM'
                    print*, elemI(:,ei_node_Gidx_SWMM)[ii], 'node_Gidx_SWMM'
                    print*, elemI(:,ei_Mface_uL)[ii],'Mface_uL'
@@ -413,7 +411,7 @@ contains
                         faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
                         faceI(FaceLocalCounter,fi_Melem_uL) = nullvalueI
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
-                        faceI(FaceLocalCounter,fi_BCtype)   = fBCup
+                        faceI(FaceLocalCounter,fi_BCtype)   = BCup
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
@@ -425,6 +423,7 @@ contains
                         !% integer data
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                        faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                         if (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode) then
 
@@ -522,7 +521,10 @@ contains
         integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
         integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
 
-        integer, pointer        :: lAssignStatus, linkType
+        integer                 :: ii
+        real(8)                 :: zCenter
+        integer, pointer        :: lAssignStatus, NlinkElem
+        real(8), pointer        :: zUpstream
 
         character(64) :: subroutine_name = 'init_network_handle_link'
 
@@ -532,56 +534,69 @@ contains
 
         !% necessary pointers
         lAssignStatus => linkI(thisLink,li_assigned)
-        linkType      => linkI(thisLink,li_link_type)
 
-        select case (linkType)
+        if (lAssignStatus .eq. lUnAssigned) then
+            NlinkElem     => linkI(thisLink,li_N_element)
+            zUpstream     => nodeR(upNode,nr_Zbottom)
 
-            case (lChannel)
-                !% subdivide channel links
-                if (lAssignStatus .eq. lUnassigned) then
-                    !% check if the link has already been assigned
-                    call init_network_subdivide_channel &
-                        (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, &
-                        ElemGlobalCounter, FaceGlobalCounter, lAssignStatus)
-                endif 
+            !% store the ID of the first (upstream) element in this link
+            linkI(thisLink,li_first_elem_idx)   = ElemLocalCounter
+            linkI(thisLink,li_Melem_u)          = ElemLocalCounter - oneI ! the new element is the 1st (downstream)
+            linkI(thisLink,li_Mface_u)          = FaceLocalCounter        ! the old face is the 1st
 
-            case (lpipe)
-                !% subdivide pipe links
-                if (lAssignStatus .eq. lUnassigned) then
-                    !% check if the link has already been assigned
-                    call init_network_subdivide_pipe &
-                        (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, &
-                        ElemGlobalCounter, FaceGlobalCounter, lAssignStatus)
-                endif 
+            !% reference elevations at cell center
+            zCenter = zUpstream - 0.5 * linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
 
-            case (lweir)
-                !% handle weir links
-                if (lAssignStatus .eq. lUnassigned) then
-                    call init_network_handle_weir &
-                        (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, &
-                        ElemGlobalCounter, FaceGlobalCounter, lAssignStatus)
-                endif 
+            do ii = 1, NlinkElem
+                !%................................................................
+                !% Element arrays update
+                !%................................................................
 
-            case (lOrifice)
+                !% integer data
+                elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
+                elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
+                elemI(ElemLocalCounter,ei_elementType)      = linkI(thisLink,li_link_type)
+                elemI(ElemLocalCounter,ei_link_Gidx_SWMM)   = thisLink
+                elemI(ElemLocalCounter,ei_Mface_uL)         = FaceLocalCounter
+                elemI(ElemLocalCounter,ei_Mface_dL)         = FaceLocalCounter + oneI
+                elemI(ElemLocalCounter,ei_link_pos)         = ii
 
-                print*, 'In ', subroutine_name
-                print*, 'orifices are not handeled yet'
-                stop
+                !% real data
+                elemR(ElemLocalCounter,er_Length)           = linkR(thisLink,lr_ElementLength)
+                elemR(ElemLocalCounter,er_Zbottom)          = zCenter
 
-            case (lPump)
+                !%................................................................
+                !% Face arrays update
+                !%................................................................
 
-                print*, 'In ', subroutine_name
-                print*, 'pumps are not handeled yet'
-                stop
+                !% advance the face counters
+                FaceLocalCounter  = FaceLocalCounter  + oneI
+                FaceGlobalCounter = FaceGlobalCounter + oneI
 
-            case default
+                !% face integer data
+                faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter + oneI
+                faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
-                print*, 'In ', subroutine_name
-                print*, 'error: unexpected link, ', linkType,'  in the network'
-                stop
+                !% counter for element z bottom calculation
+                zCenter = zCenter - linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
 
-        end select
+                !% Advance the element counter
+                ElemLocalCounter  = ElemLocalCounter  + oneI
+                ElemGlobalCounter = ElemGlobalCounter + oneI
+            end do
 
+            lAssignStatus = lAssigned
+
+            linkI(thisLink,li_last_elem_idx)    = ElemLocalCounter - oneI
+
+        ! linkI(thisLink,li_Melem_d)          = ElemLocalCounter        ! HACK: This may not be right in some cases
+        ! linkI(thisLink,li_Mface_d)          = FaceLocalCounter + oneI ! HACK: This may not be right in some cases
+        !% HACK:
+        !% the last face idx may need to be corrected based on junction element
+        endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
@@ -630,7 +645,7 @@ contains
 
                         !% integer data
                         faceI(FaceLocalCounter,fi_Melem_dL) = nullvalueI
-                        faceI(FaceLocalCounter,fi_BCtype)   = fBCdn
+                        faceI(FaceLocalCounter,fi_BCtype)   = BCdn
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
@@ -644,7 +659,7 @@ contains
                         !% subdivide_link_going_downstream. only the map
                         !% to downstream element is needed to be fixed if
                         !% the node is an edge node.
-
+                        faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         !% integer data
                         if (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode) then
 
@@ -737,10 +752,10 @@ contains
         !%................................................................
         !% Element Arrays
         !% integer data
-        elemI(ElemLocalCounter,ei_Lidx) = ElemLocalCounter
-        elemI(ElemLocalCounter,ei_Gidx) = ElemGlobalCounter
-        elemI(ElemLocalCounter,ei_elementType) = eJunctionMain
-        elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
+        elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
+        elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
+        elemI(ElemLocalCounter,ei_elementType)      = JM
+        elemI(ElemLocalCounter,ei_node_Gidx_SWMM)   = thisNode
 
         !% real data
         elemR(ElemLocalCounter,er_Zbottom) = nodeR(thisNode,nr_zbottom)
@@ -766,7 +781,7 @@ contains
             !% integer data
             elemI(ElemLocalCounter,ei_Lidx)           = ElemLocalCounter
             elemI(ElemLocalCounter,ei_Gidx)           = ElemGlobalCounter
-            elemI(ElemLocalCounter,ei_elementType)    = eJunctionBranch
+            elemI(ElemLocalCounter,ei_elementType)    = JB
             elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
 
             !% real data
@@ -797,7 +812,7 @@ contains
                     !% check if the link connecting this branch
                     !% is a part of this partition
                     if ( (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode)  .and. &
-                         (linkI(upBranchIdx,li_P_image) .ne. image) )  then
+                         (linkI(upBranchIdx,li_P_image)    .ne. image   ) )  then
 
                         !% HACK:
                         !% face counters are always advanced by link
@@ -819,7 +834,9 @@ contains
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                        faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         faceI(FaceLocalCounter,fi_Connected_image) = linkI(upBranchIdx,li_P_image)
+
 
 
                         !% logical data
@@ -847,6 +864,7 @@ contains
                     faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                    faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                     call init_network_nullify_nJm_branch &
                         (ElemLocalCounter, FaceLocalCounter)
@@ -869,7 +887,7 @@ contains
                     !% check if the link connecting this branch
                     !% is a part of this partition
                     if ( (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode)  .and. &
-                         (linkI(dnBranchIdx,li_P_image) .ne. image) )  then
+                         (linkI(dnBranchIdx,li_P_image)    .ne. image   ) )  then
 
                         !% HACK:
                         !% faces are always advanced by link elements
@@ -890,6 +908,7 @@ contains
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                         faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                        faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         faceI(FaceLocalCounter,fi_Connected_image) = linkI(dnBranchIdx,li_P_image)
 
                         !% logical data
@@ -917,6 +936,7 @@ contains
                     faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                    faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                     call init_network_nullify_nJm_branch &
                         (ElemLocalCounter, FaceLocalCounter)
@@ -935,373 +955,6 @@ contains
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
     end subroutine init_network_handle_nJm
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine init_network_subdivide_channel &
-                (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, &
-                ElemGlobalCounter, FaceGlobalCounter, lAssignStatus)
-
-    !-------------------------------------------------------------------------- 
-    !
-    !% subdivides the links into elements going downstream
-    !
-    !--------------------------------------------------------------------------
-
-        integer, intent(in)     :: thisLink, upNode
-        integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
-        integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
-        integer, intent(inout)  :: lAssignStatus
-
-        integer                 :: ii
-        integer, pointer        :: NlinkElem
-        real(8), pointer        :: zUpstream
-        real(8)                 :: zCenter
-
-        character(64) :: subroutine_name = 'init_network_subdivide_channel'
-
-    !--------------------------------------------------------------------------
-
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
-
-        !% necessary pointers
-        NlinkElem       => linkI(thisLink,li_N_element)
-        zUpstream       => nodeR(upNode,nr_Zbottom)
-
-        !%  store the ID of the first (upstream) element in this link
-        linkI(thisLink,li_first_elem_idx)   = ElemLocalCounter
-        linkI(thisLink,li_Melem_u)          = ElemLocalCounter - oneI ! the new element is the 1st (downstream)
-        linkI(thisLink,li_Mface_u)          = FaceLocalCounter        ! the old face is the 1st
-
-        if (linkI(thisLink,li_Melem_u) .eq. zeroI) then
-            !% HACK: needs further testing
-            !% a zero value of Melem_u indicates there isnt
-            !% any local element upstream of that link
-            linkI(thisLink,li_Melem_u) = nullvalueI
-        endif
-
-        !%  reference elevations at cell center
-        zCenter = zUpstream - 0.5 * linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
-
-        do ii = 1, NlinkElem
-            !%................................................................
-            !% Element arrays update
-            !%................................................................
-
-            !% integer data
-            elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
-            elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
-            elemI(ElemLocalCounter,ei_geometryType)     = linkI(thisLink,li_geometry)
-            elemI(ElemLocalCounter,ei_elementType)      = eChannel
-            elemI(ElemLocalCounter,ei_link_Gidx_SWMM)   = thisLink
-            elemI(ElemLocalCounter,ei_Mface_uL)         = FaceLocalCounter
-            elemI(ElemLocalCounter,ei_Mface_dL)         = FaceLocalCounter + oneI
-            elemI(ElemLocalCounter,ei_link_pos)         = ii
-
-            !% real data
-            elemR(ElemLocalCounter,er_Length)           = linkR(thisLink,lr_ElementLength)
-            elemR(ElemLocalCounter,er_Zbottom)          = zCenter
-
-            !%................................................................
-            !% Face arrays update
-            !%................................................................
-
-            !% advance the face counters
-            FaceLocalCounter  = FaceLocalCounter  + oneI
-            FaceGlobalCounter = FaceGlobalCounter + oneI
-
-            !% face integer data
-            faceI(FaceLocalCounter,fi_Lidx)             = FaceLocalCounter
-            faceI(FaceLocalCounter,fi_Gidx)             = FaceGlobalCounter
-            faceI(FaceLocalCounter,fi_Melem_dL)         = ElemLocalCounter + oneI
-            faceI(FaceLocalCounter,fi_Melem_uL)         = ElemLocalCounter
-
-            !% counter for element z bottom calculation
-            zCenter = zCenter - linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
-
-            !% Advance the element counter
-            ElemLocalCounter  = ElemLocalCounter  + oneI
-            ElemGlobalCounter = ElemGlobalCounter + oneI
-        end do
-
-        lAssignStatus = lAssigned
-
-        linkI(thisLink,li_last_elem_idx)    = ElemLocalCounter - oneI
-
-        ! linkI(thisLink,li_Melem_d)          = ElemLocalCounter        ! HACK: This may not be right in some cases
-        ! linkI(thisLink,li_Mface_d)          = FaceLocalCounter + oneI ! HACK: This may not be right in some cases
-        !% HACK:
-        !% the last face idx may need to be corrected based on junction element
-        
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-
-    end subroutine init_network_subdivide_channel
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine init_network_subdivide_pipe &
-                (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, &
-                ElemGlobalCounter, FaceGlobalCounter, lAssignStatus)
-
-    !-------------------------------------------------------------------------- 
-    !
-    !% subdivides the pipe into elements going downstream
-    !
-    !--------------------------------------------------------------------------
-
-        integer, intent(in)     :: thisLink, upNode
-        integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
-        integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
-        integer, intent(inout)  :: lAssignStatus
-
-        integer                 :: ii
-        integer, pointer        :: NlinkElem
-        real(8), pointer        :: zUpstream
-        real(8)                 :: zCenter
-
-        character(64) :: subroutine_name = 'init_network_subdivide_pipe'
-
-    !--------------------------------------------------------------------------
-
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
-
-        !% necessary pointers
-        NlinkElem       => linkI(thisLink,li_N_element)
-        zUpstream       => nodeR(upNode,nr_Zbottom)
-
-        !%  store the ID of the first (upstream) element in this link
-        linkI(thisLink,li_first_elem_idx)   = ElemLocalCounter
-        linkI(thisLink,li_Melem_u)          = ElemLocalCounter - oneI ! the new element is the 1st (downstream)
-        linkI(thisLink,li_Mface_u)          = FaceLocalCounter        ! the old face is the 1st
-
-        if (linkI(thisLink,li_Melem_u) .eq. zeroI) then
-            !% HACK: needs further testing
-            !% a zero value of Melem_u indicates there isnt
-            !% any local element upstream of that link
-            linkI(thisLink,li_Melem_u) = nullvalueI
-        endif
-
-        !%  reference elevations at cell center
-        zCenter = zUpstream - 0.5 * linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
-
-        do ii = 1, NlinkElem
-            !%................................................................
-            !% Element arrays update
-            !%................................................................
-            
-            !% integer data
-            elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
-            elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
-            elemI(ElemLocalCounter,ei_elementType)      = ePipe
-            elemI(ElemLocalCounter,ei_link_Gidx_SWMM)   = thisLink
-            elemI(ElemLocalCounter,ei_Mface_uL)         = FaceLocalCounter
-            elemI(ElemLocalCounter,ei_Mface_dL)         = FaceLocalCounter + oneI
-
-            !% real data
-            elemR(ElemLocalCounter,er_FullDepth)        = linkR(thisLink,lr_FullDepth) 
-            elemR(ElemLocalCounter,er_Length)           = linkR(thisLink,lr_ElementLength)
-            elemR(ElemLocalCounter,er_Zbottom)          = zCenter
-            elemR(ElemLocalCounter,er_Zcrown)           = zCenter + linkR(thisLink,lr_FullDepth)
-
-            !% logical data
-            elemYN(ElemLocalCounter,eYN_canSurcharge)   = .true.
-
-            !%................................................................
-            !% Face arrays update
-            !%................................................................
-
-            !% advance the face counters
-            FaceLocalCounter  = FaceLocalCounter  + oneI
-            FaceGlobalCounter = FaceGlobalCounter + oneI
-
-            !% face integer data
-            faceI(FaceLocalCounter,fi_Lidx)             = FaceLocalCounter
-            faceI(FaceLocalCounter,fi_Gidx)             = FaceGlobalCounter
-            faceI(FaceLocalCounter,fi_Melem_dL)         = ElemLocalCounter + oneI
-            faceI(FaceLocalCounter,fi_Melem_uL)         = ElemLocalCounter
-
-            !% counter for element z bottom calculation
-            zCenter = zCenter - linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
-
-            !% Advance the element counter
-            ElemLocalCounter  = ElemLocalCounter  + oneI
-            ElemGlobalCounter = ElemGlobalCounter + oneI
-        end do
-
-        lAssignStatus = lAssigned
-
-        linkI(thisLink,li_last_elem_idx)    = ElemLocalCounter - oneI
-
-        ! linkI(thisLink,li_Melem_d)          = ElemLocalCounter        ! HACK: This may not be right in some cases
-        ! linkI(thisLink,li_Mface_d)          = FaceLocalCounter + oneI ! HACK: This may not be right in some cases
-        !% HACK:
-        !% the last face idx may need to be corrected based on junction element
-        
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-
-    end subroutine init_network_subdivide_pipe
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine init_network_handle_weir &
-                (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, &
-                ElemGlobalCounter, FaceGlobalCounter, lAssignStatus)
-
-    !-------------------------------------------------------------------------- 
-    !
-    !% create weir into elements going downstream
-    !
-    !--------------------------------------------------------------------------
-
-        integer, intent(in)     :: thisLink, upNode
-        integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
-        integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
-        integer, intent(inout)  :: lAssignStatus
-
-        integer, pointer        :: specificWeirType
-        real(8), pointer        :: zUpstream
-        real(8)                 :: zCenter
-
-        character(64) :: subroutine_name = 'init_network_handle_weir'
-
-    !--------------------------------------------------------------------------
-
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
-
-        !% necessary pointers
-        specificWeirType => linkI(thisLink,li_weir_type)
-        zUpstream        => nodeR(upNode,nr_Zbottom)
-
-        !%  store the ID of the first (upstream) element in this link
-        linkI(thisLink,li_first_elem_idx)   = ElemLocalCounter
-        linkI(thisLink,li_Melem_u)          = ElemLocalCounter - oneI ! the new element is the 1st (downstream)
-        linkI(thisLink,li_Mface_u)          = FaceLocalCounter        ! the old face is the 1st
-
-        if (linkI(thisLink,li_Melem_u) .eq. zeroI) then
-            !% HACK: needs further testing
-            !% a zero value of Melem_u indicates there isnt
-            !% any local element upstream of that link
-            linkI(thisLink,li_Melem_u) = nullvalueI
-        endif
-
-        !%  reference elevations at cell center
-        zCenter = zUpstream - 0.5 * linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
-
-        !%................................................................
-        !% Element arrays update
-        !%................................................................
-        
-        !% integer data
-        elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
-        elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
-        elemI(ElemLocalCounter,ei_elementType)      = eWeir
-        elemI(ElemLocalCounter,ei_link_Gidx_SWMM)   = thisLink
-        elemI(ElemLocalCounter,ei_Mface_uL)         = FaceLocalCounter
-        elemI(ElemLocalCounter,ei_Mface_dL)         = FaceLocalCounter + oneI
-
-        !% real data
-        elemR(ElemLocalCounter,er_FullDepth)        = linkR(thisLink,lr_FullDepth) 
-        elemR(ElemLocalCounter,er_Length)           = linkR(thisLink,lr_ElementLength)
-        elemR(ElemLocalCounter,er_Zbottom)          = zCenter
-        elemR(ElemLocalCounter,er_Zcrown)           = zCenter + linkR(thisLink,lr_FullDepth)
-
-        select case (specificWeirType)
-            !% copy weir specific data
-            case (lTrapezoidalWeir)  
-                !% integer data
-                elemSI(ElemLocalCounter,eSi_Weir_SpecificType)          = eTrapezoidalWeir
-
-                !% real data
-                elemSR(ElemLocalCounter,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
-                elemSR(ElemLocalCounter,eSr_Weir_DischargeCoeff1)       = linkR(thisLink,lr_DischargeCoeff1)
-                elemSR(ElemLocalCounter,eSr_Weir_DischargeCoeff2)       = linkR(thisLink,lr_DischargeCoeff2)
-                elemSR(ElemLocalCounter,eSr_Weir_TrapezoidalBreadth)    = linkR(thisLink,lr_BreadthScale)
-                elemSR(ElemLocalCounter,eSr_Weir_TrapezoidalLeftSlope)  = linkR(thisLink,lr_LeftSlope)
-                elemSR(ElemLocalCounter,eSr_Weir_TrapezoidalRightSlope) = linkR(thisLink,lr_RightSlope)
-                elemSR(ElemLocalCounter,eSr_Weir_Zcrest)                = zCenter + linkR(thisLink,lr_InletOffset)
-
-            case (lSideFlowWeir) 
-
-                !% integer data
-                elemSI(ElemLocalCounter,eSi_Weir_SpecificType)          = eSideFlowWeir
-                elemSI(ElemLocalCounter,eSi_Weir_EndContractions)       = linkI(thisLink,li_weir_EndContrations)
-
-                !% real data
-                elemSR(ElemLocalCounter,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
-                elemSR(ElemLocalCounter,eSr_Weir_DischargeCoeff2)       = linkR(thisLink,lr_DischargeCoeff2)
-                elemSR(ElemLocalCounter,eSr_Weir_RectangularBreadth)    = linkR(thisLink,lr_BreadthScale)
-                elemSR(ElemLocalCounter,eSr_Weir_Zcrest)                = zCenter + linkR(thisLink,lr_InletOffset)
-
-            case (lRoadWayWeir)
-
-                print*, 'In ', subroutine_name
-                print*, 'roadway weir is not handeled yet'
-                stop
-
-            case (lVnotchWeir)
-
-                !% integer data
-                elemSI(ElemLocalCounter,eSi_Weir_SpecificType)          = eVnotchWeir
-
-                !% real data
-                elemSR(ElemLocalCounter,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
-                elemSR(ElemLocalCounter,eSr_Weir_DischargeCoeff1)       = linkR(thisLink,lr_DischargeCoeff1)
-                elemSR(ElemLocalCounter,eSr_Weir_TriangularSideSlope)   = linkR(thisLink,lr_SideSlope)
-                elemSR(ElemLocalCounter,eSr_Weir_Zcrest)                = zCenter + linkR(thisLink,lr_InletOffset)
-
-            case (lTransverseWeir)
-
-                !% integer data
-                elemSI(ElemLocalCounter,eSi_Weir_SpecificType)          = eTransverseWeir
-                elemSI(ElemLocalCounter,eSi_Weir_EndContractions)       = linkI(thisLink,li_weir_EndContrations)
-
-                !% real data
-                elemSR(ElemLocalCounter,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
-                elemSR(ElemLocalCounter,eSr_Weir_DischargeCoeff2)       = linkR(thisLink,lr_DischargeCoeff2)
-                elemSR(ElemLocalCounter,eSr_Weir_RectangularBreadth)    = linkR(thisLink,lr_BreadthScale)
-                elemSR(ElemLocalCounter,eSr_Weir_Zcrest)                = zCenter + linkR(thisLink,lr_InletOffset)
-
-            case default
-
-                print*, 'In ', subroutine_name
-                print*, 'error: unknown weir type, ', specificWeirType,'  in network'
-                stop
-
-        end select
-
-        !%................................................................
-        !% Face arrays update
-        !%................................................................
-
-        !% advance the face counters
-        FaceLocalCounter  = FaceLocalCounter  + oneI
-        FaceGlobalCounter = FaceGlobalCounter + oneI
-
-        !% face integer data
-        faceI(FaceLocalCounter,fi_Lidx)             = FaceLocalCounter
-        faceI(FaceLocalCounter,fi_Gidx)             = FaceGlobalCounter
-        faceI(FaceLocalCounter,fi_Melem_dL)         = ElemLocalCounter + oneI
-        faceI(FaceLocalCounter,fi_Melem_uL)         = ElemLocalCounter
-
-        !% Advance the element counter
-        ElemLocalCounter  = ElemLocalCounter  + oneI
-        ElemGlobalCounter = ElemGlobalCounter + oneI
-
-        lAssignStatus = lAssigned
-
-        linkI(thisLink,li_last_elem_idx)    = ElemLocalCounter - oneI
-
-        ! linkI(thisLink,li_Melem_d)          = ElemLocalCounter        ! HACK: This may not be right in some cases
-        ! linkI(thisLink,li_Mface_d)          = FaceLocalCounter + oneI ! HACK: This may not be right in some cases
-        !% HACK:
-        !% the last face idx may need to be corrected based on junction element
-        
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-
-    end subroutine init_network_handle_weir
     !
     !==========================================================================
     !==========================================================================

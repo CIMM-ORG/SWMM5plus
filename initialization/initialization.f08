@@ -51,15 +51,15 @@ contains
     !   a public subroutine that calls all the private initialization subroutines
     !
     !-----------------------------------------------------------------------------
-
         character(64) :: subroutine_name = 'initialize_all'
-
+        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-
+        ! load the settings.json file with the default setting% model control structure
         !% def_load_settings is one of the few subroutines in the Definition modules
         call def_load_settings(setting%Paths%setting)
+    
+        !% execute the command line options provided when the code is run
         if (this_image() == 1) then
             call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
@@ -79,7 +79,7 @@ contains
 
         call init_network()
 
-        call initial_condition_setup ()
+        call init_IC_setup ()
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all

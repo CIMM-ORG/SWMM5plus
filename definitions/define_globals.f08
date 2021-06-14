@@ -60,7 +60,10 @@ module define_globals
     integer, allocatable, target :: elemI(:,:)[:]    ! coarray for element Interger
     logical, allocatable, target :: elemYN(:,:)[:]   ! coarray for element logical
     integer, allocatable, target :: elemP(:,:)[:]    ! coarray for element pack array
-    integer, allocatable, target :: elemPG(:,:)[:]   ! coarray for element pack geometry array   [NOTE] elemPG not defined yet
+
+    integer, allocatable, target :: elemPGalltm(:,:)[:] ! coarray for element pack geometry array
+    integer, allocatable, target :: elemPGac(:,:)[:]    ! coarray for element pack geometry array
+    integer, allocatable, target :: elemPGetm(:,:)[:]   ! coarray for element pack geometry array
     integer, allocatable, target :: elemSI(:,:)[:]   ! coarray for special element Integer
     real(8), allocatable, target :: elemSR(:,:)[:]   ! coarray for special elemen Real
     real(8), allocatable, target :: elemSGR(:,:)[:]  ! coarray for special element geometry Real
@@ -70,6 +73,7 @@ module define_globals
     integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
     logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data
     integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array
+    logical, allocatable, target :: faceM(:,:)[:]    ! coarray for faces mask array 
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
@@ -139,6 +143,34 @@ module define_globals
     ! Constants for Junction
     integer :: J_elem_add = 7 ! Supplement elements for junction
     integer :: J_face_add = 6 ! Supplement faces for junction
+
+    ! assign status parameters for nodes
+    integer, parameter :: nUnassigned = 998877
+    integer, parameter :: nAssigned = 1
+    integer, parameter :: nDeferred = -1
+
+
+    ! assign status parameters for links
+    integer, parameter :: lUnassigned = 998877
+    integer, parameter :: lAssigned = 1
+    integer, parameter :: lDeferred = -1
+
+    ! default number of elements for different node types
+    integer, parameter :: N_elem_nJ2 = 0 ! 2-link nodes are assigned to a single face
+    integer, parameter :: N_elem_nJm = 7 ! M-link nodes are assigned a maximum of 7 elements
+    integer, parameter :: N_elem_nStorage = 1 ! Storage nodes are assigned to 1 element
+    integer, parameter :: N_elem_nBCdn = 0 ! Downstream BC nodes are assigned to 0 element (only a face)
+    integer, parameter :: N_elem_nBCup = 0 ! Upstream BC nodes are assigned to 0 element (only a face)
+
+    ! default for edge and non-edge node
+    integer, parameter :: EdgeNode    = 1 ! Edge node of a partition
+    integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element
+
+    ! defaults from initial depth type in links 
+    integer, parameter :: Uniform           = 1
+    integer, parameter :: LinearlyVarying   = 2
+    integer, parameter :: ExponentialDecay  = 3
+
 
     ! useful shortcuts
     !% NOTE: don't use setting%... structure in define_globals to prevent linking problems
