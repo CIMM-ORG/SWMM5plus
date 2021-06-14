@@ -48,7 +48,7 @@ contains
         call init_IC_from_nodedata ()
 
         !% update time marching type
-        !% call select_solver()
+        call init_IC_solver_select()
 
         !% set up all the static packs and masks
         call pack_mask_arrays_all ()
@@ -735,7 +735,55 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine init_IC_solver_select ()
+    !--------------------------------------------------------------------------
+    !
+    !% select the solver based on depth for all the elements
+    !
+    !--------------------------------------------------------------------------
 
+        integer, pointer :: solver
+
+        character(64) :: subroutine_name = 'init_IC_solver_select'
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+
+
+        solver => setting%Solver%SolverSelect
+
+
+        select case (solver)
+
+            case (ETM)
+
+                where ( (elemI(:,ei_HeqType) .eq. time_march) .or. &
+                        (elemI(:,ei_QeqType) .eq. time_march) )
+
+                    elemI(:,ei_tmType) = ETM
+
+                endwhere
+
+            case (AC)
+
+                print*, 'In, ', subroutine_name
+                print*, 'AC solver is not handeled at this moment'
+
+            case (ETM_AC)
+
+                print*, 'In, ', subroutine_name
+                print*, 'ETM-AC solver is not handeled at this moment'
+            case default
+
+                print*, 'In, ', subroutine_name
+                print*, 'error: unknown solver, ', solver
+                stop
+
+        end select
+
+
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_solver_select
     !
     !==========================================================================
     !==========================================================================
