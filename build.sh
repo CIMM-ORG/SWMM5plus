@@ -31,8 +31,6 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/partitioning.f08\
               $INIT_DIR/network_define.f08\
-              $INIT_DIR/initial_condition.f08\
-              $INIT_DIR/initialization.f08\
               $TL_DIR/adjust.f08\
               $TL_DIR/jump.f08\
               $TL_DIR/weir_elements.f08\
@@ -43,6 +41,8 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/lowlevel_rk2.f08\
               $TL_DIR/update.f08\
               $TL_DIR/face.f08\
+              $INIT_DIR/initial_condition.f08\
+              $INIT_DIR/initialization.f08\
               $TL_DIR/diagnostic_elements.f08\
               $TL_DIR/runge_kutta2.f08\
               $TL_DIR/timeloop.f08\

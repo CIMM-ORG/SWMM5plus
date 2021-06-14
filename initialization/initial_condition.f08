@@ -14,6 +14,7 @@ module initial_condition
     use define_globals
     use define_settings
     use pack_mask_arrays
+    use update
 
     implicit none
 
@@ -34,12 +35,14 @@ contains
     !
     !--------------------------------------------------------------------------
 
-        integer         :: ii
-
-        character(64)   :: subroutine_name = 'init_IC_setup'
+        integer          :: ii
+        integer, pointer :: solver
+        character(64)    :: subroutine_name = 'init_IC_setup'
 
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+
+        solver => setting%Solver%SolverSelect
 
         !% get data that can be extracted from links
         call init_IC_from_linkdata ()
@@ -48,13 +51,13 @@ contains
         call init_IC_from_nodedata ()
 
         !% update time marching type
-        call init_IC_solver_select()
+        call init_IC_solver_select(solver)
 
         !% set up all the static packs and masks
         call pack_mask_arrays_all ()
 
         !% update all the auxiliary variables
-        ! call update_auxiliary_variables
+        call update_auxiliary_variables (solver)
 
         !% update faces
         ! call face_update()
@@ -69,13 +72,20 @@ contains
                    print*, '----------------------------------------------------'
                    print*, 'image = ', ii
                    print*, '..................elements..........................'
+                   print*, 'GEOMETRY DATA'
                    print*, elemI(:,ei_elementType)[ii], 'elementType'
                    print*, elemI(:,ei_geometryType)[ii], 'Geometry'
                    print*, elemR(:,er_Depth)[ii], 'Depth'
                    print*, elemR(:,er_Area)[ii], 'Area'
+                   print*, elemR(:,er_Head)[ii], 'Head'
+                   print*, elemR(:,er_Topwidth)[ii], 'Topwidth'
                    print*, elemR(:,er_Volume)[ii],'Volume'
+                   print*, 'DYNAMICS DATA'
                    print*, elemR(:,er_Flowrate)[ii], 'Flowrate'
                    print*, elemR(:,er_Velocity)[ii], 'Velocity'
+                   print*, elemR(:,er_FroudeNumber)[ii], 'Froude Number'
+                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'TImescale Q up'
+                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'TImescale Q dn'
                    call execute_command_line('')
                 enddo
 
@@ -735,21 +745,18 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine init_IC_solver_select ()
+    subroutine init_IC_solver_select (solver)
     !--------------------------------------------------------------------------
     !
     !% select the solver based on depth for all the elements
     !
     !--------------------------------------------------------------------------
 
-        integer, pointer :: solver
+        integer, intent(in) :: solver
+        character(64)       :: subroutine_name = 'init_IC_solver_select'
 
-        character(64) :: subroutine_name = 'init_IC_solver_select'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
-
-
-        solver => setting%Solver%SolverSelect
 
 
         select case (solver)

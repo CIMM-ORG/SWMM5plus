@@ -40,7 +40,7 @@ module update
         !% update the head (non-surcharged) and geometry
 
         call geometry_toplevel (whichTM)
-        
+
         !% adjust velocity with limiters and small volume treatment
         call adjust_velocity (whichTM, er_Volume, er_Velocity)
 
@@ -55,7 +55,7 @@ module update
             case default
                 print *, 'error, default case should not be reached'
                 stop 7489
-        end select   
+        end select
 
         !% Compute the flowrate on CC.
         !% Note that JM should have 0 flowrate and JB has lagged flowrate at this point.
@@ -115,7 +115,7 @@ module update
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
         !%-----------------------------------------------------------------------------
     
-        Npack => col_elemP(thisCol)
+        Npack => npack_elemP(thisCol)
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisCol)
             Froude(thisP) = velocity(thisP) / sqrt(grav * depth(thisP))
@@ -161,7 +161,7 @@ module update
                 stop 3987
         end select    
     
-        Npack => col_elemP(thisCol)
+        Npack => npack_elemP(thisCol)
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisCol)
 
@@ -170,7 +170,7 @@ module update
         
             !% modify wavespeed for surcharged AC cells
             if (whichTM .ne. ETM) then
-                Npack2 => col_elemP(thisCol_AC)
+                Npack2 => npack_elemP(thisCol_AC)
                 if (Npack2 > 0) then
                     thisP2 => elemP(1:Npack2,thisCol_AC)
                     wavespeed(thisP2) = wavespeed(thisP2) * setting%ACmethod%Celerity%RC
