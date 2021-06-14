@@ -81,6 +81,9 @@ module lowlevel_rk2
         eQlat => elemR(:,er_FlowrateLateral)
         !%-----------------------------------------------------------------------------
         
+        !% note that 1, 3 and 5 are nominal upstream branches and 2, 4, 6 are nominal
+        !% downstream branches
+        
         elemR(thisP,outCol) =  &
             +fQ(iup(thisP+1)) - fQ(idn(thisP+2)) &
             +fQ(iup(thisP+3)) - fQ(idn(thisP+4)) &

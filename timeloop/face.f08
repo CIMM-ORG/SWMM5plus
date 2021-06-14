@@ -26,7 +26,6 @@ module face
     !%==========================================================================
     !%
     subroutine face_interpolation (facecol, isMask)
-    !%  
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Interpolates faces
@@ -34,6 +33,9 @@ module face
         integer, intent(in)  :: faceCol
         logical, intent(in)  :: isMask
         integer, pointer :: Npack
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'face_interpolation'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
         !% 
         if (num_images() == 1) then
@@ -50,6 +52,7 @@ module face
             call face_interp_interior()
         end if 
         
+        if (setting%Debug%File%face)  print *, '*** leave ', subroutine_name
     end subroutine face_interpolation
     !%    
     !%==========================================================================

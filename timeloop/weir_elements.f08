@@ -35,6 +35,9 @@ module weir_elements
         integer, intent(in) :: eIdx  !% must be a single element ID
         logical, pointer :: isSurcharged
         !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'weir_toplevel'
+        if (setting%Debug%File%weir_elements) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
         isSurcharged => elemYN(eIdx,eYN_isSurcharged)
         !%  
         !%
@@ -56,6 +59,7 @@ module weir_elements
         !% update velocity from flowrate and area
         call util_velocity_from_flowrate_singular (eIdx)
         
+        if (setting%Debug%File%weir_elements)  print *, '*** leave ', subroutine_name
     end subroutine weir_toplevel    
     !%
     !%==========================================================================

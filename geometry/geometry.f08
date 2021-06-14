@@ -89,13 +89,13 @@ module geometry
         !% reset all zero or near-zero depths in non-surcharged CC and JM
         call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged)
 
-        !% limit volume for incipient surcharge. This is done after depth is computed
-        !% so that the "depth" algorithm can include depths greater than fulldepth
-        !% as a way to handle incipient surcharge.
-        call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged)
-
         !% compute the head on all non-surcharged elements of CC and JM
         call geo_head_from_depth (thisColP_NonSurcharged)
+
+        !% limit volume for incipient surcharge. This is done after depth is computed
+        !% so that the "depth" algorithm can include depths greater than fulldepth
+        !% as a way to handle head for incipient surcharge.
+        call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged)
 
         !% limit depth for incipient surcharged. This is done after head is computed
         !% so that the depth algorithm can include depths greater than fulldepth to

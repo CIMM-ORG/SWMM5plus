@@ -33,6 +33,9 @@ module update
         integer, intent(in) :: whichTM  !% indicates which Time marching method
         integer, pointer :: thisCol_all
         !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'update_auxiliary_variables'
+        if (setting%Debug%File%update) print *, '*** enter ', subroutine_name     
+        !%-----------------------------------------------------------------------------
         !%  
         !% update the head (non-surcharged) and geometry
 
@@ -65,6 +68,7 @@ module update
         !% compute element face interpolation weights on CC, JM
         call update_interpolation_weights_element (thisCol_all, whichTM)
    
+        if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
     end subroutine update_auxiliary_variables  
  
     !%

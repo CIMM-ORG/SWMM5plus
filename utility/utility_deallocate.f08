@@ -160,7 +160,13 @@ contains
         deallocate(elemP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        deallocate(elemPG, stat=deallocation_status, errmsg=emsg)
+        deallocate(elemPGetm, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg)
+
+        deallocate(elemPGac, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg)
+        
+        deallocate(elemPGalltm, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
         deallocate(elemSI, stat=deallocation_status, errmsg=emsg)

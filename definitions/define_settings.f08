@@ -155,26 +155,38 @@ module define_settings
 
     ! setting%Debug%File
     type DebugFileYNType
+        logical :: adjust           = .false.
         logical :: define_globals   = .false.
         logical :: define_indexes   = .false.
         logical :: define_keys      = .false.
         logical :: define_settings  = .false.
         logical :: define_types     = .false.
+        logical :: diagnostic_elements = .false.
         logical :: discretization   = .false.
+        logical :: face             = .false.
         logical :: finalization     = .false.
+        logical :: geometry         = .false.
         logical :: initial_condition = .false.
         logical :: initialization   = .false.
+        logical :: jump             = .false.
+        logical :: lowlevel_rk2     = .false.
         logical :: network_define   = .false.
+        logical :: orifice_elements = .false.
+        logical :: rectangular_channel = .false.
+        logical :: runge_kutta2     = .false.
         logical :: pack_mask_arrays = .false.
         logical :: partitioning     = .false.
+        logical :: pump_elements    = .false.
         logical :: interface        = .false.
         logical :: timeloop         = .false.
+        logical :: update           = .false.
         logical :: utility          = .false.
         logical :: utility_allocate = .false.
         logical :: utility_deallocate = .false.
         logical :: utility_array    = .false.
         logical :: utility_datetime = .false.
         logical :: utility_string   = .false.
+        logical :: weir_elements    = .false.
     end type DebugFileYNType
 
     ! setting%Debug%FileGroup
@@ -182,6 +194,7 @@ module define_settings
         logical :: all              = .false.
         logical :: definitions      = .false.
         logical :: finalization     = .false.
+        logical :: geometry         = .false.
         logical :: initialization   = .false.
         logical :: interface        = .false.
         logical :: timeloop         = .false.
@@ -842,6 +855,9 @@ contains
         if (.not. found) stop 880
 
         ! Load Debug Settings
+        call json%get('Debug.File.adjust', logical_value, found)
+        setting%Debug%File%adjust = logical_value
+        if (.not. found) stop 885
         call json%get('Debug.File.define_globals', logical_value, found)
         setting%Debug%File%define_globals = logical_value
         if (.not. found) stop 890
@@ -857,27 +873,60 @@ contains
         call json%get('Debug.File.define_types', logical_value, found)
         setting%Debug%File%define_types = logical_value
         if (.not. found) stop 930
+        call json%get('Debug.File.diagnostic_elements', logical_value, found)
+        setting%Debug%File%diagnostic_elements = logical_value
+        if (.not. found) stop 935
         call json%get('Debug.File.discretization', logical_value, found)
         setting%Debug%File%discretization = logical_value
         if (.not. found) stop 940
+        call json%get('Debug.File.face', logical_value, found)
+        setting%Debug%File%face = logical_value
+        if (.not. found) stop 942
+        call json%get('Debug.File.geometry', logical_value, found)
+        setting%Debug%File%geometry = logical_value
+        if (.not. found) stop 943        
+        call json%get('Debug.File.interface', logical_value, found)
+        setting%Debug%File%interface = logical_value
+        if (.not. found) stop 945
         call json%get('Debug.File.initial_condition', logical_value, found)
         setting%Debug%File%initial_condition = logical_value
         if (.not. found) stop 945
         call json%get('Debug.File.initialization', logical_value, found)
         setting%Debug%File%initialization = logical_value
         if (.not. found) stop 950
+        call json%get('Debug.File.jump', logical_value, found)
+        setting%Debug%File%jump = logical_value
+        if (.not. found) stop 953
+        call json%get('Debug.File.lowlevel_rk2', logical_value, found)
+        setting%Debug%File%lowlevel_rk2 = logical_value
+        if (.not. found) stop 955
         call json%get('Debug.File.network_define', logical_value, found)
         setting%Debug%File%network_define = logical_value
         if (.not. found) stop 960
+        call json%get('Debug.File.orifice_elements', logical_value, found)
+        setting%Debug%File%orifice_elements = logical_value
+        if (.not. found) stop 965
         call json%get('Debug.File.pack_mask_arrays', logical_value, found)
         setting%Debug%File%pack_mask_arrays = logical_value
         if (.not. found) stop 965
         call json%get('Debug.File.partitioning', logical_value, found)
         setting%Debug%File%partitioning = logical_value
         if (.not. found) stop 970
-        call json%get('Debug.File.interface', logical_value, found)
-        setting%Debug%File%interface = logical_value
+        call json%get('Debug.File.pump_elements', logical_value, found)
+        setting%Debug%File%pump_elements = logical_value
+        if (.not. found) stop 975
+        call json%get('Debug.File.rectangular_channel', logical_value, found)
+        setting%Debug%File%rectangular_channel = logical_value
+        if (.not. found) stop 978
+        call json%get('Debug.File.runge_kutta2', logical_value, found)
+        setting%Debug%File%runge_kutta2 = logical_value
         if (.not. found) stop 980
+        call json%get('Debug.File.timeloop', logical_value, found)
+        setting%Debug%File%timeloop = logical_value
+        if (.not. found) stop 982
+        call json%get('Debug.File.update', logical_value, found)
+        setting%Debug%File%update = logical_value
+        if (.not. found) stop 985
         call json%get('Debug.File.utility_allocate', logical_value, found)
         setting%Debug%File%utility_allocate = logical_value
         if (.not. found) stop 990
@@ -895,6 +944,9 @@ contains
         if (.not. found) stop 1030
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
+        call json%get('Debug.File.weir_elements', logical_value, found)
+        setting%Debug%File%weir_elements = logical_value
+        if (.not. found) stop 1035
         if (.not. found) stop 1040
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
@@ -905,12 +957,18 @@ contains
         call json%get('Debug.FileGroup.finalization', logical_value, found)
         setting%Debug%FileGroup%finalization = logical_value
         if (.not. found) stop 1070
+        call json%get('Debug.FileGroup.geometry', logical_value, found)
+        setting%Debug%FileGroup%geometry = logical_value
+        if (.not. found) stop 1075
         call json%get('Debug.FileGroup.initialization', logical_value, found)
         setting%Debug%FileGroup%initialization = logical_value
         if (.not. found) stop 1080
         call json%get('Debug.FileGroup.interface', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
         if (.not. found) stop 1090
+        call json%get('Debug.FileGroup.timeloop', logical_value, found)
+        setting%Debug%FileGroup%timeloop = logical_value
+        if (.not. found) stop 1095
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
         if (.not. found) stop 1100
@@ -931,8 +989,10 @@ contains
         if (setting%Debug%FileGroup%all) then
             setting%Debug%FileGroup%definitions = .true.
             setting%Debug%FileGroup%finalization = .true.
+            setting%Debug%FileGroup%geometry = .true.
             setting%Debug%FileGroup%initialization = .true.
             setting%Debug%FileGroup%interface = .true.
+            setting%Debug%FileGroup%timeloop  = .true.
             setting%Debug%FileGroup%utility = .true.
         end if
         if (setting%Debug%FileGroup%definitions) then
@@ -944,6 +1004,10 @@ contains
         end if
         if (setting%Debug%FileGroup%finalization) then
             setting%Debug%File%finalization = .true.
+        end if        
+        if (setting%Debug%FileGroup%geometry) then
+            setting%Debug%File%geometry = .true.
+            setting%Debug%File%rectangular_channel = .true.
         end if
         if (setting%Debug%FileGroup%initialization) then
             setting%Debug%File%discretization = .true.
@@ -956,6 +1020,19 @@ contains
         if (setting%Debug%FileGroup%interface) then
             setting%Debug%File%interface = .true.
         end if
+        if (setting%Debug%FileGroup%timeloop) then
+            setting%Debug%File%adjust = .true.
+            setting%Debug%File%diagnostic_elements = .true.
+            setting%Debug%File%face = .true.
+            setting%Debug%File%jump = .true.
+            setting%Debug%File%lowlevel_rk2 = .true.
+            setting%Debug%File%orifice_elements = .true.
+            setting%Debug%File%pump_elements = .true.
+            setting%Debug%File%runge_kutta2 = .true.
+            setting%Debug%File%timeloop = .true.
+            setting%Debug%File%update = .true.
+            setting%Debug%File%weir_elements = .true.
+        endif    
         if (setting%Debug%FileGroup%utility) then
             setting%Debug%File%utility_allocate = .true.
             setting%Debug%File%utility_deallocate = .true.

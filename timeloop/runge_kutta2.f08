@@ -34,8 +34,11 @@ module runge_kutta2
         !% single RK2 step for explicit time advance of SVE
         !%-----------------------------------------------------------------------------
         integer :: istep
-        ! !%-----------------------------------------------------------------------------
-        ! !% RK2 solution step 1   
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'rk2_toplevel_ETM'
+        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
+        !% RK2 solution step 1 -- single time advance step 
         istep=1   
         call rk2_step_ETM (istep)
 
@@ -71,7 +74,8 @@ module runge_kutta2
 
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
-    
+
+        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', subroutine_name
     end subroutine rk2_toplevel_ETM
     !%
     !%==========================================================================  
@@ -82,8 +86,10 @@ module runge_kutta2
         !% Description:
         !%
         !%-----------------------------------------------------------------------------
-    
+        character(64) :: subroutine_name = 'rk2_toplevel_AC'
+        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', subroutine_name
     end subroutine rk2_toplevel_AC    
     !%
     !%==========================================================================  
@@ -96,6 +102,8 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         integer :: istep, faceMaskCol, thisCol
         integer, pointer :: Npack
+        character(64) :: subroutine_name = 'rk2_toplevel_ETMAC'
+        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------    
         !% step 1 -- RK2 step 1 for ETM
                 
@@ -177,7 +185,7 @@ module runge_kutta2
         !% step X -- make ad hoc adjustments
         call adjust_values (ALLtm)
               
-        !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', subroutine_name
     end subroutine rk2_toplevel_ETMAC    
     !%
     !%==========================================================================
@@ -251,7 +259,7 @@ module runge_kutta2
             call ll_continuity_volume_CCJM_ETM (er_Volume, thisPackCol, Npack, istep)
         endif
         
-        !% adjust near-zero elements
+        !% adjust elements with near-zero volume
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_ETM))
 
     end subroutine rk2_continuity_step_ETM       
@@ -320,7 +328,6 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         thisPackCol => col_elemP(ep_CC_Q_ETM)
         Npack       => npack_elemP(thisPackCol)  
-
         !%-----------------------------------------------------------------------------
         !%    
         if (Npack > 0) then

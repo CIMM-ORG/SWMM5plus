@@ -33,9 +33,13 @@ module timeloop
         logical :: isTLfinished
         logical, pointer :: useHydrology, useHydraulics
         !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'timeloop_toplevel'
+        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
         useHydrology  => setting%Simulation%useHydrology
         useHydraulics => setting%simulation%useHydraulics
         !%-----------------------------------------------------------------------------
+
         isTLfinished = .false.
         !%
         !% Combined hydrology and hydraulics simulation
@@ -81,6 +85,7 @@ module timeloop
             print *, 'error, condition that should not occur.'  
         endif  
 
+        if (setting%Debug%File%timeloop)  print *, '*** leave ', subroutine_name
     end subroutine timeloop_toplevel
     !%
     !%==========================================================================
