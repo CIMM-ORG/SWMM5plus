@@ -194,30 +194,23 @@ end subroutine deallocate_BIPquick_arrays
 !==========================================================================   
 !========================================================================== 
 !
-   subroutine network_node_preprocessing()
-    ! ----------------------------------------------------------------------------------------------------------------
-    !
-    ! Description:
-    !   This subroutine is a preprocessing step.
-    !   The network is traversed once and the B_nodeI array is populated with the adjacent upstream nodes.  This
-    !   step eliminates the need to continuously jump back and forth between the nodeI/linkI arrays during subsequent
-    !   network traversals.
-    !
-    ! ----------------------------------------------------------------------------------------------------------------
-    character(64) :: subroutine_name = 'network_node_preprocessing'
-    integer :: upstream_link, upstream_node, uplink_counter, root_node
-    integer ii, jj, uplinks
-    ! ----------------------------------------------------------------------------------------------------------------
-     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
-    
-    
-     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
-   end subroutine network_node_preprocessing
-    !
-    !============================================================================ 
-    !============================================================================ 
-    ! 
-
+  subroutine network_node_preprocessing()
+  ! ----------------------------------------------------------------------------------------------------------------
+  !
+  ! Description:
+  !   This subroutine is a preprocessing step.
+  !   The network is traversed once and the B_nodeI array is populated with the adjacent upstream nodes.  This
+  !   step eliminates the need to continuously jump back and forth between the nodeI/linkI arrays during subsequent
+  !   network traversals.
+  !
+  ! ----------------------------------------------------------------------------------------------------------------
+  character(64) :: subroutine_name = 'network_node_preprocessing'
+  ! ----------------------------------------------------------------------------------------------------------------
+    if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+  
+  
+    if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+  end subroutine network_node_preprocessing
 !
 !============================================================================ 
 !============================================================================ 
@@ -240,23 +233,23 @@ end subroutine deallocate_BIPquick_arrays
 !============================================================================ 
 !============================================================================ 
 !
-  function weighting_function() result(weight)
-      ! ----------------------------------------------------------------------------
-      
-      ! Description:
-      !   the weight attributed to each link (that will ultimately be assigned to the 
-      !   downstream node) are normalized by lr_Target.  This gives an estimate of 
-      !   computational complexity. In the future lr_Target can be customized for each 
-      !   link.
-      
-      ! ----------------------------------------------------------------------------
-    character(64)   :: function_name = 'weighting_function'
+function weighting_function() result(weight)
+    ! ----------------------------------------------------------------------------
+    
+    ! Description:
+    !   the weight attributed to each link (that will ultimately be assigned to the 
+    !   downstream node) are normalized by lr_Target.  This gives an estimate of 
+    !   computational complexity. In the future lr_Target can be customized for each 
+    !   link.
+    
+    ! ----------------------------------------------------------------------------
+  character(64)   :: function_name = 'weighting_function'
 
-      ! --------------------------------------------------------------------------
-    if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
+    ! --------------------------------------------------------------------------
+  if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
 
-    if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
-  end function weighting_function
+  if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
+end function weighting_function
 !
 !============================================================================
 !============================================================================
@@ -272,9 +265,6 @@ subroutine null_value_convert()
  !----------------------------------------------------------------------------
   character(64) :: subroutine_name = 'null_value_convert'
 
-  !real(8), intent(in out) :: array(:)
-  integer :: ii
-  !real(8) :: nullValue = nullvalueR
  !--------------------------------------------------------------------------
   if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
 
@@ -296,14 +286,6 @@ subroutine local_node_weighting()
  !
  !----------------------------------------------------------------------------
   character(64) :: subroutine_name = 'local_node_weighting'
-
-  !real(8)  :: lr_target
-  !real(8), intent(in)  :: lr_target_default
-  !integer, intent(in) :: nodeI(:,:), linkI(:,:)
-  !real(8), intent(in out) :: nodeR(:,:), linkR(:,:), B_nodeR(:,:)
-  !integer :: rootnode_index, links_row
-  integer ii, jj
-
  !--------------------------------------------------------------------------
   if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
 
@@ -320,21 +302,9 @@ recursive subroutine upstream_weight_calculation()
    ! Description:
    !
    !
-   ! Method:
-   !    
    !-----------------------------------------------------------------------------
 
    character(64) :: subroutine_name = 'upstream_weight_calculation'
-
-   !  real(8), intent(in out) :: B_nodeR(:,:), nodeR(:,:), linkR(:,:)
-   !  integer, intent(in out) :: B_nodeI(:,:), nodeI(:,:), linkI(:,:), B_node_Partition(:,:), B_link_Partition(:,:)
-   !  integer :: upstream_node_list(3)
-   !  integer, intent(in) :: weight_index
-   !  integer :: root, node_row_contents, link_idx, new_root
-   !  integer :: link_row_contents, node_upstream
-   !  logical, intent(in out) :: visited_flag_weight(:)
-   !  logical, intent(in) :: visit_network_mask(:)
-   !  integer :: ii, jj, kk
 
    !--------------------------------------------------------------------------
    if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
@@ -352,20 +322,9 @@ subroutine nr_totalweight_assigner()
  ! Description:
  !
  !
- ! Method:
- !    
  !-----------------------------------------------------------------------------
 
   character(64) :: subroutine_name = 'nr_totalweight_assigner'
-
-  !real(8), intent(in out) :: B_nodeR(:,:), nodeR(:,:), linkR(:,:)
-  !nteger, intent(in out) :: B_nodeI(:,:), nodeI(:,:), linkI(:,:), B_node_Partition(:,:), B_link_Partition(:,:)
-  !integer, intent(in out) :: weight_index
-  !logical, intent(in out) :: visited_flag_weight(:)
-  !logical, intent(in out) :: visit_network_mask(:)
-  !real(8), intent(in out) :: max_weight
-  !integer :: ii, root
-  !real(8) :: nullValue = nullValueI
 
  !--------------------------------------------------------------------------
   if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
@@ -378,17 +337,14 @@ end subroutine nr_totalweight_assigner
  !============================================================================
  !
 recursive subroutine subnetwork_carving() 
+ !-----------------------------------------------------------------------------
+ !
+ ! Description:
+ !
+ !
+ !-----------------------------------------------------------------------------
 
   character(64) :: subroutine_name = 'subnetwork_carving'
-
- !  logical, intent(in out) :: visit_network_mask(:)
- !  real(8), intent (in out) :: subnetwork_container_nodes (:,:,:)
- !  real(8), intent(in) :: nodeMatrix(:,:), linkMatrix(:,:)
- !  integer :: upstream_node_list(3)
- !  integer :: node_row_contents, link_row_contents, new_root, node_upstream
- !  integer, intent(in) :: root, proc
- !  integer :: ii, jj, kk
- !  integer, intent (in out) :: print_counter
 
  !--------------------------------------------------------------------------
   if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
@@ -401,12 +357,17 @@ end subroutine subnetwork_carving
  !============================================================================
  !
 subroutine subnetworks_links()
+ !-----------------------------------------------------------------------------
+ !
+ ! Description:
+ !
+ !
+ !-----------------------------------------------------------------------------
 
    character(64) :: subroutine_name = 'subnetworks_links'
 
  !--------------------------------------------------------------------------
   if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
-
 
 
   if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
@@ -416,6 +377,12 @@ end subroutine subnetworks_links
 !============================================================================
 !
 function ideal_partition_check() result (effective_root)
+ !-----------------------------------------------------------------------------
+ !
+ ! Description:
+ !
+ !
+ !-----------------------------------------------------------------------------
 
   character(64) :: subroutine_name = 'ideal_partition_check'
   integer :: effective_root
@@ -432,6 +399,12 @@ end function ideal_partition_check
 !============================================================================
 !
 subroutine spanning_check()
+ !-----------------------------------------------------------------------------
+ !
+ ! Description:
+ !
+ !
+ !-----------------------------------------------------------------------------
 
   character(64) :: subroutine_name = 'spanning_check'
  !--------------------------------------------------------------------------
@@ -444,6 +417,12 @@ end subroutine spanning_check
 !==========================================================================
 !
 function linear_interpolator() result(length_from_start)
+ !-----------------------------------------------------------------------------
+ !
+ ! Description:
+ !
+ !
+ !-----------------------------------------------------------------------------
 
   character(64)   :: function_name = 'linear_interpolator'
 
@@ -457,13 +436,17 @@ end function linear_interpolator
 !==========================================================================
 !
 subroutine phantom_naming_convention2()
+ !-----------------------------------------------------------------------------
+ !
+ ! Description:
+ !
+ !
+ !-----------------------------------------------------------------------------
 
  character(64)   :: function_name = 'phantom_naming_convention2'
 
  !--------------------------------------------------------------------------
  if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
-
-
 
  if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
 end subroutine phantom_naming_convention2
@@ -477,8 +460,6 @@ subroutine phantom_naming_convention()
  ! Description:
  !
  !
- ! Method:
- !    
  !-----------------------------------------------------------------------------
 
   character(64)   :: function_name = 'phantom_naming_convention'
@@ -494,8 +475,12 @@ end subroutine phantom_naming_convention
 !==========================================================================
 !
 subroutine phantom_node_generator()
- ! !
- ! !
+ !-----------------------------------------------------------------------------
+ !
+ ! Description:
+ !
+ !
+ !-----------------------------------------------------------------------------
   character(64) :: subroutine_name = 'phantom_node_generator'
 
  !--------------------------------------------------------------------------
@@ -510,6 +495,12 @@ end subroutine phantom_node_generator
 !==========================================================================
 !
 subroutine non_ideal_partitioning()
+ !-----------------------------------------------------------------------------
+ !
+ ! Description:
+ !
+ !
+ !-----------------------------------------------------------------------------
 
   character(64) :: subroutine_name = 'non_ideal_partitioning'
  
@@ -523,15 +514,21 @@ subroutine non_ideal_partitioning()
 !============================================================================
 !============================================================================
 !
- subroutine assign_links()
+subroutine assign_links()
+ !-----------------------------------------------------------------------------
+ !
+ ! Description:
+ !
+ !
+ !-----------------------------------------------------------------------------
 
  character(64) :: subroutine_name = 'assign_links'
-!--------------------------------------------------------------------------
+
+ !--------------------------------------------------------------------------
  if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
 
-
  if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
- end subroutine assign_links
+end subroutine assign_links
 !
 !============================================================================
 !============================================================================
