@@ -29,6 +29,10 @@ use define_settings
  integer, parameter :: upstream1 = oneI
  integer, parameter :: upstream2 = twoI
  integer, parameter :: upstream3 = threeI
+
+ !HACK - need to figure out how the number of processors is determined
+ integer, parameter :: processors = 3 
+
  contains
 
 !--------------------------------------------------------------------------
@@ -61,7 +65,6 @@ subroutine init_partitioning_BIPquick()
     ! -----------------------------------------------------------------------------------------------------------------
   character(64) :: subroutine_name = 'BIPquick_subroutine'
 
-  integer       :: processors = 3 !HACK - need to figure out how the number of processors is determined
   integer       :: mp
   real(8)       :: partition_threshold, max_weight
   logical       :: ideal_exists = .false.
@@ -150,7 +153,7 @@ subroutine allocate_BIPquick_arrays()
     B_nodeI(:,:) = nullValueI
 
     allocate(B_nodeR(size(nodeR,1), twoI))
-    B_nodeR(:,:) = nullValueR
+    B_nodeR(:,:) = zeroR
 
     allocate(visited_flag_weight(size(nodeI, oneI)))
     visited_flag_weight(:) = .false.
@@ -216,9 +219,10 @@ end subroutine deallocate_BIPquick_arrays
 !============================================================================ 
 ! 
   subroutine BIPquick_Optimal_Hardcode()
-     integer :: ii
+    integer :: ii
 
-     
+    nodeI(:, ni_P_image) = (/1, 1, 1, 2, 3, 3, 1, 1, 2, 2, 2, 2, 3, 3, 3, 1, 3/)
+    linkI(:, li_P_image) = (/1, 1, 1, 2, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1/)
 
   end subroutine BIPquick_Optimal_Hardcode    
 !
@@ -226,7 +230,11 @@ end subroutine deallocate_BIPquick_arrays
 !============================================================================ 
 ! 
  subroutine BIPquick_YJunction_Hardcode()
-     integer :: ii
+  integer :: ii
+
+  nodeI(:, ni_P_image) = (/1, 2, 1, 3, -998877, -998877/)
+  nodeI(:, ni_P_is_boundary) = (/0, 0, 1, 0, -998877, -998877/)
+  linkI(:, li_P_image) = (/1, 2, 3, -998877, -998877/)
 
  end subroutine BIPquick_YJunction_Hardcode
 !
@@ -254,27 +262,6 @@ end function weighting_function
 !============================================================================
 !============================================================================
 !
-subroutine null_value_convert()
- !----------------------------------------------------------------------------
- !
- ! Description:
- !   this function is used to convert the null values that are defaulted in the 
- !   B_nr_directweight_u and B_nr_totalweight_u columns of the nodes array into float 
- !   zeros.
- !
- !----------------------------------------------------------------------------
-  character(64) :: subroutine_name = 'null_value_convert'
-
- !--------------------------------------------------------------------------
-  if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
-
-
-  if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
-end subroutine null_value_convert
- !
- !============================================================================
- !============================================================================
- !
 subroutine local_node_weighting()
  !----------------------------------------------------------------------------
  !
@@ -303,8 +290,9 @@ end subroutine local_node_weighting
 recursive subroutine upstream_weight_calculation()
    !-----------------------------------------------------------------------------
    !
-   ! Description:
-   !
+   ! Description: Recursive subroutine that visits each node upstream of some root
+   !  and adds the directweight to the root's totalweight.  This recursive subroutine
+   !  is called for each node remaining in the network.
    !
    !-----------------------------------------------------------------------------
 
@@ -323,8 +311,9 @@ end subroutine upstream_weight_calculation
 subroutine nr_totalweight_assigner()
  !-----------------------------------------------------------------------------
  !
- ! Description:
- !
+ ! Description: This subroutine drives the upstream_weight_calculation() recursive
+ !  subroutine.  If a node remains in the network (i.e. hasn't been assigned to a
+ !  partition yet), then it is passed as a root to the upstream_weight_calculation().
  !
  !-----------------------------------------------------------------------------
 
@@ -343,8 +332,8 @@ end subroutine nr_totalweight_assigner
 recursive subroutine subnetwork_carving() 
  !-----------------------------------------------------------------------------
  !
- ! Description:
- !
+ ! Description: This recursive subroutine visits every node upstream of a root node
+ !  (where the root node is the "effective_root") 
  !
  !-----------------------------------------------------------------------------
 
