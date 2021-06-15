@@ -266,18 +266,15 @@ subroutine local_node_weighting()
  !----------------------------------------------------------------------------
  !
  ! Description:
- !   this function takes each node index (ni_idx) and finds that ni_idx in the 
- !   downstream node column of the links array (li_Mnode_d).  From this row in 
- !   links the link weight is grabbed and ascribed to the node-in-questions local 
- !   weight (nr_directweight_u).
+ !   This subroutine looks at the upstream links for each node, calculates their
+ !   link weights using weighting_function(), and sums those weights to yield the
+ !   B_nodeR(node, directweight)
  !
  !----------------------------------------------------------------------------
   character(64) :: subroutine_name = 'local_node_weighting'
   real(8)       :: weighting_function_output ! HACK
  !--------------------------------------------------------------------------
   if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
-
-  call null_value_convert()
 
   weighting_function_output = weighting_function()
 
@@ -312,7 +309,7 @@ subroutine nr_totalweight_assigner()
  !-----------------------------------------------------------------------------
  !
  ! Description: This subroutine drives the upstream_weight_calculation() recursive
- !  subroutine.  If a node remains in the network (i.e. hasn't been assigned to a
+ !  subroutine. If a node remains in the network (i.e. hasn't been assigned to a
  !  partition yet), then it is passed as a root to the upstream_weight_calculation().
  !
  !-----------------------------------------------------------------------------
