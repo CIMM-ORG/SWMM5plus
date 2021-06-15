@@ -243,13 +243,13 @@ end subroutine deallocate_BIPquick_arrays
 !
 function weighting_function() result(weight)
     ! ----------------------------------------------------------------------------
-    
+    !
     ! Description:
-    !   the weight attributed to each link (that will ultimately be assigned to the 
+    !   The weight attributed to each link (that will ultimately be assigned to the 
     !   downstream node) are normalized by lr_Target.  This gives an estimate of 
     !   computational complexity. In the future lr_Target can be customized for each 
     !   link.
-    
+    !
     ! ----------------------------------------------------------------------------
   character(64)   :: function_name = 'weighting_function'
 
@@ -333,8 +333,10 @@ recursive subroutine subnetwork_carving()
  !-----------------------------------------------------------------------------
  !
  ! Description: This recursive subroutine visits every node upstream of a root node
- !  (where the root node is the "effective_root") 
- !
+ !  (where the root node is the "effective_root") and assigns that node to the current
+ !  image.  It also updates the visit_network_mask(:) array to "remove" that node from
+ !  the network.
+ !  
  !-----------------------------------------------------------------------------
 
   character(64) :: subroutine_name = 'subnetwork_carving'
@@ -352,8 +354,8 @@ end subroutine subnetwork_carving
 subroutine subnetworks_links()
  !-----------------------------------------------------------------------------
  !
- ! Description:
- !
+ ! Description: This subroutine is used to assign links to images.  BIPquick first
+ !  assigns nodes to images, and then uses that info to assign links to images.
  !
  !-----------------------------------------------------------------------------
 
@@ -372,8 +374,10 @@ end subroutine subnetworks_links
 function ideal_partition_check() result (effective_root)
  !-----------------------------------------------------------------------------
  !
- ! Description:
- !
+ ! Description: This function is used to search for the effective root.  The effective
+ !  root can fit one of two descriptions: it can have a totalweight that is exactly
+ !  equal to the partition_threshold (Case 1), or it can have a totalweight that is the 
+ !  floor of the range (partition_threshold, max_weight] (nearest_overestimate_node, Case 3).
  !
  !-----------------------------------------------------------------------------
 
@@ -394,8 +398,10 @@ end function ideal_partition_check
 subroutine spanning_check()
  !-----------------------------------------------------------------------------
  !
- ! Description:
- !
+ ! Description: This subroutine is used to search for a link that spans the 
+ !  partition_threshold (Case 2).  A link is considered to "span" if the 
+ !  partition_threshold is in the range (totalweight_upstream_node, 
+ !  totalweight_upstream_node + weight_of_link).
  !
  !-----------------------------------------------------------------------------
 
@@ -412,8 +418,10 @@ end subroutine spanning_check
 function linear_interpolator() result(length_from_start)
  !-----------------------------------------------------------------------------
  !
- ! Description:
- !
+ ! Description:  This function is used to calculate how far along the spanning_link 
+ !  (from the upstream node) the phantom_node should be placed.
+
+    ! HACK - might want to consider snapping this to the nearest element subdivision
  !
  !-----------------------------------------------------------------------------
 
@@ -428,30 +436,12 @@ end function linear_interpolator
 !==========================================================================
 !==========================================================================
 !
-subroutine phantom_naming_convention2()
- !-----------------------------------------------------------------------------
- !
- ! Description:
- !
- !
- !-----------------------------------------------------------------------------
-
- character(64)   :: function_name = 'phantom_naming_convention2'
-
- !--------------------------------------------------------------------------
- if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
-
- if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
-end subroutine phantom_naming_convention2
-!
-!==========================================================================
-!==========================================================================
-!
 subroutine phantom_naming_convention()
  !-----------------------------------------------------------------------------
  !
- ! Description:
- !
+ ! Description: This subroutine is used to establish what the first phantom node/link
+ !  will be named.  The phantom_node/link is simply named for the index of the nodeI/linkI
+ !  array in which it is populated.
  !
  !-----------------------------------------------------------------------------
 
@@ -470,8 +460,10 @@ end subroutine phantom_naming_convention
 subroutine phantom_node_generator()
  !-----------------------------------------------------------------------------
  !
- ! Description:
- !
+ ! Description: This subroutine populates the nodeI/linkI/linkR arrays with the phantom
+ !  node/link that has been generated by a Case 2 system.  The nodeI entries
+ !  are set from the properties of phantom_nodes, the linkI/R phantom entries are copied
+ !  from the linkI/R real entries then updated.
  !
  !-----------------------------------------------------------------------------
   character(64) :: subroutine_name = 'phantom_node_generator'
@@ -490,8 +482,11 @@ end subroutine phantom_node_generator
 subroutine non_ideal_partitioning()
  !-----------------------------------------------------------------------------
  !
- ! Description:
- !
+ ! Description: This subroutine drives the steps required to reduce a Case 3 network
+ !  into a Case 2 network (that has a spanning link).  This reduction involves calling
+ !  trav_subnetwork() on the effective_root, updating the partition_threshold, and 
+ !  searching the remaining network for Case 1 or 2.  This iterative reduction occurs
+ !  in a do while loop until a Case 1 or 2 network is found.
  !
  !-----------------------------------------------------------------------------
 
@@ -503,25 +498,6 @@ subroutine non_ideal_partitioning()
  
    if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
  end subroutine non_ideal_partitioning
-!
-!============================================================================
-!============================================================================
-!
-subroutine assign_links()
- !-----------------------------------------------------------------------------
- !
- ! Description:
- !
- !
- !-----------------------------------------------------------------------------
-
- character(64) :: subroutine_name = 'assign_links'
-
- !--------------------------------------------------------------------------
- if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
-
- if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
-end subroutine assign_links
 !
 !============================================================================
 !============================================================================
