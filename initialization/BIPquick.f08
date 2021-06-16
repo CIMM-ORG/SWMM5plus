@@ -68,7 +68,7 @@ module BIPquick
       ! -----------------------------------------------------------------------------------------------------------------
     character(64) :: subroutine_name = 'BIPquick_subroutine'
   
-    integer       :: mp, ii, jj
+    integer       :: mp, ii, jj, image
     real(8)       :: partition_threshold, max_weight
     logical       :: ideal_exists = .false.
     integer       :: spanning_link = nullValueI
@@ -92,10 +92,16 @@ module BIPquick
     !% This subroutine populates the directweight column of B_nodeR
     call calc_directweight()
   
+    !% BIPquick sweeps through the network a finite number of times
     do mp = 1, processors
+
+      !% Save the current processor as image (used as input to trav_subnetwork)
+      image = mp
       print*, "Partition", mp
   
       B_nodeR(:, totalweight) = 0.0
+
+      ideal_exists = .false.
   
       !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
       call calc_totalweight(max_weight)
@@ -103,27 +109,26 @@ module BIPquick
       do ii = 1, size(B_nodeR, 1)
         print*, nodeI(ii, ni_idx), B_nodeR(ii, :)
       end do
-
-      stop
   
       !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
       partition_threshold = max_weight/real(processors - mp + 1, 8)
   
       !% This subroutine determines if there is an ideal partition possible and what the effective root is
-      effective_root = calc_effective_root()
+      effective_root = calc_effective_root(ideal_exists, max_weight, partition_threshold)
   
       if (ideal_exists) then
   
         !% This subroutine traverses the subnetwork upstream of the effective root
         !% and populates the partition column of nodeI
-        call trav_subnetwork()
+        call trav_subnetwork(effective_root, image)
   
       else
   
         !% This subroutine checks if the partition threshold is spanned by any link
         call calc_spanning_link()
   
-        do while (spanning_link == nullValueI)
+        !% While the spanning link doesn't exist (i.e. when the system is still Case 3)
+        do while ( (spanning_link == nullValueI) .and. ( ideal_exists .eqv. .false. ) )
   
             !% This subroutine houses the litany of steps that are required for a Case 3 partition
             call trav_casethree()
@@ -134,11 +139,17 @@ module BIPquick
         call phantom_node_generator()
   
         !% This subroutine does the same thing as the previous call to trav_subnetwork()
-        call trav_subnetwork()
+        call trav_subnetwork(effective_root, image)
   
       endif 
   
     end do
+
+    do ii = 1, size(B_nodeR, 1)
+      print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image)
+    end do
+
+    stop
   
     !% This subroutine assigns network links to images on the basis of their endpoint nodes
     call trav_assign_link()
@@ -172,8 +183,8 @@ module BIPquick
       allocate(totalweight_visited_nodes(size(nodeI, oneI)))
       totalweight_visited_nodes(:) = .false.
   
-      allocate(visit_network_mask(size(nodeI, oneI)))
-      visit_network_mask(:) = .false.
+      allocate(partitioned_nodes(size(nodeI, oneI)))
+      partitioned_nodes(:) = .false.
   
       allocate(partition_boolean(size(linkI, oneI)))
       partition_boolean(:) = .false.
@@ -201,7 +212,7 @@ module BIPquick
       deallocate(B_nodeI)
       deallocate(B_nodeR)
       deallocate(totalweight_visited_nodes)
-      deallocate(visit_network_mask)
+      deallocate(partitioned_nodes)
       deallocate(partition_boolean)
       deallocate(weight_range)
   
@@ -369,7 +380,7 @@ module BIPquick
 
      !% If the node has not been visited this traversal (protective against cross connection bugs)
      !% and the node has not already been partitioned
-     if ( (totalweight_visited_nodes(root) .eqv. .false.) .and. (visit_network_mask(root) .eqv. .false.) ) then
+     if ( (totalweight_visited_nodes(root) .eqv. .false.) .and. (partitioned_nodes(root) .eqv. .false.) ) then
 
       !% Mark the current root node as having been visited
       totalweight_visited_nodes(root) = .true.
@@ -444,28 +455,53 @@ module BIPquick
   !============================================================================
   !============================================================================
   !
-  recursive subroutine trav_subnetwork() 
+  recursive subroutine trav_subnetwork(root, image) 
     !-----------------------------------------------------------------------------
     !
     ! Description: This recursive subroutine visits every node upstream of a root node
     !  (where the root node is the "effective_root") and assigns that node to the current
-    !  image.  It also updates the visit_network_mask(:) array to "remove" that node from
+    !  image.  It also updates the partitioned_nodes(:) array to "remove" that node from
     !  the network.
     !
     !-----------------------------------------------------------------------------
   
     character(64) :: subroutine_name = 'trav_subnetwork'
   
-    ! logical, intent(in out) :: visit_network_mask(:)
+    integer, intent(in out) :: root, image
     integer :: upstream_node_list(3)
-    integer :: node_row_contents, link_row_contents, new_root, node_upstream
-    ! integer, intent(in) :: root, proc
     integer :: ii, jj, kk
-    ! integer, intent (in out) :: print_counter
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
-  
+      !% If the root node has not been added to a partition
+      if  ( partitioned_nodes(root) .eqv. .false. ) then
+        
+        !% Mark it as having been added to a partition
+        partitioned_nodes(root) = .true.
+
+        !% Add that node to the current image
+        nodeI(root, ni_P_image) = image
+
+      !% Save the adjacent upstream nodes
+      upstream_node_list = B_nodeI(root, :)
+
+      !% Iterate through the upstream nodes
+      do jj= 1, size(upstream_node_list)
+
+          !% If the upstream node exists
+          if ( upstream_node_list(jj) /= nullValueI ) then
+
+              !% call the recursive subroutine on the new root node
+              call trav_subnetwork(upstream_node_list(jj), image)
+          endif
+      enddo
+
+      ! elseif( partitioned_nodes(root) .eqv. .true.) then
+      !         subnetwork_container_nodes(proc, root, :) = nodeMatrix(root, :)
+      !         print_counter = print_counter + 1
+      endif
+
+
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine trav_subnetwork
    !
@@ -492,7 +528,7 @@ module BIPquick
   !============================================================================
   !============================================================================
   !
-  function calc_effective_root() result (effective_root)
+  function calc_effective_root(ideal_exists, max_weight, partition_threshold) result (effective_root)
    !-----------------------------------------------------------------------------
    !
    ! Description: This function is used to search for the effective root.  The effective
@@ -505,18 +541,34 @@ module BIPquick
     character(64) :: subroutine_name = 'calc_effective_root'
     integer :: effective_root
   
-    ! real(8), intent(in) :: max_weight, partition_threshold
-    ! logical, intent(in out) :: ideal_exists
+    real(8), intent(in) :: max_weight, partition_threshold
+    logical, intent(in out) :: ideal_exists
     real(8) :: nearest_overestimate
-    ! real(8), intent(in) :: B_nodeR(:,:)
-    ! integer, intent(in) :: nodeI(:,:)
     integer :: ii
-    integer :: nullValue = nullValueI
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
-    effective_root = oneI ! HACK
-  
+    nearest_overestimate = max_weight*1.1
+    effective_root = nullValueI
+   
+    do ii=1, size(nodeI,1)
+       if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
+               < precision_matching_tolerance )  then
+           effective_root = nodeI(ii, ni_idx)
+           ideal_exists = .true.
+           exit
+       endif
+       if (&
+           (B_nodeR(ii, totalweight) > partition_threshold) .and. &
+           (B_nodeR(ii, totalweight) < nearest_overestimate) &
+          ) then
+          nearest_overestimate = B_nodeR(ii, totalweight)
+          effective_root = nodeI(ii, ni_idx)
+          print*, effective_root, B_nodeR(ii, totalweight)
+       endif
+    enddo
+   
+    
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end function calc_effective_root
   !

@@ -157,7 +157,7 @@ module define_globals
     real(8), allocatable, dimension(:,:)    :: B_nodeR
     real(8), allocatable, dimension(:,:)    :: weight_range
     logical, allocatable, dimension(:)      :: totalweight_visited_nodes
-    logical, allocatable, dimension(:)      :: visit_network_mask
+    logical, allocatable, dimension(:)      :: partitioned_nodes
     logical, allocatable, dimension(:)      :: partition_boolean
 
     !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
