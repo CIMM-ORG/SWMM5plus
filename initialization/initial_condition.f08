@@ -85,13 +85,13 @@ contains
                    print*, elemR(:,er_FroudeNumber)[ii], 'Froude Number'
                    print*, elemR(:,er_InterpWeight_uQ)[ii], 'TImescale Q up'
                    print*, elemR(:,er_InterpWeight_dQ)[ii], 'TImescale Q dn'
-                   call execute_command_line('')
                    print*, '..................faces..........................'
                    print*, faceR(:,fr_Area_u)[ii], 'face area up'
                    print*, faceR(:,fr_Area_d)[ii], 'face area dn'
                    print*, faceR(:,fr_Head_u)[ii], 'face head up'
                    print*, faceR(:,fr_Head_d)[ii], 'face head dn'
                    print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
+                   call execute_command_line('')
                 enddo
 
             endif
