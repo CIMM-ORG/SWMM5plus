@@ -34,6 +34,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $INIT_DIR/network_define.f08\
               $TL_DIR/adjust.f08\
               $TL_DIR/jump.f08\
+              $TL_DIR/common_elements.f08\
               $TL_DIR/weir_elements.f08\
               $TL_DIR/orifice_elements.f08\
               $TL_DIR/pump_elements.f08\
