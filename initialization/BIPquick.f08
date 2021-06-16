@@ -32,6 +32,9 @@ module BIPquick
   
    !HACK - need to figure out how the number of processors is determined
    integer, parameter :: processors = 3
+
+   !HACK - I'm not sure this is still needed
+   integer, parameter :: lr_target_default = 1.0
   
    contains
   
@@ -88,6 +91,12 @@ module BIPquick
   
     !% This subroutine populates the directweight column of B_nodeR
     call calc_directweight()
+
+    do ii = 1, size(B_nodeR, 1)
+      print*, nodeI(ii, ni_idx), B_nodeR(ii, directweight)
+    end do
+
+    stop
   
     do mp = 1, processors
       print*, "Partition", mp
@@ -291,6 +300,7 @@ module BIPquick
     ! --------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
 
+    !% The link weight is equal to the link length divided by the element length
     weight = linkR(link_index, lr_Length) / linkR(link_index, lr_ElementLength)
   
     if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
@@ -312,17 +322,28 @@ module BIPquick
     real(8)       :: calc_link_weights_output ! HACK
   
     real(8)  :: lr_target
-    ! real(8), intent(in)  :: lr_target_default
-    ! integer, intent(in) :: nodeI(:,:), linkI(:,:)
-    ! real(8), intent(in out) :: nodeR(:,:), linkR(:,:), B_nodeR(:,:)
-    integer :: rootnode_index, links_row
-    integer ii, jj
+    integer :: rootnode_index, links_row, upstream_links
+    integer :: ii, jj
   
    !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
     
-    
-  
+    !% Calculates directweight for each node
+    do ii= 1,size(nodeI,1)
+
+      !% Need a loop bc multiple links might have a given node as its downstream endpoint
+      do jj=1,size(linkI(:, li_Mnode_d))
+
+        !% If the link has the current node as a downstream endpoint
+        if (linkI(jj, li_Mnode_d) == nodeI(ii, ni_idx)) then
+            
+          !% The directweight for that node is the running total of link weights
+          B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
+            + calc_link_weights(linkI(jj, li_idx))
+        endif
+      enddo
+    enddo
+   
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine calc_directweight
    !
