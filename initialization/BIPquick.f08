@@ -69,7 +69,7 @@ module BIPquick
     character(64) :: subroutine_name = 'BIPquick_subroutine'
   
     integer       :: mp, ii, jj, image
-    real(8)       :: partition_threshold, max_weight
+    real(8)       :: partition_threshold, max_weight, phantom_node_start
     logical       :: ideal_exists = .false.
     integer       :: spanning_link = nullValueI
     integer       :: effective_root  
@@ -99,9 +99,10 @@ module BIPquick
       image = mp
       print*, "Partition", mp
   
+      !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
       B_nodeR(:, totalweight) = 0.0
-
       ideal_exists = .false.
+      spanning_link = nullValueI
   
       !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
       call calc_totalweight(max_weight)
@@ -125,7 +126,7 @@ module BIPquick
       else
   
         !% This subroutine checks if the partition threshold is spanned by any link
-        call calc_spanning_link()
+        call calc_spanning_link(spanning_link, partition_threshold)
   
         !% While the spanning link doesn't exist (i.e. when the system is still Case 3)
         do while ( (spanning_link == nullValueI) .and. ( ideal_exists .eqv. .false. ) )
@@ -135,17 +136,24 @@ module BIPquick
             exit !HACK until we can fill in the guts of this part
         end do
   
+        phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
+
         !% This subroutine creates a phantom node/link and adds it to nodeI/linkI
-        call phantom_node_generator()
+        call phantom_node_generator(spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
   
         !% This subroutine does the same thing as the previous call to trav_subnetwork()
-        call trav_subnetwork(effective_root, image)
+        call trav_subnetwork(phantom_node_idx, image)
+
+        phantom_node_idx = phantom_node_idx + 1
+        phantom_link_idx = phantom_link_idx + 1
   
       endif 
+
+      GOTO 11
   
     end do
 
-    do ii = 1, size(B_nodeR, 1)
+    11 do ii = 1, size(B_nodeR, 1)
       print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image)
     end do
 
@@ -186,8 +194,8 @@ module BIPquick
       allocate(partitioned_nodes(size(nodeI, oneI)))
       partitioned_nodes(:) = .false.
   
-      allocate(partition_boolean(size(linkI, oneI)))
-      partition_boolean(:) = .false.
+      allocate(partitioned_links(size(linkI, oneI)))
+      partitioned_links(:) = .false.
   
       allocate(weight_range(size(linkI, oneI), twoI))
       weight_range(:,:) = zeroR
@@ -213,7 +221,7 @@ module BIPquick
       deallocate(B_nodeR)
       deallocate(totalweight_visited_nodes)
       deallocate(partitioned_nodes)
-      deallocate(partition_boolean)
+      deallocate(partitioned_links)
       deallocate(weight_range)
   
       if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
@@ -326,7 +334,7 @@ module BIPquick
    !
    ! Description:
    !   This subroutine looks at the upstream links for each node, calculates their
-   !   link weights using weighting_function(), and sums those weights to yield the
+   !   link weights using calc_link_weights(), and sums those weights to yield the
    !   B_nodeR(node, directweight)
    !
    !----------------------------------------------------------------------------
@@ -564,7 +572,6 @@ module BIPquick
           ) then
           nearest_overestimate = B_nodeR(ii, totalweight)
           effective_root = nodeI(ii, ni_idx)
-          print*, effective_root, B_nodeR(ii, totalweight)
        endif
     enddo
    
@@ -575,7 +582,7 @@ module BIPquick
   !============================================================================
   !============================================================================
   !
-  subroutine calc_spanning_link()
+  subroutine calc_spanning_link(spanning_link, partition_threshold)
    !-----------------------------------------------------------------------------
    !
    ! Description: This subroutine is used to search for a link that spans the 
@@ -587,23 +594,51 @@ module BIPquick
   
     character(64) :: subroutine_name = 'calc_spanning_link'
   
-    ! integer, intent(in out) :: spanning_link
-    ! integer, intent(out) :: spanning_node_upstream
-    ! real(8), allocatable, intent(in out) :: weight_range(:,:)
-    ! real(8), intent(in) :: lr_target, partition_threshold
-    ! logical, intent(in out) :: partition_boolean(:)
+    integer, intent(in out) :: spanning_link
+    real(8), intent(in)     :: partition_threshold
+    integer :: weight_range(2)
     integer :: upstream_node
     integer :: ii, jj
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
+    !% Check each link for spanning the partition threshold
+    do jj=1, size(linkI,1)
+        
+      !% Save the upstream node of the current link
+      upstream_node = linkI(jj, li_Mnode_u)
+
+      !% The first entry of the weight_range is the upstream node's totalweight
+      weight_range(oneI) = B_nodeR(upstream_node, totalweight)
+
+      !% The second entry is the first entry + the weight of the link
+      weight_range(twoI) = weight_range(oneI) + calc_link_weights(linkI(jj, li_idx))
+
+      !% If the partition threshold is between the weight_range entries
+      !% and that link has not yet been partitioned
+      if( (weight_range(oneI) < partition_threshold) .and. &
+        (partition_threshold < weight_range(twoI)) .and. &
+        (partitioned_links(jj) .eqv. .false.) ) then
+            
+        !% The current link is the spanning link
+        spanning_link = linkI(jj, li_idx)
+        print*, "The new spanning link is:  ", spanning_link
+
+        !% Mark this link as being partitioned
+        partitioned_links(jj) = .true.
+
+        !% Only need one spanning link - if found, exit
+        exit
+      endif
+    enddo
+
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine calc_spanning_link
   !
   !==========================================================================
   !==========================================================================
   !
-  function calc_phantom_node_loc() result(length_from_start)
+  function calc_phantom_node_loc(spanning_link, partition_threshold) result(length_from_start)
     !-----------------------------------------------------------------------------
    !
    ! Description:  This function is used to calculate how far along the spanning_link 
@@ -614,14 +649,33 @@ module BIPquick
    !-----------------------------------------------------------------------------  
     character(64)   :: function_name = 'calc_phantom_node_loc'
   
-    ! real(8), intent(in) :: weight_range(:,:)
-    ! real(8), intent(in) :: partition_threshold, lr_target
-    ! integer, intent(in) :: spanning_link
-    real(8) :: length_from_start, total_length, start, weight_ratio
-    integer :: ii
+    real(8), intent(in) :: partition_threshold
+    integer, intent(in) :: spanning_link
+    real(8) :: length_from_start, total_length, start_weight, weight_ratio, link_weight
+    integer :: upstream_node
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
    
+    !% The length of the spanning_link
+    total_length = linkR(spanning_link, lr_Length)
+
+    !% The weight of the spanning_link
+    link_weight = calc_link_weights(spanning_link)
+
+    !% The upstream node from the spanning_link
+    upstream_node = linkI(spanning_link, li_Mnode_u)
+
+    !% The totalweight of the upstream node
+    start_weight = B_nodeR(upstream_node, totalweight)
+
+    !% The weight_ratio yields the factor that the link would have to be
+    !% to have a downstream weight equal to the partition_threshold
+    weight_ratio = (partition_threshold - start_weight) / link_weight
+
+    !% Multiply the total_length by the weight_ratio to get the distance from
+    !% the upstream node that the phantom_node should be generated
+    length_from_start = weight_ratio * total_length
+
     if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
   end function calc_phantom_node_loc
   !
@@ -655,7 +709,7 @@ module BIPquick
   !==========================================================================
   !==========================================================================
   !
-  subroutine phantom_node_generator()
+  subroutine phantom_node_generator(spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
    !-----------------------------------------------------------------------------
    !
    ! Description: This subroutine populates the nodeI/linkI/linkR arrays with the phantom
@@ -666,20 +720,62 @@ module BIPquick
    !-----------------------------------------------------------------------------
     character(64) :: subroutine_name = 'phantom_node_generator'
   
-    ! real(8), intent(in) :: start_point
-    ! integer, intent(in) :: spanning_link, phantom_node_idx, phantom_link_idx, spanning_node_upstream
-    ! integer, intent(in) :: mp
-    ! real(8), intent(in) :: partition_threshold
-    ! real(8), intent(in)  :: lr_target
-    ! integer, intent(in out) :: phantom_array_location
-    integer :: phantom_counter = 0
-    integer :: phantom_name, phantom_array_location_link
-    integer :: downstream_node, upstream_spanning_node
-    integer :: ii, jj, kk
+    integer, intent(in out)   :: phantom_node_idx, phantom_link_idx
+    real(8), intent(in)       :: phantom_node_start, partition_threshold
+    integer, intent(in)       :: spanning_link
+    integer :: upstream_node_list(3)
+    integer :: downstream_node, upstream_node
+    integer :: kk
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
-  
+    nodeI(phantom_node_idx, ni_idx) = phantom_node_idx
+
+    nodeI(phantom_node_idx, ni_node_type) = zeroI
+
+    nodeI(phantom_node_idx, ni_N_link_u) = oneI
+
+    nodeI(phantom_node_idx, ni_N_link_d) = oneI
+
+    nodeI(phantom_node_idx, ni_Mlink_u1:ni_Mlink_d3) = nullValueI
+
+    nodeI(phantom_node_idx, ni_Mlink_u1) = spanning_link
+
+    nodeI(phantom_node_idx, ni_Mlink_d1) = phantom_link_idx
+
+    B_nodeR(phantom_node_idx, directweight) = 0.0
+
+    B_nodeR(phantom_node_idx, totalweight) = partition_threshold
+
+    upstream_node = linkI(spanning_link, li_Mnode_u)
+    upstream_node_list(:) = (/upstream_node, nullValueI, nullValueI/)
+    B_nodeI(phantom_node_idx, :) = upstream_node_list
+
+    linkI(phantom_link_idx, :) = linkI(spanning_link, :)
+    linkR(phantom_link_idx, :) = linkR(spanning_link, :)
+
+    linkR(phantom_link_idx, lr_Length) = linkR(spanning_link, lr_Length) - phantom_node_start
+    linkR(spanning_link, lr_Length) = phantom_node_start
+
+    downstream_node = linkI(spanning_link, li_Mnode_d)
+    
+    linkI(spanning_link, li_Mnode_d) = phantom_node_idx
+
+    B_nodeR(downstream_node, directweight) = B_nodeR(downstream_node, directweight) &
+      - calc_link_weights(spanning_link)
+
+
+    upstream_node_list(:) = B_nodeI(downstream_node, :)
+    do kk = 1, size(upstream_node_list)
+      if ( upstream_node_list(kk) == upstream_node ) then
+        B_nodeI(downstream_node, kk) = phantom_node_idx
+      end if
+    end do
+
+    linkI(phantom_link_idx, li_idx) = phantom_link_idx
+
+    linkI(phantom_link_idx, li_Mnode_u) = phantom_node_idx
+
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine phantom_node_generator
   !
