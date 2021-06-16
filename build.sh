@@ -67,7 +67,6 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-echo "$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM"
 $CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
 
 # --------------------------------------------------------------------------------------
