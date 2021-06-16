@@ -160,7 +160,6 @@ module define_globals
     logical, allocatable, dimension(:)      :: visit_network_mask
     logical, allocatable, dimension(:)      :: partition_boolean
 
-    
     !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable, dimension(:) :: adjacent_links
     integer, allocatable, dimension(:) :: elem_per_image

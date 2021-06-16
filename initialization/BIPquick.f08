@@ -31,7 +31,7 @@ module BIPquick
    integer, parameter :: upstream3 = threeI
   
    !HACK - need to figure out how the number of processors is determined
-   integer, parameter :: processors = 3 
+   integer, parameter :: processors = 3
   
    contains
   
@@ -65,11 +65,12 @@ module BIPquick
       ! -----------------------------------------------------------------------------------------------------------------
     character(64) :: subroutine_name = 'BIPquick_subroutine'
   
-    integer       :: mp
+    integer       :: mp, ii, jj
     real(8)       :: partition_threshold, max_weight
     logical       :: ideal_exists = .false.
     integer       :: spanning_link = nullValueI
     integer       :: effective_root  
+    integer       :: phantom_node_idx, phantom_link_idx
   
     real(8) :: start, intermediate, finish
     call cpu_time(start)
@@ -83,7 +84,7 @@ module BIPquick
     call bip_network_processing()
   
     !% This subroutine determines what the phantom nodes will be named
-    call phantom_naming_convention()
+    call phantom_naming_convention(phantom_node_idx, phantom_link_idx)
   
     !% This subroutine populates the directweight column of B_nodeR
     call calc_directweight()
@@ -212,13 +213,37 @@ module BIPquick
     ! ----------------------------------------------------------------------------------------------------------------
     character(64) :: subroutine_name = 'bip_network_processing'
   
-    ! integer, intent(in) :: nodeI(:,:), linkI(:,:)
-    ! integer, intent(in out) :: B_nodeI(:,:)
-    integer :: upstream_link, upstream_node, uplink_counter, root_node
+    integer :: upstream_link, upstream_node, uplink_counter
     integer ii, jj, uplinks
     ! ----------------------------------------------------------------------------------------------------------------
       if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
-    
+
+      !% Iterate through the nodes array
+      do ii= 1,size(nodeI,1)
+        ! if ( mod(ii, 1) == 0 ) then
+        !     print*, "processing upstream nodes of ni_idx:", ii
+        ! endif
+        
+        !% The number of links upstream of a node
+        uplink_counter = nodeI(ii, ni_N_link_u)
+        print*, nodeI(ii, ni_idx), "has", nodeI(ii, ni_N_link_u), "upstream links"
+
+        !% Iterate through the links upstream of a node
+        do uplinks= 1, uplink_counter
+
+            !% If the link entry is not nullValueI (i.e. if it exists)
+            if ( nodeI(ii, ni_idx_base1 + uplinks) /= nullValueI ) then
+
+                !% Go to the upstream link to find the next upstream node
+                upstream_link = nodeI(ii, ni_idx_base1 + uplinks)
+                upstream_node = linkI(upstream_link, li_Mnode_u)
+
+                !% Add the adjacent upstream node to B_nodeI
+                B_nodeI(ii, uplinks) = upstream_node
+
+            endif
+        enddo
+     enddo
     
       if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine bip_network_processing
@@ -249,7 +274,7 @@ module BIPquick
   !============================================================================ 
   !============================================================================ 
   !
-  function calc_link_weights() result(weight)
+  function calc_link_weights(link_index) result(weight)
     ! ----------------------------------------------------------------------------
     !  
     ! Description:
@@ -261,11 +286,12 @@ module BIPquick
     ! ----------------------------------------------------------------------------
     character(64)   :: function_name = 'calc_link_weights'
   
-    ! real(8), intent(in)  :: lr_target
-    ! real(8), intent(in)  :: link_length
-    real(8) :: weight
+    integer, intent(in) :: link_index
+    real(8)             :: weight
     ! --------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
+
+    weight = linkR(link_index, lr_Length) / linkR(link_index, lr_ElementLength)
   
     if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
   end function calc_link_weights
@@ -295,7 +321,7 @@ module BIPquick
    !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
     
-    calc_link_weights_output = calc_link_weights()
+    
   
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine calc_directweight
@@ -493,7 +519,7 @@ module BIPquick
   !==========================================================================
   !==========================================================================
   !
-  subroutine phantom_naming_convention()
+  subroutine phantom_naming_convention(phantom_node_idx, phantom_link_idx)
    !-----------------------------------------------------------------------------
    !
    ! Description: This subroutine is used to establish what the first phantom node/link
@@ -504,14 +530,16 @@ module BIPquick
   
     character(64)   :: function_name = 'phantom_naming_convention'
   
-    ! integer, intent(in) :: linkI(:,:), nodeI(:,:)
-    ! integer, intent(out) :: phantom_node_idx, phantom_link_idx
-    integer :: max_node_idx, max_link_idx
-    integer, allocatable :: node_indices(:), link_indices(:)
+    integer, intent(in out) :: phantom_node_idx, phantom_link_idx
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
-  
-  
+     
+    !% The phantom_node_idx is equal to 1 more than the largest ni_idx (that is not nullValueI)
+    phantom_node_idx = maxval(nodeI(:, ni_idx), MASK= ( nodeI(:, ni_idx) /= nullValueI )) + 1
+
+    !% The phantom_link_idx is equal to 1 more than the largest li_idx (that is not nullValueI)
+    phantom_link_idx = maxval(linkI(:, li_idx), MASK= ( linkI(:, ni_idx) /= nullValueI )) + 1
+     
     if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
   end subroutine phantom_naming_convention
   !
