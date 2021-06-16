@@ -398,7 +398,8 @@ module geometry
                                     !case (trapezoidal)
                                     case default
                                         print *, 'error, case default should not be reached'
-                                        stop 3998
+                                        print *, 'in ',trim(subroutine_name), ' with stop commented out <<<<<<<<<<<<<<<<<<<<<<<'
+                                        !stop 3998
                                 end select
                             end if
                             volume(tB) = area(tB) * length(tB)

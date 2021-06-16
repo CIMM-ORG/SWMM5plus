@@ -414,7 +414,9 @@ module define_indexes
         !% define the column indexes for elemSI(:,:) weir elements
         enumerator :: eSi_Weir_EndContractions = 1      !% number of endcontractions of the weir
         enumerator :: eSi_Weir_FlowDirection            !% weir flow direction
-        enumerator :: eSi_Weir_SpecificType             !% specifice weir type
+        enumerator :: eSi_Weir_SpecificType             !% specific weir type
+        enumerator :: eSi_Orifice_FlowDirection         !% orifice flow direction
+        enumerator :: eSi_specific_orifice_type         !% specifc weir type
     end enum
     !% note, this must be changed to whatever the last enum element is
     integer, parameter :: Ncol_elemSI_weir = eSi_Weir_SpecificType
@@ -442,6 +444,12 @@ module define_indexes
         enumerator ::  eSr_Weir_TrapezoidalRightSlope   !% trapezoidal weir right slope
         enumerator ::  eSr_Weir_TriangularSideSlope     !% triangular weir side slope
         enumerator ::  eSr_Weir_Zcrest                  !% weir crest elevation
+        enumerator ::  eSr_Orifice_DischargeCoeff       !% discharge coefficient orifice
+        enumerator ::  eSr_Orifice_EffectiveFullDepth   !% effective full depth after control intervention
+        enumerator ::  eSr_Orifice_EffectiveHeadDelta   !% effective head delta across orifice
+        enumerator ::  eSr_Orifice_NominalDownstreamHead   !% nominal downstream head for orifice
+        enumerator ::  eSr_Orifice_RectangularBreadth      !% rectangular orifice breadth
+        enumerator ::  eSr_Orifice_Zcrest                  !% orifice "crest" elevation - lowest edge of orifice.
     end enum
     !% note, this must be changed to whatever the last enum element is
     integer, parameter :: Ncol_elemSR_Weir = eSr_Weir_Zcrest

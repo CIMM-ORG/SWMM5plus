@@ -4,15 +4,15 @@ module weir_elements
     use define_keys
     use define_indexes
     use define_settings, only: setting
-    use utility
+    use common_elements
     use adjust
-
-    implicit none
 
     !%----------------------------------------------------------------------------- 
     !% Description:
-    !% Computes weir elemevnts
-    !%
+    !% Computes flow and head for weir elements
+    !%----------------------------------------------------------------------------- 
+
+    implicit none
 
     private
 
@@ -26,11 +26,7 @@ module weir_elements
     subroutine weir_toplevel  (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% 
-        !%
-        !% NOTES we need a subroutine to get the new full depth (eSr_Weir_EffectiveFullDepth) 
-        !% and crest elevation (eSr_Weir_Zcrest) from control setting.
-        
+        !% Computes diagnostic flow and head delta across a weir.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx  !% must be a single element ID
         logical, pointer :: isSurcharged
@@ -40,8 +36,9 @@ module weir_elements
         !%-----------------------------------------------------------------------------
         isSurcharged => elemYN(eIdx,eYN_isSurcharged)
         !%  
-        !%
-        call util_head_and_flowdirection_for_diagnostic_element (eIdx)
+        !% get the flow direction and element head
+        call  common_head_and_flowdirection_singular &
+            (eIdx, eSr_Weir_Zcrest, eSr_Weir_NominalDownstreamHead, eSi_Weir_FlowDirection)
         
         !% find effective head difference accross weir element
         call weir_effective_head_delta (eIdx)
@@ -57,13 +54,14 @@ module weir_elements
         call weir_geometry_update (eIdx)
         
         !% update velocity from flowrate and area
-        call util_velocity_from_flowrate_singular (eIdx)
+        call common_velocity_from_flowrate_singular (eIdx)
         
         if (setting%Debug%File%weir_elements)  print *, '*** leave ', subroutine_name
     end subroutine weir_toplevel    
     !%
     !%==========================================================================
     !% PRIVATE
+ 
     !%==========================================================================   
     !%  
     subroutine weir_effective_head_delta (eIdx)
@@ -306,6 +304,9 @@ module weir_elements
         !%-----------------------------------------------------------------------------
         !% Description:
         !% 
+        !% HACK -- it is not clear as yet what geometries we actually need. There's
+        !% an important difference between the geometry of the flow over the weir
+        !% and the geometry surrounding the weir.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx
         real(8), pointer :: Head, Length, Zbottom,  Zcrown
@@ -351,15 +352,15 @@ module weir_elements
         !% set geometry variables for weir types
         select case (SpecificWeirType) 
             case (transverse_weir)
-                Area      =  RectangularBreadth * Depth
-                Volume    = Area * Length
+                Area      = RectangularBreadth * Depth
+                Volume    = Area * Length  !% HACK this is not the correct volume in the element
                 Topwidth  = RectangularBreadth
-                HydDepth  = Depth
+                HydDepth  = Depth !% HACK this is not the correct hydraulic depth in the element
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
                 
             case (side_flow)
-                Area      =  RectangularBreadth * Depth
+                Area      = RectangularBreadth * Depth
                 Volume    = Area * Length
                 Topwidth  = RectangularBreadth
                 HydDepth  = Depth

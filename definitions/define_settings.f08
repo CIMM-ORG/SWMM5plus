@@ -262,6 +262,12 @@ module define_settings
         type(LimiterArraySizeType)    :: ArraySize
     end type LimiterType
 
+    type OrificeType
+        real(8) :: SharpCrestedWeirCoefficient
+        real(8) :: TransverseWeirExponent
+        real(8) :: VillemonteCorrectionExponent
+    end type OrificeType
+
     !% setting%Partitioning
     type PartitioningType
         integer :: PartitioningMethod = BLink
@@ -378,6 +384,7 @@ module define_settings
         type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
         type(LimiterType)        :: Limiter ! maximum and minimum limiters
+        type(OrificeType)        :: Orifice 
         type(PartitioningType)   :: Partitioning
         type(SimulationType)     :: Simulation    
         type(SmallVolumeType)    :: SmallVolume ! controls for small volumes

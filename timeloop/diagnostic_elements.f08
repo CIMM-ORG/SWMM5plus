@@ -82,7 +82,7 @@ module diagnostic_elements
                     call weir_toplevel (thisP(ii))
                 
                 case (orifice)
-                    !call diagnostic_orifice (thisP(ii))
+                    call orifice_toplevel (thisP(ii))
                 
                 case (pump)
                     ! call diagnostic_pump (thisP(ii))
