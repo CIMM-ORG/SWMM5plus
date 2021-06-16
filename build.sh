@@ -57,7 +57,7 @@ for i in $(find $TEST_DIR -name '*.f08')
 do
     fname=$(basename -- "$i")
     fname="${fname%.*}"
-    if [[ $fname != _* ]]
+    if [[ $fname != _* ]] && [[ $fname != "main" ]]
     then
         TEST_FILES="$TEST_FILES $i"
     fi
@@ -67,6 +67,7 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
+echo "$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM"
 $CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
 
 # --------------------------------------------------------------------------------------

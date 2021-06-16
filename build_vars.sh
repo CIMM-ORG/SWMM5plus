@@ -20,7 +20,6 @@ then
     rm $INSTALLATION_LOG
 fi
 
-MAIN_DIR='main'
 INIT_DIR='initialization'
 API_DIR='interface'
 UTIL_DIR='utility'
@@ -30,6 +29,13 @@ GEO_DIR='geometry'
 TL_DIR='timeloop'
 FIN_DIR='finalization'
 TEST_DIR='tests'
+
+if [[ -f $TEST_DIR/main.f08 ]]
+then
+    MAIN_DIR=$TEST_DIR
+else
+    MAIN_DIR='main'
+fi
 
 if [[ ! -d $TEST_DIR ]]
 then
