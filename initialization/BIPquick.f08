@@ -91,12 +91,6 @@ module BIPquick
   
     !% This subroutine populates the directweight column of B_nodeR
     call calc_directweight()
-
-    do ii = 1, size(B_nodeR, 1)
-      print*, nodeI(ii, ni_idx), B_nodeR(ii, directweight)
-    end do
-
-    stop
   
     do mp = 1, processors
       print*, "Partition", mp
@@ -104,8 +98,15 @@ module BIPquick
       B_nodeR(:, totalweight) = 0.0
   
       !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
-      call calc_totalweight()
+      call calc_totalweight(max_weight)
+
+      do ii = 1, size(B_nodeR, 1)
+        print*, nodeI(ii, ni_idx), B_nodeR(ii, :)
+      end do
+
+      stop
   
+      !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
       partition_threshold = max_weight/real(processors - mp + 1, 8)
   
       !% This subroutine determines if there is an ideal partition possible and what the effective root is
@@ -168,8 +169,8 @@ module BIPquick
       allocate(B_nodeR(size(nodeR,1), twoI))
       B_nodeR(:,:) = zeroR
   
-      allocate(visited_flag_weight(size(nodeI, oneI)))
-      visited_flag_weight(:) = .false.
+      allocate(totalweight_visited_nodes(size(nodeI, oneI)))
+      totalweight_visited_nodes(:) = .false.
   
       allocate(visit_network_mask(size(nodeI, oneI)))
       visit_network_mask(:) = .false.
@@ -199,7 +200,7 @@ module BIPquick
   
       deallocate(B_nodeI)
       deallocate(B_nodeR)
-      deallocate(visited_flag_weight)
+      deallocate(totalweight_visited_nodes)
       deallocate(visit_network_mask)
       deallocate(partition_boolean)
       deallocate(weight_range)
@@ -319,7 +320,6 @@ module BIPquick
    !
    !----------------------------------------------------------------------------
     character(64) :: subroutine_name = 'calc_directweight'
-    real(8)       :: calc_link_weights_output ! HACK
   
     real(8)  :: lr_target
     integer :: rootnode_index, links_row, upstream_links
@@ -350,7 +350,7 @@ module BIPquick
    !============================================================================
    !============================================================================
    !
-  recursive subroutine calc_upstream_weight()
+  recursive subroutine calc_upstream_weight(weight_index, root)
      !-----------------------------------------------------------------------------
      !
      ! Description: Recursive subroutine that visits each node upstream of some root
@@ -359,20 +359,39 @@ module BIPquick
      !
      !-----------------------------------------------------------------------------
   
-     character(64) :: subroutine_name = 'upstream_weight_calculation'
+     character(64) :: subroutine_name = 'calc_upstream_weight'
 
-    !  real(8), intent(in out) :: B_nodeR(:,:), nodeR(:,:), linkR(:,:)
-    !  integer, intent(in out) :: B_nodeI(:,:), nodeI(:,:), linkI(:,:)
      integer :: upstream_node_list(3)
-    !  integer, intent(in) :: weight_index
-     integer :: root, node_row_contents, link_idx, new_root
-     integer :: link_row_contents, node_upstream
-    !  logical, intent(in out) :: visited_flag_weight(:)
-    !  logical, intent(in) :: visit_network_mask(:)
-     integer :: ii, jj, kk
+     integer, intent(in out) :: weight_index, root
+     integer :: jj
      !--------------------------------------------------------------------------
      if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
-  
+
+     !% If the node has not been visited this traversal (protective against cross connection bugs)
+     !% and the node has not already been partitioned
+     if ( (totalweight_visited_nodes(root) .eqv. .false.) .and. (visit_network_mask(root) .eqv. .false.) ) then
+
+      !% Mark the current root node as having been visited
+      totalweight_visited_nodes(root) = .true.
+
+      !% The totalweight of the weight_index node is increased by the root node's directweight
+      B_nodeR(weight_index, totalweight) = B_nodeR(weight_index, totalweight) + B_nodeR(root, directweight)
+
+        !% The adjacent upstream nodes are saved
+        upstream_node_list = B_nodeI(root,:)
+
+        !% Iterate through the adjacent upstream nodes
+        do jj= 1, size(upstream_node_list)
+
+          !% If the upstream node exists
+          if( upstream_node_list(jj) /= nullValueI) then
+            
+            !% The call the recursive calc_upstream_weight on the weight_index node
+            !% and the adjacent upstream node as the new root
+            call calc_upstream_weight(weight_index, upstream_node_list(jj))
+          endif
+        enddo
+      endif
   
      if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine calc_upstream_weight
@@ -380,7 +399,7 @@ module BIPquick
    !============================================================================
    !============================================================================
    !
-  subroutine calc_totalweight()
+  subroutine calc_totalweight(max_weight)
     !-----------------------------------------------------------------------------
     !
     ! Description: This subroutine drives the calc_upstream_weight() recursive
@@ -391,16 +410,33 @@ module BIPquick
   
     character(64) :: subroutine_name = 'calc_totalweight'
   
-    ! real(8), intent(in out) :: B_nodeR(:,:), nodeR(:,:), linkR(:,:)
-    ! integer, intent(in out) :: B_nodeI(:,:), nodeI(:,:), linkI(:,:), B_node_Partition(:,:), B_link_Partition(:,:)
-    ! integer, intent(in out) :: weight_index
-    ! logical, intent(in out) :: visited_flag_weight(:)
-    ! logical, intent(in out) :: visit_network_mask(:)
-    ! real(8), intent(in out) :: max_weight
-    integer :: ii, root
-    real(8) :: nullValue = nullValueI
+    real(8), intent(in out) :: max_weight
+    integer :: ii, weight_index
+
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+
+    !% Calculates the totalweight for all nodes
+    do ii=1, size(nodeI,1)
+  
+      !% Provided that the node has not already been assigned to a partition
+      if ( nodeI(ii, ni_P_image) == nullValueI ) then
+
+          !% The boolean for visited nodes during the upstream traversal is reset 
+          totalweight_visited_nodes(:) = .false.
+
+          !% The weight_index is saved so that the recursive calc_upstream_weight knows where to add the totalweight updates
+          weight_index = ii
+
+          !% The weight_index (i.e. the current node) is passed to the first iteration
+          !% of calc_upstream_weight as both the node being updated and the root node for traversal
+          call calc_upstream_weight(weight_index, weight_index)
+      endif
+    enddo
+  
+    !% The max_weight is the largest totalweight value for this partition
+    max_weight = (maxval(B_nodeR(:, totalweight)))
+  
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
 
   end subroutine calc_totalweight
