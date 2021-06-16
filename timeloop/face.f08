@@ -37,21 +37,21 @@ module face
         character(64) :: subroutine_name = 'face_interpolation'
         if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
-        !% 
-        if (num_images() == 1) then
-            if (isMask) then
-                call face_interpolation_byMask(faceCol)
-            else
-                Npack => npack_faceP(faceCol)
-                if (Npack > 0) then
-                    call face_interpolation_byPack (faceCol, Npack)
-                endif
-            endif
+
+        !% face reconstruction of all the interior faces
+        if (isMask) then
+            call face_interpolation_byMask(faceCol)
         else
-            call face_interp_across_images()
-            call face_interp_interior()
-        end if 
-        
+            Npack => npack_faceP(faceCol)
+            if (Npack > 0) then
+                call face_interpolation_byPack (faceCol, Npack)
+            endif
+        endif
+
+        sync all
+
+        ! call face_interp_across_images()
+
         if (setting%Debug%File%face)  print *, '*** leave ', subroutine_name
     end subroutine face_interpolation
     !%    
@@ -68,6 +68,9 @@ module face
         integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
         integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
         integer :: fFlowSet(1), eFlowSet(1)
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'face_interpolation_byMask'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
         !% Face values are needed for
         !% Area_u, Area_d, Head_u, Head_d, Flowrate, 
@@ -112,6 +115,7 @@ module face
         !% reset all the hydraulic jump faces
         call jump_compute
         
+        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_byMask
     !%
     !%==========================================================================  
@@ -167,10 +171,12 @@ module face
         integer, pointer :: eup(:), edn(:)
         integer :: ii
         !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'face_interp_set_byMask'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
         eup => faceI(:,fi_Melem_uL)
         edn => faceI(:,fi_Melem_dL) 
         !%-----------------------------------------------------------------------------
-
         !% cycle through each element in the set.
         do ii=1,size(fset)
             where (faceM(:,faceMaskCol))
@@ -181,7 +187,8 @@ module face
                     ( elemR(edn(:),eWup) + elemR(eup(:),eWdn))
             endwhere    
         enddo
-                
+
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name         
     end subroutine face_interp_set_byMask
     !%
     !%========================================================================== 
@@ -197,13 +204,17 @@ module face
         integer, intent(in) :: faceMaskCol, downstreamSet(:), upstreamSet(:)
         integer :: ii
         !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'face_copy_upstream_to_downstream_byMask'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
 
         do ii=1,size(downstreamset)
             where (faceM(:,faceMaskCol))
                 faceR(:,downstreamSet(ii)) = faceR(:,upstreamSet(ii))
             endwhere
         enddo
-    
+        
+        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_copy_upstream_to_downstream_byMask
     !%
     !%========================================================================== 

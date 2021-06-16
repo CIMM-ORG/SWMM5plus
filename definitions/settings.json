@@ -193,7 +193,7 @@
             "define_settings" : false,
             "define_types" : false,
             "diagnostic_elements" : false,
-            "face" : false,
+            "face" : true,
             "finalization" : false,
             "geometry" : true,
             "discretization"  : false,

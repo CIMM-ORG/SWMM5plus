@@ -15,6 +15,7 @@ module initial_condition
     use define_settings
     use pack_mask_arrays
     use update
+    use face
 
     implicit none
 
@@ -60,9 +61,7 @@ contains
         call update_auxiliary_variables (solver)
 
         !% update faces
-        ! call face_update()
-
-        sync all
+        call face_interpolation (fm_all, .true.)
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -87,6 +86,12 @@ contains
                    print*, elemR(:,er_InterpWeight_uQ)[ii], 'TImescale Q up'
                    print*, elemR(:,er_InterpWeight_dQ)[ii], 'TImescale Q dn'
                    call execute_command_line('')
+                   print*, '..................faces..........................'
+                   print*, faceR(:,fr_Area_u)[ii], 'face area up'
+                   print*, faceR(:,fr_Area_d)[ii], 'face area dn'
+                   print*, faceR(:,fr_Head_u)[ii], 'face head up'
+                   print*, faceR(:,fr_Head_d)[ii], 'face head dn'
+                   print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
                 enddo
 
             endif

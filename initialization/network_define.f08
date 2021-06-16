@@ -76,6 +76,7 @@ contains
                    print*, faceI(:,fi_Melem_dL)[ii], 'face Melem_dL'
                    print*, faceI(:,fi_Melem_uL)[ii], 'face Melem_uL'
                    print*, faceI(:,fi_Connected_image)[ii], 'fi_Connected_image'
+                   print*, faceI(:,fi_BCtype)[ii], 'fi_BCtype'
                    print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared face'
                    print*, '----------------------------------------------------'
                    call execute_command_line('')

@@ -117,8 +117,10 @@ contains
 
         faceM(:,mcol) = ( & 
             (faceI(:,fi_BCtype) == doesnotexist) &
-            .or. &
-            (faceYN(:,fYN_isnull) .eqv. .true.) &
+            .and. &
+            (faceYN(:,fYN_isnull) .eqv. .false.)  &
+            .and. &
+            (faceYN(:,fYN_isSharedFace) .eqv. .false.) &
             )
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
@@ -1069,6 +1071,9 @@ contains
         ptype => col_faceP(fp_Diag)
         npack => npack_faceP(ptype)
         
+        ! % HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
+        ! % meaning not a boundary, shared, null face
+        ! % this theory needs testing
         npack =  count( &
                 ((edn /= nullvalueI) .and. (elemI(edn,ei_HeqType) == diagnostic)) &
                 .or. &
@@ -1088,6 +1093,41 @@ contains
                 .or. &
                 ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
         endif
+
+        !% HACK: the psuedo code below tests the above hypothesis
+        ! npack =  count( &
+        !         ((faceYN(:,fYN_isSharedFace) .eqv. .false.) &
+        !         .and. &
+        !         (faceYN(:,fYN_isnull) .eqv. .false.) &
+        !         .and. &
+        !         (faceI(:,fi_BCtype) == doesnotexist)) &
+        !         .and. &
+        !         ((elemI(edn,ei_HeqType) == diagnostic) &
+        !         .or. &
+        !         (elemI(edn,ei_QeqType) == diagnostic) &
+        !         .or. &        
+        !         (elemI(eup,ei_HeqType) == diagnostic) &
+        !         .or. &
+        !         (elemI(eup,ei_QeqType) == diagnostic)) ) 
+        
+        ! if (npack > 0) then
+        !     faceP(1:npack, ptype) = pack( fIdx, &
+        !         ((faceYN(:,fYN_isSharedFace) .eqv. .false.) &
+        !         .and. &
+        !         (faceYN(:,fYN_isnull) .eqv. .false.) &
+        !         .and. &
+        !         (faceI(:,fi_BCtype) == doesnotexist)) &
+        !         .and. &
+        !         ((elemI(edn,ei_HeqType) == diagnostic) &
+        !         .or. &
+        !         (elemI(edn,ei_QeqType) == diagnostic) &
+        !         .or. &        
+        !         (elemI(eup,ei_HeqType) == diagnostic) &
+        !         .or. &
+        !         (elemI(eup,ei_QeqType) == diagnostic)) ) 
+        ! endif
+
+        ! print*, faceP(:,ptype), 'faceP(1:npack, ptype) in image, ', this_image()
         
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name 
     end subroutine
@@ -1122,6 +1162,9 @@ contains
         !% - faces with any AC adjacent
         ptype => col_faceP(fp_AC)
         npack => npack_faceP(ptype)
+
+        !% HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
+        !% this theory needs testing
 
         npack = count( &
                 ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &

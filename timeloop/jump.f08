@@ -102,26 +102,26 @@ module jump
         !% from upstream (supercritical) to downstream (subcritical)
         !% and open-channel flow on either side
         npack_faceP(fp_JumpUp) = count( &
-            (Fr(eup) >= oneR + feps) &
+            ((eup .ne. nullvalueI) .and. (Fr(eup) >= oneR + feps))  &
             .and. &
-            (Fr(edn) < oneR - feps) &
+            ((edn .ne. nullvalueI) .and. (Fr(edn) < oneR - feps))   &
             .and. &
-            (.not. isSurcharged(eup)) &
+            ((eup .ne. nullvalueI) .and. (.not. isSurcharged(eup))) &
             .and. &
-            (.not. isSurcharged(eDn)) )
+            ((edn .ne. nullvalueI) .and. (.not. isSurcharged(eDn))) )
 
         Npack_JumpUp => npack_faceP(fp_JumpUp) 
 
         !% pack the indexes 
         if (Npack_JumpUp > 0) then
             faceP(1:Npack_JumpUp, fp_JumpUp) = pack(faceIdx, &
-                (Fr(eup) >= oneR + feps) &
+                ((eup .ne. nullvalueI) .and. (Fr(eup) >= oneR + feps))  &
                 .and. &
-                (Fr(edn) < oneR - feps) &
+                ((edn .ne. nullvalueI) .and. (Fr(edn) <  oneR - feps))  &
                 .and. &
-                (.not. isSurcharged(eup)) &
+                ((eup .ne. nullvalueI) .and. (.not. isSurcharged(eup))) &
                 .and. &
-                (.not. isSurcharged(eDn)) )
+                ((edn .ne. nullvalueI) .and. (.not. isSurcharged(eDn))) )
 
             !% pointer to the packed indexes
             thisP => faceP(1:Npack_JumpUp,fp_JumpUp)
@@ -134,13 +134,13 @@ module jump
         !% downstream (supercritical) to upstream (subcritical)
         !% and open channel flow on either side
         npack_faceP(fp_JumpDn)  = count( &
-            (Fr(eup) <= -oneR + feps) &
+            ((eup .ne. nullvalueI) .and. (Fr(eup) <= -oneR + feps)) &
             .and. &
-            (Fr(edn) >  -oneR - feps) &
+            ((edn .ne. nullvalueI) .and. (Fr(edn) >  -oneR - feps)) &
             .and. &
-            (.not. isSurcharged(eup)) &
+            ((eup .ne. nullvalueI) .and. (.not. isSurcharged(eup))) &
             .and. &
-            (.not. isSurcharged(eDn)) )
+            ((edn .ne. nullvalueI) .and. (.not. isSurcharged(eDn))) )
 
         !% assign the above count to the npack storage for later use
         Npack_JumpDn => npack_faceP(fp_JumpDn)
@@ -148,13 +148,13 @@ module jump
         !% pack the indexes 
         if (Npack_JumpDn > 0) then
             faceP(1:Npack_JumpDn, fp_JumpDn) = pack(faceIdx, &
-                (Fr(eup) <= -oneR + feps) &
+                ((eup .ne. nullvalueI) .and. (Fr(eup) <= -oneR + feps)) &
                 .and. &
-                (Fr(edn) > -oneR - feps) &
+                ((edn .ne. nullvalueI) .and. (Fr(edn) >  -oneR - feps)) &
                 .and. &
-                (.not. isSurcharged(eup) ) &
+                ((eup .ne. nullvalueI) .and. (.not. isSurcharged(eup))) &
                 .and. &
-                (.not. isSurcharged(eDn)) )
+                ((edn .ne. nullvalueI) .and. (.not. isSurcharged(eDn))) )
             
             !% pointer to thee packed indexes
             thisP => faceP(1:Npack_JumpDn,fp_JumpDn)
