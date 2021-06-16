@@ -59,7 +59,8 @@ contains
 
         !% If BIPquick is being used for Partitioning, include additional rows to the link-node arrays
         if (setting%Partitioning%PartitioningMethod == BQuick) then
-            additional_rows = num_images() - 1
+            ! HACK - have to hard code the num_images until I can get the CAFRUN to work
+            additional_rows = 3 - 1
         end if
 
         allocate(nodeI(N_node + additional_rows, Ncol_nodeI), stat=allocation_status, errmsg=emsg)

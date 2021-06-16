@@ -148,17 +148,13 @@ module BIPquick
         phantom_link_idx = phantom_link_idx + 1
   
       endif 
-
-      GOTO 11
   
     end do
 
-    11 do ii = 1, size(B_nodeR, 1)
+    do ii = 1, size(B_nodeR, 1)
       print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image)
     end do
 
-    stop
-  
     !% This subroutine assigns network links to images on the basis of their endpoint nodes
     call trav_assign_link()
   
@@ -199,6 +195,9 @@ module BIPquick
   
       allocate(weight_range(size(linkI, oneI), twoI))
       weight_range(:,:) = zeroR
+
+      allocate(accounted_for_links(size(linkI, oneI)))
+      accounted_for_links = .false.
   
       if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine bip_allocate_arrays
@@ -223,6 +222,7 @@ module BIPquick
       deallocate(partitioned_nodes)
       deallocate(partitioned_links)
       deallocate(weight_range)
+      deallocate(accounted_for_links)
   
       if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine bip_deallocate_arrays
@@ -349,6 +349,10 @@ module BIPquick
     
     !% Calculates directweight for each node
     do ii= 1,size(nodeI,1)
+
+      if ( nodeI(ii, ni_idx) == nullValueI ) then
+        cycle
+      endif
 
       !% Need a loop bc multiple links might have a given node as its downstream endpoint
       do jj=1,size(linkI(:, li_Mnode_d))
@@ -525,11 +529,41 @@ module BIPquick
    !-----------------------------------------------------------------------------
   
     character(64) :: subroutine_name = 'trav_assign_link'
+    
+    integer :: potential_endpoints(size(nodeI,1))
+    integer :: endpoint_up, endpoint_dn, dn_image
+    integer :: jj
   
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
-  
+    potential_endpoints(:) = nodeI(:, ni_idx)
+
+    do jj=1, size(linkI,1)
+      if ( linkI(jj, li_idx) /= nullValueI ) then
+          endpoint_up = linkI(jj, li_Mnode_u)
+          endpoint_dn = linkI(jj, li_Mnode_d)
+          if ( any(potential_endpoints(:) == endpoint_up) .and. &
+                any(potential_endpoints(:) == endpoint_dn) .and. &
+                ( accounted_for_links(jj) .eqv. .false.) ) then
+                
+                dn_image = nodeI(endpoint_dn, ni_P_image)
+                linkI(jj, li_P_image) = dn_image
+                accounted_for_links(jj) = .true.
+            endif
+        endif
+     enddo
+
+     do jj=1, size(accounted_for_links, 1)
+        if ( ( accounted_for_links(jj) .eqv. .false. ) &
+          .and. ( linkI(jj, li_idx) /= nullValueI ) ) then
+            endpoint_dn = linkI(jj, li_Mnode_d)
+            dn_image = nodeI(endpoint_dn, ni_P_image)
+            linkI(jj, li_P_image) = dn_image
+            accounted_for_links(jj) = .true.
+        end if 
+     end do
+
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine trav_assign_link
   !
