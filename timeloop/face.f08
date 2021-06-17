@@ -173,6 +173,9 @@ module face
         call face_copy_upstream_to_downstream_byPack &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
 
+        !% reset all the hydraulic jump faces
+        call jump_compute
+
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name 
     end subroutine face_interpolation_byPack
     !%
