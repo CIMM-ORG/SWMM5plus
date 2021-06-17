@@ -136,8 +136,6 @@ module BIPquick
 
             !% HACK - I'm fairly sure that this do-loop will work for repeated instances of Case 3
 
-            !% HACK - Also need to add the check for the ideal_exists
-
           end do
   
         !% The distance along the spanning_link to the phantom node is calculated
