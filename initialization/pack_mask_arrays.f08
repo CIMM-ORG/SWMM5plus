@@ -1066,6 +1066,29 @@ contains
         eup  => faceI(:,fi_Melem_uL)
         edn  => faceI(:,fi_Melem_dL)
 
+        !% fp_all
+        !% - all faces execpt boundary, null, and shared faces
+        ptype => col_faceP(fp_all)
+        npack => npack_faceP(ptype)
+
+        npack = count( &
+                (faceI(:,fi_BCtype) == doesnotexist) &
+                .and. &
+                (faceYN(:,fYN_isnull) .eqv. .false.)  &
+                .and. &
+                (faceYN(:,fYN_isSharedFace) .eqv. .false.) &
+                )
+
+        if (npack > 0) then
+            faceP(1:npack,ptype) = pack( fIdx, &
+                (faceI(:,fi_BCtype) == doesnotexist) &
+                .and. &
+                (faceYN(:,fYN_isnull) .eqv. .false.)  &
+                .and. &
+                (faceYN(:,fYN_isSharedFace) .eqv. .false.) &
+                )
+        endif
+
         !% fp_Diag
         !% - all faces adjacent to a diagnostic element
         ptype => col_faceP(fp_Diag)

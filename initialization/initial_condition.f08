@@ -61,7 +61,7 @@ contains
         call update_auxiliary_variables (solver)
 
         !% update faces
-        call face_interpolation (fm_all, .true.)
+        call face_interpolation (fp_all)
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results

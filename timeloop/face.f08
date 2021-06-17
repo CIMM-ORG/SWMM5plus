@@ -25,13 +25,12 @@ module face
     !% PUBLIC
     !%==========================================================================
     !%
-    subroutine face_interpolation (facecol, isMask)
+    subroutine face_interpolation (facecol)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Interpolates faces
         !%-----------------------------------------------------------------------------
         integer, intent(in)  :: faceCol
-        logical, intent(in)  :: isMask
         integer, pointer :: Npack
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interpolation'
@@ -39,13 +38,9 @@ module face
         !%-----------------------------------------------------------------------------
 
         !% face reconstruction of all the interior faces
-        if (isMask) then
-            call face_interpolation_byMask(faceCol)
-        else
-            Npack => npack_faceP(faceCol)
-            if (Npack > 0) then
-                call face_interpolation_byPack (faceCol, Npack)
-            endif
+        Npack => npack_faceP(faceCol)
+        if (Npack > 0) then
+            call face_interpolation_byPack (faceCol, Npack)
         endif
 
         sync all
@@ -121,20 +116,69 @@ module face
     !%==========================================================================  
     !%==========================================================================  
     !%
-    subroutine face_interpolation_byPack (thisCol, Npack)
+    subroutine face_interpolation_byPack (facePackCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Interpolates all faces using a mask -- assumes single processor
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: thisCol !% Column in faceP array for needed pack
-        integer, intent(in) :: Npack   !% expected number of packed rows in faceP.
+        integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
+        integer, intent(in) :: Npack        !% expected number of packed rows in faceP.
+        integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
+        integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
+        integer :: fFlowSet(1), eFlowSet(1)
         !%-----------------------------------------------------------------------------
-        !%  
+        character(64) :: subroutine_name = 'face_interpolation_byPack'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
+        !% Face values are needed for
+        !% Area_u, Area_d, Head_u, Head_d, Flowrate, 
+        
+        !% not sure if we need
+        !% Topwidth_u, Topwidth_d, HydDepth_u, HydDepth_d
+        !% Velocity_u, Velocity_d
+        
+        !% General approach
+        !% interpolate to ..._u
+        !% identify hydraulic jumps
+        !% set .._u and ..d based on jumps
+
+        !% set the matching sets
+        !% THESE SHOULD BE DONE IN A GLOBAL -- MAYBE SETTINGS
+        !% Note these can be expanded for other terms to be interpolated.
+        fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
+        fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+        eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+
+        fHeadSetU = [fr_Head_u]
+        fHeadSetD = [fr_Head_d]
+        eHeadSet = [er_Head]
+         
+        fFlowSet = [fr_Flowrate]
+        eFlowSet = [er_Flowrate]
+
+        !% two-sided interpolation to using the upstream face set
+        call face_interp_set_byPack &
+            (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
+        call face_interp_set_byPack &
+            (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
+        call face_interp_set_byPack &
+            (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
+
+        !% copy upstream to downstream storage at a face
+        !% (only for Head and Geometry types)
+        !% note that these might be reset by hydraulic jump
+        call face_copy_upstream_to_downstream_byPack &
+            (fGeoSetD, fGeoSetU, facePackCol, Npack)
+            
+        call face_copy_upstream_to_downstream_byPack &
+            (fHeadSetD, fHeadSetU, facePackCol, Npack)
+
+        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name 
     end subroutine face_interpolation_byPack
     !%
     !%==========================================================================  
     !%==========================================================================  
-    !%   
+    !% 
     subroutine face_interp_across_images ()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -143,7 +187,7 @@ module face
 
         !%-----------------------------------------------------------------------------
         !%  
-    end subroutine face_interp_across_images   
+    end subroutine face_interp_across_images
     !%
     !%==========================================================================  
     !%==========================================================================  
@@ -221,13 +265,67 @@ module face
     !%==========================================================================    
     !%  
     !%  
+    subroutine face_interp_set_byPack &
+            (fset, eset, eWdn, eWup, facePackCol, Npack)
+            !%-----------------------------------------------------------------------------
+            !% Description:
+            !% Interpolates to a face for a set of variables using a mask
+            !%-----------------------------------------------------------------------------
+            integer, intent(in) :: fset(:), eset(:), eWdn, eWup, facePackCol, Npack
+            integer, pointer :: thisP(:), eup(:), edn(:)
+            integer :: ii
+            !%-----------------------------------------------------------------------------
+            character(64) :: subroutine_name = 'face_interp_set_byPack'
+            if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+            !%-----------------------------------------------------------------------------
+            thisP => faceP(1:Npack,facePackCol)
+
+            eup => faceI(:,fi_Melem_uL)
+            edn => faceI(:,fi_Melem_dL) 
+            !%-----------------------------------------------------------------------------
+            !% cycle through each element in the set.
+            !% This is designed for fset and eset being vectors, but it
+            !%   is not clear that this is needed.
+            do ii=1,size(fset)
+                faceR(thisP,fset(ii)) = &
+                    (+elemR(eup(thisP),eset(ii)) * elemR(edn(thisP),eWup) &
+                     +elemR(edn(thisP),eset(ii)) * elemR(eup(thisP),eWdn) &
+                    ) / &
+                    ( elemR(edn(thisP),eWup) + elemR(eup(thisP),eWdn))
+            end do
+
+            !% NOTES
+            !% elemR(eup(thisP),eset(ii)) is the element value upstream of the face
+            !% elemR(edn(thisP),eset(ii) is the element value downstream of the face.
+            !% elemR(eup(thisp),eWdn) is the downstream weighting of the upstream element
+            !% elemR(edn(thisp),eWup)) is the upstream weighting of the downstream element
+
+            if (setting%Debug%File%face) print *, '*** enter ', subroutine_name         
+    end subroutine face_interp_set_byPack  
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine face_copy_upstream_to_downstream_byPack &
+        (downstreamSet, upstreamSet, facePackCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% Copies the interpolated value on the upstrea side to the downstream side
+        !% These values are later adjusted for hydraulic jumps
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: facePackCol, Npack, downstreamSet(:), upstreamSet(:)
+        integer, pointer :: thisP(:)
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'face_copy_upstream_to_downstream_byPack'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
 
-        !%-----------------------------------------------------------------------------
-        !%  
+        thisP => faceP(1:Npack,facePackCol)
+
+        faceR(thisP,downstreamSet) = faceR(thisP,upstreamSet)
+        
+        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
+    end subroutine face_copy_upstream_to_downstream_byPack
     !%
     !%========================================================================== 
     !%==========================================================================    

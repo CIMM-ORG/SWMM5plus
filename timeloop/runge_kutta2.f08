@@ -46,7 +46,7 @@ module runge_kutta2
         call update_auxiliary_variables (ETM)   
 
         !% RK2 solution step 4 -- all face interpolation
-        call face_interpolation(fm_all, .true.)
+        call face_interpolation(fp_all)
         
         !% RK2 solution step 5 -- update diagnostic elements and faces
         if (N_diag > 0) then
@@ -65,7 +65,7 @@ module runge_kutta2
         call update_auxiliary_variables(ETM)
         
         !% RK2 solution step 8(d,e) -- update all faces
-        call face_interpolation(fm_all, .true.)
+        call face_interpolation(fp_all)
         
         !% RK2 solution step 9 -- update diagnostic elements and faces
         if (N_diag > 0) then 
@@ -126,7 +126,7 @@ module runge_kutta2
         call update_auxiliary_variables(ALLtm)
                  
         !% step 4 -- all face interpolation
-        call face_interpolation(fm_all, .true.)
+        call face_interpolation(fp_all)
         
         !% step 5 -- update diagnostic elements and faces
         if (N_diag > 0) then
@@ -151,7 +151,7 @@ module runge_kutta2
             call update_auxiliary_variables (AC)      
 
             !% step 6(f,g) -- update faces for AC elements
-            call face_interpolation (fp_AC, .false.)
+            call face_interpolation (fp_AC)
 
         endif  
         
@@ -174,7 +174,7 @@ module runge_kutta2
             call update_auxiliary_variables(ETM)
             
             !% step 8(d,e) -- update all faces
-            call face_interpolation (fm_all, .true.)
+            call face_interpolation (fp_all)
         endif
         
         !% step 9 -- update diagnostic elements and faces      
