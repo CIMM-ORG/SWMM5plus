@@ -74,6 +74,7 @@ module BIPquick
     integer       :: spanning_link = nullValueI
     integer       :: effective_root  
     integer       :: phantom_node_idx, phantom_link_idx
+    integer       :: connectivity
   
     real(8) :: start, intermediate, finish
     call cpu_time(start)
@@ -154,12 +155,21 @@ module BIPquick
   
     end do
 
-    do ii = 1, size(B_nodeR, 1)
-      print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image)
-    end do
-
     !% This subroutine assigns network links to images on the basis of their endpoint nodes
     call trav_assign_link()
+
+    !% This subroutine calculates the ni_P_is_boundary column of the nodeI array
+    call calc_is_boundary()
+
+    do ii = 1, size(B_nodeR, 1)
+      print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image), nodeI(ii, ni_P_is_boundary)
+    end do
+
+    connectivity = connectivity_metric()
+
+    print*, connectivity 
+
+    stop
   
     !% This subroutine deallocates all of the array variables used in BIPquick
     call bip_deallocate_arrays()
@@ -940,8 +950,95 @@ module BIPquick
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
    end subroutine trav_casethree
   !
-  !============================================================================
-  !============================================================================
+  !==========================================================================
+  !==========================================================================
+  !
+   subroutine calc_is_boundary()
+    !-----------------------------------------------------------------------------
+    !
+    ! Description: This subroutine calculates the number of nodes that exist as 
+    !   a boundary between 1 or more partitions.  If a node has adjacent links that
+    !   have been assigned to other partitions than its own, the ni_P_is_boundary
+    !   column is incremented.
+    !
+    !-----------------------------------------------------------------------------
+   
+     character(64) :: subroutine_name = 'calc_is_boundary'
+     
+     integer    :: adjacent_links(6), link_image
+     integer    :: ii, kk
+       
+     !--------------------------------------------------------------------------
+     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+
+     !% Initialize the ni_P_is_boundary column to 0
+     nodeI(:, ni_P_is_boundary) = zeroI
+
+     !% Check each node in the network
+     do ii = 1, size(nodeI, 1)
+
+        !% Create a list of links that are adjacent to the node
+        adjacent_links = nodeI(ii, ni_Mlink_u1:ni_Mlink_d3)
+
+        print*, adjacent_links
+
+        !% Iterate through that list
+        do kk = 1, size(adjacent_links)
+
+            !% If the adjacent link doesn't exist, skip it
+            if ( adjacent_links(kk) == nullValueI ) then
+              cycle
+            end if
+
+            !% Check the image that the link has been assigned to (from trav_assign_link)
+            link_image = linkI(adjacent_links(kk), li_P_image)
+
+            ! print*, linkI(adjacent_links(kk), li_idx), linkI(adjacent_links(kk), li_P_image)
+
+            !% If the link and the image are on separate images, increment the ni_P_is_boundary
+            if ( link_image /= nodeI(ii, ni_P_image) ) then
+              ! print*, "The images are mismatched", link_image, nodeI(ii, ni_P_image)
+              nodeI(ii, ni_P_is_boundary) = nodeI(ii, ni_P_is_boundary) + 1
+            end if
+        end do
+     end do
+
+     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+    
+   end subroutine calc_is_boundary
+  !
+  !==========================================================================
+  !==========================================================================
+  !
+
+   function connectivity_metric() result(connectivity)
+    !-----------------------------------------------------------------------------
+    !
+    ! Description: This subroutine is used to calculate the number of nodes that belong
+    !   to multiple partitions
+    !
+    !-----------------------------------------------------------------------------
+   
+     character(64) :: subroutine_name = 'connectivity_metric'
+
+     integer  :: connectivity, ii
+
+       
+     !--------------------------------------------------------------------------
+     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+
+     connectivity = 0
+
+     do ii = 1, size(nodeI, 1)
+      connectivity = connectivity + nodeI(ii, ni_P_is_boundary)
+     end do
+
+     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+    
+   end function connectivity_metric
+  !
+  !==========================================================================
+  !==========================================================================
   !
    end module BIPquick
   !==========================================================================
