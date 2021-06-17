@@ -31,7 +31,7 @@ module BIPquick
    integer, parameter :: upstream3 = threeI
   
    !HACK - need to figure out how the number of processors is determined
-   integer, parameter :: processors = 3
+   integer, parameter :: processors = 2
 
    !HACK - I'm not sure this is still needed
    integer, parameter :: lr_target_default = 1.0
@@ -125,17 +125,22 @@ module BIPquick
   
       else
   
-        !% This subroutine checks if the partition threshold is spanned by any link
+        !% This subroutine checks if the partition threshold is spanned by any link (Case 2)
         call calc_spanning_link(spanning_link, partition_threshold)
   
         !% While the spanning link doesn't exist (i.e. when the system is still Case 3)
         do while ( (spanning_link == nullValueI) .and. ( ideal_exists .eqv. .false. ) )
   
             !% This subroutine houses the litany of steps that are required for a Case 3 partition
-            call trav_casethree()
-            exit !HACK until we can fill in the guts of this part
-        end do
+            call trav_casethree(effective_root, spanning_link, image, partition_threshold, max_weight, ideal_exists)
+
+            !% HACK - I'm fairly sure that this do-loop will work for repeated instances of Case 3
+
+            !% HACK - Also need to add the check for the ideal_exists
+
+          end do
   
+        !% The distance along the spanning_link to the phantom node is calculated
         phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
 
         !% This subroutine creates a phantom node/link and adds it to nodeI/linkI
@@ -249,9 +254,10 @@ module BIPquick
 
       !% Iterate through the nodes array
       do ii= 1,size(nodeI,1)
-        ! if ( mod(ii, 1) == 0 ) then
-        !     print*, "processing upstream nodes of ni_idx:", ii
-        ! endif
+
+        if ( nodeI(ii, ni_idx) == nullValueI ) then
+          cycle
+        end if
         
         !% The number of links upstream of a node
         uplink_counter = nodeI(ii, ni_N_link_u)
@@ -316,12 +322,24 @@ module BIPquick
     character(64)   :: function_name = 'calc_link_weights'
   
     integer, intent(in) :: link_index
-    real(8)             :: weight
+    real(8)             :: weight, length, element_length
     ! --------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
 
+    !% Sometimes the Interface gives garbage for these values so I need to adjust
+    length = linkR(link_index, lr_Length)
+    if ( (length < 0.0) .or. (length > nullValueI) ) then
+      length = 1.0
+    end if
+
+    !% In particular sometimes the lr_ElementLength can be Infinity
+    element_length = linkR(link_index, lr_ElementLength)
+    if ( (element_length < 0.0) .or. (element_length > length) ) then
+      element_length = 1.0
+    end if
+
     !% The link weight is equal to the link length divided by the element length
-    weight = linkR(link_index, lr_Length) / linkR(link_index, lr_ElementLength)
+    weight = length / element_length
   
     if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
   end function calc_link_weights
@@ -348,7 +366,7 @@ module BIPquick
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
     
     !% Calculates directweight for each node
-    do ii= 1,size(nodeI,1)
+    do ii = 1, size(nodeI,1)
 
       if ( nodeI(ii, ni_idx) == nullValueI ) then
         cycle
@@ -441,6 +459,10 @@ module BIPquick
 
     !% Calculates the totalweight for all nodes
     do ii=1, size(nodeI,1)
+
+      if ( nodeI(ii, ni_idx) == nullValueI ) then
+        cycle
+      end if
   
       !% Provided that the node has not already been assigned to a partition
       if ( nodeI(ii, ni_P_image) == nullValueI ) then
@@ -494,11 +516,11 @@ module BIPquick
         !% Add that node to the current image
         nodeI(root, ni_P_image) = image
 
-      !% Save the adjacent upstream nodes
-      upstream_node_list = B_nodeI(root, :)
+        !% Save the adjacent upstream nodes
+        upstream_node_list = B_nodeI(root, :)
 
-      !% Iterate through the upstream nodes
-      do jj= 1, size(upstream_node_list)
+        !% Iterate through the upstream nodes
+        do jj= 1, size(upstream_node_list)
 
           !% If the upstream node exists
           if ( upstream_node_list(jj) /= nullValueI ) then
@@ -506,11 +528,8 @@ module BIPquick
               !% call the recursive subroutine on the new root node
               call trav_subnetwork(upstream_node_list(jj), image)
           endif
-      enddo
+        enddo
 
-      ! elseif( partitioned_nodes(root) .eqv. .true.) then
-      !         subnetwork_container_nodes(proc, root, :) = nodeMatrix(root, :)
-      !         print_counter = print_counter + 1
       endif
 
 
@@ -638,6 +657,10 @@ module BIPquick
   
     !% Check each link for spanning the partition threshold
     do jj=1, size(linkI,1)
+
+      if ( linkI(jj, li_idx) == nullValueI ) then
+        cycle
+      end if 
         
       !% Save the upstream node of the current link
       upstream_node = linkI(jj, li_Mnode_u)
@@ -763,52 +786,72 @@ module BIPquick
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
+    !% The phantom node index is given
     nodeI(phantom_node_idx, ni_idx) = phantom_node_idx
 
+    !% The phantom node type is guaranteed to be a simple 2 link junction
+    !% HACK - need to figure out if I make this more robust than the integer
     nodeI(phantom_node_idx, ni_node_type) = zeroI
 
+    !% The phantom node is guaranteed to have one upstream and one downstream link
     nodeI(phantom_node_idx, ni_N_link_u) = oneI
-
     nodeI(phantom_node_idx, ni_N_link_d) = oneI
 
+    !% Initialize the upstream and downstream links as null values
     nodeI(phantom_node_idx, ni_Mlink_u1:ni_Mlink_d3) = nullValueI
 
+    !% The upstream link for the phantom node is the spanning link
     nodeI(phantom_node_idx, ni_Mlink_u1) = spanning_link
 
+    !% The downstream link for the phantom node is the phantom link
     nodeI(phantom_node_idx, ni_Mlink_d1) = phantom_link_idx
 
+    !% Reset the phantom node directweight to 0.0 (for cleanliness, this won't matter)
     B_nodeR(phantom_node_idx, directweight) = 0.0
 
+    !% By definition, the phantom node totalweight will be the partition_threshold
     B_nodeR(phantom_node_idx, totalweight) = partition_threshold
 
+    !% Find the adjacent upstream nodes for the B_nodeI traversal array
     upstream_node = linkI(spanning_link, li_Mnode_u)
     upstream_node_list(:) = (/upstream_node, nullValueI, nullValueI/)
     B_nodeI(phantom_node_idx, :) = upstream_node_list
 
+    !% Copy the link row entries from the spanning link to the phantom link
     linkI(phantom_link_idx, :) = linkI(spanning_link, :)
     linkR(phantom_link_idx, :) = linkR(spanning_link, :)
 
+    !% The phantom link length is the spanning_link length - the phantom node location
     linkR(phantom_link_idx, lr_Length) = linkR(spanning_link, lr_Length) - phantom_node_start
     linkR(spanning_link, lr_Length) = phantom_node_start
 
+    !% Save the original downstream node for the spanning link
     downstream_node = linkI(spanning_link, li_Mnode_d)
     
+    !% The downstream node for the spanning link is set as the phantom node
     linkI(spanning_link, li_Mnode_d) = phantom_node_idx
 
+    !% Reduce the downstream node directweight by the spanning link's new length
     B_nodeR(downstream_node, directweight) = B_nodeR(downstream_node, directweight) &
       - calc_link_weights(spanning_link)
 
-
+    !% Checks the adjacent nodes that were originally upstream of the downstream node
     upstream_node_list(:) = B_nodeI(downstream_node, :)
     do kk = 1, size(upstream_node_list)
+
+      !% If the adjacent upstream node is the upstream node from the spanning link
       if ( upstream_node_list(kk) == upstream_node ) then
+
+        !% Then replace it with the phantom node
         B_nodeI(downstream_node, kk) = phantom_node_idx
       end if
     end do
 
+    !% The resets the phantom index to having the phantom link and phantom node (as upstream node)
     linkI(phantom_link_idx, li_idx) = phantom_link_idx
-
     linkI(phantom_link_idx, li_Mnode_u) = phantom_node_idx
+
+    !% HACK - need to check with Saz/Gerardo in Network_Define to see if I missed anything here
 
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine phantom_node_generator
@@ -816,7 +859,7 @@ module BIPquick
   !==========================================================================
   !==========================================================================
   !
-  subroutine trav_casethree()
+  subroutine trav_casethree(effective_root, spanning_link, image, partition_threshold, max_weight, ideal_exists)
    !-----------------------------------------------------------------------------
    !
    ! Description: This subroutine drives the steps required to reduce a Case 3 network
@@ -828,11 +871,74 @@ module BIPquick
    !-----------------------------------------------------------------------------
   
     character(64) :: subroutine_name = 'trav_casethree'
+
+    integer, intent(in out)   :: effective_root, spanning_link, image
+    real(8), intent(in out)   :: partition_threshold, max_weight
+    logical, intent(in out)   :: ideal_exists
+    integer   :: upstream_node_list(3), upstream_node
+    real(8)   :: upstream_link_length, upstream_weight, total_clipped_weight
+    integer   :: jj
       
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
    
-   
+    print*, "Case 3 Found, effective_root is: ", effective_root
+
+    !% The upstream node list is used to chose a branch for removal
+    !% The effective root is guaranteed to have at least one upstream node
+    upstream_node_list(:) = B_nodeI(effective_root, :)
+    upstream_node = upstream_node_list(oneI)
+
+    !% Find the link who's upstream node is the upstream_node
+    do jj=1,size(linkI,1)
+
+      !% If the link index is nullValue then cycle
+      if ( linkI(jj, li_idx) == nullValueI ) then
+        cycle
+      end if
+
+      !% If the link has upstream_node as its upstream node
+      if (linkI(jj, li_Mnode_u) == upstream_node) then
+
+        !% The clipped weight is the upstream totalweight + the link weight
+        total_clipped_weight = B_nodeR(upstream_node, totalweight) & 
+          + calc_link_weights(jj)
+        print*, "The weight being clipped from the effective node is", total_clipped_weight
+
+        !% Tags the link as being partitioned (removes it from the spanning link potential)
+        partitioned_links(jj) = .true.
+
+        !% Exit saves time and records jj for later use
+        exit
+      endif
+    enddo
+
+    !% Reduce the effective_root directweight by the link length
+    B_nodeR(effective_root, directweight) = &
+            B_nodeR(effective_root, directweight) - calc_link_weights(jj)
+
+    !% Reduce the effective_root totalweight by the total_clipped_weight
+    B_nodeR(effective_root, totalweight) = &
+            B_nodeR(effective_root, totalweight) - total_clipped_weight
+
+    !% Reduce the partition_threshold by the total_clipped_weight too
+    partition_threshold = partition_threshold - total_clipped_weight
+
+    print*, "Calling subnetwork carving on ", upstream_node
+
+    !% Assigns the link to the current image and removes it from future assignment
+    linkI(jj, li_P_image) = image
+    accounted_for_links(jj) = .true.
+
+    !% Assign the subnetwork induced on the upstream node to the current image
+    call trav_subnetwork(upstream_node, image)
+
+    !% Checks the remaining network for a spanning_link
+    call calc_spanning_link(spanning_link, partition_threshold)
+
+    !% Resets the effective root to reflect updated system
+    effective_root = calc_effective_root(ideal_exists, max_weight, partition_threshold)
+
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
    end subroutine trav_casethree
   !
