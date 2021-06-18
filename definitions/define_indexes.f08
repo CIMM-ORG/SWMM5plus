@@ -64,10 +64,6 @@ module define_indexes
         enumerator :: li_N_element  ! Number of elements in this link
         enumerator :: li_Mnode_u  ! map to upstream node connecting to link
         enumerator :: li_Mnode_d ! map to downstram node connecting to link
-        enumerator :: li_Melem_u ! element ID of upstream element of link
-        enumerator :: li_Melem_d ! element ID of downstream element of link
-        enumerator :: li_Mface_u ! face ID of upstream face of link
-        enumerator :: li_Mface_d ! face ID of downstream face of link
         enumerator :: li_assigned ! given 1 when link is assigned
         enumerator :: li_InitialDepthType ! 1=uniform, 2= lineary change, 3=exponential decay
         enumerator :: li_length_adjusted  ! 1 = length was not adjusted, 2 = one side was adjusted, 3 = both side was adjusted

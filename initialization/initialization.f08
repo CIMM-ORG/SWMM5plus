@@ -74,7 +74,7 @@ contains
 
         call init_partitioning()
         
-        sync all 
+        ! sync all 
         !% HACK: this sync call is probably not needed
 
         call init_network()

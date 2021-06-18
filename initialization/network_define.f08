@@ -56,7 +56,6 @@ contains
         sync all
         !% print result
         if (setting%Debug%File%network_define) then
-
             !% only using the first processor to print results
             if (this_image() == 1) then
 
@@ -73,8 +72,8 @@ contains
                    print*, '..................faces.............................'
                    print*, faceI(:,fi_Lidx)[ii], 'face Lidx'
                    print*, faceI(:,fi_Gidx)[ii], 'face Gidx'
-                   print*, faceI(:,fi_Melem_dL)[ii], 'face Melem_dL'
                    print*, faceI(:,fi_Melem_uL)[ii], 'face Melem_uL'
+                   print*, faceI(:,fi_Melem_dL)[ii], 'face Melem_dL'
                    print*, faceI(:,fi_Connected_image)[ii], 'fi_Connected_image'
                    print*, faceI(:,fi_BCtype)[ii], 'fi_BCtype'
                    print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared face'
@@ -218,12 +217,13 @@ contains
     !
     !--------------------------------------------------------------------------
     !
-        integer, intent(in)    :: image
-        integer, intent(inout) :: ElemLocalCounter, FaceLocalCounter
-        integer, intent(inout) :: ElemGlobalCounter, FaceGlobalCounter
+        integer, intent(in)     :: image
+        integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
+        integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
 
-        integer :: ii, pLink, pNode
-        integer, pointer :: thisLink, upNode, dnNode
+        integer                 :: ii, pLink, pNode
+        integer, pointer        :: thisLink, upNode, dnNode
+        logical                 :: firstUpBcHandeled
         integer, dimension(:), allocatable, target :: packed_link_idx, packed_node_idx
 
         character(64) :: subroutine_name = 'init_network_handle_partition'
@@ -243,6 +243,11 @@ contains
         !% number of nodes in a partition
         pNode = size(packed_node_idx)
 
+        !% initializing first upstream boundary node handeled as false.
+        !% if a partition has multiple upstream boundary node, this flag
+        !% will keep the count consistant.
+        firstUpBcHandeled = .false.
+
         !% cycle through the links in an image
         do ii = 1,pLink
             !% necessary pointers to the links and connected nodes
@@ -252,10 +257,10 @@ contains
 
             call init_network_handle_upstreamnode &
                 (image, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
-                FaceGlobalCounter)
+                FaceGlobalCounter,firstUpBcHandeled)
 
             call init_network_handle_link &
-                (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
+                (image, thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                 FaceGlobalCounter)
 
             call init_network_handle_downstreamnode &
@@ -375,7 +380,7 @@ contains
     !
     subroutine init_network_handle_upstreamnode &
         (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
-        FaceGlobalCounter)
+        FaceGlobalCounter,firstUpBcHandeled)
     !
     !--------------------------------------------------------------------------
     !
@@ -383,13 +388,14 @@ contains
     !
     !--------------------------------------------------------------------------
     !
-        integer, intent(in)    :: image, thisNode
-        integer, intent(inout) :: ElemLocalCounter, FaceLocalCounter
-        integer, intent(inout) :: ElemGlobalCounter, FaceGlobalCounter
+        integer, intent(in)     :: image, thisNode
+        integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
+        integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
+        logical, intent(inout)  :: firstUpBcHandeled
 
-        integer, pointer :: nAssignStatus, nodeType, linkUp
-
-        integer :: ii
+        integer                 :: ii
+        integer, pointer        :: nAssignStatus, nodeType, linkUp
+        
 
         character(64) :: subroutine_name = 'init_network_handle_upstreamnode'
     !--------------------------------------------------------------------------
@@ -407,6 +413,14 @@ contains
                 case(nBCup)
                     !% check if the node has already been assigned
                     if (nAssignStatus .eq. nUnassigned) then
+                        if (firstUpBcHandeled) then
+                            !% if first boundary condition already assigned this condition will be
+                            !% true. Thus, if the handler finds other upstream boundary node in the
+                            !% images, the face counder will be advanced.
+                            FaceLocalCounter  = FaceLocalCounter + oneI
+                            FaceGlobalCounter = FaceGlobalCounter + oneI
+                        endif
+
                         !% integer data
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
@@ -416,6 +430,7 @@ contains
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
+                        firstUpBcHandeled = .true.
                     endif
 
                 case (nJ2)
@@ -511,14 +526,15 @@ contains
     !==========================================================================
     !
     subroutine init_network_handle_link &
-        (thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, FaceGlobalCounter)
+        (image, thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
+        FaceGlobalCounter)
     !--------------------------------------------------------------------------
     !
     !% handle links in a partition
     !
     !--------------------------------------------------------------------------
 
-        integer, intent(in)     :: thisLink, upNode
+        integer, intent(in)     :: image, thisLink, upNode
         integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
         integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
 
@@ -542,11 +558,33 @@ contains
 
             !% store the ID of the first (upstream) element in this link
             linkI(thisLink,li_first_elem_idx)   = ElemLocalCounter
-            linkI(thisLink,li_Melem_u)          = ElemLocalCounter - oneI ! the new element is the 1st (downstream)
-            linkI(thisLink,li_Mface_u)          = FaceLocalCounter        ! the old face is the 1st
-
             !% reference elevations at cell center
             zCenter = zUpstream - 0.5 * linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
+
+            !% HACK CODE
+            !% the node handler usually dont advance face counter.
+            !% thus if an assigned junction node in the same partition
+            !% upstream of the link is encountered, the face counters
+            !% needed to be advanced (this will be the upstream face of 
+            !% the link element). This is necessary because the do loop will 
+            !% always advance the downstream face of a link element
+
+            !% the mapping of this face will be carried out later
+            if ( (nodeI(upNode,ni_P_image)   .eq. image    )  .and. &
+                 (nodeI(upNode,ni_assigned)  .eq. nAssigned)  .and. &
+                 (nodeI(upNode,ni_node_type) .eq. nJm      ) ) then
+
+                !% advancing face counter
+                FaceLocalCounter  = FaceLocalCounter  + oneI
+                FaceGlobalCounter = FaceGlobalCounter + oneI
+
+                !% face integer data
+                faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
+                faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
+                faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
+                faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+
+            endif
 
             do ii = 1, NlinkElem
                 !%................................................................
@@ -570,7 +608,7 @@ contains
                 !% Face arrays update
                 !%................................................................
 
-                !% advance the face counters
+                !% advance the downstream face counter of a link element
                 FaceLocalCounter  = FaceLocalCounter  + oneI
                 FaceGlobalCounter = FaceGlobalCounter + oneI
 
@@ -1045,11 +1083,11 @@ contains
                 if ( (dnBranchIdx .ne. nullvalueI)   .and.       &
                      (linkI(dnBranchIdx,li_P_image) .eq. image) ) then
 
-                    !% find the last element index of the link
+                    !% find the first element index of the link
                     LinkFirstElem = linkI(dnBranchIdx,li_first_elem_idx)
 
                     !% find the downstream face index of that last element
-                    fLidx => elemI(LinkFirstElem,ei_Mface_dL)
+                    fLidx => elemI(LinkFirstElem,ei_Mface_uL)
 
                     !% pointer to the specific branch element
                     eIdx => JelemIdx(ii)

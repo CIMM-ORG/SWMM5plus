@@ -45,12 +45,11 @@ module utility
             "lr_DischargeCoeff2,lr_FullDepth,lr_EndContractions,lr_Flowrate,lr_Depth,"  // &
             "lr_DepthUp,lr_DepthDn,lr_Volume,lr_Velocity,lr_Capacity"
 
-        write(2, '(A)')                                                            &
-            "li_idx,li_link_type,li_weir_type,li_orif_type,"                    // &
-            "li_pump_type,li_geometry,li_roughness_type,"                       // &
-            "li_N_element,li_Mnode_u,li_Mnode_d,li_Melem_u,"                    // &
-            "li_Melem_d,li_Mface_u,li_Mface_d,li_assigned,li_InitialDepthType," // &
-            "li_length_adjusted,li_P_image,li_first_elem_idx,li_last_elem_idx"
+        write(2, '(A)')                                                                    &
+            "li_idx,li_link_type,li_weir_type,li_orif_type,li_pump_type,li_geometry,"    //&
+            "li_roughness_type, li_N_element,li_Mnode_u,li_Mnode_d,li_assigned,"         // &   
+            "li_InitialDepthType, li_length_adjusted,li_P_image, li_first_elem_idx,"     //&
+            "li_last_elem_idx"
 
         do ii = 1, N_link
             write(1,'(*(G0.6,:,","))') linkR(ii,:)
