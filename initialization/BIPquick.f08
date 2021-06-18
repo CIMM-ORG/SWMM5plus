@@ -30,8 +30,8 @@ module BIPquick
    integer, parameter :: upstream2 = twoI
    integer, parameter :: upstream3 = threeI
   
-   !HACK - need to figure out how the number of processors is determined
-   integer, parameter :: processors = 3
+  !  !HACK - need to figure out how the number of processors is determined
+  !  integer, parameter :: processors = 3
 
    !HACK - I'm not sure this is still needed
    integer, parameter :: lr_target_default = 1.0
@@ -94,7 +94,7 @@ module BIPquick
     call calc_directweight()
   
     !% BIPquick sweeps through the network a finite number of times
-    do mp = 1, processors
+    do mp = 1, num_images()
 
       !% Save the current processor as image (used as input to trav_subnetwork)
       image = mp
@@ -113,7 +113,7 @@ module BIPquick
       end do
   
       !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
-      partition_threshold = max_weight/real(processors - mp + 1, 8)
+      partition_threshold = max_weight/real(num_images() - mp + 1, 8)
   
       !% This subroutine determines if there is an ideal partition possible and what the effective root is
       effective_root = calc_effective_root(ideal_exists, max_weight, partition_threshold)
@@ -166,8 +166,6 @@ module BIPquick
     end do
 
     connectivity = connectivity_metric()
-
-    stop
   
     !% This subroutine deallocates all of the array variables used in BIPquick
     call bip_deallocate_arrays()
