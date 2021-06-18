@@ -31,7 +31,7 @@ module BIPquick
    integer, parameter :: upstream3 = threeI
   
    !HACK - need to figure out how the number of processors is determined
-   integer, parameter :: processors = 2
+   integer, parameter :: processors = 3
 
    !HACK - I'm not sure this is still needed
    integer, parameter :: lr_target_default = 1.0
@@ -166,8 +166,6 @@ module BIPquick
     end do
 
     connectivity = connectivity_metric()
-
-    print*, connectivity 
 
     stop
   
@@ -980,8 +978,6 @@ module BIPquick
         !% Create a list of links that are adjacent to the node
         adjacent_links = nodeI(ii, ni_Mlink_u1:ni_Mlink_d3)
 
-        print*, adjacent_links
-
         !% Iterate through that list
         do kk = 1, size(adjacent_links)
 
@@ -993,11 +989,8 @@ module BIPquick
             !% Check the image that the link has been assigned to (from trav_assign_link)
             link_image = linkI(adjacent_links(kk), li_P_image)
 
-            ! print*, linkI(adjacent_links(kk), li_idx), linkI(adjacent_links(kk), li_P_image)
-
             !% If the link and the image are on separate images, increment the ni_P_is_boundary
             if ( link_image /= nodeI(ii, ni_P_image) ) then
-              ! print*, "The images are mismatched", link_image, nodeI(ii, ni_P_image)
               nodeI(ii, ni_P_is_boundary) = nodeI(ii, ni_P_is_boundary) + 1
             end if
         end do
