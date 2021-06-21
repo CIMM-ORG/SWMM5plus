@@ -340,9 +340,11 @@ contains
 
             case (lOrifice)
 
-                print*, 'In ', subroutine_name
-                print*, 'orifices are not handeled yet'
-                stop
+                where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+                    elemI(:,ei_elementType)     = orifice
+                    elemI(:,ei_QeqType)         = diagnostic
+                    elemYN(:,eYN_canSurcharge)  = .true.
+                endwhere
 
             case (lPump)
 
@@ -394,13 +396,11 @@ contains
 
             case (lweir)
                 !% get geomety data for weirs
-                call init_IC_get_weir_geometry(thisLink)
+                call init_IC_get_weir_geometry (thisLink)
 
             case (lOrifice)
 
-                print*, 'In ', subroutine_name
-                print*, 'orifices are not handeled yet'
-                stop
+                call init_IC_get_orifice_geometry (thisLink)
 
             case (lPump)
 
@@ -532,7 +532,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-     subroutine init_IC_get_weir_geometry (thisLink)
+    subroutine init_IC_get_weir_geometry (thisLink)
     !--------------------------------------------------------------------------
     !
     !% get the geometry and other data data for weir links 
@@ -639,6 +639,88 @@ contains
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
     end subroutine init_IC_get_weir_geometry
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_IC_get_orifice_geometry (thisLink)
+    !--------------------------------------------------------------------------
+    !
+    !% get the geometry and other data data for weir links 
+    !% and calculate element volumes
+    !
+    !--------------------------------------------------------------------------
+
+        integer, intent(in) :: thisLink
+        integer, pointer    :: specificOrificeType, OrificeGeometryType 
+
+        character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
+    !--------------------------------------------------------------------------
+
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+
+        !% pointer to specific weir type
+        specificOrificeType => linkI(thisLink,li_orif_type)
+
+        select case (specificOrificeType)
+            !% copy orifice specific data
+            case (lBottomOrifice) 
+
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                    !% integer data
+                    elemSI(:,eSi_specific_orifice_type)      = bottom_orifice
+
+                endwhere
+
+            case (lSideOrifice) 
+
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                    !% integer data
+                    elemSI(:,eSi_specific_orifice_type)       = side_orifice
+
+                endwhere
+
+            case default
+
+                print*, 'In ', subroutine_name
+                print*, 'error: unknown orifice type, ', specificOrificeType,'  in network'
+                stop
+
+        end select
+
+        !% pointer to specific orifice geometry 
+        OrificeGeometryType => linkI(thisLink,li_geometry)
+
+        select case (OrificeGeometryType)
+            !% copy orifice specific geometry data
+            case (lRectangular)
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                    !% integer data
+                    elemSI(:,ei_geometryType)          = rectangular
+
+                    !% real data
+                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
+                    elemSR(:,eSr_Orifice_DischargeCoeff)     = linkR(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,eSr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + linkR(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Orifice_RectangularBreadth) = linkR(thisLink,lr_BreadthScale)
+
+                endwhere
+
+            case (lCircular)
+                print*, 'In ', subroutine_name
+                print *, 'error, the circular orifice is not yet implemented'
+                stop
+
+            case default
+                print*, 'In ', subroutine_name
+                print*, 'error: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
+                stop
+            end select
+
+        
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+
+    end subroutine init_IC_get_orifice_geometry
     !
     !==========================================================================
     !==========================================================================
