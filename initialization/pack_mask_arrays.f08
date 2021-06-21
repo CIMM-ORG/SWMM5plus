@@ -438,6 +438,31 @@ contains
                 )
         endif
 
+        !% ep_JB_ALLtm 
+        !% - all junction main elements that are time march
+        ptype => col_elemP(ep_JB_ALLtm)
+        npack => npack_elemP(ptype)
+        npack = count( & 
+                ( &
+                    (elemI(:,ei_QeqType) == time_march ) &
+                    .or. &
+                    (elemI(:,ei_HeqType) == time_march ) &
+                ) &
+                .and. &
+                (elemI(:,ei_elementType) == JB) &
+                )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack( eIdx, &
+                ( &
+                    (elemI(:,ei_QeqType) == time_march ) &
+                    .or. &
+                    (elemI(:,ei_HeqType) == time_march ) &
+                ) &
+                .and. &
+                (elemI(:,ei_elementType) == JB) &
+                )
+        endif
+
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_nongeometry_static_elements
     !
@@ -845,6 +870,22 @@ contains
                 (elemI(:,ei_tmType) == AC) )
         endif
 
+        !% ep_JB_AC
+        !% - all elements that are junction mains and use AC
+        ptype => col_elemP(ep_JB_AC)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemI(:,ei_elementType) == JB ) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) )
+        if (npack > 0) then    
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (elemI(:,ei_elementType) == JB ) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) )
+        endif
+
         !% ep_JM_ETM
         !% - all elements that are junction mains and ETM
         ptype => col_elemP(ep_JM_ETM)
@@ -858,6 +899,23 @@ contains
         if (npack > 0) then    
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_elementType) == JM ) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) )
+        endif
+
+        !% ep_JB_ETM
+        !% - all elements that are junction mains and ETM
+        ptype => col_elemP(ep_JB_ETM)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemI(:,ei_elementType) == JB ) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) )
+
+        if (npack > 0) then    
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (elemI(:,ei_elementType) == JB ) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) )
         endif

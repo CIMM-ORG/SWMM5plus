@@ -52,7 +52,7 @@ contains
         call init_IC_from_nodedata ()
 
         !% update time marching type
-        call init_IC_solver_select(solver)
+        call init_IC_solver_select (solver)
 
         !% set up all the static packs and masks
         call pack_mask_arrays_all ()
@@ -872,14 +872,21 @@ contains
                         elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
                         elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
                         elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
-                        elemR(JBidx,er_ZbreadthMax)  = linkR(BranchIdx,lr_FullDepth)
-
+                        
                         !% store geometry specific data
                         elemSGR(JBidx,eSGR_Rectangular_Breadth) = linkR(BranchIdx,lr_BreadthScale)
 
                         !% HACK: not sure if we need surcharge condition for junction branches
                         if (linkI(BranchIdx,li_link_type) .eq. lPipe) then
                             elemYN(JBidx,eYN_canSurcharge)  = .true.
+
+                            elemR(JBidx,er_FullDepth)   = linkR(BranchIdx,lr_FullDepth)
+                            elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
+                            elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
+                            elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
+                        else
+                            elemR(JBidx,er_ZbreadthMax)  = linkR(BranchIdx,lr_FullDepth)
+
                         end if
 
                     case default
