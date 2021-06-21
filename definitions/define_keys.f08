@@ -47,11 +47,7 @@ module define_keys
         enumerator :: lCircular         !% circular link geometry
         !% different link roughness types
         enumerator :: lManningsN        !% ManningsN roughness type
-        enumerator :: lCD               !% drag coefficient roughness type
-        !% data types for link lengths adjustments
-        enumerator :: NoAdjust          !% no link length adjustment has done
-        enumerator :: OneSideAdjust     !% one sided link length adjustment has done
-        enumerator :: BothSideAdjust    !% both sided link length adjustment has done
+        enumerator :: lCD               !% drag coefficient roughness type  
         !% different node types (HACK: probably could be consolidated to element types)
         enumerator :: nJ2               !% junction node with 2 links
         enumerator :: nJm               !% junction node with multiple links

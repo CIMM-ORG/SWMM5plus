@@ -401,10 +401,11 @@ module define_indexes
 
     enum, bind(c)
         !% define the column indexes for elemSI(:,:) junction elements
-        enumerator ::  eSI_JunctionBranch_Exists = 1    !% assigned 1 if branch exists
+        enumerator ::  eSI_JunctionBranch_Exists            = 1    !% assigned 1 if branch exists
+        enumerator ::  eSI_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
     end enum
     !% note, this must be changed to whatever the last enum element is
-    integer, parameter :: Ncol_elemSI_junction = eSI_JunctionBranch_Exists
+    integer, parameter :: Ncol_elemSI_junction = eSI_JunctionBranch_Link_Connection
 
     enum, bind(c)
         !% define the column indexes for elemSI(:,:) weir elements

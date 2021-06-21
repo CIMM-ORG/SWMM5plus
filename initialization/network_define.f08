@@ -798,7 +798,6 @@ contains
 
         !% real data
         elemR(ElemLocalCounter,er_Zbottom) = nodeR(thisNode,nr_zbottom)
-        elemR(ElemLocalCounter,er_Depth)   = nodeR(thisNode,nr_InitialDepth)
 
         !% Advance the element counter to 1st upstream branch
         ElemLocalCounter  = ElemLocalCounter  + oneI
@@ -845,7 +844,8 @@ contains
 
                 if (upBranchIdx .ne. nullvalueI) then
                     !% integer data
-                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
+                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)           = oneI
+                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection)  = upBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(upBranchIdx)
 
                     !% check if the link connecting this branch
@@ -920,7 +920,8 @@ contains
 
                 if (dnBranchIdx .ne. nullvalueI) then
                     !% integer data
-                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)  = oneI
+                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)          = oneI
+                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection) = dnBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(dnBranchIdx)
 
                     !% check if the link connecting this branch

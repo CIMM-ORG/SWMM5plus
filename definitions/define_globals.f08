@@ -149,6 +149,10 @@ module define_globals
     integer, parameter :: nAssigned = 1
     integer, parameter :: nDeferred = -1
 
+    integer, parameter :: NoAdjust       = 1   !% no link length adjustment has done
+    integer, parameter :: OneSideAdjust  = 2   !% one sided link length adjustment has done
+    integer, parameter :: BothSideAdjust = 3   !% both sided link length adjustment has done
+
 
     ! assign status parameters for links
     integer, parameter :: lUnassigned = 998877

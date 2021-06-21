@@ -399,7 +399,7 @@ contains
                 call init_IC_get_weir_geometry (thisLink)
 
             case (lOrifice)
-
+                !% get geomety data for orifices
                 call init_IC_get_orifice_geometry (thisLink)
 
             case (lPump)
@@ -536,7 +536,6 @@ contains
     !--------------------------------------------------------------------------
     !
     !% get the geometry and other data data for weir links 
-    !% and calculate element volumes
     !
     !--------------------------------------------------------------------------
 
@@ -646,8 +645,7 @@ contains
     subroutine init_IC_get_orifice_geometry (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the geometry and other data data for weir links 
-    !% and calculate element volumes
+    !% get the geometry and other data data for orifice links 
     !
     !--------------------------------------------------------------------------
 
@@ -659,7 +657,7 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-        !% pointer to specific weir type
+        !% pointer to specific orifice type
         specificOrificeType => linkI(thisLink,li_orif_type)
 
         select case (specificOrificeType)
@@ -798,9 +796,7 @@ contains
             !% necessary pointers
             thisJunctionNode    => packed_nJm_idx(ii)
 
-            where (elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
-                elemI(:,ei_HeqType) = time_march
-            endwhere
+            call init_IC_get_junction_data (thisJunctionNode)
 
         end do
 
@@ -811,21 +807,107 @@ contains
     !==========================================================================
     !
     subroutine init_IC_get_junction_data (thisJunctionNode)
-    !--------------------------------------------------------------------------
-    !
-    !% get the initial depth, and geometry data from nJm nodes
     !
     !--------------------------------------------------------------------------
+    !
+    !% get data for the multi branch junction elements
+    !
+    !--------------------------------------------------------------------------
+    !
+        integer, intent(in) :: thisJunctionNode
 
-        integer, intent(in) :: thisJunctionNode 
+        integer             :: ii, JMidx, JBidx
+        integer, pointer    :: BranchIdx, geometryType
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
-        !% initialize selecteros for upstream and downstream branches
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
+
+        !%................................................................
+        !% Junction main
+        !%................................................................
+        !% find the first element ID associated with that nJm
+        JMidx = minval(elemI(:,ei_Lidx), elemI(:,ei_node_Gidx_SWMM) .eq. thisJunctionNode)
+
+        !% the first element index is a junction main
+        elemI(JMidx,ei_elementType) = JM
+        elemI(JMidx,ei_HeqType)     = time_march
+        elemR(JMidx,er_Depth)       = nodeR(thisJunctionNode,nr_InitialDepth)
+
+        !% find if the node can surcharge
+        if (nodeR(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
+            elemYN(JMidx,eYN_canSurcharge)  = .true.
+        end if
+
+        !%................................................................
+        !% Junctin Branches
+        !%................................................................
+        !% loopthrough all the branches
+        do ii = 1,max_branch_per_node
+
+            !% find the element id of junction branches
+            JBidx = JMidx + ii
+
+            !% set the junction branch element type
+            elemI(JBidx,ei_elementType) = JB
+            elemI(JBidx,ei_HeqType)     = time_march
+
+            !% set the geometry for eisting branches
+            if (elemSI(JBidx,eSI_JunctionBranch_Exists) .eq. oneI) then 
+
+                BranchIdx    => elemSI(JBidx,eSI_JunctionBranch_Link_Connection)
+                geometryType => linkI(BranchIdx,li_geometry)
+
+                select case (geometryType)
+
+                    case (lRectangular)
+
+                        elemI(JBidx,ei_geometryType) = rectangular
+
+                        elemR(JBidx,er_BreadthMax)   = linkR(BranchIdx,lr_BreadthScale)
+                        elemR(JBidx,er_Area)         = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)
+                        elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
+                        elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
+                        elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
+                        elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
+                        elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
+                        elemR(JBidx,er_ZbreadthMax)  = linkR(BranchIdx,lr_FullDepth)
+
+                        !% store geometry specific data
+                        elemSGR(JBidx,eSGR_Rectangular_Breadth) = linkR(BranchIdx,lr_BreadthScale)
+
+                        !% HACK: not sure if we need surcharge condition for junction branches
+                        if (linkI(BranchIdx,li_link_type) .eq. lPipe) then
+                            elemYN(JBidx,eYN_canSurcharge)  = .true.
+                        end if
+
+                    case default
+
+                        print*, 'In, ', subroutine_name
+                        print*, 'Only rectangular geometry is handeled at this moment'
+                        stop
+
+                end select
+            end if
+        end do
+
+        !% HACK: check with Dr. Hodges
+        !% set initial conditions for junction main from the junction branch data
+        !% length
+        elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
+                                     elemR(JMidx+5,er_Length)) + &
+                                 max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
+                                     elemR(JMidx+6,er_Length))
+        !% Volume
+        elemR(JMidx,er_Volume) = elemR(JMidx+1,er_Volume) + elemR(JMidx+2,er_Volume) + &
+                                 elemR(JMidx+3,er_Volume) + elemR(JMidx+4,er_Volume) + &
+                                 elemR(JMidx+5,er_Volume) + elemR(JMidx+6,er_Volume)
+
+        elemR(JBidx,er_Volume_N0) = elemR(JMidx,er_Volume)
+        elemR(JBidx,er_Volume_N1) = elemR(JMidx,er_Volume)
         
-
+            
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_get_junction_data
     !
@@ -843,7 +925,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_solver_select'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
 
 
         select case (solver)
@@ -878,6 +960,41 @@ contains
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_solver_select
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_set_zero_values_diagnostic_elems (DiagElemType)
+    !--------------------------------------------------------------------------
+    !
+    !% set the volume, area, head, other geometry, and flow to zero values
+    !% for the diagnostic elements so no error is induced in the primary 
+    !% face update
+    !
+    !--------------------------------------------------------------------------
+
+        integer, intent(in) :: DiagElemType
+        character(64)       :: subroutine_name = 'init_set_zero_values_diagnostic_elems'
+
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
+
+        where (elemI(:,ei_elementType) .eq. DiagElemType)
+
+            !% HACK: settings%ZeroValues should be used here
+            !% when the code is finalized
+
+            elemR(:,er_Area)     = 1.0e-6 
+            elemR(:,er_Depth)    = 1.0e-6
+            elemR(:,er_Flowrate) = 1.0e-6 
+            elemR(:,er_Head)     = 1.0e-6
+            elemR(:,er_Volume)   = 1.0e-6
+
+        endwhere
+
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_set_zero_values_diagnostic_elems
     !
     !==========================================================================
     !==========================================================================
