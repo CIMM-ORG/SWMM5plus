@@ -860,13 +860,15 @@ contains
 
             !% set the junction branch element type
             elemI(JBidx,ei_elementType) = JB
-            elemI(JBidx,ei_HeqType)     = time_march
-
+            
             !% set the geometry for eisting branches
             if (elemSI(JBidx,eSI_JunctionBranch_Exists) .eq. oneI) then 
 
                 BranchIdx    => elemSI(JBidx,eSI_JunctionBranch_Link_Connection)
                 geometryType => linkI(BranchIdx,li_geometry)
+
+                !% set the head equation as time-march for existing branches
+                elemI(JBidx,ei_HeqType) = time_march
 
                 !% get the geometry data
                 select case (geometryType)
