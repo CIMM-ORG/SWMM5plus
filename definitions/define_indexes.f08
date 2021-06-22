@@ -164,8 +164,9 @@ module define_indexes
         enumerator :: nr_LateralInflow
         enumerator :: nr_TotalInflow
         enumerator :: nr_Flooding
+        enumerator :: nr_JunctionBranch_Kfactor
     end enum
-    integer, parameter :: nr_idx_base1 = nr_Flooding
+    integer, parameter :: nr_idx_base1 = nr_JunctionBranch_Kfactor
 
     !% column index for real data on multiple branches of a node
     integer, parameter :: nr_ElementLength_u1 = nr_idx_base1 + 1 ! used for subdividing junctions

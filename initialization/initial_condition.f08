@@ -458,6 +458,15 @@ contains
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
                     elemR(:,er_ZbreadthMax)  = linkR(thisLink,lr_FullDepth)
 
+                    !% the full depth of channel is set to a large depth so it
+                    !% never surcharges. the large depth is set as, factor x width, 
+                    !% where the factor is an user controlled paratmeter. 
+                    elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
+                                                linkR(thisLink,lr_BreadthScale)
+                    elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)    = elemR(:,er_BreadthMax) * elemR(:,er_FullDepth)
+                    elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
+
                     !% store geometry specific data
                     elemSGR(:,eSGR_Rectangular_Breadth) = linkR(thisLink,lr_BreadthScale)
                 endwhere
@@ -859,6 +868,7 @@ contains
                 BranchIdx    => elemSI(JBidx,eSI_JunctionBranch_Link_Connection)
                 geometryType => linkI(BranchIdx,li_geometry)
 
+                !% get the geometry data
                 select case (geometryType)
 
                     case (lRectangular)
@@ -872,6 +882,15 @@ contains
                         elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
                         elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
                         elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
+
+                        !% Junction branch k-factor
+                        !% HACK: if the user doesnot input the k-factor for junction brnaches,
+                        !% get a default value from the setting
+                        if (nodeR(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
+                            elemSR(JBidx,eSr_JunctionBranch_Kfactor) = nodeR(thisJunctionNode,nr_JunctionBranch_Kfactor)
+                        else
+                            elemSR(JBidx,eSr_JunctionBranch_Kfactor) = setting%Junction%kFactor
+                        end if
                         
                         !% store geometry specific data
                         elemSGR(JBidx,eSGR_Rectangular_Breadth) = linkR(BranchIdx,lr_BreadthScale)
@@ -887,6 +906,15 @@ contains
                         else
                             elemR(JBidx,er_ZbreadthMax)  = linkR(BranchIdx,lr_FullDepth)
 
+                            !% the full depth of channel is set to a large depth so it
+                            !% never surcharges. the large depth is set as, factor x width, 
+                            !% where the factor is an user controlled paratmeter. 
+                            elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
+                                                        linkR(BranchIdx,lr_BreadthScale)
+                            elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
+                            elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
+                            elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
+
                         end if
 
                     case default
@@ -896,6 +924,17 @@ contains
                         stop
 
                 end select
+
+                !% get the flow data from links for junction branches
+                elemR(JBidx,er_Flowrate) = linkR(BranchIdx,lr_InitialFlowrate)
+
+                if (elemR(JBidx,er_Area) .gt. zeroR) then
+                    
+                    elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
+                else
+                    elemR(JBidx,er_Velocity) = zeroR
+                endif
+
             end if
         end do
 

@@ -109,6 +109,11 @@ module define_settings
         real(8) :: FroudeInflowMaximum = 1.5
     end type LimiterBCType
 
+    ! setting%Limiter%Channel
+    type LimiterChannelType
+        real(8) :: LargeDepthFactor = 10.0
+    end type LimiterChannelType
+
     ! setting%Limiter%Flowrate
     type LimiterFlowrateType
         logical :: UseFaceVolumeTransport = .true.
@@ -253,9 +258,15 @@ module define_settings
         real(8) :: InflowDepthIncreaseFroudeLimit = 0.1
     end type EpsilonType
 
+    ! setting%Junction
+    type JunctionType
+        real(8) :: kFactor = 0.7    !% junction branch k-factor for entrance or exit losses
+    end type JunctionType
+
     ! setting%Limiter
     type LimiterType
         type(LimiterBCType)           :: BC
+        type(LimiterChannelType)      :: Channel
         type(LimiterFlowrateType)     :: Flowrate
         type(LimiterInterpWeightType) :: InterpWeight
         type(LimiterVelocityType)     :: Velocity
@@ -383,6 +394,7 @@ module define_settings
         type(ConstantType)       :: Constant ! Constants
         type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
+        type(JunctionType)       :: Junction       
         type(LimiterType)        :: Limiter ! maximum and minimum limiters
         type(OrificeType)        :: Orifice 
         type(PartitioningType)   :: Partitioning
@@ -571,6 +583,11 @@ contains
         setting%Eps%InflowDepthIncreaseFroudeLimit = real_value
         if (.not. found) stop 310
 
+        ! Load Junction Settings
+        call json%get('Junction.kFactor', real_value, found)
+        setting%Junction%kFactor = real_value
+        if (.not. found) stop 320
+
         ! Load Limiter Settings
         call json%get('Limiter.BC.approach', c, found)
         call util_lower_case(c)
@@ -581,34 +598,38 @@ contains
             stop
             stop
         end if
-        if (.not. found) stop 320
+        if (.not. found) stop 330
         call json%get('Limiter.BC.FroudeInflowMaximum', real_value, found)
         setting%Limiter%BC%FroudeInflowMaximum = real_value
-        if (.not. found) stop 330
+        if (.not. found) stop 340
         call json%get('Limiter.BC.UseInflowLimiter', logical_value, found)
         setting%Limiter%BC%UseInflowLimiter = logical_value
-        if (.not. found) stop 340
+        if (.not. found) stop 350
+
+        call json%get('Limiter.Channel.LargeDepthFactor', real_value, found)
+        setting%Limiter%Channel%LargeDepthFactor = real_value
+        if (.not. found) stop 355
 
         call json%get('Limiter.Flowrate.FaceVolumeTransport', real_value, found)
         setting%Limiter%Flowrate%FaceVolumeTransport = real_value
-        if (.not. found) stop 350
+        if (.not. found) stop 360
         call json%get('Limiter.Flowrate.UseFaceVolumeTransport', logical_value, found)
         setting%Limiter%Flowrate%UseFaceVolumeTransport = logical_value
-        if (.not. found) stop 360
+        if (.not. found) stop 370
 
         call json%get('Limiter.InterpWeight.Maximum', real_value, found)
         setting%Limiter%InterpWeight%Maximum = real_value
-        if (.not. found) stop 370
+        if (.not. found) stop 380
         call json%get('Limiter.InterpWeight.Minimum', real_value, found)
         setting%Limiter%InterpWeight%Minimum = real_value
-        if (.not. found) stop 380
+        if (.not. found) stop 390
 
         call json%get('Limiter.Velocity.Maximum', real_value, found)
         setting%Limiter%Velocity%Maximum = real_value
-        if (.not. found) stop 390
+        if (.not. found) stop 400
         call json%get('Limiter.Velocity.UseLimitMax', logical_value, found)
         setting%Limiter%Velocity%UseLimitMax = logical_value
-        if (.not. found) stop 400
+        if (.not. found) stop 410
 
 
         ! Load BIPQuick settings
@@ -624,44 +645,44 @@ contains
             setting%Partitioning%PartitioningMethod = BLink
         else
             print *, "Error, the setting '" // trim(c) // "' is not supported for PartitioningMethod"
-            stop 410
+            stop 420
         end if
-        if (.not. found) stop 420
+        if (.not. found) stop 430
 
         call json%get("Simulation.useHydrology", logical_value, found)
         setting%Simulation%useHydrology = logical_value
-        if (.not. found) stop 430
+        if (.not. found) stop 440
         call json%get("Simulation.useHydraulics", logical_value, found)
         setting%Simulation%useHydraulics = logical_value
-        if (.not. found) stop 440
+        if (.not. found) stop 450
 
         ! Load SmallVolume Settings
         call json%get('SmallVolume.DepthCutoff', real_value, found)
         setting%SmallVolume%DepthCutoff = real_value
-        if (.not. found) stop 450
+        if (.not. found) stop 460
         call json%get('SmallVolume.ManningsN', real_value, found)
         setting%SmallVolume%ManningsN = real_value
-        if (.not. found) stop 460
+        if (.not. found) stop 470
         call json%get('SmallVolume.MinimumArea', real_value, found)
         setting%SmallVolume%MinimumArea = real_value
-        if (.not. found) stop 470
+        if (.not. found) stop 480
         call json%get('SmallVolume.MinimumHydRadius', real_value, found)
         setting%SmallVolume%MinimumHydRadius = real_value
-        if (.not. found) stop 480
+        if (.not. found) stop 490
         call json%get('SmallVolume.MinimumPerimeter', real_value, found)
         setting%SmallVolume%MinimumPerimeter = real_value
-        if (.not. found) stop 490
+        if (.not. found) stop 500
         call json%get('SmallVolume.MinimumTopwidth', real_value, found)
         setting%SmallVolume%MinimumTopwidth = real_value
-        if (.not. found) stop 500
+        if (.not. found) stop 510
         call json%get('SmallVolume.UseSmallVolumes', logical_value, found)
         setting%SmallVolume%UseSmallVolumes = logical_value
-        if (.not. found) stop 510
+        if (.not. found) stop 520
 
         ! Load Solver Settings
         call json%get('Solver.crk2', real_value, found)
         setting%Solver%crk2 = real_value
-        if (.not. found) stop 520
+        if (.not. found) stop 530
         call json%get('Solver.MomentumSourceMethod', c, found)
         call util_lower_case(c)
         if (c == 't00') then
@@ -672,12 +693,12 @@ contains
             setting%Solver%MomentumSourceMethod = T20
         else
             print *, "Error, the setting '" // trim(c) // "' is not supported for MomentumSourceMethod"
-            stop 530
+            stop 540
         end if
-        if (.not. found) stop 540
+        if (.not. found) stop 550
         call json%get('Solver.PreissmanSlot', logical_value, found)
         setting%Solver%PreissmanSlot = logical_value
-        if (.not. found) stop 550
+        if (.not. found) stop 560
         call json%get('Solver.SolverSelect', c, found)
         call util_lower_case(c)
         if (c == 'etm') then
@@ -688,15 +709,15 @@ contains
             setting%Solver%SolverSelect = AC
         else
             print *, "Error, the setting '" // trim(c) // "' is not supported for SolverSelect"
-            stop 560
+            stop 570
         end if
-        if (.not. found) stop 570
+        if (.not. found) stop 580
         call json%get('Solver.SwitchFractionDn', real_value, found)
         setting%Solver%SwitchFractionDn = real_value
-        if (.not. found) stop 580
+        if (.not. found) stop 590
         call json%get('Solver.SwitchFractionUp', real_value, found)
         setting%Solver%SwitchFractionUp = real_value
-        if (.not. found) stop 590       
+        if (.not. found) stop 600       
 
         ! Load Step Settings
         !rm 20210607 brh call json%get('Step.Current', real_value, found)
@@ -712,7 +733,7 @@ contains
         ! Load Time Settings
         call json%get('Time.DateTimeStamp', c, found)
         setting%Time%DateTimeStamp = c
-        if (.not. found) stop 600
+        if (.not. found) stop 610
         !rm 20210607 brh call json%get('Time.Dt', real_value, found)
         !rm 20210607 brh setting%Time%Dt = real_value
         !rm 20210607 brh if (.not. found) stop 52
@@ -721,264 +742,264 @@ contains
         !rm 20210607 brh if (.not. found) stop 49
         !rm 20210607 brh call json%get('Time.NextTime', real_value, found)
         !rm 20210607 brh setting%Time%NextTime = real_value
-        if (.not. found) stop 610
+        if (.not. found) stop 620
         call json%get('Time.StartTime', real_value, found)
         setting%Time%StartTime = real_value
-        if (.not. found) stop 620
+        if (.not. found) stop 630
         call json%get('Time.Hydrology.Dt', real_value, found)
         setting%Time%Hydrology%Dt = real_value
-        if (.not. found) stop 630
+        if (.not. found) stop 640
         call json%get('Time.Hydrology.timeNow', real_value, found)
         setting%Time%Hydrology%timeNow = real_value
-        if (.not. found) stop 640
+        if (.not. found) stop 650
         call json%get('Time.Hydrology.timeNext', real_value, found)
         setting%Time%Hydrology%timeNext = real_value
-        if (.not. found) stop 650
+        if (.not. found) stop 660
         call json%get('Time.Hydrology.timeFinal', real_value, found)
         setting%Time%Hydrology%timeFinal = real_value
-        if (.not. found) stop 660   
+        if (.not. found) stop 670   
         call json%get('Time.Hydrology.stepNow', integer_value, found)
         setting%Time%Hydrology%stepNow = integer_value
-        if (.not. found) stop 670
+        if (.not. found) stop 680
         call json%get('Time.Hydrology.stepNext', integer_value, found)
         setting%Time%Hydrology%stepNext = integer_value
-        if (.not. found) stop 680      
+        if (.not. found) stop 690      
         call json%get('Time.Hydrology.stepFinal', integer_value, found)
         setting%Time%Hydrology%stepFinal = integer_value
-        if (.not. found) stop 690   
+        if (.not. found) stop 700   
         call json%get('Time.Hydraulics.Dt', real_value, found)
         setting%Time%Hydraulics%Dt = real_value
-        if (.not. found) stop 700
+        if (.not. found) stop 710
         call json%get('Time.Hydraulics.timeNow', real_value, found)
         setting%Time%Hydraulics%timeNow = real_value
-        if (.not. found) stop 710
+        if (.not. found) stop 720
         call json%get('Time.Hydraulics.timeNext', real_value, found)
         setting%Time%Hydraulics%timeNext = real_value
-        if (.not. found) stop 720
+        if (.not. found) stop 730
         call json%get('Time.Hydraulics.timeFinal', real_value, found)
         setting%Time%Hydraulics%timeFinal = real_value
-        if (.not. found) stop 730 
+        if (.not. found) stop 740 
         call json%get('Time.Hydraulics.stepNow', integer_value, found)
         setting%Time%Hydraulics%stepNow = integer_value
-        if (.not. found) stop 740
+        if (.not. found) stop 750
         call json%get('Time.Hydraulics.stepNext', integer_value, found)
         setting%Time%Hydraulics%stepNext = integer_value
-        if (.not. found) stop 750    
+        if (.not. found) stop 760    
         call json%get('Time.Hydraulics.stepFinal', integer_value, found)
         setting%Time%Hydraulics%stepFinal = integer_value
-        if (.not. found) stop 760  
+        if (.not. found) stop 770  
 
         call json%get("Weir.Transverse.WeirExponent", real_value, found)
         setting%Weir%Transverse%WeirExponent = real_value
-        if (.not. found) stop 7601
+        if (.not. found) stop 7701
         call json%get("Weir.Transverse.WeirContractionFactor", real_value, found)
         setting%Weir%Transverse%WeirContractionFactor = real_value
-        if (.not. found) stop 7602
+        if (.not. found) stop 7702
         call json%get("Weir.Transverse.SideFlowWeirCrestExponent", real_value, found)
         setting%Weir%Transverse%SideFlowWeirCrestExponent = real_value
-        if (.not. found) stop 7603
+        if (.not. found) stop 7703
         call json%get("Weir.Transverse.VillemonteCorrectionExponent", real_value, found)
         setting%Weir%Transverse%VillemonteCorrectionExponent = real_value
-        if (.not. found) stop 7604
+        if (.not. found) stop 7704
 
         call json%get("Weir.SideFlow.WeirExponent", real_value, found)
         setting%Weir%SideFlow%WeirExponent = real_value
-        if (.not. found) stop 7611
+        if (.not. found) stop 7711
         call json%get("Weir.SideFlow.WeirContractionFactor", real_value, found)
         setting%Weir%SideFlow%WeirContractionFactor = real_value
-        if (.not. found) stop 7612
+        if (.not. found) stop 7712
         call json%get("Weir.SideFlow.SideFlowWeirCrestExponent", real_value, found)
         setting%Weir%SideFlow%SideFlowWeirCrestExponent = real_value
-        if (.not. found) stop 7613
+        if (.not. found) stop 7713
         call json%get("Weir.SideFlow.VillemonteCorrectionExponent", real_value, found)
         setting%Weir%SideFlow%VillemonteCorrectionExponent = real_value
-        if (.not. found) stop 7614
+        if (.not. found) stop 7714
 
         call json%get("Weir.VNotch.WeirExponent", real_value, found)
         setting%Weir%VNotch%WeirExponent = real_value
-        if (.not. found) stop 7621
+        if (.not. found) stop 7721
         call json%get("Weir.VNotch.WeirContractionFactor", real_value, found)
         setting%Weir%VNotch%WeirContractionFactor = real_value
-        if (.not. found) stop 7622
+        if (.not. found) stop 7722
         call json%get("Weir.VNotch.SideFlowWeirCrestExponent", real_value, found)
         setting%Weir%VNotch%SideFlowWeirCrestExponent = real_value
-        if (.not. found) stop 7623
+        if (.not. found) stop 7723
         call json%get("Weir.VNotch.VillemonteCorrectionExponent", real_value, found)
         setting%Weir%VNotch%VillemonteCorrectionExponent = real_value
-        if (.not. found) stop 7624
+        if (.not. found) stop 7724
 
 
         call json%get("Weir.Trapezoidal.WeirExponent", real_value, found)
         setting%Weir%Trapezoidal%WeirExponent = real_value
-        if (.not. found) stop 7631
+        if (.not. found) stop 7731
         call json%get("Weir.Trapezoidal.WeirContractionFactor", real_value, found)
         setting%Weir%Trapezoidal%WeirContractionFactor = real_value
-        if (.not. found) stop 7632
+        if (.not. found) stop 7732
         call json%get("Weir.Trapezoidal.SideFlowWeirCrestExponent", real_value, found)
         setting%Weir%Trapezoidal%SideFlowWeirCrestExponent = real_value
-        if (.not. found) stop 7633
+        if (.not. found) stop 7733
         call json%get("Weir.Trapezoidal.VillemonteCorrectionExponent", real_value, found)
         setting%Weir%Trapezoidal%VillemonteCorrectionExponent = real_value
-        if (.not. found) stop 7634
+        if (.not. found) stop 7734
 
         !% load variable time step settings
         call json%get("VariableDT.Apply", logical_value, found)
         setting%VariableDT%Apply = logical_value
-        if (.not. found) stop 770
+        if (.not. found) stop 780
         call json%get("VariableDT.CFL_hi_max", real_value, found)
         setting%VariableDT%CFL_hi_max = real_value
-        if (.not. found) stop 780
+        if (.not. found) stop 790
         call json%get("VariableDT.CFL_target", real_value, found)
         setting%VariableDT%CFL_target = real_value
-        if (.not. found) stop 790
+        if (.not. found) stop 800
         call json%get("VariableDT.CFL_lo_max", real_value, found)
         setting%VariableDT%CFL_lo_max = real_value
-        if (.not. found) stop 800
+        if (.not. found) stop 810
         call json%get("VariableDT.decreaseFactor", real_value, found)
         setting%VariableDT%decreaseFactor = real_value
-        if (.not. found) stop 810
+        if (.not. found) stop 820
         call json%get("VariableDT.increaseFactor", real_value, found)
         setting%VariableDT%increaseFactor = real_value
-        if (.not. found) stop 820
+        if (.not. found) stop 830
         call json%get("VariableDT.NstepsForCheck", integer_value, found)
         setting%VariableDT%NstepsForCheck = integer_value
-        if (.not. found) stop 830
+        if (.not. found) stop 840
 
         ! Load ZeroValue Settings
         call json%get('ZeroValue.Area', real_value, found)
         setting%ZeroValue%Area = real_value
-        if (.not. found) stop 840
+        if (.not. found) stop 850
         call json%get('ZeroValue.Depth', real_value, found)
         setting%ZeroValue%Depth = real_value
-        if (.not. found) stop 850
+        if (.not. found) stop 860
         call json%get('ZeroValue.Topwidth', real_value, found)
         setting%ZeroValue%Topwidth = real_value
-        if (.not. found) stop 860
+        if (.not. found) stop 870
         call json%get('ZeroValue.UseZeroValues', logical_value, found)
         setting%ZeroValue%UseZeroValues = logical_value
-        if (.not. found) stop 870
+        if (.not. found) stop 880
         call json%get('ZeroValue.Volume', real_value, found)
         setting%ZeroValue%Volume = real_value
-        if (.not. found) stop 880
+        if (.not. found) stop 890
 
         ! Load Debug Settings
         call json%get('Debug.File.adjust', logical_value, found)
         setting%Debug%File%adjust = logical_value
-        if (.not. found) stop 885
+        if (.not. found) stop 895
         call json%get('Debug.File.define_globals', logical_value, found)
         setting%Debug%File%define_globals = logical_value
-        if (.not. found) stop 890
+        if (.not. found) stop 900
         call json%get('Debug.File.define_indexes', logical_value, found)
         setting%Debug%File%define_indexes = logical_value
-        if (.not. found) stop 900
+        if (.not. found) stop 910
         call json%get('Debug.File.define_keys', logical_value, found)
         setting%Debug%File%define_keys = logical_value
-        if (.not. found) stop 910
+        if (.not. found) stop 920
         call json%get('Debug.File.define_settings', logical_value, found)
         setting%Debug%File%define_settings = logical_value
-        if (.not. found) stop 920
+        if (.not. found) stop 930
         call json%get('Debug.File.define_types', logical_value, found)
         setting%Debug%File%define_types = logical_value
-        if (.not. found) stop 930
+        if (.not. found) stop 940
         call json%get('Debug.File.diagnostic_elements', logical_value, found)
         setting%Debug%File%diagnostic_elements = logical_value
-        if (.not. found) stop 935
+        if (.not. found) stop 945
         call json%get('Debug.File.discretization', logical_value, found)
         setting%Debug%File%discretization = logical_value
-        if (.not. found) stop 940
+        if (.not. found) stop 950
         call json%get('Debug.File.face', logical_value, found)
         setting%Debug%File%face = logical_value
-        if (.not. found) stop 942
+        if (.not. found) stop 952
         call json%get('Debug.File.geometry', logical_value, found)
         setting%Debug%File%geometry = logical_value
-        if (.not. found) stop 943        
+        if (.not. found) stop 953        
         call json%get('Debug.File.interface', logical_value, found)
         setting%Debug%File%interface = logical_value
-        if (.not. found) stop 945
+        if (.not. found) stop 955
         call json%get('Debug.File.initial_condition', logical_value, found)
         setting%Debug%File%initial_condition = logical_value
-        if (.not. found) stop 945
+        if (.not. found) stop 955
         call json%get('Debug.File.initialization', logical_value, found)
         setting%Debug%File%initialization = logical_value
-        if (.not. found) stop 950
+        if (.not. found) stop 960
         call json%get('Debug.File.jump', logical_value, found)
         setting%Debug%File%jump = logical_value
-        if (.not. found) stop 953
+        if (.not. found) stop 963
         call json%get('Debug.File.lowlevel_rk2', logical_value, found)
         setting%Debug%File%lowlevel_rk2 = logical_value
-        if (.not. found) stop 955
+        if (.not. found) stop 965
         call json%get('Debug.File.network_define', logical_value, found)
         setting%Debug%File%network_define = logical_value
-        if (.not. found) stop 960
+        if (.not. found) stop 970
         call json%get('Debug.File.orifice_elements', logical_value, found)
         setting%Debug%File%orifice_elements = logical_value
-        if (.not. found) stop 965
+        if (.not. found) stop 975
         call json%get('Debug.File.pack_mask_arrays', logical_value, found)
         setting%Debug%File%pack_mask_arrays = logical_value
-        if (.not. found) stop 965
+        if (.not. found) stop 985
         call json%get('Debug.File.partitioning', logical_value, found)
         setting%Debug%File%partitioning = logical_value
-        if (.not. found) stop 970
+        if (.not. found) stop 990
         call json%get('Debug.File.pump_elements', logical_value, found)
         setting%Debug%File%pump_elements = logical_value
-        if (.not. found) stop 975
+        if (.not. found) stop 995
         call json%get('Debug.File.rectangular_channel', logical_value, found)
         setting%Debug%File%rectangular_channel = logical_value
-        if (.not. found) stop 978
+        if (.not. found) stop 998
         call json%get('Debug.File.runge_kutta2', logical_value, found)
         setting%Debug%File%runge_kutta2 = logical_value
-        if (.not. found) stop 980
+        if (.not. found) stop 1000
         call json%get('Debug.File.timeloop', logical_value, found)
         setting%Debug%File%timeloop = logical_value
-        if (.not. found) stop 982
+        if (.not. found) stop 1002
         call json%get('Debug.File.update', logical_value, found)
         setting%Debug%File%update = logical_value
-        if (.not. found) stop 985
+        if (.not. found) stop 1005
         call json%get('Debug.File.utility_allocate', logical_value, found)
         setting%Debug%File%utility_allocate = logical_value
-        if (.not. found) stop 990
+        if (.not. found) stop 1010
         call json%get('Debug.File.utility_deallocate', logical_value, found)
         setting%Debug%File%utility_deallocate = logical_value
-        if (.not. found) stop 1000
+        if (.not. found) stop 1020
         call json%get('Debug.File.utility_array', logical_value, found)
         setting%Debug%File%utility_array = logical_value
-        if (.not. found) stop 1010
+        if (.not. found) stop 1030
         call json%get('Debug.File.utility_datetime', logical_value, found)
         setting%Debug%File%utility_datetime = logical_value
-        if (.not. found) stop 1020
+        if (.not. found) stop 1040
         call json%get('Debug.File.utility_string', logical_value, found)
         setting%Debug%File%utility_string = logical_value
-        if (.not. found) stop 1030
+        if (.not. found) stop 1050
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
         call json%get('Debug.File.weir_elements', logical_value, found)
         setting%Debug%File%weir_elements = logical_value
-        if (.not. found) stop 1035
-        if (.not. found) stop 1040
+        if (.not. found) stop 1055
+        if (.not. found) stop 1060
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
-        if (.not. found) stop 1050
+        if (.not. found) stop 1070
         call json%get('Debug.FileGroup.definitions', logical_value, found)
         setting%Debug%FileGroup%definitions = logical_value
-        if (.not. found) stop 1060
+        if (.not. found) stop 1080
         call json%get('Debug.FileGroup.finalization', logical_value, found)
         setting%Debug%FileGroup%finalization = logical_value
-        if (.not. found) stop 1070
+        if (.not. found) stop 1090
         call json%get('Debug.FileGroup.geometry', logical_value, found)
         setting%Debug%FileGroup%geometry = logical_value
-        if (.not. found) stop 1075
+        if (.not. found) stop 1095
         call json%get('Debug.FileGroup.initialization', logical_value, found)
         setting%Debug%FileGroup%initialization = logical_value
-        if (.not. found) stop 1080
+        if (.not. found) stop 1100
         call json%get('Debug.FileGroup.interface', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 1090
+        if (.not. found) stop 1110
         call json%get('Debug.FileGroup.timeloop', logical_value, found)
         setting%Debug%FileGroup%timeloop = logical_value
-        if (.not. found) stop 1095
+        if (.not. found) stop 1115
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 1100
+        if (.not. found) stop 1120
         call def_update_debug_options()
 
         ! Load verbose or non-verbose run

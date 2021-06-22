@@ -66,11 +66,17 @@
         "FroudeJump" : 0.1,
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
+    "Junction" : {
+        "kFactor" : 0.7,
+    },
     "Limiter" : {
         "BC" : {
             "approach" : "FroudeNumber",
             "FroudeInflowMaximum" : 1.5,
             "UseInflowLimiter" : true
+        },
+        "Channel" : {
+            "LargeDepthFactor" : 10.0,
         },
         "Flowrate" : {
             "FaceVolumeTransport" : 0.5,
@@ -142,28 +148,28 @@
     },
     "Weir" : {
         "Transverse" : {
-            "WeirExponent" : 1.0,
-            "WeirContractionFactor" : 1.0,
+            "WeirExponent" : 1.5,
+            "WeirContractionFactor" : 0.1,
             "SideFlowWeirCrestExponent" : 1.0,
-            "VillemonteCorrectionExponent" : 1.0
+            "VillemonteCorrectionExponent" : 0.385
         },
         "SideFlow" : {
-            "WeirExponent" : 1.0,
-            "WeirContractionFactor" : 1.0,
-            "SideFlowWeirCrestExponent" : 1.0,
-            "VillemonteCorrectionExponent" : 1.0
+            "WeirExponent" : 1.67,
+            "WeirContractionFactor" : 0.1,
+            "SideFlowWeirCrestExponent" : 0.83,
+            "VillemonteCorrectionExponent" : 0.385
         },
         "VNotch" : {
-            "WeirExponent" : 1.0,
+            "WeirExponent" : 2.5,
             "WeirContractionFactor" : 1.0,
             "SideFlowWeirCrestExponent" : 1.0,
-            "VillemonteCorrectionExponent" : 1.0
+            "VillemonteCorrectionExponent" : 0.385
         },    
         "Trapezoidal" : {
-            "WeirExponent" : 1.0,
+            "WeirExponent" : 1.5,
             "WeirContractionFactor" : 1.0,
             "SideFlowWeirCrestExponent" : 1.0,
-            "VillemonteCorrectionExponent" : 1.0
+            "VillemonteCorrectionExponent" : 0.385
         }    
     },
     "VariableDT" : {
