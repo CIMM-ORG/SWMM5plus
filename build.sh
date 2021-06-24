@@ -26,7 +26,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_allocate.f08\
               $UTIL_DIR/utility_deallocate.f08\
               $UTIL_DIR/utility_array.f08\
-	      $UTIL_DIR/utility_debug.f08\
+	          $UTIL_DIR/utility_debug.f08\
               $API_DIR/c_library.f08\
               $API_DIR/interface.f08\
               $INIT_DIR/pack_mask_arrays.f08\

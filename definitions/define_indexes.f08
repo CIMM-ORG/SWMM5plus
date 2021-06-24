@@ -603,12 +603,11 @@ module define_indexes
     !% These are for the packed array of face data
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: fp_all                    !% all faces execpt boundary, null, and shared faces
+        enumerator :: fp_all = 1                !% all faces execpt boundary, null, and shared faces
         enumerator :: fp_AC                     !% face with adjacent AC element
         enumerator :: fp_Diag                   !% face with adjacent diagnostic element
         enumerator :: fp_JumpDn                 !% face with hydraulic jump from nominal downstream to upstream
         enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
-
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_faceP =  fp_JumpUp
