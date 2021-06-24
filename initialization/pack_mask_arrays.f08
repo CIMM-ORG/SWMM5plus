@@ -1124,8 +1124,8 @@ contains
         eup  => faceI(:,fi_Melem_uL)
         edn  => faceI(:,fi_Melem_dL)
 
-        !% fp_all
-        !% - all faces execpt boundary, null, and shared faces
+        ! % fp_all
+        ! % - all faces execpt boundary, null, and shared faces
         ptype => col_faceP(fp_all)
         npack => npack_faceP(ptype)
 

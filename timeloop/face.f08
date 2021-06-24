@@ -269,42 +269,42 @@ module face
     !%  
     !%  
     subroutine face_interp_set_byPack &
-            (fset, eset, eWdn, eWup, facePackCol, Npack)
-            !%-----------------------------------------------------------------------------
-            !% Description:
-            !% Interpolates to a face for a set of variables using a mask
-            !%-----------------------------------------------------------------------------
-            integer, intent(in) :: fset(:), eset(:), eWdn, eWup, facePackCol, Npack
-            integer, pointer :: thisP(:), eup(:), edn(:)
-            integer :: ii
-            !%-----------------------------------------------------------------------------
-            character(64) :: subroutine_name = 'face_interp_set_byPack'
-            if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
-            !%-----------------------------------------------------------------------------
-            thisP => faceP(1:Npack,facePackCol)
+        (fset, eset, eWdn, eWup, facePackCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Interpolates to a face for a set of variables using a mask
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: fset(:), eset(:), eWdn, eWup, facePackCol, Npack
+        integer, pointer :: thisP(:), eup(:), edn(:)
+        integer :: ii
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'face_interp_set_byPack'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
+        thisP => faceP(1:Npack,facePackCol)
 
-            eup => faceI(:,fi_Melem_uL)
-            edn => faceI(:,fi_Melem_dL) 
-            !%-----------------------------------------------------------------------------
-            !% cycle through each element in the set.
-            !% This is designed for fset and eset being vectors, but it
-            !%   is not clear that this is needed.
-            do ii=1,size(fset)
-                faceR(thisP,fset(ii)) = &
-                    (+elemR(eup(thisP),eset(ii)) * elemR(edn(thisP),eWup) &
-                     +elemR(edn(thisP),eset(ii)) * elemR(eup(thisP),eWdn) &
-                    ) / &
-                    ( elemR(edn(thisP),eWup) + elemR(eup(thisP),eWdn))
-            end do
+        eup => faceI(:,fi_Melem_uL)
+        edn => faceI(:,fi_Melem_dL) 
+        !%-----------------------------------------------------------------------------
+        !% cycle through each element in the set.
+        !% This is designed for fset and eset being vectors, but it
+        !%   is not clear that this is needed.
+        do ii=1,size(fset)
+            faceR(thisP,fset(ii)) = &
+                (+elemR(eup(thisP),eset(ii)) * elemR(edn(thisP),eWup) &
+                 +elemR(edn(thisP),eset(ii)) * elemR(eup(thisP),eWdn) &
+                ) / &
+                ( elemR(edn(thisP),eWup) + elemR(eup(thisP),eWdn))
+        end do
 
-            !% NOTES
-            !% elemR(eup(thisP),eset(ii)) is the element value upstream of the face
-            !% elemR(edn(thisP),eset(ii) is the element value downstream of the face.
-            !% elemR(eup(thisp),eWdn) is the downstream weighting of the upstream element
-            !% elemR(edn(thisp),eWup)) is the upstream weighting of the downstream element
+        !% NOTES
+        !% elemR(eup(thisP),eset(ii)) is the element value upstream of the face
+        !% elemR(edn(thisP),eset(ii) is the element value downstream of the face.
+        !% elemR(eup(thisp),eWdn) is the downstream weighting of the upstream element
+        !% elemR(edn(thisp),eWup)) is the upstream weighting of the downstream element
 
-            if (setting%Debug%File%face) print *, '*** enter ', subroutine_name         
-    end subroutine face_interp_set_byPack  
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name         
+    end subroutine face_interp_set_byPack
     !%
     !%==========================================================================  
     !%==========================================================================  

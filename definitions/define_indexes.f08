@@ -608,7 +608,6 @@ module define_indexes
         enumerator :: fp_Diag                   !% face with adjacent diagnostic element
         enumerator :: fp_JumpDn                 !% face with hydraulic jump from nominal downstream to upstream
         enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
-
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_faceP =  fp_JumpUp
