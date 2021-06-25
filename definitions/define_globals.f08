@@ -20,36 +20,36 @@ module define_globals
 
     !% Main Arrays - Allocated in allocate_storage.f08
     !%  links are the building blocks from SWMM link-node formulation
-    real(8), dimension(:,:), allocatable, target :: linkR ! real data for links
-    integer, dimension(:,:), allocatable, target :: linkI ! integer data for links
-    logical, dimension(:,:), allocatable, target :: linkYN ! logical data for links
+    real(8), dimension(:,:), allocatable, target :: linkR                                       !% real data for links
+    integer, dimension(:,:), allocatable, target :: linkI                                       !% integer data for links
+    logical, dimension(:,:), allocatable, target :: linkYN                                      !% logical data for links
 
-    type(string), dimension(:), allocatable, target :: linkName ! array of character strings
+    type(string), dimension(:), allocatable, target :: linkName                                 !% array of character strings
 
     !%  nodes are the building blocks from teh SWMM link-node formulation
-    real(8), dimension(:,:), allocatable, target :: nodeR ! real data for nodes
-    integer, dimension(:,:), allocatable, target :: nodeI ! integer data for nodes
-    logical, dimension(:,:), allocatable, target :: nodeYN ! logical data for nodes
+    real(8), dimension(:,:), allocatable, target :: nodeR                                       !% real data for nodes
+    integer, dimension(:,:), allocatable, target :: nodeI                                       !% integer data for nodes
+    logical, dimension(:,:), allocatable, target :: nodeYN                                      !% logical data for nodes
 
     !%  columns of element and face arrays
-    integer, dimension(:), allocatable, target :: col_elemI[:]                                  ! columns of elemI array
-    integer, dimension(:), allocatable, target :: col_elemP[:], npack_elemP[:]                  ! columns and number of packs for elemP array
-    integer, dimension(:), allocatable, target :: col_elemPGalltm[:], npack_elemPGalltm[:]      ! columns and number of packs for elemPG array for all tm
-    integer, dimension(:), allocatable, target :: col_elemPGac[:], npack_elemPGac[:]            ! columns and number of packs for elemPG array for ac tm
-    integer, dimension(:), allocatable, target :: col_elemPGetm[:], npack_elemPGetm[:]          ! columns and number of packs for elemPG array for etm
-    integer, dimension(:), allocatable, target :: col_elemR[:]                                  ! columns of elemR array
-    integer, dimension(:), allocatable, target :: col_elemSI[:]                                 ! columns of elemSI array
-    integer, dimension(:), allocatable, target :: col_elemSR[:]                                 ! columns of elemSR array
-    integer, dimension(:), allocatable, target :: col_elemSGR[:]                                ! columns of elemSGR array
-    integer, dimension(:), allocatable, target :: col_elemWDI[:]                                ! columns of elemWDI array
-    integer, dimension(:), allocatable, target :: col_elemWDR[:]                                ! columns of elemWDR array
-    integer, dimension(:), allocatable, target :: col_elemYN[:]                                 ! columns of elemYN array
-    integer, dimension(:), allocatable, target :: col_faceI[:]                                  ! columns of faceI array
-    integer, dimension(:), allocatable, target :: col_faceM[:]                                  ! columns of faceM array
-    integer, dimension(:), allocatable, target :: col_faceP[:], npack_faceP[:]                  ! columns and number of packs for faceP array
-    integer, dimension(:), allocatable, target :: col_facePS[:], npack_facePS[:]                ! columns and number of packs for facePS array
-    integer, dimension(:), allocatable, target :: col_faceR[:]                                  ! columns of faceR array
-    integer, dimension(:), allocatable, target :: col_faceYN[:]                                 ! columns of faceYN array
+    integer, dimension(:), allocatable, target :: col_elemI[:]                                  !% columns of elemI array
+    integer, dimension(:), allocatable, target :: col_elemP[:], npack_elemP[:]                  !% columns and number of packs for elemP array
+    integer, dimension(:), allocatable, target :: col_elemPGalltm[:], npack_elemPGalltm[:]      !% columns and number of packs for elemPG array for all tm
+    integer, dimension(:), allocatable, target :: col_elemPGac[:], npack_elemPGac[:]            !% columns and number of packs for elemPG array for ac tm
+    integer, dimension(:), allocatable, target :: col_elemPGetm[:], npack_elemPGetm[:]          !% columns and number of packs for elemPG array for etm
+    integer, dimension(:), allocatable, target :: col_elemR[:]                                  !% columns of elemR array
+    integer, dimension(:), allocatable, target :: col_elemSI[:]                                 !% columns of elemSI array
+    integer, dimension(:), allocatable, target :: col_elemSR[:]                                 !% columns of elemSR array
+    integer, dimension(:), allocatable, target :: col_elemSGR[:]                                !% columns of elemSGR array
+    integer, dimension(:), allocatable, target :: col_elemWDI[:]                                !% columns of elemWDI array
+    integer, dimension(:), allocatable, target :: col_elemWDR[:]                                !% columns of elemWDR array
+    integer, dimension(:), allocatable, target :: col_elemYN[:]                                 !% columns of elemYN array
+    integer, dimension(:), allocatable, target :: col_faceI[:]                                  !% columns of faceI array
+    integer, dimension(:), allocatable, target :: col_faceM[:]                                  !% columns of faceM array
+    integer, dimension(:), allocatable, target :: col_faceP[:], npack_faceP[:]                  !% columns and number of packs for faceP array
+    integer, dimension(:), allocatable, target :: col_facePS[:], npack_facePS[:]                !% columns and number of packs for facePS array
+    integer, dimension(:), allocatable, target :: col_faceR[:]                                  !% columns of faceR array
+    integer, dimension(:), allocatable, target :: col_faceYN[:]                                 !% columns of faceYN array
 
     !%  vector of number of elements and faces across images
     integer, dimension(:), allocatable, target :: N_elem
@@ -57,27 +57,27 @@ module define_globals
     integer, dimension(:), allocatable, target :: N_unique_face
 
     !%  elems in coarray
-    real(8), allocatable, target :: elemR(:,:)[:]    ! coarray for elements
-    integer, allocatable, target :: elemI(:,:)[:]    ! coarray for element Interger
-    logical, allocatable, target :: elemYN(:,:)[:]   ! coarray for element logical
-    integer, allocatable, target :: elemP(:,:)[:]    ! coarray for element pack array
+    real(8), allocatable, target :: elemR(:,:)[:]       !% coarray for elements
+    integer, allocatable, target :: elemI(:,:)[:]       !% coarray for element Interger
+    logical, allocatable, target :: elemYN(:,:)[:]      !% coarray for element logical
+    integer, allocatable, target :: elemP(:,:)[:]       !% coarray for element pack array
 
-    integer, allocatable, target :: elemPGalltm(:,:)[:] ! coarray for element pack geometry array
-    integer, allocatable, target :: elemPGac(:,:)[:]    ! coarray for element pack geometry array
-    integer, allocatable, target :: elemPGetm(:,:)[:]   ! coarray for element pack geometry array
-    integer, allocatable, target :: elemSI(:,:)[:]      ! coarray for special element Integer
-    real(8), allocatable, target :: elemSR(:,:)[:]      ! coarray for special elemen Real
-    real(8), allocatable, target :: elemSGR(:,:)[:]     ! coarray for special element geometry Real
-    real(8), allocatable, target :: elemGR(:,:)         ! array for ghost elements Real
-    integer, allocatable, target :: elemGI(:,:)         ! array for ghost elements Integer
+    integer, allocatable, target :: elemPGalltm(:,:)[:] !% coarray for element pack geometry array
+    integer, allocatable, target :: elemPGac(:,:)[:]    !% coarray for element pack geometry array
+    integer, allocatable, target :: elemPGetm(:,:)[:]   !% coarray for element pack geometry array
+    integer, allocatable, target :: elemSI(:,:)[:]      !% coarray for special element Integer
+    real(8), allocatable, target :: elemSR(:,:)[:]      !% coarray for special elemen Real
+    real(8), allocatable, target :: elemSGR(:,:)[:]     !% coarray for special element geometry Real
+    real(8), allocatable, target :: elemGR(:,:)         !% array for ghost elements Real
+    integer, allocatable, target :: elemGI(:,:)         !% array for ghost elements Integer
     
     !%  faces in coarray
-    real(8), allocatable, target :: faceR(:,:)[:]    ! coarray for faces real data
-    integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
-    logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data
-    integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array
-    integer, allocatable, target :: facePS(:,:)[:]   ! coarray for shared faces pack array
-    logical, allocatable, target :: faceM(:,:)[:]    ! coarray for faces mask array 
+    real(8), allocatable, target :: faceR(:,:)[:]       !% coarray for faces real data
+    integer, allocatable, target :: faceI(:,:)[:]       !% coarray for faces integer data
+    logical, allocatable, target :: faceYN(:,:)[:]      !% coarray for faces logical data
+    integer, allocatable, target :: faceP(:,:)[:]       !% coarray for faces pack array
+    integer, allocatable, target :: facePS(:,:)[:]      !% coarray for shared faces pack array
+    logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array 
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
