@@ -546,8 +546,8 @@ module define_indexes
         enumerator ::  fi_jump_type                 !% Type of hydraulic jump
         enumerator ::  fi_Melem_uL                  !% map to element upstream (local index)
         enumerator ::  fi_Melem_dL                  !% map to element downstream (local index)
+        enumerator ::  fi_Melem_ghost               !% map to ghost element
         enumerator ::  fi_Connected_image           !% image number a shared face connected to 
-
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
         ! enumerator ::  fi_Melem_dG                 !% map to element upstream (global index)
@@ -608,9 +608,10 @@ module define_indexes
         enumerator :: fp_Diag                   !% face with adjacent diagnostic element
         enumerator :: fp_JumpDn                 !% face with hydraulic jump from nominal downstream to upstream
         enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
+        enumerator :: fp_IBF                    !% all internal boundary faces
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceP =  fp_JumpUp
+    integer, target :: Ncol_faceP =  fp_IBF
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceYN(:,:) arrays

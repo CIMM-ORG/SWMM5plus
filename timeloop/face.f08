@@ -8,12 +8,12 @@ module face
 
     implicit none
 
-    !%----------------------------------------------------------------------------- 
+    !%-----------------------------------------------------------------------------
     !% Description:
     !% Provides computation of face values for timeloop of hydraulics
     !%
     !% METHOD:
-    !% 
+    !%
     !%
 
     private
@@ -49,11 +49,11 @@ module face
 
         if (setting%Debug%File%face)  print *, '*** leave ', subroutine_name
     end subroutine face_interpolation
-    !%    
+    !%
     !%==========================================================================
     !% PRIVATE
-    !%==========================================================================  
-    !%   
+    !%==========================================================================
+    !%
     subroutine face_interpolation_byMask (faceMaskCol)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -68,31 +68,31 @@ module face
         if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
         !% Face values are needed for
-        !% Area_u, Area_d, Head_u, Head_d, Flowrate, 
-        
+        !% Area_u, Area_d, Head_u, Head_d, Flowrate,
+
         !% not sure if we need
         !% Topwidth_u, Topwidth_d, HydDepth_u, HydDepth_d
         !% Velocity_u, Velocity_d
-        
+
         !% General approach
         !% interpolate to ..._u
         !% identify hydraulic jumps
         !% set .._u and ..d based on jumps
-        
+
         !% set the matching sets
         !% THESE SHOULD BE DONE IN A GLOBAL -- MAYBE SETTINGS
         !% Note these can be expanded for other terms to be interpolated.
         fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
         fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
         eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
-        
+
         fHeadSetU = [fr_Head_u]
         fHeadSetD = [fr_Head_d]
         eHeadSet = [er_Head]
-        
+
         fFlowSet = [fr_Flowrate]
         eFlowSet = [er_Flowrate]
-        
+
         !% two-sided interpolation to using the upstream face set
         call face_interp_set_byMask &
             (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, faceMaskCol)
@@ -100,21 +100,21 @@ module face
             (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, faceMaskCol)
         call face_interp_set_byMask &
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, faceMaskCol)
-        
+
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types as flow has a single value)
         !% note that these might be reset by hydraulic jump
         call face_copy_upstream_to_downstream_byMask (fGeoSetD,  fGeoSetU,  faceMaskCol)
         call face_copy_upstream_to_downstream_byMask (fHeadSetD, fHeadSetU, faceMaskCol)
-        
+
         !% reset all the hydraulic jump faces
         call jump_compute
-        
+
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_byMask
     !%
-    !%==========================================================================  
-    !%==========================================================================  
+    !%==========================================================================
+    !%==========================================================================
     !%
     subroutine face_interpolation_byPack (facePackCol, Npack)
         !%-----------------------------------------------------------------------------
@@ -131,12 +131,12 @@ module face
         if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
         !% Face values are needed for
-        !% Area_u, Area_d, Head_u, Head_d, Flowrate, 
-        
+        !% Area_u, Area_d, Head_u, Head_d, Flowrate,
+
         !% not sure if we need
         !% Topwidth_u, Topwidth_d, HydDepth_u, HydDepth_d
         !% Velocity_u, Velocity_d
-        
+
         !% General approach
         !% interpolate to ..._u
         !% identify hydraulic jumps
@@ -152,7 +152,7 @@ module face
         fHeadSetU = [fr_Head_u]
         fHeadSetD = [fr_Head_d]
         eHeadSet = [er_Head]
-         
+
         fFlowSet = [fr_Flowrate]
         eFlowSet = [er_Flowrate]
 
@@ -169,47 +169,47 @@ module face
         !% note that these might be reset by hydraulic jump
         call face_copy_upstream_to_downstream_byPack &
             (fGeoSetD, fGeoSetU, facePackCol, Npack)
-            
+
         call face_copy_upstream_to_downstream_byPack &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
 
         !% reset all the hydraulic jump faces
         call jump_compute
 
-        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name 
+        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_byPack
     !%
-    !%==========================================================================  
-    !%==========================================================================  
-    !% 
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine face_interp_across_images ()
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% Performs a single hydrology step
         !%-----------------------------------------------------------------------------
 
         !%-----------------------------------------------------------------------------
-        !%  
+        !%
     end subroutine face_interp_across_images
     !%
-    !%==========================================================================  
-    !%==========================================================================  
+    !%==========================================================================
+    !%==========================================================================
     !%
     subroutine face_interp_interior ()
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% Performs a single hydrology step
         !%-----------------------------------------------------------------------------
 
         !%-----------------------------------------------------------------------------
-        !%  
+        !%
     end subroutine face_interp_interior
     !%
-    !%========================================================================== 
-    !%==========================================================================    
-    !%  
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine face_interp_set_byMask &
-        (fset, eset, eWdn, eWup, faceMaskCol) 
+        (fset, eset, eWdn, eWup, faceMaskCol)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Interpolates to a face for a set of variables using a mask
@@ -222,7 +222,7 @@ module face
         if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
         eup => faceI(:,fi_Melem_uL)
-        edn => faceI(:,fi_Melem_dL) 
+        edn => faceI(:,fi_Melem_dL)
         !%-----------------------------------------------------------------------------
         !% cycle through each element in the set.
         do ii=1,size(fset)
@@ -232,15 +232,15 @@ module face
                      +elemR(edn(:),eset(ii)) * elemR(eup(:),eWdn) &
                     ) / &
                     ( elemR(edn(:),eWup) + elemR(eup(:),eWdn))
-            endwhere    
+            endwhere
         enddo
 
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name         
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
     end subroutine face_interp_set_byMask
     !%
-    !%========================================================================== 
-    !%==========================================================================    
-    !%  
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine face_copy_upstream_to_downstream_byMask &
         (downstreamSet, upstreamSet, faceMaskCol)
         !%-----------------------------------------------------------------------------
@@ -260,14 +260,14 @@ module face
                 faceR(:,downstreamSet(ii)) = faceR(:,upstreamSet(ii))
             endwhere
         enddo
-        
+
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_copy_upstream_to_downstream_byMask
     !%
-    !%========================================================================== 
-    !%==========================================================================    
-    !%  
-    !%  
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    !%
     subroutine face_interp_set_byPack &
         (fset, eset, eWdn, eWup, facePackCol, Npack)
         !%-----------------------------------------------------------------------------
@@ -284,7 +284,7 @@ module face
         thisP => faceP(1:Npack,facePackCol)
 
         eup => faceI(:,fi_Melem_uL)
-        edn => faceI(:,fi_Melem_dL) 
+        edn => faceI(:,fi_Melem_dL)
         !%-----------------------------------------------------------------------------
         !% cycle through each element in the set.
         !% This is designed for fset and eset being vectors, but it
@@ -303,11 +303,11 @@ module face
         !% elemR(eup(thisp),eWdn) is the downstream weighting of the upstream element
         !% elemR(edn(thisp),eWup)) is the upstream weighting of the downstream element
 
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name         
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
     end subroutine face_interp_set_byPack
     !%
-    !%==========================================================================  
-    !%==========================================================================  
+    !%==========================================================================
+    !%==========================================================================
     !%
     subroutine face_copy_upstream_to_downstream_byPack &
         (downstreamSet, upstreamSet, facePackCol, Npack)
@@ -326,20 +326,62 @@ module face
         thisP => faceP(1:Npack,facePackCol)
 
         faceR(thisP,downstreamSet) = faceR(thisP,upstreamSet)
-        
+
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_copy_upstream_to_downstream_byPack
     !%
-    !%========================================================================== 
-    !%==========================================================================    
-    !%  
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine face_init_ghost_data()
+        integer :: ii, ext_image, ibf, ibf_ext, ibe_ext
+
+        !% Definitions
+        !% ibf: internal boundary face
+        !% ibe: internal boundary element
+        !% ext_image: neighbor image containing information of ibe
+        do ii = 1, npack_faceP(fp_IBF)
+            ibf = faceP(ii, fp_IBF)
+            ext_image = faceI(ibf, fi_Connected_image)
+            if (faceI(ibf, fi_Melem_uL) == nullValueI) then ! upstream is null
+                !% HACK - we should  use a hash table instead of searching over every Gidx
+                ibf_ext = faceI(ibf, fi_Gidx) - faceI(1, fi_Gidx)[ext_image] + 1
+                ibe_ext = faceI(ibf_ext, fi_Melem_uL)[ext_image]
+            else if (faceI(ibf, fi_Melem_dL) == nullValueI) then
+                !% HACK - we should  use a hash table instead of searching over every Gidx
+                ibf_ext = faceI(ibf, fi_Gidx) - faceI(1, fi_Gidx)[ext_image] + 1
+                ibe_ext = faceI(ibf_ext, fi_Melem_dL)[ext_image]
+            else
+                print *, "There is an error, function not compatible with such convention"
+            end if
+            elemGR(ii, :) = elemR(ibe_ext, :)[ext_image]
+            elemGI(ii, :) = elemI(ibe_ext, :)[ext_image]
+            faceI(ibf, fi_Melem_ghost) = ii ! index in local ghost table (elemGR)
+        end do
+
+    end subroutine face_init_ghost_data
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine face_update_ghost_data(elem_col)
+        integer, intent(in) ::  elem_col
+        integer :: ii, jj, ext_image
+
+        do ii = 1, npack_faceP(fp_IBF)
+            jj = faceP(ii, fp_IBF)
+            ext_image = faceI(jj, fi_Connected_image)
+            elemGR(jj, elem_col) = elemR(elemGI(jj,ei_Lidx), elem_col)[ext_image]
+        end do
+    end subroutine face_update_ghost_data
+
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% Performs a single hydrology step
         !%-----------------------------------------------------------------------------
 
         !%-----------------------------------------------------------------------------
-        !%  
+        !%
     !%
     !%==========================================================================
     !% END OF MODULE

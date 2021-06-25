@@ -64,10 +64,12 @@ module define_globals
     integer, allocatable, target :: elemPGalltm(:,:)[:] ! coarray for element pack geometry array
     integer, allocatable, target :: elemPGac(:,:)[:]    ! coarray for element pack geometry array
     integer, allocatable, target :: elemPGetm(:,:)[:]   ! coarray for element pack geometry array
-    integer, allocatable, target :: elemSI(:,:)[:]   ! coarray for special element Integer
-    real(8), allocatable, target :: elemSR(:,:)[:]   ! coarray for special elemen Real
-    real(8), allocatable, target :: elemSGR(:,:)[:]  ! coarray for special element geometry Real
-
+    integer, allocatable, target :: elemSI(:,:)[:]      ! coarray for special element Integer
+    real(8), allocatable, target :: elemSR(:,:)[:]      ! coarray for special elemen Real
+    real(8), allocatable, target :: elemSGR(:,:)[:]     ! coarray for special element geometry Real
+    real(8), allocatable, target :: elemGR(:,:)         ! array for ghost elements Real
+    integer, allocatable, target :: elemGI(:,:)         ! array for ghost elements Integer
+    
     !%  faces in coarray
     real(8), allocatable, target :: faceR(:,:)[:]    ! coarray for faces real data
     integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
@@ -137,8 +139,9 @@ module define_globals
     integer, parameter :: N_api_total_link_attributes = N_api_link_attributes + N_api_link_xsect_attributes
 
     ! Coarray variables
-    integer :: max_caf_elem_N ! size of all elem array in coarray
-    integer :: max_caf_face_N ! size of all face array in coarray
+    integer :: max_caf_elem_N    ! size of all elem array in coarray
+    integer :: max_caf_face_N    ! size of all face array in coarray
+    integer :: max_caf_Gelem_N   ! size of all internal boundary face in coarray
 
     ! Constants for Junction
     integer :: J_elem_add = 7 ! Supplement elements for junction

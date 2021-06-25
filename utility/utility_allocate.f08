@@ -106,9 +106,9 @@ contains
     !
     !==========================================================================
     !==========================================================================
-    
+
     subroutine util_allocate_elemX_faceX ()
-        ! the max_caf_elem and max_caf_face are the maximum length of the coarray 
+        ! the max_caf_elem and max_caf_face are the maximum length of the coarray
         ! across all employed images
         ! ==========================
         ! This will be excuted at parallel level
@@ -116,7 +116,7 @@ contains
         integer :: ii
         integer, pointer :: ncol
         character(64) :: subroutine_name = 'util_allocate_elemX_faceX'
-    
+
         !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
@@ -173,7 +173,7 @@ contains
         elemSGR(:,:) = nullvalueR
 
         !==== face allocation ====
-        ncol => Ncol_faceR 
+        ncol => Ncol_faceR
         allocate(faceR(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         faceR(:,:) = nullvalueR
@@ -210,7 +210,7 @@ contains
         !-----------------------------------------------------------------------------
         !
         ! Description:
-        !   All the enumerated variables can not be used as pointers. Thus the 
+        !   All the enumerated variables can not be used as pointers. Thus the
         !   variables are stored in col_elemX(:) arrays that is a target
         !
         !-----------------------------------------------------------------------------
@@ -218,7 +218,7 @@ contains
         character(64) :: subroutine_name = 'util_allocate_columns'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% allocation of the col_elemX and npack_elemX
@@ -261,12 +261,12 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemI'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         ncol => Ncol_elemI
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_elemI(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -274,7 +274,7 @@ contains
         col_elemI(:) = [(ii,ii=1,ncol)]
 
         !%--------------------------------------------------------------
-        !% the code below is a quick print check to see if 
+        !% the code below is a quick print check to see if
         !% the coarray have been set up properly
         ! if (this_image() == 1) then
         !     do jj = 1, num_images()
@@ -310,7 +310,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemP'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
@@ -354,7 +354,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemPGalltm'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
@@ -398,9 +398,9 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemPGac'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
- 
+
         !% define the maximum number of columns as
         ncol => Ncol_elemPGac!% whatever the last item in the enumerator
 
@@ -431,7 +431,7 @@ contains
         ! Description:
         !   the col_elemPGetm is a vector of the columns in the elemPGetm arrays
         !   that correspond to the enumerated epg_... array_index parameters
-        !    
+        !
         !   the npack_elemPGetm(:) vector contains the number of packed elements
         !   for a given column.
         !
@@ -442,7 +442,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemPGetm'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
@@ -477,19 +477,19 @@ contains
         !   that correspond to the enumerated er_... array_index parameter
         !
         !-----------------------------------------------------------------------------
-        
+
         integer, pointer    :: ncol
         integer             :: ii
         character(64)       :: subroutine_name = 'util_allocate_col_elemR'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemR
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_elemR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -517,13 +517,13 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemSI'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSI
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_elemSI(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -551,13 +551,13 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemSR'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSR
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_elemSR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -585,13 +585,13 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemSGR'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSGR
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_elemSGR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -619,13 +619,13 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemWDI'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemWDI
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_elemWDI(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -653,13 +653,13 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemWDI'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemWDR
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_elemWDR(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -687,13 +687,13 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemYN'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemYN
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_elemYN(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -721,13 +721,13 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceI'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceI
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_faceI(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -755,13 +755,13 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceM'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceM
 
-        !% allocate an array for storing the column 
+        !% allocate an array for storing the column
         allocate( col_faceM(ncol)[*], stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg)
 
@@ -793,11 +793,11 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceP'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
-        ncol => Ncol_faceP 
+        ncol => Ncol_faceP
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_faceP(ncol)[*], stat=allocation_status, errmsg= emsg)
@@ -834,7 +834,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceR'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
@@ -868,7 +868,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceYN'
 
         !-----------------------------------------------------------------------------
-        
+
         if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
         !% define the maximum number of columns as
@@ -952,23 +952,42 @@ contains
         !   Checks allocation status and stops if there is an error
         !
         !-----------------------------------------------------------------------------
-    
+
             integer,           intent(in   ) :: allocation_status
             character(len=*),  intent(in   ) :: emsg
-    
+
             character(64):: subroutine_name = 'util_allocate_check'
-    
+
         !-----------------------------------------------------------------------------
-    
+
             if (setting%Debug%File%utility) print *, '*** enter ',subroutine_name
-    
+
             if (allocation_status > 0) then
                 print *, trim(emsg)
                 stop
             end if
-    
+
             if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
-    
+
     end subroutine util_allocate_check
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine util_allocate_interior_boundary_elements()
+        character(64) :: subroutine_name = 'util_allocate_interior_boundary_elements'
+
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+
+        allocate(elemGR(max_caf_Gelem_N, Ncol_elemR), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        elemGR(:,:) = nullvalueR
+
+        allocate(elemGI(max_caf_Gelem_N, Ncol_elemI), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        elemGI(:,:) = nullvalueI
+
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+    end subroutine util_allocate_interior_boundary_elements
 
 end module utility_allocate

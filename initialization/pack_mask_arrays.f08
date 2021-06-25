@@ -7,7 +7,7 @@
 !==========================================================================
 !
 module pack_mask_arrays
-  
+
     use define_indexes
     use define_keys
     use define_globals
@@ -39,12 +39,12 @@ contains
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
-        
+
         call mask_faces_whole_array_static ()
         call pack_geometry_alltm_elements ()
         call pack_geometry_etm_elements ()
-        call pack_geometry_ac_elements () 
-        call pack_nongeometry_static_elements () 
+        call pack_geometry_ac_elements ()
+        call pack_nongeometry_static_elements ()
         call pack_nongeometry_dynamic_elements ()
         call pack_static_faces ()
         call pack_dynamic_faces ()
@@ -87,8 +87,8 @@ contains
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
-        call pack_geometry_etm_elements () 
-        call pack_geometry_ac_elements () 
+        call pack_geometry_etm_elements ()
+        call pack_geometry_ac_elements ()
         call pack_nongeometry_dynamic_elements ()
         call pack_dynamic_faces ()
 
@@ -115,7 +115,7 @@ contains
 
         mcol => col_faceM(fm_all)
 
-        faceM(:,mcol) = ( & 
+        faceM(:,mcol) = ( &
             (faceI(:,fi_BCtype) == doesnotexist) &
             .and. &
             (faceYN(:,fYN_isnull) .eqv. .false.)  &
@@ -138,13 +138,13 @@ contains
 
         integer, pointer :: ptype, npack, eIDx(:)
 
-        character(64) :: subroutine_name = 'pack_geometry_alltm_elements'  
+        character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
-            
+
         !% rectangular channels, conduits and junction main
         ptype => col_elemPGalltm(epg_CCJM_rectangular_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
@@ -164,7 +164,7 @@ contains
                     .or. &
                     (elemI(:,ei_QeqType) == time_march) &
                 ) )
-            
+
         if (npack > 0) then
             elemPGalltm(1:npack, ptype) = pack(eIdx, &
                 ( &
@@ -181,7 +181,7 @@ contains
                     (elemI(:,ei_HeqType) == time_march) &
                     .or. &
                     (elemI(:,ei_QeqType) == time_march) &
-                ) ) 
+                ) )
         endif
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
@@ -190,7 +190,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_geometry_ac_elements () 
+    subroutine pack_geometry_ac_elements ()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for geometry types for AC elements
@@ -203,7 +203,7 @@ contains
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
-            
+
         !% rectangular channels, conduits and junction main
         ptype => col_elemPGac(epg_CCJM_rectangular_nonsurcharged)
         npack => npack_elemPGac(ptype)
@@ -220,7 +220,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
-            
+
         if (npack > 0) then
             elemPGac(1:npack, ptype) = pack(eIdx, &
                 ( &
@@ -258,7 +258,7 @@ contains
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
-            
+
         !% rectangular channels, conduits and junction main
         ptype => col_elemPGac(epg_CCJM_rectangular_nonsurcharged)
         npack => npack_elemPGetm(ptype)
@@ -275,7 +275,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
-            
+
         if (npack > 0) then
             elemPGetm(1:npack, ptype) = pack(eIdx, &
                 ( &
@@ -303,11 +303,11 @@ contains
         !
         !% packed arrays for non geometry static elements
         !%
-        !% HACK: Note that in this approach, an element that is diagnostic in Q and 
-        !% time march in H would appear in both the ep_Diag and ep_ALLtm packed arrays. 
-        !% Is this something we want to allow? It seems like we might need to require 
-        !% that an element that is diagnostic in Q must be either diagnostic in H or 
-        !% doesnotexist. Similarly, an element that is time march in H must be time-march 
+        !% HACK: Note that in this approach, an element that is diagnostic in Q and
+        !% time march in H would appear in both the ep_Diag and ep_ALLtm packed arrays.
+        !% Is this something we want to allow? It seems like we might need to require
+        !% that an element that is diagnostic in Q must be either diagnostic in H or
+        !% doesnotexist. Similarly, an element that is time march in H must be time-march
         !% in Q or doesnotexist
         !
         !--------------------------------------------------------------------------
@@ -321,29 +321,29 @@ contains
 
         eIdx => elemI(:,ei_Lidx)
 
-        !% ep_ALLtm 
+        !% ep_ALLtm
         !% - all elements that have a time march
         ptype => col_elemP(ep_ALLtm)
         npack => npack_elemP(ptype)
-        npack = count( &   
+        npack = count( &
                 (elemI(:,ei_QeqType) == time_march ) &
                 .or. &
                 (elemI(:,ei_HeqType) == time_march ) &
                 )
-                
+
         if (npack > 0) then
             elemP(1:npack,ptype) = pack( eIdx, &
                 (elemI(:,ei_QeqType) == time_march ) &
                 .or. &
                 (elemI(:,ei_HeqType) == time_march ) &
-                )    
-        endif    
+                )
+        endif
 
-        !% ep_CC_ALLtm 
+        !% ep_CC_ALLtm
         !% - all time march elements that are CC
         ptype => col_elemP(ep_CC_ALLtm)
         npack => npack_elemP(ptype)
-        npack = count( & 
+        npack = count( &
                 ( &
                     (elemI(:,ei_QeqType) == time_march ) &
                     .or. &
@@ -362,13 +362,13 @@ contains
                 .and. &
                 (elemI(:,ei_elementType) == CC) &
                 )
-        endif 
+        endif
 
-        !% ep_CCJB_ALLtm 
+        !% ep_CCJB_ALLtm
         !% - all time march elements that are CC or JB
         ptype => col_elemP(ep_CCJB_ALLtm)
         npack => npack_elemP(ptype)
-        npack = count( & 
+        npack = count( &
                 ( &
                     (elemI(:,ei_QeqType) == time_march ) &
                     .or. &
@@ -376,12 +376,12 @@ contains
                 ) &
                 .and. &
                 ( &
-                    (elemI(:,ei_elementType) == CC) & 
+                    (elemI(:,ei_elementType) == CC) &
                     .or. &
                     (elemI(:,ei_elementType) == JB) &
                 ) )
         if (npack > 0) then
-            elemP(1:npack,ptype) = pack( eIdx, &        
+            elemP(1:npack,ptype) = pack( eIdx, &
                 ( &
                     (elemI(:,ei_QeqType) == time_march ) &
                     .or. &
@@ -389,13 +389,13 @@ contains
                 ) &
                 .and. &
                 ( &
-                    (elemI(:,ei_elementType) == CC) & 
+                    (elemI(:,ei_elementType) == CC) &
                     .or. &
                     (elemI(:,ei_elementType) == JB) &
                 ) )
-        endif        
+        endif
 
-        !% ep_Diag 
+        !% ep_Diag
         !% - all elements that are diagnostic
         ptype => col_elemP(ep_Diag)
         npack => npack_elemP(ptype)
@@ -413,11 +413,11 @@ contains
                 )
         endif
 
-        !% ep_JM_ALLtm 
+        !% ep_JM_ALLtm
         !% - all junction main elements that are time march
         ptype => col_elemP(ep_JM_ALLtm)
         npack => npack_elemP(ptype)
-        npack = count( & 
+        npack = count( &
                 ( &
                     (elemI(:,ei_QeqType) == time_march ) &
                     .or. &
@@ -438,11 +438,11 @@ contains
                 )
         endif
 
-        !% ep_JB_ALLtm 
+        !% ep_JB_ALLtm
         !% - all junction main elements that are time march
         ptype => col_elemP(ep_JB_ALLtm)
         npack => npack_elemP(ptype)
-        npack = count( & 
+        npack = count( &
                 ( &
                     (elemI(:,ei_QeqType) == time_march ) &
                     .or. &
@@ -489,13 +489,13 @@ contains
         fup => elemI(:,ei_Mface_uL)
         fdn => elemI(:,ei_Mface_dL)
 
-        !% ep_AC 
+        !% ep_AC
         !% - all elements that use AC
         ptype => col_elemP(ep_AC)
         npack => npack_elemP(ptype)
         npack = count( &
                 (elemI(:,ei_tmType) == AC) )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_tmType) == AC) )
         endif
@@ -508,7 +508,7 @@ contains
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
                 (elemI(:,ei_tmType) == AC)     )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
@@ -521,13 +521,13 @@ contains
         npack => npack_elemP(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
-                .and. &        
+                .and. &
                 (elemI(:,ei_tmType) == ETM)     )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_elementType) == CC) &
-                .and. &        
+                .and. &
                 (elemI(:,ei_tmType) == ETM)     )
         endif
 
@@ -541,7 +541,7 @@ contains
                 (elemI(:,ei_HeqType) == time_march) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM)     )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                (elemI(:,ei_elementType) == CC) &
                 .and. &
@@ -560,7 +560,7 @@ contains
                 (elemI(:,ei_QeqType) == time_march) &
                 .and. &
                 (elemI(:,ei_tmType) == AC)     )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                (elemI(:,ei_elementType) == CC) &
                 .and. &
@@ -579,7 +579,7 @@ contains
                 (elemI(:,ei_QeqType) == time_march) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM)     )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                (elemI(:,ei_elementType) == CC) &
                 .and. &
@@ -601,7 +601,7 @@ contains
                 ) &
                 .and. &
                 (elemI(:,ei_tmType) == AC)     )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 ( &
                     (elemI(:,ei_elementType) == CC) &
@@ -627,7 +627,7 @@ contains
                 (elemI(:,ei_tmType) == AC)        &
                 .and. &
                 (elemYN(:,eYN_isSurcharged) .eqv. .true.) )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (  &
                     (elemI(:,ei_elementType) == CC) &
@@ -659,7 +659,7 @@ contains
                 ) &
                 .and. &
                 (elemYN(:,eYN_isSurcharged) .eqv. .true.) )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 ( &
                     (elemI(:,ei_elementType) == CC) &
@@ -700,7 +700,7 @@ contains
                     .and. &
                     (faceYN(fdn,fYN_isAC_adjacent) .eqv. .true.) ) &
                 ) )
-      
+
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx, &
                 ( &
@@ -842,7 +842,7 @@ contains
                 )
         endif
 
-        !% ep_ETM 
+        !% ep_ETM
         !% - all elements that use ETM
         ptype => col_elemP(ep_ETM)
         npack => npack_elemP(ptype)
@@ -863,7 +863,7 @@ contains
                 (elemI(:,ei_elementType) == JM ) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_elementType) == JM ) &
                 .and. &
@@ -879,7 +879,7 @@ contains
                 (elemI(:,ei_elementType) == JB ) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_elementType) == JB ) &
                 .and. &
@@ -896,7 +896,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_elementType) == JM ) &
                 .and. &
@@ -913,14 +913,14 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_elementType) == JB ) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) )
         endif
 
-        !% ep_NonSurcharged_AC  
+        !% ep_NonSurcharged_AC
         !% - all AC elements that are not surcharged
         ptype => col_elemP(ep_NonSurcharged_AC)
         npack => npack_elemP(ptype)
@@ -929,7 +929,7 @@ contains
                 (elemYN(:,eYN_isSurcharged) .eqv. .false. ) &
                 .and. &
                 (elemI(:,ei_tmType) == AC) )
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemYN(:,eYN_isSurcharged) .eqv. .false. ) &
                 .and. &
@@ -950,7 +950,7 @@ contains
                     (elemI(:,ei_tmType) == ETM) &
                 ) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemYN(:,eYN_isSurcharged) .eqv. .false. ) &
                 .and. &
@@ -971,7 +971,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemYN(:,eYN_isSurcharged) .eqv. .false. ) &
                 .and. &
@@ -989,7 +989,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemYN(:,eYN_isSmallVolume) .eqv. .true.) &
                 .and. &
@@ -1011,7 +1011,7 @@ contains
                     (elemI(:,ei_tmType) == ETM) &
                 ) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemYN(:,eYN_isSmallVolume) .eqv. .true.) &
                 .and. &
@@ -1033,14 +1033,14 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemYN(:,eYN_isSmallVolume) .eqv. .true.) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) )
         endif
 
-        !% ep_Surcharged_AC  
+        !% ep_Surcharged_AC
         !% - all AC elements that are surcharged
         ptype => col_elemP(ep_Surcharged_AC)
         npack => npack_elemP(ptype)
@@ -1050,7 +1050,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemYN(:,eYN_isSurcharged) .eqv. .true. ) &
                 .and. &
@@ -1071,7 +1071,7 @@ contains
                     (elemI(:,ei_tmType) == ETM) &
                 ) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemYN(:,eYN_isSurcharged) .eqv. .true.) &
                 .and. &
@@ -1082,7 +1082,7 @@ contains
                 ) )
         endif
 
-        !% ep_Surcharged_ETM  
+        !% ep_Surcharged_ETM
         !% - all ETM elements that are surcharged
         ptype => col_elemP(ep_Surcharged_ETM)
         npack => npack_elemP(ptype)
@@ -1092,7 +1092,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemYN(:,eYN_isSurcharged) .eqv. .true. ) &
                 .and. &
@@ -1151,7 +1151,7 @@ contains
         !% - all faces adjacent to a diagnostic element
         ptype => col_faceP(fp_Diag)
         npack => npack_faceP(ptype)
-        
+
         ! % HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
         ! % meaning not a boundary, shared, null face
         ! % this theory needs testing
@@ -1159,21 +1159,29 @@ contains
                 ((edn /= nullvalueI) .and. (elemI(edn,ei_HeqType) == diagnostic)) &
                 .or. &
                 ((edn /= nullvalueI) .and. (elemI(edn,ei_QeqType) == diagnostic)) &
-                .or. &        
+                .or. &
                 ((eup /= nullvalueI) .and. (elemI(eup,ei_HeqType) == diagnostic)) &
                 .or. &
-                ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) ) 
-        
+                ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
+
         if (npack > 0) then
             faceP(1:npack, ptype) = pack( fIdx, &
                 ((edn /= nullvalueI) .and. (elemI(edn,ei_HeqType) == diagnostic)) &
                 .or. &
                 ((edn /= nullvalueI) .and. (elemI(edn,ei_QeqType) == diagnostic)) &
-                .or. &        
+                .or. &
                 ((eup /= nullvalueI) .and. (elemI(eup,ei_HeqType) == diagnostic)) &
                 .or. &
                 ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
         endif
+
+        !% Create packs associated to internal boundary faces
+        faceP(:, fp_IBF) = pack(faceI(:,fi_Lidx), faceI(:,fi_Connected_image) /= nullValueI)
+        npack_faceP(fp_IBF) = count(faceP(:,fp_IBF) /= nullvalueI)
+        max_caf_Gelem_N = npack_faceP(fp_IBF)
+        ! Compute max_caf_Gelem_N across images
+        sync all
+        call co_max(max_caf_Gelem_N)
 
         !% HACK: the psuedo code below tests the above hypothesis
         ! npack =  count( &
@@ -1186,11 +1194,11 @@ contains
         !         ((elemI(edn,ei_HeqType) == diagnostic) &
         !         .or. &
         !         (elemI(edn,ei_QeqType) == diagnostic) &
-        !         .or. &        
+        !         .or. &
         !         (elemI(eup,ei_HeqType) == diagnostic) &
         !         .or. &
-        !         (elemI(eup,ei_QeqType) == diagnostic)) ) 
-        
+        !         (elemI(eup,ei_QeqType) == diagnostic)) )
+
         ! if (npack > 0) then
         !     faceP(1:npack, ptype) = pack( fIdx, &
         !         ((faceYN(:,fYN_isSharedFace) .eqv. .false.) &
@@ -1202,15 +1210,15 @@ contains
         !         ((elemI(edn,ei_HeqType) == diagnostic) &
         !         .or. &
         !         (elemI(edn,ei_QeqType) == diagnostic) &
-        !         .or. &        
+        !         .or. &
         !         (elemI(eup,ei_HeqType) == diagnostic) &
         !         .or. &
-        !         (elemI(eup,ei_QeqType) == diagnostic)) ) 
+        !         (elemI(eup,ei_QeqType) == diagnostic)) )
         ! endif
 
         ! print*, faceP(:,ptype), 'faceP(1:npack, ptype) in image, ', this_image()
-        
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name 
+
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine
     !
     !==========================================================================
@@ -1220,9 +1228,9 @@ contains
         !--------------------------------------------------------------------------
         !
         !% packed arrays for dynamic faces
-        !% HACK: Should the jump packing be called after all jump conditions are 
-        !% changed? or can it wait until the end of a time step? Note that this 
-        !% simply packs what is stored in faceI(:,fi_jump_type) as the actual 
+        !% HACK: Should the jump packing be called after all jump conditions are
+        !% changed? or can it wait until the end of a time step? Note that this
+        !% simply packs what is stored in faceI(:,fi_jump_type) as the actual
         !% computation of what is a jump is in the identify_hydraulic_jump subroutine.
         !
         !--------------------------------------------------------------------------
@@ -1237,7 +1245,7 @@ contains
 
         fIdx => faceI(:,fi_Lidx)
         eup  => faceI(:,fi_Melem_uL)
-        edn  => faceI(:,fi_Melem_dL)   
+        edn  => faceI(:,fi_Melem_dL)
 
         !% fp_AC
         !% - faces with any AC adjacent
@@ -1251,8 +1259,8 @@ contains
                 ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
                 .or. &
                 ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
-        if (npack > 0) then    
-            faceP(1:npack, ptype) = pack( fIdx, &        
+        if (npack > 0) then
+            faceP(1:npack, ptype) = pack( fIdx, &
                 ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
                 .or. &
                 ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
@@ -1266,7 +1274,7 @@ contains
         npack = count( &
             faceI(:,fi_jump_type) == jump_from_upstream )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             faceP(1:npack, ptype) = pack( fIdx, &
                 faceI(:,fi_jump_type) == jump_from_upstream )
         endif
@@ -1279,7 +1287,7 @@ contains
         npack = count( &
             faceI(:,fi_jump_type) == jump_from_downstream )
 
-        if (npack > 0) then    
+        if (npack > 0) then
             faceP(1:npack, ptype) = pack( fIdx, &
                 faceI(:,fi_jump_type) == jump_from_downstream )
         endif

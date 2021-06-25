@@ -330,4 +330,8 @@ contains
     
     end subroutine util_deallocate_check
 
+    subroutine util_deallocate_interior_boundary_elements()
+        deallocate(elemGR)
+        deallocate(elemGI)
+    end subroutine util_deallocate_interior_boundary_elements
 end module utility_deallocate
