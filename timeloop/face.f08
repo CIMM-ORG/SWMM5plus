@@ -331,59 +331,6 @@ module face
     end subroutine face_copy_upstream_to_downstream_byPack
     !%
     !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine face_init_ghost_data()
-        integer :: ii, ext_image, ibf, ibf_ext, ibe_ext
-
-        !% Definitions
-        !% ibf: internal boundary face
-        !% ibe: internal boundary element
-        !% ext_image: neighbor image containing information of ibe
-        do ii = 1, npack_faceP(fp_IBF)
-            ibf = faceP(ii, fp_IBF)
-            ext_image = faceI(ibf, fi_Connected_image)
-            if (faceI(ibf, fi_Melem_uL) == nullValueI) then ! upstream is null
-                !% HACK - we should  use a hash table instead of searching over every Gidx
-                ibf_ext = faceI(ibf, fi_Gidx) - faceI(1, fi_Gidx)[ext_image] + 1
-                ibe_ext = faceI(ibf_ext, fi_Melem_uL)[ext_image]
-            else if (faceI(ibf, fi_Melem_dL) == nullValueI) then
-                !% HACK - we should  use a hash table instead of searching over every Gidx
-                ibf_ext = faceI(ibf, fi_Gidx) - faceI(1, fi_Gidx)[ext_image] + 1
-                ibe_ext = faceI(ibf_ext, fi_Melem_dL)[ext_image]
-            else
-                print *, "There is an error, function not compatible with such convention"
-            end if
-            elemGR(ii, :) = elemR(ibe_ext, :)[ext_image]
-            elemGI(ii, :) = elemI(ibe_ext, :)[ext_image]
-            faceI(ibf, fi_Melem_ghost) = ii ! index in local ghost table (elemGR)
-        end do
-
-    end subroutine face_init_ghost_data
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine face_update_ghost_data(elem_col)
-        integer, intent(in) ::  elem_col
-        integer :: ii, jj, ext_image
-
-        do ii = 1, npack_faceP(fp_IBF)
-            jj = faceP(ii, fp_IBF)
-            ext_image = faceI(jj, fi_Connected_image)
-            elemGR(jj, elem_col) = elemR(elemGI(jj,ei_Lidx), elem_col)[ext_image]
-        end do
-    end subroutine face_update_ghost_data
-
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Performs a single hydrology step
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%
-    !%
-    !%==========================================================================
     !% END OF MODULE
-    !%+=========================================================================
+    !%==========================================================================
 end module face

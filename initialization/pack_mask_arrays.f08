@@ -46,8 +46,8 @@ contains
         call pack_geometry_ac_elements ()
         call pack_nongeometry_static_elements ()
         call pack_nongeometry_dynamic_elements ()
-        call pack_static_faces ()
-        call pack_dynamic_faces ()
+        call pack_static_interior_faces ()
+        call pack_dynamic_interior_faces ()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -91,7 +91,7 @@ contains
         call pack_geometry_etm_elements ()
         call pack_geometry_ac_elements ()
         call pack_nongeometry_dynamic_elements ()
-        call pack_dynamic_faces ()
+        call pack_dynamic_interior_faces ()
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_dynamic_arrays
@@ -1106,17 +1106,17 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_static_faces ()
+    subroutine pack_static_interior_faces ()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for static faces
         !% HACK: Need packs for faces that are duplicates in co-array
         !
         !--------------------------------------------------------------------------
+        integer :: ii
+        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:), c_image(:)
 
-        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:)
-
-        character(64) :: subroutine_name = 'pack_static_faces'
+        character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
@@ -1230,12 +1230,12 @@ contains
         ! print*, faceP(:,ptype), 'faceP(1:npack, ptype) in image, ', this_image()
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
-    end subroutine
+    end subroutine pack_static_interior_faces
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_dynamic_faces()
+    subroutine pack_dynamic_interior_faces()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for dynamic faces
@@ -1249,7 +1249,7 @@ contains
         integer          :: ii
         integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:)
 
-        character(64) :: subroutine_name = 'pack_dynamic_faces'
+        character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
@@ -1304,7 +1304,7 @@ contains
         endif
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
-    end subroutine pack_dynamic_faces
+    end subroutine pack_dynamic_interior_faces
     !
     !==========================================================================
     !==========================================================================

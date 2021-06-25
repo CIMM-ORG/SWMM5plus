@@ -47,6 +47,7 @@ module define_globals
     integer, dimension(:), allocatable, target :: col_faceI[:]                                  ! columns of faceI array
     integer, dimension(:), allocatable, target :: col_faceM[:]                                  ! columns of faceM array
     integer, dimension(:), allocatable, target :: col_faceP[:], npack_faceP[:]                  ! columns and number of packs for faceP array
+    integer, dimension(:), allocatable, target :: col_facePS[:], npack_facePS[:]                ! columns and number of packs for facePS array
     integer, dimension(:), allocatable, target :: col_faceR[:]                                  ! columns of faceR array
     integer, dimension(:), allocatable, target :: col_faceYN[:]                                 ! columns of faceYN array
 
@@ -75,6 +76,7 @@ module define_globals
     integer, allocatable, target :: faceI(:,:)[:]    ! coarray for faces integer data
     logical, allocatable, target :: faceYN(:,:)[:]   ! coarray for faces logical data
     integer, allocatable, target :: faceP(:,:)[:]    ! coarray for faces pack array
+    integer, allocatable, target :: facePS(:,:)[:]   ! coarray for shared faces pack array
     logical, allocatable, target :: faceM(:,:)[:]    ! coarray for faces mask array 
 
     type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
