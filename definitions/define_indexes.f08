@@ -546,7 +546,8 @@ module define_indexes
         enumerator ::  fi_jump_type                 !% Type of hydraulic jump
         enumerator ::  fi_Melem_uL                  !% map to element upstream (local index)
         enumerator ::  fi_Melem_dL                  !% map to element downstream (local index)
-        enumerator ::  fi_Melem_ghost               !% map to ghost element
+        enumerator ::  fi_GhostElem_uL              !% map to upstream ghost element
+        enumerator ::  fi_GhostElem_dL              !% map to downstream ghost element
         enumerator ::  fi_Connected_image           !% image number a shared face connected to 
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
