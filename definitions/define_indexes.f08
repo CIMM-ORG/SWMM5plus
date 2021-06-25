@@ -386,7 +386,7 @@ module define_indexes
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        enumerator :: eYN_canSurcharge                  !% TRUE for element that can surcharge, FALSE where it cannot (static)
+        enumerator :: eYN_canSurcharge = 1                  !% TRUE for element that can surcharge, FALSE where it cannot (static)
         enumerator :: eYN_isAdhocFlowrate               !% TRUE is use of ad hoc flowrate algorithm
         enumerator :: eYN_isSmallVolume                 !% TRUE is use small volume algorithm
         enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged conduit, FALSE is open channel flow

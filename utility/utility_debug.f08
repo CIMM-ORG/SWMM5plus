@@ -11,6 +11,7 @@ Module utility_debug
   private
 
   public :: debug_2D_array_csv
+  public :: debug_Nface_check
 
 contains
 
@@ -89,5 +90,52 @@ contains
     if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     
   end subroutine debug_2D_array_csv
+
+
+
+  subroutine debug_Nface_check
+    !% debug to check that the number of faces on each processor is equal to N_Face
+
+    integer :: ii, total_faces
+
+    character(64) :: subroutine_name = 'init_face_check'
+    if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+
+
+    total_faces = 0
+
+    !Looping through elemI, and finding the last local index
+    do ii=1, size(elemI(:,ei_Lidx))
+
+       if(elemI(ii,ei_Mface_uL) /= nullvalueI .and.  total_faces < elemI(ii,ei_Mface_uL) ) then
+
+          total_faces = elemI(ii, ei_Mface_uL)
+
+       end if
+
+       if(elemI(ii,ei_Mface_dL) /= nullvalueI .and. total_faces < elemI(ii,ei_Mface_dL)) then
+
+          total_faces = elemI(ii, ei_Mface_dL)
+
+       end if
+
+    end do
+
+    !Then we compare it to N_Face and print if it is the same or not.
+
+    if(total_faces == N_face(this_image())) then
+
+       print *, "CORRECT NUMBER OF FACES ON IMAGE ::", this_image()
+
+    else
+
+       print *, "ERROR, INCORRECT NUMVER OF FACES ON IMAGE ::", this_image()
+       print *, "total_faces = ", total_faces
+       print *, "N_face(this_image()) =", N_face(this_image())
+    end if
+
+    if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+
+  end subroutine debug_Nface_check
   
 end module utility_debug
