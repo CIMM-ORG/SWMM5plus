@@ -63,6 +63,7 @@ contains
                    print*, elemP(:,ep_Diag)[ii], 'all diagnostic elements'
                    print*, '.................face logicals......................'
                    print*, faceM(:,fm_all)[ii], 'all the faces except boundary and null faces'
+                   print*, faceP(:,fp_IBF)[ii], 'all the internal boundary faces'
                    call execute_command_line('')
                 enddo
 
@@ -1175,10 +1176,20 @@ contains
                 ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
         endif
 
-        !% Create packs associated to internal boundary faces
-        faceP(:, fp_IBF) = pack(faceI(:,fi_Lidx), faceI(:,fi_Connected_image) /= nullValueI)
-        npack_faceP(fp_IBF) = count(faceP(:,fp_IBF) /= nullvalueI)
-        max_caf_Gelem_N = npack_faceP(fp_IBF)
+        !% fp_IBF
+        !% - all faces that are shared across images (Internal Boundary Faces)
+        ptype => col_faceP(fp_IBF)
+        npack => npack_faceP(ptype)
+
+        npack = count( &
+                faceYN(:,fYN_isSharedFace) )
+
+        if (npack > 0) then
+            faceP(1:npack, ptype) = pack( fIdx, &
+                faceYN(:,fYN_isSharedFace) )
+        endif
+
+        max_caf_Gelem_N = npack
         ! Compute max_caf_Gelem_N across images
         sync all
         call co_max(max_caf_Gelem_N)
