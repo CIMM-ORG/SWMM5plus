@@ -98,7 +98,7 @@ contains
 
     integer :: ii, total_faces
 
-    character(64) :: subroutine_name = 'init_face_check'
+    character(64) :: subroutine_name = 'debug_Nface_check'
     if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
 
