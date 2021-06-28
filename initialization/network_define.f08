@@ -353,6 +353,7 @@ contains
 
         do ii = 1,NsharedFaces
             fLidx => sharedFaces(ii)
+            fGidx => faceI(fLidx,fi_Gidx)
             eUp   => faceI(fLidx,fi_Melem_uL)
             eDn   => faceI(fLidx,fi_Melem_dL)
             !% find the target image
@@ -371,7 +372,6 @@ contains
 
                     !% find the global index and set to target image
                     if(faceI(fLidx,fi_Gidx) .ne. nullvalueI) then
-                        fGidx => faceI(fLidx,fi_Gidx)
                         faceI(jj,fi_Gidx)[targetImage] = fGidx
                     endif
                 endif

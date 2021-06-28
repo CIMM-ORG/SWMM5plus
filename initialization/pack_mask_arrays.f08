@@ -1329,6 +1329,8 @@ contains
         sync all
         call co_max(max_caf_Gelem_N)
 
+        !% HACK: the code below has to be rewritten for shared faces
+
         !% fp_Diag (shared faces)
         !% - all faces adjacent to a diagnostic element which is shared across images
         ! ptype => col_facePS(fp_Diag)
@@ -1386,24 +1388,26 @@ contains
         eup  => faceI(:,fi_Melem_uL)
         edn  => faceI(:,fi_Melem_dL)
 
+        !% HACK: the code below has to be rewritten for shared faces
+
         !% fp_AC (shared faces)
         !% - faces with any AC adjacent which is shared across images
-        ptype => col_facePS(fp_AC)
-        npack => npack_facePS(ptype)
+        ! ptype => col_facePS(fp_AC)
+        ! npack => npack_facePS(ptype)
 
-        !% HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
-        !% this theory needs testing
+        ! !% HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
+        ! !% this theory needs testing
 
-        npack = count( &
-                ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
-                .or. &
-                ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
-        if (npack > 0) then
-            facePS(1:npack, ptype) = pack( fIdx, &
-                ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
-                .or. &
-                ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
-        endif
+        ! npack = count( &
+        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
+        !         .or. &
+        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
+        ! if (npack > 0) then
+        !     facePS(1:npack, ptype) = pack( fIdx, &
+        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
+        !         .or. &
+        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
+        ! endif
 
         !% fp_JumpUp
         !% -Hydraulic jump from nominal upstream to downstream

@@ -391,7 +391,7 @@ module face
             !%   is not clear that this is needed.
             do jj=1,size(fset)
 
-                !% condition for upstream element of the shared face is in a different image
+                !% condition for upstream element of the shared face is ghost and in a different image
                 if (eup .eq. nullValueI) then
 
                     faceR(thisP,fset(jj)) = &
@@ -399,22 +399,15 @@ module face
                          +elemR(edn,eset(jj)) * elemR(ghostUp,eWdn)[connected_image] &
                         ) / &
                         ( elemR(edn,eWup) + elemR(ghostUp,eWdn)[connected_image] )
-                print*, this_image(), 'image'
-                print*, connected_image, 'connected_image'
-                print*, thisP, 'face idx'  
-                print*, faceR(thisP,fset(jj)), 'faceR(thisP,fset(jj))'  
-                !% condition for downstream element of the shared face is in a different image
+
+                !% condition for downstream element of the shared face is ghost and in a different image
                 elseif (edn .eq. nullValueI) then
 
                     faceR(thisP,fset(jj)) = &
                         (+elemR(eup,eset(jj)) * elemR(ghostDn,eWup)[connected_image] &
                          +elemR(ghostDn,eset(jj))[connected_image] * elemR(eup,eWdn) &
                         ) / &
-                        ( elemR(ghostDn,eWup)[connected_image] + elemR(eup,eWdn) )
-                print*, this_image(), 'image'
-                print*, connected_image, 'connected_image'
-                print*, thisP, 'face idx'  
-                print*, faceR(thisP,fset(jj)), 'faceR(thisP,fset(jj))' 
+                        ( elemR(ghostDn,eWup)[connected_image] + elemR(eup,eWdn) ) 
                 endif
             end do
         end do
