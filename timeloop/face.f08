@@ -40,12 +40,15 @@ module face
         !% face reconstruction of all the interior faces
         Npack => npack_faceP(faceCol)
         if (Npack > 0) then
-            call face_interpolation_byPack (faceCol, Npack)
+            call face_interpolation_interior_byPack (faceCol, Npack)
         endif
 
         sync all
-
-        ! call face_interp_across_images()
+        !% face reconstruction of all the shared faces
+        Npack => npack_facePS(faceCol)
+        if (Npack > 0) then
+            call face_interpolation_shared_byPack (faceCol, Npack)
+        endif
 
         if (setting%Debug%File%face)  print *, '*** leave ', subroutine_name
     end subroutine face_interpolation
@@ -116,10 +119,10 @@ module face
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine face_interpolation_byPack (facePackCol, Npack)
+    subroutine face_interpolation_interior_byPack (facePackCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Interpolates all faces using a mask -- assumes single processor
+        !% Interpolates all faces using a pack
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
         integer, intent(in) :: Npack        !% expected number of packed rows in faceP.
@@ -157,27 +160,27 @@ module face
         eFlowSet = [er_Flowrate]
 
         !% two-sided interpolation to using the upstream face set
-        call face_interp_set_byPack &
+        call face_interp_interior_set_byPack &
             (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
-        call face_interp_set_byPack &
+        call face_interp_interior_set_byPack &
             (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
-        call face_interp_set_byPack &
+        call face_interp_interior_set_byPack &
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
         !% note that these might be reset by hydraulic jump
-        call face_copy_upstream_to_downstream_byPack &
+        call face_copy_upstream_to_downstream_interior_byPack &
             (fGeoSetD, fGeoSetU, facePackCol, Npack)
 
-        call face_copy_upstream_to_downstream_byPack &
+        call face_copy_upstream_to_downstream_interior_byPack &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
 
         !% reset all the hydraulic jump faces
         call jump_compute
 
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
-    end subroutine face_interpolation_byPack
+    end subroutine face_interpolation_interior_byPack
     !%
     !%==========================================================================
     !%==========================================================================
@@ -195,15 +198,67 @@ module face
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine face_interp_interior ()
+    subroutine face_interpolation_shared_byPack (facePackCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step
+        !% Interpolates all the shared faces
         !%-----------------------------------------------------------------------------
+        integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
+        integer, intent(in) :: Npack        !% expected number of packed rows in faceP.
+        integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
+        integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
+        integer :: fFlowSet(1), eFlowSet(1)
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'face_interpolation_shared_byPack'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
+        !% Face values are needed for
+        !% Area_u, Area_d, Head_u, Head_d, Flowrate,
 
-        !%-----------------------------------------------------------------------------
-        !%
-    end subroutine face_interp_interior
+        !% not sure if we need
+        !% Topwidth_u, Topwidth_d, HydDepth_u, HydDepth_d
+        !% Velocity_u, Velocity_d
+
+        !% General approach
+        !% interpolate to ..._u
+        !% identify hydraulic jumps
+        !% set .._u and ..d based on jumps
+
+        !% set the matching sets
+        !% THESE SHOULD BE DONE IN A GLOBAL -- MAYBE SETTINGS
+        !% Note these can be expanded for other terms to be interpolated.
+        fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
+        fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+        eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+
+        fHeadSetU = [fr_Head_u]
+        fHeadSetD = [fr_Head_d]
+        eHeadSet = [er_Head]
+
+        fFlowSet = [fr_Flowrate]
+        eFlowSet = [er_Flowrate]
+
+        !% two-sided interpolation to using the upstream face set
+        call face_interp_shared_set_byPack &
+            (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
+        call face_interp_shared_set_byPack &
+            (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
+        call face_interp_shared_set_byPack &
+            (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
+
+        !% copy upstream to downstream storage at a face
+        !% (only for Head and Geometry types)
+        !% note that these might be reset by hydraulic jump
+        call face_copy_upstream_to_downstream_shared_byPack &
+            (fGeoSetD, fGeoSetU, facePackCol, Npack)
+
+        call face_copy_upstream_to_downstream_shared_byPack &
+            (fHeadSetD, fHeadSetU, facePackCol, Npack)
+
+        !% HACK needs junp computation for across shared faces
+
+        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
+    end subroutine face_interpolation_shared_byPack
     !%
     !%==========================================================================
     !%==========================================================================
@@ -268,7 +323,7 @@ module face
     !%==========================================================================
     !%
     !%
-    subroutine face_interp_set_byPack &
+    subroutine face_interp_interior_set_byPack &
         (fset, eset, eWdn, eWup, facePackCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -278,7 +333,7 @@ module face
         integer, pointer :: thisP(:), eup(:), edn(:)
         integer :: ii
         !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'face_interp_set_byPack'
+        character(64) :: subroutine_name = 'face_interp_interior_set_byPack'
         if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
         thisP => faceP(1:Npack,facePackCol)
@@ -304,12 +359,108 @@ module face
         !% elemR(edn(thisp),eWup)) is the upstream weighting of the downstream element
 
         if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
-    end subroutine face_interp_set_byPack
+    end subroutine face_interp_interior_set_byPack
     !%
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine face_copy_upstream_to_downstream_byPack &
+    subroutine face_interp_shared_set_byPack &
+        (fset, eset, eWdn, eWup, facePackCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Interpolates to a face for a set of variables using a mask
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: fset(:), eset(:), eWdn, eWup, facePackCol, Npack
+        integer, pointer :: thisP, eup, edn, connected_image, ghostUp, ghostDn
+        integer :: ii, jj
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'face_interp_shared_set_byPack'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
+        !% cycle through all the shared faces
+        do ii = 1,Npack
+            thisP           => facePS(ii,facePackCol)
+            connected_image => faceI(thisP,fi_Connected_image)
+            eup             => faceI(thisP,fi_Melem_uL)
+            edn             => faceI(thisP,fi_Melem_dL)
+            ghostUp         => faceI(thisP,fi_GhostElem_uL)
+            ghostDn         => faceI(thisP,fi_GhostElem_dL)
+            !%-----------------------------------------------------------------------------
+            !% cycle through each element in the set.
+            !% This is designed for fset and eset being vectors, but it
+            !%   is not clear that this is needed.
+            do jj=1,size(fset)
+
+                !% condition for upstream element of the shared face is in a different image
+                if (eup .eq. nullValueI) then
+
+                    faceR(thisP,fset(jj)) = &
+                        (+elemR(ghostUp,eset(jj))[connected_image] * elemR(edn,eWup) &
+                         +elemR(edn,eset(jj)) * elemR(ghostUp,eWdn)[connected_image] &
+                        ) / &
+                        ( elemR(edn,eWup) + elemR(ghostUp,eWdn)[connected_image] )
+                print*, this_image(), 'image'
+                print*, connected_image, 'connected_image'
+                print*, thisP, 'face idx'  
+                print*, faceR(thisP,fset(jj)), 'faceR(thisP,fset(jj))'  
+                !% condition for downstream element of the shared face is in a different image
+                elseif (edn .eq. nullValueI) then
+
+                    faceR(thisP,fset(jj)) = &
+                        (+elemR(eup,eset(jj)) * elemR(ghostDn,eWup)[connected_image] &
+                         +elemR(ghostDn,eset(jj))[connected_image] * elemR(eup,eWdn) &
+                        ) / &
+                        ( elemR(ghostDn,eWup)[connected_image] + elemR(eup,eWdn) )
+                print*, this_image(), 'image'
+                print*, connected_image, 'connected_image'
+                print*, thisP, 'face idx'  
+                print*, faceR(thisP,fset(jj)), 'faceR(thisP,fset(jj))' 
+                endif
+            end do
+        end do
+
+        !% NOTES
+        !% elemR(eup,eset(jj)) is the element value upstream of the face
+        !% elemR(edn,eset(jj) is the element value downstream of the face.
+        !% elemR(eup,eWdn) is the downstream weighting of the upstream element
+        !% elemR(edn,eWup)) is the upstream weighting of the downstream element
+
+        !% elemR(ghostUp,eset(jj))[connected_image] is the elem value from the upstream image of the face
+        !% elemR(ghostDn,eset(jj))[connected_image] is the elem value from the downstream image of the face
+        !% elemR(ghostUp,eWdn)[connected_image] is the downstream weighting of the upstream image element
+        !% elemR(ghostDn,eWup))[connected_image] is the upstream weighting of the downstream image element
+
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+    end subroutine face_interp_shared_set_byPack
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine face_copy_upstream_to_downstream_interior_byPack &
+        (downstreamSet, upstreamSet, facePackCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Copies the interpolated value on the upstrea side to the downstream side
+        !% These values are later adjusted for hydraulic jumps
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: facePackCol, Npack, downstreamSet(:), upstreamSet(:)
+        integer, pointer :: thisP(:)
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'face_copy_upstream_to_downstream_interior_byPack'
+        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
+
+        thisP => faceP(1:Npack,facePackCol)
+
+        faceR(thisP,downstreamSet) = faceR(thisP,upstreamSet)
+
+        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
+    end subroutine face_copy_upstream_to_downstream_interior_byPack
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine face_copy_upstream_to_downstream_shared_byPack &
         (downstreamSet, upstreamSet, facePackCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -323,67 +474,14 @@ module face
         if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
 
-        thisP => faceP(1:Npack,facePackCol)
+        thisP => facePS(1:Npack,facePackCol)
 
         faceR(thisP,downstreamSet) = faceR(thisP,upstreamSet)
 
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
-    end subroutine face_copy_upstream_to_downstream_byPack
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine face_init_ghost_data()
-        integer :: ii, ext_image, ibf, ibf_ext, ibe_ext
-
-        !% Definitions
-        !% ibf: internal boundary face
-        !% ibe: internal boundary element
-        !% ext_image: neighbor image containing information of ibe
-        do ii = 1, npack_faceP(fp_IBF)
-            ibf = faceP(ii, fp_IBF)
-            ext_image = faceI(ibf, fi_Connected_image)
-            if (faceI(ibf, fi_Melem_uL) == nullValueI) then ! upstream is null
-                !% HACK - we should  use a hash table instead of searching over every Gidx
-                ibf_ext = faceI(ibf, fi_Gidx) - faceI(1, fi_Gidx)[ext_image] + 1
-                ibe_ext = faceI(ibf_ext, fi_Melem_uL)[ext_image]
-            else if (faceI(ibf, fi_Melem_dL) == nullValueI) then
-                !% HACK - we should  use a hash table instead of searching over every Gidx
-                ibf_ext = faceI(ibf, fi_Gidx) - faceI(1, fi_Gidx)[ext_image] + 1
-                ibe_ext = faceI(ibf_ext, fi_Melem_dL)[ext_image]
-            else
-                print *, "There is an error, function not compatible with such convention"
-            end if
-            elemGR(ii, :) = elemR(ibe_ext, :)[ext_image]
-            elemGI(ii, :) = elemI(ibe_ext, :)[ext_image]
-            faceI(ibf, fi_Melem_ghost) = ii ! index in local ghost table (elemGR)
-        end do
-
-    end subroutine face_init_ghost_data
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine face_update_ghost_data(elem_col)
-        integer, intent(in) ::  elem_col
-        integer :: ii, jj, ext_image
-
-        do ii = 1, npack_faceP(fp_IBF)
-            jj = faceP(ii, fp_IBF)
-            ext_image = faceI(jj, fi_Connected_image)
-            elemGR(jj, elem_col) = elemR(elemGI(jj,ei_Lidx), elem_col)[ext_image]
-        end do
-    end subroutine face_update_ghost_data
-
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Performs a single hydrology step
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%
+    end subroutine face_copy_upstream_to_downstream_shared_byPack
     !%
     !%==========================================================================
     !% END OF MODULE
-    !%+=========================================================================
+    !%==========================================================================
 end module face

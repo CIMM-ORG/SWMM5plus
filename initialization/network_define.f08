@@ -76,6 +76,8 @@ contains
                    print*, faceI(:,fi_Melem_dL)[ii], 'face Melem_dL'
                    print*, faceI(:,fi_Connected_image)[ii], 'fi_Connected_image'
                    print*, faceI(:,fi_BCtype)[ii], 'fi_BCtype'
+                   print*, faceI(:,fi_GhostElem_uL)[ii], 'fi_GhostElem_uL'
+                   print*, faceI(:,fi_GhostElem_dL)[ii], 'fi_GhostElem_dL'
                    print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared face'
                    print*, '----------------------------------------------------'
                    call execute_command_line('')
@@ -289,8 +291,6 @@ contains
         integer, pointer :: thisJunctionNode
         integer, dimension(:), allocatable, target :: packed_nJm_idx, JunctionElementIdx
 
-
-
         character(64) :: subroutine_name = 'init_network_map_nJm'
     !--------------------------------------------------------------------------
 
@@ -332,8 +332,8 @@ contains
     !
         integer, intent(in)    :: image
 
-        integer :: ii, jj, targetImage, NsharedFaces, fGidx
-        integer, pointer :: fLidx
+        integer :: ii, jj, NsharedFaces
+        integer, pointer :: fLidx, fGidx, eUp, eDn, targetImage
         integer, dimension(:), allocatable, target ::  sharedFaces
 
         character(64) :: subroutine_name = 'init_network_map_shared_faces'
@@ -347,29 +347,37 @@ contains
         !% fid the size of the pack
         NsharedFaces = size(sharedFaces)
 
-
         !% HACK: bellow is absolutely rubbish code
         !% it can be written in a better way
         !% but it works for now
 
         do ii = 1,NsharedFaces
             fLidx => sharedFaces(ii)
+            eUp   => faceI(fLidx,fi_Melem_uL)
+            eDn   => faceI(fLidx,fi_Melem_dL)
             !% find the target image
-            targetImage = faceI(fLidx,fi_Connected_image)
+            targetImage => faceI(fLidx,fi_Connected_image)
+            
+            do jj = 1, size(faceI(:,fi_Lidx))
+                if (faceI(jj,fi_Connected_image)[targetImage] .eq. image) then
 
-            !% find the global index and set to target image
-            if(faceI(fLidx,fi_Gidx) .ne. nullvalueI) then
+                    !% find the local ghost element index of the connected image
+                    if (faceI(jj,fi_Melem_uL)[targetImage] .eq. nullvalueI) then
+                        faceI(jj,fi_GhostElem_uL)[targetImage] = eUp
 
-                fGidx = faceI(fLidx,fi_Gidx)
+                    elseif (faceI(jj,fi_Melem_dL)[targetImage] .eq. nullvalueI) then
+                        faceI(jj,fi_GhostElem_dL)[targetImage] = eDn
+                    endif
 
-                do jj = 1, size(faceI(:,fi_Lidx))
-
-                    if (faceI(jj,fi_Connected_image)[targetImage] .eq. image) then
+                    !% find the global index and set to target image
+                    if(faceI(fLidx,fi_Gidx) .ne. nullvalueI) then
+                        fGidx => faceI(fLidx,fi_Gidx)
                         faceI(jj,fi_Gidx)[targetImage] = fGidx
                     endif
-                enddo
-            endif
+                endif
+            enddo
         enddo
+
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 

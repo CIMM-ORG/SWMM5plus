@@ -193,6 +193,10 @@ contains
         call util_allocate_check(allocation_status, emsg)
         faceP(:,:) = nullvalueI
 
+        allocate(facePS(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        facePS(:,:) = nullvalueI
+
         ncol=> Ncol_faceM
         allocate(faceM(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
@@ -237,6 +241,7 @@ contains
         call util_allocate_col_faceI
         call util_allocate_col_faceM
         call util_allocate_col_faceP
+        call util_allocate_col_facePS
         call util_allocate_col_faceR
         call util_allocate_col_faceYN
 
@@ -816,6 +821,54 @@ contains
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
 
     end subroutine util_allocate_col_faceP
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine util_allocate_col_facePS()
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   packed arrays for the shared (internal boundary)faces
+        !   the col_facePS is a vector of the columns in the facePS arrays
+        !   that correspond to the enumerated fp_... array_index parameters
+        !   col_facePS has the same number of columns as col_faceP because 
+        !   all the packs for internal faces are needed for shared faces as
+        !   well. 
+        !
+        !   the npack_facePS(:) vector contains the number of packed elements
+        !   for a given column.
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, pointer    :: ncol
+        integer             :: ii
+        character(64)       :: subroutine_name = 'util_allocate_col_facePS'
+
+        !-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+
+        !% define the maximum number of columns as
+        ncol => Ncol_faceP
+
+        !% allocate an array for storing the size of each packed type
+        allocate( npack_facePS(ncol)[*], stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg)
+
+        !% allocate an array for storing the column of each packed type
+        allocate( col_facePS(ncol)[*], stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg)
+
+        !% this array can be used as a pointer target in defining masks
+        col_facePS(:) = [(ii,ii=1,ncol)]
+
+        !% zero the number of packed items (to be defined in the packing)
+        npack_facePS(:) = 0
+
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+
+    end subroutine util_allocate_col_facePS
     !
     !==========================================================================
     !==========================================================================

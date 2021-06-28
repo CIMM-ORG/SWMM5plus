@@ -46,8 +46,10 @@ contains
         call pack_geometry_ac_elements ()
         call pack_nongeometry_static_elements ()
         call pack_nongeometry_dynamic_elements ()
-        call pack_static_faces ()
-        call pack_dynamic_faces ()
+        call pack_static_interior_faces ()
+        call pack_static_shared_faces ()
+        call pack_dynamic_interior_faces ()
+        call pack_dynamic_shared_faces ()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -63,6 +65,7 @@ contains
                    print*, elemP(:,ep_Diag)[ii], 'all diagnostic elements'
                    print*, '.................face logicals......................'
                    print*, faceM(:,fm_all)[ii], 'all the faces except boundary and null faces'
+                   print*, faceP(:,fp_IBF)[ii], 'all the internal boundary faces'
                    call execute_command_line('')
                 enddo
 
@@ -90,7 +93,8 @@ contains
         call pack_geometry_etm_elements ()
         call pack_geometry_ac_elements ()
         call pack_nongeometry_dynamic_elements ()
-        call pack_dynamic_faces ()
+        call pack_dynamic_interior_faces ()
+        call pack_dynamic_shared_faces ()
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_dynamic_arrays
@@ -1105,17 +1109,16 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_static_faces ()
+    subroutine pack_static_interior_faces ()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for static faces
-        !% HACK: Need packs for faces that are duplicates in co-array
         !
         !--------------------------------------------------------------------------
+        integer :: ii
+        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:), c_image(:)
 
-        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:)
-
-        character(64) :: subroutine_name = 'pack_static_faces'
+        character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
@@ -1175,14 +1178,6 @@ contains
                 ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
         endif
 
-        !% Create packs associated to internal boundary faces
-        faceP(:, fp_IBF) = pack(faceI(:,fi_Lidx), faceI(:,fi_Connected_image) /= nullValueI)
-        npack_faceP(fp_IBF) = count(faceP(:,fp_IBF) /= nullvalueI)
-        max_caf_Gelem_N = npack_faceP(fp_IBF)
-        ! Compute max_caf_Gelem_N across images
-        sync all
-        call co_max(max_caf_Gelem_N)
-
         !% HACK: the psuedo code below tests the above hypothesis
         ! npack =  count( &
         !         ((faceYN(:,fYN_isSharedFace) .eqv. .false.) &
@@ -1219,12 +1214,12 @@ contains
         ! print*, faceP(:,ptype), 'faceP(1:npack, ptype) in image, ', this_image()
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
-    end subroutine
+    end subroutine pack_static_interior_faces
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_dynamic_faces()
+    subroutine pack_dynamic_interior_faces()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for dynamic faces
@@ -1238,7 +1233,7 @@ contains
         integer          :: ii
         integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:)
 
-        character(64) :: subroutine_name = 'pack_dynamic_faces'
+        character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
@@ -1293,7 +1288,155 @@ contains
         endif
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
-    end subroutine pack_dynamic_faces
+    end subroutine pack_dynamic_interior_faces
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine pack_static_shared_faces ()
+        !--------------------------------------------------------------------------
+        !
+        !% packed arrays for static shared faces
+        !
+        !--------------------------------------------------------------------------
+        integer :: ii
+        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:), c_image(:)
+
+        character(64) :: subroutine_name = 'pack_static_shared_faces'
+
+        !--------------------------------------------------------------------------
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+
+        fIdx => faceI(:,fi_Lidx)
+        eup  => faceI(:,fi_Melem_uL)
+        edn  => faceI(:,fi_Melem_dL)
+
+        ! % fp_all (shared faces)
+        !% - all faces that are shared across images (Internal Boundary Faces)
+        ptype => col_facePS(fp_all)
+        npack => npack_facePS(ptype)
+
+        npack = count( &
+                faceYN(:,fYN_isSharedFace) )
+
+        if (npack > 0) then
+            facePS(1:npack, ptype) = pack( fIdx, &
+                faceYN(:,fYN_isSharedFace) )
+        endif
+
+        max_caf_Gelem_N = npack
+        ! Compute max_caf_Gelem_N across images
+        sync all
+        call co_max(max_caf_Gelem_N)
+
+        !% fp_Diag (shared faces)
+        !% - all faces adjacent to a diagnostic element which is shared across images
+        ! ptype => col_facePS(fp_Diag)
+        ! npack => npack_facePS(ptype)
+
+        ! % HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
+        ! % meaning not a boundary, shared, null face
+        ! % this theory needs testing
+        ! npack =  count( &
+        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_HeqType) == diagnostic)) &
+        !         .or. &
+        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_QeqType) == diagnostic)) &
+        !         .or. &
+        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_HeqType) == diagnostic)) &
+        !         .or. &
+        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
+
+        ! if (npack > 0) then
+        !     facePS(1:npack, ptype) = pack( fIdx, &
+        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_HeqType) == diagnostic)) &
+        !         .or. &
+        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_QeqType) == diagnostic)) &
+        !         .or. &
+        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_HeqType) == diagnostic)) &
+        !         .or. &
+        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
+        ! endif
+
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+    end subroutine pack_static_shared_faces
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+     subroutine pack_dynamic_shared_faces()
+        !--------------------------------------------------------------------------
+        !
+        !% packed arrays for dynamic shared faces
+        !% HACK: Should the jump packing be called after all jump conditions are
+        !% changed? or can it wait until the end of a time step? Note that this
+        !% simply packs what is stored in faceI(:,fi_jump_type) as the actual
+        !% computation of what is a jump is in the identify_hydraulic_jump subroutine.
+        !
+        !--------------------------------------------------------------------------
+
+        integer          :: ii
+        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:)
+
+        character(64) :: subroutine_name = 'pack_dynamic_shared_faces'
+
+        !--------------------------------------------------------------------------
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+
+        fIdx => faceI(:,fi_Lidx)
+        eup  => faceI(:,fi_Melem_uL)
+        edn  => faceI(:,fi_Melem_dL)
+
+        !% fp_AC (shared faces)
+        !% - faces with any AC adjacent which is shared across images
+        ptype => col_facePS(fp_AC)
+        npack => npack_facePS(ptype)
+
+        !% HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
+        !% this theory needs testing
+
+        npack = count( &
+                ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
+                .or. &
+                ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
+        if (npack > 0) then
+            facePS(1:npack, ptype) = pack( fIdx, &
+                ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
+                .or. &
+                ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
+        endif
+
+        !% fp_JumpUp
+        !% -Hydraulic jump from nominal upstream to downstream
+        ptype => col_facePS(fp_JumpUp)
+        npack => npack_facePS(ptype)
+
+        npack = count( &
+                faceYN(:,fYN_isSharedFace)              .and. &
+                (faceI(:,fi_jump_type) == jump_from_upstream) )
+
+        if (npack > 0) then
+            facePS(1:npack, ptype) = pack( fIdx, &
+                faceYN(:,fYN_isSharedFace)             .and. &
+                (faceI(:,fi_jump_type) == jump_from_upstream) )
+        endif
+
+        !% fp_JumpDn
+        !% --Hydraulic jump from nominal downstream to upstream
+        ptype => col_facePS(fp_JumpDn)
+        npack => npack_facePS(ptype)
+
+        npack = count( &
+                faceYN(:,fYN_isSharedFace)                .and. &
+                (faceI(:,fi_jump_type) == jump_from_downstream) )
+
+        if (npack > 0) then
+            facePS(1:npack, ptype) = pack( fIdx, &
+                faceYN(:,fYN_isSharedFace)                .and. &
+                (faceI(:,fi_jump_type) == jump_from_downstream) )
+        endif
+
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+    end subroutine pack_dynamic_shared_faces
     !
     !==========================================================================
     !==========================================================================
