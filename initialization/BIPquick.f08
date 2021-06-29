@@ -30,33 +30,9 @@ module BIPquick
    integer, parameter :: upstream2 = twoI
    integer, parameter :: upstream3 = threeI
   
-  !  !HACK - need to figure out how the number of processors is determined
-  !  integer, parameter :: processors = 3
-
-   !HACK - I'm not sure this is still needed
-   integer, parameter :: lr_target_default = 1.0
-  
    contains
-  
-  !--------------------------------------------------------------------------
-  !% What subroutines do I need to recreate?
-  !%    BIPquick main - public subroutine that does the following
-  !%      Allocate B_nodeI (to contain the upstream nodes), B_nodeR (for nr_directweight_u, nr_totalweight_u)
-  !%      Populate B_nodeI (bip_network_processing)
-  !%      phantom_naming_convention()
-  !%      calc_directweight()
-  !%      calculate_partition_threshold()
-  !%      Initialize flag arrays (only add the ones that I'm sure I need)
-  !%      do loop for processors
-  !%          total_weight_assigner() - includes calc_upstream_weight()
-  !%          calc_effective_root() - function that returns effective_root
-  !%          trav_subnetwork()    - assigns nodes to images, sets the visited_flags to .true.
-  !%          calc_spanning_link()        - determines if any of the links span the partition_threshold
-  !%          calc_phantom_node_loc()   - determines where in the link to put the phantom node
-  !%          do while loop for case 3
-  !%          create_phantom_node()   - create the phantom node in the nodeI, nodeR, linkI, linkR, B_nodeI, B_nodeR
-  !%      assign_links()      - use the existing funny logic to assign links to the images
-  !%      check_is_boundary() - looks at the adjacent links for every node and increments the ni_P_is_boundary column
+
+   ! -----------------------------------------------------------------------------------------------------------------
   
   subroutine init_partitioning_BIPquick()
       ! ----------------------------------------------------------------------------------------------------------------
@@ -846,8 +822,12 @@ module BIPquick
       !% If the adjacent upstream node is the upstream node from the spanning link
       if ( upstream_node_list(kk) == upstream_node ) then
 
-        !% Then replace it with the phantom node
+        !% Then replace it with the phantom node in B_nodeI
         B_nodeI(downstream_node, kk) = phantom_node_idx
+
+        !% Also replace the downstream node's upstream link with the phantom link
+        nodeI(downstream_node, ni_idx_base1 + kk) = phantom_link_idx
+
       end if
     end do
 
@@ -924,6 +904,11 @@ module BIPquick
     !% Reduce the effective_root totalweight by the total_clipped_weight
     B_nodeR(effective_root, totalweight) = &
             B_nodeR(effective_root, totalweight) - total_clipped_weight
+
+    if ( total_clipped_weight <= zeroR ) then
+      print*, "BIPquick Case 3: Haven't removed any weight"
+      stop
+    end if
 
     !% Reduce the partition_threshold by the total_clipped_weight too
     partition_threshold = partition_threshold - total_clipped_weight

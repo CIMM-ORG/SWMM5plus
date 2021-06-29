@@ -72,7 +72,7 @@ subroutine init_partitioning_method()
         end do
         print*, "-----------------------------------------------------------"
         do ii = 1, size(linkI, 1)
-            print*, linkI(ii, li_idx), linkI(ii, li_Mnode_u), linkI(ii, li_Mnode_d), linkI(ii, li_P_image)
+            print*, linkI(ii, li_idx), linkI(ii, li_Mnode_u), linkI(ii, li_Mnode_d), linkI(ii, li_P_image), linkR(ii, lr_Length)
         end do
 
         stop
