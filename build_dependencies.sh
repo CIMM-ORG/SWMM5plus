@@ -45,7 +45,7 @@ then
 fi
 # --------------------------------------------------------------------------------------
 
-# Download SWMM C
+# Download EPA-SWMM
 # --------------------------------------------------------------------------------------
 if [ ! -d "$API_DIR/src" ]
 then
@@ -375,7 +375,7 @@ then
 fi
 # --------------------------------------------------------------------------------------
 
-# Compile SWMM C
+# Compile EPA-SWMM
 
 echo
 echo Compiling SWMM 5.13 ...
@@ -384,7 +384,7 @@ echo
 cp -f "$API_DIR/api.h" "$API_DIR/src/"
 cp -f "$API_DIR/api.c" "$API_DIR/src/"
 
-# Insert new files in SWMM C Makefile
+# Insert new files in EPA-SWMM Makefile
 
 SCRIPTS='api.o'
 OBJECTS='api.o   : headers.h api.h\

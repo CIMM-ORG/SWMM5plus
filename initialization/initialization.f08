@@ -64,7 +64,7 @@ contains
         !% load the settings.json file with the default setting% model control structure
         !% def_load_settings is one of the few subroutines in the Definition modules
         call def_load_settings(setting%Paths%setting)
-    
+
         !% execute the command line options provided when the code is run
         if (this_image() == 1) then
             call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
@@ -84,6 +84,9 @@ contains
         !% partition the network for multi-processor parallel computation
         call init_partitioning()
 
+        ! sync all
+        !% HACK: this sync call is probably not needed
+
         call init_network()
 
         call init_IC_setup ()
@@ -102,13 +105,13 @@ contains
     !-----------------------------------------------------------------------------
     !
     ! Description:
-    !   Retrieves data from SWMM C interface and populates link and node tables
+    !   Retrieves data from EPA-SWMM interface and populates link and node tables
     !
     !-----------------------------------------------------------------------------
 
         integer       :: ii, total_n_links
         logical       :: l1, l2
-        
+
         character(64) :: subroutine_name = 'init_linknode_arrays'
 
     !-----------------------------------------------------------------------------
@@ -178,7 +181,7 @@ contains
                 end if
                 ! if (nodeI(ii,ni_N_link_u) == zeroI) then
                 !     nodeI(ii, ni_node_type) = nBCup
-                ! end if   
+                ! end if
             end if
 
             nodeR(ii,nr_InitialDepth) = interface_get_node_attribute(ii, api_node_initDepth)
@@ -215,8 +218,8 @@ contains
     !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-        
-        !% find the number of elements in a link based on nominal element length   
+
+        !% find the number of elements in a link based on nominal element length
         call init_discretization_nominal()
 
         !% Set the network partitioning method used for multi-processor parallel computation

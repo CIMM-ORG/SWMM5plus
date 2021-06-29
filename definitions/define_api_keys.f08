@@ -6,12 +6,12 @@ module define_api_keys
     !% Interface keys
     !%
     !%   The following variables must have the same values of
-    !%   the variables in the SWMM C source code. The especific
+    !%   the variables in the EPA-SWMM source code. The especific
     !%   C file that is associated to each enumerator is
     !%   written at the beginning of each 'enum' declaration.
     !%
     !%   The variables have been renamed with respect to the
-    !%   SWMM C source code to avoid name conflicts. Concretely,
+    !%   EPA-SWMM source code to avoid name conflicts. Concretely,
     !%   the 'API_' substring was added to the name at the
     !%   the beginning of the API key
     !% --------------------------------------------------------

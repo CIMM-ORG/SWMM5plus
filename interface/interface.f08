@@ -11,9 +11,29 @@ module interface
 
     implicit none
 
-    public
+    private
 
-    ! interface to C DLL
+    !% -------------------------------------------------------------------------------
+    !% PUBLIC
+    !% -------------------------------------------------------------------------------
+
+    type(c_lib_type), public :: c_lib
+    type(c_ptr), public :: api
+    logical, public :: api_is_initialized = .false.
+
+    !% Public subroutines/functions
+    public :: interface_init
+    public :: interface_finalize
+    public :: interface_get_node_attribute
+    public :: interface_get_link_attribute
+    public :: interface_get_obj_name_len
+    public :: interface_update_linknode_names
+
+    !% -------------------------------------------------------------------------------
+    !% PRIVATE
+    !% -------------------------------------------------------------------------------
+
+    ! Interface with SWMM shared library
     abstract interface
 
         ! --- Simulation
@@ -137,47 +157,58 @@ module interface
         end function api_get_end_datetime
     end interface
 
-    type(c_lib_type) :: c_lib
-    type(c_ptr) :: api
-    character(len = 1024), private :: errmsg
-    integer, private :: errstat
-    logical :: api_is_initialized = .false.
+    procedure(api_initialize), pointer :: ptr_api_initialize
+    procedure(api_finalize), pointer :: ptr_api_finalize
+    procedure(api_get_node_attribute), pointer :: ptr_api_get_node_attribute
+    procedure(api_get_link_attribute), pointer :: ptr_api_get_link_attribute
+    procedure(api_get_num_objects), pointer :: ptr_api_get_num_objects
+    procedure(api_get_first_table_entry), pointer :: ptr_api_get_first_table_entry
+    procedure(api_get_next_table_entry), pointer :: ptr_api_get_next_table_entry
+    procedure(api_get_pattern_count), pointer :: ptr_api_get_pattern_count
+    procedure(api_get_pattern_factor), pointer :: ptr_api_get_pattern_factor
+    procedure(api_get_pattern_type), pointer :: ptr_api_get_pattern_type
+    procedure(api_get_start_datetime), pointer :: ptr_api_get_start_datetime
+    procedure(api_get_end_datetime), pointer :: ptr_api_get_end_datetime
+    procedure(api_get_object_name_len), pointer :: ptr_api_get_object_name_len
+    procedure(api_get_object_name), pointer :: ptr_api_get_object_name
 
-    ! Time constants
-    real(8) :: swmm_start_time ! in days
-    real(8) :: swmm_end_time ! in days
+    !% Error handling
+    character(len = 1024) :: errmsg
+    integer :: errstat
 
-    procedure(api_initialize), pointer, private :: ptr_api_initialize
-    procedure(api_finalize), pointer, private :: ptr_api_finalize
-    procedure(api_get_node_attribute), pointer, private :: ptr_api_get_node_attribute
-    procedure(api_get_link_attribute), pointer, private :: ptr_api_get_link_attribute
-    procedure(api_get_num_objects), pointer, private :: ptr_api_get_num_objects
-    procedure(api_get_first_table_entry), pointer, private :: ptr_api_get_first_table_entry
-    procedure(api_get_next_table_entry), pointer, private :: ptr_api_get_next_table_entry
-    procedure(api_get_pattern_count), pointer, private :: ptr_api_get_pattern_count
-    procedure(api_get_pattern_factor), pointer, private :: ptr_api_get_pattern_factor
-    procedure(api_get_pattern_type), pointer, private :: ptr_api_get_pattern_type
-    procedure(api_get_start_datetime), pointer, private :: ptr_api_get_start_datetime
-    procedure(api_get_end_datetime), pointer, private :: ptr_api_get_end_datetime
-    procedure(api_get_object_name_len), pointer, private :: ptr_api_get_object_name_len
-    procedure(api_get_object_name), pointer, private :: ptr_api_get_object_name
+    !% Time constants
+    real(8) :: swmm_start_time, swmm_end_time ! in days
 
 contains
 
-    ! --- Simulation
+    !%=============================================================================
+    !% PUBLIC
+    !%=============================================================================
+
+    !%-----------------------------------------------------------------------------
+    !%  |
+    !%  |   Simulation subroutines/functions
+    !%  V
+    !%-----------------------------------------------------------------------------
 
     subroutine interface_init()
-
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    initializes the EPA-SWMM shared library, creating input (.inp),
+    !%    report (.rpt), and output (.out) files, necessary to run simulation with
+    !%    EPA-SWMM. It also updates the number of objects in the SWMM model, i.e.,
+    !%    number of links, nodes, and tables, and defines the start and end
+    !%    simulation times.
+    !%-----------------------------------------------------------------------------
         integer :: ppos, num_args
-        character(64) :: subroutine_name
-
-        subroutine_name = 'interface_init'
+        character(64) :: subroutine_name = 'interface_init'
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
-        ! Initialize C API
-        api = c_null_ptr
+        !% Initialize C API
 
+        api = c_null_ptr
         if (setting%Paths%inp == "") then
             print *, "ERROR: it is necessary to define the path to the .inp file"
             stop
@@ -187,14 +218,10 @@ contains
             setting%Paths%rpt = setting%Paths%inp(1:ppos) // "rpt"
             setting%Paths%out = setting%Paths%inp(1:ppos) // "out"
         end if
-
         setting%Paths%inp = trim(setting%Paths%inp) // c_null_char
         setting%Paths%rpt = trim(setting%Paths%rpt) // c_null_char
         setting%Paths%out = trim(setting%Paths%out) // c_null_char
-
         c_lib%filename = trim(setting%Paths%project) // "/libswmm5.so"
-
-        ! Initialize API
         c_lib%procname = "api_initialize"
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
@@ -203,34 +230,50 @@ contains
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
         api = ptr_api_initialize(setting%Paths%inp, setting%Paths%rpt, setting%Paths%out)
-
-        N_link = interface_get_num_objects(API_LINK)
-        N_node = interface_get_num_objects(API_NODE)
-        N_curve = interface_get_num_objects(API_CURVES)
-        N_tseries = interface_get_num_objects(API_TSERIES)
-        N_pattern = interface_get_num_objects(API_TIMEPATTERN)
-
         api_is_initialized = .true.
 
-        swmm_start_time = interface_get_start_datetime()
-        swmm_end_time = interface_get_end_datetime()
+        !% Get number of objects
 
+        N_link = get_num_objects(API_LINK)
+        N_node = get_num_objects(API_NODE)
+        N_curve = get_num_objects(API_CURVES)
+        N_tseries = get_num_objects(API_TSERIES)
+        N_pattern = get_num_objects(API_TIMEPATTERN)
+
+        !% Defines start and end simulation times
+        !% SWMM defines start and end dates as epoch times in days
+        !% we need to transform those values to durations in seconds,
+        !% such that our start time is zero and our end time is
+        !% the total simulation duration in seconds.
+
+        swmm_start_time = get_start_datetime()
+        swmm_end_time = get_end_datetime()
         setting%time%starttime = 0
         setting%time%endtime = (swmm_end_time - swmm_start_time) * real(secsperday)
 
-        print *, new_line("")
         if (setting%Debug%File%interface) then
+            print *, new_line("")
             print *, "N_link", N_link
             print *, "N_node", N_node
             print *, "N_curve", N_curve
             print *, "N_tseries", N_tseries
             print *, "N_pattern", N_pattern
+            print *, new_line("")
+            print *, "SWMM start time", swmm_start_time
+            print *, "SWMM end time", swmm_end_time
+            print *, "setting%time%starttime", setting%time%starttime
+            print *, "setting%time%endtime", setting%time%endtime
             print *, '*** leave ', subroutine_name
         end if
     end subroutine interface_init
 
     subroutine interface_finalize()
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    finalizes the EPA-SWMM shared library
+    !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'interface_finalize'
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -246,45 +289,11 @@ contains
 
     end subroutine interface_finalize
 
-    ! --- Property-extraction
-
-    ! * After Initialization
-
-    function interface_get_start_datetime()
-        real(8) :: interface_get_start_datetime
-        character(64) :: subroutine_name = 'interface_get_start_datetime'
-
-        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
-
-        c_lib%procname = "api_get_start_datetime"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_start_datetime)
-        interface_get_start_datetime = ptr_api_get_start_datetime()
-        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
-    end function interface_get_start_datetime
-
-    function interface_get_end_datetime()
-        real(8) :: interface_get_end_datetime
-        character(64) :: subroutine_name
-
-        subroutine_name = 'interface_get_end_datetime'
-
-        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
-
-        c_lib%procname = "api_get_end_datetime"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_end_datetime)
-        interface_get_end_datetime = ptr_api_get_end_datetime()
-        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
-    end function interface_get_end_datetime
+    !%-----------------------------------------------------------------------------
+    !%  |
+    !%  |   Property-extraction functions (only run after initialization)
+    !%  V
+    !%-----------------------------------------------------------------------------
 
     subroutine interface_update_linknode_names()
         integer :: ii
@@ -350,15 +359,23 @@ contains
     end function interface_get_obj_name_len
 
     function interface_get_node_attribute(node_idx, attr)
-
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves node attributes from EPA-SWMM. API node attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
         integer :: node_idx, attr, error
         real(8) :: interface_get_node_attribute
         type(c_ptr) :: cptr_value
         real(c_double), target :: node_value
-        character(64) :: subroutine_name = 'interface_get_node_attr'
+        character(64) :: subroutine_name = 'interface_get_node_attribute'
+    !%-----------------------------------------------------------------------------
 
         cptr_value = c_loc(node_value)
-
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -379,34 +396,40 @@ contains
             stop
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_node_attribute)
-        ! Fortran index starts in 1, whereas in C starts in 0
+        !% Substracts 1 to every Fortran index (it becomes a C index)
         error = ptr_api_get_node_attribute(api, node_idx-1, attr, cptr_value)
-        call interface_print_error(error)
+        call print_api_error(error)
 
         interface_get_node_attribute = node_value
 
-        ! Fortran index correction
+        !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
         if ((attr == api_node_extInflow_tSeries) .or. (attr == api_node_extInflow_basePat)) then
             if (node_value /= -1) interface_get_node_attribute = interface_get_node_attribute + 1
         end if
 
         if (setting%Debug%File%interface)  then
             print *, '*** leave ', subroutine_name
-            ! print *, "NODE", node_value, attr
         end if
     end function interface_get_node_attribute
 
     function interface_get_link_attribute(link_idx, attr)
-
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves link attributes from EPA-SWMM. API link attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
         integer :: link_idx, attr, error
         real(8) :: interface_get_link_attribute
-        character(64) :: subroutine_name
+        character(64) :: subroutine_name = 'interface_get_link_attribute'
         type(c_ptr) :: cptr_value
         real(c_double), target :: link_value
+    !%-----------------------------------------------------------------------------
 
         cptr_value = c_loc(link_value)
-
-        subroutine_name = 'interface_get_link_attribute'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -431,11 +454,11 @@ contains
         if (attr <= N_api_link_attributes) then
             ! Fortran index starts in 1, whereas in C starts in 0
             error = ptr_api_get_link_attribute(api, link_idx-1, attr, cptr_value)
-            call interface_print_error(error)
+            call print_api_error(error)
             interface_get_link_attribute = link_value
         else
             error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_type, cptr_value)
-            call interface_print_error(error)
+            call print_api_error(error)
             interface_get_link_attribute = link_value
             if (link_value == API_RECT_CLOSED) then
                 if (attr == api_link_geometry) then
@@ -444,7 +467,7 @@ contains
                     interface_get_link_attribute = lpipe
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call interface_print_error(error)
+                    call print_api_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -456,7 +479,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call interface_print_error(error)
+                    call print_api_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -468,7 +491,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yBot, cptr_value)
-                    call interface_print_error(error)
+                    call print_api_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -480,7 +503,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call interface_print_error(error)
+                    call print_api_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -492,7 +515,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call interface_print_error(error)
+                    call print_api_error(error)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -507,13 +530,17 @@ contains
         end if
     end function interface_get_link_attribute
 
-    function interface_get_num_objects(obj_type)
+    !%=============================================================================
+    !% PRIVATE
+    !%=============================================================================
+
+    function get_num_objects(obj_type)
 
         integer :: obj_type
-        integer :: interface_get_num_objects
+        integer :: get_num_objects
         character(64) :: subroutine_name
 
-        subroutine_name = 'interface_get_num_objects'
+        subroutine_name = 'get_num_objects'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -524,102 +551,52 @@ contains
             stop
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_objects)
-        interface_get_num_objects = ptr_api_get_num_objects(api, obj_type)
+        get_num_objects = ptr_api_get_num_objects(api, obj_type)
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
-    end function interface_get_num_objects
+    end function get_num_objects
 
-    function interface_get_first_table_entry(k, table_type, entries)
-        integer, intent(in) :: k ! table id
-        integer, intent(in) :: table_type
-        real(8), dimension(2), intent(inout) :: entries
-        integer :: interface_get_first_table_entry
-        type(c_ptr) :: cptr_x, cptr_y
-        real(c_double), target :: x, y
+    function get_start_datetime()
+        real(8) :: get_start_datetime
+        character(64) :: subroutine_name = 'get_start_datetime'
 
-        cptr_x = c_loc(x)
-        cptr_y = c_loc(y)
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
-        c_lib%procname = "api_get_first_table_entry"
+        c_lib%procname = "api_get_start_datetime"
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_first_table_entry)
-        interface_get_first_table_entry = ptr_api_get_first_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_start_datetime)
+        get_start_datetime = ptr_api_get_start_datetime()
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
+    end function get_start_datetime
 
-        entries(1) = x
-        entries(2) = y
-    end function interface_get_first_table_entry
+    function get_end_datetime()
+        real(8) :: get_end_datetime
+        character(64) :: subroutine_name
 
-    function interface_get_next_table_entry(k, table_type, entries)
-        integer, intent(in) :: k ! table id
-        integer, intent(in) :: table_type
-        real(8), dimension(2), intent(inout) :: entries
-        integer :: interface_get_next_table_entry
-        type(c_ptr) :: cptr_x, cptr_y
-        real(c_double), target :: x, y
+        subroutine_name = 'get_end_datetime'
 
-        cptr_x = c_loc(x)
-        cptr_y = c_loc(y)
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
-        c_lib%procname = "api_get_next_table_entry"
+        c_lib%procname = "api_get_end_datetime"
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
             stop
         end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_table_entry)
-        interface_get_next_table_entry = ptr_api_get_next_table_entry(k-1, table_type, cptr_x, cptr_y) ! index starts at 0 in C
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_end_datetime)
+        get_end_datetime = ptr_api_get_end_datetime()
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
+    end function get_end_datetime
 
-        entries(1) = x
-        entries(2) = y
-    end function interface_get_next_table_entry
-
-    function interface_get_pattern(k)
-        integer, intent(in) :: k
-        type(pattern) :: pfactors
-        type(pattern) :: interface_get_pattern
-        integer :: i, count
-
-        if (k /= -1) then
-            c_lib%procname = "api_get_pattern_count"
-            call c_lib_load(c_lib, errstat, errmsg)
-            if (errstat /= 0) then
-                print *, "ERROR: " // trim(errmsg)
-                stop
-            end if
-            call c_f_procpointer(c_lib%procaddr, ptr_api_get_pattern_count)
-            interface_get_pattern%count = ptr_api_get_pattern_count(k-1)
-
-            c_lib%procname = "api_get_pattern_factor"
-            call c_lib_load(c_lib, errstat, errmsg)
-            if (errstat /= 0) then
-                print *, "ERROR: " // trim(errmsg)
-                stop
-            end if
-            call c_f_procpointer(c_lib%procaddr, ptr_api_get_pattern_factor)
-            do i = 1, 24
-                interface_get_pattern%factor(i) = ptr_api_get_pattern_factor(k-1, i-1) ! index starts at 0 in C
-            end do
-
-            c_lib%procname = "api_get_pattern_type"
-            call c_lib_load(c_lib, errstat, errmsg)
-            if (errstat /= 0) then
-                print *, "ERROR: " // trim(errmsg)
-                stop
-            end if
-            call c_f_procpointer(c_lib%procaddr, ptr_api_get_pattern_type) ! index starts at 0 in C
-            interface_get_pattern%ptype = ptr_api_get_pattern_type(k-1)
-        end if
-    end function interface_get_pattern
-
-    subroutine interface_print_error(error)
+    subroutine print_api_error(error)
         integer, intent(in) :: error
         if (error /= 0) then
-            print *, "SWMM Error Code: " , error
+            print *, "EPA-SWMM Error Code: ", error
             stop
         end if
-    end subroutine interface_print_error
+    end subroutine print_api_error
 end module interface

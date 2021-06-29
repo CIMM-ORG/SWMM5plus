@@ -29,13 +29,13 @@ static int  Ntokens;                   // Number of tokens in line of input
 
 // --- Simulation
 
-// Initializes the SWMM C simulation. It creates an Interface
+// Initializes the EPA-SWMM simulation. It creates an Interface
 // variable (details about Interface in interface.h). The
 // function opens de SWMM input file and creates report and
 // output files. Although the .inp is parsed within swmm_start,
 // not every property is extracted, e.g., slopes of trapezoidal channels.
 // In swmm.c
-// to parse the .inp again using SWMM C functionalities
+// to parse the .inp again using EPA-SWMM functionalities
 // within api_load_vars
 // The interface object is passed to many functions in interface.c
 // but it is passed as a void pointer. This is because the object
@@ -65,7 +65,7 @@ void DLLEXPORT api_finalize(void* f_api)
 //
 //  Input: f_api is an Interface object passed as a void*
 //  Output: None
-//  Purpose: Closes the link with the SWMM C library
+//  Purpose: Closes the link with the EPA-SWMM library
 //
 {
     int i;
@@ -101,7 +101,7 @@ int DLLEXPORT api_get_node_results(void* f_api, char* node_name, float* inflow, 
 //            node_name = string identifier of node
 //            inflow, overflow, depth, volume =
 //  Output: None
-//  Purpose: Closes the link with the SWMM C library
+//  Purpose: Closes the link with the EPA-SWMM library
 //
 {
     int j, error;
@@ -803,7 +803,7 @@ int api_findObject(int type, char *id)
 }
 
 // Copy pasted getTokens from src/input.c to ensure independence
-// from the original SWMM C code. In the original code
+// from the original EPA-SWMM code. In the original code
 // getTokens is not defined as an external API function
 
 int getTokens(char *s)

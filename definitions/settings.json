@@ -61,7 +61,7 @@
     "Discretization" : {
         "NominalElemLength" : 10.0,
         "LinkShortingFactor" : 0.33
-    },   
+    },
     "Eps" : {
         "FroudeJump" : 0.1,
         "InflowDepthIncreaseFroudeLimit" : 0.1
@@ -96,7 +96,7 @@
         }
     },
     "Partitioning" : {
-        "PartitioningMethod" : "BLink"   
+        "PartitioningMethod" : "BLink"
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -122,7 +122,7 @@
     "TestCase" : {
         "UseTestCase" : false,
         "TestName" : "testcase"
-    }, 
+    },
     "Time" : {
         "DateTimeStamp" : 0.0,
         "EndTime" : 0.0,
@@ -144,7 +144,7 @@
             "stepNow"  : 0,
             "stepNext"  : 1,
             "stepFinal" : 1
-        }        
+        }
     },
     "Weir" : {
         "Transverse" : {
@@ -164,13 +164,13 @@
             "WeirContractionFactor" : 1.0,
             "SideFlowWeirCrestExponent" : 1.0,
             "VillemonteCorrectionExponent" : 0.385
-        },    
+        },
         "Trapezoidal" : {
             "WeirExponent" : 1.5,
             "WeirContractionFactor" : 1.0,
             "SideFlowWeirCrestExponent" : 1.0,
             "VillemonteCorrectionExponent" : 0.385
-        }    
+        }
     },
     "VariableDT" : {
         "Apply" : true,
@@ -193,6 +193,7 @@
         "Tests" : true,
         "File" : {
             "adjust" : false,
+            "c_library" : false,
             "define_globals" : false,
             "define_indexes" : false,
             "define_keys" : false,

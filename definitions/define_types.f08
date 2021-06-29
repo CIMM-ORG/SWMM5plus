@@ -39,8 +39,8 @@ module define_types
         real(8), dimension(2) :: dwf_weekend_pattern = [-1, -1]
         ! ---------------------------------------------------------
         ! fetch keeps track of the vars in nodeInflow that need to be
-        ! fetched from SWMM C. If fetch[i] == .true. then the variable
-        ! needs to be updated from SWMM C. Update as more data is needed.
+        ! fetched from EPA-SWMM. If fetch[i] == .true. then the variable
+        ! needs to be updated from EPA-SWMM. Update as more data is needed.
         ! fetch = [
         !    ext_t_series, ext_base_pat, ext_baseline, ext_sfactor,
         !    dwf_avgValue, dwf_monthly_pattern, dwf_daily_pattern,
