@@ -113,19 +113,30 @@ module BIPquick
 
             !% HACK - I'm fairly sure that this do-loop will work for repeated instances of Case 3
 
-          end do
-  
-        !% The distance along the spanning_link to the phantom node is calculated
-        phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
+        end do
 
-        !% This subroutine creates a phantom node/link and adds it to nodeI/linkI
-        call phantom_node_generator(spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
-  
-        !% This subroutine does the same thing as the previous call to trav_subnetwork()
-        call trav_subnetwork(phantom_node_idx, image)
+        if ( ideal_exists .eqv. .true. ) then
+          call trav_subnetwork(effective_root, image)
 
-        phantom_node_idx = phantom_node_idx + 1
-        phantom_link_idx = phantom_link_idx + 1
+        else if ( spanning_link /= nullValueI ) then
+  
+          !% The distance along the spanning_link to the phantom node is calculated
+          phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
+
+          !% This subroutine creates a phantom node/link and adds it to nodeI/linkI
+          call phantom_node_generator(spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
+    
+          !% This subroutine does the same thing as the previous call to trav_subnetwork()
+          call trav_subnetwork(phantom_node_idx, image)
+
+          phantom_node_idx = phantom_node_idx + 1
+          phantom_link_idx = phantom_link_idx + 1
+
+        else 
+          print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
+          stop
+        
+        end if
   
       endif 
   
@@ -137,9 +148,9 @@ module BIPquick
     !% This subroutine calculates the ni_P_is_boundary column of the nodeI array
     call calc_is_boundary()
 
-    do ii = 1, size(B_nodeR, 1)
-      print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image), nodeI(ii, ni_P_is_boundary)
-    end do
+    ! do ii = 1, size(B_nodeR, 1)
+    !   print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image), nodeI(ii, ni_P_is_boundary)
+    ! end do
 
     connectivity = connectivity_metric()
   
@@ -499,8 +510,15 @@ module BIPquick
         !% Save the adjacent upstream nodes
         upstream_node_list = B_nodeI(root, :)
 
+        !% Find the links that are in the subnetwork and mark them as being added to a partition
+        do jj = 1, size(linkI, 1)
+          if ( linkI(jj, li_Mnode_d) == root ) then
+            partitioned_links(jj) = .true.
+          end if
+        end do
+
         !% Iterate through the upstream nodes
-        do jj= 1, size(upstream_node_list)
+        do jj = 1, size(upstream_node_list)
 
           !% If the upstream node exists
           if ( upstream_node_list(jj) /= nullValueI ) then
@@ -593,22 +611,26 @@ module BIPquick
     effective_root = nullValueI
    
     do ii=1, size(nodeI,1)
-       if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
+      if (partitioned_nodes(ii) .eqv. .true. ) then
+        cycle
+      end if
+      if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
                < precision_matching_tolerance )  then
-           effective_root = nodeI(ii, ni_idx)
-           ideal_exists = .true.
-           exit
-       endif
-       if (&
+        effective_root = nodeI(ii, ni_idx)
+        ideal_exists = .true.
+        exit
+      endif
+      if (&
            (B_nodeR(ii, totalweight) > partition_threshold) .and. &
            (B_nodeR(ii, totalweight) < nearest_overestimate) &
           ) then
-          nearest_overestimate = B_nodeR(ii, totalweight)
-          effective_root = nodeI(ii, ni_idx)
-       endif
+        nearest_overestimate = B_nodeR(ii, totalweight)
+        effective_root = nodeI(ii, ni_idx)
+      endif
     enddo
    
-    
+    print*, "Effective root:", effective_root
+
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end function calc_effective_root
   !
@@ -650,6 +672,9 @@ module BIPquick
 
       !% The second entry is the first entry + the weight of the link
       weight_range(twoI) = weight_range(oneI) + calc_link_weights(linkI(jj, li_idx))
+
+      ! print*, "Link", jj, "Weight Range", weight_range(:), "Partition Threshold", partition_threshold, &
+      !   "Partitioned Links", partitioned_links(jj)
 
       !% If the partition threshold is between the weight_range entries
       !% and that link has not yet been partitioned
