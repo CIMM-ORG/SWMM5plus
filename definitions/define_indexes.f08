@@ -52,18 +52,18 @@ module define_indexes
     enum, bind(c)
         enumerator :: li_idx = 1
         enumerator :: li_link_type
-        enumerator :: li_weir_type  ! type of weir link
-        enumerator :: li_orif_type  ! type of orifice link
-        enumerator :: li_pump_type  ! type of pump link
+        enumerator :: li_weir_type           ! type of weir link
+        enumerator :: li_orif_type           ! type of orifice link
+        enumerator :: li_pump_type           ! type of pump link
         enumerator :: li_geometry
         enumerator :: li_roughness_type
-        enumerator :: li_N_element  ! Number of elements in this link
-        enumerator :: li_Mnode_u  ! map to upstream node connecting to link
-        enumerator :: li_Mnode_d ! map to downstram node connecting to link
-        enumerator :: li_assigned ! given 1 when link is assigned
-        enumerator :: li_InitialDepthType ! 1=uniform, 2= lineary change, 3=exponential decay
-        enumerator :: li_length_adjusted  ! 1 = length was not adjusted, 2 = one side was adjusted, 3 = both side was adjusted
-        enumerator :: li_P_image ! image number assigned from BIPquick
+        enumerator :: li_N_element           ! Number of elements in this link
+        enumerator :: li_Mnode_u             ! map to upstream node connecting to link
+        enumerator :: li_Mnode_d             ! map to downstram node connecting to link
+        enumerator :: li_assigned            ! given 1 when link is assigned
+        enumerator :: li_InitialDepthType    ! Uniform, LinearlyVarying, ExponentialDecay
+        enumerator :: li_length_adjusted     ! 1 = length was not adjusted, 2 = one side was adjusted, 3 = both side was adjusted
+        enumerator :: li_P_image             ! image number assigned from BIPquick
         enumerator :: li_weir_EndContrations
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
@@ -78,13 +78,13 @@ module define_indexes
     enum, bind(c)
         enumerator :: ni_idx = 1
         enumerator :: ni_node_type
-        enumerator :: ni_N_link_u ! number of upstream links at this node
-        enumerator :: ni_N_link_d ! number of downstram links at this node
-        enumerator :: ni_curve_type ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
-        enumerator :: ni_assigned ! given 1 when node has been assigned to face/elem,
-        enumerator :: ni_total_inflow ! index to total_inflow (-1 if not total_inflow)
-        enumerator :: ni_P_image ! image number assigned from BIPquick
-        enumerator :: ni_P_is_boundary  ! 0=this node has nothing to do with image communication; >0=this node is a partition boundary
+        enumerator :: ni_N_link_u      ! number of upstream links at this node
+        enumerator :: ni_N_link_d      ! number of downstram links at this node
+        enumerator :: ni_curve_type    ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
+        enumerator :: ni_assigned      ! given 1 when node has been assigned to face/elem,
+        enumerator :: ni_total_inflow  ! index to total_inflow (-1 if not total_inflow)
+        enumerator :: ni_P_image       ! image number assigned from BIPquick
+        enumerator :: ni_P_is_boundary ! 0=this node has nothing to do with image communication; >0=this node is a partition boundary
     end enum
     integer, parameter :: ni_idx_base1 = ni_P_is_boundary
 
@@ -126,10 +126,10 @@ module define_indexes
         enumerator :: lr_InitialUpstreamDepth
         enumerator :: lr_InitialDnstreamDepth
         enumerator :: lr_ParabolaValue
-        enumerator :: lr_SideSlope ! for weirs only
-        enumerator :: lr_DischargeCoeff1 ! discharge coefficient for triangular weir part or orifice element
-        enumerator :: lr_DischargeCoeff2 ! discharge coefficient for rectangular weir part
-        enumerator :: lr_FullDepth ! vertical opening of pipe, weir, orifice
+        enumerator :: lr_SideSlope             ! for weirs only
+        enumerator :: lr_DischargeCoeff1       ! discharge coefficient for triangular weir part or orifice element
+        enumerator :: lr_DischargeCoeff2       ! discharge coefficient for rectangular weir part
+        enumerator :: lr_FullDepth             ! vertical opening of pipe, weir, orifice
         enumerator :: lr_Flowrate
         enumerator :: lr_Depth
         enumerator :: lr_DepthUp
@@ -208,8 +208,8 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: P_ni_idx_Partition = 1 ! the node index number
-        enumerator :: P_ni_Partition_No ! the Partition number to which that node index belongs
-        enumerator :: P_ni_is_boundary ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
+        enumerator :: P_ni_Partition_No      ! the Partition number to which that node index belongs
+        enumerator :: P_ni_is_boundary       ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
     end enum
 
     !%-------------------------------------------------------------------------
@@ -217,7 +217,7 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: P_li_idx_Partition = 1 ! the link index number
-        enumerator :: P_li_Partition_No ! the Partition number to which that link index belongs
+        enumerator :: P_li_Partition_No      ! the Partition number to which that link index belongs
     end enum
 
     !%-------------------------------------------------------------------------
@@ -346,7 +346,7 @@ module define_indexes
         enumerator :: ep_JM_ETM                     !% junction mains using ETM method
         enumerator :: ep_JB_AC                      !% junction branches using AC method
         enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
-        enumerator :: ep_JB_ETM                     !% junction branches using ETM method        
+        enumerator :: ep_JB_ETM                     !% junction branches using ETM method
         enumerator :: ep_NonSurcharged_AC           !% all surcharged with AC
         enumerator :: ep_NonSurcharged_ALLtm        !% all time march nonsurcharged
         enumerator :: ep_NonSurcharged_ETM          !% all surcharged with ETM
@@ -361,7 +361,7 @@ module define_indexes
         enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemP = ep_CCJB_eAC_i_fETM 
+    integer, target :: Ncol_elemP = ep_CCJB_eAC_i_fETM
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemPGalltm(:,:), elemPGetm(:,:),
@@ -371,15 +371,15 @@ module define_indexes
 
     enum, bind(c)
         enumerator :: epg_CCJM_rectangular_nonsurcharged = 1 !% CC and JM rectangular channels that are not surcharged
-        enumerator :: epg_CCJM_trapezoidal_nonsurcharged   
+        enumerator :: epg_CCJM_trapezoidal_nonsurcharged
         enumerator :: epg_JB_rectangular                     !% all JB rectangular channels
-        enumerator :: epg_JB_trapezoidal                     
+        enumerator :: epg_JB_trapezoidal
         end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_elemPGalltm =  epg_JB_trapezoidal
     integer, target :: Ncol_elemPGetm   =  epg_JB_trapezoidal
-    integer, target :: Ncol_elemPGac    =  epg_JB_trapezoidal 
-    
+    integer, target :: Ncol_elemPGac    =  epg_JB_trapezoidal
+
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemYN(:,:) arrays
     !% These are the for the full arrays of logical
@@ -549,7 +549,7 @@ module define_indexes
         enumerator ::  fi_Melem_dL                  !% map to element downstream (local index)
         enumerator ::  fi_GhostElem_uL              !% map to upstream ghost element
         enumerator ::  fi_GhostElem_dL              !% map to downstream ghost element
-        enumerator ::  fi_Connected_image           !% image number a shared face connected to 
+        enumerator ::  fi_Connected_image           !% image number a shared face connected to
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
         ! enumerator ::  fi_Melem_dG                 !% map to element upstream (global index)
@@ -624,7 +624,7 @@ module define_indexes
         enumerator :: fYN_isSharedFace
         enumerator :: fYN_isUpGhost
         enumerator :: fYN_isDnGhost
-        enumerator :: fYN_isnull    
+        enumerator :: fYN_isnull
 
         !% HACK: The following might not be needed
         ! enumerator :: fYN_isDiag_adjacent

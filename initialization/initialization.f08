@@ -144,7 +144,11 @@ contains
             nodeI(linkI(ii,li_Mnode_u), ni_N_link_d) = nodeI(linkI(ii,li_Mnode_u), ni_N_link_d) + 1
             nodeI(linkI(ii,li_Mnode_u), ni_idx_base2 + nodeI(linkI(ii,li_Mnode_u), ni_N_link_d)) = ii
 
-            linkI(ii,li_InitialDepthType) = 1 ! TODO - get from params file
+            !% HACK All links have the same initial depth type which is the default one
+            !% a better approach would be to allow specific links to have specific depth
+            !% types via an external JSON file for links whose path can be specified in
+            !% setting%Link%PropertiesFile
+            linkI(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
             linkR(ii,lr_Length) = interface_get_link_attribute(ii, api_conduit_length)
 
             ! linkR(ii,lr_TopWidth): defined in network_define.f08
@@ -227,7 +231,7 @@ contains
 
         !% adjust the link lengths by cutting off a certain portion for the junction branch
         !% this subroutine is called here to correctly estimate the number of elements and faces
-        !% to allocate the coarrays. 
+        !% to allocate the coarrays.
         !% HACK: This might be moved someplace more suitable?
         call init_discretization_adjustlinklength()
 
