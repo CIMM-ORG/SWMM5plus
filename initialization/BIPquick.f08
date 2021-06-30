@@ -30,15 +30,6 @@ module BIPquick
    integer, parameter :: upstream2 = twoI
    integer, parameter :: upstream3 = threeI
 
-   !% BIPquick Arrays
-   integer, allocatable, dimension(:,:)    :: B_nodeI
-   real(8), allocatable, dimension(:,:)    :: B_nodeR
-   real(8), allocatable, dimension(:,:)    :: weight_range
-   logical, allocatable, dimension(:)      :: totalweight_visited_nodes
-   logical, allocatable, dimension(:)      :: partitioned_nodes
-   logical, allocatable, dimension(:)      :: partitioned_links
-   logical, allocatable, dimension(:)      :: accounted_for_links
-
    contains
 
    ! -----------------------------------------------------------------------------------------------------------------

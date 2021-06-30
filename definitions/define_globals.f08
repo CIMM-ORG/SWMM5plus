@@ -152,6 +152,15 @@ module define_globals
     real(8), allocatable :: bcdataDn
     real(8), allocatable :: bcdataUp
 
+    !% BIPquick Arrays - (De)Allocated in BIPquick.f08
+    integer, allocatable, dimension(:,:)    :: B_nodeI
+    real(8), allocatable, dimension(:,:)    :: B_nodeR
+    real(8), allocatable, dimension(:,:)    :: weight_range
+    logical, allocatable, dimension(:)      :: totalweight_visited_nodes
+    logical, allocatable, dimension(:)      :: partitioned_nodes
+    logical, allocatable, dimension(:)      :: partitioned_links
+    logical, allocatable, dimension(:)      :: accounted_for_links
+ 
     !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable, dimension(:) :: adjacent_links
     integer, allocatable, dimension(:) :: elem_per_image
