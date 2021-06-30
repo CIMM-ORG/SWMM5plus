@@ -14,7 +14,7 @@ program main
     call initialize_all()
 
     ! --- Time Loop
-    ! call timeloop_toplevel()
+    call timeloop_toplevel()
 
     ! --- Finalization
     call finalize_all()

@@ -325,8 +325,11 @@ module define_indexes
         enumerator :: ep_AC = 1                     !% all AC elements
         enumerator :: ep_ALLtm                      !% all ETM, AC elements
         enumerator :: ep_CC_AC                      !% all CC elements that are AC
+        enumerator :: ep_CC_AC_surcharged           !% all CC elements that are AC
         enumerator :: ep_CC_ALLtm                   !% all CC elements that are ETM or AC
+        enumerator :: ep_CC_ALLtm_surcharged        !% all CC elements that are AC and surcharged
         enumerator :: ep_CC_ETM                     !% all CC elements that are ETM
+        enumerator :: ep_CC_ETM_surcharged          !% CC elements that are ETM and surcharged
         enumerator :: ep_CC_H_ETM                   !% all CC elements that are ETM for H
         enumerator :: ep_CC_Q_AC                    !% all CC elements that are AC for Q
         enumerator :: ep_CC_Q_ETM                   !% all CC elements that are ETM for Q

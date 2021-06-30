@@ -615,6 +615,31 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC)     )
         endif
+        
+
+        !% ep_CC_AC_surcharged
+        !% - all channel conduit elements elements that are AC and surcharged
+        ptype => col_elemP(ep_CC_AC_surcharged)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (  &
+                    (elemI(:,ei_elementType) == CC) &
+                ) &
+                .and. &
+                (elemI(:,ei_tmType) == AC)        &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .true.) )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (  &
+                    (elemI(:,ei_elementType) == CC) &
+                ) &
+                .and. &
+                (elemI(:,ei_tmType) == AC)        &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .true.) )
+        endif
 
         !% ep_CCJB_AC_surcharged
         !% - all channel conduit or junction branch elements elements that are AC and surcharged
@@ -640,6 +665,38 @@ contains
                 ) &
                 .and. &
                 (elemI(:,ei_tmType) == AC)        &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .true.) )
+        endif
+
+        !% ep_CC_ALLtm_surcharged
+        !% - all channel conduit elements with any time march and surcharged
+        ptype => col_elemP(ep_CC_ALLtm_surcharged)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_tmType) == AC)        &
+                    .or. &
+                    (elemI(:,ei_tmType) == ETM)  &
+                ) &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .true.) )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_tmType) == AC)        &
+                    .or. &
+                    (elemI(:,ei_tmType) == ETM)  &
+                ) &
                 .and. &
                 (elemYN(:,eYN_isSurcharged) .eqv. .true.) )
         endif
@@ -749,6 +806,32 @@ contains
                  ) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
+                )
+        endif
+        
+        !% ep_CC_ETM_surcharged
+        !% - all channel conduit or junction branch that are ETM and surcharged
+        ptype => col_elemP(ep_CC_ETM_surcharged)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                 ) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .true.) &
+                )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                 ) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .true.) &
                 )
         endif
 

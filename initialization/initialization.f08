@@ -81,6 +81,9 @@ contains
 
         call init_IC_setup ()
 
+        !% wait for all the processors to reach this stage before starting the time loop
+        sync all
+
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all
     !
