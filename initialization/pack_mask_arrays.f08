@@ -1300,16 +1300,15 @@ contains
         !
         !--------------------------------------------------------------------------
         integer :: ii
-        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:), c_image(:)
+        integer, pointer :: ptype, npack, fIdx(:), eup, edn, gup, gdn
+        integer, pointer :: c_image, N_shared_faces, thisP
 
         character(64) :: subroutine_name = 'pack_static_shared_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
-        fIdx => faceI(:,fi_Lidx)
-        eup  => faceI(:,fi_Melem_uL)
-        edn  => faceI(:,fi_Melem_dL)
+        fIdx    => faceI(:,fi_Lidx)
 
         ! % fp_all (shared faces)
         !% - all faces that are shared across images (Internal Boundary Faces)
@@ -1324,41 +1323,52 @@ contains
                 faceYN(:,fYN_isSharedFace) )
         endif
 
-        max_caf_Gelem_N = npack
-        ! Compute max_caf_Gelem_N across images
         sync all
-        call co_max(max_caf_Gelem_N)
-
-        !% HACK: the code below has to be rewritten for shared faces
 
         !% fp_Diag (shared faces)
         !% - all faces adjacent to a diagnostic element which is shared across images
-        ! ptype => col_facePS(fp_Diag)
-        ! npack => npack_facePS(ptype)
+        ptype => col_facePS(fp_Diag)
+        npack => npack_facePS(ptype)
 
-        ! % HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
-        ! % meaning not a boundary, shared, null face
-        ! % this theory needs testing
-        ! npack =  count( &
-        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_HeqType) == diagnostic)) &
-        !         .or. &
-        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_QeqType) == diagnostic)) &
-        !         .or. &
-        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_HeqType) == diagnostic)) &
-        !         .or. &
-        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
+        !% pointer towards the total number of shared faces in an image
+        N_shared_faces  => npack_facePS(fp_all)
 
-        ! if (npack > 0) then
-        !     facePS(1:npack, ptype) = pack( fIdx, &
-        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_HeqType) == diagnostic)) &
-        !         .or. &
-        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_QeqType) == diagnostic)) &
-        !         .or. &
-        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_HeqType) == diagnostic)) &
-        !         .or. &
-        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
-        ! endif
+        if (N_shared_faces > 0) then
+            do ii = 1,N_shared_faces
+                thisP   => facePS(ii,fp_all)
+                eup     => faceI(thisP,fi_Melem_uL)
+                edn     => faceI(thisP,fi_Melem_dL)
+                gup     => faceI(thisP,fi_GhostElem_uL)
+                gdn     => faceI(thisP,fi_GhostElem_dL)
+                c_image => faceI(thisP,fi_Connected_image)
 
+                if (eup == nullvalueI) then                              
+                   if ((elemI(gup,ei_HeqType)[c_image] == diagnostic) .or.  &
+                       (elemI(gup,ei_QeqType)[c_image] == diagnostic) .or.  &
+                       (elemI(edn,ei_HeqType)          == diagnostic) .or.  &
+                       (elemI(edn,ei_QeqType)          == diagnostic))   then
+
+                        !% advance the number of pack value
+                        npack = npack + oneI
+                        !% save the face index 
+                        facePS(npack,ptype) = thisP
+                    endif
+
+                elseif (edn == nullvalueI) then                         
+                    if ((elemI(gdn,ei_HeqType)[c_image] == diagnostic) .or.  &
+                        (elemI(gdn,ei_QeqType)[c_image] == diagnostic) .or.  &
+                        (elemI(eup,ei_HeqType)          == diagnostic) .or.  &
+                        (elemI(eup,ei_QeqType)          == diagnostic))  then
+
+                        !% advance the number of pack value
+                        npack = npack + oneI
+                        !% save the face index 
+                        facePS(npack,ptype) = thisP
+                    endif
+                endif
+            end do
+        endif
+        
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_static_shared_faces
     !
@@ -1377,39 +1387,59 @@ contains
         !--------------------------------------------------------------------------
 
         integer          :: ii
-        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:)
+        integer, pointer :: ptype, npack, fIdx(:)
+        integer, pointer :: N_shared_faces, thisP, eup, edn, gup, gdn, c_image
 
         character(64) :: subroutine_name = 'pack_dynamic_shared_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        
+        sync all
 
         fIdx => faceI(:,fi_Lidx)
-        eup  => faceI(:,fi_Melem_uL)
-        edn  => faceI(:,fi_Melem_dL)
-
-        !% HACK: the code below has to be rewritten for shared faces
 
         !% fp_AC (shared faces)
         !% - faces with any AC adjacent which is shared across images
-        ! ptype => col_facePS(fp_AC)
-        ! npack => npack_facePS(ptype)
+        ptype => col_facePS(fp_AC)
+        npack => npack_facePS(ptype)
 
-        ! !% HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
-        ! !% this theory needs testing
+        !% pointer towards the total number of shared faces in an image
+        N_shared_faces  => npack_facePS(fp_all)
 
-        ! npack = count( &
-        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
-        !         .or. &
-        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
-        ! if (npack > 0) then
-        !     facePS(1:npack, ptype) = pack( fIdx, &
-        !         ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
-        !         .or. &
-        !         ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
-        ! endif
+        if (N_shared_faces > 0) then
+            do ii = 1,N_shared_faces
+                thisP   => facePS(ii,fp_all)
+                eup     => faceI(thisP,fi_Melem_uL)
+                edn     => faceI(thisP,fi_Melem_dL)
+                gup     => faceI(thisP,fi_GhostElem_uL)
+                gdn     => faceI(thisP,fi_GhostElem_dL)
+                c_image => faceI(thisP,fi_Connected_image)
 
-        !% fp_JumpUp
+                if (eup == nullvalueI) then 
+                    if ((elemI(gup,ei_tmType)[c_image] == AC) .or.  &
+                        (elemI(edn,ei_tmType)          == AC))  then
+
+                        !% advance the number of pack value
+                        npack = npack + oneI
+                        !% save the face index 
+                        facePS(npack,ptype) = thisP
+                    endif
+
+                elseif (edn == nullvalueI) then
+                    if ((elemI(gdn,ei_tmType)[c_image] == AC) .or.  &
+                        (elemI(eup,ei_tmType)          == AC))  then
+
+                        !% advance the number of pack value
+                        npack = npack + oneI
+                        !% save the face index 
+                        facePS(npack,ptype) = thisP
+                    endif
+                endif
+            end do
+        endif
+
+        !% fp_JumpUp (shared faces)
         !% -Hydraulic jump from nominal upstream to downstream
         ptype => col_facePS(fp_JumpUp)
         npack => npack_facePS(ptype)

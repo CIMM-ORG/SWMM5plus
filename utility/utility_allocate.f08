@@ -1023,24 +1023,5 @@ contains
             if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
 
     end subroutine util_allocate_check
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine util_allocate_interior_boundary_elements()
-        character(64) :: subroutine_name = 'util_allocate_interior_boundary_elements'
-
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
-
-        allocate(elemGR(max_caf_Gelem_N, Ncol_elemR), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
-        elemGR(:,:) = nullvalueR
-
-        allocate(elemGI(max_caf_Gelem_N, Ncol_elemI), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
-        elemGI(:,:) = nullvalueI
-
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
-    end subroutine util_allocate_interior_boundary_elements
 
 end module utility_allocate
