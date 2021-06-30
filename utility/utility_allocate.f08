@@ -59,7 +59,6 @@ contains
 
         !% If BIPquick is being used for Partitioning, include additional rows to the link-node arrays
         if (setting%Partitioning%PartitioningMethod == BQuick) then
-            ! HACK - have to hard code the num_images until I can get the CAFRUN to work
             additional_rows = num_images() - 1
         end if
 
@@ -103,6 +102,17 @@ contains
         allocate(adjacent_links(max_us_branch_per_node + max_ds_branch_per_node))
         allocate(elem_per_image(num_images()))
         allocate(image_full(num_images()))
+
+        !% If BIPquick is being used for Partitioning, allocate additional arrays
+        if (setting%Partitioning%PartitioningMethod == BQuick) then
+            allocate(B_nodeI(size(nodeI,1), max_us_branch_per_node))    
+            allocate(B_nodeR(size(nodeR,1), twoI))
+            allocate(totalweight_visited_nodes(size(nodeI, oneI)))
+            allocate(partitioned_nodes(size(nodeI, oneI)))
+            allocate(partitioned_links(size(linkI, oneI)))
+            allocate(weight_range(size(linkI, oneI), twoI))
+            allocate(accounted_for_links(size(linkI, oneI)))
+        end if
     end subroutine util_allocate_partitioning_arrays
     !
     !==========================================================================
@@ -112,6 +122,18 @@ contains
         deallocate(adjacent_links)
         deallocate(elem_per_image)
         deallocate(image_full)
+
+                !% If BIPquick is being used for Partitioning, allocate additional arrays
+        if (setting%Partitioning%PartitioningMethod == BQuick) then
+            deallocate(B_nodeI)    
+            deallocate(B_nodeR)
+            deallocate(totalweight_visited_nodes)
+            deallocate(partitioned_nodes)
+            deallocate(partitioned_links)
+            deallocate(weight_range)
+            deallocate(accounted_for_links)
+        end if
+
     end subroutine util_deallocate_partitioning_arrays
     !
     !==========================================================================

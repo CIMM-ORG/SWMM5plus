@@ -57,8 +57,8 @@ module BIPquick
     ! -----------------------------------------------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
-    !% Allocate the B_nodeI and B_nodeR temporary arrays needed for BIPquick
-    call bip_allocate_arrays()
+    !% Initialize the temporary arrays needed for BIPquick
+    call bip_initialize_arrays()
   
     !% This subroutine populates B_nodeI with the upstream neighbors for a given node
     call bip_network_processing()
@@ -154,15 +154,13 @@ module BIPquick
 
     connectivity = connectivity_metric()
   
-    !% This subroutine deallocates all of the array variables used in BIPquick
-    call bip_deallocate_arrays()
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
   end subroutine init_partitioning_BIPquick
   !
   !==========================================================================   
   !========================================================================== 
   !
-  subroutine bip_allocate_arrays()
+  subroutine bip_initialize_arrays()
       ! ----------------------------------------------------------------------------------------------------------------
       !
       ! Description:
@@ -174,54 +172,16 @@ module BIPquick
       ! -----------------------------------------------------------------------------------------------------------------
       if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
-      allocate(B_nodeI(size(nodeI,1), max_us_branch_per_node))
       B_nodeI(:,:) = nullValueI
-  
-      allocate(B_nodeR(size(nodeR,1), twoI))
       B_nodeR(:,:) = zeroR
-  
-      allocate(totalweight_visited_nodes(size(nodeI, oneI)))
       totalweight_visited_nodes(:) = .false.
-  
-      allocate(partitioned_nodes(size(nodeI, oneI)))
       partitioned_nodes(:) = .false.
-  
-      allocate(partitioned_links(size(linkI, oneI)))
       partitioned_links(:) = .false.
-  
-      allocate(weight_range(size(linkI, oneI), twoI))
       weight_range(:,:) = zeroR
-
-      allocate(accounted_for_links(size(linkI, oneI)))
       accounted_for_links = .false.
   
       if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
-  end subroutine bip_allocate_arrays
-  !
-  !==========================================================================   
-  !========================================================================== 
-  !
-  subroutine bip_deallocate_arrays()
-      ! ----------------------------------------------------------------------------------------------------------------
-      !
-      ! Description:
-      !   This subroutine deallocates the temporary arrays that are needed for the BIPquick algorithm
-      !
-      ! -----------------------------------------------------------------------------------------------------------------
-      character(64) :: subroutine_name = 'bip_deallocate_arrays'
-      ! -----------------------------------------------------------------------------------------------------------------
-      if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
-  
-      deallocate(B_nodeI)
-      deallocate(B_nodeR)
-      deallocate(totalweight_visited_nodes)
-      deallocate(partitioned_nodes)
-      deallocate(partitioned_links)
-      deallocate(weight_range)
-      deallocate(accounted_for_links)
-  
-      if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
-  end subroutine bip_deallocate_arrays
+  end subroutine bip_initialize_arrays
   !
   !==========================================================================   
   !========================================================================== 
@@ -531,25 +491,35 @@ module BIPquick
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
+    !% Save the system nodes as potential endpoints
     potential_endpoints(:) = nodeI(:, ni_idx)
 
     !% HACK - I'm not sure if this logic is air tight
 
+    !% For each link, if the link is not nullValueI
     do jj=1, size(linkI,1)
       if ( linkI(jj, li_idx) /= nullValueI ) then
+
+          !% Save the endpoints of that link
           endpoint_up = linkI(jj, li_Mnode_u)
           endpoint_dn = linkI(jj, li_Mnode_d)
+
+          !% If the endpoints are in the nodes array and the link has not been accounted for
           if ( any(potential_endpoints(:) == endpoint_up) .and. &
                 any(potential_endpoints(:) == endpoint_dn) .and. &
                 ( accounted_for_links(jj) .eqv. .false.) ) then
                 
+                !% Assign the link to the downstream node's image
                 dn_image = nodeI(endpoint_dn, ni_P_image)
                 linkI(jj, li_P_image) = dn_image
+
+                !% Set the accounted for boolean to true
                 accounted_for_links(jj) = .true.
             endif
         endif
      enddo
 
+     !% This do loop just checks any links that somehow slipped through
      do jj=1, size(accounted_for_links, 1)
         if ( ( accounted_for_links(jj) .eqv. .false. ) &
           .and. ( linkI(jj, li_idx) /= nullValueI ) ) then
@@ -586,28 +556,45 @@ module BIPquick
     !--------------------------------------------------------------------------
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
+    !% The nearest overestimate is set above the max_weight as a buffer
     nearest_overestimate = max_weight*1.1
+
+    !% The effective_root is initialized as a nullValueI
     effective_root = nullValueI
    
+    !% Searching through each node
     do ii=1, size(nodeI,1)
+
+      !% If the node has already been partitioned then go to the next one
       if (partitioned_nodes(ii) .eqv. .true. ) then
         cycle
       end if
+
+      !% If the node's totalweight matches the partition_threshold to within a tolerance
       if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
                < precision_matching_tolerance )  then
+
+        !% Then the effective root is set and the ideal (Case 1) boolean is set to true
         effective_root = nodeI(ii, ni_idx)
         ideal_exists = .true.
         exit
       endif
+
+      !% Alternatively, if the totalweight is greater than the partition threshold and 
+      !% less than the nearest overestimate
       if (&
            (B_nodeR(ii, totalweight) > partition_threshold) .and. &
            (B_nodeR(ii, totalweight) < nearest_overestimate) &
           ) then
+
+        !% Then update the nearest overestimate and set the effective root
         nearest_overestimate = B_nodeR(ii, totalweight)
         effective_root = nodeI(ii, ni_idx)
       endif
     enddo
    
+    !% The effective root is the one that most nearly overestimates the partition threshold
+    !% reverse The Price Is Right style
     print*, "Effective root:", effective_root
 
     if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
@@ -1009,6 +996,7 @@ module BIPquick
 
      connectivity = 0
 
+     !% The sum of the ni_P_is_boundary column is the connectivity value
      do ii = 1, size(nodeI, 1)
       connectivity = connectivity + nodeI(ii, ni_P_is_boundary)
      end do
