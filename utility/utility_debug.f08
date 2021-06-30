@@ -15,11 +15,12 @@ Module utility_debug
 
 contains
 
-  subroutine debug_2D_array_csv(file_name_input, type, arr_real, arr_int, arr_log)
-
+  subroutine debug_2D_array_csv(file_name_input, type, header, arr_real, arr_int, arr_log)
+    
     character(64) :: subroutine_name = 'debug_2D_array_csv'
-    character(len = *), intent(in) :: file_name_input !file name wanted
-    character(len = 1), intent(in) :: type !the type of file you are trying to print out
+    character(len = *), intent(in) :: file_name_input !% file name wanted
+    character(len = 1), intent(in) :: type !% this should be I or i for int, R or r for real and L or l for log
+    character(len = *), optional, intent(in) :: header !% header that is printed at the top of the file
     real(8), optional, intent(in) :: arr_real(:,:) 
     integer, optional, intent(in) :: arr_int(:,:)  
     logical, optional, intent(in) :: arr_log(:,:)  
@@ -30,21 +31,24 @@ contains
     if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
     
-    !fu stands for file unit which will be tied to the image and tells the system what file to open
+    !% fu stands for file unit which will be tied to the image and tells the system what file to open
     fu = this_image()
 
-    !here we create the file name that will be opened by the code
+    !& here we create the file name that will be opened by the code
     write(str_image, '(i1)') fu
     file_name = 'debug/'//trim(file_name_input)//'_'//trim(str_image)//'.csv'
 
-    !opening the file, as well as error handing if the open fails
+    !% opening the file, as well as error handing if the open fails
     open (action='write', file=file_name, status='replace', iostat=rc, newunit=fu)
     if (rc .ne. 0) then
        write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
     end if
 
+    write(fu,'(A)', advance = "no") header
+    write(Fu, *)
+
     
-    !We write to the file depending on the array type selected.
+    !% We write to the file depending on the array type selected.
     
     if (type == 'R' .or. type == 'r') then
     
@@ -83,7 +87,7 @@ contains
        
     end if
        
-    !closing the file
+    !% closing the file
     close(fu) 
     
 
@@ -104,7 +108,7 @@ contains
 
     total_faces = 0
 
-    !Looping through elemI, and finding the last local index
+    !% Looping through elemI, and finding the last local index
     do ii=1, size(elemI(:,ei_Lidx))
 
        if(elemI(ii,ei_Mface_uL) /= nullvalueI .and.  total_faces < elemI(ii,ei_Mface_uL) ) then
@@ -121,7 +125,7 @@ contains
 
     end do
 
-    !Then we compare it to N_Face and print if it is the same or not.
+    !% Then we compare it to N_Face and print if it is the same or not.
 
     if(total_faces == N_face(this_image())) then
 
