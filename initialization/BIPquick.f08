@@ -29,7 +29,16 @@ module BIPquick
    integer, parameter :: upstream1 = oneI
    integer, parameter :: upstream2 = twoI
    integer, parameter :: upstream3 = threeI
-  
+
+   !% BIPquick Arrays
+   integer, allocatable, dimension(:,:)    :: B_nodeI
+   real(8), allocatable, dimension(:,:)    :: B_nodeR
+   real(8), allocatable, dimension(:,:)    :: weight_range
+   logical, allocatable, dimension(:)      :: totalweight_visited_nodes
+   logical, allocatable, dimension(:)      :: partitioned_nodes
+   logical, allocatable, dimension(:)      :: partitioned_links
+   logical, allocatable, dimension(:)      :: accounted_for_links
+
    contains
 
    ! -----------------------------------------------------------------------------------------------------------------
@@ -115,12 +124,16 @@ module BIPquick
 
         end do
 
+        !% The outcomes of the Case 3 while loop are a Case 1
         if ( ideal_exists .eqv. .true. ) then
+
+          !% In which case traverse the subnetwork from the effective_root
           call trav_subnetwork(effective_root, image)
 
+        !% Or Case 2
         else if ( spanning_link /= nullValueI ) then
   
-          !% The distance along the spanning_link to the phantom node is calculated
+          !% In which case the distance along the spanning_link to the phantom node is calculated
           phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
 
           !% This subroutine creates a phantom node/link and adds it to nodeI/linkI
@@ -147,10 +160,6 @@ module BIPquick
 
     !% This subroutine calculates the ni_P_is_boundary column of the nodeI array
     call calc_is_boundary()
-
-    ! do ii = 1, size(B_nodeR, 1)
-    !   print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image), nodeI(ii, ni_P_is_boundary)
-    ! end do
 
     connectivity = connectivity_metric()
   
@@ -277,29 +286,6 @@ module BIPquick
   !============================================================================ 
   !============================================================================ 
   ! 
-  subroutine BIPquick_Optimal_Hardcode()
-      integer :: ii
-  
-      nodeI(:, ni_P_image) = (/1, 1, 1, 2, 3, 3, 1, 1, 2, 2, 2, 2, 3, 3, 3, 1, 3/)
-      linkI(:, li_P_image) = (/1, 1, 1, 2, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 1, 1, 1/)
-  
-  end subroutine BIPquick_Optimal_Hardcode    
-  !
-  !============================================================================ 
-  !============================================================================ 
-  ! 
-  subroutine BIPquick_YJunction_Hardcode()
-    integer :: ii
-  
-    nodeI(:, ni_P_image) = (/1, 2, 1, 3, -998877, -998877/)
-    nodeI(:, ni_P_is_boundary) = (/0, 0, 1, 0, -998877, -998877/)
-    linkI(:, li_P_image) = (/1, 2, 3, -998877, -998877/)
-  
-  end subroutine BIPquick_YJunction_Hardcode
-  !
-  !============================================================================ 
-  !============================================================================ 
-  !
   function calc_link_weights(link_index) result(weight)
     ! ----------------------------------------------------------------------------
     !  
@@ -555,6 +541,8 @@ module BIPquick
     if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
   
     potential_endpoints(:) = nodeI(:, ni_idx)
+
+    !% HACK - I'm not sure if this logic is air tight
 
     do jj=1, size(linkI,1)
       if ( linkI(jj, li_idx) /= nullValueI ) then
