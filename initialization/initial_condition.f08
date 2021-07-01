@@ -16,6 +16,7 @@ module initial_condition
     use pack_mask_arrays
     use update
     use face
+    use diagnostic_elements
 
     implicit none
 
@@ -60,8 +61,21 @@ contains
         !% update all the auxiliary variables
         call update_auxiliary_variables (solver)
 
+        !% update diagnostic interpolation weights
+        !% (the interpolation weights of diagnostic elements
+        !% stays the same throughout the simulation. Thus, they
+        !% are only needed to be set at the top of the simulation)
+        call diagnostic_element_interpolation_weights()
+
+        !% set small values to diagnostic element interpolation sets
+        !% so that junk values does not mess up the first interpolation
+        call init_set_small_values_diagnostic_elements
+
         !% update faces
         call face_interpolation (fp_all)
+
+        !% update the initial condition in all diagnostic elements
+        call diagnostic_toplevel()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -1012,7 +1026,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine init_set_zero_values_diagnostic_elems (DiagElemType)
+    subroutine init_set_small_values_diagnostic_elements ()
     !--------------------------------------------------------------------------
     !
     !% set the volume, area, head, other geometry, and flow to zero values
@@ -1021,28 +1035,67 @@ contains
     !
     !--------------------------------------------------------------------------
 
-        integer, intent(in) :: DiagElemType
-        character(64)       :: subroutine_name = 'init_set_zero_values_diagnostic_elems'
+        character(64)       :: subroutine_name = 'init_set_small_values_diagnostic_elements'
 
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
 
-        where (elemI(:,ei_elementType) .eq. DiagElemType)
-
+        where ( (elemI(:,ei_QeqType) == diagnostic) .or. (elemI(:,ei_HeqType) == diagnostic))
             !% HACK: settings%ZeroValues should be used here
             !% when the code is finalized
-
-            elemR(:,er_Area)     = 1.0e-6 
-            elemR(:,er_Depth)    = 1.0e-6
+            elemR(:,er_Area)     = 1.0e-6
+            elemR(:,er_Topwidth) = 1.0e-6  
+            elemR(:,er_HydDepth) = 1.0e-6
             elemR(:,er_Flowrate) = 1.0e-6 
             elemR(:,er_Head)     = 1.0e-6
-            elemR(:,er_Volume)   = 1.0e-6
-
         endwhere
 
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
-    end subroutine init_set_zero_values_diagnostic_elems
+    end subroutine init_set_small_values_diagnostic_elements
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine diagnostic_element_interpolation_weights ()
+    !--------------------------------------------------------------------------
+    !
+    !% set the interpolation weights for diagnostic elements
+    !
+    !--------------------------------------------------------------------------
+
+        character(64)       :: subroutine_name = 'diagnostic_element_interpolation_weights'
+
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
+
+
+        !% Q-diagnostic elements will have minimum interp weights for Q
+        where (elemI(:,ei_QeqType) == diagnostic)
+
+            elemR(:,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Minimum
+            elemR(:,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Minimum
+            elemR(:,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Maximum
+
+        endwhere
+
+        !% Q-diagnostic elements will have minimum interp weights for H and G
+        where (elemI(:,ei_HeqType) == diagnostic)
+
+            elemR(:,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Maximum
+            elemR(:,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Minimum
+            elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Minimum
+            elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Minimum
+            elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
+
+        endwhere
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine diagnostic_element_interpolation_weights
     !
     !==========================================================================
     !==========================================================================

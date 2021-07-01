@@ -65,7 +65,6 @@ contains
                    print*, elemP(:,ep_Diag)[ii], 'all diagnostic elements'
                    print*, '.................face logicals......................'
                    print*, faceM(:,fm_all)[ii], 'all the faces except boundary and null faces'
-                   print*, faceP(:,fp_IBF)[ii], 'all the internal boundary faces'
                    call execute_command_line('')
                 enddo
 
