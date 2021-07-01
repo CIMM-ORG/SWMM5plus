@@ -84,20 +84,20 @@ contains
                    print*, '----------------------------------------------------'
                    print*, 'image = ', ii
                    print*, '.....................elements.......................'
+                   print*, elemI(:,ei_elementType)[ii], 'element type'
+                   print*, elemI(:,ei_geometryType)[ii],'element geometry'
                    print*, '-------------------Geometry Data--------------------'
-                   print*, elemI(:,ei_elementType)[ii], 'elementType'
-                   print*, elemI(:,ei_geometryType)[ii], 'Geometry'
-                   print*, elemR(:,er_Depth)[ii], 'Depth'
-                   print*, elemR(:,er_Area)[ii], 'Area'
-                   print*, elemR(:,er_Head)[ii], 'Head'
-                   print*, elemR(:,er_Topwidth)[ii], 'Topwidth'
-                   print*, elemR(:,er_Volume)[ii],'Volume'
+                   print*, elemR(:,er_Depth)[ii], 'depth'
+                   print*, elemR(:,er_Area)[ii], 'area'
+                   print*, elemR(:,er_Head)[ii], 'head'
+                   print*, elemR(:,er_Topwidth)[ii], 'topwidth'
+                   print*, elemR(:,er_Volume)[ii],'volume'
                    print*, '-------------------Dynamics Data--------------------'
-                   print*, elemR(:,er_Flowrate)[ii], 'Flowrate'
-                   print*, elemR(:,er_Velocity)[ii], 'Velocity'
-                   print*, elemR(:,er_FroudeNumber)[ii], 'Froude Number'
-                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'TImescale Q up'
-                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'TImescale Q dn'
+                   print*, elemR(:,er_Flowrate)[ii], 'flowrate'
+                   print*, elemR(:,er_Velocity)[ii], 'velocity'
+                   print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
+                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'timescale Q up'
+                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'timescale Q dn'
                    print*, '..................faces..........................'
                    print*, faceR(:,fr_Area_u)[ii], 'face area up'
                    print*, faceR(:,fr_Area_d)[ii], 'face area dn'
@@ -1048,7 +1048,6 @@ contains
             elemR(:,er_Head)     = 1.0e-6
         endwhere
 
-
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_set_small_values_diagnostic_elements
     !
@@ -1070,26 +1069,22 @@ contains
 
         !% Q-diagnostic elements will have minimum interp weights for Q
         where (elemI(:,ei_QeqType) == diagnostic)
-
             elemR(:,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Maximum
-
         endwhere
 
         !% Q-diagnostic elements will have minimum interp weights for H and G
         where (elemI(:,ei_HeqType) == diagnostic)
-
             elemR(:,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
-
         endwhere
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
