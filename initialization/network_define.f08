@@ -53,8 +53,7 @@ contains
         !% divide the link node networks in elements and faces
         call init_network_datacreate()
 
-        sync all
-        !% print result
+        !% print results
         if (setting%Debug%File%network_define) then
             !% only using the first processor to print results
             if (this_image() == 1) then
@@ -82,14 +81,10 @@ contains
                    print*, '----------------------------------------------------'
                    call execute_command_line('')
                 enddo
-
             endif
         endif
 
-        sync all
-
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-
     end subroutine init_network
     !
     !==========================================================================

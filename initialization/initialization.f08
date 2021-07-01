@@ -73,9 +73,6 @@ contains
         call init_linknode_arrays()
 
         call init_partitioning()
-        
-        ! sync all 
-        !% HACK: this sync call is probably not needed
 
         call init_network()
 
