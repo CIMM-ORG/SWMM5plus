@@ -80,12 +80,11 @@ contains
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
-
                 do ii = 1,num_images()
                    print*, '----------------------------------------------------'
                    print*, 'image = ', ii
-                   print*, '..................elements..........................'
-                   print*, 'GEOMETRY DATA'
+                   print*, '.....................elements.......................'
+                   print*, '-------------------Geometry Data--------------------'
                    print*, elemI(:,ei_elementType)[ii], 'elementType'
                    print*, elemI(:,ei_geometryType)[ii], 'Geometry'
                    print*, elemR(:,er_Depth)[ii], 'Depth'
@@ -93,7 +92,7 @@ contains
                    print*, elemR(:,er_Head)[ii], 'Head'
                    print*, elemR(:,er_Topwidth)[ii], 'Topwidth'
                    print*, elemR(:,er_Volume)[ii],'Volume'
-                   print*, 'DYNAMICS DATA'
+                   print*, '-------------------Dynamics Data--------------------'
                    print*, elemR(:,er_Flowrate)[ii], 'Flowrate'
                    print*, elemR(:,er_Velocity)[ii], 'Velocity'
                    print*, elemR(:,er_FroudeNumber)[ii], 'Froude Number'
@@ -107,7 +106,6 @@ contains
                    print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
                    call execute_command_line('')
                 enddo
-
             endif
         endif
 
