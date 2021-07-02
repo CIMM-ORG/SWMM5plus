@@ -81,7 +81,8 @@ contains
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays()
 
-        !% partition the network for multi-processor parallel computation
+        call init_bc()
+
         call init_partitioning()
 
         ! sync all
@@ -126,70 +127,70 @@ contains
         ! Allocate storage for link & node tables
         call util_allocate_linknode()
 
-        nodeI(:,ni_N_link_u) = 0
-        nodeI(:,ni_N_link_d) = 0
+        node%I(:,ni_N_link_u) = 0
+        node%I(:,ni_N_link_d) = 0
 
         do ii = 1, N_link
-            linkI(ii,li_idx) = ii
-            linkI(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
-            linkI(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
-            linkI(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
-            linkI(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
+            link%I(ii,li_idx) = ii
+            link%I(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
+            link%I(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
+            link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
+            link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
 
             ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
-            linkI(ii, li_N_element) = 10
+            link%I(ii, li_N_element) = 10
 
-            nodeI(linkI(ii,li_Mnode_d), ni_N_link_u) = nodeI(linkI(ii,li_Mnode_d), ni_N_link_u) + 1
-            nodeI(linkI(ii,li_Mnode_d), ni_idx_base1 + nodeI(linkI(ii,li_Mnode_d), ni_N_link_u)) = ii
-            nodeI(linkI(ii,li_Mnode_u), ni_N_link_d) = nodeI(linkI(ii,li_Mnode_u), ni_N_link_d) + 1
-            nodeI(linkI(ii,li_Mnode_u), ni_idx_base2 + nodeI(linkI(ii,li_Mnode_u), ni_N_link_d)) = ii
+            node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
+            node%I(link%I(ii,li_Mnode_d), ni_idx_base1 + node%I(link%I(ii,li_Mnode_d), ni_N_link_u)) = ii
+            node%I(link%I(ii,li_Mnode_u), ni_N_link_d) = node%I(link%I(ii,li_Mnode_u), ni_N_link_d) + 1
+            node%I(link%I(ii,li_Mnode_u), ni_idx_base2 + node%I(link%I(ii,li_Mnode_u), ni_N_link_d)) = ii
 
             !% HACK All links have the same initial depth type which is the default one
             !% a better approach would be to allow specific links to have specific depth
             !% types via an external JSON file for links whose path can be specified in
             !% setting%Link%PropertiesFile
-            linkI(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
-            linkR(ii,lr_Length) = interface_get_link_attribute(ii, api_conduit_length)
+            link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
+            link%R(ii,lr_Length) = interface_get_link_attribute(ii, api_conduit_length)
 
-            ! linkR(ii,lr_TopWidth): defined in network_define.f08
-            linkR(ii,lr_BreadthScale) = interface_get_link_attribute(ii, api_link_xsect_wMax)
-            ! linkR(ii,lr_Slope): defined in network_define.f08
-            linkR(ii,lr_LeftSlope) = interface_get_link_attribute(ii, api_link_left_slope)
-            linkR(ii,lr_RightSlope) = interface_get_link_attribute(ii, api_link_right_slope)
-            linkR(ii,lr_Roughness) = interface_get_link_attribute(ii, api_conduit_roughness)
-            linkR(ii,lr_InitialFlowrate) = interface_get_link_attribute(ii, api_link_q0)
-            linkR(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(linkI(ii,li_Mnode_u), api_node_initDepth)
-            linkR(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(linkI(ii,li_Mnode_d), api_node_initDepth)
-            linkR(ii,lr_InitialDepth) = (linkR(ii,lr_InitialDnstreamDepth) + linkR(ii,lr_InitialUpstreamDepth)) / 2.0
+            ! link%R(ii,lr_TopWidth): defined in network_define.f08
+            link%R(ii,lr_BreadthScale) = interface_get_link_attribute(ii, api_link_xsect_wMax)
+            ! link%R(ii,lr_Slope): defined in network_define.f08
+            link%R(ii,lr_LeftSlope) = interface_get_link_attribute(ii, api_link_left_slope)
+            link%R(ii,lr_RightSlope) = interface_get_link_attribute(ii, api_link_right_slope)
+            link%R(ii,lr_Roughness) = interface_get_link_attribute(ii, api_conduit_roughness)
+            link%R(ii,lr_InitialFlowrate) = interface_get_link_attribute(ii, api_link_q0)
+            link%R(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_u), api_node_initDepth)
+            link%R(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_d), api_node_initDepth)
+            link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
         end do
 
         do ii = 1, N_node
-            total_n_links = nodeI(ii,ni_N_link_u) + nodeI(ii,ni_N_link_d)
-            nodeI(ii, ni_idx) = ii
+            total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
+            node%I(ii, ni_idx) = ii
             if (interface_get_node_attribute(ii, api_node_type) == oneI) then ! OUTFALL
-                nodeI(ii, ni_node_type) = nBCdn
+                node%I(ii, ni_node_type) = nBCdn
             else if ((total_n_links == twoI)         .and. &
-                     (nodeI(ii,ni_N_link_u) == oneI) .and. &
-                     (nodeI(ii,ni_N_link_d) == oneI) )then
-                nodeI(ii, ni_node_type) = nJ2
+                     (node%I(ii,ni_N_link_u) == oneI) .and. &
+                     (node%I(ii,ni_N_link_d) == oneI) )then
+                node%I(ii, ni_node_type) = nJ2
             else if (total_n_links >= twoI) then
-                nodeI(ii, ni_node_type) = nJm
+                node%I(ii, ni_node_type) = nJm
             end if
             ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
             l1 = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
             l2 = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
             if (l1 .or. l2) then
-                nodeYN(ii, nYN_has_inflow) = .true.
+                node%YN(ii, nYN_has_inflow) = .true.
                 if (total_n_links == 1) then
-                    nodeI(ii, ni_node_type) = nBCup
+                    node%I(ii, ni_node_type) = nBCup
                 end if
-                ! if (nodeI(ii,ni_N_link_u) == zeroI) then
-                !     nodeI(ii, ni_node_type) = nBCup
+                ! if (node%I(ii,ni_N_link_u) == zeroI) then
+                !     node%I(ii, ni_node_type) = nBCup
                 ! end if
             end if
 
-            nodeR(ii,nr_InitialDepth) = interface_get_node_attribute(ii, api_node_initDepth)
-            nodeR(ii,nr_Zbottom) = interface_get_node_attribute(ii, api_node_invertElev)
+            node%R(ii,nr_InitialDepth) = interface_get_node_attribute(ii, api_node_initDepth)
+            node%R(ii,nr_Zbottom) = interface_get_node_attribute(ii, api_node_invertElev)
         end do
 
         !% Update Link/Node names
@@ -207,6 +208,53 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine init_bc()
+        ! call util_allocate_bc()
+        ! integer :: ii, nidx, counter_bc_er
+        ! !% Initialize Inflow BCs
+        ! !% BC%I(ii, bi_face_idx) is assigned later
+        ! do ii = 1, N_inflow_BC
+        !     BC%I(ii, bi_idx) = ii
+        !     BC%I(ii, bi_now) = 1
+        !     nidx = node%P%have_inflow_BC(ii)
+        !     BC%I(ii, bi_node_idx) = nidx
+        !     !% Check if node has inflow BC
+        !     if (interface_get_node_attribute(nidx, api_node_has_dwfInflow) &
+        !         .or. interface_get_node_attribute(nidx, api_node_has_extInflow)) then
+        !         BC%I(ii, bi_category) = BC_inflow
+        !     else if (nodeI(nidx, ni_node_type) == nBCdn) then
+        !         BC%I(ii, bi_category) = BC_depth
+        !         if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_FREE_OUTFALL) then
+        !             BC%I(ii, bi_subcategory) = BC_d_free
+        !         else if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_NORMAL_OUTFALL) then
+        !             BC%I(ii, bi_subcategory) = BC_d_normal
+        !         else if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_FIXED_OUTFALL) then
+        !             BC%I(ii, bi_subcategory) = BC_d_fixed
+        !             BC
+        !         else if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_TIDAL_OUTFALL) then
+        !             BC%I(ii, bi_subcategory) = BC_d_tidal
+        !         else if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_TIMESERIES_OUTFALL) then
+        !             BC%I(ii, bi_subcategory) = BC_d_tseries
+        !         end if
+        !     end if
+
+        !     BC%I(ii, bi_category) = node
+        !     if (BC%) then
+
+        !     end if
+        !     BC%I(ii, bi_xr_idx) =
+        ! end do
+
+        ! !% Initialize Elevation BCs
+        ! !% BC%I(ii, bi_face_idx) is assigned later
+        ! do ii = 1, N_elevation_BC
+        !     BC%I(ii, bi_idx) = ii
+        !     BC%I(ii, bi_now) = 1
+        !     BC%I(ii, bi_node_idx) = node%P%have_elevation_BC(ii)
+        !     BC%I(ii, bi_category) = BCdn
+        !     BC%I(ii, bi_xr_idx) = ii
+        ! end do
+    end subroutine init_bc
 
     subroutine init_partitioning()
     !-----------------------------------------------------------------------------
@@ -270,14 +318,14 @@ contains
         allocate(N_unique_face(size(unique_imagenum,1)))
 
         do ii=1, size(unique_imagenum,1)
-            node_index = PACK([(counter, counter=1,size(nodeI,1))], nodeI(:, ni_P_image) .eq. unique_imagenum(ii))
-            link_index = PACK([(counter, counter=1,size(linkI,1))], linkI(:, li_P_image) .eq. unique_imagenum(ii))
+            node_index = PACK([(counter, counter=1,size(node%I,1))], node%I(:, ni_P_image) == unique_imagenum(ii))
+            link_index = PACK([(counter, counter=1,size(link%I,1))], link%I(:, li_P_image) == unique_imagenum(ii))
             ! create corresponding indices for node and link in this image
 
             ! The number of elements and faces is actually decided by the junctions
             ! So we will calculate the number of junction and base on different scenarios to decided
             ! how many elem/face are assigned to each image
-            junction_counter = count(nodeI(node_index, ni_node_type) == nJm)
+            junction_counter = count(node%I(node_index, ni_node_type) == nJm)
 
             !% first calculate the number of nodes in each partition, assign elems/faces for junctions
             elem_counter = elem_counter + J_elem_add * junction_counter
@@ -286,18 +334,18 @@ contains
             !% loop through the links and calculate the internal faces between elements
             do jj = 1, size(link_index,1)
                 idx = link_index(jj)
-                face_counter = face_counter + linkI(idx, li_N_element) - 1 !% internal faces between elems, e.g. 5 elements have 4 internal faces
-                elem_counter = elem_counter + linkI(idx, li_N_element) ! number of elements
+                face_counter = face_counter + link%I(idx, li_N_element) - 1 !% internal faces between elems, e.g. 5 elements have 4 internal faces
+                elem_counter = elem_counter + link%I(idx, li_N_element) ! number of elements
             enddo
 
             !% now we loop through the nodes and count the node faces
             do jj = 1, size(node_index,1)
                 idx = node_index(jj)
-                if (nodeI(idx, ni_node_type) .eq. nJ2) then
+                if (node%I(idx, ni_node_type) == nJ2) then
                     face_counter = face_counter + 1 !% add the face of 1-to-1 junction between 2 links
-                elseif (nodeI(idx, ni_node_type) .eq. nBCup) then
+                elseif (node%I(idx, ni_node_type) == nBCup) then
                     face_counter = face_counter +1 !% add the upstream faces
-                elseif (nodeI(idx, ni_node_type) .eq. nBCdn) then
+                elseif (node%I(idx, ni_node_type) == nBCdn) then
                     face_counter = face_counter +1 !% add the downstream faces
                 endif !% multiple junction faces already counted
             enddo
@@ -306,14 +354,14 @@ contains
             do jj = 1, size(link_index,1)
                 idx = link_index(jj)
                 !% check upstream node first
-                if ( ( nodeI(linkI(idx, li_Mnode_u), ni_P_is_boundary) .eq. 1) .and. &
-                    ( nodeI(linkI(idx, li_Mnode_u), ni_P_image) .ne. ii) ) then
+                if ( ( node%I(link%I(idx, li_Mnode_u), ni_P_is_boundary) == 1) .and. &
+                    ( node%I(link%I(idx, li_Mnode_u), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
                 endif
                 ! then downstream node
-                if ( ( nodeI(linkI(idx, li_Mnode_d), ni_P_is_boundary) .eq. 1) .and. &
-                    ( nodeI(linkI(idx, li_Mnode_d), ni_P_image) .ne. ii) ) then
+                if ( ( node%I(link%I(idx, li_Mnode_d), ni_P_is_boundary) == 1) .and. &
+                    ( node%I(link%I(idx, li_Mnode_d), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
                 endif

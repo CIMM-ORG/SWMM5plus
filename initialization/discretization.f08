@@ -37,21 +37,21 @@ contains
         if (setting%Debug%File%discretization) print *, '*** enter ', subroutine_name
 
         do ii =1, N_link
-            temp_length = linkR(ii,lr_Length) ! lenght of link ii
+            temp_length = link%R(ii,lr_Length) ! lenght of link ii
             Adjustment_flag = oneI
 
-            if ( nodeI(linkI(ii,li_Mnode_u), ni_node_type) .eq. nJm ) then
+            if ( node%I(link%I(ii,li_Mnode_u), ni_node_type) == nJm ) then
                 temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for upstream M junction
                 Adjustment_flag = Adjustment_flag + oneI
             endif
 
-            if ( nodeI(linkI(ii,li_Mnode_d), ni_node_type) .eq. nJm ) then
+            if ( node%I(link%I(ii,li_Mnode_d), ni_node_type) == nJm ) then
                 temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for downstream M junction
                 Adjustment_flag = Adjustment_flag + oneI
             endif
 
-            linkR(ii,lr_AdjustedLength) = temp_length
-            linkI(ii,li_length_adjusted) = Adjustment_flag
+            link%R(ii,lr_AdjustedLength) = temp_length
+            link%I(ii,li_length_adjusted) = Adjustment_flag
         enddo
 
         if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name
@@ -77,16 +77,16 @@ contains
         if (setting%Debug%File%discretization) print *, '*** enter ', subroutine_name
 
         do ii = 1, N_link
-            remainder = mod(linkR(ii,lr_Length), elem_nominal_length)
-            if ( remainder .eq. zeroR ) then
-                linkI(ii, li_N_element) = int(linkR(ii, lr_Length)/elem_nominal_length)
-                linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
+            remainder = mod(link%R(ii,lr_Length), elem_nominal_length)
+            if ( remainder == zeroR ) then
+                link%I(ii, li_N_element) = int(link%R(ii, lr_Length)/elem_nominal_length)
+                link%R(ii, lr_ElementLength) = link%R(ii, lr_Length)/link%I(ii, li_N_element)
             elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
-                linkI(ii, li_N_element) = ceiling(linkR(ii,lr_Length)/elem_nominal_length)
-                linkR(ii, lr_ElementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
+                link%I(ii, li_N_element) = ceiling(link%R(ii,lr_Length)/elem_nominal_length)
+                link%R(ii, lr_ElementLength) = link%R(ii, lr_Length)/link%I(ii, li_N_element)
             else
-                linkI(ii, li_N_element) = floor(linkR(ii,lr_Length)/elem_nominal_length)
-                linkR(ii, lr_ELementLength) = linkR(ii, lr_Length)/linkI(ii, li_N_element)
+                link%I(ii, li_N_element) = floor(link%R(ii,lr_Length)/elem_nominal_length)
+                link%R(ii, lr_ELementLength) = link%R(ii, lr_Length)/link%I(ii, li_N_element)
             endif
         enddo
 

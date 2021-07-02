@@ -231,7 +231,7 @@
             "weir_elements" : false
         },
         "FileGroup" : {
-            "all" : false,
+            "all" : true,
             "definitions" : false,
             "finalization" : false,
             "geometry" : false,

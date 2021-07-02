@@ -236,9 +236,6 @@ contains
 
         N_link = get_num_objects(API_LINK)
         N_node = get_num_objects(API_NODE)
-        N_curve = get_num_objects(API_CURVES)
-        N_tseries = get_num_objects(API_TSERIES)
-        N_pattern = get_num_objects(API_TIMEPATTERN)
 
         !% Defines start and end simulation times
         !% SWMM defines start and end dates as epoch times in days
@@ -255,9 +252,6 @@ contains
             print *, new_line("")
             print *, "N_link", N_link
             print *, "N_node", N_node
-            print *, "N_curve", N_curve
-            print *, "N_tseries", N_tseries
-            print *, "N_pattern", N_pattern
             print *, new_line("")
             print *, "SWMM start time", swmm_start_time
             print *, "SWMM end time", swmm_end_time
@@ -310,23 +304,23 @@ contains
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
 
         do ii = 1, N_node
-            call ptr_api_get_object_name(api, ii-1, nodeName(ii)%str, API_NODE)
+            call ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
         end do
 
         do ii = 1, N_link
-            call ptr_api_get_object_name(api, ii-1, linkName(ii)%str, API_LINK)
+            call ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
         end do
 
         if (setting%Debug%File%interface) then
             print *, new_line("")
             print *, "List of Links"
             do ii = 1, N_link
-                print *, "- ", linkName(ii)%str
+                print *, "- ", link%Names(ii)%str
             end do
             print *, new_line("")
             print *, "List of Nodes"
             do ii = 1, N_node
-                print *, "- ", nodeName(ii)%str
+                print *, "- ", node%Names(ii)%str
             end do
             print *, new_line("")
             print *, '*** leave ', subroutine_name
@@ -529,6 +523,12 @@ contains
             ! print *, "LINK", link_value, attr
         end if
     end function interface_get_link_attribute
+
+    !%-----------------------------------------------------------------------------
+    !%  |
+    !%  |   Boundary Conditions (execute after initialization only)
+    !%  V
+    !%-----------------------------------------------------------------------------
 
     !%=============================================================================
     !% PRIVATE

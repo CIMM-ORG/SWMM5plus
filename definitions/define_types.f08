@@ -58,23 +58,6 @@ module define_types
         type(diagnosticVolumeType)  :: Volume
     end type diagnosticType
 
-    !% boundary condition data
-    type bcType
-        integer :: Idx
-        integer :: NodeID
-        integer :: FaceID
-        integer :: ElemGhostID
-        integer :: ElemInsideID
-        integer :: Updn      ! bc_updn_...  (0 = upstream,  1 = downstream)
-        integer :: Category  ! bc_category_... (0 = elevation, 1 = inflowrate)
-        real(8), allocatable :: TimeArray(:)
-        real(8), allocatable :: ValueArray(:)
-        real(8)    :: ThisValue
-        real(8)    :: ThisTime
-        real(8)    :: ThisFlowrate
-    end type bcType
-
-    ! --- File Handling
     type steady_state_record
         character(len=52) :: id_time
         real(8) :: flowrate
@@ -82,4 +65,35 @@ module define_types
         real(8) :: depth
         real(8) :: froude
     end type steady_state_record
+
+    !% ==============================================================
+    !% Arrays
+    !% ==============================================================
+
+    type NodePack
+        integer, allocatable :: have_QBC(:)
+        integer, allocatable :: have_HBC(:)
+    end type NodePack
+
+    type NodeArray
+        integer,      allocatable :: I(:,:)   !% integer data for nodes
+        real(8),      allocatable :: R(:,:)   !% real data for nodes
+        logical,      allocatable :: YN(:,:)  !% logical data for nodes
+        type(string), allocatable :: Names(:) !% names for nodes retrieved from EPA-SWMM
+        type(NodePack)            :: P        !% packs for nodes
+    end type NodeArray
+
+    type LinkArray
+        integer,      allocatable :: I(:,:)   !% integer data for links
+        real(8),      allocatable :: R(:,:)   !% real data for links
+        logical,      allocatable :: YN(:,:)  !% logical data for links
+        type(string), allocatable :: Names(:) !% names for links retrieved from EPA-SWMM
+    end type LinkArray
+
+    type BCArray
+        integer,      allocatable :: QI(:,:)   !% integer data for inflow BCs
+        integer,      allocatable :: HI(:,:)   !% integer data for elevation BCs
+        real(8),      allocatable :: QR(:,:,:) !% time series data for inflow BC
+        real(8),      allocatable :: HR(:,:,:) !% time series data for elevation BC
+    end type BCArray
 end module define_types

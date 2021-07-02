@@ -30,38 +30,38 @@ contains
     if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
     !% Looping through the array and finding all of the unqiue values
-    min_val = minval(linkI(:,li_idx)) - 1 
-    max_val = maxval(linkI(:,li_idx))
+    min_val = minval(link%I(:,li_idx)) - 1 
+    max_val = maxval(link%I(:,li_idx))
     ii = 0
     
     do while(min_val<max_val)
        ii = ii + 1
-       min_val = minval(linkI(:,li_idx),mask=linkI(:,li_idx)>min_val)
+       min_val = minval(link%I(:,li_idx),mask=link%I(:,li_idx)>min_val)
     end do
     
-    if(ii /= size(linkI(:, li_idx))) then
-       print *, "ERROR:::: linkI(:,li_idx) is not unique. This_image ::", this_image()
+    if(ii /= size(link%I(:, li_idx))) then
+       print *, "ERROR:::: link%I(:,li_idx) is not unique. This_image ::", this_image()
     else
-       print *, "linkI(:,li_idx) is unique. This_image ::", this_image()
+       print *, "link%I(:,li_idx) is unique. This_image ::", this_image()
     end if
     
-    !% checking nodeI(:,:) indexes
+    !% checking node%I(:,:) indexes
     
-    min_val = minval(nodeI(:,ni_idx)) - 1
-    max_val = maxval(nodeI(:,ni_idx))
+    min_val = minval(node%I(:,ni_idx)) - 1
+    max_val = maxval(node%I(:,ni_idx))
     ii = 0
 
     do while(min_val<max_val)
        ii = ii + 1
-       min_val = minval(nodeI(:,ni_idx),mask=nodeI(:,ni_idx)>min_val)
+       min_val = minval(node%I(:,ni_idx),mask=node%I(:,ni_idx)>min_val)
     end do
 
     
 
-    if(ii /= size(nodeI(:, ni_idx))) then
-       print *, "ERROR:::: nodeI(:,ni_idx) is not unique. This_image ::", this_image()
+    if(ii /= size(node%I(:, ni_idx))) then
+       print *, "ERROR:::: node%I(:,ni_idx) is not unique. This_image ::", this_image()
     else
-       print *, "nodeI(:,ni_idx) is unique. This_image ::", this_image()
+       print *, "node%I(:,ni_idx) is unique. This_image ::", this_image()
     end if
 
 
@@ -1481,13 +1481,13 @@ contains
       kk = 1
       counter = 0
 
-      !% We can find if there is a node on each image by counting the amount of unique values there is inside of nodeI(:,ni_P_image)
-      !% So we use the code below to loop through nodeI(:,ni_P_image) and find all the unique values
+      !% We can find if there is a node on each image by counting the amount of unique values there is inside of node%I(:,ni_P_image)
+      !% So we use the code below to loop through node%I(:,ni_P_image) and find all the unique values
       
-      do ii = 1, size(nodeI(:,ni_P_image))
+      do ii = 1, size(node%I(:,ni_P_image))
          do jj = 1, ii
             
-            if((nodeI(ii, ni_P_image)) == nodeI(jj, ni_P_image)) then
+            if((node%I(ii, ni_P_image)) == node%I(jj, ni_P_image)) then
                exit 
             end if
          end do
@@ -1511,10 +1511,10 @@ contains
       !% We reset the counter and do the same process for the Links
       counter = 0
 
-      do ii = 1, size(linkI(:,li_P_image))
+      do ii = 1, size(link%I(:,li_P_image))
          do jj = 1, ii
             
-            if((linkI(ii, li_P_image)) == linkI(jj, li_P_image)) then
+            if((link%I(ii, li_P_image)) == link%I(jj, li_P_image)) then
                exit 
             end if
          end do
@@ -1547,16 +1547,16 @@ contains
       if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
       invalid_slope = .false.
-      do ii = 1, size(linkR(:,lr_Slope))
+      do ii = 1, size(link%R(:,lr_Slope))
 
-         if(linkR(ii, lr_slope) < 0) then
+         if(link%R(ii, lr_slope) < 0) then
             invalid_slope = .true.
             exit
          end if
       end do
 
       if(invalid_slope .eqv. .true.) then
-         print *, "error found in linkR(:,lr_slope) slope is negative. This_image :: ", this_image()
+         print *, "error found in link%R(:,lr_slope) slope is negative. This_image :: ", this_image()
       else
          print *, "all slopes are postive.  This_image :: ", this_image()
       end if
@@ -1627,11 +1627,11 @@ contains
 
       !integer ii, jj
 
-      !do ii = 1, size(linkI(:,linktype))
+      !do ii = 1, size(link%I(:,linktype))
 
-         !if(linkI(ii, linktype) .eq. lchannel) then
+         !if(link%I(ii, linktype) .eq. lchannel) then
 
-          !  select case(linkI(ii,li_geometry)
+          !  select case(link%I(ii,li_geometry)
 
      !          case(lRectangular)
 

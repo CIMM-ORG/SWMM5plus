@@ -22,14 +22,14 @@ module define_api_keys
         enumerator :: API_LINK
     end enum
 
-    ! SWMM Table types ($API_DIR/src/enums.h -> ObjectType)
+    !% SWMM Table types ($API_DIR/src/enums.h -> ObjectType)
     enum, bind(c)
         enumerator :: API_TIMEPATTERN = 6
         enumerator :: API_CURVES
         enumerator :: API_TSERIES
     end enum
 
-    ! SWMM XSECT_TYPES ($API_DIR/src/enums.h -> XsectType)
+    !% SWMM XSECT_TYPES ($API_DIR/src/enums.h -> XsectType)
     enum, bind(c)
         enumerator :: API_RECT_CLOSED = 3
         enumerator :: API_RECT_OPEN
@@ -38,7 +38,7 @@ module define_api_keys
         enumerator :: API_PARABOLIC
     end enum
 
-    ! SWMM PATTERN TYPES ($API_DIR/src/enums.h -> PatternType)
+    !% SWMM PATTERN TYPES ($API_DIR/src/enums.h -> PatternType)
     enum, bind(c)
         enumerator :: API_MONTHLY_PATTERN = 0
         enumerator :: API_DAILY_PATTERN
@@ -46,13 +46,22 @@ module define_api_keys
         enumerator :: API_WEEKEND_PATTERN
     end enum
 
-    ! API VARS
+    !% SWMM outfall types
+    enum, bind(c)
+        enumerator :: API_FREE_OUTFALL = 0
+        enumerator :: API_NORMAL_OUTFALL
+        enumerator :: API_FIXED_OUTFALL
+        enumerator :: API_TIDAL_OUTFALL
+        enumerator :: API_TIMESERIES_OUTFALL
+    end enum
+
+    !% API VARS
     enum, bind(c)
         enumerator :: API_NODES_WITH_EXTINFLOW = 1000
         enumerator :: API_NODES_WITH_DWFINFLOW
     end enum
 
-    ! API Node Attributes
+    !% API Node Attributes
     enum, bind(c)
         enumerator :: api_node_ID = 1
         enumerator :: api_node_type
@@ -74,7 +83,7 @@ module define_api_keys
         enumerator :: api_node_overflow
     end enum
 
-    ! API link attributes
+    !% API link attributes
     enum, bind(c)
         enumerator :: api_link_ID = 1
         enumerator :: api_link_subIndex

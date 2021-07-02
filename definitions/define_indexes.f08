@@ -45,8 +45,9 @@ module define_indexes
         enumerator :: Junction_branch_6_out
     end enum
     integer, target :: Nelem_in_Junction = Junction_branch_6_out
+
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for nodeI(:,:) arrays
+    !% Define the column indexes for node%I(:,:) arrays
     !% These are the for the full arrays of integer data
     !%-------------------------------------------------------------------------
     enum, bind(c)
@@ -72,7 +73,7 @@ module define_indexes
     integer, target :: Ncol_linkI = li_last_elem_idx
 
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for nodeI(:,:) arrays
+    !% Define the column indexes for node%I(:,:) arrays
     !% These are the for the full arrays of integer data
     !%-------------------------------------------------------------------------
     enum, bind(c)
@@ -106,43 +107,7 @@ module define_indexes
     integer, target :: Ncol_nodeI = ni_idx_base2 + max_branch_per_node/2
 
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for linkR(:,:) arrays
-    !% These are the for the full arrays of real data
-    !%-------------------------------------------------------------------------
-    enum, bind(c)
-        enumerator :: lr_Length = 1
-        enumerator :: lr_AdjustedLength ! lenght adjustment if multi-link junction is present
-        enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
-        enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
-        enumerator :: lr_BreadthScale
-        enumerator :: lr_TopWidth
-        enumerator :: lr_ElementLength
-        enumerator :: lr_Slope
-        enumerator :: lr_LeftSlope
-        enumerator :: lr_RightSlope
-        enumerator :: lr_Roughness
-        enumerator :: lr_InitialFlowrate
-        enumerator :: lr_InitialDepth
-        enumerator :: lr_InitialUpstreamDepth
-        enumerator :: lr_InitialDnstreamDepth
-        enumerator :: lr_ParabolaValue
-        enumerator :: lr_SideSlope             ! for weirs only
-        enumerator :: lr_DischargeCoeff1       ! discharge coefficient for triangular weir part or orifice element
-        enumerator :: lr_DischargeCoeff2       ! discharge coefficient for rectangular weir part
-        enumerator :: lr_FullDepth             ! vertical opening of pipe, weir, orifice
-        enumerator :: lr_Flowrate
-        enumerator :: lr_Depth
-        enumerator :: lr_DepthUp
-        enumerator :: lr_DepthDn
-        enumerator :: lr_Volume
-        enumerator :: lr_Velocity
-        enumerator :: lr_Capacity
-    end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_linkR = lr_Capacity
-
-    !%-------------------------------------------------------------------------
-    !% Define the column indexes for nodeYN(:,:) arrays
+    !% Define the column indexes for node%R(:,:) arrays
     !% These are the for the full arrays of real data
     !%-------------------------------------------------------------------------
     enum, bind(c)
@@ -182,7 +147,7 @@ module define_indexes
     integer, target :: Ncol_nodeR = nr_idx_base2 + max_branch_per_node/2
 
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for nodeYN(:,:) arrays
+    !% Define the column indexes for node%YN(:,:) arrays
     !% These are the for the full arrays of logical
     !%-------------------------------------------------------------------------
     enum, bind(c)
@@ -193,7 +158,68 @@ module define_indexes
     integer, target :: Ncol_nodeYN  = nYN_temp1
 
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for linkYN(:,:) arrays
+    !% Define the column indexes for link%R(:,:) arrays
+    !% These are the for the full arrays of real data
+    !%-------------------------------------------------------------------------
+    enum, bind(c)
+        enumerator :: lr_Length = 1
+        enumerator :: lr_AdjustedLength ! lenght adjustment if multi-link junction is present
+        enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
+        enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
+        enumerator :: lr_BreadthScale
+        enumerator :: lr_TopWidth
+        enumerator :: lr_ElementLength
+        enumerator :: lr_Slope
+        enumerator :: lr_LeftSlope
+        enumerator :: lr_RightSlope
+        enumerator :: lr_Roughness
+        enumerator :: lr_InitialFlowrate
+        enumerator :: lr_InitialDepth
+        enumerator :: lr_InitialUpstreamDepth
+        enumerator :: lr_InitialDnstreamDepth
+        enumerator :: lr_ParabolaValue
+        enumerator :: lr_SideSlope             ! for weirs only
+        enumerator :: lr_DischargeCoeff1       ! discharge coefficient for triangular weir part or orifice element
+        enumerator :: lr_DischargeCoeff2       ! discharge coefficient for rectangular weir part
+        enumerator :: lr_FullDepth             ! vertical opening of pipe, weir, orifice
+        enumerator :: lr_Flowrate
+        enumerator :: lr_Depth
+        enumerator :: lr_DepthUp
+        enumerator :: lr_DepthDn
+        enumerator :: lr_Volume
+        enumerator :: lr_Velocity
+        enumerator :: lr_Capacity
+    end enum
+    !% note, this must be changed to whatever the last enum element is
+    integer, target :: Ncol_linkR = lr_Capacity
+
+    !% Column indexes for BC_xI(:,:)
+    enum, bind(c)
+        enumerator :: bi_idx = 1
+        enumerator :: bi_now         ! index of current BC value
+        enumerator :: bi_node_idx
+        enumerator :: bi_face_idx
+        enumerator :: bi_category
+        enumerator :: bi_subcategory
+        enumerator :: bi_xr_idx      ! BC%xR idx if elevation BC, -1 otherwise
+    end enum
+    !% HACK - we will probably want to create a different set of indexes for BC_Q and BC_H tables
+    !% For instance, BC_Q tables will probably need addititonal information to distribute flowrates
+    !% over link elements.
+    integer, parameter :: N_QBC_I = bi_xr_idx
+    integer, parameter :: N_HBC_I = bi_xr_idx
+
+    !% Column indexes for BC_xR(:,:,:)
+    enum, bind(c)
+        enumerator :: br_time = 1
+        enumerator :: br_value
+    end enum
+    ! HACK - we will probably want to change the dimensions of QBC and HBC real tables
+    integer, parameter :: N_HBC_R = br_value
+    integer, parameter :: N_QBC_R = br_value
+
+    !%-------------------------------------------------------------------------
+    !% Define the column indexes for link%YN(:,:) arrays
     !% These are the for the full arrays of logical
     !%-------------------------------------------------------------------------
     enum, bind(c)
@@ -202,23 +228,6 @@ module define_indexes
     end enum
     !% note, this must be changed to whatever the last enum element is
     integer, target :: Ncol_linkYN  = lYN_temp1
-
-    !%-------------------------------------------------------------------------
-    !% COLUMN INDEXES FOR INTEGER DATA IN P_nodeI partitioning arrays
-    !%-------------------------------------------------------------------------
-    enum, bind(c)
-        enumerator :: P_ni_idx_Partition = 1 ! the node index number
-        enumerator :: P_ni_Partition_No      ! the Partition number to which that node index belongs
-        enumerator :: P_ni_is_boundary       ! a binary marker that is 1 when the node is shared between partitions in the link-node paradigm
-    end enum
-
-    !%-------------------------------------------------------------------------
-    !% COLUMN INDEXES FOR INTEGER DATA IN P_linkI partitioning arrays
-    !%-------------------------------------------------------------------------
-    enum, bind(c)
-        enumerator :: P_li_idx_Partition = 1 ! the link index number
-        enumerator :: P_li_Partition_No      ! the Partition number to which that link index belongs
-    end enum
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemI(:,:) array

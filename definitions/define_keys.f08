@@ -88,12 +88,21 @@ module define_keys
         enumerator :: type2_Pump            !% type 2 pump type
         enumerator :: type3_Pump            !% type 3 pump type
         enumerator :: type4_Pump            !% type 4 pump type
-        !% BC face types
-        enumerator :: BCup                  !% Up BC face
-        enumerator :: BCdn                  !% Dn BC face
-        enumerator :: critical              !% critical depth BC designator
-        enumerator :: depth                 !% depth (subcritical) BC designator
-        enumerator :: flowrate              !% flowrate BC designato
+        !% BC face types ----- BC%I(:,bi_category)
+        enumerator :: BC_elevation
+        enumerator :: BC_inflow
+        !% BC subcategory (Q - flowrate)
+        enumerator :: BC_Q_fixed
+        enumerator :: BC_Q_tseries
+        !% BC subcategory (H - head)
+        enumerator :: BC_H_free             !% minimum of critical flow depth an normal flow depth
+        enumerator :: BC_H_normal           !% outfall stage based on normal flow depth in connecting conduit
+        enumerator :: BC_H_fixed            !% outfall stage set to a fixed value
+        enumerator :: BC_H_tidal            !% outfall stage given by a table of tide elevation versus time of day
+        enumerator :: BC_H_tseries          !% outfall stage supplied from a time series of elevations
+        !% face types
+        enumerator :: BCup
+        enumerator :: BCdn
         !% face jump types
         enumerator :: jump_none             !% type of hydraulic jump
         enumerator :: jump_from_upstream    !% type of hydraulic jump
@@ -106,18 +115,9 @@ module define_keys
         enumerator :: doesnotexist          !% used in various places to indicate something doesn't exist
         enumerator :: vshape                !% type of adjustment
         enumerator :: vshape_surcharge_only !% type of adjustment
-        enumerator :: FroudeNumber          !% data types for limiter BC approach
-    end enum
-
-    ! data types for bcdata
-    integer, parameter :: bc_updn_downstream = 1
-    integer, parameter :: bc_updn_upstream = 0
-    integer, parameter :: bc_category_elevation = 0
-    integer, parameter :: bc_category_inflowrate = 1
-
-    ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
-    enum, bind(c)
-        enumerator :: Default = 1
+        enumerator :: FroudeNumber          !% data types for limiter BC approachs
+        ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
+        enumerator :: Default
         enumerator :: BQuick
         enumerator :: Random
         enumerator :: BLink

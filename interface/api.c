@@ -93,45 +93,6 @@ void DLLEXPORT api_finalize(void* f_api)
 
 // --- Property-extraction
 
-// * During Simulation
-
-int DLLEXPORT api_get_node_results(void* f_api, char* node_name, float* inflow, float* overflow, float* depth, float* volume)
-//
-//  Input:    f_api = Interface object passed as a void*
-//            node_name = string identifier of node
-//            inflow, overflow, depth, volume =
-//  Output: None
-//  Purpose: Closes the link with the EPA-SWMM library
-//
-{
-    int j, error;
-    Interface * api = (Interface*) f_api;
-
-    error = check_api_is_initialized(api);
-    if (error != 0) return error;
-
-    j = project_findObject(NODE, node_name);
-    *inflow = Node[j].inflow;
-    *overflow = Node[j].overflow;
-    *depth = Node[j].newDepth;
-    *volume = Node[j].newVolume;
-    return 0;
-}
-
-int DLLEXPORT api_get_link_results(void* f_api, char* link_name, float* flow, float* depth, float* volume)
-{
-    int j, error;
-    Interface * api = (Interface*) f_api;
-
-    error = check_api_is_initialized(api);
-    if (error != 0) return error;
-    j = project_findObject(LINK, link_name);
-    *flow = Link[j].newFlow;
-    *depth = Link[j].newDepth;
-    *volume = Link[j].newVolume;
-    return 0;
-}
-
 // * After Initialization
 
 double DLLEXPORT api_get_start_datetime()

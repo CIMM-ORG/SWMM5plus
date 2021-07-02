@@ -31,18 +31,13 @@ module define_globals
 
     !% Main Arrays - Allocated in allocate_storage.f08
     !%  links are the building blocks from SWMM link-node formulation
-    real(8), allocatable, target :: linkR(:,:)                                       !% real data for links
-    integer, allocatable, target :: linkI(:,:)                                       !% integer data for links
-    logical, allocatable, target :: linkYN(:,:)                                      !% logical data for links
+    type(LinkArray), target :: link
 
-    type(string), allocatable, target :: linkName(:)                                            !% array of character strings
+    !%  nodes are the building blocks from the SWMM link-node formulation
+    type(NodeArray), target :: node
 
-    !%  nodes are the building blocks from teh SWMM link-node formulation
-    real(8), allocatable, target :: nodeR(:,:)                                       !% real data for nodes
-    integer, allocatable, target :: nodeI(:,:)                                       !% integer data for nodes
-    logical, allocatable, target :: nodeYN(:,:)                                      !% logical data for nodes
-
-    type(string), allocatable, target :: nodeName(:) ! array of character strings
+    !% Boundary conditions
+    type(BCArray), target :: BC
 
     !%  columns of element and face arrays
     integer, allocatable, target :: col_elemI(:)[:]                                !% columns of elemI array
@@ -143,12 +138,8 @@ module define_globals
     !% Number of objects
     integer :: N_link
     integer :: N_node
-    integer :: N_curve
-    integer :: N_tseries
-    integer :: N_pattern
-    integer :: N_inflow
-    integer :: N_BCupstream
-    integer :: N_BCdnstream
+    integer :: N_HBC
+    integer :: N_QBC
     integer :: N_nBCup
     integer :: N_nBCdn
     integer :: N_nJm
