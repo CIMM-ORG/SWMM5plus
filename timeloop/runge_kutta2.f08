@@ -38,7 +38,7 @@ module runge_kutta2
         character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         if (setting%Debug%File%runge_kutta2) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
-        !% RK2 solution step 1 -- single time advance step 
+        !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1   
         call rk2_step_ETM (istep)
 
@@ -47,7 +47,7 @@ module runge_kutta2
 
         !% RK2 solution step 4 -- all face interpolation
         call face_interpolation(fp_all)
-        
+
         !% RK2 solution step 5 -- update diagnostic elements and faces
         if (N_diag > 0) then
             call diagnostic_toplevel()
@@ -90,6 +90,11 @@ module runge_kutta2
         if (setting%Debug%File%runge_kutta2) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', subroutine_name
+
+
+        print *, "need rk2_toplevel_AC to be written"
+        stop 57839
+
     end subroutine rk2_toplevel_AC    
     !%
     !%==========================================================================  

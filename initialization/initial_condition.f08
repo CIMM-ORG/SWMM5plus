@@ -864,7 +864,7 @@ contains
         end if
 
         !%................................................................
-        !% Junctin Branches
+        !% Junction Branches
         !%................................................................
         !% loopthrough all the branches
         do ii = 1,max_branch_per_node
@@ -900,7 +900,7 @@ contains
                         elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
 
                         !% Junction branch k-factor
-                        !% HACK: if the user doesnot input the k-factor for junction brnaches,
+                        !% HACK: if the user does not input the k-factor for junction brnaches,
                         !% get a default value from the setting
                         if (nodeR(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
                             elemSR(JBidx,eSr_JunctionBranch_Kfactor) = nodeR(thisJunctionNode,nr_JunctionBranch_Kfactor)
@@ -1005,16 +1005,18 @@ contains
 
                 print*, 'In, ', subroutine_name
                 print*, 'AC solver is not handeled at this moment'
+                stop 83974
 
             case (ETM_AC)
 
                 print*, 'In, ', subroutine_name
                 print*, 'ETM-AC solver is not handeled at this moment'
+                stop 2975
             case default
 
                 print*, 'In, ', subroutine_name
                 print*, 'error: unknown solver, ', solver
-                stop
+                stop 81878
 
         end select
 
@@ -1071,6 +1073,9 @@ contains
 
 
         !% Q-diagnostic elements will have minimum interp weights for Q
+        !% and maximum interp values for G and H
+        !% Theses serve to force the Q value of the diagnostic element to the faces
+        !% the G and H values are obtained from adjacent elements.
         where (elemI(:,ei_QeqType) == diagnostic)
 
             elemR(:,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Minimum
@@ -1082,7 +1087,10 @@ contains
 
         endwhere
 
-        !% Q-diagnostic elements will have minimum interp weights for H and G
+        !% H-diagnostic elements will have minimum interp weights for H and G
+        !% and maximum interp weights for Q
+        !% These serve to force the G, and H values of the diagnostic element to the faces
+        !% and the Q value is obtained from adjacent elements
         where (elemI(:,ei_HeqType) == diagnostic)
 
             elemR(:,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Maximum

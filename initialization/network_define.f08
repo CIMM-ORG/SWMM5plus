@@ -812,7 +812,7 @@ contains
         ElemGlobalCounter = ElemGlobalCounter + oneI
 
         !%................................................................
-        !% Handle Junctin Branches
+        !% Handle Junction Branches
         !%................................................................
 
         !% initialize selecteros for upstream and downstream branches

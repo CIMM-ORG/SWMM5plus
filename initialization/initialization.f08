@@ -64,14 +64,18 @@ contains
             call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
 
+        !% read and store the command-line options
         call init_read_arguments()
 
         if (setting%Verbose) print *, "Simulation Starts"
 
+        !% initialize the API with the SWMM-C code
         call interface_init()
 
+        !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays()
 
+        !% partition the network for multi-processor parallel computation
         call init_partitioning()
         
         ! sync all 
@@ -209,12 +213,13 @@ contains
         !% find the number of elements in a link based on nominal element length   
         call init_discretization_nominal()
 
-        !% in order to keep the main() clean, move the following two subroutines here, BIPquick can be removed
+        !% Set the network partitioning method used for multi-processor parallel computation
         call init_partitioning_method()
 
-        !% adjust the link lenghts by cutting off a certain portion for the junction branch
+        !% adjust the link lengths by cutting off a certain portion for the junction branch
         !% this subroutine is called here to correctly estimate the number of elements and faces
-        !% to allocate the coarrays. HACK: it can be moved someplace more suitable
+        !% to allocate the coarrays. 
+        !% HACK: This might be moved someplace more suitable?
         call init_discretization_adjustlinklength()
 
         !% calculate the largest number of elements and faces to allocate the coarrays

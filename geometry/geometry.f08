@@ -81,7 +81,7 @@ module geometry
         !% STATUS: at this point we know volume on Non-surcharged CC, JM, 
         !% elements and head on all surcharged CC, JM elements
 
-        !% assign all geometry for surcharged elements CC, JM, JB
+        !% assign all geometry for surcharged elements CC, JM (and JB?)
         call geo_surcharged (thisColP_surcharged)
 
         !% reset all zero or near-zero volumes in non-surcharged CC and JM
@@ -336,7 +336,8 @@ module geometry
                 tM => thisP(ii) !% junction main ID
                 !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
                 if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then
-                    do kk=1,6
+                    !% cycle through the possible junction branches
+                    do kk=1,max_branch_per_node
                         tB = tM + kk !% junction branch ID
                         if (BranchExists(tB) == 1) then
                             !% only when a branch exists.
@@ -344,7 +345,9 @@ module geometry
                                 !% for main head above branch bottom entrance use a head
                                 !% loss approach. The branchsign and velocity sign ensure
                                 !% the headloss is added to an inflow and subtracted at
-                                !% an outflow
+                                !% an outflow 
+                                !% Note this is a time-lagged velocity as the JB velocity
+                                !% is not updated until after face interpolation
                                 head(tB) = head(tM)  + branchsign(kk) * sign(oneR,velocity(tB)) &
                                     * (Kfac(tB) / (twoR * grav)) * (velocity(tB)**twoR) 
                             else
@@ -352,6 +355,8 @@ module geometry
                                 !% Froude number of one on an inflow to the junction main. Note
                                 !% an outflow from a junction main for this case gets head 
                                 !% of z_bottom of the branch (zero depth).
+                                !% Note this is a time-lagged velocity as the JB velocity
+                                !% is not updated until after face interpolation
                                 head(tB) = zBtm(tB)  &
                                     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
                                     *(velocity(tB)**twoR) / grav
@@ -368,7 +373,7 @@ module geometry
                                 hydRadius(tB) = fulldepth(tB) / fullperimeter(tB)
                                 dHdA(tB)      = setting%ZeroValue%Topwidth
                             elseif ((depth(tB) < setting%ZeroValue%Depth) .and. (setting%ZeroValue%UseZeroValues)) then  
-                                !% negligible depth
+                                !% negligible depth is treated with ZeroValues
                                 depth(tB)     = setting%ZeroValue%Depth
                                 area(tB)      = setting%ZeroValue%Area
                                 topwidth(tB)  = setting%ZeroValue%Topwidth
@@ -377,6 +382,7 @@ module geometry
                                 hydRadius(tB) = setting%ZeroValue%Area / perimeter(tB)
                                 dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                             elseif ((depth(tB) .le. zeroR) .and. (.not. setting%ZeroValue%UseZeroValues)) then
+                                !% negative depth is treated as exactly zero
                                 depth(tB) = zeroR
                                 area(tB)  = zeroR
                                 topwidth(tB) = zeroR

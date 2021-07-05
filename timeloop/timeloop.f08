@@ -39,17 +39,17 @@ module timeloop
         useHydrology  => setting%Simulation%useHydrology
         useHydraulics => setting%simulation%useHydraulics
         !%-----------------------------------------------------------------------------
-
+        !% logical to detect end of time loop computations
         isTLfinished = .false.
         !%
-        !% Combined hydrology and hydraulics simulation
+        !% Combined hydrology (SWMM-C) and hydraulics simulation
         !%
         if (useHydrology .and. useHydraulics) then
             !% set the counters used for outer loop iteration
             call tl_setup_counters(hydrology)     
             !% outer loop (Hydrology) time stepping
             do while (.not. isTLfinished)
-                !% Perform 1 time step of hydrology
+                !% Perform one time step of hydrology
                 call tl_hydrology()
                 !% Call inner loop (multiple subtime steps) of hydraulics
                 call tl_hydraulics()
@@ -57,6 +57,7 @@ module timeloop
                 call tl_check_finish_status(isTLfinished)
 
             !% HACK to prevent infinite loop in testing
+            print *, "HACK hard-code stopping time loop  39872"
             isTLfinished = .true.    
 
             end do !% (while not isTLfinished)
@@ -72,6 +73,7 @@ module timeloop
                 call tl_check_finish_status(isTLfinished)
 
             !% HACK to prevent infinite loop in testing
+            print *, "HACK hard-code stopping time loop  93785"
             isTLfinished = .true.          
 
             end do !% (while not isTLfinished)
@@ -79,10 +81,12 @@ module timeloop
         !% Hydraulics only simulation
         !%    
         elseif (useHydraulics .and. .not. useHydrology) then
-            !% time-loop for hydraulics is self-contained
+            !% time-loop for hydraulics only is self-contained and doesn't
+            !% require an external loop
             call tl_hydraulics()
         else
             print *, 'error, condition that should not occur.'  
+            stop 76408
         endif  
 
         if (setting%Debug%File%timeloop)  print *, '*** leave ', subroutine_name
@@ -157,6 +161,11 @@ module timeloop
     
         !%-----------------------------------------------------------------------------
 
+        !% need to execute a hydrology step and extract boundary conditions for
+        !% upstream, downstream, and lateral inflows.
+        print *, "Hydrology calls to SWMM-C are needed 8473"
+        !% stop 8473
+
     end subroutine tl_hydrology    
     
     !%==========================================================================  
@@ -191,6 +200,7 @@ module timeloop
             call tl_set_hydraulic_substep()
 
         !% HACK to prevent infinite loop in testing
+        print *, "Hard-code hydrualic subtime-step loop exit for testing 7647"
         timeNext = timeFinal+1.0  
 
         end do
@@ -307,6 +317,28 @@ module timeloop
         !% and lateral inflows. 
         !%-----------------------------------------------------------------------------
 
+        !% This needs to take the BC from the hydrology step (obtained in tl_hydrology)
+        !% and subdivide for the subtime stepping of the hydraulics. For flow rates this
+        !% is a simple task -- take the flow over the hydrology timestep and subdivide
+        !% by the hydraulics time step (however ,this gets a little tricky if the hydraulic 
+        !% timestep is allowed to change during the overarching hydrology timestep, which 
+        !% may be necessary for stability). For the elevation BC we will need to think 
+        !% more carefully. Let's imagine that we have a hydrology time step of 15 minutes. 
+        !% Does the hydrology elevation BC represent the average water surface elevation 
+        !% during those 15 minutes? or does it represent the instantaneous water surface
+        !% elevation at the start of the 15 minute step? Let us assume that it represents 
+        !% average elevation over the hydrology time step "m".  In which case, we can make 
+        !% an estimate of the  surface elevation at the start of the time step as 
+        !% H^{m-1/2} = (H^{m} + H^{m-1}) / 2
+        !% Furthermore, the rate of change of the water surface elevation can be estimated
+        !% for the 15 minute time step as a simple difference  
+        !% dH/dt = ( H^{m} - H^{m-1} ) / (15 * 60)
+        !% Let us assume that we use a 3 minute subtime step for hydraulics, in which case
+        !% for the n subtime step we have
+        !% H^{n} = H^{m-1/2} + n(3 * 60) dH/dt   
+        !% The above should be written out more clearly in the SWMM5+ Code Narration.
+
+        print *, "Need tl_updated_hydraulic_BC to be written 38972"
 
     end subroutine tl_update_hydraulic_BC
     !%
@@ -319,7 +351,7 @@ module timeloop
         !% Top level hydraulic solver for a single time step  
         !%-----------------------------------------------------------------------------
 
-        !% check for where solver needs to switch
+        !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
             call tl_solver_select ()
         endif    
@@ -327,6 +359,7 @@ module timeloop
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
         !call pack_dynamic_arrays
+        print *, "Need to decide on pack_dynamic_arrays 94837"
         
         !%  push the old values down the stack for AC solver
         call tl_save_previous_values ()

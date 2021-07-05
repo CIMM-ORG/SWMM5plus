@@ -44,6 +44,7 @@ module face
         endif
 
         sync all
+
         !% face reconstruction of all the shared faces
         Npack => npack_facePS(faceCol)
         if (Npack > 0) then
@@ -113,6 +114,9 @@ module face
         !% reset all the hydraulic jump faces
         call jump_compute
 
+        print *, "obsolete code face_interpolation_byMask"
+        stop 63098
+
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_byMask
     !%
@@ -176,7 +180,7 @@ module face
         call face_copy_upstream_to_downstream_interior_byPack &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
 
-        !% reset all the hydraulic jump faces
+        !% reset all the hydraulic jump interior faces
         call jump_compute
 
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
@@ -188,11 +192,14 @@ module face
     subroutine face_interp_across_images ()
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step
+        !% 
         !%-----------------------------------------------------------------------------
 
         !%-----------------------------------------------------------------------------
         !%
+        print *, "HACK in face_interp_across_images stub -- may be obsolete"
+        stop 7387
+
     end subroutine face_interp_across_images
     !%
     !%==========================================================================
@@ -255,8 +262,9 @@ module face
         call face_copy_upstream_to_downstream_shared_byPack &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
 
-        !% HACK needs junp computation for across shared faces
-
+        !% HACK needs jump computation for across shared faces
+        print *, "HACK missing hydraulic jump that occurs on shared faces 36987"
+        
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_shared_byPack
     !%
@@ -290,6 +298,9 @@ module face
             endwhere
         enddo
 
+        print *, 'in face_interp_set_byMask -- may be obsolete'
+        stop 87098
+
         if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
     end subroutine face_interp_set_byMask
     !%
@@ -316,12 +327,14 @@ module face
             endwhere
         enddo
 
+        print *, 'in face_copy_upstream_to_downstream_byMask -- may be obsolete'
+        stop 23980
+
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_copy_upstream_to_downstream_byMask
     !%
     !%==========================================================================
     !%==========================================================================
-    !%
     !%
     subroutine face_interp_interior_set_byPack &
         (fset, eset, eWdn, eWup, facePackCol, Npack)

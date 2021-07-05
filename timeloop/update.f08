@@ -27,7 +27,7 @@ module update
     !%
     subroutine update_auxiliary_variables (whichTM)
         !%-----------------------------------------------------------------------------
-        !% Description:
+        !% Description: 
         !% 
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: whichTM  !% indicates which Time marching method

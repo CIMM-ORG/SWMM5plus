@@ -79,6 +79,8 @@ module lowlevel_rk2
         thisP => elemP(1:Npack,thisCol)          
         fQ    => faceR(:,fr_Flowrate)
         eQlat => elemR(:,er_FlowrateLateral)
+        iup   => elemI(:,ei_Mface_uL)
+        idn   => elemI(:,ei_Mface_dL)
         !%-----------------------------------------------------------------------------
         
         !% note that 1, 3 and 5 are nominal upstream branches and 2, 4, 6 are nominal
@@ -212,6 +214,9 @@ module lowlevel_rk2
         !         (Qnet(:) - (a2/dt) * volumeN0(:) - (a3/dt) * volumeN1(:))
         ! endwhere
 
+        print *, "inside ll_continuity_add_source_CCJM_AC_open stub"
+        stop 9366
+
     end subroutine ll_continuity_add_source_CCJM_AC_open
     !%
     !%==========================================================================  
@@ -246,6 +251,10 @@ module lowlevel_rk2
         !     elemR(:,inoutCol) =  &
         !         (ell(:) * (Fr**twoR) / area(:)) * Qnet(:)
         ! endwhere
+
+        print *, "inside ll_continuity_add_source_CCMJM_AC_surcharged stub"
+        stop 84792
+
     end subroutine ll_continuity_add_source_CCJM_AC_surcharged
     !%
     !%==========================================================================  
@@ -283,7 +292,8 @@ module lowlevel_rk2
         !         / ( dt * ( area(:) * dHdA(:) + head(:) ) )
         ! endwhere   
         
-        
+        print *, "inside ll_continuity_add_gamma_CCJM_AC_open stub"
+        stop 29870
 
     end subroutine ll_continuity_add_gamma_CCJM_AC_open
     !%    
@@ -652,7 +662,7 @@ module lowlevel_rk2
     !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% 
         !%-----------------------------------------------------------------------------
     
         !%-----------------------------------------------------------------------------
@@ -666,7 +676,7 @@ module lowlevel_rk2
     !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% 
         !%-----------------------------------------------------------------------------
     
         !%-----------------------------------------------------------------------------
