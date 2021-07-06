@@ -379,6 +379,78 @@ int DLLEXPORT api_get_pattern_type(int k)
     return Pattern[k].type;
 }
 
+double DLLEXPORT api_get_next_inflow_bc(void* f_api, int node_idx, double current_datetime) {
+
+    int ptype, pcount, i, j, p;
+    int yy, mm, dd;
+    int h, m, s, dow;
+    double val;
+    double x, y, next_datetime;
+    double bline, sfactor;
+    double total_factor = 1;
+    double total_extinflow = 0;
+    double total_inflow = 0;
+
+    datetime_decodeDate(current_datetime, &yy, &mm, &dd);
+    datetime_decodeTime(current_datetime, &h, &m, &s);
+    dow = datetime_dayOfWeek(current_datetime);
+
+    api_get_node_attribute(f_api, node_idx, node_has_dwfInflow, &val);
+    if (val == 1) { // node_has_dwfInflow
+        for (int i=0; i<4; i++)
+        {
+            j = Node[node_idx].dwfInflow->patterns[i];
+            ptype = Pattern[j].type;
+            if (ptype == MONTHLY_PATTERN)
+                total_factor *= Pattern[j].factor[mm-1];
+            else if (ptype == DAILY_PATTERN)
+                total_factor *= Pattern[j].factor[dow-1];
+            else if (ptype == HOURLY_PATTERN)
+                total_factor *= Pattern[j].factor[h];
+            else if (ptype == WEEKEND_PATTERN)
+            {
+                if ((dow == 1) || (dow == 7))
+                    total_factor *= Pattern[j].factor[h];
+            }
+        }
+        total_inflow += total_factor * Node[node_idx].dwfInflow->avgValue;
+    }
+
+    api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
+    if (val == 1) { // node_has_dwfInflow
+        p = Node[node_idx].extInflow->basePat; // pattern
+        if (p > 0)
+        {
+            ptype = Pattern[p].type;
+            bline = Node[node_idx].extInflow->baseline; // baseline value
+            if (ptype == MONTHLY_PATTERN)
+                total_extinflow += Pattern[j].factor[mm-1] * bline;
+            else if (ptype == DAILY_PATTERN)
+                total_extinflow += Pattern[j].factor[dow-1] * bline;
+            else if (ptype == HOURLY_PATTERN)
+                total_extinflow += Pattern[j].factor[h] * bline;
+            else if (ptype == WEEKEND_PATTERN)
+            {
+                if ((dow == 1) || (dow == 7))
+                    total_extinflow += Pattern[j].factor[h] * bline;
+            }
+        }
+        j = Node[node_idx].extInflow->tSeries; // tseries
+        sfactor = Node[node_idx].extInflow->sFactor; // scale factor
+        if (j > 0)
+        {
+            total_extinflow += table_lookup(&Tseries[j], current_datetime) * sfactor;
+        }
+        total_inflow += total_extinflow;
+    }
+
+    return total_inflow;
+}
+
+int DLLEXPORT api_get_next_head_bc()
+{
+
+}
 // --- Print-out
 
 void DLLEXPORT api_print_object_name(int k, int object_type)

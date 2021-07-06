@@ -145,6 +145,7 @@ int DLLEXPORT api_get_next_table_entry(int k, int table_type, double* x, double*
 int DLLEXPORT api_get_pattern_count(int k);
 double DLLEXPORT api_get_pattern_factor(int k, int j);
 int DLLEXPORT api_get_pattern_type(int k);
+double DLLEXPORT api_get_next_inflow_bc(void* f_api, int node_idx, double current_datetime);
 double DLLEXPORT api_get_start_datetime();
 double DLLEXPORT api_get_end_datetime();
 int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type);
