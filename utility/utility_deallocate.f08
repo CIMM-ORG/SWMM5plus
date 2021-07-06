@@ -14,8 +14,8 @@ module utility_deallocate
 !
 !-----------------------------------------------------------------------------
 
-    private 
-    
+    private
+
     integer           :: deallocation_status
     character(len=99) ::              emsg
 
@@ -31,7 +31,7 @@ contains
     !   deallocate all the data relate to defined network, including:
     !   linkX, nodeX, elemX, faceX
     !-----------------------------------------------------------------------------
-        
+
         character(64) :: subroutine_name = 'util_deallocate_network_data'
 
     !-----------------------------------------------------------------------------
@@ -60,12 +60,13 @@ contains
     !   Release the memory used by the tables nodeI, linkI, nodeR, linkR, nodeYN,
     !   linkYN.
     !   These are defined in globals.f08), and allocated in allocate_storage.f08
-    !   Every time memory is deallocated, the utility_check_deallocation functionality 
+    !   Every time memory is deallocated, the utility_check_deallocation functionality
     !   (from utility.f08) is used to determine wheter or not there was an error during
     !   the deallocation.
     !
     !-----------------------------------------------------------------------------
 
+        integer       :: ii
         character(64) :: subroutine_name = 'util_deallocate_linknode_storage'
 
     !-----------------------------------------------------------------------------
@@ -89,6 +90,16 @@ contains
         deallocate(linkYN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
+        !% Deallocate link/node names
+        do ii = 1, N_link
+            deallocate(linkName(ii)%str, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg)
+        end do
+        do ii = 1, N_node
+            deallocate(nodeName(ii)%str, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg)
+        end do
+
         deallocate(nodeName, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
@@ -103,43 +114,43 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    
+
     subroutine util_deallocate_partitioning_arrays()
     !-----------------------------------------------------------------------------
     !
     ! Description:
     !   deallocates the partitioning arrays storage used for storing partitioned
-    !   network information 
+    !   network information
     !
     !-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'util_deallocate_partitioning_arrays'
     !-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
-    
+
         deallocate(adjacent_links, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
-    
+
         deallocate(elem_per_image, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
-    
+
         deallocate(image_full, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
-    
+
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_partitioning_arrays
-        
+
 !
 !==========================================================================
 !==========================================================================
 !
-    
-    
+
+
     subroutine util_deallocate_elemX_faceX ()
     !-----------------------------------------------------------------------------
     !
     ! Description:
     !   Simply deallocate the elemX and faceX thatwe assigned across all employed images
-    !   
+    !
     !-----------------------------------------------------------------------------
 
         character(64) :: subroutine_name = 'util_deallocate_elemX_faceX'
@@ -165,7 +176,7 @@ contains
 
         deallocate(elemPGac, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
-        
+
         deallocate(elemPGalltm, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
@@ -178,17 +189,17 @@ contains
         !==== face deallocation ====
         deallocate(faceR, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
-        
+
         deallocate(faceI, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
-        
+
         deallocate(faceYN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
-        
+
         deallocate(faceP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
-        
-        
+
+
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_elemX_faceX
 
@@ -196,12 +207,12 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    
+
     subroutine util_deallocate_columns()
     !-----------------------------------------------------------------------------
     !
     ! Description:
-    !   All variables are stored in col_elemX(:) arrays, release the memory here 
+    !   All variables are stored in col_elemX(:) arrays, release the memory here
     !   in all images
     !
     !-----------------------------------------------------------------------------
@@ -210,7 +221,7 @@ contains
 
     !-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
-        
+
         !==== col_elemI====
         deallocate(col_elemI, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
@@ -277,7 +288,7 @@ contains
         !==== col_faceYN ====
         deallocate(col_faceYN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
- 
+
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_columns
@@ -289,12 +300,12 @@ contains
 !
 
     subroutine util_deallocate_bc()
-        
+
         character(64) :: subroutine_name = 'util_deallocate_bc'
-        
+
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
-        
-        
+
+
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_bc
 
@@ -303,8 +314,8 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    
-    
+
+
     subroutine util_deallocate_check(deallocation_status, emsg)
         !-----------------------------------------------------------------------------
         !
@@ -316,18 +327,18 @@ contains
             character(len=*),   intent(in   ) :: emsg
 
             character(64):: subroutine_name = 'util_deallocate_check'
-    
+
         !-----------------------------------------------------------------------------
-    
+
             if (setting%Debug%File%utility) print *, '*** enter ',subroutine_name
-    
+
             if (deallocation_status > 0) then
                 print *, trim(emsg)
                 stop
             end if
-    
+
             if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
-    
+
     end subroutine util_deallocate_check
 
 end module utility_deallocate

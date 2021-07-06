@@ -353,9 +353,19 @@ int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int obj
     error = check_api_is_initialized(api);
     if (error != 0) return error;
     if (object_type == NODE)
-        object_name = Node[k].ID;
+    {
+        for (int i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
+        {
+            object_name[i] = Node[k].ID[i];
+        }
+    }
     else if (object_type == LINK)
-        object_name = Link[k].ID;
+    {
+        for (int i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
+        {
+            object_name[i] = Link[k].ID[i];
+        }
+    }
     else
         return ERROR_FEATURE_NOT_COMPATIBLE;
     return 0;

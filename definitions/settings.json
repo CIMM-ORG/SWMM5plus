@@ -199,9 +199,9 @@
             "define_settings" : false,
             "define_types" : false,
             "diagnostic_elements" : false,
-            "face" : true,
+            "face" : false,
             "finalization" : false,
-            "geometry" : true,
+            "geometry" : false,
             "discretization"  : false,
             "initial_condition" : false,
             "initialization" : false,
@@ -229,12 +229,12 @@
             "all" : false,
             "definitions" : false,
             "finalization" : false,
-            "geometry" : true,
-            "initialization" : true,
+            "geometry" : false,
+            "initialization" : false,
             "interface" : false,
-            "timeloop" : true,
+            "timeloop" : false,
             "utility" : false
-        },
+        }
     },
     "Warning"  : false,
     "Verbose" : false

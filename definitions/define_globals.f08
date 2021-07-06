@@ -30,12 +30,14 @@ module define_globals
     integer, dimension(:,:), allocatable, target :: linkI                                       !% integer data for links
     logical, dimension(:,:), allocatable, target :: linkYN                                      !% logical data for links
 
-    type(string), dimension(:), allocatable, target :: linkName                                 !% array of character strings
+    type(string), allocatable, target :: linkName(:)                                            !% array of character strings
 
     !%  nodes are the building blocks from teh SWMM link-node formulation
     real(8), dimension(:,:), allocatable, target :: nodeR                                       !% real data for nodes
     integer, dimension(:,:), allocatable, target :: nodeI                                       !% integer data for nodes
     logical, dimension(:,:), allocatable, target :: nodeYN                                      !% logical data for nodes
+
+    type(string), allocatable, target :: nodeName(:)                                            !% array of character strings
 
     !%  columns of element and face arrays
     integer, dimension(:), allocatable, target :: col_elemI[:]                                  !% columns of elemI array
@@ -82,8 +84,6 @@ module define_globals
     integer, allocatable, target :: faceP(:,:)[:]       !% coarray for faces pack array
     integer, allocatable, target :: facePS(:,:)[:]      !% coarray for shared faces pack array
     logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array 
-
-    type(string), dimension(:), allocatable, target :: nodeName ! array of character strings
 
     !% note that nullvalueI < 0 is required
     integer, parameter :: nullvalueI = 998877

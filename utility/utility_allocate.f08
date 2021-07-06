@@ -4,6 +4,8 @@ module utility_allocate
     use define_keys
     use define_indexes
     use define_settings, only: setting
+    use interface
+
     ! use utility, only: utility_check_allocation
 
     implicit none
@@ -52,6 +54,7 @@ contains
 
         character(64) :: subroutine_name = 'util_allocate_linknode'
         integer       :: additional_rows = 0
+        integer       :: ii, obj_name_len
 
     !-----------------------------------------------------------------------------
 
@@ -86,11 +89,27 @@ contains
         call util_allocate_check(allocation_status, emsg)
         linkYN(:,:) = nullvalueL
 
-        allocate(nodeName(N_node + additional_rows), stat=allocation_status, errmsg=emsg)
+        !% |
+        !% | Only names of objects present in EPA-SWMM are stored
+        !% v
+
+        allocate(nodeName(N_node), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
 
-        allocate(linkName(N_link + additional_rows), stat=allocation_status, errmsg=emsg)
+        do ii = 1, N_node
+            obj_name_len = interface_get_obj_name_len(ii, API_NODE)
+            allocate(character(obj_name_len) :: nodeName(ii)%str, stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg)
+        end do
+
+        allocate(linkName(N_link), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
+
+        do ii = 1, N_link
+            obj_name_len = interface_get_obj_name_len(ii, API_LINK)
+            allocate(character(obj_name_len) :: linkName(ii)%str, stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg)
+        end do
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
     end subroutine util_allocate_linknode
@@ -832,9 +851,9 @@ contains
         !   packed arrays for the shared (internal boundary)faces
         !   the col_facePS is a vector of the columns in the facePS arrays
         !   that correspond to the enumerated fp_... array_index parameters
-        !   col_facePS has the same number of columns as col_faceP because 
+        !   col_facePS has the same number of columns as col_faceP because
         !   all the packs for internal faces are needed for shared faces as
-        !   well. 
+        !   well.
         !
         !   the npack_facePS(:) vector contains the number of packed elements
         !   for a given column.

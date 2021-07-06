@@ -286,6 +286,69 @@ contains
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
     end function interface_get_end_datetime
 
+    subroutine interface_update_linknode_names()
+        integer :: ii
+        character(64) :: subroutine_name = "interface_update_linknode_names"
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
+
+        c_lib%procname = "api_get_object_name"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
+
+        do ii = 1, N_node
+            call ptr_api_get_object_name(api, ii-1, nodeName(ii)%str, API_NODE)
+        end do
+
+        do ii = 1, N_link
+            call ptr_api_get_object_name(api, ii-1, linkName(ii)%str, API_LINK)
+        end do
+
+        if (setting%Debug%File%interface) then
+            print *, new_line("")
+            print *, "List of Links"
+            do ii = 1, N_link
+                print *, "- ", linkName(ii)%str
+            end do
+            print *, new_line("")
+            print *, "List of Nodes"
+            do ii = 1, N_node
+                print *, "- ", nodeName(ii)%str
+            end do
+            print *, new_line("")
+            print *, '*** leave ', subroutine_name
+        end if
+
+    end subroutine interface_update_linknode_names
+
+    function interface_get_obj_name_len(obj_idx, obj_type) result(obj_name_len)
+        integer, intent(in) :: obj_idx
+        integer, intent(in) :: obj_type
+        integer :: obj_name_len
+        character(64) :: subroutine_name = "interface_get_obj_name_len"
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
+
+        c_lib%procname = "api_get_object_name_len"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name_len)
+        obj_name_len = ptr_api_get_object_name_len(api, obj_idx-1, obj_type)
+
+        if (setting%Debug%File%interface) then
+            print *, obj_idx, obj_type, obj_name_len
+        end if
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
+    end function interface_get_obj_name_len
+
     function interface_get_node_attribute(node_idx, attr)
 
         integer :: node_idx, attr, error

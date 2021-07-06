@@ -188,6 +188,9 @@ contains
             nodeR(ii,nr_Zbottom) = interface_get_node_attribute(ii, api_node_invertElev)
         end do
 
+        !% Update Link/Node names
+        call interface_update_linknode_names()
+
         if (setting%Debug%File%initialization) then
             if (this_image() == 1) then
                 call util_export_linknode_csv()

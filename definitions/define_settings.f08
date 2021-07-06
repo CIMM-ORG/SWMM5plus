@@ -160,38 +160,38 @@ module define_settings
 
     ! setting%Debug%File
     type DebugFileYNType
-        logical :: adjust           = .false.
-        logical :: define_globals   = .false.
-        logical :: define_indexes   = .false.
-        logical :: define_keys      = .false.
-        logical :: define_settings  = .false.
-        logical :: define_types     = .false.
+        logical :: adjust              = .false.
+        logical :: define_globals      = .false.
+        logical :: define_indexes      = .false.
+        logical :: define_keys         = .false.
+        logical :: define_settings     = .false.
+        logical :: define_types        = .false.
         logical :: diagnostic_elements = .false.
-        logical :: discretization   = .false.
-        logical :: face             = .false.
-        logical :: finalization     = .false.
-        logical :: geometry         = .false.
-        logical :: initial_condition = .false.
-        logical :: initialization   = .false.
-        logical :: jump             = .false.
-        logical :: lowlevel_rk2     = .false.
-        logical :: network_define   = .false.
-        logical :: orifice_elements = .false.
+        logical :: discretization      = .false.
+        logical :: face                = .false.
+        logical :: finalization        = .false.
+        logical :: geometry            = .false.
+        logical :: initial_condition   = .false.
+        logical :: initialization      = .false.
+        logical :: jump                = .false.
+        logical :: lowlevel_rk2        = .false.
+        logical :: network_define      = .false.
+        logical :: orifice_elements    = .false.
         logical :: rectangular_channel = .false.
-        logical :: runge_kutta2     = .false.
-        logical :: pack_mask_arrays = .false.
-        logical :: partitioning     = .false.
-        logical :: pump_elements    = .false.
-        logical :: interface        = .false.
-        logical :: timeloop         = .false.
-        logical :: update           = .false.
-        logical :: utility          = .false.
-        logical :: utility_allocate = .false.
-        logical :: utility_deallocate = .false.
-        logical :: utility_array    = .false.
-        logical :: utility_datetime = .false.
-        logical :: utility_string   = .false.
-        logical :: weir_elements    = .false.
+        logical :: runge_kutta2        = .false.
+        logical :: pack_mask_arrays    = .false.
+        logical :: partitioning        = .false.
+        logical :: pump_elements       = .false.
+        logical :: interface           = .false.
+        logical :: timeloop            = .false.
+        logical :: update              = .false.
+        logical :: utility             = .false.
+        logical :: utility_allocate    = .false.
+        logical :: utility_deallocate  = .false.
+        logical :: utility_array       = .false.
+        logical :: utility_datetime    = .false.
+        logical :: utility_string      = .false.
+        logical :: weir_elements       = .false.
     end type DebugFileYNType
 
     ! setting%Debug%FileGroup
@@ -998,7 +998,7 @@ contains
         setting%Debug%FileGroup%timeloop = logical_value
         if (.not. found) stop 1115
         call json%get('Debug.FileGroup.utility', logical_value, found)
-        setting%Debug%FileGroup%interface = logical_value
+        setting%Debug%FileGroup%utility = logical_value
         if (.not. found) stop 1120
         call def_update_debug_options()
 
