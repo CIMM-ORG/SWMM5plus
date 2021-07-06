@@ -1068,6 +1068,8 @@ contains
 
         character(64)       :: subroutine_name = 'diagnostic_element_interpolation_weights'
 
+        integer, pointer ::  Npack, thisP(:), tM
+        integer :: ii, kk, tB
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
 
@@ -1101,6 +1103,26 @@ contains
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
 
         endwhere
+
+        !% Branch elements have invariant interpolation weights so are computed here
+        !% These are designed so that the face of a JB gets the flowrate from the 
+        !% adjacent CC conduit or channel, but the geometry and head are from the JB. 
+        Npack => npack_elemP(ep_JM_ALLtm)
+        if (Npack > 0) then
+            thisP  => elemP(1:Npack,ep_JM_ALLtm)  
+            do ii=1,Npack
+                tM => thisP(ii) !% junction main ID
+                do kk=1,max_branch_per_node
+                    tB = tM + kk !% junction branch ID
+                    elemR(tB,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Maximum
+                    elemR(tB,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Maximum
+                    elemR(tB,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Minimum
+                    elemR(tB,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Minimum
+                    elemR(tB,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Minimum
+                    elemR(tB,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum  
+                end do
+            end do
+        end if
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine diagnostic_element_interpolation_weights

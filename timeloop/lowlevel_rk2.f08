@@ -38,6 +38,7 @@ module lowlevel_rk2
     public :: ll_restore_from_temporary
     public :: ll_extrapolate_values
     public :: ll_interpolate_values
+    public :: ll_junction_branch_flowrate_and_velocity
 
     contains
     !%==========================================================================
@@ -660,16 +661,66 @@ module lowlevel_rk2
     !%==========================================================================  
     !%==========================================================================  
     !%
+    subroutine ll_junction_branch_flowrate_and_velocity (whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% 
+        !% Updates the flowrate and velocity on junction branches from face values
+        !% obtained in the face interpolation
         !%-----------------------------------------------------------------------------
-    
+        integer, intent(in) :: whichTM
+        integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
+        integer, pointer :: Npack
+        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:)
+        integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
         !%   
+        BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
+        eArea        => elemR(:,er_Area)
+        eVelocity    => elemR(:,er_Velocity)
+        eFlow        => elemR(:,er_Flowrate)
+        fFlow        => faceR(:,fr_Flowrate)
+        iup          => elemI(:,ei_Mface_uL)
+        idn          => elemI(:,ei_Mface_dL)
+         
+        !%-----------------------------------------------------------------------------
+        !% 
+        select case (whichTM)
+        case (ALLtm)
+            thisColP_JM            => col_elemP(ep_JM_ALLtm)
+         case (ETM)
+            thisColP_JM            => col_elemP(ep_JM_ETM)
+        case (AC)  
+            thisColP_JM            => col_elemP(ep_JM_AC) 
+        case default
+            print *, 'error, case default should never be reached.'
+            stop 7659
+        end select
 
-    
-        
+        Npack => npack_elemP(thisColP_JM) 
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,thisColP_JM)
+            do ii=1,Npack
+                tM => thisP(ii)
+                ! handle the upstream branches
+                do kk=1,max_branch_per_node,2
+                    tB = tM + kk
+                    if (BranchExists(tB)==1) then
+                        eFlow(tB) = fFlow(iup(tB))    
+                        eVelocity(tB) = eFlow(tB) / eArea(tB)
+                    end if
+                end do
+                !% handle the downstram branches
+                do kk=2,max_branch_per_node,2
+                    tB = tM + kk
+                    if (BranchExists(tB)==1) then
+                        eFlow(tB) = fFlow(idn(tB)) 
+                        eVelocity(tB) = eFlow(tB) / eArea(tB)
+                    end if
+                end do
+            end do
+        end if
+       
+    end subroutine ll_junction_branch_flowrate_and_velocity
     !%
     !%==========================================================================  
     !%==========================================================================  

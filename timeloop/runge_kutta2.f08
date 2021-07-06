@@ -48,6 +48,9 @@ module runge_kutta2
         !% RK2 solution step 4 -- all face interpolation
         call face_interpolation(fp_all)
 
+        !% junction branch flowrate and velocity update
+        call ll_junction_branch_flowrate_and_velocity(ETM)
+
         !% RK2 solution step 5 -- update diagnostic elements and faces
         if (N_diag > 0) then
             call diagnostic_toplevel()
