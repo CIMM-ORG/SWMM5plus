@@ -64,7 +64,8 @@ contains
                    print*, elemP(:,ep_CC_ETM)[ii], 'all CC elements that are ETM'
                    print*, elemP(:,ep_Diag)[ii], 'all diagnostic elements'
                    print*, '.................face logicals......................'
-                   print*, faceM(:,fm_all)[ii], 'all the faces except boundary and null faces'
+                   print*, faceP(:,fp_all)[ii], 'all the interior faces'
+                   print*, facePS(:,fp_all)[ii], 'all the shared faces'
                    call execute_command_line('')
                 enddo
 

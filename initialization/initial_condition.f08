@@ -65,11 +65,11 @@ contains
         !% (the interpolation weights of diagnostic elements
         !% stays the same throughout the simulation. Thus, they
         !% are only needed to be set at the top of the simulation)
-        call diagnostic_element_interpolation_weights()
+        call init_IC_diagnostic_interpolation_weights()
 
         !% set small values to diagnostic element interpolation sets
         !% so that junk values does not mess up the first interpolation
-        call init_set_small_values_diagnostic_elements
+        call init_IC_small_values_diagnostic_elements
 
         !% update faces
         call face_interpolation (fp_all)
@@ -1024,7 +1024,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine init_set_small_values_diagnostic_elements ()
+    subroutine init_IC_small_values_diagnostic_elements ()
     !--------------------------------------------------------------------------
     !
     !% set the volume, area, head, other geometry, and flow to zero values
@@ -1033,7 +1033,7 @@ contains
     !
     !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'init_set_small_values_diagnostic_elements'
+        character(64)       :: subroutine_name = 'init_IC_small_values_diagnostic_elements'
 
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
@@ -1049,19 +1049,19 @@ contains
         endwhere
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
-    end subroutine init_set_small_values_diagnostic_elements
+    end subroutine init_IC_small_values_diagnostic_elements
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine diagnostic_element_interpolation_weights ()
+    subroutine init_IC_diagnostic_interpolation_weights ()
     !--------------------------------------------------------------------------
     !
     !% set the interpolation weights for diagnostic elements
     !
     !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'diagnostic_element_interpolation_weights'
+        character(64)       :: subroutine_name = 'init_IC_diagnostic_interpolation_weights'
 
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
@@ -1088,7 +1088,7 @@ contains
         endwhere
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
-    end subroutine diagnostic_element_interpolation_weights
+    end subroutine init_IC_diagnostic_interpolation_weights
     !
     !==========================================================================
     !==========================================================================
