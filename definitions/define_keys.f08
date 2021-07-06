@@ -51,7 +51,7 @@ module define_keys
         !% different node types (HACK: probably could be consolidated to element types)
         enumerator :: nJ2                   !% junction node with 2 links
         enumerator :: nJm                   !% junction node with multiple links
-        enumerator :: nStorage              !% stroage node
+        enumerator :: nStorage              !% storage node
         enumerator :: nBCdn                 !% downstream BC node
         enumerator :: nBCup                 !% upstream BC node
         !% SWMM5+ elements types
@@ -88,8 +88,8 @@ module define_keys
         enumerator :: type2_Pump            !% type 2 pump type
         enumerator :: type3_Pump            !% type 3 pump type
         enumerator :: type4_Pump            !% type 4 pump type
-        !% BC face types ----- BC%I(:,bi_category)
-        enumerator :: BC_elevation
+        !% BC types ----- BC%I(:,bi_category)
+        enumerator :: BC_head
         enumerator :: BC_inflow
         !% BC subcategory (Q - flowrate)
         enumerator :: BC_Q_fixed

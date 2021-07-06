@@ -79,6 +79,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: ni_idx = 1
         enumerator :: ni_node_type
+        enumerator :: ni_node_subtype
         enumerator :: ni_N_link_u      ! number of upstream links at this node
         enumerator :: ni_N_link_d      ! number of downstram links at this node
         enumerator :: ni_curve_type    ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular

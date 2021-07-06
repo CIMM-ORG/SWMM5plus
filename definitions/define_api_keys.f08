@@ -65,6 +65,7 @@ module define_api_keys
     enum, bind(c)
         enumerator :: api_node_ID = 1
         enumerator :: api_node_type
+        enumerator :: api_node_subtype
         enumerator :: api_node_invertElev
         enumerator :: api_node_initDepth
         enumerator :: api_node_extInflow_tSeries

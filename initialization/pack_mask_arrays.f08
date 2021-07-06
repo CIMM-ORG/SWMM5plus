@@ -1551,7 +1551,7 @@ contains
         node%P%have_QBC = pack(node%I(:,ni_idx), &
             node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
         node%P%have_HBC = pack(node%I(:,ni_idx), &
-            node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
+            (node%I(:, ni_node_type) == nBCdn) .and. (node%I(:,ni_P_image) == this_image()))
     end subroutine pack_nodes
 
 

@@ -209,51 +209,55 @@ contains
     !==========================================================================
     !
     subroutine init_bc()
-        ! call util_allocate_bc()
-        ! integer :: ii, nidx, counter_bc_er
-        ! !% Initialize Inflow BCs
-        ! !% BC%I(ii, bi_face_idx) is assigned later
-        ! do ii = 1, N_inflow_BC
-        !     BC%I(ii, bi_idx) = ii
-        !     BC%I(ii, bi_now) = 1
-        !     nidx = node%P%have_inflow_BC(ii)
-        !     BC%I(ii, bi_node_idx) = nidx
-        !     !% Check if node has inflow BC
-        !     if (interface_get_node_attribute(nidx, api_node_has_dwfInflow) &
-        !         .or. interface_get_node_attribute(nidx, api_node_has_extInflow)) then
-        !         BC%I(ii, bi_category) = BC_inflow
-        !     else if (nodeI(nidx, ni_node_type) == nBCdn) then
-        !         BC%I(ii, bi_category) = BC_depth
-        !         if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_FREE_OUTFALL) then
-        !             BC%I(ii, bi_subcategory) = BC_d_free
-        !         else if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_NORMAL_OUTFALL) then
-        !             BC%I(ii, bi_subcategory) = BC_d_normal
-        !         else if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_FIXED_OUTFALL) then
-        !             BC%I(ii, bi_subcategory) = BC_d_fixed
-        !             BC
-        !         else if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_TIDAL_OUTFALL) then
-        !             BC%I(ii, bi_subcategory) = BC_d_tidal
-        !         else if (interface_get_node_attribute(nidx, ni_ourfall_type) == API_TIMESERIES_OUTFALL) then
-        !             BC%I(ii, bi_subcategory) = BC_d_tseries
-        !         end if
-        !     end if
+        integer :: ii, nidx, counter_bc_er
+        character(64) :: subroutine_name = "init_bc"
 
-        !     BC%I(ii, bi_category) = node
-        !     if (BC%) then
+        if (setting%Debug%File%initialization)  print *, '*** enter ', subroutine_name
+        !% Initialize Inflow BCs
+        !% BC%I(ii, bi_face_idx) is assigned later
+        do ii = 1, N_QBC
+            BC%QI(ii, bi_idx) = ii
+            BC%QI(ii, bi_now) = 1
+            nidx = node%P%have_QBC(ii)
+            BC%QI(ii, bi_node_idx) = nidx
+            !% Check if node has inflow BC
+            if ((interface_get_node_attribute(nidx, api_node_has_dwfInflow) == 1) &
+                .or. (interface_get_node_attribute(nidx, api_node_has_extInflow) == 1)) then
+                BC%QI(ii, bi_category) = BC_inflow
+            end if
 
-        !     end if
-        !     BC%I(ii, bi_xr_idx) =
-        ! end do
+            ! BC%QI(ii, bi_category) = node
+            ! if (BC%) then
 
-        ! !% Initialize Elevation BCs
-        ! !% BC%I(ii, bi_face_idx) is assigned later
-        ! do ii = 1, N_elevation_BC
-        !     BC%I(ii, bi_idx) = ii
-        !     BC%I(ii, bi_now) = 1
-        !     BC%I(ii, bi_node_idx) = node%P%have_elevation_BC(ii)
-        !     BC%I(ii, bi_category) = BCdn
-        !     BC%I(ii, bi_xr_idx) = ii
-        ! end do
+            ! end if
+            ! BC%I(ii, bi_xr_idx) =
+        end do
+
+        !% Initialize Elevation BCs
+        !% BC%I(ii, bi_face_idx) is assigned later
+        do ii = 1, N_HBC
+            BC%HI(ii, bi_idx) = ii
+            BC%HI(ii, bi_now) = 1
+            nidx = node%P%have_HBC(ii)
+            BC%HI(ii, bi_node_idx) = nidx
+            BC%HI(ii, bi_category) = BCdn
+            BC%HI(ii, bi_xr_idx) = ii
+            if (node%I(nidx, ni_node_type) == nBCdn) then
+                BC%HI(ii, bi_category) = BC_head
+                if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FREE_OUTFALL) then
+                    BC%HI(ii, bi_subcategory) = BC_H_free
+                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_NORMAL_OUTFALL) then
+                    BC%HI(ii, bi_subcategory) = BC_H_normal
+                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FIXED_OUTFALL) then
+                    BC%HI(ii, bi_subcategory) = BC_H_fixed
+                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIDAL_OUTFALL) then
+                    BC%HI(ii, bi_subcategory) = BC_H_tidal
+                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIMESERIES_OUTFALL) then
+                    BC%HI(ii, bi_subcategory) = BC_H_tseries
+                end if
+            end if
+        end do
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_bc
 
     subroutine init_partitioning()
