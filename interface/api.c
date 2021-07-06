@@ -447,25 +447,6 @@ double DLLEXPORT api_get_next_inflow_bc(void* f_api, int node_idx, double curren
     return total_inflow;
 }
 
-double api_get_runoff(int node_idx, double current_datetime)
-{
-    // --- compute runoff until next routing time reached or exceeded
-    while ( NewRunoffTime < current_datetime )
-    {
-        runoff_execute();
-        if ( ErrorCode ) return -999999;
-    }
-    return CFTOCM(Node[node_idx].newLatFlow);
-}
-
-// --- Print-out
-
-void DLLEXPORT api_print_object_name(int k, int object_type)
-{
-    if (object_type == NODE) printf("%s\n", Node[k].ID);
-    if (object_type == LINK) printf("%s\n", Link[k].ID);
-}
-
 int add_link(
     int li_idx,
     int ni_idx,
