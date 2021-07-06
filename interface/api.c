@@ -447,10 +447,17 @@ double DLLEXPORT api_get_next_inflow_bc(void* f_api, int node_idx, double curren
     return total_inflow;
 }
 
-int DLLEXPORT api_get_next_head_bc()
+double api_get_runoff(int node_idx, double current_datetime)
 {
-
+    // --- compute runoff until next routing time reached or exceeded
+    while ( NewRunoffTime < current_datetime )
+    {
+        runoff_execute();
+        if ( ErrorCode ) return;
+    }
+    return CFTOCM(Node[node_idx].newLatFlow);
 }
+
 // --- Print-out
 
 void DLLEXPORT api_print_object_name(int k, int object_type)
