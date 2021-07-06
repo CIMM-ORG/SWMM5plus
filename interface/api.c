@@ -453,7 +453,7 @@ double api_get_runoff(int node_idx, double current_datetime)
     while ( NewRunoffTime < current_datetime )
     {
         runoff_execute();
-        if ( ErrorCode ) return;
+        if ( ErrorCode ) return -999999;
     }
     return CFTOCM(Node[node_idx].newLatFlow);
 }

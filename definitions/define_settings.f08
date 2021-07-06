@@ -174,13 +174,13 @@ module define_settings
 
     ! setting%Debug%File
     type DebugFileYNType
-        logical :: adjust           = .false.
-        logical :: c_library        = .false.
-        logical :: define_globals   = .false.
-        logical :: define_indexes   = .false.
-        logical :: define_keys      = .false.
-        logical :: define_settings  = .false.
-        logical :: define_types     = .false.
+        logical :: adjust              = .false.
+        logical :: c_library           = .false.
+        logical :: define_globals      = .false.
+        logical :: define_indexes      = .false.
+        logical :: define_keys         = .false.
+        logical :: define_settings     = .false.
+        logical :: define_types        = .false.
         logical :: diagnostic_elements = .false.
         logical :: discretization      = .false.
         logical :: face                = .false.

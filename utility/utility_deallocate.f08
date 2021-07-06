@@ -90,9 +90,6 @@ contains
         deallocate(node%P%have_HBC, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        deallocate(link%R, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg)
-
         !% Deallocate link/node names
         do ii = 1, N_link
             deallocate(link%Names(ii)%str, stat=deallocation_status, errmsg=emsg)
