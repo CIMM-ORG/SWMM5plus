@@ -26,13 +26,14 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_allocate.f08\
               $UTIL_DIR/utility_deallocate.f08\
               $UTIL_DIR/utility_array.f08\
-	          $UTIL_DIR/utility_debug.f08\
+	      $UTIL_DIR/utility_debug.f08\
               $API_DIR/c_library.f08\
               $API_DIR/interface.f08\
               $INIT_DIR/pack_mask_arrays.f08\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/partitioning.f08\
               $INIT_DIR/network_define.f08\
+	      $UTIL_DIR/utility_UnitTesting.f08\
               $TL_DIR/adjust.f08\
               $TL_DIR/jump.f08\
               $TL_DIR/common_elements.f08\
