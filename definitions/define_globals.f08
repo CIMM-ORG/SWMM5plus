@@ -16,7 +16,13 @@ module define_globals
 
     public
 
-    real(8), parameter :: element_length = 10.0 ! This is a temperory element length
+    real(8), parameter :: element_length = 10.0 ! This is a temporary element length
+    
+    !% Number of maximum branches for a junction
+    !integer, parameter :: max_us_branch_per_node = 3
+    !integer, parameter :: max_ds_branch_per_node = 3
+    integer, parameter :: max_branch_per_node = 6
+    real(8) :: branchsign(max_branch_per_node)
 
     !% Main Arrays - Allocated in allocate_storage.f08
     !%  links are the building blocks from SWMM link-node formulation

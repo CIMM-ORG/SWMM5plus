@@ -337,7 +337,7 @@ subroutine init_partitioning_linkbalance()
         nodeI(:, ni_P_is_boundary) = 0
         do ii = 1, N_node
             assigned_image = nullvalueI
-            do jj = 1, (max_us_branch_per_node + max_ds_branch_per_node)
+            do jj = 1,max_branch_per_node
                 clink = nodeI(ii, ni_idx_base1+jj)
                 if (clink /= nullvalueI) then
                     clink_image = linkI(clink, li_P_image)

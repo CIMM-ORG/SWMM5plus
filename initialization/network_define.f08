@@ -844,12 +844,16 @@ contains
             !%......................................................
             !% Upstream Branches
             !%......................................................
-            if ((ii .eq. 1) .or. (ii .eq. 3) .or. (ii .eq. 5)) then
+            ! if ((ii .eq. 1) .or. (ii .eq. 3) .or. (ii .eq. 5)) then
+            select case (mod(ii,2))   
+            case (1)    
+            !% finds odd number branches    
             !% all the odd numbers are upstream branches
                 upBranchSelector = upBranchSelector + oneI
                 !% pointer to upstream branch
                 upBranchIdx => nodeI(thisNode,ni_idx_base1 + upBranchSelector)
 
+                !% real branches
                 if (upBranchIdx .ne. nullvalueI) then
                     !% integer data
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)           = oneI
@@ -891,13 +895,12 @@ contains
 
                     endif
                 else
-
-                    !% HACK:
-                    !% face counters are always advanced by link
-                    !% elements unless a branch does not have any
-                    !% elements associated with it. for null branches,
-                    !% no links are connected to the junction branch.
-                    !% to keep the count consistant, face is advanced
+                !% null branches require a valid face row
+                !% face counters are always advanced by link
+                !% elements unless a branch does not have any
+                !% elements associated with it. For null branches,
+                !% no links are connected to the junction branch,
+                !% but a face row is defined and connected.
 
                     !% advance the face counters for next branch
                     FaceLocalCounter  = FaceLocalCounter  + oneI
@@ -920,7 +923,10 @@ contains
             !%......................................................
             !% Downstream Branches
             !%......................................................
-            else
+            !else
+            case (0)
+            !% even number branches
+
                 !% all the even numbers are downstream branches
                 dnBranchSelector = dnBranchSelector + oneI
                 !% pointer to upstream branch
@@ -989,7 +995,7 @@ contains
                     call init_network_nullify_nJm_branch &
                         (ElemLocalCounter, FaceLocalCounter)
                 endif
-            endif
+            end select !% case (mod(ii,2))  
 
             !% Advance the element counter for next branch
             ElemLocalCounter  = ElemLocalCounter  + oneI

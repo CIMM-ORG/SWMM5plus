@@ -99,7 +99,7 @@ contains
     !==========================================================================
     !
     subroutine util_allocate_partitioning_arrays()
-        allocate(adjacent_links(max_us_branch_per_node + max_ds_branch_per_node))
+        allocate(adjacent_links(max_branch_per_node))
         allocate(elem_per_image(num_images()))
         allocate(image_full(num_images()))
     end subroutine util_allocate_partitioning_arrays

@@ -33,11 +33,7 @@ module define_indexes
     integer, parameter :: first_face_index  = 1
     integer, parameter :: first_elem_index  = 1
 
-    !%-------------------------------------------------------------------------
-    !% Number of maximum branches
-    integer, parameter :: max_us_branch_per_node = 3
-    integer, parameter :: max_ds_branch_per_node = 3
-    integer, parameter :: max_branch_per_node = max_us_branch_per_node + max_ds_branch_per_node
+
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: Junction_main = 1
@@ -96,17 +92,18 @@ module define_indexes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
     integer, parameter :: ni_Mlink_u2   = ni_idx_base1+2 ! map to link up dowstream branch 1
     integer, parameter :: ni_Mlink_u3   = ni_idx_base1+3
-    integer, parameter :: ni_idx_base2  = ni_idx_base1 + max_us_branch_per_node
+
+    integer, parameter :: ni_idx_base2  = ni_idx_base1 + max_branch_per_node/2
 
     integer, parameter :: ni_Mlink_d1   = ni_idx_base2+1
     integer, parameter :: ni_Mlink_d2   = ni_idx_base2+2
     integer, parameter :: ni_Mlink_d3   = ni_idx_base2+3
 
     !% storage for link index for upstream and downstream links
-    integer, dimension(max_us_branch_per_node) :: ni_MlinkUp = nullvalueI
-    integer, dimension(max_ds_branch_per_node) :: ni_MlinkDn = nullvalueI
+    integer, dimension(max_branch_per_node/2) :: ni_MlinkUp = nullvalueI
+    integer, dimension(max_branch_per_node/2) :: ni_MlinkDn = nullvalueI
 
-    integer, target :: Ncol_nodeI = ni_idx_base2 + max_ds_branch_per_node
+    integer, target :: Ncol_nodeI = ni_idx_base2 + max_branch_per_node/2
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for linkR(:,:) arrays
@@ -173,16 +170,16 @@ module define_indexes
     integer, parameter :: nr_ElementLength_u2 = nr_idx_base1 + 2 ! used for subdividing junctions
     integer, parameter :: nr_ElementLength_u3 = nr_idx_base1 + 3 ! used for subdividing junctions
 
-    integer, parameter :: nr_idx_base2 = nr_idx_base1 + max_us_branch_per_node
+    integer, parameter :: nr_idx_base2 = nr_idx_base1 + max_branch_per_node/2
     integer, parameter :: nr_ElementLength_d1 = nr_idx_base2 + 1 ! used for subdividing junctions
     integer, parameter :: nr_ElementLength_d2 = nr_idx_base2 + 2 ! used for subdividing junctions
     integer, parameter :: nr_ElementLength_d3 = nr_idx_base2 + 3 ! used for subdividing junctions
 
     !% storage of node indexes for multi-branch data
-    integer, dimension(max_us_branch_per_node) :: nr_ElementLengthUp = nullvalueI
-    integer, dimension(max_ds_branch_per_node) :: nr_ElementLengthDn = nullvalueI
+    integer, dimension(max_branch_per_node/2) :: nr_ElementLengthUp = nullvalueI
+    integer, dimension(max_branch_per_node/2) :: nr_ElementLengthDn = nullvalueI
 
-    integer, target :: Ncol_nodeR = nr_idx_base2 + max_ds_branch_per_node
+    integer, target :: Ncol_nodeR = nr_idx_base2 + max_branch_per_node/2
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for nodeYN(:,:) arrays
@@ -632,6 +629,13 @@ module define_indexes
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_faceYN =  fYN_isnull
+
+    !
+    !==========================================================================
+    ! definitions
+    !==========================================================================
+    !
+
     !
     !==========================================================================
     ! END OF MODULE

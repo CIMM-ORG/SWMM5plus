@@ -298,7 +298,8 @@ module geometry
         real(8), pointer :: fullhyddepth(:)
         integer :: tB, ii, kk
         !% branchsign assume branches are ordered as nominal inflow, outflow, inflow...
-        real(8) :: branchsign(6) = [+oneR,-oneR,+oneR,-oneR,+oneR,-oneR]
+        !real(8) :: branchsign(6) = [+oneR,-oneR,+oneR,-oneR,+oneR,-oneR]
+       
         !% thisColP_JM is the column for the junction mains of a particular 
         !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC    
 
