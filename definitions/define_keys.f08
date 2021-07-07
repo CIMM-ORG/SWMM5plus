@@ -89,20 +89,20 @@ module define_keys
         enumerator :: type3_Pump            !% type 3 pump type
         enumerator :: type4_Pump            !% type 4 pump type
         !% BC types ----- BC%I(:,bi_category)
-        enumerator :: BC_head
-        enumerator :: BC_inflow
+        enumerator :: BCH
+        enumerator :: BCQ
         !% BC subcategory (Q - flowrate)
-        enumerator :: BC_Q_fixed
-        enumerator :: BC_Q_tseries
+        enumerator :: BCQ_fixed
+        enumerator :: BCQ_tseries
         !% BC subcategory (H - head)
-        enumerator :: BC_H_free             !% minimum of critical flow depth an normal flow depth
-        enumerator :: BC_H_normal           !% outfall stage based on normal flow depth in connecting conduit
-        enumerator :: BC_H_fixed            !% outfall stage set to a fixed value
-        enumerator :: BC_H_tidal            !% outfall stage given by a table of tide elevation versus time of day
-        enumerator :: BC_H_tseries          !% outfall stage supplied from a time series of elevations
+        enumerator :: BCH_free             !% minimum of critical flow depth an normal flow depth
+        enumerator :: BCH_normal           !% outfall stage based on normal flow depth in connecting conduit
+        enumerator :: BCH_fixed            !% outfall stage set to a fixed value
+        enumerator :: BCH_tidal            !% outfall stage given by a table of tide elevation versus time of day
+        enumerator :: BCH_tseries          !% outfall stage supplied from a time series of elevations
         !% face types
-        enumerator :: BCup
-        enumerator :: BCdn
+        enumerator :: BCdn                  !% face with downstream BC
+        enumerator :: BCup                  !% face with upstream BC
         !% face jump types
         enumerator :: jump_none             !% type of hydraulic jump
         enumerator :: jump_from_upstream    !% type of hydraulic jump

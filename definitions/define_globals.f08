@@ -138,9 +138,7 @@ module define_globals
     !% Number of objects
     integer :: N_link
     integer :: N_node
-    !integer :: N_HBC
     integer :: N_headBC
-    !integer :: N_QBC
     integer :: N_flowBC
     integer :: N_nBCup
     integer :: N_nBCdn

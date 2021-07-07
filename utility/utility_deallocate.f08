@@ -84,11 +84,11 @@ contains
         deallocate(node%YN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        !deallocate(node%P%have_QBC, stat=deallocation_status, errmsg=emsg)
+        !deallocate(node%P%have_flowBC, stat=deallocation_status, errmsg=emsg)
         deallocate(node%P%have_flowBC, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        !deallocate(node%P%have_HBC, stat=deallocation_status, errmsg=emsg)
+        !deallocate(node%P%have_headBC, stat=deallocation_status, errmsg=emsg)
         deallocate(node%P%have_headBC, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
@@ -307,20 +307,22 @@ contains
 
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
 
-        !deallocate(BC%QI, stat=deallocation_status, errmsg=emsg)
         deallocate(BC%flowI, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check (deallocation_status, emsg)
 
-        !deallocate(BC%HI, stat=deallocation_status, errmsg=emsg)
-        deallocate(BC%headI, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check (deallocation_status, emsg)
-
-        !deallocate(BC%QR, stat=deallocation_status, errmsg=emsg)
         deallocate(BC%flowR_timeseries, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check (deallocation_status, emsg)
 
-        !deallocate(BC%HR, stat=deallocation_status, errmsg=emsg)
+        deallocate(BC%flowIdx, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check (deallocation_status, emsg)
+
+        deallocate(BC%headI, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check (deallocation_status, emsg)
+
         deallocate(BC%headR_timeseries, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check (deallocation_status, emsg)
+
+        deallocate(BC%headIdx, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check (deallocation_status, emsg)
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name

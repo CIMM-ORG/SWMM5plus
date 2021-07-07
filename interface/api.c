@@ -332,54 +332,7 @@ int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int obj
     return 0;
 }
 
-int DLLEXPORT api_get_first_table_entry(int k, int table_type, double* x, double* y)
-{
-    int success;
-    if (table_type == TSERIES)
-    {
-        success = table_getFirstEntry(&Tseries[k], x, y);
-        if (Tseries[k].curveType == -1 && Tseries[k].refersTo == EXTERNAL_INFLOW)
-            *y = CFTOCM(*y);
-        return success;
-    }
-    else
-    {
-        return ERR_API_WRONG_TYPE;
-    }
-}
-
-int DLLEXPORT api_get_next_table_entry(int k, int table_type, double* x, double* y)
-{
-    int success;
-    if (table_type == TSERIES)
-    {
-        success = table_getNextEntry(&Tseries[k], x, y);
-        if (Tseries[k].curveType == -1 && Tseries[k].refersTo == EXTERNAL_INFLOW)
-            *y = CFTOCM(*y);
-        return success;
-    }
-    else
-    {
-        return ERR_API_WRONG_TYPE;
-    }
-}
-
-int DLLEXPORT api_get_pattern_count(int k)
-{
-    return Pattern[k].count;
-}
-
-double DLLEXPORT api_get_pattern_factor(int k, int j)
-{
-    return Pattern[k].factor[j];
-}
-
-int DLLEXPORT api_get_pattern_type(int k)
-{
-    return Pattern[k].type;
-}
-
-double DLLEXPORT api_get_next_inflow_bc(void* f_api, int node_idx, double current_datetime) {
+double DLLEXPORT api_get_QBC(void* f_api, int node_idx, double current_datetime) {
 
     int ptype, pcount, i, j, p;
     int yy, mm, dd;
@@ -400,24 +353,27 @@ double DLLEXPORT api_get_next_inflow_bc(void* f_api, int node_idx, double curren
         for (int i=0; i<4; i++)
         {
             j = Node[node_idx].dwfInflow->patterns[i];
-            ptype = Pattern[j].type;
-            if (ptype == MONTHLY_PATTERN)
-                total_factor *= Pattern[j].factor[mm-1];
-            else if (ptype == DAILY_PATTERN)
-                total_factor *= Pattern[j].factor[dow-1];
-            else if (ptype == HOURLY_PATTERN)
-                total_factor *= Pattern[j].factor[h];
-            else if (ptype == WEEKEND_PATTERN)
+            if (j > 0)
             {
-                if ((dow == 1) || (dow == 7))
+                ptype = Pattern[j].type;
+                if (ptype == MONTHLY_PATTERN)
+                    total_factor *= Pattern[j].factor[mm-1];
+                else if (ptype == DAILY_PATTERN)
+                    total_factor *= Pattern[j].factor[dow-1];
+                else if (ptype == HOURLY_PATTERN)
                     total_factor *= Pattern[j].factor[h];
+                else if (ptype == WEEKEND_PATTERN)
+                {
+                    if ((dow == 1) || (dow == 7))
+                        total_factor *= Pattern[j].factor[h];
+                }
             }
         }
         total_inflow += total_factor * Node[node_idx].dwfInflow->avgValue;
     }
 
     api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
-    if (val == 1) { // node_has_dwfInflow
+    if (val == 1) { // node_has_extInflow
         p = Node[node_idx].extInflow->basePat; // pattern
         if (p > 0)
         {
@@ -443,7 +399,6 @@ double DLLEXPORT api_get_next_inflow_bc(void* f_api, int node_idx, double curren
         }
         total_inflow += total_extinflow;
     }
-
     return total_inflow;
 }
 
@@ -746,7 +701,12 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
     return 0;
 }
 
-// --- Utils
+// -------------------------------------------------------------------------
+// |
+// |  Private functionalities
+// v
+// -------------------------------------------------------------------------
+
 int check_api_is_initialized(Interface* api)
 {
     if ( ErrorCode ) return error_getCode(ErrorCode);
@@ -759,7 +719,6 @@ int check_api_is_initialized(Interface* api)
     return 0;
 }
 
-// ---
 int api_load_vars(void * f_api)
 {
     Interface * api = (Interface*) f_api;
@@ -816,7 +775,6 @@ int api_load_vars(void * f_api)
     }
     return 0;
 }
-
 
 int api_findObject(int type, char *id)
 {

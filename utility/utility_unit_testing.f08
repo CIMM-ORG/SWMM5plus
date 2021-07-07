@@ -1,4 +1,4 @@
-Module utility_UnitTesting
+Module utility_unit_testing
   use interface
   use utility_allocate
   use discretization
@@ -12,17 +12,17 @@ Module utility_UnitTesting
 
   private
 
-  public :: util_UnitTest_local_global
-  public :: util_UnitTest_pack_arrays
-  public :: util_UnitTest_node_link_image
-  public :: util_UnitTesting_slope_checking
-  public :: util_UnitTesting_global_index_check
+  public :: util_utest_local_global
+  public :: util_utest_pack_arrays
+  public :: util_utest_node_link_image
+  public :: util_utest_slope_checking
+  public :: util_utest_global_index_check
 
 contains
 
-  subroutine util_UnitTest_local_global
+  subroutine util_utest_local_global
 
-    !% In this subroutine we are checking the the local and global indexs of the link,node,elem and face arrays are unique   
+    !% In this subroutine we are checking the the local and global indexs of the link,node,elem and face arrays are unique
 
     integer ii, jj, kk, min_val, max_val
     logical dup_found
@@ -30,23 +30,23 @@ contains
     if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
     !% Looping through the array and finding all of the unqiue values
-    min_val = minval(link%I(:,li_idx)) - 1 
+    min_val = minval(link%I(:,li_idx)) - 1
     max_val = maxval(link%I(:,li_idx))
     ii = 0
-    
+
     do while(min_val<max_val)
        ii = ii + 1
        min_val = minval(link%I(:,li_idx),mask=link%I(:,li_idx)>min_val)
     end do
-    
+
     if(ii /= size(link%I(:, li_idx))) then
        print *, "ERROR:::: link%I(:,li_idx) is not unique. This_image ::", this_image()
     else
        print *, "link%I(:,li_idx) is unique. This_image ::", this_image()
     end if
-    
+
     !% checking node%I(:,:) indexes
-    
+
     min_val = minval(node%I(:,ni_idx)) - 1
     max_val = maxval(node%I(:,ni_idx))
     ii = 0
@@ -56,7 +56,7 @@ contains
        min_val = minval(node%I(:,ni_idx),mask=node%I(:,ni_idx)>min_val)
     end do
 
-    
+
 
     if(ii /= size(node%I(:, ni_idx))) then
        print *, "ERROR:::: node%I(:,ni_idx) is not unique. This_image ::", this_image()
@@ -70,7 +70,7 @@ contains
     min_val = minval(elemI(1:N_elem(this_image()),ei_Lidx)) - 1
     max_val = maxval(elemI(1:N_elem(This_image()),ei_Lidx))
     ii = 0
-    
+
     do while(min_val<max_val)
        ii = ii + 1
        min_val = minval(elemI(1:N_elem(This_image()),ei_Lidx),mask=elemI(1:N_elem(This_image()),ei_Lidx)>min_val)
@@ -83,20 +83,20 @@ contains
     else
        print *, "elemI(:,ei_Lidx) is unique. This_image ::", this_image()
     end if
-    
 
-    
+
+
     !% checking faceI(:,:) indexes
 
     min_val = minval(faceI(1:N_face(this_image()),fi_Lidx)) - 1
     max_val = maxval(faceI(1:N_face(this_image()),fi_Lidx))
     ii = 0
-    
+
     do while(min_val<max_val)
        ii = ii + 1
        min_val = minval(faceI(1:N_face(this_image()),fi_Lidx),mask=faceI(1:N_face(this_image()),fi_Lidx)>min_val)
     end do
-           
+
 
 
     if(ii /= n_face(this_image())) then
@@ -110,12 +110,12 @@ contains
     min_val = minval(faceI(1:N_face(this_image()),fi_Gidx)) - 1
     max_val = maxval(faceI(1:N_face(this_image()),fi_Gidx))
     ii = 0
-    
+
     do while(min_val<max_val)
        ii = ii + 1
        min_val = minval(faceI(1:N_face(this_image()),fi_Gidx),mask=faceI(1:N_face(this_image()),fi_Gidx)>min_val)
     end do
-           
+
 
 
     if(ii /= n_face(this_Image())) then
@@ -123,8 +123,8 @@ contains
     else
        print *, "faceI(:,fi_Gidx) is unique. This_image ::", this_image()
     end if
-    
-    
+
+
     !% checking elemI(:,:) global indexes
 
     min_val = minval(elemI(1:N_elem(this_image()),ei_Gidx)) - 1
@@ -142,20 +142,20 @@ contains
     else
        print *, "elemI(:,ei_Gidx) is unique. This_image ::", this_image()
     end if
-    
+
 
     if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
-  end subroutine util_UnitTest_local_global
+  end subroutine util_utest_local_global
 
-    subroutine util_UnitTest_pack_arrays
+    subroutine util_utest_pack_arrays
 
-      !% Going through all of the pack arrays and making sure they are unique, this follows the same process as the subroutine above, with a slight change.  
+      !% Going through all of the pack arrays and making sure they are unique, this follows the same process as the subroutine above, with a slight change.
       integer ii, jj, kk, min_val, max_val
       logical dup_found
       character(64) :: subroutine_name = 'pack_arrays_unique'
       if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-      
+
 
 
       kk = 1
@@ -172,22 +172,22 @@ contains
       end do
 
       !% Here we check if nullvalueI is part packed array and if so we subtract one.
-      !% We do this because 
+      !% We do this because
       if(min_val == nullvalueI) then
          ii = ii - 1
       end if
-      
+
 
       if(ii == 0 .and. min_val == nullvalueI) then
          print *, "elemP(:,ep_AC) is only filled with nullvalueI. This_image ::", this_image()
-      
+
       else if(ii /= npack_elemP(ep_ac)) then
          print *, "ERROR:::: elemP(:,ep_AC) is not unique. This_image ::", this_image()
-      
+
       else
          print *, "elemP(:,ep_AC) is unique. This_image ::", this_image()
       end if
-      
+
 
       !% checking elemP(:,ep_ALLtm) indexes
 
@@ -203,7 +203,7 @@ contains
       if(min_val == nullvalueI) then
          ii = ii - 1
       end if
-      
+
       if(ii == 0 .and. min_val == nullvalueI) then
          print *, "elemP(:,ep_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
 
@@ -239,8 +239,8 @@ contains
       else
          print *, "elemP(:,ep_CC_AC) is unique. This_image ::", this_image()
       end if
-      
-      
+
+
       !% checking elemP(:,ep_CC_ALLtm) indexes
 
       min_val = minval(elemP(:,ep_CC_ALLtm)) - 1
@@ -256,7 +256,7 @@ contains
          ii = ii - 1
       end if
 
-      
+
 
 
       if(ii == 0 .and. min_val == nullvalueI) then
@@ -268,7 +268,7 @@ contains
       else
          print *, "elemP(:,ep_CC_ALLtm) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CC_ETM) indexes
 
       min_val = minval(elemP(:,ep_CC_ETM)) - 1
@@ -294,10 +294,10 @@ contains
       else
          print *, "elemP(:,ep_CC_ETM) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CC_H_ETM) indexes
 
-      
+
       min_val = minval(elemP(:,ep_CC_H_ETM)) - 1
       max_val = maxval(elemP(:,ep_CC_H_ETM))
       ii = 0
@@ -321,10 +321,10 @@ contains
       else
          print *, "elemP(:,ep_CC_H_ETM) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CC_Q_AC) indexes
 
-      
+
       min_val = minval(elemP(:,ep_CC_Q_AC)) - 1
       max_val = maxval(elemP(:,ep_CC_Q_AC))
       ii = 0
@@ -348,7 +348,7 @@ contains
       else
          print *, "elemP(:,ep_CC_Q_AC) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CC_Q_ETM) indexes
 
       min_val = minval(elemP(:,ep_CC_Q_ETM)) - 1
@@ -374,10 +374,10 @@ contains
       else
          print *, "elemP(:,ep_CC_Q_ETM) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CCJB_AC_surcharged) indexes
 
-      
+
       min_val = minval(elemP(:,ep_CCJB_AC_surcharged)) - 1
       max_val = maxval(elemP(:,ep_CCJB_AC_surcharged))
       ii = 0
@@ -401,10 +401,10 @@ contains
       else
          print *, "elemP(:,ep_CCJB_AC_surcharged) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CCJB_ALLtm) indexes
 
-      
+
       min_val = minval(elemP(:,ep_CCJB_ALLtm)) - 1
       max_val = maxval(elemP(:,ep_CCJB_ALLtm))
       ii = 0
@@ -428,10 +428,10 @@ contains
       else
          print *, "elemP(:,ep_CCJB_ALLtm) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CCJB_AC) indexes
 
-      
+
       min_val = minval(elemP(:,ep_CCJB_AC)) - 1
       max_val = maxval(elemP(:,ep_CCJB_AC))
       ii = 0
@@ -455,7 +455,7 @@ contains
       else
          print *, "elemP(:,ep_CCJB_AC) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CCJB_ALLtm_surcharged) indexes
 
       min_val = minval(elemP(:,ep_CCJB_ALLtm_surcharged)) - 1
@@ -483,7 +483,7 @@ contains
       end if
 
 
-      
+
       !% checking elemP(:,ep_CCJB_eETM_i_fAC) indexes
 
 
@@ -510,7 +510,7 @@ contains
       else
          print *, "elemP(:,ep_CCJB_eETM_i_fAC) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CCJB_ETM) indexes
 
 
@@ -526,8 +526,8 @@ contains
       if(min_val == nullvalueI) then
          ii = ii - 1
       end if
-      
-      
+
+
       if(ii == 0 .and. min_val == nullvalueI) then
          print *, "elemP(:,ep_CCJB_ETM) is only filled with nullvalueI. This_image ::", this_image()
 
@@ -537,7 +537,7 @@ contains
       else
          print *, "elemP(:,ep_CCJB_ETM) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_Diag) indexes
 
 
@@ -564,7 +564,7 @@ contains
       else
          print *, "elemP(:,ep_Diag) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_ETM) indexes
 
       min_val = minval(elemP(:,ep_ETM)) - 1
@@ -672,7 +672,7 @@ contains
       else
          print *, "elemP(:,ep_JB_ETM) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_NonSurcharged_AC) indexes
 
 
@@ -699,7 +699,7 @@ contains
       else
          print *, "elemP(:,ep_NonSurcharged_AC) is unique. This_image ::", this_image()
       end if
-            
+
       !% checking elemP(:,ep_NonSurcharged_ALLtm) indexes
 
       min_val = minval(elemP(:,ep_NonSurcharged_ALLtm)) - 1
@@ -725,7 +725,7 @@ contains
       else
          print *, "elemP(:,ep_NonSurcharged_ALLtm) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_NonSurcharged_ETM) indexes
 
 
@@ -753,7 +753,7 @@ contains
          print *, "elemP(:,ep_NonSurcharged_ETM) is unique. This_image ::", this_image()
       end if
 
-      
+
       !% checking elemP(:,ep_smallvolume_AC) indexes
 
 
@@ -807,7 +807,7 @@ contains
       else
          print *, "elemP(:,ep_smallvolume_ALLtm) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_smallvolume_ETM) indexes
 
       min_val = minval(elemP(:,ep_smallvolume_ETM)) - 1
@@ -837,7 +837,7 @@ contains
 
       !% checking elemP(:,ep_Surcharged_AC) indexes
 
-      
+
       min_val = minval(elemP(:,ep_Surcharged_AC)) - 1
       max_val = maxval(elemP(:,ep_Surcharged_AC))
       ii = 0
@@ -861,8 +861,8 @@ contains
       else
          print *, "elemP(:,ep_Surcharged_AC) is unique. This_image ::", this_image()
       end if
-      
-      
+
+
       !% checking elemP(:,ep_Surcharged_ALLtm) indexes
 
       min_val = minval(elemP(:,ep_Surcharged_ALLtm)) - 1
@@ -888,11 +888,11 @@ contains
       else
          print *, "elemP(:,ep_Surcharged_ALLtm) is unique. This_image ::", this_image()
       end if
-      
+
 
       !% checking elemP(:,ep_Surcharged_ETM) indexes
 
-      
+
       min_val = minval(elemP(:,ep_Surcharged_ETM)) - 1
       max_val = maxval(elemP(:,ep_Surcharged_ETM))
       ii = 0
@@ -916,7 +916,7 @@ contains
       else
          print *, "elemP(:,ep_Surcharged_ETM) is unique. This_image ::", this_image()
       end if
-      
+
 
       !% checking elemP(:,ep_CCJM_H_AC_surcharged) indexes
 
@@ -942,7 +942,7 @@ contains
       else
          print *, "elemP(:,ep_CCJM_H_AC_surcharged) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CCJM_H_AC) indexes
 
       min_val = minval(elemP(:,ep_CCJM_H_AC)) - 1
@@ -968,7 +968,7 @@ contains
       else
          print *, "elemP(:,ep_CCJM_H_AC) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking elemP(:,ep_CCJB_eAC_i_fETM) indexes
 
       min_val = minval(elemP(:,ep_CCJB_eAC_i_fETM)) - 1
@@ -1050,10 +1050,10 @@ contains
          print *, "elemPGalltm(:,epg_CCJM_trapezoidal_nonsurcharged) is unique. This_image ::", this_image()
       end if
 
-      
+
       !% checking elemPGalltm(:,epg_JB_rectangular) indexes
 
-      
+
       min_val = minval(elemPGalltm(:,epg_JB_rectangular)) - 1
       max_val = maxval(elemPGalltm(:,epg_JB_rectangular))
       ii = 0
@@ -1081,7 +1081,7 @@ contains
 
       !% checking elemPGalltm(:,epg_JB_trapezoidal) indexes
 
-      
+
       min_val = minval(elemPGalltm(:,epg_JB_trapezoidal)) - 1
       max_val = maxval(elemPGalltm(:,epg_JB_trapezoidal))
       ii = 0
@@ -1106,7 +1106,7 @@ contains
          print *, "elemPGalltm(:,epg_JB_trapezoidal) is unique. This_image ::", this_image()
       end if
 
-      
+
       !% --------------------------------------------------------------------------------------------------------------
 
       !% checking elemPGetm(:,epg_CCJM_rectangular_nonsurcharged) indexes
@@ -1162,10 +1162,10 @@ contains
          print *, "elemPGetm(:,epg_CCJM_trapezoidal_nonsurcharged) is unique. This_image ::", this_image()
       end if
 
-      
+
       !% checking elemPGetm(:,epg_JB_rectangular) indexes
 
-      
+
       min_val = minval(elemPGetm(:,epg_JB_rectangular)) - 1
       max_val = maxval(elemPGetm(:,epg_JB_rectangular))
       ii = 0
@@ -1192,7 +1192,7 @@ contains
 
       !% checking elemPGetm(:,epg_JB_trapezoidal) indexes
 
-      
+
       min_val = minval(elemPGetm(:,epg_JB_trapezoidal)) - 1
       max_val = maxval(elemPGetm(:,epg_JB_trapezoidal))
       ii = 0
@@ -1217,7 +1217,7 @@ contains
          print *, "elemPGetm(:,epg_JB_trapezoidal) is unique. This_image ::", this_image()
       end if
 
-      
+
       !% --------------------------------------------------------------------------------------------------------------
 
       !% checking elemPGac(:,epg_CCJM_rectangular_nonsurcharged) indexes
@@ -1275,10 +1275,10 @@ contains
          print *, "elemPGac(:,epg_CCJM_trapezoidal_nonsurcharged) is unique. This_image ::", this_image()
       end if
 
-      
+
       !% checking elemPGac(:,epg_JB_rectangular) indexes
 
-      
+
       min_val = minval(elemPGac(:,epg_JB_rectangular)) - 1
       max_val = maxval(elemPGac(:,epg_JB_rectangular))
       ii = 0
@@ -1306,7 +1306,7 @@ contains
 
       !% checking elemPGac(:,epg_JB_trapezoidal) indexes
 
-      
+
       min_val = minval(elemPGac(:,epg_JB_trapezoidal)) - 1
       max_val = maxval(elemPGac(:,epg_JB_trapezoidal))
       ii = 0
@@ -1333,7 +1333,7 @@ contains
 
       !% checking faceP(:,fp_all) indexes
 
-      
+
       min_val = minval(faceP(:,fp_all)) - 1
       max_val = maxval(faceP(:,fp_all))
       ii = 0
@@ -1357,10 +1357,10 @@ contains
       else
          print *, "faceP(:,fp_all) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking faceP(:,fp_AC) indexes
 
-      
+
       min_val = minval(faceP(:,fp_AC)) - 1
       max_val = maxval(faceP(:,fp_AC))
       ii = 0
@@ -1384,10 +1384,10 @@ contains
       else
          print *, "faceP(:,fp_AC) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking faceP(:,fp_Diag) indexes
 
-      
+
       min_val = minval(faceP(:,fp_Diag)) - 1
       max_val = maxval(faceP(:,fp_Diag))
       ii = 0
@@ -1411,10 +1411,10 @@ contains
       else
          print *, "faceP(:,fp_Diag) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking faceP(:,fp_JumpDn) indexes
 
-      
+
       min_val = minval(faceP(:,fp_JumpDn)) - 1
       max_val = maxval(faceP(:,fp_JumpDn))
       ii = 0
@@ -1438,10 +1438,10 @@ contains
       else
          print *, "faceP(:,fp_JumpDn) is unique. This_image ::", this_image()
       end if
-      
+
       !% checking faceP(:,fp_JumpUp) indexes
 
-      
+
       min_val = minval(faceP(:,fp_JumpUp)) - 1
       max_val = maxval(faceP(:,fp_JumpUp))
       ii = 0
@@ -1465,38 +1465,38 @@ contains
       else
          print *, "faceP(:,fp_JumpUp) is unique. This_image ::", this_image()
       end if
-      
-      
-      if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
-            
-    end subroutine util_UnitTest_pack_arrays
 
-    subroutine util_UnitTest_node_link_image
-      
+
+      if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+
+    end subroutine util_utest_pack_arrays
+
+    subroutine util_utest_node_link_image
+
       !% In this subroutine we are checking whether the every image has atleast one node and link assigned to it.
       integer :: ii, jj, kk, counter
       character(64) :: subroutine_name = 'init_face_check'
       if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-      
+
       kk = 1
       counter = 0
 
       !% We can find if there is a node on each image by counting the amount of unique values there is inside of node%I(:,ni_P_image)
       !% So we use the code below to loop through node%I(:,ni_P_image) and find all the unique values
-      
+
       do ii = 1, size(node%I(:,ni_P_image))
          do jj = 1, ii
-            
+
             if((node%I(ii, ni_P_image)) == node%I(jj, ni_P_image)) then
-               exit 
+               exit
             end if
          end do
-         
+
             if(ii == jj) then
                counter = counter + 1
 
             end if
-            
+
       end do
 
       !% After that we compare the number of images we are using to what we counted.
@@ -1513,17 +1513,17 @@ contains
 
       do ii = 1, size(link%I(:,li_P_image))
          do jj = 1, ii
-            
+
             if((link%I(ii, li_P_image)) == link%I(jj, li_P_image)) then
-               exit 
+               exit
             end if
          end do
-         
+
             if(ii == jj) then
                counter = counter + 1
 
             end if
-            
+
       end do
 
 
@@ -1535,11 +1535,11 @@ contains
       end if
       if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
-    end subroutine util_UnitTest_node_link_image
+    end subroutine util_utest_node_link_image
 
-    subroutine util_UnitTesting_slope_checking
+    subroutine util_utest_slope_checking
       !% In this subroutine we are checking that all of the slopes are postive.
-      !% To do this and loop through and if we find a negative slope then we exit the loop and report it. 
+      !% To do this and loop through and if we find a negative slope then we exit the loop and report it.
 
       integer :: ii, jj
       logical :: invalid_slope
@@ -1562,20 +1562,20 @@ contains
       end if
 
       if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
-      
-    end subroutine util_UnitTesting_slope_checking
+
+    end subroutine util_utest_slope_checking
 
 
-    subroutine util_UnitTesting_global_index_check
+    subroutine util_utest_global_index_check
       !% In this subroutine we are checking that the global indexs are correct by adding the first valid global index of an image with the local index
-      
+
       integer :: ii, current_length, counter
       character(64) :: subroutine_name = 'global_index_checking'
 
       if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
       !% here we find the current length of the global index by looking at the first value of elemI on that image and subtracting one.
-      
+
       current_length = elemI(1, ei_Gidx) - 1
 
       !% Then we loop through elemI(:,ei_Gidx) and report and stop looping if there is an error in the global indexes
@@ -1594,7 +1594,7 @@ contains
       !% This means we can't do the same thing to find the current length, instead we need to find the first face that is not a shared face and then calculate the current length based of that.
       !% That is what is happening the lines below.
       ii = 1
-      
+
       do while(faceYN(ii,fYN_isSharedFace))
 
          ii = ii + 1
@@ -1605,12 +1605,12 @@ contains
 
       !% Now that we have the correct current length we do the same thing as before with the elems, except we have to check if it a shared_face or not.
       !% So we write an extra if statement before checking to skip those faces.
-      
+
       do ii = 1, size(faceI(:,ei_Gidx))
-         
+
          if(faceYN(ii,fYN_isSharedFace)) then
             cycle
-         
+
          else if(faceI(ii,ei_Gidx) /= current_length+faceI(ii,ei_Lidx) .and. faceI(ii,ei_Gidx)/= nullvalueI) then
             print *, "error in face global indexes. Image :: ", this_Image()
             !% print *, "faceI(ii,ei_Gidx)", faceI(ii,ei_Gidx)
@@ -1620,9 +1620,9 @@ contains
       end do
 
       if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
-      
-    end subroutine util_UnitTesting_global_index_check
-    
+
+    end subroutine util_utest_global_index_check
+
     !subroutine geometry_checking
 
       !integer ii, jj
@@ -1636,7 +1636,7 @@ contains
      !          case(lRectangular)
 
     !end subroutine geometry_checking
-         
-         
-    
-  end Module utility_UnitTesting
+
+
+
+  end Module utility_unit_testing

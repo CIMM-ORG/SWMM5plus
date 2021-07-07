@@ -978,20 +978,23 @@ contains
             print *, "Error: the number of BCSlots has to be greater than 2"
             stop
         end if
-        !allocate(BC%HI(N_HBC, N_HBC_I), stat=allocation_status, errmsg=emsg)
-        allocate(BC%headI(N_headBC, N_headBC_I), stat=allocation_status, errmsg=emsg)
+
+        allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg)
 
-        !allocate(BC%QI(N_QBC, N_QBC_I), stat=allocation_status, errmsg=emsg)
-        allocate(BC%flowI(N_flowBC, N_flowBC_I), stat=allocation_status, errmsg=emsg)
+        allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg)
 
-        !allocate(BC%HR(N_HBC, setting%BC%BCSlots, N_HBC_R), stat=allocation_status, errmsg=emsg)
-        allocate(BC%headR_timeseries(N_headBC, setting%BC%BCSlots, N_headBC_R), stat=allocation_status, errmsg=emsg)
+        allocate(BC%headR_timeseries(N_headBC, setting%BC%BCSlots, N_headR), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg)
 
-        !allocate(BC%QR(N_QBC, setting%BC%BCSlots, N_QBC_R), stat=allocation_status, errmsg=emsg)
-        allocate(BC%flowR_timeseries(N_flowBC, setting%BC%BCSlots, N_flowBC_R), stat=allocation_status, errmsg=emsg)
+        allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg)
+
+        allocate(BC%flowR_timeseries(N_flowBC, setting%BC%BCSlots, N_flowR), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg)
+
+        allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg)
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name

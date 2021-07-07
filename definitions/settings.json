@@ -215,7 +215,7 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
-            "pack_mask_arrays" : true,
+            "pack_mask_arrays" : false,
             "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,

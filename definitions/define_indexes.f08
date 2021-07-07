@@ -87,8 +87,11 @@ module define_indexes
         enumerator :: ni_total_inflow  ! index to total_inflow (-1 if not total_inflow)
         enumerator :: ni_P_image       ! image number assigned from BIPquick
         enumerator :: ni_P_is_boundary ! 0=this node has nothing to do with image communication; >0=this node is a partition boundary
+        ! if node is BCup or BCdn, ni_elemface_idx is the index of its associated BC face
+        ! if node is nJm or nJ2, ni_elemface_idx is the index of the associated element
+        enumerator :: ni_elemface_idx
     end enum
-    integer, parameter :: ni_idx_base1 = ni_P_is_boundary
+    integer, parameter :: ni_idx_base1 = ni_elemface_idx
 
     !% column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
@@ -199,29 +202,25 @@ module define_indexes
         enumerator :: bi_idx = 1
         enumerator :: bi_now         ! index of current BC value
         enumerator :: bi_node_idx
-        enumerator :: bi_face_idx
+        enumerator :: bi_face_idx    ! Index of face for nJ2 and nBCup nodes
+        enumerator :: bi_elem_idx    ! Index of main junction element for lateral inflow
         enumerator :: bi_category
         enumerator :: bi_subcategory
-        enumerator :: bi_xr_idx      ! BC%xR idx if elevation BC, -1 otherwise
     end enum
     !% HACK - we will probably want to create a different set of indexes for BC_flow and BC_head tables
     !% For instance, BC_flow tables will probably need addititonal information to distribute flowrates
     !% over link elements.
-    !integer, parameter :: N_QBC_I = bi_xr_idx
-    integer, parameter :: N_flowBC_I = bi_xr_idx
-    !integer, parameter :: N_HBC_I = bi_xr_idx
-    integer, parameter :: N_headBC_I = bi_xr_idx
+    integer, parameter :: N_flowI = bi_subcategory
+    integer, parameter :: N_headI = bi_subcategory
 
     !% Column indexes for BC_xR(:,:,:)
     enum, bind(c)
         enumerator :: br_time = 1
         enumerator :: br_value
     end enum
-    ! HACK - we will probably want to change the dimensions of flowBC and headBC real tables
-    !integer, parameter :: N_HBC_R = br_value
-    integer, parameter :: N_headBC_R = br_value
-    !integer, parameter :: N_QBC_R = br_value
-    integer, parameter :: N_flowBC_R = br_value
+    ! HACK - we will probably want to change the dimensions of BC%flowR and BC%headR real tables
+    integer, parameter :: N_headR = br_value
+    integer, parameter :: N_flowR = br_value
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for link%YN(:,:) arrays

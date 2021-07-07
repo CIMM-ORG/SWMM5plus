@@ -40,6 +40,7 @@ contains
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
+        call pack_nodes()
         call mask_faces_whole_array_static()
         call pack_geometry_alltm_elements()
         call pack_geometry_etm_elements()
@@ -50,7 +51,7 @@ contains
         call pack_static_shared_faces()
         call pack_dynamic_interior_faces()
         call pack_dynamic_shared_faces()
-        call pack_nodes()
+
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
@@ -615,7 +616,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC)     )
         endif
-        
+
 
         !% ep_CC_AC_surcharged
         !% - all channel conduit elements elements that are AC and surcharged
@@ -808,7 +809,7 @@ contains
                 (elemI(:,ei_tmType) == ETM) &
                 )
         endif
-        
+
         !% ep_CC_ETM_surcharged
         !% - all channel conduit or junction branch that are ETM and surcharged
         ptype => col_elemP(ep_CC_ETM_surcharged)
@@ -1404,11 +1405,11 @@ contains
                 edn         => faceI(thisP,fi_Melem_dL)
                 isUpGhost   => faceYN(thisP,fYN_isUpGhost)
                 gup         => faceI(thisP,fi_GhostElem_uL)
-                isDnGhost   => faceYN(thisP,fYN_isDnGhost) 
+                isDnGhost   => faceYN(thisP,fYN_isDnGhost)
                 gdn         => faceI(thisP,fi_GhostElem_dL)
                 c_image     => faceI(thisP,fi_Connected_image)
 
-                if (isUpGhost) then                              
+                if (isUpGhost) then
                    if ((elemI(gup,ei_HeqType)[c_image] == diagnostic) .or.  &
                        (elemI(gup,ei_QeqType)[c_image] == diagnostic) .or.  &
                        (elemI(edn,ei_HeqType)          == diagnostic) .or.  &
@@ -1416,11 +1417,11 @@ contains
 
                         !% advance the number of pack value
                         npack = npack + oneI
-                        !% save the face index 
+                        !% save the face index
                         facePS(npack,ptype) = thisP
                     endif
 
-                elseif (isDnGhost) then                         
+                elseif (isDnGhost) then
                     if ((elemI(gdn,ei_HeqType)[c_image] == diagnostic) .or.  &
                         (elemI(gdn,ei_QeqType)[c_image] == diagnostic) .or.  &
                         (elemI(eup,ei_HeqType)          == diagnostic) .or.  &
@@ -1428,13 +1429,13 @@ contains
 
                         !% advance the number of pack value
                         npack = npack + oneI
-                        !% save the face index 
+                        !% save the face index
                         facePS(npack,ptype) = thisP
                     endif
                 endif
             end do
         endif
-        
+
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_static_shared_faces
     !
@@ -1460,7 +1461,7 @@ contains
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
-        
+
         sync all
 
         !% pointing to the number of faces in this image
@@ -1484,17 +1485,17 @@ contains
                 edn         => faceI(thisP,fi_Melem_dL)
                 isUpGhost   => faceYN(thisP,fYN_isUpGhost)
                 gup         => faceI(thisP,fi_GhostElem_uL)
-                isDnGhost   => faceYN(thisP,fYN_isDnGhost) 
+                isDnGhost   => faceYN(thisP,fYN_isDnGhost)
                 gdn         => faceI(thisP,fi_GhostElem_dL)
                 c_image     => faceI(thisP,fi_Connected_image)
 
-                if (isUpGhost) then 
+                if (isUpGhost) then
                     if ((elemI(gup,ei_tmType)[c_image] == AC) .or.  &
                         (elemI(edn,ei_tmType)          == AC))  then
 
                         !% advance the number of pack value
                         npack = npack + oneI
-                        !% save the face index 
+                        !% save the face index
                         facePS(npack,ptype) = thisP
                     endif
 
@@ -1504,7 +1505,7 @@ contains
 
                         !% advance the number of pack value
                         npack = npack + oneI
-                        !% save the face index 
+                        !% save the face index
                         facePS(npack,ptype) = thisP
                     endif
                 endif
@@ -1550,17 +1551,17 @@ contains
     subroutine pack_nodes()
         !--------------------------------------------------------------------------
         !% This allocates and packs the node data in the arrays of node%P.
-        !% With this approach using the P type, each of the arrays on the  images
+        !% With this approach using the P type, each of the arrays on the images
         !% are allocated to the size needed.
         !--------------------------------------------------------------------------
-        !node%P%have_QBC = pack(node%I(:,ni_idx), &
+        !node%P%have_flowBC = pack(node%I(:,ni_idx), &
         node%P%have_flowBC = pack(node%I(:,ni_idx), &
             node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
-
-        !% HACK -- this assumes that a head BC is always a downstream BC.    
-        !node%P%have_HBC = pack(node%I(:,ni_idx), &
+        N_flowBC = size(node%P%have_flowBC)
+        !% HACK -- this assumes that a head BC is always a downstream BC.
         node%P%have_headBC = pack(node%I(:,ni_idx), &
             (node%I(:, ni_node_type) == nBCdn) .and. (node%I(:,ni_P_image) == this_image()))
+        N_headBC = size(node%P%have_headBC)
     end subroutine pack_nodes
 
 

@@ -82,8 +82,7 @@ contains
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays()
 
-        call init_bc()
-
+        !% partition the network for multi-processor parallel computation
         call init_partitioning()
 
         ! sync all
@@ -92,6 +91,8 @@ contains
         call init_network()
 
         call init_IC_setup ()
+
+        call init_bc()
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
@@ -211,69 +212,62 @@ contains
     !
     subroutine init_bc()
         integer :: ii, nidx, counter_bc_er
+        integer :: ntseries, nbasepat
+        logical :: has_dwf_inflow, has_ext_inflow
         character(64) :: subroutine_name = "init_bc"
 
         if (setting%Debug%File%initialization)  print *, '*** enter ', subroutine_name
+
+        call util_allocate_bc()
+
+        BC%flowIdx(:) = 1
+        BC%headIdx(:) = 1
+
         !% Initialize Inflow BCs
         !% BC%I(ii, bi_face_idx) is assigned later
-        !do ii = 1, N_QBC
         do ii = 1, N_flowBC
-            !BC%QI(ii, bi_idx) = ii
             BC%flowI(ii, bi_idx) = ii
-            !BC%QI(ii, bi_now) = 1
             BC%flowI(ii, bi_now) = 1
-            !nidx = node%P%have_QBC(ii)
             nidx = node%P%have_flowBC(ii)
-            !BC%QI(ii, bi_node_idx) = nidx
             BC%flowI(ii, bi_node_idx) = nidx
+
             !% Check if node has inflow BC
-            if ((interface_get_node_attribute(nidx, api_node_has_dwfInflow) == 1) &
-                .or. (interface_get_node_attribute(nidx, api_node_has_extInflow) == 1)) then
-                !BC%QI(ii, bi_category) = BC_inflow
-                BC%flowI(ii, bi_category) = BC_inflow
+            has_dwf_inflow = (interface_get_node_attribute(nidx, api_node_has_dwfInflow) == 1)
+            has_ext_inflow = (interface_get_node_attribute(nidx, api_node_has_extInflow) == 1)
+            nbasepat = interface_get_node_attribute(nidx, api_node_extInflow_basePat)
+            ntseries = interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
+
+            if (has_dwf_inflow .or. has_ext_inflow) then
+                BC%flowI(ii, bi_category) = BCQ
+                BC%flowI(ii, bi_subcategory) = BCQ_tseries
+                if (.not. has_dwf_inflow) then
+                    if ((ntseries == -1) .and. (nbasepat /= -1)) then
+                        BC%flowI(ii, bi_subcategory) = BCQ_fixed
+                    end if
+                end if
             end if
-
-            ! BC%QI(ii, bi_category) = node
-            ! if (BC%) then
-
-            ! end if
-            ! BC%I(ii, bi_xr_idx) =
         end do
 
         !% Initialize Elevation BCs
         !% BC%I(ii, bi_face_idx) is assigned later
-        !do ii = 1, N_HBC
         do ii = 1, N_headBC
-            !BC%HI(ii, bi_idx) = ii
             BC%headI(ii, bi_idx) = ii
-            !BC%HI(ii, bi_now) = 1
             BC%headI(ii, bi_now) = 1
-            !nidx = node%P%have_HBC(ii)
             nidx = node%P%have_headBC(ii)
-            !BC%HI(ii, bi_node_idx) = nidx
             BC%headI(ii, bi_node_idx) = nidx
-            !BC%HI(ii, bi_category) = BCdn
             BC%headI(ii, bi_category) = BCdn
-            !BC%HI(ii, bi_xr_idx) = ii
-            BC%headI(ii, bi_xr_idx) = ii
             if (node%I(nidx, ni_node_type) == nBCdn) then
-                !BC%HI(ii, bi_category) = BC_head
-                BC%headI(ii, bi_category) = BC_head
+                BC%headI(ii, bi_category) = BCH
                 if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FREE_OUTFALL) then
-                    !BC%HI(ii, bi_subcategory) = BC_H_free
-                    BC%headI(ii, bi_subcategory) = BC_H_free
+                    BC%headI(ii, bi_subcategory) = BCH_free
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_NORMAL_OUTFALL) then
-                    !BC%HI(ii, bi_subcategory) = BC_H_normal
-                    BC%headI(ii, bi_subcategory) = BC_H_normal
+                    BC%headI(ii, bi_subcategory) = BCH_normal
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FIXED_OUTFALL) then
-                    !BC%HI(ii, bi_subcategory) = BC_H_fixed
-                    BC%headI(ii, bi_subcategory) = BC_H_fixed
+                    BC%headI(ii, bi_subcategory) = BCH_fixed
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIDAL_OUTFALL) then
-                    !BC%HI(ii, bi_subcategory) = BC_H_tidal
-                    BC%headI(ii, bi_subcategory) = BC_H_tidal
+                    BC%headI(ii, bi_subcategory) = BCH_tidal
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIMESERIES_OUTFALL) then
-                    !BC%HI(ii, bi_subcategory) = BC_H_tseries
-                    BC%headI(ii, bi_subcategory) = BC_H_tseries
+                    BC%headI(ii, bi_subcategory) = BCH_tseries
                 end if
             end if
         end do

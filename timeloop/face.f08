@@ -192,7 +192,7 @@ module face
     subroutine face_interp_across_images ()
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% 
+        !%
         !%-----------------------------------------------------------------------------
 
         !%-----------------------------------------------------------------------------
@@ -264,7 +264,7 @@ module face
 
         !% HACK needs jump computation for across shared faces
         print *, "HACK missing hydraulic jump that occurs on shared faces 36987"
-        
+
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_shared_byPack
     !%
@@ -423,7 +423,7 @@ module face
                         (+elemR(eup,eset(jj)) * elemR(ghostDn,eWup)[connected_image] &
                          +elemR(ghostDn,eset(jj))[connected_image] * elemR(eup,eWdn) &
                         ) / &
-                        ( elemR(ghostDn,eWup)[connected_image] + elemR(eup,eWdn) ) 
+                        ( elemR(ghostDn,eWup)[connected_image] + elemR(eup,eWdn) )
                 endif
             end do
         end do
@@ -449,7 +449,7 @@ module face
         (downstreamSet, upstreamSet, facePackCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Copies the interpolated value on the upstrea side to the downstream side
+        !% Copies the interpolated value on the upstream side to the downstream side
         !% These values are later adjusted for hydraulic jumps
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: facePackCol, Npack, downstreamSet(:), upstreamSet(:)

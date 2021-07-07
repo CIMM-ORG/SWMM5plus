@@ -56,25 +56,6 @@ module interface
         ! --- Property-extraction
 
         ! * After Initialization
-        function api_get_object_name_len(api, k, object_type)
-            use, intrinsic :: iso_c_binding
-            implicit none
-            type(c_ptr), value, intent(in) :: api
-            integer(c_int), value :: k
-            integer(c_int), value :: object_type
-            integer(c_int) :: api_get_object_name_len
-        end function api_get_object_name_len
-
-        function api_get_object_name(api, k, object_name, object_type)
-            use, intrinsic :: iso_c_binding
-            implicit none
-            type(c_ptr), value, intent(in) :: api
-            integer(c_int), value :: k
-            character(c_char), dimension(*) :: object_name
-            integer(c_int), value :: object_type
-            integer(c_int) :: api_get_object_name
-        end function api_get_object_name
-
         function api_get_node_attribute(api, k, attr, value)
             use, intrinsic :: iso_c_binding
             implicit none
@@ -103,46 +84,24 @@ module interface
             integer(c_int) :: api_get_num_objects
         end function api_get_num_objects
 
-        function api_get_first_table_entry(k, table_type, x, y)
+        function api_get_object_name_len(api, k, object_type)
             use, intrinsic :: iso_c_binding
             implicit none
+            type(c_ptr), value, intent(in) :: api
             integer(c_int), value :: k
-            integer(c_int), value :: table_type
-            type(c_ptr), value, intent(in) :: x
-            type(c_ptr), value, intent(in) :: y
-            integer(c_int) :: api_get_first_table_entry
-        end function api_get_first_table_entry
+            integer(c_int), value :: object_type
+            integer(c_int) :: api_get_object_name_len
+        end function api_get_object_name_len
 
-        function api_get_next_table_entry(k, table_type, x, y)
+        function api_get_object_name(api, k, object_name, object_type)
             use, intrinsic :: iso_c_binding
             implicit none
+            type(c_ptr), value, intent(in) :: api
             integer(c_int), value :: k
-            integer(c_int), value :: table_type
-            type(c_ptr), value, intent(in) :: x
-            type(c_ptr), value, intent(in) :: y
-            integer(c_int) :: api_get_next_table_entry
-        end function api_get_next_table_entry
-
-        function api_get_pattern_count(k)
-            use, intrinsic :: iso_c_binding
-            implicit none
-            integer(c_int), value :: k
-            integer(c_int) :: api_get_pattern_count
-        end function api_get_pattern_count
-
-        function api_get_pattern_factor(k, j)
-            use, intrinsic :: iso_c_binding
-            implicit none
-            integer(c_int), value :: k, j
-            real(c_double) :: api_get_pattern_factor
-        end function api_get_pattern_factor
-
-        function api_get_pattern_type(k)
-            use, intrinsic :: iso_c_binding
-            implicit none
-            integer(c_int), value :: k
-            integer(c_int) :: api_get_pattern_type
-        end function api_get_pattern_type
+            character(c_char), dimension(*) :: object_name
+            integer(c_int), value :: object_type
+            integer(c_int) :: api_get_object_name
+        end function api_get_object_name
 
         function api_get_start_datetime()
             use, intrinsic :: iso_c_binding
@@ -155,22 +114,27 @@ module interface
             implicit none
             real(c_double) :: api_get_end_datetime
         end function api_get_end_datetime
+
+        function api_get_inflow_bc(api, k, current_datetime)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr),    value, intent(in) :: api
+            integer(c_int), value, intent(in) :: k
+            real(c_double),        intent(in) :: current_datetime
+            real(c_double)                    :: api_get_inflow_bc
+        end function api_get_inflow_bc
     end interface
 
-    procedure(api_initialize), pointer :: ptr_api_initialize
-    procedure(api_finalize), pointer :: ptr_api_finalize
-    procedure(api_get_node_attribute), pointer :: ptr_api_get_node_attribute
-    procedure(api_get_link_attribute), pointer :: ptr_api_get_link_attribute
-    procedure(api_get_num_objects), pointer :: ptr_api_get_num_objects
-    procedure(api_get_first_table_entry), pointer :: ptr_api_get_first_table_entry
-    procedure(api_get_next_table_entry), pointer :: ptr_api_get_next_table_entry
-    procedure(api_get_pattern_count), pointer :: ptr_api_get_pattern_count
-    procedure(api_get_pattern_factor), pointer :: ptr_api_get_pattern_factor
-    procedure(api_get_pattern_type), pointer :: ptr_api_get_pattern_type
-    procedure(api_get_start_datetime), pointer :: ptr_api_get_start_datetime
-    procedure(api_get_end_datetime), pointer :: ptr_api_get_end_datetime
+    procedure(api_initialize),          pointer :: ptr_api_initialize
+    procedure(api_finalize),            pointer :: ptr_api_finalize
+    procedure(api_get_node_attribute),  pointer :: ptr_api_get_node_attribute
+    procedure(api_get_link_attribute),  pointer :: ptr_api_get_link_attribute
+    procedure(api_get_num_objects),     pointer :: ptr_api_get_num_objects
     procedure(api_get_object_name_len), pointer :: ptr_api_get_object_name_len
-    procedure(api_get_object_name), pointer :: ptr_api_get_object_name
+    procedure(api_get_object_name),     pointer :: ptr_api_get_object_name
+    procedure(api_get_start_datetime),  pointer :: ptr_api_get_start_datetime
+    procedure(api_get_end_datetime),    pointer :: ptr_api_get_end_datetime
+    procedure(api_get_inflow_bc),       pointer :: ptr_api_get_inflow_bc
 
     !% Error handling
     character(len = 1024) :: errmsg
@@ -290,8 +254,15 @@ contains
     !%-----------------------------------------------------------------------------
 
     subroutine interface_update_linknode_names()
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Updates the link%Names and node%Names arrays which should've been
+    !%    allocated by the time the subroutine is executed. Names are copied
+    !%    from EPA-SWMM
+    !%-----------------------------------------------------------------------------
         integer :: ii
         character(64) :: subroutine_name = "interface_update_linknode_names"
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -329,10 +300,18 @@ contains
     end subroutine interface_update_linknode_names
 
     function interface_get_obj_name_len(obj_idx, obj_type) result(obj_name_len)
-        integer, intent(in) :: obj_idx
-        integer, intent(in) :: obj_type
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Returns the lenght of the name string associated to the EPA-SWMM object.
+    !%    This function is necessary to allocate the entries of the link%Names and
+    !%    node%Names arraysr. The function is currently compatible with NODE and
+    !%    LINK types.
+    !%-----------------------------------------------------------------------------
+        integer, intent(in) :: obj_idx  ! index of the EPA-SWMM object
+        integer, intent(in) :: obj_type ! type of EPA-SWMM object (API_NODE, API_LINK)
         integer :: obj_name_len
         character(64) :: subroutine_name = "interface_get_obj_name_len"
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
@@ -529,6 +508,13 @@ contains
     !%  |   Boundary Conditions (execute after initialization only)
     !%  V
     !%-----------------------------------------------------------------------------
+
+    ! subroutine interface_fetch_QBC()
+    !     integer :: ii
+    !     do ii = 1, N_QBC_R
+    !         BC%QR(ii,)
+    !     end do
+    ! end subroutine interface_fetch_QBC
 
     !%=============================================================================
     !% PRIVATE

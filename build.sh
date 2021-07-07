@@ -33,7 +33,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/partitioning.f08\
               $INIT_DIR/network_define.f08\
-              $UTIL_DIR/utility_UnitTesting.f08\
+              $UTIL_DIR/utility_unit_testing.f08\
               $TL_DIR/adjust.f08\
               $TL_DIR/jump.f08\
               $TL_DIR/common_elements.f08\
