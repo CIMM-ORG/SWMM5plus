@@ -386,14 +386,15 @@ module define_indexes
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        enumerator :: eYN_canSurcharge = 1                  !% TRUE for element that can surcharge, FALSE where it cannot (static)
+        enumerator :: eYN_canSurcharge = 1              !% TRUE for element that can surcharge, FALSE where it cannot (static)
         enumerator :: eYN_isAdhocFlowrate               !% TRUE is use of ad hoc flowrate algorithm
         enumerator :: eYN_isSmallVolume                 !% TRUE is use small volume algorithm
         enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged conduit, FALSE is open channel flow
         enumerator :: eYN_isNearZeroVolume              !% TRUE if volume qualifies as "near zero"
+        enumerator :: eYN_isDummy
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemYN = eYN_isSurcharged
+    integer, target :: Ncol_elemYN = eYN_isDummy
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSI(:,:) arrays
@@ -619,7 +620,10 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: fYN_isAC_adjacent = 1
+        enumerator :: fYN_isInteriorFace
         enumerator :: fYN_isSharedFace
+        enumerator :: fYN_isUpGhost
+        enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull    
 
         !% HACK: The following might not be needed

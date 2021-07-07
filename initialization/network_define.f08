@@ -77,7 +77,8 @@ contains
                    print*, faceI(:,fi_BCtype)[ii], 'fi_BCtype'
                    print*, faceI(:,fi_GhostElem_uL)[ii], 'fi_GhostElem_uL'
                    print*, faceI(:,fi_GhostElem_dL)[ii], 'fi_GhostElem_dL'
-                   print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared face'
+                   print*, faceYN(:,fYN_isInteriorFace)[ii], 'face is interior'
+                   print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared'
                    print*, '----------------------------------------------------'
                    call execute_command_line('')
                 enddo
@@ -176,6 +177,9 @@ contains
         call init_network_set_global_indexes &
             (image, ElemGlobalIdx, FaceGlobalIdx)
 
+        !% set the dummy element
+        call init_network_set_dummy_elem()
+
         !% handle all the links and nodes in a partition
         call init_network_handle_partition &
             (image, ElemLocalIdx, FacelocalIdx, ElemGlobalIdx, FaceGlobalIdx)
@@ -184,11 +188,14 @@ contains
         !% handeled in handle_link_nodes subroutine
         call init_network_map_nJm (image)
 
+        !% set interior face logical
+        call init_network_set_interior_faceYN ()
+
         !% shared faces are mapped by copying data from different images
         !% thus a sync all is needed
         sync all
 
-        !% finally set the same global face idx for shared faces across images
+        !% set the same global face idx for shared faces across images
         call init_network_map_shared_faces (image)
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
@@ -228,6 +235,37 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
     end subroutine init_network_set_global_indexes
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_network_set_dummy_elem ()
+    !
+    !--------------------------------------------------------------------------
+    !
+    !% initialize dummy row in the elem arrays
+    !
+    !--------------------------------------------------------------------------
+    !
+
+        integer       :: dummyIdx
+
+        character(64) :: subroutine_name = 'init_network_set_dummy_elem'
+    !--------------------------------------------------------------------------
+
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+
+        !% index for the dummy element
+        dummyIdx = max_caf_elem_N + N_dummy_elem
+
+        !% set the elem arrays with dummy values
+        elemI(dummyIdx, ei_Lidx)        = dummyIdx
+        elemI(dummyIdx,ei_elementType)  = dummy
+
+        elemYN(dummyIdx,eYN_isDummy)    = .true.
+
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+    end subroutine init_network_set_dummy_elem
     !
     !==========================================================================
     !==========================================================================
@@ -381,10 +419,10 @@ contains
                 if (faceI(jj,fi_Connected_image)[targetImage] .eq. image) then
 
                     !% find the local ghost element index of the connected image
-                    if (faceI(jj,fi_Melem_uL)[targetImage] .eq. nullvalueI) then
+                    if (faceYN(jj,fYN_isUpGhost)[targetImage]) then
                         faceI(jj,fi_GhostElem_uL)[targetImage] = eUp
 
-                    elseif (faceI(jj,fi_Melem_dL)[targetImage] .eq. nullvalueI) then
+                    elseif (faceYN(jj,fYN_isDnGhost)[targetImage]) then
                         faceI(jj,fi_GhostElem_dL)[targetImage] = eDn
                     endif
 
@@ -398,7 +436,6 @@ contains
 
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-
     end subroutine init_network_map_shared_faces
     !
     !==========================================================================
@@ -452,7 +489,9 @@ contains
                         !% integer data
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
-                        faceI(FaceLocalCounter,fi_Melem_uL) = nullvalueI
+                        !% an upstream boundary face does not have any local upstream element
+                        !% thus, it is mapped to the dummy element
+                        faceI(FaceLocalCounter,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
                         faceI(FaceLocalCounter,fi_BCtype)   = BCup
 
@@ -475,11 +514,13 @@ contains
                         if (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode) then
 
                             !% An upstream edge node indicates there are no local
-                            !% elements upstream of that node
-                            faceI(FaceLocalCounter,fi_Melem_uL) = nullvalueI
+                            !% elements upstream of that node. Thus it is mapped to 
+                            !% the dummy element
+                            faceI(FaceLocalCounter,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
 
                             !% logical data
                             faceYN(FaceLocalCounter,fYN_isSharedFace) = .true.
+                            faceYN(FaceLocalCounter,fYN_isUpGhost)    = .true.
 
                             !% find the connecting image to this face
                             linkUp  => nodeI(thisNode,ni_Mlink_u1)
@@ -490,6 +531,8 @@ contains
                             !% local link element which has already been handeled
                             faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
                             faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
+
+                            faceYN(FaceLocalCounter,fYN_isInteriorFace) = .true.
                         endif
 
                         !% change the node assignmebt value
@@ -532,8 +575,9 @@ contains
 
 
             !% if the upstream node is not in the partiton,
-            !% the face map to upstream nullvalue
-
+            !% the face map to upstream is mapped to 
+            !% the dummy element
+            faceI(FaceLocalCounter,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
             !% since no upstream node indicates start of a partiton,
             !% the downstream element will be initialized elem idx
             faceI(FacelocalCounter,fi_Melem_dL) = ElemLocalCounter
@@ -551,7 +595,8 @@ contains
             FaceGlobalCounter = FaceGlobalCounter - oneI
 
             !% logical data
-            faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
+            faceYN(FacelocalCounter,fYN_isSharedFace)   = .true.
+            faceYN(FacelocalCounter,fYN_isUpGhost)      = .true.
         endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
@@ -712,7 +757,9 @@ contains
                         !% needed to be fixed.
 
                         !% integer data
-                        faceI(FaceLocalCounter,fi_Melem_dL) = nullvalueI
+                        !% an downstream boundary face does not have any local downstream element
+                        !% thus, it is mapped to the dummy element
+                        faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_BCtype)   = BCdn
 
                         !% change the node assignmebt value
@@ -734,11 +781,12 @@ contains
                         if (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode) then
 
                             !% An downstream edge node indicates there are no local
-                            !% elements downstream of that node
-                            faceI(FaceLocalCounter,fi_Melem_dL) = nullvalueI
+                            !% elements downstream of that node. thus, it is mapped to the dummy element
+                            faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
 
                             !% logical data
                             faceYN(FaceLocalCounter,fYN_isSharedFace) = .true.
+                            faceYN(FaceLocalCounter,fYN_isDnGhost)    = .true.
 
                             !% find the connecting image to this face
                             linkDn  => nodeI(thisNode,ni_Mlink_d1)
@@ -776,9 +824,9 @@ contains
             !% through subdivide_link_going_downstream subroutine
             !% upstream map to the element has alrady been set.
             !% However, downstream map has set to wrong value.
-            !% Thus, setting the map elem ds as nullvaleI
+            !% Thus, setting the map elem ds to dummy elem
             !% integer data
-            faceI(FaceLocalCounter,fi_Melem_dL) = nullvalueI
+            faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
             faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
             !% since this will be a shared face, the global counter will be set from
             !% init_network_map_shared_faces subroutine
@@ -787,6 +835,7 @@ contains
 
             !% logical data
             faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
+            faceYN(FaceLocalCounter,fYN_isDnGhost)    = .true.
         endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
@@ -900,11 +949,15 @@ contains
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                        !% since this is a shared face in the upstream direction,
+                        !% the up_map is set to dummy element 
+                        faceI(FaceLocalCounter,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         faceI(FaceLocalCounter,fi_Connected_image) = linkI(upBranchIdx,li_P_image)
 
                         !% logical data
                         faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
+                        faceYN(FaceLocalCounter,fYN_isUpGhost)    = .true.
                     endif
                 else
                     
@@ -927,6 +980,9 @@ contains
                     faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
+                    !% since this is a null face in the upstream direction,
+                    !% the up_map is set to dummy element 
+                    faceI(FaceLocalCounter,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
                     faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                     call init_network_nullify_nJm_branch &
@@ -973,11 +1029,15 @@ contains
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                         faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                        !% since this is a shared face in the downstream direction,
+                        !% the dn_map is set to dummy element 
+                        faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         faceI(FaceLocalCounter,fi_Connected_image) = linkI(dnBranchIdx,li_P_image)
 
                         !% logical data
                         faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
+                        faceYN(FaceLocalCounter,fYN_isDnGhost)    = .true.
                     endif
 
                 else
@@ -996,6 +1056,9 @@ contains
                     faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                     faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
+                    !% since this is a null face in the downstream direction,
+                    !% the dn_map is set to dummy element 
+                    faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
                     faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                     call init_network_nullify_nJm_branch &
@@ -1189,6 +1252,34 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
     end subroutine init_network_nullify_nJm_branch
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_network_set_interior_faceYN ()
+    !
+    !--------------------------------------------------------------------------
+    !
+    !% set the logicals of fYN_isInteriorFace
+    !
+    !--------------------------------------------------------------------------
+    !
+        character(64) :: subroutine_name = 'init_network_set_interior_faceYN'
+    !--------------------------------------------------------------------------
+
+        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+
+        where ( (faceI(:,fi_BCtype)         .eq.  doesnotexist) &
+                .and. &
+                (faceYN(:,fYN_isnull)       .eqv. .false.     ) &
+                .and. &
+                (faceYN(:,fYN_isSharedFace) .eqv. .false.     ) )
+
+            faceYN(:,fYN_isInteriorFace) = .true.
+        endwhere
+
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+    end subroutine init_network_set_interior_faceYN
     !
     !==========================================================================
     ! END OF MODULE

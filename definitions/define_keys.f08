@@ -63,6 +63,7 @@ module define_keys
         enumerator :: JB                !% junction branch element
         enumerator :: storage           !% storage element
         enumerator :: manhole           !% manhole elemen (HACK: not sure if we need this)
+        enumerator :: dummy             !% dummy element type
         !% SWMM5+ CC geometry types
         enumerator :: rectangular       !% rectangular channel or conduit
         enumerator :: circular          !% circular channel or conduit

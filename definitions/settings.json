@@ -230,7 +230,7 @@
             "definitions" : false,
             "finalization" : false,
             "geometry" : false,
-            "initialization" : false,
+            "initialization" : true,
             "interface" : false,
             "timeloop" : false,
             "utility" : false

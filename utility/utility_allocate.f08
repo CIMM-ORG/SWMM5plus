@@ -142,52 +142,52 @@ contains
 
         !==== elem allocation ====
         ncol => Ncol_elemR ! the maxmiumu number of columns
-        allocate(elemR(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemR(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemR(:,:) = nullvalueR
 
         ncol => Ncol_elemI
-        allocate(elemI(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemI(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemI(:,:) = nullvalueI
 
         ncol => Ncol_elemYN
-        allocate(elemYN(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemYN(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemYN(:,:) = nullvalueL
 
         ncol => Ncol_elemP
-        allocate(elemP(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemP(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemP(:,:) = nullvalueI
 
         ncol => Ncol_elemPGalltm
-        allocate(elemPGalltm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemPGalltm(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemPGalltm(:,:) = nullvalueI
 
         ncol => Ncol_elemPGetm
-        allocate(elemPGetm(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemPGetm(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemPGetm(:,:) = nullvalueI
 
         ncol => Ncol_elemPGac
-        allocate(elemPGac(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemPGac(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemPGac(:,:) = nullvalueI
 
         ncol => Ncol_elemSI
-        allocate(elemSI(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemSI(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemSI(:,:) = nullvalueI
 
         ncol => Ncol_elemSR
-        allocate(elemSR(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemSR(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemSR(:,:) = nullvalueR
 
         ncol => Ncol_elemSGR
-        allocate(elemSGR(max_caf_elem_N, ncol)[*], stat=allocation_status, errmsg=emsg)
+        allocate(elemSGR(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         elemSGR(:,:) = nullvalueR
 

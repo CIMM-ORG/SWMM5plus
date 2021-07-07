@@ -58,6 +58,9 @@ module define_globals
     integer, dimension(:), allocatable, target :: col_facePS[:], npack_facePS[:]                !% columns and number of packs for facePS array
     integer, dimension(:), allocatable, target :: col_faceR[:]                                  !% columns of faceR array
     integer, dimension(:), allocatable, target :: col_faceYN[:]                                 !% columns of faceYN array
+    
+    !%  number of dummy row in elem arrays (do not change)
+    integer, parameter :: N_dummy_elem = 1
 
     !%  vector of number of elements and faces across images
     integer, dimension(:), allocatable, target :: N_elem
