@@ -65,11 +65,11 @@ contains
         !% (the interpolation weights of diagnostic elements
         !% stays the same throughout the simulation. Thus, they
         !% are only needed to be set at the top of the simulation)
-        call diagnostic_element_interpolation_weights()
+        call init_IC_diagnostic_interpolation_weights()
 
         !% set small values to diagnostic element interpolation sets
         !% so that junk values does not mess up the first interpolation
-        call init_set_small_values_diagnostic_elements
+        call init_IC_small_values_diagnostic_elements
 
         !% update faces
         call face_interpolation (fp_all)
@@ -80,25 +80,24 @@ contains
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
-
                 do ii = 1,num_images()
                    print*, '----------------------------------------------------'
                    print*, 'image = ', ii
-                   print*, '..................elements..........................'
-                   print*, 'GEOMETRY DATA'
-                   print*, elemI(:,ei_elementType)[ii], 'elementType'
-                   print*, elemI(:,ei_geometryType)[ii], 'Geometry'
-                   print*, elemR(:,er_Depth)[ii], 'Depth'
-                   print*, elemR(:,er_Area)[ii], 'Area'
-                   print*, elemR(:,er_Head)[ii], 'Head'
-                   print*, elemR(:,er_Topwidth)[ii], 'Topwidth'
-                   print*, elemR(:,er_Volume)[ii],'Volume'
-                   print*, 'DYNAMICS DATA'
-                   print*, elemR(:,er_Flowrate)[ii], 'Flowrate'
-                   print*, elemR(:,er_Velocity)[ii], 'Velocity'
-                   print*, elemR(:,er_FroudeNumber)[ii], 'Froude Number'
-                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'TImescale Q up'
-                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'TImescale Q dn'
+                   print*, '.....................elements.......................'
+                   print*, elemI(:,ei_elementType)[ii], 'element type'
+                   print*, elemI(:,ei_geometryType)[ii],'element geometry'
+                   print*, '-------------------Geometry Data--------------------'
+                   print*, elemR(:,er_Depth)[ii], 'depth'
+                   print*, elemR(:,er_Area)[ii], 'area'
+                   print*, elemR(:,er_Head)[ii], 'head'
+                   print*, elemR(:,er_Topwidth)[ii], 'topwidth'
+                   print*, elemR(:,er_Volume)[ii],'volume'
+                   print*, '-------------------Dynamics Data--------------------'
+                   print*, elemR(:,er_Flowrate)[ii], 'flowrate'
+                   print*, elemR(:,er_Velocity)[ii], 'velocity'
+                   print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
+                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'timescale Q up'
+                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'timescale Q dn'
                    print*, '..................faces..........................'
                    print*, faceR(:,fr_Area_u)[ii], 'face area up'
                    print*, faceR(:,fr_Area_d)[ii], 'face area dn'
@@ -107,7 +106,6 @@ contains
                    print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
                    call execute_command_line('')
                 enddo
-
             endif
         endif
 
@@ -1028,7 +1026,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine init_set_small_values_diagnostic_elements ()
+    subroutine init_IC_small_values_diagnostic_elements ()
     !--------------------------------------------------------------------------
     !
     !% set the volume, area, head, other geometry, and flow to zero values
@@ -1037,7 +1035,7 @@ contains
     !
     !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'init_set_small_values_diagnostic_elements'
+        character(64)       :: subroutine_name = 'init_IC_small_values_diagnostic_elements'
 
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
@@ -1052,21 +1050,20 @@ contains
             elemR(:,er_Head)     = 1.0e-6
         endwhere
 
-
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
-    end subroutine init_set_small_values_diagnostic_elements
+    end subroutine init_IC_small_values_diagnostic_elements
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine diagnostic_element_interpolation_weights ()
+    subroutine init_IC_diagnostic_interpolation_weights ()
     !--------------------------------------------------------------------------
     !
     !% set the interpolation weights for diagnostic elements
     !
     !--------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'diagnostic_element_interpolation_weights'
+        character(64)       :: subroutine_name = 'init_IC_diagnostic_interpolation_weights'
 
         integer, pointer ::  Npack, thisP(:), tM
         integer :: ii, kk, tB
@@ -1079,14 +1076,12 @@ contains
         !% Theses serve to force the Q value of the diagnostic element to the faces
         !% the G and H values are obtained from adjacent elements.
         where (elemI(:,ei_QeqType) == diagnostic)
-
             elemR(:,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Maximum
-
         endwhere
 
         !% H-diagnostic elements will have minimum interp weights for H and G
@@ -1094,14 +1089,12 @@ contains
         !% These serve to force the G, and H values of the diagnostic element to the faces
         !% and the Q value is obtained from adjacent elements
         where (elemI(:,ei_HeqType) == diagnostic)
-
             elemR(:,er_InterpWeight_uQ) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_dQ) = setting%Limiter%InterpWeight%Maximum
             elemR(:,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Minimum
             elemR(:,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
-
         endwhere
 
         !% Branch elements have invariant interpolation weights so are computed here
@@ -1125,7 +1118,7 @@ contains
         end if
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
-    end subroutine diagnostic_element_interpolation_weights
+    end subroutine init_IC_diagnostic_interpolation_weights
     !
     !==========================================================================
     !==========================================================================

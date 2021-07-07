@@ -83,9 +83,6 @@ contains
 
         !% partition the network for multi-processor parallel computation
         call init_partitioning()
-        
-        ! sync all 
-        !% HACK: this sync call is probably not needed
 
         call init_network()
 
