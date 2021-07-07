@@ -557,7 +557,7 @@ contains
                 case default
 
                     print*, 'In ', subroutine_name
-                    print*, 'error: unexpected node, ', nodeType,'  at upstream boundary'
+                    print*, 'error: unexpected node, ', nodeType,'  at upstream node'
                     stop
             end select
 
@@ -812,7 +812,7 @@ contains
                 case default
 
                     print*, 'In ', subroutine_name
-                    print*, 'error: unexpected node, ', nodeType,'  at upstream boundary'
+                    print*, 'error: unexpected node, ', nodeType,'  at downstream node'
                     stop
             end select
         else
