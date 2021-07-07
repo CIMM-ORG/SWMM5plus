@@ -403,10 +403,6 @@ contains
         !% fid the size of the pack
         NsharedFaces = size(sharedFaces)
 
-        !% HACK: bellow is absolutely rubbish code
-        !% it can be written in a better way
-        !% but it works for now
-
         do ii = 1,NsharedFaces
             fLidx => sharedFaces(ii)
             fGidx => faceI(fLidx,fi_Gidx)

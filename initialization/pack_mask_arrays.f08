@@ -1198,103 +1198,65 @@ contains
         !% packed arrays for static faces
         !
         !--------------------------------------------------------------------------
-        integer :: ii
-        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:), c_image(:)
+        integer :: ii, image
+
+        integer, pointer :: Nfaces, ptype, npack, fIdx(:), eup(:), edn(:)
 
         character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
-        fIdx => faceI(:,fi_Lidx)
-        eup  => faceI(:,fi_Melem_uL)
-        edn  => faceI(:,fi_Melem_dL)
+        !% pointing to the number of faces in this image
+        image  = this_image()
+        Nfaces => N_face(image)
+
+        fIdx => faceI(1:Nfaces,fi_Lidx)
+        eup  => faceI(1:Nfaces,fi_Melem_uL)
+        edn  => faceI(1:Nfaces,fi_Melem_dL)
 
         ! % fp_all
         ! % - all faces execpt boundary, null, and shared faces
         ptype => col_faceP(fp_all)
         npack => npack_faceP(ptype)
 
-        npack = count( &
-                (faceI(:,fi_BCtype) == doesnotexist) &
-                .and. &
-                (faceYN(:,fYN_isnull) .eqv. .false.)  &
-                .and. &
-                (faceYN(:,fYN_isSharedFace) .eqv. .false.) &
-                )
+        npack = count(faceYN(1:Nfaces,fYN_isInteriorFace))
 
         if (npack > 0) then
-            faceP(1:npack,ptype) = pack( fIdx, &
-                (faceI(:,fi_BCtype) == doesnotexist) &
-                .and. &
-                (faceYN(:,fYN_isnull) .eqv. .false.)  &
-                .and. &
-                (faceYN(:,fYN_isSharedFace) .eqv. .false.) &
+            faceP(1:npack,ptype) = pack(fIdx, &
+                faceYN(1:Nfaces,fYN_isInteriorFace) &
                 )
         endif
+
 
         !% fp_Diag
         !% - all faces adjacent to a diagnostic element
         ptype => col_faceP(fp_Diag)
         npack => npack_faceP(ptype)
 
-        ! % HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
-        ! % meaning not a boundary, shared, null face
-        ! % this theory needs testing
         npack =  count( &
-                ((edn /= nullvalueI) .and. (elemI(edn,ei_HeqType) == diagnostic)) &
-                .or. &
-                ((edn /= nullvalueI) .and. (elemI(edn,ei_QeqType) == diagnostic)) &
-                .or. &
-                ((eup /= nullvalueI) .and. (elemI(eup,ei_HeqType) == diagnostic)) &
-                .or. &
-                ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
+                faceYN(1:Nfaces,fYN_isInteriorFace)   &
+                .and. &
+                (elemI(edn,ei_HeqType) == diagnostic) &
+                .or.  &
+                (elemI(edn,ei_QeqType) == diagnostic) &
+                .or.  &
+                (elemI(eup,ei_HeqType) == diagnostic) &
+                .or.  &
+                (elemI(eup,ei_QeqType) == diagnostic) )
 
         if (npack > 0) then
             faceP(1:npack, ptype) = pack( fIdx, &
-                ((edn /= nullvalueI) .and. (elemI(edn,ei_HeqType) == diagnostic)) &
-                .or. &
-                ((edn /= nullvalueI) .and. (elemI(edn,ei_QeqType) == diagnostic)) &
-                .or. &
-                ((eup /= nullvalueI) .and. (elemI(eup,ei_HeqType) == diagnostic)) &
-                .or. &
-                ((eup /= nullvalueI) .and. (elemI(eup,ei_QeqType) == diagnostic)) )
+                    faceYN(1:Nfaces,fYN_isInteriorFace)   &
+                    .and. &
+                    (elemI(edn,ei_HeqType) == diagnostic) &
+                    .or.  &
+                    (elemI(edn,ei_QeqType) == diagnostic) &
+                    .or.  &
+                    (elemI(eup,ei_HeqType) == diagnostic) &
+                    .or.  &
+                    (elemI(eup,ei_QeqType) == diagnostic) )
         endif
-
-        !% HACK: the psuedo code below tests the above hypothesis
-        ! npack =  count( &
-        !         ((faceYN(:,fYN_isSharedFace) .eqv. .false.) &
-        !         .and. &
-        !         (faceYN(:,fYN_isnull) .eqv. .false.) &
-        !         .and. &
-        !         (faceI(:,fi_BCtype) == doesnotexist)) &
-        !         .and. &
-        !         ((elemI(edn,ei_HeqType) == diagnostic) &
-        !         .or. &
-        !         (elemI(edn,ei_QeqType) == diagnostic) &
-        !         .or. &
-        !         (elemI(eup,ei_HeqType) == diagnostic) &
-        !         .or. &
-        !         (elemI(eup,ei_QeqType) == diagnostic)) )
-
-        ! if (npack > 0) then
-        !     faceP(1:npack, ptype) = pack( fIdx, &
-        !         ((faceYN(:,fYN_isSharedFace) .eqv. .false.) &
-        !         .and. &
-        !         (faceYN(:,fYN_isnull) .eqv. .false.) &
-        !         .and. &
-        !         (faceI(:,fi_BCtype) == doesnotexist)) &
-        !         .and. &
-        !         ((elemI(edn,ei_HeqType) == diagnostic) &
-        !         .or. &
-        !         (elemI(edn,ei_QeqType) == diagnostic) &
-        !         .or. &
-        !         (elemI(eup,ei_HeqType) == diagnostic) &
-        !         .or. &
-        !         (elemI(eup,ei_QeqType) == diagnostic)) )
-        ! endif
-
-        ! print*, faceP(:,ptype), 'faceP(1:npack, ptype) in image, ', this_image()
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_static_interior_faces
@@ -1313,35 +1275,41 @@ contains
         !
         !--------------------------------------------------------------------------
 
-        integer          :: ii
-        integer, pointer :: ptype, npack, fIdx(:), eup(:), edn(:)
+        integer          :: ii, image
+        integer, pointer :: Nfaces, ptype, npack, fIdx(:), eup(:), edn(:)
 
         character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
-        fIdx => faceI(:,fi_Lidx)
-        eup  => faceI(:,fi_Melem_uL)
-        edn  => faceI(:,fi_Melem_dL)
+        !% pointing to the number of faces in this image
+        image  = this_image()
+        Nfaces => N_face(image)
+
+        fIdx => faceI(1:Nfaces,fi_Lidx)
+        eup  => faceI(1:Nfaces,fi_Melem_uL)
+        edn  => faceI(1:Nfaces,fi_Melem_dL)
 
         !% fp_AC
         !% - faces with any AC adjacent
         ptype => col_faceP(fp_AC)
         npack => npack_faceP(ptype)
 
-        !% HACK: edn or eup =/ nullvalueI indicates the face will be an interior face
-        !% this theory needs testing
-
         npack = count( &
-                ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
+                faceYN(1:Nfaces,fYN_isInteriorFace) &
+                .and.&
+                (elemI(edn,ei_tmType) == AC) &
                 .or. &
-                ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
+                (elemI(eup,ei_tmType) == AC) )
+
         if (npack > 0) then
             faceP(1:npack, ptype) = pack( fIdx, &
-                ((edn /= nullvalueI) .and. (elemI(edn,ei_tmType) == AC)) &
+                faceYN(1:Nfaces,fYN_isInteriorFace) &
+                .and.&
+                (elemI(edn,ei_tmType) == AC)    &
                 .or. &
-                ((eup /= nullvalueI) .and. (elemI(eup,ei_tmType) == AC)) )
+                (elemI(eup,ei_tmType) == AC)    )
         endif
 
         !% fp_JumpUp
@@ -1350,11 +1318,15 @@ contains
         npack => npack_faceP(ptype)
 
         npack = count( &
-            faceI(:,fi_jump_type) == jump_from_upstream )
+            faceYN(1:Nfaces,fYN_isInteriorFace) &
+            .and. &
+            faceI(1:Nfaces,fi_jump_type) == jump_from_upstream )
 
         if (npack > 0) then
             faceP(1:npack, ptype) = pack( fIdx, &
-                faceI(:,fi_jump_type) == jump_from_upstream )
+                faceYN(1:Nfaces,fYN_isInteriorFace) &
+                .and.&
+                faceI(1:Nfaces,fi_jump_type) == jump_from_upstream )
         endif
 
         !% fp_JumpDn
@@ -1363,11 +1335,15 @@ contains
         npack => npack_faceP(ptype)
 
         npack = count( &
-            faceI(:,fi_jump_type) == jump_from_downstream )
+            faceYN(1:Nfaces,fYN_isInteriorFace) &
+            .and. &
+            faceI(1:Nfaces,fi_jump_type) == jump_from_downstream )
 
         if (npack > 0) then
             faceP(1:npack, ptype) = pack( fIdx, &
-                faceI(:,fi_jump_type) == jump_from_downstream )
+                faceYN(1:Nfaces,fYN_isInteriorFace) &
+                .and. &
+                faceI(1:Nfaces,fi_jump_type) == jump_from_downstream )
         endif
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
@@ -1382,16 +1358,21 @@ contains
         !% packed arrays for static shared faces
         !
         !--------------------------------------------------------------------------
-        integer :: ii
-        integer, pointer :: ptype, npack, fIdx(:), eup, edn, gup, gdn
+        integer :: ii, image
+        integer, pointer :: ptype, npack, fIdx(:), eup, edn, gup, gdn, Nfaces
         integer, pointer :: c_image, N_shared_faces, thisP
+        logical, pointer :: isUpGhost, isDnGhost
 
         character(64) :: subroutine_name = 'pack_static_shared_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
-        fIdx    => faceI(:,fi_Lidx)
+        !% pointing to the number of faces in this image
+        image  = this_image()
+        Nfaces => N_face(image)
+
+        fIdx   => faceI(1:Nfaces,fi_Lidx)
 
         ! % fp_all (shared faces)
         !% - all faces that are shared across images (Internal Boundary Faces)
@@ -1399,11 +1380,11 @@ contains
         npack => npack_facePS(ptype)
 
         npack = count( &
-                faceYN(:,fYN_isSharedFace) )
+                faceYN(1:Nfaces,fYN_isSharedFace) )
 
         if (npack > 0) then
             facePS(1:npack, ptype) = pack( fIdx, &
-                faceYN(:,fYN_isSharedFace) )
+                faceYN(1:Nfaces,fYN_isSharedFace) )
         endif
 
         sync all
@@ -1418,14 +1399,16 @@ contains
 
         if (N_shared_faces > 0) then
             do ii = 1,N_shared_faces
-                thisP   => facePS(ii,fp_all)
-                eup     => faceI(thisP,fi_Melem_uL)
-                edn     => faceI(thisP,fi_Melem_dL)
-                gup     => faceI(thisP,fi_GhostElem_uL)
-                gdn     => faceI(thisP,fi_GhostElem_dL)
-                c_image => faceI(thisP,fi_Connected_image)
+                thisP       => facePS(ii,fp_all)
+                eup         => faceI(thisP,fi_Melem_uL)
+                edn         => faceI(thisP,fi_Melem_dL)
+                isUpGhost   => faceYN(thisP,fYN_isUpGhost)
+                gup         => faceI(thisP,fi_GhostElem_uL)
+                isDnGhost   => faceYN(thisP,fYN_isDnGhost) 
+                gdn         => faceI(thisP,fi_GhostElem_dL)
+                c_image     => faceI(thisP,fi_Connected_image)
 
-                if (eup == nullvalueI) then                              
+                if (isUpGhost) then                              
                    if ((elemI(gup,ei_HeqType)[c_image] == diagnostic) .or.  &
                        (elemI(gup,ei_QeqType)[c_image] == diagnostic) .or.  &
                        (elemI(edn,ei_HeqType)          == diagnostic) .or.  &
@@ -1437,7 +1420,7 @@ contains
                         facePS(npack,ptype) = thisP
                     endif
 
-                elseif (edn == nullvalueI) then                         
+                elseif (isDnGhost) then                         
                     if ((elemI(gdn,ei_HeqType)[c_image] == diagnostic) .or.  &
                         (elemI(gdn,ei_QeqType)[c_image] == diagnostic) .or.  &
                         (elemI(eup,ei_HeqType)          == diagnostic) .or.  &
@@ -1469,18 +1452,22 @@ contains
         !
         !--------------------------------------------------------------------------
 
-        integer          :: ii
-        integer, pointer :: ptype, npack, fIdx(:)
+        integer          :: ii, image
+        integer, pointer :: ptype, npack, fIdx(:), Nfaces
         integer, pointer :: N_shared_faces, thisP, eup, edn, gup, gdn, c_image
-
-        character(64) :: subroutine_name = 'pack_dynamic_shared_faces'
+        logical, pointer :: isUpGhost, isDnGhost
+        character(64)    :: subroutine_name = 'pack_dynamic_shared_faces'
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
         
         sync all
 
-        fIdx => faceI(:,fi_Lidx)
+        !% pointing to the number of faces in this image
+        image  = this_image()
+        Nfaces => N_face(image)
+
+        fIdx => faceI(1:Nfaces,fi_Lidx)
 
         !% fp_AC (shared faces)
         !% - faces with any AC adjacent which is shared across images
@@ -1492,14 +1479,16 @@ contains
 
         if (N_shared_faces > 0) then
             do ii = 1,N_shared_faces
-                thisP   => facePS(ii,fp_all)
-                eup     => faceI(thisP,fi_Melem_uL)
-                edn     => faceI(thisP,fi_Melem_dL)
-                gup     => faceI(thisP,fi_GhostElem_uL)
-                gdn     => faceI(thisP,fi_GhostElem_dL)
-                c_image => faceI(thisP,fi_Connected_image)
+                thisP       => facePS(ii,fp_all)
+                eup         => faceI(thisP,fi_Melem_uL)
+                edn         => faceI(thisP,fi_Melem_dL)
+                isUpGhost   => faceYN(thisP,fYN_isUpGhost)
+                gup         => faceI(thisP,fi_GhostElem_uL)
+                isDnGhost   => faceYN(thisP,fYN_isDnGhost) 
+                gdn         => faceI(thisP,fi_GhostElem_dL)
+                c_image     => faceI(thisP,fi_Connected_image)
 
-                if (eup == nullvalueI) then 
+                if (isUpGhost) then 
                     if ((elemI(gup,ei_tmType)[c_image] == AC) .or.  &
                         (elemI(edn,ei_tmType)          == AC))  then
 
@@ -1509,7 +1498,7 @@ contains
                         facePS(npack,ptype) = thisP
                     endif
 
-                elseif (edn == nullvalueI) then
+                elseif (isDnGhost) then
                     if ((elemI(gdn,ei_tmType)[c_image] == AC) .or.  &
                         (elemI(eup,ei_tmType)          == AC))  then
 
@@ -1528,13 +1517,13 @@ contains
         npack => npack_facePS(ptype)
 
         npack = count( &
-                faceYN(:,fYN_isSharedFace)              .and. &
-                (faceI(:,fi_jump_type) == jump_from_upstream) )
+                faceYN(1:Nfaces,fYN_isSharedFace)              .and. &
+                (faceI(1:Nfaces,fi_jump_type) == jump_from_upstream) )
 
         if (npack > 0) then
             facePS(1:npack, ptype) = pack( fIdx, &
-                faceYN(:,fYN_isSharedFace)             .and. &
-                (faceI(:,fi_jump_type) == jump_from_upstream) )
+                faceYN(1:Nfaces,fYN_isSharedFace)              .and. &
+                (faceI(1:Nfaces,fi_jump_type) == jump_from_upstream) )
         endif
 
         !% fp_JumpDn
@@ -1543,13 +1532,13 @@ contains
         npack => npack_facePS(ptype)
 
         npack = count( &
-                faceYN(:,fYN_isSharedFace)                .and. &
-                (faceI(:,fi_jump_type) == jump_from_downstream) )
+                faceYN(1:Nfaces,fYN_isSharedFace)                .and. &
+                (faceI(1:Nfaces,fi_jump_type) == jump_from_downstream) )
 
         if (npack > 0) then
             facePS(1:npack, ptype) = pack( fIdx, &
-                faceYN(:,fYN_isSharedFace)                .and. &
-                (faceI(:,fi_jump_type) == jump_from_downstream) )
+                faceYN(1:Nfaces,fYN_isSharedFace)                .and. &
+                (faceI(1:Nfaces,fi_jump_type) == jump_from_downstream) )
         endif
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name

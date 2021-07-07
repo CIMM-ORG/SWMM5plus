@@ -81,47 +81,58 @@ module jump
         !% sides is a slight change from the prototype code where the jump was only 
         !% limited when the surcharged was on the downstream side.
         !%-----------------------------------------------------------------------------
+        integer :: image
         integer, pointer :: faceIdx(:), eup(:), edn(:), thisP(:), jumptype(:)
-        integer, pointer :: Npack_jumpUp, Npack_JumpDn
-        logical, pointer :: isSurcharged(:)
+        integer, pointer :: Npack_jumpUp, Npack_JumpDn, Nfaces
+        logical, pointer :: isSurcharged(:), isInterior(:)
         real(8), pointer :: feps, Fr(:)
+        !%-----------------------------------------------------------------------------
+        !% pointing to the number of faces in this image
+        image  = this_image()
+        Nfaces => N_face(image)
         !%-----------------------------------------------------------------------------
         Fr           => elemR(:,er_FroudeNumber)
         isSurcharged => elemYN(:,eYN_isSurcharged)
-        eup          => faceI(:,fi_Melem_uL)
-        faceIdx      => faceI(:,fi_Lidx) 
-        edn          => faceI(:,fi_Melem_dL)
-        jumptype     => faceI(:,fi_jump_type)
+        !%-----------------------------------------------------------------------------
+        isInterior   => faceYN(1:Nfaces,fYN_isInteriorFace)
+        eup          => faceI(1:Nfaces,fi_Melem_uL)
+        faceIdx      => faceI(1:Nfaces,fi_Lidx) 
+        edn          => faceI(1:Nfaces,fi_Melem_dL)
+        jumptype     => faceI(1:Nfaces,fi_jump_type)
         feps         => setting%EPS%FroudeJump
         !%-----------------------------------------------------------------------------
 
         !% zero out old jump
-        faceI(:,fi_jump_type) = jump_none
+        faceI(1:Nfaces,fi_jump_type) = jump_none
 
         !% count the number of faces with flow in nominal downstream and a jump 
         !% from upstream (supercritical) to downstream (subcritical)
         !% and open-channel flow on either side
         npack_faceP(fp_JumpUp) = count( &
-            ((eup .ne. nullvalueI) .and. (Fr(eup) >= oneR + feps))  &
+            isInterior &
             .and. &
-            ((edn .ne. nullvalueI) .and. (Fr(edn) < oneR - feps))   &
+            (Fr(eup) >= oneR + feps)  &
             .and. &
-            ((eup .ne. nullvalueI) .and. (.not. isSurcharged(eup))) &
+            (Fr(edn) < oneR - feps)   &
             .and. &
-            ((edn .ne. nullvalueI) .and. (.not. isSurcharged(eDn))) )
+            (.not. isSurcharged(eup)) &
+            .and. &
+            (.not. isSurcharged(eDn)) )
 
         Npack_JumpUp => npack_faceP(fp_JumpUp) 
 
         !% pack the indexes 
         if (Npack_JumpUp > 0) then
             faceP(1:Npack_JumpUp, fp_JumpUp) = pack(faceIdx, &
-                ((eup .ne. nullvalueI) .and. (Fr(eup) >= oneR + feps))  &
+                isInterior &
                 .and. &
-                ((edn .ne. nullvalueI) .and. (Fr(edn) <  oneR - feps))  &
+                (Fr(eup) >= oneR + feps)  &
                 .and. &
-                ((eup .ne. nullvalueI) .and. (.not. isSurcharged(eup))) &
+                (Fr(edn) < oneR - feps)   &
                 .and. &
-                ((edn .ne. nullvalueI) .and. (.not. isSurcharged(eDn))) )
+                (.not. isSurcharged(eup)) &
+                .and. &
+                (.not. isSurcharged(eDn)) )
 
             !% pointer to the packed indexes
             thisP => faceP(1:Npack_JumpUp,fp_JumpUp)
@@ -134,13 +145,15 @@ module jump
         !% downstream (supercritical) to upstream (subcritical)
         !% and open channel flow on either side
         npack_faceP(fp_JumpDn)  = count( &
-            ((eup .ne. nullvalueI) .and. (Fr(eup) <= -oneR + feps)) &
+            isInterior &
             .and. &
-            ((edn .ne. nullvalueI) .and. (Fr(edn) >  -oneR - feps)) &
+            (Fr(eup) <= -oneR + feps) &
             .and. &
-            ((eup .ne. nullvalueI) .and. (.not. isSurcharged(eup))) &
+            (Fr(edn) >  -oneR - feps) &
             .and. &
-            ((edn .ne. nullvalueI) .and. (.not. isSurcharged(eDn))) )
+            (.not. isSurcharged(eup)) &
+            .and. &
+            (.not. isSurcharged(eDn)) )
 
         !% assign the above count to the npack storage for later use
         Npack_JumpDn => npack_faceP(fp_JumpDn)
@@ -148,13 +161,15 @@ module jump
         !% pack the indexes 
         if (Npack_JumpDn > 0) then
             faceP(1:Npack_JumpDn, fp_JumpDn) = pack(faceIdx, &
-                ((eup .ne. nullvalueI) .and. (Fr(eup) <= -oneR + feps)) &
+                isInterior &
                 .and. &
-                ((edn .ne. nullvalueI) .and. (Fr(edn) >  -oneR - feps)) &
+                (Fr(eup) <= -oneR + feps) &
                 .and. &
-                ((eup .ne. nullvalueI) .and. (.not. isSurcharged(eup))) &
+                (Fr(edn) >  -oneR - feps) &
                 .and. &
-                ((edn .ne. nullvalueI) .and. (.not. isSurcharged(eDn))) )
+                (.not. isSurcharged(eup)) &
+                .and. &
+                (.not. isSurcharged(eDn)) )
             
             !% pointer to thee packed indexes
             thisP => faceP(1:Npack_JumpDn,fp_JumpDn)

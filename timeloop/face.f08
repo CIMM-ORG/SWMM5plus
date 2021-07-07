@@ -385,6 +385,7 @@ module face
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: fset(:), eset(:), eWdn, eWup, facePackCol, Npack
         integer, pointer :: thisP, eup, edn, connected_image, ghostUp, ghostDn
+        logical, pointer :: isGhostUp, isGhostDn
         integer :: ii, jj
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interp_shared_set_byPack'
@@ -398,6 +399,8 @@ module face
             edn             => faceI(thisP,fi_Melem_dL)
             ghostUp         => faceI(thisP,fi_GhostElem_uL)
             ghostDn         => faceI(thisP,fi_GhostElem_dL)
+            isGhostUp       => faceYN(thisP,fYN_isUpGhost)
+            isGhostDn       => faceYN(thisP,fYN_isDnGhost)
             !%-----------------------------------------------------------------------------
             !% cycle through each element in the set.
             !% This is designed for fset and eset being vectors, but it
@@ -405,7 +408,7 @@ module face
             do jj=1,size(fset)
 
                 !% condition for upstream element of the shared face is ghost and in a different image
-                if (eup .eq. nullValueI) then
+                if (isGhostUp) then
 
                     faceR(thisP,fset(jj)) = &
                         (+elemR(ghostUp,eset(jj))[connected_image] * elemR(edn,eWup) &
@@ -414,7 +417,7 @@ module face
                         ( elemR(edn,eWup) + elemR(ghostUp,eWdn)[connected_image] )
 
                 !% condition for downstream element of the shared face is ghost and in a different image
-                elseif (edn .eq. nullValueI) then
+                elseif (isGhostDn) then
 
                     faceR(thisP,fset(jj)) = &
                         (+elemR(eup,eset(jj)) * elemR(ghostDn,eWup)[connected_image] &
