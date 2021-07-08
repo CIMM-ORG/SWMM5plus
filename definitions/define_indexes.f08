@@ -204,20 +204,24 @@ module define_indexes
         enumerator :: bi_subcategory
         enumerator :: bi_xr_idx      ! BC%xR idx if elevation BC, -1 otherwise
     end enum
-    !% HACK - we will probably want to create a different set of indexes for BC_Q and BC_H tables
-    !% For instance, BC_Q tables will probably need addititonal information to distribute flowrates
+    !% HACK - we will probably want to create a different set of indexes for BC_flow and BC_head tables
+    !% For instance, BC_flow tables will probably need addititonal information to distribute flowrates
     !% over link elements.
-    integer, parameter :: N_QBC_I = bi_xr_idx
-    integer, parameter :: N_HBC_I = bi_xr_idx
+    !integer, parameter :: N_QBC_I = bi_xr_idx
+    integer, parameter :: N_flowBC_I = bi_xr_idx
+    !integer, parameter :: N_HBC_I = bi_xr_idx
+    integer, parameter :: N_headBC_I = bi_xr_idx
 
     !% Column indexes for BC_xR(:,:,:)
     enum, bind(c)
         enumerator :: br_time = 1
         enumerator :: br_value
     end enum
-    ! HACK - we will probably want to change the dimensions of QBC and HBC real tables
-    integer, parameter :: N_HBC_R = br_value
-    integer, parameter :: N_QBC_R = br_value
+    ! HACK - we will probably want to change the dimensions of flowBC and headBC real tables
+    !integer, parameter :: N_HBC_R = br_value
+    integer, parameter :: N_headBC_R = br_value
+    !integer, parameter :: N_QBC_R = br_value
+    integer, parameter :: N_flowBC_R = br_value
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for link%YN(:,:) arrays
