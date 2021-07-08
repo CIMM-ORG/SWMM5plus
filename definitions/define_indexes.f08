@@ -438,6 +438,8 @@ module define_indexes
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSR(:,:) arrays
     !% These are the full arrays if special real data
+    !% Note that different types of special elements (diagnostic, branches)
+    !% share the same columns since a row can only have one type of element.
     !%-------------------------------------------------------------------------
 
     !% define the column indexes for elemSR(:,:) for geometry that has not yet been confirmed and assigned:
@@ -453,7 +455,12 @@ module define_indexes
         enumerator ::  eSr_Weir_TrapezoidalRightSlope   !% trapezoidal weir right slope
         enumerator ::  eSr_Weir_TriangularSideSlope     !% triangular weir side slope
         enumerator ::  eSr_Weir_Zcrest                  !% weir crest elevation
-        enumerator ::  eSr_Orifice_DischargeCoeff       !% discharge coefficient orifice
+    end enum
+    !% note, this must be changed to whatever the last enum element is
+    integer, parameter :: Ncol_elemSR_Weir = eSr_Weir_Zcrest
+
+    enum, bind(c)
+        enumerator ::  eSr_Orifice_DischargeCoeff = 1       !% discharge coefficient orifice
         enumerator ::  eSr_Orifice_EffectiveFullDepth   !% effective full depth after control intervention
         enumerator ::  eSr_Orifice_EffectiveHeadDelta   !% effective head delta across orifice
         enumerator ::  eSr_Orifice_NominalDownstreamHead   !% nominal downstream head for orifice
@@ -461,7 +468,7 @@ module define_indexes
         enumerator ::  eSr_Orifice_Zcrest                  !% orifice "crest" elevation - lowest edge of orifice.
     end enum
     !% note, this must be changed to whatever the last enum element is
-    integer, parameter :: Ncol_elemSR_Weir = eSr_Weir_Zcrest
+    integer, parameter :: Ncol_elemSR_Orifice = eSr_Orifice_Zcrest
 
     enum, bind(c)
         !% Define the column indexes for elemSR(:,:) for junction branches
@@ -475,7 +482,8 @@ module define_indexes
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSR = max(&
                             Ncol_elemSR_JunctionBranch, &
-                            Ncol_elemSR_Weir)
+                            Ncol_elemSR_Weir, &
+                            Ncol_elemSR_Orifice)
 
     !% HACK: Ncol_elemSR must be updated when other special elements
     !% (i.e. orifice, pump, storage etc.) are added
