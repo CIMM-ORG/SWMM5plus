@@ -358,7 +358,7 @@ module timeloop
         
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
-        !call pack_dynamic_arrays
+        call pack_dynamic_arrays
         print *, "Need to decide on pack_dynamic_arrays 94837"
         
         !%  push the old values down the stack for AC solver
