@@ -104,7 +104,8 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-        nJ2_nodes = pack(node%I(:, ni_idx), node%I(:, ni_node_type) == nJ2)
+        nJ2_nodes = pack(node%I(:, ni_idx), (node%I(:, ni_node_type) == nJ2) &
+                        .and. (node%I(:, ni_P_image) == this_image()))
         node%I(nJ2_nodes, ni_elemface_idx) = faceI(node%I(nJ2_nodes, ni_elemface_idx), fi_Melem_uL)
         deallocate(nJ2_nodes)
 
