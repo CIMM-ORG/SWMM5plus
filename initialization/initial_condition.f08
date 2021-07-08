@@ -337,7 +337,6 @@ contains
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
                     elemI(:,ei_QeqType)         = time_march
-
                     elemYN(:,eYN_canSurcharge)  =  .true.
                 endwhere
 
@@ -461,8 +460,11 @@ contains
 
                     elemI(:,ei_geometryType) = rectangular
 
-                    elemR(:,er_BreadthMax)   = link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_Area)         = elemR(:,er_BreadthMax) * elemR(:,er_Depth)
+                    !% store geometry specific data
+                    elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+
+                    elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Rectangular_Breadth)
+                    elemR(:,er_Area)         = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_Depth)
                     elemR(:,er_Area_N0)      = elemR(:,er_Area)
                     elemR(:,er_Area_N1)      = elemR(:,er_Area)
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
@@ -476,11 +478,46 @@ contains
                     elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
                                                 link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)    = elemR(:,er_BreadthMax) * elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)    = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
 
+                endwhere
+
+            case (lTrapezoidal)
+
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+
+                    elemI(:,ei_geometryType) = trapezoidal
+
                     !% store geometry specific data
-                    elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,eSGR_Trapezoidal_Breadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,eSGR_Trapezoidal_LeftSlope)  = link%R(thisLink,lr_LeftSlope)
+                    elemSGR(:,eSGR_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
+
+                    ! (Bottom width + averageSlope * Depth)*Depth
+                    elemR(:,er_Area)         = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                                (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
+                                elemR(:,er_Depth)) * elemR(:,er_Depth)
+
+                    elemR(:,er_Area_N0)      = elemR(:,er_Area)
+                    elemR(:,er_Area_N1)      = elemR(:,er_Area)
+                    elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
+                    elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+                    elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
+                    elemR(:,er_ZbreadthMax)  = link%R(thisLink,lr_FullDepth)
+                    ! Bottom width + (lslope + rslope) * BankFullDepth
+                    elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Trapezoidal_Breadth) + (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + &
+                                elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_ZbreadthMax)
+                    !% the full depth of channel is set to a large depth so it
+                    !% never surcharges. the large depth is set as, factor x width,
+                    !% where the factor is an user controlled paratmeter.
+                    elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
+                                                link%R(thisLink,lr_BreadthScale)
+                    elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)    = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                                (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
+                                elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
+                    elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
                 endwhere
 
             case default
@@ -523,8 +560,11 @@ contains
 
                 elemI(:,ei_geometryType)    = rectangular
 
-                elemR(:,er_BreadthMax)      = link%R(thisLink,lr_BreadthScale)
-                elemR(:,er_Area)            = elemR(:,er_BreadthMax) * elemR(:,er_Depth)
+                !% store geometry specific data
+                elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+
+                elemR(:,er_BreadthMax)      = elemSGR(:,eSGR_Rectangular_Breadth)
+                elemR(:,er_Area)            = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_Depth)
                 elemR(:,er_Area_N0)         = elemR(:,er_Area)
                 elemR(:,er_Area_N1)         = elemR(:,er_Area)
                 elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
@@ -532,11 +572,40 @@ contains
                 elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
                 elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
                 elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_FullArea)        = elemR(:,er_BreadthMax) * elemR(:,er_FullDepth)
+                elemR(:,er_FullArea)        = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
                 elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
+            endwhere
+
+        case (lTrapezoidal)
+
+            where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+
+                elemI(:,ei_geometryType) = trapezoidal
 
                 !% store geometry specific data
-                elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+                elemSGR(:,eSGR_Trapezoidal_Breadth)    = link%R(thisLink,lr_BreadthScale)
+                elemSGR(:,eSGR_Trapezoidal_LeftSlope)  = link%R(thisLink,lr_LeftSlope)
+                elemSGR(:,eSGR_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
+
+                ! (Bottom width + averageSlope * Depth)*Depth
+                elemR(:,er_Area)         = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                            (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
+                            elemR(:,er_Depth)) * elemR(:,er_Depth)
+
+                elemR(:,er_Area_N0)      = elemR(:,er_Area)
+                elemR(:,er_Area_N1)      = elemR(:,er_Area)
+                elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
+                elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
+                elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
+                ! Bottom width + (lslope + rslope) * FullDepth
+                elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Trapezoidal_Breadth) + (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + &
+                            elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_ZbreadthMax)
+                elemR(:,er_FullDepth)   = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                elemR(:,er_FullArea)    = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                            (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
+                            elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
+                elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)   
             endwhere
 
         case default
