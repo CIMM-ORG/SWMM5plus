@@ -1,12 +1,23 @@
 module c_library
 
     use iso_c_binding
+    use define_settings, only: setting
 
     implicit none
 
     private
 
-    public :: c_lib_type, c_lib_load, c_lib_free
+    !% -------------------------------------------------------------------------------
+    !% PUBLIC
+    !% -------------------------------------------------------------------------------
+
+    public :: c_lib_type
+    public :: c_lib_load
+    public :: c_lib_close
+
+    !% -------------------------------------------------------------------------------
+    !% PRIVATE
+    !% -------------------------------------------------------------------------------
 
     type c_lib_type
         integer(c_intptr_t) :: fileaddr = 0
@@ -44,9 +55,25 @@ module c_library
 contains
 
     subroutine c_lib_load(c_lib, errstat, errmsg)
-        type (c_lib_type), intent(inout) :: c_lib
-        integer, intent(out) :: errstat
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Loads functions from the EPA-SWMM shared library. The name of the
+    !%    function that wants to be loaded has to be defined in c_lib%procname
+    !%    before executing c_lib_load.
+    !%
+    !%    For example:
+    !%
+    !%    c_lib%procname = "api_initialize"
+    !%    call c_lib_load(c_lib, errstat, errmsg)
+    !%
+    !%-----------------------------------------------------------------------------
+        type (c_lib_type), intent(inout) :: c_lib ! pointer to shared library
+        integer, intent(out) :: errstat ! -1 ir there was an error, 0 if successful
         character(*), intent(out) :: errmsg
+        character(64) :: subroutine_name = "c_lib_load"
+    !%-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%c_library) print *, '*** enter ', subroutine_name
 
         errmsg = ''
 
@@ -69,24 +96,31 @@ contains
         end if
 
         errstat = 0
+
+        if (setting%Debug%File%c_library) print *, '*** leave ', subroutine_name
     end subroutine c_lib_load
 
-    subroutine c_lib_free (c_lib, errstat, errmsg)
+    subroutine c_lib_close (c_lib, errstat, errmsg)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Closes the shared library
+    !%-----------------------------------------------------------------------------
         type (c_lib_type), intent(inout) :: c_lib
-        integer, intent(out) :: errstat
+        integer, intent(out) :: errstat ! -1 if error, 0 if successful
         character(*), intent(out) :: errmsg
+        character(64) :: subroutine_name = "c_lib_close"
+    !%-----------------------------------------------------------------------------
 
-        integer(c_int) :: success
+        if (setting%Debug%File%c_library) print *, '*** enter ', subroutine_name
 
-        errstat = -1
         errmsg = ''
-
-        ! close the library:
-        success = dlclose( c_lib%fileaddrx )
-        if ( success /= 0 ) then
+        errstat = dlclose( c_lib%fileaddrx )
+        if ( errstat /= 0 ) then
             errstat = -1
-            errmsg = 'The dynamic library could not be freed'
+            errmsg = 'The dynamic library could not be closed'
             return
         end if
-    end subroutine c_lib_free
+
+        if (setting%Debug%File%c_library) print *, '*** leave ', subroutine_name
+    end subroutine c_lib_close
 end module c_library

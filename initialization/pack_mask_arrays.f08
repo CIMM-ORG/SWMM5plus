@@ -26,7 +26,7 @@ contains
     ! PUBLIC
     !==========================================================================
     !
-    subroutine pack_mask_arrays_all ()
+    subroutine pack_mask_arrays_all()
         !--------------------------------------------------------------------------
         !
         !% set all the static packs and masks
@@ -40,17 +40,17 @@ contains
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
-        call mask_faces_whole_array_static ()
-        call pack_geometry_alltm_elements ()
-        call pack_geometry_etm_elements ()
-        call pack_geometry_ac_elements ()
-        call pack_nongeometry_static_elements ()
-        call pack_nongeometry_dynamic_elements ()
-        call pack_static_interior_faces ()
-        call pack_static_shared_faces ()
-        call pack_dynamic_interior_faces ()
-        call pack_dynamic_shared_faces ()
-
+        call mask_faces_whole_array_static()
+        call pack_geometry_alltm_elements()
+        call pack_geometry_etm_elements()
+        call pack_geometry_ac_elements()
+        call pack_nongeometry_static_elements()
+        call pack_nongeometry_dynamic_elements()
+        call pack_static_interior_faces()
+        call pack_static_shared_faces()
+        call pack_dynamic_interior_faces()
+        call pack_dynamic_shared_faces()
+        call pack_nodes()
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
@@ -78,7 +78,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_dynamic_arrays ()
+    subroutine pack_dynamic_arrays()
         !--------------------------------------------------------------------------
         !
         !% set all the dynamic packs and masks
@@ -90,11 +90,11 @@ contains
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
-        call pack_geometry_etm_elements ()
-        call pack_geometry_ac_elements ()
-        call pack_nongeometry_dynamic_elements ()
-        call pack_dynamic_interior_faces ()
-        call pack_dynamic_shared_faces ()
+        call pack_geometry_etm_elements()
+        call pack_geometry_ac_elements()
+        call pack_nongeometry_dynamic_elements()
+        call pack_dynamic_interior_faces()
+        call pack_dynamic_shared_faces()
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_dynamic_arrays
@@ -103,7 +103,7 @@ contains
     ! PRIVATE
     !==========================================================================
     !
-    subroutine mask_faces_whole_array_static ()
+    subroutine mask_faces_whole_array_static()
         !--------------------------------------------------------------------------
         !
         !% find all the faces except boundary and null faces
@@ -133,7 +133,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_geometry_alltm_elements ()
+    subroutine pack_geometry_alltm_elements()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for geometry types in elemPGalltm
@@ -194,7 +194,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_geometry_ac_elements ()
+    subroutine pack_geometry_ac_elements()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for geometry types for AC elements
@@ -247,7 +247,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_geometry_etm_elements ()
+    subroutine pack_geometry_etm_elements()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for geometry types
@@ -302,7 +302,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_nongeometry_static_elements ()
+    subroutine pack_nongeometry_static_elements()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for non geometry static elements
@@ -1192,7 +1192,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_static_interior_faces ()
+    subroutine pack_static_interior_faces()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for static faces
@@ -1352,7 +1352,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine pack_static_shared_faces ()
+    subroutine pack_static_shared_faces()
         !--------------------------------------------------------------------------
         !
         !% packed arrays for static shared faces
@@ -1547,4 +1547,12 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine pack_nodes()
+        node%P%have_QBC = pack(node%I(:,ni_idx), &
+            node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
+        node%P%have_HBC = pack(node%I(:,ni_idx), &
+            (node%I(:, ni_node_type) == nBCdn) .and. (node%I(:,ni_P_image) == this_image()))
+    end subroutine pack_nodes
+
+
 end module pack_mask_arrays

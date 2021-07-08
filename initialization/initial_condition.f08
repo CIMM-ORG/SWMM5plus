@@ -8,7 +8,7 @@
 !==========================================================================
 !
 module initial_condition
-  
+
     use define_indexes
     use define_keys
     use define_globals
@@ -124,7 +124,7 @@ contains
     !--------------------------------------------------------------------------
 
         integer                                     :: ii, image, pLink
-        integer, pointer                            :: thisLink 
+        integer, pointer                            :: thisLink
         integer, dimension(:), allocatable, target  :: packed_link_idx
 
         character(64) :: subroutine_name = 'init_IC_from_linkdata'
@@ -135,7 +135,7 @@ contains
         image = this_image()
 
         !% pack all the link indexes in an image
-        packed_link_idx = pack(linkI(:,li_idx), (linkI(:,li_P_image) .eq. image))
+        packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == image))
 
         !% find the number of links in an image
         pLink = size(packed_link_idx)
@@ -144,7 +144,7 @@ contains
         do ii = 1,pLink
             !% necessary pointers
             thisLink    => packed_link_idx(ii)
-            
+
             call init_IC_get_depth_from_linkdata (thisLink)
 
             call init_IC_get_flow_roughness_from_linkdata (thisLink)
@@ -153,7 +153,7 @@ contains
 
             call init_IC_get_geometry_from_linkdata (thisLink)
 
-            !% we need a small/zero volume adjustment here 
+            !% we need a small/zero volume adjustment here
 
             call init_IC_get_channel_pipe_velocity (thisLink)
 
@@ -176,7 +176,7 @@ contains
 
         integer             :: mm, ei_max
         real(8)             :: kappa
-        integer, pointer    :: LdepthType 
+        integer, pointer    :: LdepthType
         real(8), pointer    :: DepthUp, DepthDn
 
         character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
@@ -184,11 +184,11 @@ contains
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
         !% type of initial depth type
-        LdepthType  => linkI(thisLink,li_InitialDepthType)
+        LdepthType  => link%I(thisLink,li_InitialDepthType)
 
         !% up and downstream depths on this link
-        DepthUp => linkR(thisLink,lr_InitialUpstreamDepth)
-        DepthDn => linkR(thisLink,lr_InitialDnstreamDepth)
+        DepthUp => link%R(thisLink,lr_InitialUpstreamDepth)
+        DepthDn => link%R(thisLink,lr_InitialDnstreamDepth)
 
         !% set the depths in link elements from links
         select case (LdepthType)
@@ -196,13 +196,13 @@ contains
             case (Uniform)
 
                 !%  if the link has a uniform depth as an initial condition
-                if (linkR(thisLink,lr_InitialDepth) .ne. nullvalueR) then
-                    
-                    where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
-                        elemR(:,er_Depth) = linkR(thisLink,lr_InitialDepth)
+                if (link%R(thisLink,lr_InitialDepth) .ne. nullvalueR) then
+
+                    where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                        elemR(:,er_Depth) = link%R(thisLink,lr_InitialDepth)
                     endwhere
                 else
-                    where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+                    where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                         elemR(:,er_Depth) = onehalfR * (DepthUp + DepthDn)
                     endwhere
                 endif
@@ -211,16 +211,16 @@ contains
 
                 !% if the link has linearly-varying depth
                 !% depth at the upstream element (link position = 1)
-                where ( (elemI(:,ei_link_Pos) .eq. 1) .and. (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) )
+                where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
                     elemR(:,er_Depth) = DepthUp
                 endwhere
 
                 !%  using a linear distribution over the links
-                ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+                ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_SWMM) == thisLink)
 
                 do mm=2,ei_max
                     !% find the element that is at the mm position in the link
-                    where ( (elemI(:,ei_link_Pos) .eq. mm) .and. (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) )
+                    where ( (elemI(:,ei_link_Pos) == mm) .and. (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
                         !% use a linear interpolation
                         elemR(:,er_Depth) = DepthUp - (DepthUp - DepthDn) * real(mm - oneI) / real(ei_max - oneI)
                     endwhere
@@ -230,34 +230,34 @@ contains
 
                 !% if the link has exponentially decayed depth
                 !% depth at the upstream element (link position = 1)
-                where ( (elemI(:,ei_link_Pos) .eq. 1) .and. (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) )
+                where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
                     elemR(:,er_Depth) = DepthUp
                 endwhere
 
                 !% find the remaining elements in the link
-                ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+                ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_SWMM) == thisLink)
 
                 do mm=2,ei_max
                     kappa = real(mm - oneI)
 
                     !%  depth decreases exponentially going downstream
                     if (DepthUp - DepthDn > zeroR) then
-                        where ( (elemI(:,ei_link_Pos)       .eq. mm      ) .and. &
-                                (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) )
+                        where ( (elemI(:,ei_link_Pos)       == mm      ) .and. &
+                                (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
                             elemR(:,er_Depth) = DepthUp - (DepthUp - DepthDn) * exp(-kappa)
                         endwhere
 
                     !%  depth increases exponentially going downstream
                     elseif (DepthUp - DepthDn < zeroR) then
-                        where ( (elemI(:,ei_link_Pos)       .eq. mm      ) .and. &
-                                (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) )
+                        where ( (elemI(:,ei_link_Pos)       == mm      ) .and. &
+                                (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
                             elemR(:,er_Depth) = DepthUp + (DepthDn - DepthUp) * exp(-kappa)
                         endwhere
 
                     !%  uniform depth
                     else
-                        where ( (elemI(:,ei_link_Pos)       .eq. mm      ) .and. &
-                                (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) )
+                        where ( (elemI(:,ei_link_Pos)       == mm      ) .and. &
+                                (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
                             elemR(:,er_Depth) = DepthUp
                         endwhere
                     endif
@@ -291,10 +291,10 @@ contains
 
         !%  handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
-            elemR(:,er_Flowrate)       = linkR(thisLink,lr_InitialFlowrate)
-            elemR(:,er_Flowrate_N0)    = linkR(thisLink,lr_InitialFlowrate)
-            elemR(:,er_Flowrate_N1)    = linkR(thisLink,lr_InitialFlowrate)
-            elemR(:,er_Roughness)      = linkR(thisLink,lr_Roughness)
+            elemR(:,er_Flowrate)       = link%R(thisLink,lr_InitialFlowrate)
+            elemR(:,er_Flowrate_N0)    = link%R(thisLink,lr_InitialFlowrate)
+            elemR(:,er_Flowrate_N1)    = link%R(thisLink,lr_InitialFlowrate)
+            elemR(:,er_Roughness)      = link%R(thisLink,lr_Roughness)
         endwhere
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
@@ -311,48 +311,48 @@ contains
     !--------------------------------------------------------------------------
 
         integer, intent(in) :: thisLink
-        integer, pointer    :: linkType 
+        integer, pointer    :: linkType
 
         character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
         !% necessary pointers
-        linkType      => linkI(thisLink,li_link_type)
+        linkType      => link%I(thisLink,li_link_type)
 
         select case (linkType)
 
             case (lChannel)
 
-                where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
-                    elemI(:,ei_QeqType)         = time_march 
+                    elemI(:,ei_QeqType)         = time_march
                 endwhere
-                
+
 
             case (lpipe)
-                
-                where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
                     elemI(:,ei_QeqType)         = time_march
 
-                    elemYN(:,eYN_canSurcharge)  =  .true.      
+                    elemYN(:,eYN_canSurcharge)  =  .true.
                 endwhere
-                
+
 
             case (lweir)
-                
-                where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     elemI(:,ei_elementType)     = weir
                     elemI(:,ei_QeqType)         = diagnostic
-                    elemYN(:,eYN_canSurcharge)  = linkYN(thisLink,lYN_CanSurcharge)     
+                    elemYN(:,eYN_canSurcharge)  = link%YN(thisLink,lYN_CanSurcharge)
                 endwhere
 
             case (lOrifice)
 
-                where (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink)
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     elemI(:,ei_elementType)     = orifice
                     elemI(:,ei_QeqType)         = diagnostic
                     elemYN(:,eYN_canSurcharge)  = .true.
@@ -371,7 +371,7 @@ contains
                 stop
 
         end select
-        
+
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_get_elemtype_from_linkdata
@@ -387,14 +387,14 @@ contains
     !--------------------------------------------------------------------------
 
         integer, intent(in) :: thisLink
-        integer, pointer    :: linkType 
+        integer, pointer    :: linkType
 
         character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
         !% necessary pointers
-        linkType      => linkI(thisLink,li_link_type)
+        linkType      => link%I(thisLink,li_link_type)
 
         select case (linkType)
 
@@ -427,7 +427,7 @@ contains
                 stop
 
         end select
-        
+
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_get_geometry_from_linkdata
@@ -438,20 +438,20 @@ contains
     subroutine init_IC_get_channel_geometry (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the geometry data for channel links 
+    !% get the geometry data for channel links
     !% and calculate element volumes
     !
     !--------------------------------------------------------------------------
 
         integer, intent(in) :: thisLink
-        integer, pointer    :: geometryType 
+        integer, pointer    :: geometryType
 
         character(64) :: subroutine_name = 'init_IC_get_channel_geometry'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
         !% pointer to geometry type
-        geometryType => linkI(thisLink,li_geometry)
+        geometryType => link%I(thisLink,li_geometry)
 
         select case (geometryType)
 
@@ -461,26 +461,26 @@ contains
 
                     elemI(:,ei_geometryType) = rectangular
 
-                    elemR(:,er_BreadthMax)   = linkR(thisLink,lr_BreadthScale)
+                    elemR(:,er_BreadthMax)   = link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_Area)         = elemR(:,er_BreadthMax) * elemR(:,er_Depth)
                     elemR(:,er_Area_N0)      = elemR(:,er_Area)
                     elemR(:,er_Area_N1)      = elemR(:,er_Area)
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
                     elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                    elemR(:,er_ZbreadthMax)  = linkR(thisLink,lr_FullDepth)
+                    elemR(:,er_ZbreadthMax)  = link%R(thisLink,lr_FullDepth)
 
                     !% the full depth of channel is set to a large depth so it
-                    !% never surcharges. the large depth is set as, factor x width, 
-                    !% where the factor is an user controlled paratmeter. 
+                    !% never surcharges. the large depth is set as, factor x width,
+                    !% where the factor is an user controlled paratmeter.
                     elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
-                                                linkR(thisLink,lr_BreadthScale)
+                                                link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)    = elemR(:,er_BreadthMax) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
 
                     !% store geometry specific data
-                    elemSGR(:,eSGR_Rectangular_Breadth) = linkR(thisLink,lr_BreadthScale)
+                    elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
                 endwhere
 
             case default
@@ -500,20 +500,20 @@ contains
     subroutine init_IC_get_pipe_geometry (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the geometry data for pipe links 
+    !% get the geometry data for pipe links
     !% and calculate element volumes
     !
     !--------------------------------------------------------------------------
 
         integer, intent(in) :: thisLink
-        integer, pointer    :: geometryType 
+        integer, pointer    :: geometryType
 
         character(64) :: subroutine_name = 'init_IC_get_pipe_geometry'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
         !% pointer to geometry type
-        geometryType => linkI(thisLink,li_geometry)
+        geometryType => link%I(thisLink,li_geometry)
 
         select case (geometryType)
 
@@ -522,21 +522,21 @@ contains
             where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
 
                 elemI(:,ei_geometryType)    = rectangular
-                
-                elemR(:,er_BreadthMax)      = linkR(thisLink,lr_BreadthScale)
+
+                elemR(:,er_BreadthMax)      = link%R(thisLink,lr_BreadthScale)
                 elemR(:,er_Area)            = elemR(:,er_BreadthMax) * elemR(:,er_Depth)
                 elemR(:,er_Area_N0)         = elemR(:,er_Area)
                 elemR(:,er_Area_N1)         = elemR(:,er_Area)
                 elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
                 elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
                 elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
-                elemR(:,er_FullDepth)       = linkR(thisLink,lr_FullDepth)
+                elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
                 elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                 elemR(:,er_FullArea)        = elemR(:,er_BreadthMax) * elemR(:,er_FullDepth)
                 elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
 
                 !% store geometry specific data
-                elemSGR(:,eSGR_Rectangular_Breadth) = linkR(thisLink,lr_BreadthScale)
+                elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
             endwhere
 
         case default
@@ -556,12 +556,12 @@ contains
     subroutine init_IC_get_weir_geometry (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the geometry and other data data for weir links 
+    !% get the geometry and other data data for weir links
     !
     !--------------------------------------------------------------------------
 
         integer, intent(in) :: thisLink
-        integer, pointer    :: specificWeirType 
+        integer, pointer    :: specificWeirType
 
         character(64) :: subroutine_name = 'init_IC_get_weir_geometry'
     !--------------------------------------------------------------------------
@@ -569,41 +569,41 @@ contains
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
         !% pointer to specific weir type
-        specificWeirType => linkI(thisLink,li_weir_type)
+        specificWeirType => link%I(thisLink,li_weir_type)
 
         select case (specificWeirType)
             !% copy weir specific data
-            case (lTrapezoidalWeir) 
+            case (lTrapezoidalWeir)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
                     elemSI(:,eSi_Weir_SpecificType)          = trapezoidal_weir
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Weir_DischargeCoeff1)       = linkR(thisLink,lr_DischargeCoeff1)
-                    elemSR(:,eSr_Weir_DischargeCoeff2)       = linkR(thisLink,lr_DischargeCoeff2)
-                    elemSR(:,eSr_Weir_TrapezoidalBreadth)    = linkR(thisLink,lr_BreadthScale)
-                    elemSR(:,eSr_Weir_TrapezoidalLeftSlope)  = linkR(thisLink,lr_LeftSlope)
-                    elemSR(:,eSr_Weir_TrapezoidalRightSlope) = linkR(thisLink,lr_RightSlope)
-                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + linkR(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,eSr_Weir_DischargeCoeff1)       = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,eSr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
+                    elemSR(:,eSr_Weir_TrapezoidalBreadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,eSr_Weir_TrapezoidalLeftSlope)  = link%R(thisLink,lr_LeftSlope)
+                    elemSR(:,eSr_Weir_TrapezoidalRightSlope) = link%R(thisLink,lr_RightSlope)
+                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
                 endwhere
 
-            case (lSideFlowWeir) 
+            case (lSideFlowWeir)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
                     elemSI(:,eSi_Weir_SpecificType)          = side_flow
-                    elemSI(:,eSi_Weir_EndContractions)       = linkI(thisLink,li_weir_EndContrations)
+                    elemSI(:,eSi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Weir_DischargeCoeff2)       = linkR(thisLink,lr_DischargeCoeff2)
-                    elemSR(:,eSr_Weir_RectangularBreadth)    = linkR(thisLink,lr_BreadthScale)
-                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + linkR(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,eSr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
+                    elemSR(:,eSr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -622,10 +622,10 @@ contains
                     elemSI(:,eSi_Weir_SpecificType)          = vnotch_weir
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Weir_DischargeCoeff1)       = linkR(thisLink,lr_DischargeCoeff1)
-                    elemSR(:,eSr_Weir_TriangularSideSlope)   = linkR(thisLink,lr_SideSlope)
-                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + linkR(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,eSr_Weir_DischargeCoeff1)       = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,eSr_Weir_TriangularSideSlope)   = link%R(thisLink,lr_SideSlope)
+                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -636,13 +636,13 @@ contains
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
                     elemSI(:,eSi_Weir_SpecificType)          = transverse_weir
-                    elemSI(:,eSi_Weir_EndContractions)       = linkI(thisLink,li_weir_EndContrations)
+                    elemSI(:,eSi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Weir_DischargeCoeff2)       = linkR(thisLink,lr_DischargeCoeff2)
-                    elemSR(:,eSr_Weir_RectangularBreadth)    = linkR(thisLink,lr_BreadthScale)
-                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + linkR(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,eSr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
+                    elemSR(:,eSr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -655,7 +655,7 @@ contains
                 stop
 
         end select
-        
+
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
     end subroutine init_IC_get_weir_geometry
@@ -666,12 +666,12 @@ contains
     subroutine init_IC_get_orifice_geometry (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the geometry and other data data for orifice links 
+    !% get the geometry and other data data for orifice links
     !
     !--------------------------------------------------------------------------
 
         integer, intent(in) :: thisLink
-        integer, pointer    :: specificOrificeType, OrificeGeometryType 
+        integer, pointer    :: specificOrificeType, OrificeGeometryType
 
         character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
     !--------------------------------------------------------------------------
@@ -679,11 +679,11 @@ contains
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
         !% pointer to specific orifice type
-        specificOrificeType => linkI(thisLink,li_orif_type)
+        specificOrificeType => link%I(thisLink,li_orif_type)
 
         select case (specificOrificeType)
             !% copy orifice specific data
-            case (lBottomOrifice) 
+            case (lBottomOrifice)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
@@ -691,7 +691,7 @@ contains
 
                 endwhere
 
-            case (lSideOrifice) 
+            case (lSideOrifice)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
@@ -707,8 +707,8 @@ contains
 
         end select
 
-        !% pointer to specific orifice geometry 
-        OrificeGeometryType => linkI(thisLink,li_geometry)
+        !% pointer to specific orifice geometry
+        OrificeGeometryType => link%I(thisLink,li_geometry)
 
         select case (OrificeGeometryType)
             !% copy orifice specific geometry data
@@ -718,10 +718,10 @@ contains
                     elemSI(:,ei_geometryType)          = rectangular
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = linkR(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Orifice_DischargeCoeff)     = linkR(thisLink,lr_DischargeCoeff1)
-                    elemSR(:,eSr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + linkR(thisLink,lr_InletOffset)
-                    elemSR(:,eSr_Orifice_RectangularBreadth) = linkR(thisLink,lr_BreadthScale)
+                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,eSr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,eSr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
 
                 endwhere
 
@@ -736,7 +736,7 @@ contains
                 stop
             end select
 
-        
+
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
     end subroutine init_IC_get_orifice_geometry
@@ -753,7 +753,7 @@ contains
     !--------------------------------------------------------------------------
 
         integer, intent(in) :: thisLink
-        integer, pointer    :: specificWeirType 
+        integer, pointer    :: specificWeirType
 
         character(64) :: subroutine_name = 'init_IC_get_channel_pipe_velocity'
     !--------------------------------------------------------------------------
@@ -761,24 +761,24 @@ contains
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
         !% HACK: this might not be right
-        where ( (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) .and. &
+        where ( (elemI(:,ei_link_Gidx_SWMM) == thisLink) .and. &
                 (elemR(:,er_area)           .gt. zeroR   ) .and. &
-                (elemI(:,ei_elementType)    .eq. CC      ) )
+                (elemI(:,ei_elementType)    == CC      ) )
 
             elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
             elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
             elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
 
-        elsewhere ( (elemI(:,ei_link_Gidx_SWMM) .eq. thisLink) .and. &
+        elsewhere ( (elemI(:,ei_link_Gidx_SWMM) == thisLink) .and. &
                     (elemR(:,er_area)           .le. zeroR   ) .and. &
-                    (elemI(:,ei_elementType)    .eq. CC      ) )
+                    (elemI(:,ei_elementType)    == CC      ) )
 
             elemR(:,er_Velocity)    = zeroR
             elemR(:,er_Velocity_N0) = zeroR
             elemR(:,er_Velocity_N1) = zeroR
 
         endwhere
-        
+
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
     end subroutine init_IC_get_channel_pipe_velocity
@@ -793,9 +793,9 @@ contains
     !
     !--------------------------------------------------------------------------
 
-        integer                                     :: ii, image, pJunction
-        integer, pointer                            :: thisJunctionNode
-        integer, dimension(:), allocatable, target  :: packed_nJm_idx
+        integer                       :: ii, image, pJunction
+        integer, pointer              :: thisJunctionNode
+        integer, allocatable, target  :: packed_nJm_idx(:)
 
         character(64) :: subroutine_name = 'init_IC_from_nodedata'
     !--------------------------------------------------------------------------
@@ -805,9 +805,9 @@ contains
         image = this_image()
 
         !% pack all the link indexes in an image
-        packed_nJm_idx = pack(nodeI(:,ni_idx), &
-                             ((nodeI(:,ni_P_image) .eq. image) .and. &
-                              (nodeI(:,ni_node_type) .eq. nJm) ) )
+        packed_nJm_idx = pack(node%I(:,ni_idx), &
+                             ((node%I(:,ni_P_image) == image) .and. &
+                              (node%I(:,ni_node_type) == nJm) ) )
 
         !% find the number of links in an image
         pJunction = size(packed_nJm_idx)
@@ -815,7 +815,7 @@ contains
         !% cycle through the links in an image
         do ii = 1,pJunction
             !% necessary pointers
-            thisJunctionNode    => packed_nJm_idx(ii)
+            thisJunctionNode => packed_nJm_idx(ii)
 
             call init_IC_get_junction_data (thisJunctionNode)
 
@@ -849,15 +849,15 @@ contains
         !% Junction main
         !%................................................................
         !% find the first element ID associated with that nJm
-        JMidx = minval(elemI(:,ei_Lidx), elemI(:,ei_node_Gidx_SWMM) .eq. thisJunctionNode)
+        JMidx = minval(elemI(:,ei_Lidx), elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
 
         !% the first element index is a junction main
         elemI(JMidx,ei_elementType) = JM
         elemI(JMidx,ei_HeqType)     = time_march
-        elemR(JMidx,er_Depth)       = nodeR(thisJunctionNode,nr_InitialDepth)
+        elemR(JMidx,er_Depth)       = node%R(thisJunctionNode,nr_InitialDepth)
 
         !% find if the node can surcharge
-        if (nodeR(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
+        if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
             elemYN(JMidx,eYN_canSurcharge)  = .true.
         end if
 
@@ -872,12 +872,12 @@ contains
 
             !% set the junction branch element type
             elemI(JBidx,ei_elementType) = JB
-            
+
             !% set the geometry for eisting branches
-            if (elemSI(JBidx,eSI_JunctionBranch_Exists) .eq. oneI) then 
+            if (elemSI(JBidx,eSI_JunctionBranch_Exists) == oneI) then
 
                 BranchIdx    => elemSI(JBidx,eSI_JunctionBranch_Link_Connection)
-                geometryType => linkI(BranchIdx,li_geometry)
+                geometryType => link%I(BranchIdx,li_geometry)
 
                 !% set the head equation as time-march for existing branches
                 elemI(JBidx,ei_HeqType) = time_march
@@ -889,7 +889,7 @@ contains
 
                         elemI(JBidx,ei_geometryType) = rectangular
 
-                        elemR(JBidx,er_BreadthMax)   = linkR(BranchIdx,lr_BreadthScale)
+                        elemR(JBidx,er_BreadthMax)   = link%R(BranchIdx,lr_BreadthScale)
                         elemR(JBidx,er_Area)         = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)
                         elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
                         elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
@@ -900,31 +900,31 @@ contains
                         !% Junction branch k-factor
                         !% HACK: if the user does not input the k-factor for junction brnaches,
                         !% get a default value from the setting
-                        if (nodeR(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
-                            elemSR(JBidx,eSr_JunctionBranch_Kfactor) = nodeR(thisJunctionNode,nr_JunctionBranch_Kfactor)
+                        if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
+                            elemSR(JBidx,eSr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
                         else
                             elemSR(JBidx,eSr_JunctionBranch_Kfactor) = setting%Junction%kFactor
                         end if
-                        
+
                         !% store geometry specific data
-                        elemSGR(JBidx,eSGR_Rectangular_Breadth) = linkR(BranchIdx,lr_BreadthScale)
+                        elemSGR(JBidx,eSGR_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
 
                         !% HACK: not sure if we need surcharge condition for junction branches
-                        if (linkI(BranchIdx,li_link_type) .eq. lPipe) then
+                        if (link%I(BranchIdx,li_link_type) == lPipe) then
                             elemYN(JBidx,eYN_canSurcharge)  = .true.
 
-                            elemR(JBidx,er_FullDepth)   = linkR(BranchIdx,lr_FullDepth)
+                            elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
                             elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
                             elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
                             elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
                         else
-                            elemR(JBidx,er_ZbreadthMax)  = linkR(BranchIdx,lr_FullDepth)
+                            elemR(JBidx,er_ZbreadthMax)  = link%R(BranchIdx,lr_FullDepth)
 
                             !% the full depth of channel is set to a large depth so it
-                            !% never surcharges. the large depth is set as, factor x width, 
-                            !% where the factor is an user controlled paratmeter. 
+                            !% never surcharges. the large depth is set as, factor x width,
+                            !% where the factor is an user controlled paratmeter.
                             elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
-                                                        linkR(BranchIdx,lr_BreadthScale)
+                                                        link%R(BranchIdx,lr_BreadthScale)
                             elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
                             elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
                             elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
@@ -940,10 +940,10 @@ contains
                 end select
 
                 !% get the flow data from links for junction branches
-                elemR(JBidx,er_Flowrate) = linkR(BranchIdx,lr_InitialFlowrate)
+                elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
 
                 if (elemR(JBidx,er_Area) .gt. zeroR) then
-                    
+
                     elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
                 else
                     elemR(JBidx,er_Velocity) = zeroR
@@ -966,8 +966,8 @@ contains
 
         elemR(JBidx,er_Volume_N0) = elemR(JMidx,er_Volume)
         elemR(JBidx,er_Volume_N1) = elemR(JMidx,er_Volume)
-        
-            
+
+
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_get_junction_data
     !
@@ -992,8 +992,8 @@ contains
 
             case (ETM)
 
-                where ( (elemI(:,ei_HeqType) .eq. time_march) .or. &
-                        (elemI(:,ei_QeqType) .eq. time_march) )
+                where ( (elemI(:,ei_HeqType) == time_march) .or. &
+                        (elemI(:,ei_QeqType) == time_march) )
 
                     elemI(:,ei_tmType) = ETM
 
@@ -1030,7 +1030,7 @@ contains
     !--------------------------------------------------------------------------
     !
     !% set the volume, area, head, other geometry, and flow to zero values
-    !% for the diagnostic elements so no error is induced in the primary 
+    !% for the diagnostic elements so no error is induced in the primary
     !% face update
     !
     !--------------------------------------------------------------------------
@@ -1044,9 +1044,9 @@ contains
             !% HACK: settings%ZeroValues should be used here
             !% when the code is finalized
             elemR(:,er_Area)     = 1.0e-6
-            elemR(:,er_Topwidth) = 1.0e-6  
+            elemR(:,er_Topwidth) = 1.0e-6
             elemR(:,er_HydDepth) = 1.0e-6
-            elemR(:,er_Flowrate) = 1.0e-6 
+            elemR(:,er_Flowrate) = 1.0e-6
             elemR(:,er_Head)     = 1.0e-6
         endwhere
 
@@ -1098,11 +1098,11 @@ contains
         endwhere
 
         !% Branch elements have invariant interpolation weights so are computed here
-        !% These are designed so that the face of a JB gets the flowrate from the 
-        !% adjacent CC conduit or channel, but the geometry and head are from the JB. 
+        !% These are designed so that the face of a JB gets the flowrate from the
+        !% adjacent CC conduit or channel, but the geometry and head are from the JB.
         Npack => npack_elemP(ep_JM_ALLtm)
         if (Npack > 0) then
-            thisP  => elemP(1:Npack,ep_JM_ALLtm)  
+            thisP  => elemP(1:Npack,ep_JM_ALLtm)
             do ii=1,Npack
                 tM => thisP(ii) !% junction main ID
                 do kk=1,max_branch_per_node
@@ -1112,7 +1112,7 @@ contains
                     elemR(tB,er_InterpWeight_uG) = setting%Limiter%InterpWeight%Minimum
                     elemR(tB,er_InterpWeight_dG) = setting%Limiter%InterpWeight%Minimum
                     elemR(tB,er_InterpWeight_uH) = setting%Limiter%InterpWeight%Minimum
-                    elemR(tB,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum  
+                    elemR(tB,er_InterpWeight_dH) = setting%Limiter%InterpWeight%Minimum
                 end do
             end do
         end if

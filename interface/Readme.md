@@ -1,0 +1,7 @@
+## SWMM API
+
+The EPA-SWMM source code is compiled as a shared library. Although the library contains basic functionalities that allow running SWMM simulations, new functionalities are necessary to extract information from the SWMM model in order to run our SVE and AC solvers. Such additional functionalities are defined in *api.c* and *api.h*, which are compiled with the original EPA-SWMM source code in *build_dependencies.sh*.
+
+EPA-SWMM is downloaded from the [USEPA](https://github.com/USEPA/Stormwater-Management-Model) official repository and then compiled using a customized *Makefile*. The *Makefile* is edited in build_dependencies.sh since it is not executable as is. The *Makefile* contains placeholders {{SCRIPTS}} and {{OBJECTS}} which refer to additional C and object files respectively that are necessary to extend the capabilities of EPA-SWMM. The build_dependencies.sh executable detects automatically the api.c and api.h files in the interface/ directory and also any .c or .h file in the tests/ directory, and includes them in the compilation of the shared library.
+
+In order to manipulate the shared library in Fortran it is necessary to use the c_library.f08 module, since it includes functions to load and close a shared library. The c_library module relies on Fortran's built-in functionalities dlopen, dlsym, and dlclose. These functions are called from interface.f08 to extract information from EPA-SWMM, such as system properties and boundary conditions.

@@ -29,13 +29,13 @@ static int  Ntokens;                   // Number of tokens in line of input
 
 // --- Simulation
 
-// Initializes the SWMM C simulation. It creates an Interface
+// Initializes the EPA-SWMM simulation. It creates an Interface
 // variable (details about Interface in interface.h). The
 // function opens de SWMM input file and creates report and
 // output files. Although the .inp is parsed within swmm_start,
 // not every property is extracted, e.g., slopes of trapezoidal channels.
 // In swmm.c
-// to parse the .inp again using SWMM C functionalities
+// to parse the .inp again using EPA-SWMM functionalities
 // within api_load_vars
 // The interface object is passed to many functions in interface.c
 // but it is passed as a void pointer. This is because the object
@@ -65,7 +65,7 @@ void DLLEXPORT api_finalize(void* f_api)
 //
 //  Input: f_api is an Interface object passed as a void*
 //  Output: None
-//  Purpose: Closes the link with the SWMM C library
+//  Purpose: Closes the link with the EPA-SWMM library
 //
 {
     int i;
@@ -92,45 +92,6 @@ void DLLEXPORT api_finalize(void* f_api)
 }
 
 // --- Property-extraction
-
-// * During Simulation
-
-int DLLEXPORT api_get_node_results(void* f_api, char* node_name, float* inflow, float* overflow, float* depth, float* volume)
-//
-//  Input:    f_api = Interface object passed as a void*
-//            node_name = string identifier of node
-//            inflow, overflow, depth, volume =
-//  Output: None
-//  Purpose: Closes the link with the SWMM C library
-//
-{
-    int j, error;
-    Interface * api = (Interface*) f_api;
-
-    error = check_api_is_initialized(api);
-    if (error != 0) return error;
-
-    j = project_findObject(NODE, node_name);
-    *inflow = Node[j].inflow;
-    *overflow = Node[j].overflow;
-    *depth = Node[j].newDepth;
-    *volume = Node[j].newVolume;
-    return 0;
-}
-
-int DLLEXPORT api_get_link_results(void* f_api, char* link_name, float* flow, float* depth, float* volume)
-{
-    int j, error;
-    Interface * api = (Interface*) f_api;
-
-    error = check_api_is_initialized(api);
-    if (error != 0) return error;
-    j = project_findObject(LINK, link_name);
-    *flow = Link[j].newFlow;
-    *depth = Link[j].newDepth;
-    *volume = Link[j].newVolume;
-    return 0;
-}
 
 // * After Initialization
 
@@ -416,6 +377,85 @@ double DLLEXPORT api_get_pattern_factor(int k, int j)
 int DLLEXPORT api_get_pattern_type(int k)
 {
     return Pattern[k].type;
+}
+
+double DLLEXPORT api_get_next_inflow_bc(void* f_api, int node_idx, double current_datetime) {
+
+    int ptype, pcount, i, j, p;
+    int yy, mm, dd;
+    int h, m, s, dow;
+    double val;
+    double x, y, next_datetime;
+    double bline, sfactor;
+    double total_factor = 1;
+    double total_extinflow = 0;
+    double total_inflow = 0;
+
+    datetime_decodeDate(current_datetime, &yy, &mm, &dd);
+    datetime_decodeTime(current_datetime, &h, &m, &s);
+    dow = datetime_dayOfWeek(current_datetime);
+
+    api_get_node_attribute(f_api, node_idx, node_has_dwfInflow, &val);
+    if (val == 1) { // node_has_dwfInflow
+        for (int i=0; i<4; i++)
+        {
+            j = Node[node_idx].dwfInflow->patterns[i];
+            ptype = Pattern[j].type;
+            if (ptype == MONTHLY_PATTERN)
+                total_factor *= Pattern[j].factor[mm-1];
+            else if (ptype == DAILY_PATTERN)
+                total_factor *= Pattern[j].factor[dow-1];
+            else if (ptype == HOURLY_PATTERN)
+                total_factor *= Pattern[j].factor[h];
+            else if (ptype == WEEKEND_PATTERN)
+            {
+                if ((dow == 1) || (dow == 7))
+                    total_factor *= Pattern[j].factor[h];
+            }
+        }
+        total_inflow += total_factor * Node[node_idx].dwfInflow->avgValue;
+    }
+
+    api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
+    if (val == 1) { // node_has_dwfInflow
+        p = Node[node_idx].extInflow->basePat; // pattern
+        if (p > 0)
+        {
+            ptype = Pattern[p].type;
+            bline = Node[node_idx].extInflow->baseline; // baseline value
+            if (ptype == MONTHLY_PATTERN)
+                total_extinflow += Pattern[j].factor[mm-1] * bline;
+            else if (ptype == DAILY_PATTERN)
+                total_extinflow += Pattern[j].factor[dow-1] * bline;
+            else if (ptype == HOURLY_PATTERN)
+                total_extinflow += Pattern[j].factor[h] * bline;
+            else if (ptype == WEEKEND_PATTERN)
+            {
+                if ((dow == 1) || (dow == 7))
+                    total_extinflow += Pattern[j].factor[h] * bline;
+            }
+        }
+        j = Node[node_idx].extInflow->tSeries; // tseries
+        sfactor = Node[node_idx].extInflow->sFactor; // scale factor
+        if (j > 0)
+        {
+            total_extinflow += table_lookup(&Tseries[j], current_datetime) * sfactor;
+        }
+        total_inflow += total_extinflow;
+    }
+
+    return total_inflow;
+}
+
+double api_get_runoff(int node_idx, double current_datetime)
+{
+    // --- compute runoff until next routing time reached or exceeded
+    while ( NewRunoffTime < current_datetime )
+    {
+        runoff_execute();
+        if ( ErrorCode ) return -999999;
+    }
+    return CFTOCM(Node[node_idx].newLatFlow);
 }
 
 // --- Print-out
@@ -803,7 +843,7 @@ int api_findObject(int type, char *id)
 }
 
 // Copy pasted getTokens from src/input.c to ensure independence
-// from the original SWMM C code. In the original code
+// from the original EPA-SWMM code. In the original code
 // getTokens is not defined as an external API function
 
 int getTokens(char *s)

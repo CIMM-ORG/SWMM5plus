@@ -30,7 +30,7 @@ module utility_allocate
     public :: util_allocate_partitioning_arrays
     public :: util_allocate_elemX_faceX
     public :: util_allocate_columns
-
+    public :: util_allocate_bc
 
 contains
     !
@@ -45,7 +45,7 @@ contains
     !   of the network connectivity
     !
     ! Method:
-    !   The tables nodeI, linkI, nodeR, linkR, nodeYN, linkYN, are allocated
+    !   The tables node%I, link%I, node%R, link%R, node%YN, link%YN, are allocated
     !   These are defined in globals.f08). Every time memory is allocated, the
     !   util_allocate_check functionality (from utility.f08) is used to
     !   determine wheter or not there was an error during the allocation.
@@ -65,49 +65,49 @@ contains
             additional_rows = num_images() - 1
         end if
 
-        allocate(nodeI(N_node + additional_rows, Ncol_nodeI), stat=allocation_status, errmsg=emsg)
+        allocate(node%I(N_node + additional_rows, Ncol_nodeI), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
-        nodeI(:,:) = nullvalueI
+        node%I(:,:) = nullvalueI
 
-        allocate(linkI(N_link + additional_rows, Ncol_linkI), stat=allocation_status, errmsg=emsg)
+        allocate(link%I(N_link + additional_rows, Ncol_linkI), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
-        linkI(:,:) = nullvalueI
+        link%I(:,:) = nullvalueI
 
-        allocate(nodeR(N_node + additional_rows, Ncol_nodeR), stat=allocation_status, errmsg=emsg)
+        allocate(node%R(N_node + additional_rows, Ncol_nodeR), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
-        nodeR(:,:) = nullvalueR
+        node%R(:,:) = nullvalueR
 
-        allocate(linkR(N_link + additional_rows, Ncol_linkR), stat=allocation_status, errmsg=emsg)
+        allocate(link%R(N_link + additional_rows, Ncol_linkR), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
-        linkR(:,:) = nullvalueR
+        link%R(:,:) = nullvalueR
 
-        allocate(nodeYN(N_node + additional_rows, Ncol_nodeYN), stat=allocation_status, errmsg=emsg)
+        allocate(node%YN(N_node + additional_rows, Ncol_nodeYN), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
-        nodeYN(:,:) = nullvalueL
+        node%YN(:,:) = nullvalueL
 
-        allocate(linkYN(N_link + additional_rows, Ncol_linkYN), stat=allocation_status, errmsg=emsg)
+        allocate(link%YN(N_link + additional_rows, Ncol_linkYN), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
-        linkYN(:,:) = nullvalueL
+        link%YN(:,:) = nullvalueL
 
         !% |
         !% | Only names of objects present in EPA-SWMM are stored
         !% v
 
-        allocate(nodeName(N_node), stat=allocation_status, errmsg=emsg)
+        allocate(node%Names(N_node), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
 
         do ii = 1, N_node
             obj_name_len = interface_get_obj_name_len(ii, API_NODE)
-            allocate(character(obj_name_len) :: nodeName(ii)%str, stat=allocation_status, errmsg=emsg)
+            allocate(character(obj_name_len) :: node%Names(ii)%str, stat=allocation_status, errmsg=emsg)
             call util_allocate_check(allocation_status, emsg)
         end do
 
-        allocate(linkName(N_link), stat=allocation_status, errmsg=emsg)
+        allocate(link%Names(N_link), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
 
         do ii = 1, N_link
             obj_name_len = interface_get_obj_name_len(ii, API_LINK)
-            allocate(character(obj_name_len) :: linkName(ii)%str, stat=allocation_status, errmsg=emsg)
+            allocate(character(obj_name_len) :: link%Names(ii)%str, stat=allocation_status, errmsg=emsg)
             call util_allocate_check(allocation_status, emsg)
         end do
 
@@ -125,7 +125,7 @@ contains
     !
     !==========================================================================
     !==========================================================================
-
+    !
     subroutine util_allocate_elemX_faceX ()
         ! the max_caf_elem and max_caf_face are the maximum length of the coarray
         ! across all employed images
@@ -960,62 +960,38 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    ! subroutine util_allocate_bc()
-    ! !
-    ! ! allocate storage for boundary conditions.
-    ! !
-    ! !-----------------------------------------------------------------------------
+    subroutine util_allocate_bc()
+    !
+    ! allocate storage for boundary conditions.
+    !
+    !-----------------------------------------------------------------------------
 
-    !     character(64)      :: subroutine_name = 'util_allocate_bc'
-    !     integer            :: ii
-    !     integer            :: allocation_status
-    !     character(len=99)  :: emsg
+        character(64)      :: subroutine_name = 'util_allocate_bc'
+        integer            :: ii, allocation_status, bc_node
+        character(len=99)  :: emsg
 
-    ! !-----------------------------------------------------------------------------
+    !-----------------------------------------------------------------------------
 
-    !     if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
 
-    !     !% the Upstream and Downstream bc structure
-    !     allocate(bcdataUp(N_BCupstream), stat=allocation_status, errmsg=emsg)
-    !     call util_allocate_check (allocation_status, emsg)
+        if (setting%BC%BCSlots < 2) then
+            print *, "Error: the number of BCSlots has to be greater than 2"
+            stop
+        end if
+        allocate(BC%HI(N_HBC, N_HBC_I), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg)
 
-    !     allocate(bcdataDn(N_BCdnstream), stat=allocation_status, errmsg=emsg)
-    !     call util_allocate_check (allocation_status, emsg)
+        allocate(BC%QI(N_QBC, N_QBC_I), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg)
 
-    !     !% the downstream arrays - HACK default downstream is elevation
-    !     do ii=1,N_BCdnstream
-    !         bcdataDn(ii)%idx = ii
-    !         bcdataDn(ii)%Updn          = bc_updn_downstream
-    !         bcdataDn(ii)%Category      = bc_category_elevation
-    !         bcdataDn(ii)%NodeID         = nullvalueI
-    !         bcdataDn(ii)%FaceID         = nullvalueI
-    !         bcdataDn(ii)%ElemGhostID    = nullvalueI
-    !         bcdataDn(ii)%ElemInsideID   = nullvalueI
-    !         bcdataDn(ii)%ThisValue      = nullvalueR
-    !         bcdataDn(ii)%ThisTime       = nullvalueR
-    !         bcdataDn(ii)%ThisFlowrate   = nullvalueR
-    !         allocate(bcdataUp(ii)%TimeArray(setting%Constant%BCSlots))
-    !         allocate(bcdataUp(ii)%ValueArray(setting%Constant%BCSlots))
-    !     end do
+        allocate(BC%HR(N_HBC, setting%BC%BCSlots, N_HBC_R), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg)
 
-    !     !% the upstream arrays = HACK default upstream is flowrate
-    !     do ii=1,N_BCupstream
-    !         bcdataUp(ii)%idx = ii
-    !         bcdataUp(ii)%Updn       = bc_updn_upstream
-    !         bcdataUp(ii)%category   = bc_category_inflowrate
-    !         bcdataUp(ii)%NodeID         = nullvalueI
-    !         bcdataUp(ii)%FaceID         = nullvalueI
-    !         bcdataUp(ii)%ElemGhostID    = nullvalueI
-    !         bcdataUp(ii)%ElemInsideID   = nullvalueI
-    !         bcdataUp(ii)%ThisValue      = nullvalueR
-    !         bcdataUp(ii)%ThisTime       = nullvalueR
-    !         bcdataUp(ii)%ThisFlowrate   = nullvalueR
-    !         allocate(bcdataUp(ii)%TimeArray(setting%Constant%BCSlots))
-    !         allocate(bcdataUp(ii)%ValueArray(setting%Constant%BCSlots))
-    !     end do
+        allocate(BC%QR(N_QBC, setting%BC%BCSlots, N_QBC_R), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg)
 
-    !     if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
-    ! end subroutine util_allocate_bc
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+    end subroutine util_allocate_bc
 
     subroutine util_allocate_check(allocation_status, emsg)
         !-----------------------------------------------------------------------------

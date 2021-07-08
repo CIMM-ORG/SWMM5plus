@@ -40,7 +40,7 @@ contains
         call util_deallocate_linknode()
         call util_deallocate_elemX_faceX()
         call util_deallocate_columns()
-        call util_deallocate_bc()
+        ! call util_deallocate_bc()
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_network_data
@@ -57,8 +57,8 @@ contains
     !   of the network connectivity
     !
     ! Method:
-    !   Release the memory used by the tables nodeI, linkI, nodeR, linkR, nodeYN,
-    !   linkYN.
+    !   Release the memory used by the tables node%I, link%I, node%R, linkR, node%YN,
+    !   link%YN.
     !   These are defined in globals.f08), and allocated in allocate_storage.f08
     !   Every time memory is deallocated, the utility_check_deallocation functionality
     !   (from utility.f08) is used to determine wheter or not there was an error during
@@ -72,38 +72,38 @@ contains
     !-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
 
-        deallocate(nodeI, stat=deallocation_status, errmsg=emsg)
+        deallocate(node%I, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        deallocate(linkI, stat=deallocation_status, errmsg=emsg)
+        deallocate(link%I, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        deallocate(nodeR, stat=deallocation_status, errmsg=emsg)
+        deallocate(node%R, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        deallocate(linkR, stat=deallocation_status, errmsg=emsg)
+        deallocate(node%YN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        deallocate(nodeYN, stat=deallocation_status, errmsg=emsg)
+        deallocate(node%P%have_QBC, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        deallocate(linkYN, stat=deallocation_status, errmsg=emsg)
+        deallocate(node%P%have_HBC, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
         !% Deallocate link/node names
         do ii = 1, N_link
-            deallocate(linkName(ii)%str, stat=deallocation_status, errmsg=emsg)
+            deallocate(link%Names(ii)%str, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check(deallocation_status, emsg)
         end do
         do ii = 1, N_node
-            deallocate(nodeName(ii)%str, stat=deallocation_status, errmsg=emsg)
+            deallocate(node%Names(ii)%str, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check(deallocation_status, emsg)
         end do
 
-        deallocate(nodeName, stat=deallocation_status, errmsg=emsg)
+        deallocate(node%Names, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        deallocate(linkName, stat=deallocation_status, errmsg=emsg)
+        deallocate(link%Names, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
@@ -305,6 +305,17 @@ contains
 
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
 
+        deallocate(BC%QI, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check (deallocation_status, emsg)
+
+        deallocate(BC%HI, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check (deallocation_status, emsg)
+
+        deallocate(BC%QR, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check (deallocation_status, emsg)
+
+        deallocate(BC%HR, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check (deallocation_status, emsg)
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_bc

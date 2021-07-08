@@ -111,18 +111,18 @@ contains
 
         do mm = 1,N_link
             !% Inputs
-            NodeUp      => linkI(mm,li_Mnode_u)
-            NodeDn      => linkI(mm,li_Mnode_d)
-            zUp         => nodeR(NodeUp,nr_Zbottom)
-            zDn         => nodeR(NodeDn,nr_Zbottom)
-            Length      => linkR(mm,lr_Length)
+            NodeUp      => link%I(mm,li_Mnode_u)
+            NodeDn      => link%I(mm,li_Mnode_d)
+            zUp         => node%R(NodeUp,nr_Zbottom)
+            zDn         => node%R(NodeDn,nr_Zbottom)
+            Length      => link%R(mm,lr_Length)
             !%-------------------------------------------------------------------------
             !% HACK: Original length is used for slope calculation instead of adjusted
             !% length. Using adjusted lenghts will induce errors in slope calculations
             !% and will distort the original network.
             !%-------------------------------------------------------------------------
             !% Output
-            Slope       => linkR(mm,lr_Slope)
+            Slope       => link%R(mm,lr_Slope)
 
             Slope = (zUp - zDn) / Length
         end do
@@ -132,7 +132,7 @@ contains
             print *, subroutine_name,'--------------------------------'
             print *, 'link ID,               Slope,             length'
             do mm=1,N_link
-                print *, mm, linkR(mm,lr_Slope), linkR(mm,lr_Length)
+                print *, mm, link%R(mm,lr_Slope), link%R(mm,lr_Length)
             end do
         endif
 
@@ -296,7 +296,7 @@ contains
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
         !% pack all the link indexes in a partition
-        packed_link_idx = pack(linkI(:,li_idx), (linkI(:,li_P_image) .eq. image))
+        packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == image))
 
         !% find the number of links in a partition
         pLink = size(packed_link_idx)
@@ -310,8 +310,8 @@ contains
         do ii = 1,pLink
             !% necessary pointers to the link and its connected nodes
             thisLink => packed_link_idx(ii)
-            upNode   => linkI(thisLink,li_Mnode_u)
-            dnNode   => linkI(thisLink,li_Mnode_d)
+            upNode   => link%I(thisLink,li_Mnode_u)
+            dnNode   => link%I(thisLink,li_Mnode_d)
 
             !% handle the upstream node of the link to create elements and faces
             call init_network_handle_upstreamnode &
@@ -356,9 +356,9 @@ contains
 
 
         !% pack all the nJm node indexes in a partition to find face maps
-        packed_nJm_idx = pack(nodeI(:,ni_idx),                         &
-                             ((nodeI(:,ni_P_image)   .eq. image) .and. &
-                              (nodeI(:,ni_node_type) .eq. nJm  ) ) )
+        packed_nJm_idx = pack(node%I(:,ni_idx),                         &
+                             ((node%I(:,ni_P_image)   == image) .and. &
+                              (node%I(:,ni_node_type) == nJm  ) ) )
 
         !% number of nJm nodes in a partition
         pnJm = size(packed_nJm_idx)
@@ -367,7 +367,7 @@ contains
         do ii = 1,pnJm
             thisJunctionNode => packed_nJm_idx(ii)
             JunctionElementIdx = pack( elemI(:,ei_Lidx), &
-                                     ( elemI(:,ei_node_Gidx_SWMM) .eq. thisJunctionNode) )
+                                     ( elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode) )
 
             call init_network_map_nJm_branches (image, thisJunctionNode, JunctionElementIdx)
         end do
@@ -412,7 +412,7 @@ contains
             targetImage => faceI(fLidx,fi_Connected_image)
             
             do jj = 1, size(faceI(:,fi_Lidx))
-                if (faceI(jj,fi_Connected_image)[targetImage] .eq. image) then
+                if (faceI(jj,fi_Connected_image)[targetImage] == image) then
 
                     !% find the local ghost element index of the connected image
                     if (faceYN(jj,fYN_isUpGhost)[targetImage]) then
@@ -423,7 +423,7 @@ contains
                     endif
 
                     !% find the global index and set to target image
-                    if(faceI(fLidx,fi_Gidx) .ne. nullvalueI) then
+                    if(faceI(fLidx,fi_Gidx) /= nullvalueI) then
                         faceI(jj,fi_Gidx)[targetImage] = fGidx
                     endif
                 endif
@@ -460,18 +460,18 @@ contains
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
         !% Check 1: If the node is in the partition
-        if (nodeI(thisNode,ni_P_image) .eq. image) then
+        if (node%I(thisNode,ni_P_image) == image) then
 
             !% necessary pointers
-            nAssignStatus => nodeI(thisNode,ni_assigned)
-            nodeType      => nodeI(thisNode,ni_node_type)
+            nAssignStatus => node%I(thisNode,ni_assigned)
+            nodeType      => node%I(thisNode,ni_node_type)
 
             select case (nodeType)
 
                 !% Handle upstream boundary nodes
                 case(nBCup)
                     !% Check 2: If the node has already been assigned
-                    if (nAssignStatus .eq. nUnassigned) then
+                    if (nAssignStatus == nUnassigned) then
 
                         !% Check 3: If there are multiple UpBc 
                         if (firstUpBcHandeled) then
@@ -499,7 +499,7 @@ contains
                 !% Handle 2 branch junction nodes
                 case (nJ2)
                     !% Check 2: If the node has already been assigned
-                    if (nAssignStatus .eq. nUnassigned) then
+                    if (nAssignStatus == nUnassigned) then
                         !% integer data
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
@@ -507,7 +507,7 @@ contains
 
                         !% Check 3: If the node is an edge node (meaning this node is the
                         !% connecting node across partitions)
-                        if (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode) then
+                        if (node%I(thisNode,ni_P_is_boundary) == EdgeNode) then
 
                             !% An upstream edge node indicates there are no local
                             !% elements upstream of that node. Thus it is mapped to 
@@ -519,9 +519,9 @@ contains
                             faceYN(FaceLocalCounter,fYN_isUpGhost)    = .true.
 
                             !% find the connecting image to this face
-                            linkUp  => nodeI(thisNode,ni_Mlink_u1)
+                            linkUp  => node%I(thisNode,ni_Mlink_u1)
 
-                            faceI(FaceLocalCounter, fi_Connected_image) = linkI(linkUp,li_P_image)
+                            faceI(FaceLocalCounter, fi_Connected_image) = link%I(linkUp,li_P_image)
                         else
                             !% if the node is not an edge node, there is an upstream
                             !% local link element which has already been handeled
@@ -539,7 +539,7 @@ contains
                 case (nJm)
 
                     !% Check 2: If the node has already been assigned
-                    if (nAssignStatus .eq. nUnassigned) then
+                    if (nAssignStatus == nUnassigned) then
 
                         !% multibranch junction nodes will have both elements and faces.
                         !% thus, a seperate subroutine is required to handle these nodes
@@ -557,7 +557,7 @@ contains
                 case default
 
                     print*, 'In ', subroutine_name
-                    print*, 'error: unexpected node, ', nodeType,'  at upstream boundary'
+                    print*, 'error: unexpected node, ', nodeType,'  at upstream node'
                     stop
             end select
 
@@ -567,7 +567,7 @@ contains
             !% integer data
             faceI(FacelocalCounter,fi_Lidx)     = FacelocalCounter
             faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
-            faceI(FacelocalCounter,fi_Connected_image) = nodeI(thisNode,ni_P_image)
+            faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
 
 
             !% if the upstream node is not in the partiton,
@@ -626,16 +626,16 @@ contains
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
         !% necessary pointers
-        lAssignStatus => linkI(thisLink,li_assigned)
+        lAssignStatus => link%I(thisLink,li_assigned)
 
-        if (lAssignStatus .eq. lUnAssigned) then
-            NlinkElem     => linkI(thisLink,li_N_element)
-            zUpstream     => nodeR(upNode,nr_Zbottom)
+        if (lAssignStatus == lUnAssigned) then
+            NlinkElem     => link%I(thisLink,li_N_element)
+            zUpstream     => node%R(upNode,nr_Zbottom)
 
             !% store the ID of the first (upstream) element in this link
-            linkI(thisLink,li_first_elem_idx)   = ElemLocalCounter
+            link%I(thisLink,li_first_elem_idx)   = ElemLocalCounter
             !% reference elevations at cell center
-            zCenter = zUpstream - 0.5 * linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
+            zCenter = zUpstream - 0.5 * link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
 
             !% HACK CODE
             !% the node handler usually dont advance face counter.
@@ -646,9 +646,9 @@ contains
             !% here will always advance the downstream face of a link element
 
             !% the mapping of this face will be carried out later
-            if ( (nodeI(upNode,ni_P_image)   .eq. image    )  .and. &
-                 (nodeI(upNode,ni_assigned)  .eq. nAssigned)  .and. &
-                 (nodeI(upNode,ni_node_type) .eq. nJm      ) ) then
+            if ( (node%I(upNode,ni_P_image)   == image    )  .and. &
+                 (node%I(upNode,ni_assigned)  == nAssigned)  .and. &
+                 (node%I(upNode,ni_node_type) == nJm      ) ) then
 
                 !% advancing face counter
                 FaceLocalCounter  = FaceLocalCounter  + oneI
@@ -670,14 +670,14 @@ contains
                 !% integer data
                 elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
                 elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
-                elemI(ElemLocalCounter,ei_elementType)      = linkI(thisLink,li_link_type)
+                elemI(ElemLocalCounter,ei_elementType)      = link%I(thisLink,li_link_type)
                 elemI(ElemLocalCounter,ei_link_Gidx_SWMM)   = thisLink
                 elemI(ElemLocalCounter,ei_Mface_uL)         = FaceLocalCounter
                 elemI(ElemLocalCounter,ei_Mface_dL)         = FaceLocalCounter + oneI
                 elemI(ElemLocalCounter,ei_link_pos)         = ii
 
                 !% real data
-                elemR(ElemLocalCounter,er_Length)           = linkR(thisLink,lr_ElementLength)
+                elemR(ElemLocalCounter,er_Length)           = link%R(thisLink,lr_ElementLength)
                 elemR(ElemLocalCounter,er_Zbottom)          = zCenter
 
                 !%................................................................
@@ -696,7 +696,7 @@ contains
                 faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
 
                 !% counter for element z bottom calculation
-                zCenter = zCenter - linkR(thisLink,lr_ElementLength) * linkR(thisLink,lr_Slope)
+                zCenter = zCenter - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
 
                 !% Advance the element counter
                 ElemLocalCounter  = ElemLocalCounter  + oneI
@@ -704,8 +704,13 @@ contains
             end do
 
             lAssignStatus = lAssigned
-            linkI(thisLink,li_last_elem_idx)    = ElemLocalCounter - oneI
 
+            link%I(thisLink,li_last_elem_idx)    = ElemLocalCounter - oneI
+
+        ! link%I(thisLink,li_Melem_d)          = ElemLocalCounter        ! HACK: This may not be right in some cases
+        ! link%I(thisLink,li_Mface_d)          = FaceLocalCounter + oneI ! HACK: This may not be right in some cases
+        !% HACK:
+        !% the last face idx may need to be corrected based on junction element
         endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
@@ -735,17 +740,17 @@ contains
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
         !% Check 1: Is the node is in the partition
-        if (nodeI(thisNode,ni_P_image) .eq. image) then
+        if (node%I(thisNode,ni_P_image) == image) then
 
             !% necessary pointers
-            nAssignStatus => nodeI(thisNode,ni_assigned)
-            nodeType      => nodeI(thisNode,ni_node_type)
+            nAssignStatus => node%I(thisNode,ni_assigned)
+            nodeType      => node%I(thisNode,ni_node_type)
 
             select case (nodeType)
 
                 case(nBCdn)
                     !% Check 2: If the node has already been assigned
-                    if (nAssignStatus .eq. nUnassigned) then
+                    if (nAssignStatus == nUnassigned) then
                         !% by the time we reach a downstream boundary
                         !% node, all the indexes have already been set
                         !% from the subdivide_link_going_downstream.
@@ -764,7 +769,7 @@ contains
 
                 case (nJ2)
                     !% Check 2: If the node has already been assigned
-                    if (nAssignStatus .eq. nUnassigned) then
+                    if (nAssignStatus == nUnassigned) then
                         !% by the time we reach a downstream nJ2 node,
                         !% all the face indexes have already been set from
                         !% subdivide_link_going_downstream. only the map
@@ -774,7 +779,7 @@ contains
 
                         !% Check 3: If the node is an edge node (meaning this node is the
                         !% connecting node across partitions)
-                        if (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode) then
+                        if (node%I(thisNode,ni_P_is_boundary) == EdgeNode) then
 
                             !% An downstream edge node indicates there are no local
                             !% elements downstream of that node. thus, it is mapped to the dummy element
@@ -785,9 +790,9 @@ contains
                             faceYN(FaceLocalCounter,fYN_isDnGhost)    = .true.
 
                             !% find the connecting image to this face
-                            linkDn  => nodeI(thisNode,ni_Mlink_d1)
+                            linkDn  => node%I(thisNode,ni_Mlink_d1)
 
-                            faceI(FaceLocalCounter, fi_Connected_image) = linkI(linkDn,li_P_image)
+                            faceI(FaceLocalCounter, fi_Connected_image) = link%I(linkDn,li_P_image)
                         endif
 
                         !% change the node assignmebt value
@@ -796,7 +801,7 @@ contains
 
                 case (nJm)
                     !% Check 2: If the node has already been assigned
-                    if (nAssignStatus .eq. nUnassigned) then
+                    if (nAssignStatus == nUnassigned) then
 
                         call init_network_handle_nJm &
                             (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
@@ -812,7 +817,7 @@ contains
                 case default
 
                     print*, 'In ', subroutine_name
-                    print*, 'error: unexpected node, ', nodeType,'  at upstream boundary'
+                    print*, 'error: unexpected node, ', nodeType,'  at downstream node'
                     stop
             end select
         else
@@ -827,7 +832,7 @@ contains
             !% since this will be a shared face, the global counter will be set from
             !% init_network_map_shared_faces subroutine
             faceI(FacelocalCounter,fi_Gidx)     = nullvalueI
-            faceI(FacelocalCounter,fi_Connected_image) = nodeI(thisNode,ni_P_image)
+            faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
 
             !% logical data
             faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
@@ -875,7 +880,7 @@ contains
         elemI(ElemLocalCounter,ei_node_Gidx_SWMM)   = thisNode
 
         !% real data
-        elemR(ElemLocalCounter,er_Zbottom) = nodeR(thisNode,nr_zbottom)
+        elemR(ElemLocalCounter,er_Zbottom) = node%R(thisNode,nr_zbottom)
 
         !% Advance the element counter to 1st upstream branch
         ElemLocalCounter  = ElemLocalCounter  + oneI
@@ -901,23 +906,23 @@ contains
             elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
 
             !% real data
-            elemR(ElemLocalCounter,er_Zbottom) = nodeR(thisNode,nr_zbottom)
-            elemR(ElemLocalCounter,er_Depth)   = nodeR(thisNode,nr_InitialDepth)
+            elemR(ElemLocalCounter,er_Zbottom) = node%R(thisNode,nr_zbottom)
+            elemR(ElemLocalCounter,er_Depth)   = node%R(thisNode,nr_InitialDepth)
 
             !%......................................................
             !% Upstream Branches
             !%......................................................
-            ! if ((ii .eq. 1) .or. (ii .eq. 3) .or. (ii .eq. 5)) then
+            ! if ((ii == 1) .or. (ii == 3) .or. (ii == 5)) then
             select case (mod(ii,2))   
             case (1)    
             !% finds odd number branches    
             !% all the odd numbers are upstream branches
                 upBranchSelector = upBranchSelector + oneI
                 !% pointer to upstream branch
-                upBranchIdx => nodeI(thisNode,ni_idx_base1 + upBranchSelector)
+                upBranchIdx => node%I(thisNode,ni_idx_base1 + upBranchSelector)
 
                 !% real branches
-                if (upBranchIdx .ne. nullvalueI) then
+                if (upBranchIdx /= nullvalueI) then
                     !% integer data
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)           = oneI
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection)  = upBranchIdx
@@ -926,8 +931,8 @@ contains
                     !% Check 4: if the link connecting this branch is a part of this partition and 
                     !% the node is not an edge node (meaning this node is the connecting node 
                     !% across partitions)
-                    if ( (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode)  .and. &
-                         (linkI(upBranchIdx,li_P_image)    .ne. image   ) )  then
+                    if ( (node%I(thisNode,ni_P_is_boundary) == EdgeNode)  .and. &
+                         (link%I(upBranchIdx,li_P_image)    /= image   ) )  then
 
                         !% faces are always advanced by link elements unless it is
                         !% a null-branch or the branch is in a different image.
@@ -949,7 +954,7 @@ contains
                         !% the up_map is set to dummy element 
                         faceI(FaceLocalCounter,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
-                        faceI(FaceLocalCounter,fi_Connected_image) = linkI(upBranchIdx,li_P_image)
+                        faceI(FaceLocalCounter,fi_Connected_image) = link%I(upBranchIdx,li_P_image)
 
                         !% logical data
                         faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
@@ -994,10 +999,10 @@ contains
                 !% all the even numbers are downstream branches
                 dnBranchSelector = dnBranchSelector + oneI
                 !% pointer to upstream branch
-                dnBranchIdx => nodeI(thisNode,ni_idx_base2 + dnBranchSelector)
+                dnBranchIdx => node%I(thisNode,ni_idx_base2 + dnBranchSelector)
 
                 !% Check 3: if the branch is a valid branch
-                if (dnBranchIdx .ne. nullvalueI) then
+                if (dnBranchIdx /= nullvalueI) then
                     !% integer data
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)          = oneI
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection) = dnBranchIdx
@@ -1006,8 +1011,8 @@ contains
                     !% Check 4: if the link connecting this branch is a part of this partition and 
                     !% the node is not an edge node (meaning this node is the connecting node 
                     !% across partitions)
-                    if ( (nodeI(thisNode,ni_P_is_boundary) .eq. EdgeNode)  .and. &
-                         (linkI(dnBranchIdx,li_P_image)    .ne. image   ) )  then
+                    if ( (node%I(thisNode,ni_P_is_boundary) == EdgeNode)  .and. &
+                         (link%I(dnBranchIdx,li_P_image)    /= image   ) )  then
 
                         !% faces are always advanced by link elements unless it is
                         !% a null-branch or the branch is in a different image.
@@ -1029,7 +1034,7 @@ contains
                         !% the dn_map is set to dummy element 
                         faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
-                        faceI(FaceLocalCounter,fi_Connected_image) = linkI(dnBranchIdx,li_P_image)
+                        faceI(FaceLocalCounter,fi_Connected_image) = link%I(dnBranchIdx,li_P_image)
 
                         !% logical data
                         faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
@@ -1109,19 +1114,19 @@ contains
             !% junction main.
 
             !% all the even numbers are upstream branch elements
-            if ((ii .eq. 2) .or. (ii .eq. 4) .or. (ii .eq. 6)) then
+            if ((ii == 2) .or. (ii == 4) .or. (ii == 6)) then
 
                 upBranchSelector = upBranchSelector + oneI
                 !% pointer to upstream branch
-                upBranchIdx => nodeI(thisJNode,ni_idx_base1 + upBranchSelector)
+                upBranchIdx => node%I(thisJNode,ni_idx_base1 + upBranchSelector)
 
                 !% condition for a link connecting this branch is valid and
                 !% included in this partition.
-                if ( (upBranchIdx .ne. nullvalueI)   .and.       &
-                     (linkI(upBranchIdx,li_P_image) .eq. image) ) then
+                if ( (upBranchIdx /= nullvalueI)   .and.       &
+                     (link%I(upBranchIdx,li_P_image) == image) ) then
 
                     !% find the last element index of the link
-                    LinkLastElem = linkI(upBranchIdx,li_last_elem_idx)
+                    LinkLastElem = link%I(upBranchIdx,li_last_elem_idx)
 
                     !% find the downstream face index of that last element
                     fLidx => elemI(LinkLastElem,ei_Mface_dL)
@@ -1148,19 +1153,19 @@ contains
                 endif
 
             !% all odd numbers starting from 3 are downstream branch elements
-            elseif ((ii .eq. 3) .or. (ii .eq. 5) .or. (ii .eq. 7)) then
+            elseif ((ii == 3) .or. (ii == 5) .or. (ii == 7)) then
 
                 dnBranchSelector = dnBranchSelector + oneI
                 !% pointer to upstream branch
-                dnBranchIdx => nodeI(thisJNode,ni_idx_base2 + dnBranchSelector)
+                dnBranchIdx => node%I(thisJNode,ni_idx_base2 + dnBranchSelector)
 
                 !% condition for a link connecting this branch is valid and
                 !% included in this partition.
-                if ( (dnBranchIdx .ne. nullvalueI)   .and.       &
-                     (linkI(dnBranchIdx,li_P_image) .eq. image) ) then
+                if ( (dnBranchIdx /= nullvalueI)   .and.       &
+                     (link%I(dnBranchIdx,li_P_image) == image) ) then
 
                     !% find the first element index of the link
-                    LinkFirstElem = linkI(dnBranchIdx,li_first_elem_idx)
+                    LinkFirstElem = link%I(dnBranchIdx,li_first_elem_idx)
 
                     !% find the downstream face index of that last element
                     fLidx => elemI(LinkFirstElem,ei_Mface_uL)
@@ -1211,13 +1216,13 @@ contains
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
 
         !% find the length of the junction branch
-        if (linkI(LinkIdx,li_length_adjusted) .eq. OneSideAdjust) then
+        if (link%I(LinkIdx,li_length_adjusted) == OneSideAdjust) then
 
-            BranchLength = linkR(LinkIdx,lr_Length) - linkR(LinkIdx,lr_AdjustedLength)
+            BranchLength = link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength)
 
-        elseif (linkI(LinkIdx,li_length_adjusted) .eq. BothSideAdjust) then
+        elseif (link%I(LinkIdx,li_length_adjusted) == BothSideAdjust) then
 
-            BranchLength = (linkR(LinkIdx,lr_Length) - linkR(LinkIdx,lr_AdjustedLength))/twoR
+            BranchLength = (link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength))/twoR
         endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
@@ -1265,7 +1270,7 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-        where ( (faceI(:,fi_BCtype)         .eq.  doesnotexist) &
+        where ( (faceI(:,fi_BCtype)         ==  doesnotexist) &
                 .and. &
                 (faceYN(:,fYN_isnull)       .eqv. .false.     ) &
                 .and. &

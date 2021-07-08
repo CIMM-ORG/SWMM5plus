@@ -52,8 +52,8 @@ module utility
             "li_last_elem_idx"
 
         do ii = 1, N_link
-            write(1,'(*(G0.6,:,","))') linkR(ii,:)
-            write(2,'(*(G0.6,:,","))') linkI(ii,:)
+            write(1,'(*(G0.6,:,","))') link%R(ii,:)
+            write(2,'(*(G0.6,:,","))') link%I(ii,:)
         end do
 
         close(1)
@@ -75,8 +75,8 @@ module utility
             "ni_Mlink_d2,ni_Mlink_d3"
 
         do ii = 1, N_node
-            write(3,'(*(G0.6,:,","))') nodeR(ii,:)
-            write(4,'(*(G0.6,:,","))') nodeI(ii,:)
+            write(3,'(*(G0.6,:,","))') node%R(ii,:)
+            write(4,'(*(G0.6,:,","))') node%I(ii,:)
         end do
 
         close(3)
@@ -96,11 +96,11 @@ module utility
         integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2
         integer :: ii
         !%-----------------------------------------------------------------------------
-        N_nBCup = count(nodeI(:, ni_node_type) == nBCup)
-        N_nBCdn = count(nodeI(:, ni_node_type) == nBCdn)
-        N_nJm = count(nodeI(:, ni_node_type) == nJM)
-        N_nStorage = count(nodeI(:, ni_node_type) == nStorage)
-        N_nJ2 = count(nodeI(:, ni_node_type) == nJ2)
+        N_nBCup = count(node%I(:, ni_node_type) == nBCup)
+        N_nBCdn = count(node%I(:, ni_node_type) == nBCdn)
+        N_nJm = count(node%I(:, ni_node_type) == nJM)
+        N_nStorage = count(node%I(:, ni_node_type) == nStorage)
+        N_nJ2 = count(node%I(:, ni_node_type) == nJ2)
     
     end subroutine util_count_node_types
     !%

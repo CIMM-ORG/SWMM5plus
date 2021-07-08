@@ -18,37 +18,6 @@ module define_types
         character(len=:), allocatable :: str
     end type string
 
-    ! Temporal Array object
-    type Array3D
-        integer :: current_idx
-        real(8), allocatable :: val(:,:,:)
-    end type Array3D
-
-    type nodeInflow
-        integer :: node_id ! index to element thar receives inflow
-        ! t_series*sfactor + base_pat*baseline
-        real(8), dimension(2) :: ext_t_series = [-1, -1] ! time_series
-        real(8), dimension(2) :: ext_base_pat = [-1, -1] ! baseline pattern
-        real(8) :: ext_baseline = 0 ! constant baseline value
-        real(8) :: ext_sfactor = 0 ! time series scaling factor
-        ! ---------------------------------------------------------
-        real(8) :: dwf_avgValue = 0 ! average inflow value
-        real(8), dimension(2) :: dwf_monthly_pattern = [-1, -1]
-        real(8), dimension(2) :: dwf_daily_pattern = [-1, -1]
-        real(8), dimension(2) :: dwf_hourly_pattern = [-1, -1]
-        real(8), dimension(2) :: dwf_weekend_pattern = [-1, -1]
-        ! ---------------------------------------------------------
-        ! fetch keeps track of the vars in nodeInflow that need to be
-        ! fetched from SWMM C. If fetch[i] == .true. then the variable
-        ! needs to be updated from SWMM C. Update as more data is needed.
-        ! fetch = [
-        !    ext_t_series, ext_base_pat, ext_baseline, ext_sfactor,
-        !    dwf_avgValue, dwf_monthly_pattern, dwf_daily_pattern,
-        !    dwf_hourly_pattern, dwf_weekend_pattern
-        ! ]
-        logical, dimension(9) :: fetch = .true.
-    end type nodeInflow
-
     !%  control data
     type controlType
         integer :: Idx
@@ -89,104 +58,6 @@ module define_types
         type(diagnosticVolumeType)  :: Volume
     end type diagnosticType
 
-    type real_array
-        integer :: max_size = 0
-        integer :: len = 0
-        real(8), allocatable :: array(:)
-    end type real_array
-
-    !% boundary condition data
-    type bcType
-        integer :: Idx
-        integer :: NodeID
-        integer :: FaceID
-        integer :: ElemGhostID
-        integer :: ElemInsideID
-        integer :: Updn      ! bc_updn_...  (0 = upstream,  1 = downstream)
-        integer :: Category  ! bc_category_... (0 = elevation, 1 = inflowrate)
-        real(8), allocatable :: TimeArray(:)
-        real(8), allocatable :: ValueArray(:)
-        real(8)    :: ThisValue
-        real(8)    :: ThisTime
-        real(8)    :: ThisFlowrate
-    end type bcType
-
-    !% output file location
-    type outputfileType
-        integer        :: UnitNumber = 0
-        character(256) :: FileName   = 'dummy.txt'
-        character(256) :: FolderName = 'dummyFolder'
-        character(256) :: FolderPath = './'
-        character(32)  :: FileStatus = 'new'
-        character(512) :: WriteName  = ''
-        logical        :: IsOpen     = .false.
-    end type outputfileType
-
-    !% specific information for a debug file
-    type debugfileType
-        type (outputfileType) :: FileInfo
-        character(32)         :: ArrayName
-        integer               :: ColumnIndex
-    end type debugfileType
-
-    !% specific information for a threaded output file
-    type threadedfileType
-        type (outputfileType) :: FileInfo
-        character(32)         :: DataName
-    end type threadedfileType
-
-    type integer_array
-        integer :: max_size = 0
-        integer :: len = 0
-        integer, allocatable :: array(:)
-    end type integer_array
-
-    ! TABLE OBJECT
-    type real_table
-        integer :: table_type
-        integer :: dim
-        integer, allocatable :: tsize(:)
-        type(real_array), allocatable :: data(:)
-    end type real_table
-
-    ! PATTERN OBJECT
-    type pattern
-        integer :: ptype
-        integer :: count
-        real(8), dimension(24) :: factor
-    end type pattern
-
-    ! EXTERNAL INFLOW OBJECT
-    type totalInflow
-        integer :: node_id ! index to element thar receives inflow
-        type(real_table) :: xy
-        ! t_series*sfactor + base_pat*baseline
-        integer :: ext_t_series = -1 ! time_series
-        integer :: ext_base_pat = -1 ! pattern
-        real(8) :: ext_baseline = 0! constant baseline value
-        real(8) :: ext_sfactor = 0! time series scaling factor
-        ! ---------------------------------------------------------
-        real(8) :: dwf_avgValue = 0 ! average inflow value
-        integer :: dwf_monthly_pattern = -1
-        integer :: dwf_daily_pattern = -1
-        integer :: dwf_hourly_pattern = -1
-        integer :: dwf_weekend_pattern = -1
-    end type totalInflow
-
-    type graph_node
-        integer :: node_id
-        type(integer_array) :: neighbors
-        type(integer_array) :: link_id
-        type(real_array) :: neighbor_flows
-    end type graph_node
-
-    type graph
-        integer :: num_vertices
-        type(graph_node), allocatable, dimension(:) :: g ! graph linked lists
-        integer, allocatable, dimension(:) :: in_degree ! list with in-degrees of node
-    end type graph
-
-    ! --- File Handling
     type steady_state_record
         character(len=52) :: id_time
         real(8) :: flowrate
@@ -194,4 +65,35 @@ module define_types
         real(8) :: depth
         real(8) :: froude
     end type steady_state_record
+
+    !% ==============================================================
+    !% Arrays
+    !% ==============================================================
+
+    type NodePack
+        integer, allocatable :: have_QBC(:)
+        integer, allocatable :: have_HBC(:)
+    end type NodePack
+
+    type NodeArray
+        integer,      allocatable :: I(:,:)   !% integer data for nodes
+        real(8),      allocatable :: R(:,:)   !% real data for nodes
+        logical,      allocatable :: YN(:,:)  !% logical data for nodes
+        type(string), allocatable :: Names(:) !% names for nodes retrieved from EPA-SWMM
+        type(NodePack)            :: P        !% packs for nodes
+    end type NodeArray
+
+    type LinkArray
+        integer,      allocatable :: I(:,:)   !% integer data for links
+        real(8),      allocatable :: R(:,:)   !% real data for links
+        logical,      allocatable :: YN(:,:)  !% logical data for links
+        type(string), allocatable :: Names(:) !% names for links retrieved from EPA-SWMM
+    end type LinkArray
+
+    type BCArray
+        integer,      allocatable :: QI(:,:)   !% integer data for inflow BCs
+        integer,      allocatable :: HI(:,:)   !% integer data for elevation BCs
+        real(8),      allocatable :: QR(:,:,:) !% time series data for inflow BC
+        real(8),      allocatable :: HR(:,:,:) !% time series data for elevation BC
+    end type BCArray
 end module define_types
