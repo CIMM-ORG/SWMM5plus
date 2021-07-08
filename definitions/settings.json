@@ -219,6 +219,7 @@
             "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
+            "trapezoidal_channel" : false,
             "runge_kutta2" : false,
             "timeloop" : false,
             "update" : false,

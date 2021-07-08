@@ -5,6 +5,7 @@ module geometry
     use define_keys
     use define_settings, only: setting
     use rectangular_channel
+    use trapezoidal_channel
     use adjust
 
 
@@ -201,8 +202,15 @@ module geometry
             call rectangular_depth_from_volume (elemPGx, Npack, thisCol)    
         endif
 
-        !HACK Needs additional geometries, including surcharged rectangular conduits
-        ! with and without Preissman slot.
+        !% TRAPEZOIDAL
+        thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)    
+        endif
+
+        !% HACK Needs additional geometries, including surcharged rectangular conduits
+        !% with and without Preissman slot.
         if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
     end subroutine geo_depth_from_volume
     !%
@@ -402,7 +410,14 @@ module geometry
                                         hydRadius(tB)= rectangular_hydradius_from_depth_singular (tB)
                                         ell(tB)      = geo_ell_singular (tB)
                                         dHdA(tB)     = oneR / topwidth(tB)
-                                    !case (trapezoidal)
+                                    case (trapezoidal)
+                                        area(tB)     = trapezoidal_area_from_depth_singular (tB)
+                                        topwidth(tB) = trapezoidal_topwidth_from_depth_singular (tB)
+                                        hydDepth(tB) = trapezoidal_hyddepth_from_depth_singular (tB)
+                                        perimeter(tB)= trapezoidal_perimeter_from_depth_singular (tB)
+                                        hydRadius(tB)= trapezoidal_hydradius_from_depth_singular (tB)
+                                        ell(tB)      = geo_ell_singular (tB)
+                                        dHdA(tB)     = oneR / topwidth(tB)
                                     case default
                                         print *, 'error, case default should not be reached'
                                         print *, 'in ',trim(subroutine_name), ' with stop commented out <<<<<<<<<<<<<<<<<<<<<<<'
@@ -474,6 +489,12 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
             call rectangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+        endif
+
+        Npack => npack_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+            call trapezoidal_topwidth_from_depth (elemPGx, Npack, thisCol)
         endif    
         
         !% HACK NEED OTHER GEOMETRIES
@@ -502,6 +523,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
             call rectangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+        endif 
+
+        !% cycle through different geometries
+        Npack => npack_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+            call trapezoidal_perimeter_from_depth (elemPGx, Npack, thisCol)
         endif    
         
         !% HACK NEED OTHER GEOMETRIES
@@ -531,6 +559,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
             call rectangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
+        endif 
+
+        !% cycle through different geometries
+        Npack => npack_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+        if (Npack > 0) then
+            thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
+            call trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
         endif    
         
         !% HACK need other geometries

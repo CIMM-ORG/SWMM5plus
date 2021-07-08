@@ -41,6 +41,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/orifice_elements.f08\
               $TL_DIR/pump_elements.f08\
               $GEO_DIR/rectangular_channel.f08\
+              $GEO_DIR/trapezoidal_channel.f08\
               $GEO_DIR/geometry.f08\
               $TL_DIR/lowlevel_rk2.f08\
               $TL_DIR/update.f08\
