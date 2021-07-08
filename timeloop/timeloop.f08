@@ -4,6 +4,7 @@ module timeloop
     use define_globals
     use define_indexes
     use define_keys
+    use pack_mask_arrays
     use runge_kutta2
 
     implicit none

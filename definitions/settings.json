@@ -209,7 +209,7 @@
             "geometry" : false,
             "discretization"  : false,
             "initial_condition" : false,
-            "initialization" : true,
+            "initialization" : false,
             "interface" : false,
             "jump" : false,
             "lowlevel_rk2" : false,
@@ -231,7 +231,7 @@
             "weir_elements" : false
         },
         "FileGroup" : {
-            "all" : true,
+            "all" : false,
             "definitions" : false,
             "finalization" : false,
             "geometry" : false,
