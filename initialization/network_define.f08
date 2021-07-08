@@ -789,6 +789,7 @@ contains
                         !% thus, it is mapped to the dummy element
                         faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_BCtype)   = BCdn
+                        node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
@@ -907,7 +908,9 @@ contains
         elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
         elemI(ElemLocalCounter,ei_elementType)      = JM
         elemI(ElemLocalCounter,ei_node_Gidx_SWMM)   = thisNode
+        !% Assign junction main element to node
         node%I(thisNode,ni_elemface_idx)             = ElemLocalCounter
+
         !% real data
         elemR(ElemLocalCounter,er_Zbottom) = node%R(thisNode,nr_zbottom)
 
