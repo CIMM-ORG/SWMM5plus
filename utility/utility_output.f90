@@ -84,7 +84,7 @@ contains
             write(str_elem_idx,'(I10)') elemI(ii,ei_Gidx)
 
             if(elemI(ii,ei_elementType) == CC) then
-                file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" & 
+                file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
                     // trim(link%names(elemI(ii,ei_link_Gidx_SWMM))%str) // &
                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
@@ -186,7 +186,6 @@ contains
         if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
 
     end subroutine util_output_create_faceR_files
-
 
     subroutine util_output_write_elemR_faceR
 
@@ -1483,7 +1482,6 @@ contains
 
     end subroutine util_output_debug_elemR
 
-
     subroutine util_output_debug_faceI
 
         integer fu, open_status
@@ -1808,7 +1806,6 @@ contains
 
     end subroutine util_output_debug_faceR
 
-
     subroutine util_output_debug_elemYN
 
         integer fu, open_status
@@ -2003,8 +2000,61 @@ contains
 
     end subroutine util_output_debug_faceYN
 
+    ! subroutine utility_output_steady_state_check
+
+    !     integer :: ii
+    !     real(8), allocatable:: sum_outflow[:], sum_inflow[:]
+    !     logical :: log_sys_flow_tol, log_lat_flow_tol
+    !     real(8) :: lat_flow_tol, steady_state_tol
+
+    !     allocate(sum_outflow[*])
+    !     allocate(sum_inflow[*])
+
+    !     sum_outflow = 0.0
+    !     sum_inflow = 0.0
+    !     lat_flow_tol = 0.000001
+    !     steady_state_tol = 0.000001
+    !     log_sys_flow_tol = .false.
+    !     log_lat_flow_tol = .true.
+
+    !     do ii = 1, N_face(this_Image())
+
+    !        if(faceI(ii, fi_BCtype) == BCdn .and. faceR(ii, fr_Flowrate_N0) /= nullvalueR) then
+    !           sum_outflow = faceR(ii, fr_Flowrate_N0)
+    !        else if(faceI(ii, fi_BCtype) == BCup .and. faceR(ii,fr_Flowrate_N0) /= nullvalueR) then
+    !           sum_inflow = faceR(ii, fr_Flowrate_N0)
+    !        end if
+
+    !     end do
+
+    !     do ii = 1, N_elem(this_image())
+
+    !        if(elemR(ii, er_FlowrateLateral) /= nullvalueR) then
+    !           sum_inflow = elemR(ii, er_FlowrateLateral)
+    !        end if
+
+    !        if(abs(elemR(ii,er_Flowrate_N0) - elemR(ii,er_Flowrate_N1) ) > lat_flow_tol) then
+    !           log_lat_flow_tol = .false.
+    !        end if
+
+    !     end do
 
 
+    !     call co_sum(sum_inflow)
+    !     call co_sum(sum_outflow)
+    !     print *, "sum_outflow", sum_outflow, "this_image() ::", this_Image()
+    !     print *, "sum_inflow", sum_inflow, "this_image() :: ", this_Image()
 
+
+    !     if(abs(sum_inflow - sum_outflow) < steady_state_tol) then
+    !        log_sys_flow_tol = .true.
+    !     end if
+
+
+    !     if( log_sys_flow_tol .and. log_lat_flow_tol) then
+    !        print *, "steady state found"
+    !     end if
+
+    !   end subroutine utility_output_steady_state_check
 
 end Module utility_output

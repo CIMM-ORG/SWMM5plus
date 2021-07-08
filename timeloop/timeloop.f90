@@ -47,7 +47,7 @@ module timeloop
         !% logical to detect end of time loop computations
         isTLfinished = .false.
         !%
-        
+
         !% Combined hydrology (SWMM-C) and hydraulics simulation
         !%
         if (useHydrology .and. useHydraulics) then
@@ -70,10 +70,10 @@ module timeloop
                 !% Call inner loop (multiple subtime steps) of hydraulics
                 call tl_hydraulics()
                 call tl_increment_counters(hydrology)
-                
+
                 call bc_update()
                 call tl_check_finish_status(isTLfinished)
-                
+
             !% HACK to prevent infinite loop in testing
             ! print *, "HACK hard-code stopping time loop  39872"
             ! isTLfinished = .true.
@@ -222,7 +222,7 @@ module timeloop
         !% set the counters used for inner loop iteration
         call tl_setup_counters(hydraulics)
 
-    
+
         !% set the expected number of substeps for hydraulics given the present CFL
         call tl_set_hydraulic_substep()
 
@@ -243,9 +243,9 @@ module timeloop
 
             !print *, '--- in ',trim(subroutine_name),' in hydraulics loop'
             !print *, setting%Time%Hydraulics%timeNow, setting%Time%Hydraulics%timeFinal, 'Hydraulics timeNow, timeFinal'
-            !print *, setting%Time%Hydraulics%stepNow, setting%Time%Hydraulics%stepFinal, 'Hydraulics stepNow, StepFinal'    
+            !print *, setting%Time%Hydraulics%stepNow, setting%Time%Hydraulics%stepFinal, 'Hydraulics stepNow, StepFinal'
             !print *, '------------------------------------------'
-            
+
         end do
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
@@ -355,7 +355,7 @@ module timeloop
                             lastCheckStep = stepNow
                         endif
                     endif
-                endif  
+                endif
             endif
         else
             !% for timeleft <= 0 there is no change as the hydraulics loop should exit
@@ -643,7 +643,7 @@ module timeloop
             print *, endtime, ' = planned endtime'
         endif
         !% BRHbugfix 20210813 end
-        
+
         !% FUTURE brh 20210607 Need a control to exit on error
         if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_check_finish_status
