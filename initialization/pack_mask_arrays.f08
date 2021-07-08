@@ -189,6 +189,45 @@ contains
                 ) )
         endif
 
+        !% trapezoidal channels, conduits and junction main
+        ptype => col_elemPGalltm(epg_CCJM_trapezoidal_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == trapezoidal) &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .false.) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) )
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == trapezoidal) &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .false.) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) )
+        endif
+
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_geometry_alltm_elements
     !
@@ -208,6 +247,8 @@ contains
 
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+
+        eIdx => elemI(:,ei_Lidx)
 
         !% rectangular channels, conduits and junction main
         ptype => col_elemPGac(epg_CCJM_rectangular_nonsurcharged)
@@ -242,6 +283,39 @@ contains
                 )
         endif
 
+        !% trapezoidal channels, conduits and junction main
+        ptype => col_elemPGac(epg_CCJM_trapezoidal_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == trapezoidal) &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .false.) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == trapezoidal) &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .false.)&
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+        endif
+
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_geometry_ac_elements
     !
@@ -265,7 +339,7 @@ contains
         eIdx => elemI(:,ei_Lidx)
 
         !% rectangular channels, conduits and junction main
-        ptype => col_elemPGac(epg_CCJM_rectangular_nonsurcharged)
+        ptype => col_elemPGetm(epg_CCJM_rectangular_nonsurcharged)
         npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
@@ -290,6 +364,39 @@ contains
                 ) &
                 .and. &
                 (elemI(:,ei_geometryType) == rectangular) &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .false.) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+        endif
+
+        !% trapezoidal channels, conduits and junction main
+        ptype => col_elemPGetm(epg_CCJM_trapezoidal_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == trapezoidal) &
+                .and. &
+                (elemYN(:,eYN_isSurcharged) .eqv. .false.) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == trapezoidal) &
                 .and. &
                 (elemYN(:,eYN_isSurcharged) .eqv. .false.) &
                 .and. &

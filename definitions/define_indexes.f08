@@ -464,11 +464,11 @@ module define_indexes
 
     enum, bind(c)
         enumerator ::  eSr_Orifice_DischargeCoeff = 1       !% discharge coefficient orifice
-        enumerator ::  eSr_Orifice_EffectiveFullDepth   !% effective full depth after control intervention
-        enumerator ::  eSr_Orifice_EffectiveHeadDelta   !% effective head delta across orifice
-        enumerator ::  eSr_Orifice_NominalDownstreamHead   !% nominal downstream head for orifice
-        enumerator ::  eSr_Orifice_RectangularBreadth      !% rectangular orifice breadth
-        enumerator ::  eSr_Orifice_Zcrest                  !% orifice "crest" elevation - lowest edge of orifice.
+        enumerator ::  eSr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention
+        enumerator ::  eSr_Orifice_EffectiveHeadDelta       !% effective head delta across orifice
+        enumerator ::  eSr_Orifice_NominalDownstreamHead    !% nominal downstream head for orifice
+        enumerator ::  eSr_Orifice_RectangularBreadth       !% rectangular orifice breadth
+        enumerator ::  eSr_Orifice_Zcrest                   !% orifice "crest" elevation - lowest edge of orifice.
     end enum
     !% note, this must be changed to whatever the last enum element is
     integer, parameter :: Ncol_elemSR_Orifice = eSr_Orifice_Zcrest
@@ -498,18 +498,28 @@ module define_indexes
 
     !% Define the column indexes for elemGSR(:,:) for rectangular pipe or channel
     enum, bind(c)
-         enumerator ::  eSGR_Rectangular_Breadth = 1  !% breadth for rectangular geometry
+         enumerator ::  eSGR_Rectangular_Breadth = 1    !% breadth for rectangular geometry
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Rectangular =  eSGr_Rectangular_Breadth
+    integer, parameter :: Ncol_elemSGR_Rectangular =  eSGR_Rectangular_Breadth
 
+    !% Define the column indexes for elemGSR(:,:) for trapezoidal pipe or channel
+    enum, bind(c)
+         enumerator ::  eSGR_Trapezoidal_Breadth = 1    !% bottom breadth for trapezoidal geometry
+         enumerator ::  eSGR_Trapezoidal_LeftSlope      !% left slope for trapezoidal geometry
+         enumerator ::  eSGR_Trapezoidal_RightSlope     !% right slope for trapezoidal geometry
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Trapezoidal =  eSGR_Trapezoidal_RightSlope
 
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
     !% NEED OTHER GEOMETRY HERE
 
     !% determine the largest number of columns for a special set
-    integer, target :: Ncol_elemSGR = Ncol_elemSGR_Rectangular
+    integer, target :: Ncol_elemSGR = max(&
+                            Ncol_elemSGR_Rectangular, &
+                            Ncol_elemSGR_Trapezoidal)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or

@@ -193,6 +193,7 @@ module define_settings
         logical :: network_define      = .false.
         logical :: orifice_elements    = .false.
         logical :: rectangular_channel = .false.
+        logical :: trapezoidal_channel = .false.
         logical :: runge_kutta2        = .false.
         logical :: pack_mask_arrays    = .false.
         logical :: partitioning        = .false.
@@ -985,68 +986,71 @@ contains
         call json%get('Debug.File.rectangular_channel', logical_value, found)
         setting%Debug%File%rectangular_channel = logical_value
         if (.not. found) stop 133
+        call json%get('Debug.File.trapezoidal_channel', logical_value, found)
+        setting%Debug%File%trapezoidal_channel = logical_value
+        if (.not. found) stop 134
         call json%get('Debug.File.runge_kutta2', logical_value, found)
         setting%Debug%File%runge_kutta2 = logical_value
-        if (.not. found) stop 134
+        if (.not. found) stop 135
         call json%get('Debug.File.timeloop', logical_value, found)
         setting%Debug%File%timeloop = logical_value
-        if (.not. found) stop 135
+        if (.not. found) stop 136
         call json%get('Debug.File.update', logical_value, found)
         setting%Debug%File%update = logical_value
-        if (.not. found) stop 136
+        if (.not. found) stop 137
         call json%get('Debug.File.utility_allocate', logical_value, found)
         setting%Debug%File%utility_allocate = logical_value
-        if (.not. found) stop 137
+        if (.not. found) stop 138
         call json%get('Debug.File.utility_deallocate', logical_value, found)
         setting%Debug%File%utility_deallocate = logical_value
-        if (.not. found) stop 138
+        if (.not. found) stop 139
         call json%get('Debug.File.utility_array', logical_value, found)
         setting%Debug%File%utility_array = logical_value
-        if (.not. found) stop 139
+        if (.not. found) stop 140
         call json%get('Debug.File.utility_datetime', logical_value, found)
         setting%Debug%File%utility_datetime = logical_value
-        if (.not. found) stop 140
+        if (.not. found) stop 141
         call json%get('Debug.File.utility_string', logical_value, found)
         setting%Debug%File%utility_string = logical_value
-        if (.not. found) stop 141
+        if (.not. found) stop 142
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
         call json%get('Debug.File.weir_elements', logical_value, found)
         setting%Debug%File%weir_elements = logical_value
-        if (.not. found) stop 142
+        if (.not. found) stop 143
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
-        if (.not. found) stop 143
+        if (.not. found) stop 144
         call json%get('Debug.FileGroup.definitions', logical_value, found)
         setting%Debug%FileGroup%definitions = logical_value
-        if (.not. found) stop 144
+        if (.not. found) stop 145
         call json%get('Debug.FileGroup.finalization', logical_value, found)
         setting%Debug%FileGroup%finalization = logical_value
-        if (.not. found) stop 145
+        if (.not. found) stop 146
         call json%get('Debug.FileGroup.geometry', logical_value, found)
         setting%Debug%FileGroup%geometry = logical_value
-        if (.not. found) stop 146
+        if (.not. found) stop 147
         call json%get('Debug.FileGroup.initialization', logical_value, found)
         setting%Debug%FileGroup%initialization = logical_value
-        if (.not. found) stop 147
+        if (.not. found) stop 148
         call json%get('Debug.FileGroup.interface', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 148
+        if (.not. found) stop 149
         call json%get('Debug.FileGroup.timeloop', logical_value, found)
         setting%Debug%FileGroup%timeloop = logical_value
-        if (.not. found) stop 149
+        if (.not. found) stop 150
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%utility = logical_value
-        if (.not. found) stop 150
+        if (.not. found) stop 151
         call def_update_debug_options()
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 151
+        if (.not. found) stop 152
 
         call json%destroy()
-        if (json%failed()) stop 152
+        if (json%failed()) stop 153
 
         if (setting%Debug%File%define_settings) print *, '*** leave ', subroutine_name
     end subroutine def_load_settings
@@ -1074,6 +1078,7 @@ contains
         if (setting%Debug%FileGroup%geometry) then
             setting%Debug%File%geometry = .true.
             setting%Debug%File%rectangular_channel = .true.
+            setting%Debug%File%trapezoidal_channel = .true.
         end if
         if (setting%Debug%FileGroup%initialization) then
             setting%Debug%File%discretization = .true.

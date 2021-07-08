@@ -68,27 +68,27 @@ contains
 
         !% execute the command line options provided when the code is run
         if (this_image() == 1) then
-            call execute_command_line("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
+            call execute_command_line ("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
 
         !% read and store the command-line options
-        call init_read_arguments()
+        call init_read_arguments ()
 
         if (setting%Verbose) print *, "Simulation Starts"
 
         !% initialize the API with the SWMM-C code
-        call interface_init()
+        call interface_init ()
 
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
-        call init_linknode_arrays()
+        call init_linknode_arrays ()
 
         !% partition the network for multi-processor parallel computation
-        call init_partitioning()
+        call init_partitioning ()
 
         ! sync all
         !% HACK: this sync call is probably not needed
 
-        call init_network()
+        call init_network ()
 
         call init_IC_setup ()
 
