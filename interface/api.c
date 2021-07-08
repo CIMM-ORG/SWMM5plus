@@ -332,7 +332,7 @@ int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int obj
     return 0;
 }
 
-double DLLEXPORT api_get_QBC(void* f_api, int node_idx, double current_datetime) {
+double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime) {
 
     int ptype, pcount, i, j, p;
     int yy, mm, dd;

@@ -14,12 +14,33 @@ module define_api_keys
     !%   EPA-SWMM source code to avoid name conflicts. Concretely,
     !%   the 'API_' substring was added to the name at the
     !%   the beginning of the API key
+    !%
+    !%   Variables written in caps are extracted from native
+    !%   EPA-SWMM, whereas lowercase vars are added to the
+    !%   EPA-SWMM
     !% --------------------------------------------------------
 
     !% SWMM Objects ($API_DIR/src/objects.c)
     enum, bind(c)
         enumerator :: API_NODE = 2
         enumerator :: API_LINK
+    end enum
+
+    !% SWMM Node types ($API_DIR/src/enums.h) -> NodeType
+    enum, bind(c)
+        enumerator :: API_JUNCTION = 0
+        enumerator :: API_OUTFALL
+        enumerator :: API_STORAGE
+        enumerator :: API_DIVIDER
+    end enum
+
+    !% SWMM Link types ($API_DIR/src/enums.h) -> LinkType
+    enum, bind(c)
+        enumerator :: API_CONDUIT = 0
+        enumerator :: API_PUMP
+        enumerator :: API_ORIFICE
+        enumerator :: API_WEIR
+        enumerator :: API_OUTLET
     end enum
 
     !% SWMM Table types ($API_DIR/src/enums.h -> ObjectType)

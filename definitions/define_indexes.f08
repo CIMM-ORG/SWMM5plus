@@ -197,23 +197,23 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is
     integer, target :: Ncol_linkR = lr_Capacity
 
-    !% Column indexes for BC_xI(:,:)
+    !% Column indexes for BC%xI(:,:)
     enum, bind(c)
         enumerator :: bi_idx = 1
         enumerator :: bi_now         ! index of current BC value
         enumerator :: bi_node_idx
-        enumerator :: bi_face_idx    ! Index of face for nJ2 and nBCup nodes
-        enumerator :: bi_elem_idx    ! Index of main junction element for lateral inflow
+        enumerator :: bi_face_idx    ! Index of face nBCup nodes
+        enumerator :: bi_elem_idx    ! Index of element associated with either nJ2 or nJm node with lateral inflow
         enumerator :: bi_category
         enumerator :: bi_subcategory
     end enum
-    !% HACK - we will probably want to create a different set of indexes for BC_flow and BC_head tables
-    !% For instance, BC_flow tables will probably need addititonal information to distribute flowrates
+    !% HACK - we will probably want to create a different set of indexes for BC%flowI and BC%headI tables
+    !% For instance, BC%flowI tables will probably need addititonal information to distribute flowrates
     !% over link elements.
     integer, parameter :: N_flowI = bi_subcategory
     integer, parameter :: N_headI = bi_subcategory
 
-    !% Column indexes for BC_xR(:,:,:)
+    !% Column indexes for BC_xR_timeseries(:,:,:)
     enum, bind(c)
         enumerator :: br_time = 1
         enumerator :: br_value
