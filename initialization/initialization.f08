@@ -169,7 +169,7 @@ contains
         do ii = 1, N_node
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
-            if (interface_get_node_attribute(ii, api_node_type) == oneI) then ! OUTFALL
+            if (interface_get_node_attribute(ii, api_node_type) == API_OUTFALL) then
                 node%I(ii, ni_node_type) = nBCdn
             else if ((total_n_links == twoI)         .and. &
                      (node%I(ii,ni_N_link_u) == oneI) .and. &
@@ -178,17 +178,13 @@ contains
             else if (total_n_links >= twoI) then
                 node%I(ii, ni_node_type) = nJm
             end if
-            ! Nodes with nBCup are defined in inflow.f08 -> (inflow_load_inflows)
             l1 = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
             l2 = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
             if (l1 .or. l2) then
                 node%YN(ii, nYN_has_inflow) = .true.
-                if (total_n_links == 1) then
+                if (node%I(ii,ni_N_link_u) == zeroI) then ! No upstream links
                     node%I(ii, ni_node_type) = nBCup
                 end if
-                ! if (node%I(ii,ni_N_link_u) == zeroI) then
-                !     node%I(ii, ni_node_type) = nBCup
-                ! end if
             end if
 
             node%R(ii,nr_InitialDepth) = interface_get_node_attribute(ii, api_node_initDepth)
@@ -220,8 +216,9 @@ contains
 
         call util_allocate_bc()
 
-        BC%flowIdx(:) = 1
-        BC%headIdx(:) = 1
+        !% Convention to denote that xR_timeseries arrays haven't been fetched
+        BC%flowIdx(:) = 0
+        BC%headIdx(:) = 0
 
         !% Initialize Inflow BCs
         !% BC%I(ii, bi_face_idx) is assigned later
