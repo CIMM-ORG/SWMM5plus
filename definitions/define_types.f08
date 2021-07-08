@@ -71,8 +71,10 @@ module define_types
     !% ==============================================================
 
     type NodePack
-        integer, allocatable :: have_QBC(:)
-        integer, allocatable :: have_HBC(:)
+        !integer, allocatable :: have_QBC(:)
+        !integer, allocatable :: have_HBC(:)
+        integer, allocatable :: have_flowBC(:)
+        integer, allocatable :: have_headBC(:)       
     end type NodePack
 
     type NodeArray
@@ -91,9 +93,13 @@ module define_types
     end type LinkArray
 
     type BCArray
-        integer,      allocatable :: QI(:,:)   !% integer data for inflow BCs
-        integer,      allocatable :: HI(:,:)   !% integer data for elevation BCs
-        real(8),      allocatable :: QR(:,:,:) !% time series data for inflow BC
-        real(8),      allocatable :: HR(:,:,:) !% time series data for elevation BC
+        !integer,      allocatable :: QI(:,:)   !% integer data for inflow BCs
+        integer,      allocatable :: flowI(:,:)   !% integer data for inflow BCs
+        !integer,      allocatable :: HI(:,:)   !% integer data for elevation BCs
+        integer,      allocatable :: headI(:,:)   !% integer data for elevation BCs
+        !real(8),      allocatable :: QR(:,:,:) !% time series data for inflow BC
+        real(8),      allocatable :: flowR_timeseries(:,:,:) !% time series data for inflow BC
+        !real(8),      allocatable :: HR(:,:,:) !% time series data for elevation BC
+        real(8),      allocatable :: headR_timeseries(:,:,:) !% time series data for elevation BC
     end type BCArray
 end module define_types

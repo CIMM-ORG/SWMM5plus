@@ -204,20 +204,24 @@ module define_indexes
         enumerator :: bi_subcategory
         enumerator :: bi_xr_idx      ! BC%xR idx if elevation BC, -1 otherwise
     end enum
-    !% HACK - we will probably want to create a different set of indexes for BC_Q and BC_H tables
-    !% For instance, BC_Q tables will probably need addititonal information to distribute flowrates
+    !% HACK - we will probably want to create a different set of indexes for BC_flow and BC_head tables
+    !% For instance, BC_flow tables will probably need addititonal information to distribute flowrates
     !% over link elements.
-    integer, parameter :: N_QBC_I = bi_xr_idx
-    integer, parameter :: N_HBC_I = bi_xr_idx
+    !integer, parameter :: N_QBC_I = bi_xr_idx
+    integer, parameter :: N_flowBC_I = bi_xr_idx
+    !integer, parameter :: N_HBC_I = bi_xr_idx
+    integer, parameter :: N_headBC_I = bi_xr_idx
 
     !% Column indexes for BC_xR(:,:,:)
     enum, bind(c)
         enumerator :: br_time = 1
         enumerator :: br_value
     end enum
-    ! HACK - we will probably want to change the dimensions of QBC and HBC real tables
-    integer, parameter :: N_HBC_R = br_value
-    integer, parameter :: N_QBC_R = br_value
+    ! HACK - we will probably want to change the dimensions of flowBC and headBC real tables
+    !integer, parameter :: N_HBC_R = br_value
+    integer, parameter :: N_headBC_R = br_value
+    !integer, parameter :: N_QBC_R = br_value
+    integer, parameter :: N_flowBC_R = br_value
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for link%YN(:,:) arrays
@@ -438,6 +442,8 @@ module define_indexes
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSR(:,:) arrays
     !% These are the full arrays if special real data
+    !% Note that different types of special elements (diagnostic, branches)
+    !% share the same columns since a row can only have one type of element.
     !%-------------------------------------------------------------------------
 
     !% define the column indexes for elemSR(:,:) for geometry that has not yet been confirmed and assigned:
@@ -453,7 +459,12 @@ module define_indexes
         enumerator ::  eSr_Weir_TrapezoidalRightSlope   !% trapezoidal weir right slope
         enumerator ::  eSr_Weir_TriangularSideSlope     !% triangular weir side slope
         enumerator ::  eSr_Weir_Zcrest                  !% weir crest elevation
-        enumerator ::  eSr_Orifice_DischargeCoeff       !% discharge coefficient orifice
+    end enum
+    !% note, this must be changed to whatever the last enum element is
+    integer, parameter :: Ncol_elemSR_Weir = eSr_Weir_Zcrest
+
+    enum, bind(c)
+        enumerator ::  eSr_Orifice_DischargeCoeff = 1       !% discharge coefficient orifice
         enumerator ::  eSr_Orifice_EffectiveFullDepth   !% effective full depth after control intervention
         enumerator ::  eSr_Orifice_EffectiveHeadDelta   !% effective head delta across orifice
         enumerator ::  eSr_Orifice_NominalDownstreamHead   !% nominal downstream head for orifice
@@ -461,7 +472,7 @@ module define_indexes
         enumerator ::  eSr_Orifice_Zcrest                  !% orifice "crest" elevation - lowest edge of orifice.
     end enum
     !% note, this must be changed to whatever the last enum element is
-    integer, parameter :: Ncol_elemSR_Weir = eSr_Weir_Zcrest
+    integer, parameter :: Ncol_elemSR_Orifice = eSr_Orifice_Zcrest
 
     enum, bind(c)
         !% Define the column indexes for elemSR(:,:) for junction branches
@@ -475,7 +486,8 @@ module define_indexes
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSR = max(&
                             Ncol_elemSR_JunctionBranch, &
-                            Ncol_elemSR_Weir)
+                            Ncol_elemSR_Weir, &
+                            Ncol_elemSR_Orifice)
 
     !% HACK: Ncol_elemSR must be updated when other special elements
     !% (i.e. orifice, pump, storage etc.) are added

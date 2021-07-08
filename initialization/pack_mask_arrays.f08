@@ -1548,9 +1548,18 @@ contains
     !==========================================================================
     !
     subroutine pack_nodes()
-        node%P%have_QBC = pack(node%I(:,ni_idx), &
+        !--------------------------------------------------------------------------
+        !% This allocates and packs the node data in the arrays of node%P.
+        !% With this approach using the P type, each of the arrays on the  images
+        !% are allocated to the size needed.
+        !--------------------------------------------------------------------------
+        !node%P%have_QBC = pack(node%I(:,ni_idx), &
+        node%P%have_flowBC = pack(node%I(:,ni_idx), &
             node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
-        node%P%have_HBC = pack(node%I(:,ni_idx), &
+
+        !% HACK -- this assumes that a head BC is always a downstream BC.    
+        !node%P%have_HBC = pack(node%I(:,ni_idx), &
+        node%P%have_headBC = pack(node%I(:,ni_idx), &
             (node%I(:, ni_node_type) == nBCdn) .and. (node%I(:,ni_P_image) == this_image()))
     end subroutine pack_nodes
 

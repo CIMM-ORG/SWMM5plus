@@ -54,7 +54,8 @@ contains
         character(64) :: subroutine_name = 'initialize_all'
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
     !-----------------------------------------------------------------------------
-        !% set the branchsign global
+        !% set the branchsign global -- this is used for junction branches (JB)
+        !% for upstream (+1) and downstream (-1)
         !% HACK: for clarity and consistency, this probably should be moved into
         !% the init_network. Placed here for the time being in case we need it
         !% for translating link/node from SWMM-C or partitioning.
@@ -215,15 +216,21 @@ contains
         if (setting%Debug%File%initialization)  print *, '*** enter ', subroutine_name
         !% Initialize Inflow BCs
         !% BC%I(ii, bi_face_idx) is assigned later
-        do ii = 1, N_QBC
-            BC%QI(ii, bi_idx) = ii
-            BC%QI(ii, bi_now) = 1
-            nidx = node%P%have_QBC(ii)
-            BC%QI(ii, bi_node_idx) = nidx
+        !do ii = 1, N_QBC
+        do ii = 1, N_flowBC
+            !BC%QI(ii, bi_idx) = ii
+            BC%flowI(ii, bi_idx) = ii
+            !BC%QI(ii, bi_now) = 1
+            BC%flowI(ii, bi_now) = 1
+            !nidx = node%P%have_QBC(ii)
+            nidx = node%P%have_flowBC(ii)
+            !BC%QI(ii, bi_node_idx) = nidx
+            BC%flowI(ii, bi_node_idx) = nidx
             !% Check if node has inflow BC
             if ((interface_get_node_attribute(nidx, api_node_has_dwfInflow) == 1) &
                 .or. (interface_get_node_attribute(nidx, api_node_has_extInflow) == 1)) then
-                BC%QI(ii, bi_category) = BC_inflow
+                !BC%QI(ii, bi_category) = BC_inflow
+                BC%flowI(ii, bi_category) = BC_inflow
             end if
 
             ! BC%QI(ii, bi_category) = node
@@ -235,31 +242,47 @@ contains
 
         !% Initialize Elevation BCs
         !% BC%I(ii, bi_face_idx) is assigned later
-        do ii = 1, N_HBC
-            BC%HI(ii, bi_idx) = ii
-            BC%HI(ii, bi_now) = 1
-            nidx = node%P%have_HBC(ii)
-            BC%HI(ii, bi_node_idx) = nidx
-            BC%HI(ii, bi_category) = BCdn
-            BC%HI(ii, bi_xr_idx) = ii
+        !do ii = 1, N_HBC
+        do ii = 1, N_headBC
+            !BC%HI(ii, bi_idx) = ii
+            BC%headI(ii, bi_idx) = ii
+            !BC%HI(ii, bi_now) = 1
+            BC%headI(ii, bi_now) = 1
+            !nidx = node%P%have_HBC(ii)
+            nidx = node%P%have_headBC(ii)
+            !BC%HI(ii, bi_node_idx) = nidx
+            BC%headI(ii, bi_node_idx) = nidx
+            !BC%HI(ii, bi_category) = BCdn
+            BC%headI(ii, bi_category) = BCdn
+            !BC%HI(ii, bi_xr_idx) = ii
+            BC%headI(ii, bi_xr_idx) = ii
             if (node%I(nidx, ni_node_type) == nBCdn) then
-                BC%HI(ii, bi_category) = BC_head
+                !BC%HI(ii, bi_category) = BC_head
+                BC%headI(ii, bi_category) = BC_head
                 if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FREE_OUTFALL) then
-                    BC%HI(ii, bi_subcategory) = BC_H_free
+                    !BC%HI(ii, bi_subcategory) = BC_H_free
+                    BC%headI(ii, bi_subcategory) = BC_H_free
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_NORMAL_OUTFALL) then
-                    BC%HI(ii, bi_subcategory) = BC_H_normal
+                    !BC%HI(ii, bi_subcategory) = BC_H_normal
+                    BC%headI(ii, bi_subcategory) = BC_H_normal
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FIXED_OUTFALL) then
-                    BC%HI(ii, bi_subcategory) = BC_H_fixed
+                    !BC%HI(ii, bi_subcategory) = BC_H_fixed
+                    BC%headI(ii, bi_subcategory) = BC_H_fixed
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIDAL_OUTFALL) then
-                    BC%HI(ii, bi_subcategory) = BC_H_tidal
+                    !BC%HI(ii, bi_subcategory) = BC_H_tidal
+                    BC%headI(ii, bi_subcategory) = BC_H_tidal
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIMESERIES_OUTFALL) then
-                    BC%HI(ii, bi_subcategory) = BC_H_tseries
+                    !BC%HI(ii, bi_subcategory) = BC_H_tseries
+                    BC%headI(ii, bi_subcategory) = BC_H_tseries
                 end if
             end if
         end do
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_bc
-
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine init_partitioning()
     !-----------------------------------------------------------------------------
     !
