@@ -360,6 +360,9 @@ contains
                 FaceGlobalCounter)
         end do
 
+        !% deallocate temporary array
+        deallocate(packed_link_idx)
+
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
     end subroutine init_network_handle_partition
     !
@@ -401,7 +404,13 @@ contains
                                      ( elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode) )
 
             call init_network_map_nJm_branches (image, thisJunctionNode, JunctionElementIdx)
+
+            !% deallocate temporary array
+            deallocate(JunctionElementIdx)
         end do
+
+        !% deallocate temporary array
+        deallocate(packed_nJm_idx)
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
     end subroutine init_network_map_nJm
@@ -461,7 +470,9 @@ contains
             enddo
         enddo
 
-
+        !% deallocate temporary array
+        deallocate(sharedFaces)
+        
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
     end subroutine init_network_map_shared_faces
     !

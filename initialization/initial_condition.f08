@@ -72,7 +72,7 @@ contains
         call init_IC_small_values_diagnostic_elements
 
         !% update faces
-        call face_interpolation (fp_all)
+        call face_interpolation (fp_all)  
 
         !% update the initial condition in all diagnostic elements
         call diagnostic_toplevel()
@@ -158,6 +158,9 @@ contains
             call init_IC_get_channel_pipe_velocity (thisLink)
 
         end do
+
+        !% deallocate the temporary array
+        deallocate(packed_link_idx)
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_from_linkdata
@@ -889,10 +892,11 @@ contains
         do ii = 1,pJunction
             !% necessary pointers
             thisJunctionNode => packed_nJm_idx(ii)
-
             call init_IC_get_junction_data (thisJunctionNode)
-
         end do
+
+        !% deallocate the temporary array
+        deallocate(packed_nJm_idx)
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_from_nodedata
@@ -1013,6 +1017,7 @@ contains
                 end select
 
                 !% get the flow data from links for junction branches
+                !% this flowrate will always be lagged in junction branches
                 elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
 
                 if (elemR(JBidx,er_Area) .gt. zeroR) then
