@@ -53,11 +53,11 @@ contains
         !% divide the link node networks in elements and faces
         call init_network_datacreate()
 
-        sync all
-
         !% replaces ni_elemface_idx of nJ2 nodes for the upstream elem
         !% of the face associated with the node
         call init_network_update_nj2_elem()
+
+        sync all
 
         !% print result
         if (setting%Debug%File%network_define) then
@@ -65,28 +65,29 @@ contains
             if (this_image() == 1) then
 
                 do ii = 1,num_images()
-                   print*, '----------------------------------------------------'
-                   print*, 'image = ', ii
-                   print*, '..................elements..........................'
-                   print*, elemI(:,ei_Lidx)[ii], 'Lidx'
-                   print*, elemI(:,ei_Gidx)[ii], 'Gidx'
-                   print*, elemI(:,ei_link_Gidx_SWMM)[ii], 'link_Gidx_SWMM'
-                   print*, elemI(:,ei_node_Gidx_SWMM)[ii], 'node_Gidx_SWMM'
-                   print*, elemI(:,ei_Mface_uL)[ii],'Mface_uL'
-                   print*, elemI(:,ei_Mface_dL)[ii],'Mface_dL'
-                   print*, '..................faces.............................'
-                   print*, faceI(:,fi_Lidx)[ii], 'face Lidx'
-                   print*, faceI(:,fi_Gidx)[ii], 'face Gidx'
-                   print*, faceI(:,fi_Melem_uL)[ii], 'face Melem_uL'
-                   print*, faceI(:,fi_Melem_dL)[ii], 'face Melem_dL'
-                   print*, faceI(:,fi_Connected_image)[ii], 'fi_Connected_image'
-                   print*, faceI(:,fi_BCtype)[ii], 'fi_BCtype'
-                   print*, faceI(:,fi_GhostElem_uL)[ii], 'fi_GhostElem_uL'
-                   print*, faceI(:,fi_GhostElem_dL)[ii], 'fi_GhostElem_dL'
-                   print*, faceYN(:,fYN_isInteriorFace)[ii], 'face is interior'
-                   print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared'
-                   print*, '----------------------------------------------------'
-                   call execute_command_line('')
+
+                    print*, '----------------------------------------------------'
+                    print*, 'image = ', ii
+                    print*, '..................elements..........................'
+                    print*, elemI(:,ei_Lidx)[ii], 'Lidx'
+                    print*, elemI(:,ei_Gidx)[ii], 'Gidx'
+                    print*, elemI(:,ei_link_Gidx_SWMM)[ii], 'link_Gidx_SWMM'
+                    print*, elemI(:,ei_node_Gidx_SWMM)[ii], 'node_Gidx_SWMM'
+                    print*, elemI(:,ei_Mface_uL)[ii],'Mface_uL'
+                    print*, elemI(:,ei_Mface_dL)[ii],'Mface_dL'
+                    print*, '..................faces.............................'
+                    print*, faceI(:,fi_Lidx)[ii], 'face Lidx'
+                    print*, faceI(:,fi_Gidx)[ii], 'face Gidx'
+                    print*, faceI(:,fi_Melem_uL)[ii], 'face Melem_uL'
+                    print*, faceI(:,fi_Melem_dL)[ii], 'face Melem_dL'
+                    print*, faceI(:,fi_Connected_image)[ii], 'fi_Connected_image'
+                    print*, faceI(:,fi_BCtype)[ii], 'fi_BCtype'
+                    print*, faceI(:,fi_GhostElem_uL)[ii], 'fi_GhostElem_uL'
+                    print*, faceI(:,fi_GhostElem_dL)[ii], 'fi_GhostElem_dL'
+                    print*, faceYN(:,fYN_isInteriorFace)[ii], 'face is interior'
+                    print*, faceYN(:,fYN_isSharedFace)[ii], 'face is shared'
+                    print*, '----------------------------------------------------'
+                    call execute_command_line('')
                 enddo
             endif
         endif
@@ -100,14 +101,21 @@ contains
     !
     subroutine init_network_update_nj2_elem()
         integer, allocatable :: nJ2_nodes(:)
+        integer              :: N_nJ2_nodes
         character(64) :: subroutine_name = 'init_network_update_nj2_elem'
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-        nJ2_nodes = pack(node%I(:, ni_idx), (node%I(:, ni_node_type) == nJ2) &
+        N_nJ2_nodes = count((node%I(:, ni_node_type) == nJ2) .and. (node%I(:, ni_P_image) == this_image()))
+
+        if (N_nJ2_nodes > 0) then
+
+            nJ2_nodes = pack(node%I(:, ni_idx), (node%I(:, ni_node_type) == nJ2) &
                         .and. (node%I(:, ni_P_image) == this_image()))
-        node%I(nJ2_nodes, ni_elemface_idx) = faceI(node%I(nJ2_nodes, ni_elemface_idx), fi_Melem_uL)
-        deallocate(nJ2_nodes)
+
+            node%I(nJ2_nodes, ni_elemface_idx) = faceI(node%I(nJ2_nodes, ni_elemface_idx), fi_Melem_uL)
+
+        endif
 
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
     end subroutine init_network_update_nj2_elem
@@ -555,7 +563,6 @@ contains
                             faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
                             faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
 
-                            faceYN(FaceLocalCounter,fYN_isInteriorFace) = .true.
                         endif
 
                         !% change the node assignmebt value
@@ -814,7 +821,7 @@ contains
 
                             !% A downstream edge node indicates there are no local
                             !% elements downstream of that node
-                            faceI(FaceLocalCounter,fi_Melem_dL) = nullvalueI
+                            faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
 
                             !% logical data
                             faceYN(FaceLocalCounter,fYN_isSharedFace) = .true.
