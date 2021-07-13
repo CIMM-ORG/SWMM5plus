@@ -40,7 +40,6 @@ contains
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
-        call pack_nodes()
         call mask_faces_whole_array_static()
         call pack_geometry_alltm_elements()
         call pack_geometry_etm_elements()
@@ -51,6 +50,7 @@ contains
         call pack_static_shared_faces()
         call pack_dynamic_interior_faces()
         call pack_dynamic_shared_faces()
+        call pack_nodes()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -1661,14 +1661,24 @@ contains
         !% With this approach using the P type, each of the arrays on the images
         !% are allocated to the size needed.
         !--------------------------------------------------------------------------
-        !node%P%have_flowBC = pack(node%I(:,ni_idx), &
-        node%P%have_flowBC = pack(node%I(:,ni_idx), &
-            node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
-        N_flowBC = size(node%P%have_flowBC)
+        N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
+                        (node%I(:,ni_P_image) == this_image()))
+
+        if (N_flowBC > 0) then
+            allocate(node%P%have_flowBC(N_flowBC))
+            node%P%have_flowBC = pack(node%I(:,ni_idx), &
+                node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
+        end if
+
         !% HACK -- this assumes that a head BC is always a downstream BC.
-        node%P%have_headBC = pack(node%I(:,ni_idx), &
-            (node%I(:, ni_node_type) == nBCdn) .and. (node%I(:,ni_P_image) == this_image()))
-        N_headBC = size(node%P%have_headBC)
+        N_headBC = count((node%I(:, ni_node_type) == nBCdn) .and. &
+                        (node%I(:,ni_P_image) == this_image()))
+        if (N_headBC > 0) then
+            allocate(node%P%have_headBC(N_headBC))
+            node%P%have_headBC = pack(node%I(:,ni_idx), &
+            (node%I(:, ni_node_type) == nBCdn) .and. &
+            (node%I(:,ni_P_image) == this_image()))
+        end if
     end subroutine pack_nodes
 
 

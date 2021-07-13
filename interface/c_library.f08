@@ -21,10 +21,11 @@ module c_library
 
     type c_lib_type
         integer(c_intptr_t) :: fileaddr = 0
-        type(c_ptr) :: fileaddrx = c_null_ptr
-        type(c_funptr) :: procaddr = c_null_funptr
-        character(1024) :: filename = " "
-        character(1024) :: procname = " "
+        type(c_ptr)         :: fileaddrx = c_null_ptr
+        type(c_funptr)      :: procaddr  = c_null_funptr
+        character(1024)     :: filename  = " "
+        character(1024)     :: procname  = " "
+        logical             :: loaded
     end type c_lib_type
 
     interface
@@ -77,14 +78,17 @@ contains
 
         errmsg = ''
 
-        c_lib%fileaddrx = dlopen(trim(c_lib%filename) // c_null_char, 1) ! load DLL
-        if( .not. c_associated(c_lib%fileaddrx) ) then
-            errstat = -1
-            write(errmsg, "(A, I2, A)") &
-                    'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
-                     //' Check that the file ' // 'exists in the specified location and' &
-                     //' that it is compiled for ', (c_intptr_t*8), '-bit systems.'
-            return
+        if (.not. c_lib%loaded) then
+            c_lib%fileaddrx = dlopen(trim(c_lib%filename) // c_null_char, 1) ! load DLL
+            if( .not. c_associated(c_lib%fileaddrx) ) then
+                errstat = -1
+                write(errmsg, "(A, I2, A)") &
+                        'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
+                        //' Check that the file ' // 'exists in the specified location and' &
+                        //' that it is compiled for ', (c_intptr_t*8), '-bit systems.'
+                return
+            end if
+            c_lib%loaded = .true.
         end if
 
         c_lib%procaddr = dlsym(c_lib%fileaddrx, trim(c_lib%procname) // c_null_char)

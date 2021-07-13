@@ -85,9 +85,6 @@ contains
         !% partition the network for multi-processor parallel computation
         call init_partitioning ()
 
-        ! sync all
-        !% HACK: this sync call is probably not needed
-
         call init_network ()
 
         call init_IC_setup ()
@@ -97,6 +94,7 @@ contains
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
+        !% wait for all the processors to reach this stage before starting the time loop
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all
     !
@@ -207,54 +205,115 @@ contains
     !==========================================================================
     !
     subroutine init_bc()
-        integer :: ii, nidx, counter_bc_er
+    !%-----------------------------------------------------------------------------
+    !%
+    !% Description:
+    !%    Initializes boundary connditions
+    !%
+    !% Notes:
+    !%    The structures are general enough to support 3 types of BCs:
+    !%
+    !%    BCup: updstream boundary condition which can be inflow or head BC
+    !%    BCdn: downstream boundary condition which can be inflow or head BC
+    !%    BClat: lateral inflow coming into and nJ2 or nJm node.
+    !%
+    !%    However, the code only supports inflow BCs for BCup and BClat,
+    !%    and head BCs for BCdn, mimimcking EPA-SWMM 5.13 functionalities.
+    !%    Further developments allowing other types of inflow and head BCs,
+    !%    should store the respective BC in either the BC%inflowX or the
+    !%    BC%headX arrays defining the corresponding type of BC (i.e., BCup,
+    !%    BCdn, and BClat) in the BC%xI(:,bi_category) column.
+    !%
+    !%-----------------------------------------------------------------------------
+        integer :: ii, nidx, ntype, counter_bc_er
         integer :: ntseries, nbasepat
         logical :: has_dwf_inflow, has_ext_inflow
         character(64) :: subroutine_name = "init_bc"
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization)  print *, '*** enter ', subroutine_name
 
         call util_allocate_bc()
 
         !% Convention to denote that xR_timeseries arrays haven't been fetched
-        BC%flowIdx(:) = 0
-        BC%headIdx(:) = 0
+        if (N_flowBC > 0) then
+            BC%flowI(:,bi_fetch) = 1
+            BC%flowIdx(:) = 0
+            !% Convention to denote association between nodes and face/elements
+            !% BCup and BCdn BCs are associated with faces, thus bi_elem_idx is null
+            !% BClat BCs are associated with elements, thus bi_face_idx is null
+            BC%flowI(:, bi_face_idx) = nullvalueI
+            BC%flowI(:, bi_elem_idx) = nullvalueI
+        end if
+        if (N_headBC > 0) then
+            BC%headI(:,bi_fetch) = 1
+            BC%headIdx(:) = 0
+        end if
 
         !% Initialize Inflow BCs
-        !% BC%I(ii, bi_face_idx) is assigned later
-        do ii = 1, N_flowBC
-            BC%flowI(ii, bi_idx) = ii
-            BC%flowI(ii, bi_now) = 1
-            nidx = node%P%have_flowBC(ii)
-            BC%flowI(ii, bi_node_idx) = nidx
+        if (N_flowBC > 0) then
+            do ii = 1, N_flowBC
+                nidx = node%P%have_flowBC(ii)
+                ntype = node%I(nidx, ni_node_type)
 
-            !% Check if node has inflow BC
-            has_dwf_inflow = (interface_get_node_attribute(nidx, api_node_has_dwfInflow) == 1)
-            has_ext_inflow = (interface_get_node_attribute(nidx, api_node_has_extInflow) == 1)
-            nbasepat = interface_get_node_attribute(nidx, api_node_extInflow_basePat)
-            ntseries = interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
+                !% Check if node has inflow BC
+                has_dwf_inflow = &
+                    (interface_get_node_attribute(nidx, api_node_has_dwfInflow) == 1)
+                has_ext_inflow = &
+                    (interface_get_node_attribute(nidx, api_node_has_extInflow) == 1)
 
-            if (has_dwf_inflow .or. has_ext_inflow) then
-                BC%flowI(ii, bi_category) = BCQ
-                BC%flowI(ii, bi_subcategory) = BCQ_tseries
-                if (.not. has_dwf_inflow) then
-                    if ((ntseries == -1) .and. (nbasepat /= -1)) then
-                        BC%flowI(ii, bi_subcategory) = BCQ_fixed
+                print *, nidx, api_node_has_extInflow, has_dwf_inflow, has_ext_inflow
+                !% Handle Inflow BCs (BCup and BClat only)
+                if (has_dwf_inflow .or. has_ext_inflow) then
+                    if ((ntype == nJm) .or. (ntype == nJ2)) then
+                        BC%flowI(ii, bi_category) = BClat
+                        BC%flowI(ii, bi_elem_idx) = node%I(nidx, ni_elemface_idx) !% elem idx
+                    else if (ntype == nBCup) then
+                        BC%flowI(ii, bi_category) = BCup
+                        BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
+                    else
+                        print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
+                        stop
                     end if
-                end if
-            end if
-        end do
 
-        !% Initialize Elevation BCs
-        !% BC%I(ii, bi_face_idx) is assigned later
-        do ii = 1, N_headBC
-            BC%headI(ii, bi_idx) = ii
-            BC%headI(ii, bi_now) = 1
-            nidx = node%P%have_headBC(ii)
-            BC%headI(ii, bi_node_idx) = nidx
-            BC%headI(ii, bi_category) = BCdn
-            if (node%I(nidx, ni_node_type) == nBCdn) then
-                BC%headI(ii, bi_category) = BCH
+                    BC%flowI(ii, bi_node_idx) = nidx
+                    BC%flowI(ii, bi_idx) = ii
+                    nbasepat = &
+                        interface_get_node_attribute(nidx, api_node_extInflow_basePat)
+                    ntseries = &
+                        interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
+
+                    !% BC does not have fixed value if its associated with dwfInflow
+                    !% or if extInflow has tseries or pattern
+                    BC%flowI(ii, bi_subcategory) = BCQ_tseries
+                    if (.not. has_dwf_inflow) then !% extInflow only
+                        if ((ntseries == -1) .and. (nbasepat /= -1)) then
+                            BC%flowI(ii, bi_subcategory) = BCQ_fixed
+                        end if
+                    end if
+                else
+                    print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
+                    stop
+                end if
+            end do
+        end if
+
+        !% Initialize Head BCs
+        if (N_headBC > 0) then
+            do ii = 1, N_headBC
+                nidx = node%P%have_headBC(ii)
+                ntype = node%I(nidx, ni_node_type)
+
+                if (ntype == nBCdn) then
+                    BC%headI(ii, bi_category) = BCdn
+                    BC%headI(ii, bi_face_idx) = node%I(ii, ni_elemface_idx) !% face idx
+                else
+                    print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
+                    stop
+                end if
+
+                BC%headI(ii, bi_idx) = ii
+                BC%headI(ii, bi_node_idx) = nidx
                 if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FREE_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_free
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_NORMAL_OUTFALL) then
@@ -266,8 +325,8 @@ contains
                 else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIMESERIES_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tseries
                 end if
-            end if
-        end do
+            end do
+        end if
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_bc
     !
