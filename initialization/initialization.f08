@@ -10,7 +10,7 @@ module initialization
     use utility_array
     use initial_condition
     use network_define
-    use utility, only: util_export_linknode_csv
+    use utility, only: util_export_linknode_csv, util_create_warning_file
     use utility_array
 
 
@@ -70,6 +70,12 @@ contains
         if (this_image() == 1) then
             call execute_command_line ("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
+
+        !% Create or replace warning files
+        !% Uncomment if you want to use warning files
+        !% After this call then you can use util_print_warning
+        
+        !% call util_create_warning_file()
 
         !% read and store the command-line options
         call init_read_arguments ()

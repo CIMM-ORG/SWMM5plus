@@ -4,7 +4,8 @@ module utility
     use define_keys
     use define_globals
     use define_settings, only: setting
-
+    use, intrinsic :: iso_fortran_env, only: error_unit
+    
     implicit none
 
 !-----------------------------------------------------------------------------
@@ -19,7 +20,9 @@ module utility
     public :: util_export_linknode_csv
     public :: util_count_node_types
     public :: util_sign_with_ones
-
+    public :: util_create_warning_file
+    public :: util_print_warning
+    
     contains
     !%
     !%==========================================================================  
@@ -118,8 +121,69 @@ module utility
         outarray = oneR
         outarray = sign(outarray,inarray)
 
-    end function util_sign_with_ones  
+    end function util_sign_with_ones
+
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine util_create_warning_file()
+        !% Used to create and make sure that the warning files are empty when they are first opened
+
+        character(len = 4) :: str_img
+        character(len = 21) :: file_name
+        integer :: fu, rc
+
+        fu = this_image()
+
+        write(str_img, '(i1)') fu
+
+        file_name = 'warnings_log_'//trim(str_img)//'.txt'
+
+        open (action='write', file=file_name, status='replace', iostat=rc, newunit=fu)
+
+        if (rc .ne. 0) then
+            write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
+        end if
+
+        close(fu)
+
+    end subroutine util_create_warning_file
+
+
+    subroutine util_print_warning(msg)
+        !% Used for opening up the warning files and writing to the file
+
+        character(len = *), intent(in) :: msg
+        character(len = 4) :: str_img
+        character(len = 21) :: file_name
+        integer :: fu,rc
+
+        fu = this_image()
+
+        write(str_img, '(i1)') fu
+
+        file_name = 'warnings_log_'//trim(str_img)//'.txt'
+
+        open (action='write', file=file_name, status='old',position ='APPEND', iostat=rc, newunit=fu)
+        if (rc .ne. 0) then
+            write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
+        end if
+
+
+        write(fu,'(A)') msg
+        close(fu)
+
+
+    end subroutine util_print_warning
+
+
+
+
+
+
+    
     !%========================================================================== 
     !% END OF MODULE
-    !%+=========================================================================    
+    !%==========================================================================    
 end module utility
