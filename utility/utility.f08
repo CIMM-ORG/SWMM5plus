@@ -134,11 +134,7 @@ module utility
         character(len = 21) :: file_name
         integer :: fu, rc
 
-        fu = this_image()
-
-        write(str_img, '(i1)') fu
-
-        file_name = 'warnings_log_'//trim(str_img)//'.txt'
+        file_name = 'warnings_log.txt'
 
         open (action='write', file=file_name, status='replace', iostat=rc, newunit=fu)
 
@@ -159,29 +155,22 @@ module utility
         character(len = 21) :: file_name
         integer :: fu,rc
 
-        fu = this_image()
+        if(setting%Warning) then
+        
+            file_name = 'warnings_log.txt'
 
-        write(str_img, '(i1)') fu
+            open (action='write', file=file_name, status='old',position ='APPEND', iostat=rc, newunit=fu)
+            if (rc .ne. 0) then
+                write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
+            end if
 
-        file_name = 'warnings_log_'//trim(str_img)//'.txt'
+            write(fu,'(A)') msg
+            close(fu)
 
-        open (action='write', file=file_name, status='old',position ='APPEND', iostat=rc, newunit=fu)
-        if (rc .ne. 0) then
-            write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
         end if
-
-
-        write(fu,'(A)') msg
-        close(fu)
-
+        
 
     end subroutine util_print_warning
-
-
-
-
-
-
     
     !%========================================================================== 
     !% END OF MODULE

@@ -72,11 +72,10 @@ contains
         end if
 
         !% Create or replace warning files
-        !% Uncomment if you want to use warning files
-        !% After this call then you can use util_print_warning
-        
-        !% call util_create_warning_file()
 
+        if(setting%Warning) call util_create_warning_file()
+        
+        
         !% read and store the command-line options
         call init_read_arguments ()
 
