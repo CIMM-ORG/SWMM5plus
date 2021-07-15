@@ -20,7 +20,6 @@ module utility
     public :: util_export_linknode_csv
     public :: util_count_node_types
     public :: util_sign_with_ones
-    public :: util_create_warning_file
     public :: util_print_warning
     
     contains
@@ -127,46 +126,23 @@ module utility
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine util_create_warning_file()
-        !% Used to create and make sure that the warning files are empty when they are first opened
 
-        character(len = 4) :: str_img
-        character(len = 21) :: file_name
-        integer :: fu, rc
-
-        file_name = 'warnings_log.txt'
-
-        open (action='write', file=file_name, status='replace', iostat=rc, newunit=fu)
-
-        if (rc .ne. 0) then
-            write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
-        end if
-
-        close(fu)
-
-    end subroutine util_create_warning_file
-
-
-    subroutine util_print_warning(msg)
+    subroutine util_print_warning(msg,async)
         !% Used for opening up the warning files and writing to the file
 
         character(len = *), intent(in) :: msg
-        character(len = 4) :: str_img
-        character(len = 21) :: file_name
-        integer :: fu,rc
-
-        if(setting%Warning) then
+        logical, optional, intent(in) :: async
+        logical :: async_actual
         
-            file_name = 'warnings_log.txt'
-
-            open (action='write', file=file_name, status='old',position ='APPEND', iostat=rc, newunit=fu)
-            if (rc .ne. 0) then
-                write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
-            end if
-
-            write(fu,'(A)') msg
-            close(fu)
-
+        if(present(async)) then
+            async_actual = async
+        else
+            async_actual = .true.
+        end if
+        if(this_image() == 1) then
+            print *, "Warning: "//trim(msg)
+        else if(async_actual) then
+            print *, "Warning: "//trim(msg)
         end if
         
 
