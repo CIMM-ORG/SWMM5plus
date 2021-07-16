@@ -137,7 +137,7 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     else if (attr == node_extInflow_basePat)
     {
         if (Node[k].extInflow)
-            *value = Node[k].extInflow->basePat;
+            *value = CFTOCM(Node[k].extInflow->cFactor * Node[k].extInflow->basePat);
         else
             *value = -1;
     }
@@ -153,7 +153,7 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     {
         if (Node[k].extInflow)
         {
-            *value = CFTOCM(Node[k].extInflow->baseline);
+            *value = CFTOCM(Node[k].extInflow->cFactor * Node[k].extInflow->baseline);
         }
         else
             *value = 0;
@@ -386,13 +386,13 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
                 }
             }
         }
-        total_inflow += total_factor * Node[node_idx].dwfInflow->avgValue;
+        total_inflow += total_factor * CFTOCM(Node[node_idx].dwfInflow->avgValue);
     }
 
     api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
     if (val == 1) { // node_has_extInflow
         p = Node[node_idx].extInflow->basePat; // pattern
-        bline = Node[node_idx].extInflow->baseline; // baseline value
+        bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
         if (p >= 0)
         {
             ptype = Pattern[p].type;
