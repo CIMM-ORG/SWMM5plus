@@ -197,6 +197,7 @@
         "Tests" : true,
         "File" : {
             "adjust" : false,
+            "boundary_conditions" : false,
             "c_library" : false,
             "define_globals" : false,
             "define_indexes" : false,
@@ -232,7 +233,7 @@
             "weir_elements" : false
         },
         "FileGroup" : {
-            "all" : false,
+            "all" : true,
             "definitions" : false,
             "finalization" : false,
             "geometry" : false,

@@ -39,21 +39,21 @@ module initialization
     public :: initialize_all
 
 contains
-    !
-    !==========================================================================
-    ! PUBLIC
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !% PUBLIC
+    !%==========================================================================
+    !%
     subroutine initialize_all()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   a public subroutine that calls all the private initialization subroutines
-    !
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !%
+    !% Description:
+    !%   a public subroutine that calls all the private initialization subroutines
+    !%
+    !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
         !% HACK: for clarity and consistency, this probably should be moved into
@@ -97,25 +97,28 @@ contains
         !% wait for all the processors to reach this stage before starting the time loop
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all
-    !
-    !==========================================================================
-    ! PRIVATE
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !% PRIVATE
+    !%==========================================================================
+    !%
     subroutine init_linknode_arrays()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   Retrieves data from EPA-SWMM interface and populates link and node tables
-    !
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !%
+    !% Description:
+    !%   Retrieves data from EPA-SWMM interface and populates link and node tables
+    !% Note:
+    !%   The order in which link and nodes are populated coincides with the
+    !%   order in which links and nodes are allocated in EPA-SWMM data structures
+    !%   Keeping the same order is important to be able to locate node/link data
+    !%   by label and not by index, reusing EPA-SWMM functionalities.
+    !%-----------------------------------------------------------------------------
 
         integer       :: ii, total_n_links
-        logical       :: l1, l2
 
         character(64) :: subroutine_name = 'init_linknode_arrays'
 
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
@@ -124,7 +127,7 @@ contains
             stop
         end if
 
-        ! Allocate storage for link & node tables
+        !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
         node%I(:,ni_N_link_u) = 0
@@ -137,7 +140,7 @@ contains
             link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
             link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
 
-            ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
+            !% HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
             link%I(ii, li_N_element) = 10
 
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
@@ -152,9 +155,9 @@ contains
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
             link%R(ii,lr_Length) = interface_get_link_attribute(ii, api_conduit_length)
 
-            ! link%R(ii,lr_TopWidth): defined in network_define.f08
+            !% link%R(ii,lr_TopWidth): defined in network_define.f08
             link%R(ii,lr_BreadthScale) = interface_get_link_attribute(ii, api_link_xsect_wMax)
-            ! link%R(ii,lr_Slope): defined in network_define.f08
+            !% link%R(ii,lr_Slope): defined in network_define.f08
             link%R(ii,lr_LeftSlope) = interface_get_link_attribute(ii, api_link_left_slope)
             link%R(ii,lr_RightSlope) = interface_get_link_attribute(ii, api_link_right_slope)
             link%R(ii,lr_Roughness) = interface_get_link_attribute(ii, api_conduit_roughness)
@@ -176,9 +179,9 @@ contains
             else if (total_n_links >= twoI) then
                 node%I(ii, ni_node_type) = nJm
             end if
-            l1 = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
-            l2 = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
-            if (l1 .or. l2) then
+            node%YN(ii, nYN_has_extInflow) = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
+            node%YN(ii, nYN_has_dwfInflow) = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
+            if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
                 if (node%I(ii,ni_N_link_u) == zeroI) then ! No upstream links
                     node%I(ii, ni_node_type) = nBCup
@@ -187,6 +190,7 @@ contains
 
             node%R(ii,nr_InitialDepth) = interface_get_node_attribute(ii, api_node_initDepth)
             node%R(ii,nr_Zbottom) = interface_get_node_attribute(ii, api_node_invertElev)
+            node%I(ii, ni_pattern_resolution) = interface_get_BC_resolution(ii)
         end do
 
         !% Update Link/Node names
@@ -200,10 +204,10 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_linknode_arrays
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine init_bc()
     !%-----------------------------------------------------------------------------
     !%
@@ -227,7 +231,6 @@ contains
     !%-----------------------------------------------------------------------------
         integer :: ii, nidx, ntype, counter_bc_er
         integer :: ntseries, nbasepat
-        logical :: has_dwf_inflow, has_ext_inflow
         character(64) :: subroutine_name = "init_bc"
     !%-----------------------------------------------------------------------------
 
@@ -244,10 +247,12 @@ contains
             !% BClat BCs are associated with elements, thus bi_face_idx is null
             BC%flowI(:, bi_face_idx) = nullvalueI
             BC%flowI(:, bi_elem_idx) = nullvalueI
+            BC%flowR_timeseries = nullValueR
         end if
         if (N_headBC > 0) then
             BC%headI(:,bi_fetch) = 1
             BC%headIdx(:) = 0
+            BC%headR_timeseries = nullValueR
         end if
 
         !% Initialize Inflow BCs
@@ -256,15 +261,8 @@ contains
                 nidx = node%P%have_flowBC(ii)
                 ntype = node%I(nidx, ni_node_type)
 
-                !% Check if node has inflow BC
-                has_dwf_inflow = &
-                    (interface_get_node_attribute(nidx, api_node_has_dwfInflow) == 1)
-                has_ext_inflow = &
-                    (interface_get_node_attribute(nidx, api_node_has_extInflow) == 1)
-
-                print *, nidx, api_node_has_extInflow, has_dwf_inflow, has_ext_inflow
                 !% Handle Inflow BCs (BCup and BClat only)
-                if (has_dwf_inflow .or. has_ext_inflow) then
+                if (node%YN(nidx, nYN_has_extInflow) .or. node%YN(nidx, nYN_has_dwfInflow)) then
                     if ((ntype == nJm) .or. (ntype == nJ2)) then
                         BC%flowI(ii, bi_category) = BClat
                         BC%flowI(ii, bi_elem_idx) = node%I(nidx, ni_elemface_idx) !% elem idx
@@ -286,7 +284,7 @@ contains
                     !% BC does not have fixed value if its associated with dwfInflow
                     !% or if extInflow has tseries or pattern
                     BC%flowI(ii, bi_subcategory) = BCQ_tseries
-                    if (.not. has_dwf_inflow) then !% extInflow only
+                    if (.not. node%YN(nidx, nYN_has_dwfInflow)) then !% extInflow only
                         if ((ntseries == -1) .and. (nbasepat /= -1)) then
                             BC%flowI(ii, bi_subcategory) = BCQ_fixed
                         end if
@@ -314,37 +312,37 @@ contains
 
                 BC%headI(ii, bi_idx) = ii
                 BC%headI(ii, bi_node_idx) = nidx
-                if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FREE_OUTFALL) then
+                if (interface_get_node_attribute(nidx, api_node_subtype) == API_FREE_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_free
-                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_NORMAL_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_NORMAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_normal
-                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FIXED_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_FIXED_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_fixed
-                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIDAL_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_TIDAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tidal
-                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIMESERIES_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_TIMESERIES_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tseries
                 end if
             end do
         end if
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_bc
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine init_partitioning()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   This subroutine calls the public subroutine from the utility module,
-    !   partitioning.f08. It also calls a public subroutine from the temporary
-    !   coarray_partition.f08 utility module that defines how big the coarrays
-    !   must be.
-    !
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !%
+    !% Description:
+    !%   This subroutine calls the public subroutine from the utility module,
+    !%   partitioning.f08. It also calls a public subroutine from the temporary
+    !%   coarray_partition.f08 utility module that defines how big the coarrays
+    !%   must be.
+    !%
+    !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'init_partitioning'
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
@@ -372,12 +370,12 @@ contains
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine init_partitioning
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine init_coarray_length()
-        ! for coarray length determination
+        !% for coarray length determination
         integer :: nimgs_assign
         integer, allocatable :: unique_imagenum(:)
         integer :: ii, jj, kk, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
@@ -397,11 +395,11 @@ contains
         do ii=1, size(unique_imagenum,1)
             node_index = PACK([(counter, counter=1,size(node%I,1))], node%I(:, ni_P_image) == unique_imagenum(ii))
             link_index = PACK([(counter, counter=1,size(link%I,1))], link%I(:, li_P_image) == unique_imagenum(ii))
-            ! create corresponding indices for node and link in this image
+            !% create corresponding indices for node and link in this image
 
-            ! The number of elements and faces is actually decided by the junctions
-            ! So we will calculate the number of junction and base on different scenarios to decided
-            ! how many elem/face are assigned to each image
+            !% The number of elements and faces is actually decided by the junctions
+            !% So we will calculate the number of junction and base on different scenarios to decided
+            !% how many elem/face are assigned to each image
             junction_counter = count(node%I(node_index, ni_node_type) == nJm)
 
             !% first calculate the number of nodes in each partition, assign elems/faces for junctions
@@ -436,7 +434,7 @@ contains
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
                 endif
-                ! then downstream node
+                !% then downstream node
                 if ( ( node%I(link%I(idx, li_Mnode_d), ni_P_is_boundary) == 1) .and. &
                     ( node%I(link%I(idx, li_Mnode_d), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
@@ -469,10 +467,10 @@ contains
         if (setting%Debug%File%utility_array)  print *, '*** leave ',subroutine_name
 
     end subroutine init_coarray_length
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine init_read_arguments()
         integer :: ii
         logical :: arg_param = .false.
@@ -522,9 +520,9 @@ contains
             end if
         end do
     end subroutine init_read_arguments
-    !
-    !==========================================================================
-    ! END OF MODULE
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !% END OF MODULE
+    !%==========================================================================
+    !%
 end module initialization

@@ -107,8 +107,9 @@ double DLLEXPORT api_get_end_datetime()
 
 int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value)
 {
-    int error;
+    int error, bpat, tseries_idx;
     Interface * api = (Interface*) f_api;
+
     error = check_api_is_initialized(api);
     if (error != 0) return error;
 
@@ -125,10 +126,26 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
         else
             *value = -1;
     }
+    else if (attr == node_extInflow_tSeries_x2)
+    {
+        tseries_idx = Node[k].extInflow->tSeries;
+        if (tseries_idx > 0)
+            *value = Tseries[tseries_idx].x2;
+        else
+            *value = -1;
+    }
     else if (attr == node_extInflow_basePat)
     {
         if (Node[k].extInflow)
             *value = Node[k].extInflow->basePat;
+        else
+            *value = -1;
+    }
+    else if (attr == node_extInflow_basePat_type)
+    {
+        bpat = Node[k].extInflow->basePat;
+        if (bpat >= 0) // baseline pattern exists
+            *value = Pattern[bpat].type;
         else
             *value = -1;
     }
@@ -375,10 +392,10 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
     api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
     if (val == 1) { // node_has_extInflow
         p = Node[node_idx].extInflow->basePat; // pattern
+        bline = Node[node_idx].extInflow->baseline; // baseline value
         if (p > 0)
         {
             ptype = Pattern[p].type;
-            bline = Node[node_idx].extInflow->baseline; // baseline value
             if (ptype == MONTHLY_PATTERN)
                 total_extinflow += Pattern[j].factor[mm-1] * bline;
             else if (ptype == DAILY_PATTERN)
@@ -391,6 +408,11 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
                     total_extinflow += Pattern[j].factor[h] * bline;
             }
         }
+        else if (bline > 0)
+        {
+            total_extinflow += bline;
+        }
+
         j = Node[node_idx].extInflow->tSeries; // tseries
         sfactor = Node[node_idx].extInflow->sFactor; // scale factor
         if (j > 0)
@@ -402,56 +424,9 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
     return total_inflow;
 }
 
-int add_link(
-    int li_idx,
-    int ni_idx,
-    int direction,
-    int* ni_N_link_u,
-    int* ni_Mlink_u1,
-    int* ni_Mlink_u2,
-    int* ni_Mlink_u3,
-    int* ni_N_link_d,
-    int* ni_Mlink_d1,
-    int* ni_Mlink_d2,
-    int* ni_Mlink_d3)
-{
+double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime) {
 
-    if (direction == UPSTREAM) {
-        ni_N_link_u[ni_idx] ++;
-        if (ni_N_link_u[ni_idx] <= 3) {
-            if (ni_N_link_u[ni_idx] == 1) {
-                ni_Mlink_u1[ni_idx] = li_idx;
-            } else if (ni_N_link_u[ni_idx] == 2) {
-                ni_Mlink_u2[ni_idx] = li_idx;
-            } else if (ni_N_link_u[ni_idx] == 3) {
-                ni_Mlink_u3[ni_idx] = li_idx;
-            } else {
-                return -500;
-            }
-            return 0;
-        } else {
-            return -400;
-        }
-    } else {
-        ni_N_link_d[ni_idx] ++;
-        if (ni_N_link_d[ni_idx] <= 3) {
-            if (ni_N_link_d[ni_idx] == 1) {
-                ni_Mlink_d1[ni_idx] = li_idx;
-            } else if (ni_N_link_d[ni_idx] == 2) {
-                ni_Mlink_d2[ni_idx] = li_idx;
-            } else if (ni_N_link_d[ni_idx] == 3) {
-                ni_Mlink_d3[ni_idx] = li_idx;
-            } else {
-                return -500;
-            }
-            return 0;
-        } else {
-            return -400;
-        }
-    }
-    return -296;
 }
-
 
 int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
 {
@@ -707,16 +682,88 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
 // v
 // -------------------------------------------------------------------------
 
-int check_api_is_initialized(Interface* api)
+double api_get_outfall_depth(int outfall_idx, double current_datetime, double z)
+//
+//  Input:   j = node index
+//           yNorm = normal flow depth in outfall conduit (ft)
+//           yCrit = critical flow depth in outfall conduit (ft)
+//           z = height to outfall conduit invert (ft)
+//  Output:  none
+//  Purpose: sets water depth at an outfall node.
+//
 {
-    if ( ErrorCode ) return error_getCode(ErrorCode);
-    if ( !api->IsInitialized )
-    {
-        report_writeErrorMsg(ERR_NOT_OPEN, "");
-        return error_getCode(ErrorCode);
-    }
+    // double   x, y;                     // x,y values in table
+    // double   yNew, yNorm, yCrit;       // new depth above invert elev. (ft)
+    // double   stage;                    // water elevation at outfall (ft)
+    // int      k;                        // table index
+    // int      i = Node[outfall_idx].subIndex;     // outfall index
+    // DateTime currentDate;              // current date/time in days
 
-    return 0;
+    // // Compute normal and critical depths
+
+    // switch ( Outfall[i].type )
+    // {
+    //   case FREE_OUTFALL:
+    //     if ( z > 0.0 ) yNew = 0.0;
+    //     else yNew = MIN(yNorm, yCrit);
+    //     return yNew;
+
+    //   case NORMAL_OUTFALL:
+    //     if ( z > 0.0 ) yNew = 0.0;
+    //     else yNew = yNorm;
+    //     return yNew;
+
+    //   case FIXED_OUTFALL:
+    //     stage = Outfall[i].fixedStage;
+    //     break;
+
+    //   case TIDAL_OUTFALL:
+    //     k = Outfall[i].tideCurve;
+    //     table_getFirstEntry(&Curve[k], &x, &y);
+    //     currentDate = NewRoutingTime / MSECperDAY;
+    //     x += ( currentDate - floor(currentDate) ) * 24.0;
+    //     stage = table_lookup(&Curve[k], x) / UCF(LENGTH);
+    //     break;
+
+    //   case TIMESERIES_OUTFALL:
+    //     k = Outfall[i].stageSeries;
+    //     currentDate = StartDateTime + NewRoutingTime / MSECperDAY;
+    //     stage = table_tseriesLookup(&Tseries[k], currentDate, TRUE) /
+    //             UCF(LENGTH);
+    //     break;
+    //   default: stage = Node[j].invertElev;
+    // }
+
+    // // --- now determine depth at node given outfall stage elev.
+
+    // // --- let critical flow depth be min. of critical & normal depth
+    // yCrit = MIN(yCrit, yNorm);
+
+    // // --- if elev. of critical depth is below outfall stage elev. then
+    // //     the outfall stage determines node depth
+    // if ( yCrit + z + Node[j].invertElev < stage )
+    // {
+    //     yNew = stage - Node[j].invertElev;
+    // }
+
+    // // --- otherwise if the outfall conduit lies above the outfall invert
+    // else if ( z > 0.0 )
+    // {
+    //     // --- if the outfall stage lies below the bottom of the outfall
+    //     //     conduit then the result is distance from node invert to stage
+    //     if ( stage < Node[j].invertElev + z )
+    //         yNew = MAX(0.0, (stage - Node[j].invertElev));
+
+    //     // --- otherwise stage lies between bottom of conduit and critical
+    //     //     depth in conduit so result is elev. of critical depth
+    //     else yNew = z + yCrit;
+    // }
+
+    // // --- and for case where there is no conduit offset and outfall stage
+    // //     lies below critical depth, then node depth = critical depth
+    // else yNew = yCrit;
+
+    // return yNew;
 }
 
 int api_load_vars(void * f_api)
@@ -779,6 +826,68 @@ int api_load_vars(void * f_api)
 int api_findObject(int type, char *id)
 {
     return project_findObject(type, id);
+}
+
+int add_link(
+    int li_idx,
+    int ni_idx,
+    int direction,
+    int* ni_N_link_u,
+    int* ni_Mlink_u1,
+    int* ni_Mlink_u2,
+    int* ni_Mlink_u3,
+    int* ni_N_link_d,
+    int* ni_Mlink_d1,
+    int* ni_Mlink_d2,
+    int* ni_Mlink_d3)
+{
+
+    if (direction == UPSTREAM) {
+        ni_N_link_u[ni_idx] ++;
+        if (ni_N_link_u[ni_idx] <= 3) {
+            if (ni_N_link_u[ni_idx] == 1) {
+                ni_Mlink_u1[ni_idx] = li_idx;
+            } else if (ni_N_link_u[ni_idx] == 2) {
+                ni_Mlink_u2[ni_idx] = li_idx;
+            } else if (ni_N_link_u[ni_idx] == 3) {
+                ni_Mlink_u3[ni_idx] = li_idx;
+            } else {
+                return -500;
+            }
+            return 0;
+        } else {
+            return -400;
+        }
+    } else {
+        ni_N_link_d[ni_idx] ++;
+        if (ni_N_link_d[ni_idx] <= 3) {
+            if (ni_N_link_d[ni_idx] == 1) {
+                ni_Mlink_d1[ni_idx] = li_idx;
+            } else if (ni_N_link_d[ni_idx] == 2) {
+                ni_Mlink_d2[ni_idx] = li_idx;
+            } else if (ni_N_link_d[ni_idx] == 3) {
+                ni_Mlink_d3[ni_idx] = li_idx;
+            } else {
+                return -500;
+            }
+            return 0;
+        } else {
+            return -400;
+        }
+    }
+    return -296;
+}
+
+int check_api_is_initialized(Interface* api)
+{
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( !api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    return 0;
 }
 
 // Copy pasted getTokens from src/input.c to ensure independence

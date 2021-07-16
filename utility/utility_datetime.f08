@@ -1,5 +1,9 @@
 module utility_datetime
 
+    use define_api_keys, only: api_daily, &
+                               api_hourly, &
+                               api_weekend, &
+                               api_monthly
     implicit none
 
     integer :: dayspermonth(12,2) = &
@@ -9,12 +13,6 @@ module utility_datetime
     integer, parameter :: datedelta = 693594
     integer, parameter :: secsperday = 86400
 
-    ! Resolution types
-    integer, parameter :: monthly = 1
-    integer, parameter :: daily = 2
-    integer, parameter :: hourly = 3
-    integer, parameter :: weekend = 4
-
     contains
 
     function util_datetime_get_next_time(date_in_days, resolution_type)
@@ -22,13 +20,13 @@ module utility_datetime
         integer, intent(in) :: resolution_type
         real(8) :: util_datetime_get_next_time
 
-        if (resolution_type == daily) then
+        if (resolution_type == api_daily) then
             util_datetime_get_next_time = util_datetime_get_next_day(date_in_days)
-        else if (resolution_type == hourly) then
+        else if (resolution_type == api_hourly) then
             util_datetime_get_next_time = util_datetime_get_next_hour(date_in_days)
-        else if (resolution_type == monthly) then
+        else if (resolution_type == api_monthly) then
             util_datetime_get_next_time = util_datetime_get_next_month(date_in_days)
-        else if (resolution_type == weekend) then
+        else if (resolution_type == api_weekend) then
             util_datetime_get_next_time = util_datetime_get_next_weekendday_hour(date_in_days)
         else
             print *, "Resolution type not supported, use"
