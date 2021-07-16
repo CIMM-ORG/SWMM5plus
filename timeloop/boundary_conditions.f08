@@ -87,7 +87,18 @@ contains
                 end if
             end do
         end if
-        if (setting%Debug%File%boundary_conditions)  print *, '*** leave ', subroutine_name
+
+        if (setting%Debug%File%boundary_conditions) then
+            print *, "BC times"
+            do ii = 1, setting%BC%BCSlots
+                print *, BC%flowR_timeseries(:, ii, br_time)
+            end do
+            print *, "BC values"
+            do ii = 1, setting%BC%BCSlots
+                print *, BC%flowR_timeseries(:, ii, br_value)
+            end do
+            print *, '*** leave ', subroutine_name
+        end if
 
     end subroutine bc_step
 
@@ -105,19 +116,21 @@ contains
 
         if (BC%flowIdx(bc_idx) == 0) then ! First fetch
             BC%flowR_timeseries(bc_idx, 1, br_time) = setting%Time%StartTime
+            BC%flowR_timeseries(bc_idx, 1, br_value) = interface_get_flowBC(bc_idx, setting%Time%StartTime)
         else ! last value becomes first
             BC%flowR_timeseries(bc_idx, 1, br_time) = BC%flowR_timeseries(bc_idx, NN, br_time)
             BC%flowR_timeseries(bc_idx, 1, br_value) = BC%flowR_timeseries(bc_idx, NN, br_value)
         end if
 
         do ii = 2, NN
-            new_inflow_time = interface_get_next_inflow_time(bc_idx, setting%Time%StartTime)
+            new_inflow_time = min(setting%Time%EndTime, interface_get_next_inflow_time(bc_idx, setting%Time%StartTime))
             BC%flowR_timeseries(bc_idx, ii, br_time) = new_inflow_time
             BC%flowR_timeseries(bc_idx, ii, br_value) = interface_get_flowBC(bc_idx, new_inflow_time)
+            if (new_inflow_time == setting%Time%EndTime) exit
         end do
         BC%flowIdx(bc_idx) = 2
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
 
     end subroutine bc_fetch_flow
 

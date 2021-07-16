@@ -129,7 +129,7 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     else if (attr == node_extInflow_tSeries_x2)
     {
         tseries_idx = Node[k].extInflow->tSeries;
-        if (tseries_idx > 0)
+        if (tseries_idx >= 0)
             *value = Tseries[tseries_idx].x2;
         else
             *value = -1;
@@ -393,7 +393,7 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
     if (val == 1) { // node_has_extInflow
         p = Node[node_idx].extInflow->basePat; // pattern
         bline = Node[node_idx].extInflow->baseline; // baseline value
-        if (p > 0)
+        if (p >= 0)
         {
             ptype = Pattern[p].type;
             if (ptype == MONTHLY_PATTERN)
@@ -415,9 +415,9 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
 
         j = Node[node_idx].extInflow->tSeries; // tseries
         sfactor = Node[node_idx].extInflow->sFactor; // scale factor
-        if (j > 0)
+        if (j >= 0)
         {
-            total_extinflow += table_lookup(&Tseries[j], current_datetime) * sfactor;
+            total_extinflow += table_tseriesLookup(&Tseries[j], current_datetime, FALSE) * sfactor;
         }
         total_inflow += total_extinflow;
     }

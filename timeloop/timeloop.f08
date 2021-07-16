@@ -57,7 +57,7 @@ module timeloop
                 !% Call inner loop (multiple subtime steps) of hydraulics
                 call tl_hydraulics()
                 call tl_increment_counters(hydrology)
-                ! call bc_step()
+                call bc_step()
                 call tl_check_finish_status(isTLfinished)
 
             !% HACK to prevent infinite loop in testing

@@ -144,9 +144,6 @@ module interface
     character(len = 1024) :: errmsg
     integer :: errstat
 
-    !% Time constants
-    real(8) :: swmm_start_time, swmm_end_time ! in days
-
 contains
 
     !%=============================================================================
@@ -211,18 +208,18 @@ contains
         !% such that our start time is zero and our end time is
         !% the total simulation duration in seconds.
 
-        swmm_start_time = get_start_datetime()
-        swmm_end_time = get_end_datetime()
+        setting%Time%StartEpoch = get_start_datetime()
+        setting%Time%EndEpoch = get_end_datetime()
         setting%time%starttime = 0
-        setting%time%endtime = (swmm_end_time - swmm_start_time) * real(secsperday)
+        setting%time%endtime = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday)
 
         if (setting%Debug%File%interface) then
             print *, new_line("")
             print *, "N_link", N_link
             print *, "N_node", N_node
             print *, new_line("")
-            print *, "SWMM start time", swmm_start_time
-            print *, "SWMM end time", swmm_end_time
+            print *, "SWMM start time", setting%Time%StartEpoch
+            print *, "SWMM end time", setting%Time%EndEpoch
             print *, "setting%time%starttime", setting%time%starttime
             print *, "setting%time%endtime", setting%time%endtime
             print *, '*** leave ', subroutine_name
@@ -585,10 +582,17 @@ contains
             print *, "Error, node " // node%Names(nidx)%str // " does not have an inflow"
         end if
         nres = node%I(nidx, ni_pattern_resolution)
+        print *, "nres", nres, node%Names(nidx)%str
         if (nres > 0) then
             tnextp = util_datetime_get_next_time(tnow, nres)
             if (node%YN(nidx, nYN_has_extInflow)) then
-                tnext = interface_get_node_attribute(nidx, api_node_extInflow_tSeries_x2)
+                tseries = interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
+                if (tseries >= 0) then
+                    tnext = interface_get_node_attribute(nidx, api_node_extInflow_tSeries_x2)
+                    tnext = util_datetime_epoch_to_secs(tnext)
+                else
+                    tnext = setting%Time%EndTime
+                end if
             end if
             tnext = min(tnext, tnextp)
         else
@@ -600,7 +604,7 @@ contains
         integer, intent(in) :: bc_idx
         real(8), intent(in) :: tnow
         integer             :: nidx
-        real(8)             :: bc_value
+        real(8)             :: epochNow, bc_value
         character(64) :: subroutine_name
 
         subroutine_name = 'interface_get_flowBC'
@@ -615,7 +619,8 @@ contains
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
         nidx = BC%flowI(bc_idx, bi_node_idx)
-        bc_value = ptr_api_get_flowBC(api, nidx-1, tnow)
+        epochNow = util_datetime_secs_to_epoch(tnow)
+        bc_value = ptr_api_get_flowBC(api, nidx-1, epochNow)
 
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
