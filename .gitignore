@@ -26,3 +26,4 @@ interface/src
 debug
 tests/*
 !tests/test*
+.vscode
