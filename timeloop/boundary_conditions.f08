@@ -18,7 +18,7 @@ contains
         integer :: ii, nidx
         integer :: tstep_larger_than_resolution
         real(8) :: ttime, tnow, tend
-        character(64) :: subroutine_name = "bc_step"
+        character(64) :: subroutine_name = "bc_step" 
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name

@@ -29,6 +29,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_deallocate.f08\
               $UTIL_DIR/utility_array.f08\
               $UTIL_DIR/utility_debug.f08\
+              $UTIL_DIR/utility_bc_interpolation.f08\
               $INIT_DIR/pack_mask_arrays.f08\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/partitioning.f08\
@@ -71,8 +72,9 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
 
+
+$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
 # --------------------------------------------------------------------------------------
 
 $clean:
