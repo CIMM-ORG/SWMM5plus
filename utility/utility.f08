@@ -72,9 +72,9 @@ module utility
             "nr_ElementLength_d3"
 
         write(4, '(A)')                                                                                 &
-            "ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_curve_type,ni_assigned,ni_total_inflow," // &
-            "ni_P_image,ni_P_is_boundary,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,"           // &
-            "ni_Mlink_d2,ni_Mlink_d3"
+            "ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_curve_type,ni_assigned,"                 // &
+            "ni_P_image,ni_P_is_boundary,ni_elemface_idx, ni_pattern_resolution,"                    // &
+            "ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3"
 
         do ii = 1, N_node
             write(3,'(*(G0.6,:,","))') node%R(ii,:)
