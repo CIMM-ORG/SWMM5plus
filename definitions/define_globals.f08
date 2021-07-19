@@ -39,6 +39,14 @@ module define_globals
     !% Boundary conditions
     type(BCArray), target :: BC
 
+    !% Pack arrays for BC interpolation
+    integer, allocatable, target :: P_BC_up_face_idx(:)                             !% for BC interpolation value copy
+    integer, allocatable, target :: P_BC_up_order_idx(:)
+    integer, allocatable, target :: P_BC_lat_elem_idx(:)
+    integer, allocatable, target :: P_BC_lat_order_idx(:)
+    integer, allocatable, target :: P_BC_dn_face_idx(:)
+    integer, allocatable, target :: P_BC_dn_order_idx(:)
+
     !%  columns of element and face arrays
     integer, allocatable, target :: col_elemI(:)[:]                                !% columns of elemI array
     integer, allocatable, target :: col_elemP(:)[:],       npack_elemP(:)[:]       !% columns and number of packs for elemP array

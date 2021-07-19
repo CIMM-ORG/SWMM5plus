@@ -25,6 +25,10 @@ module utility_bc_interpolation
         real(8) :: tnow
         integer :: ii, nidx, upper_idx = 0, lower_idx = 0
         real(8), intent(inout) :: BCflow_interp_output(:), BChead_interp_output(:)
+        character(64) :: subroutine_name = 'interpolation_BC'
+        !%-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
 
         tnow = setting%Time%Hydraulics%timeNow
 
@@ -64,6 +68,8 @@ module utility_bc_interpolation
                 end if
             end if
         end do
+
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
 
     end subroutine interpolation_BC
 
