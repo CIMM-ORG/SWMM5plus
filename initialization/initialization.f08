@@ -183,7 +183,7 @@ contains
             node%YN(ii, nYN_has_dwfInflow) = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
-                if (node%I(ii,ni_N_link_u) == zeroI) then ! No upstream links
+                if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then 
                     node%I(ii, ni_node_type) = nBCup
                 end if
             end if
@@ -195,12 +195,6 @@ contains
 
         !% Update Link/Node names
         call interface_update_linknode_names()
-
-        if (setting%Debug%File%initialization) then
-            if (this_image() == 1) then
-                call util_export_linknode_csv()
-            end if
-        end if
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_linknode_arrays
@@ -366,6 +360,12 @@ contains
 
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
+
+        ! if (setting%Debug%File%initialization) then
+            if (this_image() == 1) then
+                call util_export_linknode_csv()
+            end if
+        ! end if
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
