@@ -88,9 +88,10 @@ module define_keys
         enumerator :: type2_Pump            !% type 2 pump type
         enumerator :: type3_Pump            !% type 3 pump type
         enumerator :: type4_Pump            !% type 4 pump type
-        !% BC types ----- BC%I(:,bi_category)
-        enumerator :: BCH
-        enumerator :: BCQ
+        !% BC types
+        enumerator :: BCdn                  !% downstream BC
+        enumerator :: BCup                  !% upstream BC
+        enumerator :: BClat                 !% lateral BC
         !% BC subcategory (Q - flowrate)
         enumerator :: BCQ_fixed
         enumerator :: BCQ_tseries
@@ -100,9 +101,6 @@ module define_keys
         enumerator :: BCH_fixed            !% outfall stage set to a fixed value
         enumerator :: BCH_tidal            !% outfall stage given by a table of tide elevation versus time of day
         enumerator :: BCH_tseries          !% outfall stage supplied from a time series of elevations
-        !% face types
-        enumerator :: BCdn                  !% face with downstream BC
-        enumerator :: BCup                  !% face with upstream BC
         !% face jump types
         enumerator :: jump_none             !% type of hydraulic jump
         enumerator :: jump_from_upstream    !% type of hydraulic jump

@@ -15,7 +15,6 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $JSON_DIR/json_file_module.F90\
               $JSON_DIR/json_module.F90\
               $UTIL_DIR/utility_string.f08\
-              $UTIL_DIR/utility_datetime.f08\
               $DEF_DIR/define_types.f08\
               $DEF_DIR/define_api_keys.f08\
               $DEF_DIR/define_globals.f08\
@@ -23,12 +22,14 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $DEF_DIR/define_settings.f08\
               $DEF_DIR/define_indexes.f08\
               $UTIL_DIR/utility.f08\
+              $UTIL_DIR/utility_datetime.f08\
               $API_DIR/c_library.f08\
               $API_DIR/interface.f08\
               $UTIL_DIR/utility_allocate.f08\
               $UTIL_DIR/utility_deallocate.f08\
               $UTIL_DIR/utility_array.f08\
               $UTIL_DIR/utility_debug.f08\
+              $UTIL_DIR/utility_bc_interpolation.f08\
               $INIT_DIR/pack_mask_arrays.f08\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/partitioning.f08\
@@ -43,6 +44,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $GEO_DIR/rectangular_channel.f08\
               $GEO_DIR/trapezoidal_channel.f08\
               $GEO_DIR/geometry.f08\
+              $TL_DIR/boundary_conditions.f08\
               $TL_DIR/lowlevel_rk2.f08\
               $TL_DIR/update.f08\
               $TL_DIR/face.f08\
@@ -70,8 +72,9 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
 
+
+$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
 # --------------------------------------------------------------------------------------
 
 $clean:

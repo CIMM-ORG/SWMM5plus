@@ -203,4 +203,11 @@ module define_globals
     integer, parameter :: LinearlyVarying   = 2
     integer, parameter :: ExponentialDecay  = 3
 
+    !% datetime related variables
+    integer, parameter :: datedelta = 693594
+    integer, parameter :: secsperday = 86400
+    integer :: dayspermonth(12,2) = &
+        reshape((/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, & ! normal years
+        31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/), (/12,2/)) ! leap years
+
 end module define_globals

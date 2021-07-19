@@ -39,21 +39,21 @@ module initialization
     public :: initialize_all
 
 contains
-    !
-    !==========================================================================
-    ! PUBLIC
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !% PUBLIC
+    !%==========================================================================
+    !%
     subroutine initialize_all()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   a public subroutine that calls all the private initialization subroutines
-    !
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !%
+    !% Description:
+    !%   a public subroutine that calls all the private initialization subroutines
+    !%
+    !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
         !% HACK: for clarity and consistency, this probably should be moved into
@@ -70,7 +70,7 @@ contains
         if (this_image() == 1) then
             call execute_command_line ("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
-
+        
         !% read and store the command-line options
         call init_read_arguments ()
 
@@ -85,9 +85,6 @@ contains
         !% partition the network for multi-processor parallel computation
         call init_partitioning ()
 
-        ! sync all
-        !% HACK: this sync call is probably not needed
-
         call init_network ()
 
         call init_IC_setup ()
@@ -97,27 +94,31 @@ contains
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
+        !% wait for all the processors to reach this stage before starting the time loop
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all
-    !
-    !==========================================================================
-    ! PRIVATE
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !% PRIVATE
+    !%==========================================================================
+    !%
     subroutine init_linknode_arrays()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   Retrieves data from EPA-SWMM interface and populates link and node tables
-    !
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !%
+    !% Description:
+    !%   Retrieves data from EPA-SWMM interface and populates link and node tables
+    !% Note:
+    !%   The order in which link and nodes are populated coincides with the
+    !%   order in which links and nodes are allocated in EPA-SWMM data structures
+    !%   Keeping the same order is important to be able to locate node/link data
+    !%   by label and not by index, reusing EPA-SWMM functionalities.
+    !%-----------------------------------------------------------------------------
 
         integer       :: ii, total_n_links
-        logical       :: l1, l2
 
         character(64) :: subroutine_name = 'init_linknode_arrays'
 
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
@@ -126,7 +127,7 @@ contains
             stop
         end if
 
-        ! Allocate storage for link & node tables
+        !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
         node%I(:,ni_N_link_u) = 0
@@ -139,7 +140,7 @@ contains
             link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
             link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
 
-            ! HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
+            !% HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
             link%I(ii, li_N_element) = 10
 
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
@@ -154,9 +155,9 @@ contains
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
             link%R(ii,lr_Length) = interface_get_link_attribute(ii, api_conduit_length)
 
-            ! link%R(ii,lr_TopWidth): defined in network_define.f08
+            !% link%R(ii,lr_TopWidth): defined in network_define.f08
             link%R(ii,lr_BreadthScale) = interface_get_link_attribute(ii, api_link_xsect_wMax)
-            ! link%R(ii,lr_Slope): defined in network_define.f08
+            !% link%R(ii,lr_Slope): defined in network_define.f08
             link%R(ii,lr_LeftSlope) = interface_get_link_attribute(ii, api_link_left_slope)
             link%R(ii,lr_RightSlope) = interface_get_link_attribute(ii, api_link_right_slope)
             link%R(ii,lr_Roughness) = interface_get_link_attribute(ii, api_conduit_roughness)
@@ -178,114 +179,164 @@ contains
             else if (total_n_links >= twoI) then
                 node%I(ii, ni_node_type) = nJm
             end if
-            l1 = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
-            l2 = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
-            if (l1 .or. l2) then
+            node%YN(ii, nYN_has_extInflow) = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
+            node%YN(ii, nYN_has_dwfInflow) = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
+            if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
-                if (node%I(ii,ni_N_link_u) == zeroI) then ! No upstream links
+                if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then 
                     node%I(ii, ni_node_type) = nBCup
                 end if
             end if
 
             node%R(ii,nr_InitialDepth) = interface_get_node_attribute(ii, api_node_initDepth)
             node%R(ii,nr_Zbottom) = interface_get_node_attribute(ii, api_node_invertElev)
+            node%I(ii, ni_pattern_resolution) = interface_get_BC_resolution(ii)
         end do
 
         !% Update Link/Node names
         call interface_update_linknode_names()
 
-        if (setting%Debug%File%initialization) then
-            if (this_image() == 1) then
-                call util_export_linknode_csv()
-            end if
-        end if
-
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_linknode_arrays
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine init_bc()
-        integer :: ii, nidx, counter_bc_er
+    !%-----------------------------------------------------------------------------
+    !%
+    !% Description:
+    !%    Initializes boundary connditions
+    !%
+    !% Notes:
+    !%    The structures are general enough to support 3 types of BCs:
+    !%
+    !%    BCup: updstream boundary condition which can be inflow or head BC
+    !%    BCdn: downstream boundary condition which can be inflow or head BC
+    !%    BClat: lateral inflow coming into and nJ2 or nJm node.
+    !%
+    !%    However, the code only supports inflow BCs for BCup and BClat,
+    !%    and head BCs for BCdn, mimimcking EPA-SWMM 5.13 functionalities.
+    !%    Further developments allowing other types of inflow and head BCs,
+    !%    should store the respective BC in either the BC%inflowX or the
+    !%    BC%headX arrays defining the corresponding type of BC (i.e., BCup,
+    !%    BCdn, and BClat) in the BC%xI(:,bi_category) column.
+    !%
+    !%-----------------------------------------------------------------------------
+        integer :: ii, nidx, ntype, counter_bc_er
         integer :: ntseries, nbasepat
-        logical :: has_dwf_inflow, has_ext_inflow
         character(64) :: subroutine_name = "init_bc"
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization)  print *, '*** enter ', subroutine_name
 
         call util_allocate_bc()
 
         !% Convention to denote that xR_timeseries arrays haven't been fetched
-        BC%flowIdx(:) = 0
-        BC%headIdx(:) = 0
+        if (N_flowBC > 0) then
+            BC%flowI(:,bi_fetch) = 1
+            BC%flowIdx(:) = 0
+            !% Convention to denote association between nodes and face/elements
+            !% BCup and BCdn BCs are associated with faces, thus bi_elem_idx is null
+            !% BClat BCs are associated with elements, thus bi_face_idx is null
+            BC%flowI(:, bi_face_idx) = nullvalueI
+            BC%flowI(:, bi_elem_idx) = nullvalueI
+            BC%flowR_timeseries = nullValueR
+        end if
+        if (N_headBC > 0) then
+            BC%headI(:,bi_fetch) = 1
+            BC%headIdx(:) = 0
+            BC%headR_timeseries = nullValueR
+        end if
 
         !% Initialize Inflow BCs
-        !% BC%I(ii, bi_face_idx) is assigned later
-        do ii = 1, N_flowBC
-            BC%flowI(ii, bi_idx) = ii
-            BC%flowI(ii, bi_now) = 1
-            nidx = node%P%have_flowBC(ii)
-            BC%flowI(ii, bi_node_idx) = nidx
+        if (N_flowBC > 0) then
+            do ii = 1, N_flowBC
+                nidx = node%P%have_flowBC(ii)
+                ntype = node%I(nidx, ni_node_type)
 
-            !% Check if node has inflow BC
-            has_dwf_inflow = (interface_get_node_attribute(nidx, api_node_has_dwfInflow) == 1)
-            has_ext_inflow = (interface_get_node_attribute(nidx, api_node_has_extInflow) == 1)
-            nbasepat = interface_get_node_attribute(nidx, api_node_extInflow_basePat)
-            ntseries = interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
-
-            if (has_dwf_inflow .or. has_ext_inflow) then
-                BC%flowI(ii, bi_category) = BCQ
-                BC%flowI(ii, bi_subcategory) = BCQ_tseries
-                if (.not. has_dwf_inflow) then
-                    if ((ntseries == -1) .and. (nbasepat /= -1)) then
-                        BC%flowI(ii, bi_subcategory) = BCQ_fixed
+                !% Handle Inflow BCs (BCup and BClat only)
+                if (node%YN(nidx, nYN_has_extInflow) .or. node%YN(nidx, nYN_has_dwfInflow)) then
+                    if ((ntype == nJm) .or. (ntype == nJ2)) then
+                        BC%flowI(ii, bi_category) = BClat
+                        BC%flowI(ii, bi_elem_idx) = node%I(nidx, ni_elemface_idx) !% elem idx
+                    else if (ntype == nBCup) then
+                        BC%flowI(ii, bi_category) = BCup
+                        BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
+                    else
+                        print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
+                        stop
                     end if
-                end if
-            end if
-        end do
 
-        !% Initialize Elevation BCs
-        !% BC%I(ii, bi_face_idx) is assigned later
-        do ii = 1, N_headBC
-            BC%headI(ii, bi_idx) = ii
-            BC%headI(ii, bi_now) = 1
-            nidx = node%P%have_headBC(ii)
-            BC%headI(ii, bi_node_idx) = nidx
-            BC%headI(ii, bi_category) = BCdn
-            if (node%I(nidx, ni_node_type) == nBCdn) then
-                BC%headI(ii, bi_category) = BCH
-                if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FREE_OUTFALL) then
+                    BC%flowI(ii, bi_node_idx) = nidx
+                    BC%flowI(ii, bi_idx) = ii
+                    nbasepat = &
+                        interface_get_node_attribute(nidx, api_node_extInflow_basePat)
+                    ntseries = &
+                        interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
+
+                    !% BC does not have fixed value if its associated with dwfInflow
+                    !% or if extInflow has tseries or pattern
+                    BC%flowI(ii, bi_subcategory) = BCQ_tseries
+                    if (.not. node%YN(nidx, nYN_has_dwfInflow)) then !% extInflow only
+                        if ((ntseries == -1) .and. (nbasepat /= -1)) then
+                            BC%flowI(ii, bi_subcategory) = BCQ_fixed
+                        end if
+                    end if
+                else
+                    print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
+                    stop
+                end if
+            end do
+        end if
+
+        !% Initialize Head BCs
+        if (N_headBC > 0) then
+            do ii = 1, N_headBC
+                nidx = node%P%have_headBC(ii)
+                ntype = node%I(nidx, ni_node_type)
+
+                if (ntype == nBCdn) then
+                    BC%headI(ii, bi_category) = BCdn
+                    BC%headI(ii, bi_face_idx) = node%I(ii, ni_elemface_idx) !% face idx
+                else
+                    print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
+                    stop
+                end if
+
+                BC%headI(ii, bi_idx) = ii
+                BC%headI(ii, bi_node_idx) = nidx
+                if (interface_get_node_attribute(nidx, api_node_subtype) == API_FREE_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_free
-                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_NORMAL_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_NORMAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_normal
-                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_FIXED_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_FIXED_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_fixed
-                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIDAL_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_TIDAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tidal
-                else if (interface_get_node_attribute(nidx, ni_node_subtype) == API_TIMESERIES_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_TIMESERIES_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tseries
                 end if
-            end if
-        end do
+            end do
+        end if
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_bc
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine init_partitioning()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   This subroutine calls the public subroutine from the utility module,
-    !   partitioning.f08. It also calls a public subroutine from the temporary
-    !   coarray_partition.f08 utility module that defines how big the coarrays
-    !   must be.
-    !
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !%
+    !% Description:
+    !%   This subroutine calls the public subroutine from the utility module,
+    !%   partitioning.f08. It also calls a public subroutine from the temporary
+    !%   coarray_partition.f08 utility module that defines how big the coarrays
+    !%   must be.
+    !%
+    !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'init_partitioning'
-    !-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
 
@@ -310,15 +361,21 @@ contains
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
 
+        ! if (setting%Debug%File%initialization) then
+            if (this_image() == 1) then
+                call util_export_linknode_csv()
+            end if
+        ! end if
+
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 
     end subroutine init_partitioning
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine init_coarray_length()
-        ! for coarray length determination
+        !% for coarray length determination
         integer :: nimgs_assign
         integer, allocatable :: unique_imagenum(:)
         integer :: ii, jj, kk, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
@@ -338,11 +395,11 @@ contains
         do ii=1, size(unique_imagenum,1)
             node_index = PACK([(counter, counter=1,size(node%I,1))], node%I(:, ni_P_image) == unique_imagenum(ii))
             link_index = PACK([(counter, counter=1,size(link%I,1))], link%I(:, li_P_image) == unique_imagenum(ii))
-            ! create corresponding indices for node and link in this image
+            !% create corresponding indices for node and link in this image
 
-            ! The number of elements and faces is actually decided by the junctions
-            ! So we will calculate the number of junction and base on different scenarios to decided
-            ! how many elem/face are assigned to each image
+            !% The number of elements and faces is actually decided by the junctions
+            !% So we will calculate the number of junction and base on different scenarios to decided
+            !% how many elem/face are assigned to each image
             junction_counter = count(node%I(node_index, ni_node_type) == nJm)
 
             !% first calculate the number of nodes in each partition, assign elems/faces for junctions
@@ -377,7 +434,7 @@ contains
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
                 endif
-                ! then downstream node
+                !% then downstream node
                 if ( ( node%I(link%I(idx, li_Mnode_d), ni_P_is_boundary) == 1) .and. &
                     ( node%I(link%I(idx, li_Mnode_d), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
@@ -410,10 +467,10 @@ contains
         if (setting%Debug%File%utility_array)  print *, '*** leave ',subroutine_name
 
     end subroutine init_coarray_length
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine init_read_arguments()
         integer :: ii
         logical :: arg_param = .false.
@@ -463,9 +520,9 @@ contains
             end if
         end do
     end subroutine init_read_arguments
-    !
-    !==========================================================================
-    ! END OF MODULE
-    !==========================================================================
-    !
+    !%
+    !%==========================================================================
+    !% END OF MODULE
+    !%==========================================================================
+    !%
 end module initialization

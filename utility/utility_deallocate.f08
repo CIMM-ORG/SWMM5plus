@@ -40,7 +40,7 @@ contains
         call util_deallocate_linknode()
         call util_deallocate_elemX_faceX()
         call util_deallocate_columns()
-        ! call util_deallocate_bc()
+        call util_deallocate_bc()
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_network_data
@@ -67,7 +67,7 @@ contains
     !-----------------------------------------------------------------------------
 
         integer       :: ii
-        character(64) :: subroutine_name = 'util_deallocate_linknode_storage'
+        character(64) :: subroutine_name = 'util_deallocate_linknode'
 
     !-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
@@ -84,13 +84,15 @@ contains
         deallocate(node%YN, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
-        !deallocate(node%P%have_flowBC, stat=deallocation_status, errmsg=emsg)
-        deallocate(node%P%have_flowBC, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg)
+        if (allocated(node%P%have_flowBC)) then
+            deallocate(node%P%have_flowBC, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg)
+        end if
 
-        !deallocate(node%P%have_headBC, stat=deallocation_status, errmsg=emsg)
-        deallocate(node%P%have_headBC, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg)
+        if (allocated(node%P%have_headBC)) then
+            deallocate(node%P%have_headBC, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg)
+        end if
 
         !% Deallocate link/node names
         do ii = 1, N_link
@@ -307,23 +309,27 @@ contains
 
         if (setting%Debug%File%utility_deallocate) print *, '*** enter ',subroutine_name
 
-        deallocate(BC%flowI, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check (deallocation_status, emsg)
+        if (N_flowBC > 0) then
+            deallocate(BC%flowI, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg)
 
-        deallocate(BC%flowR_timeseries, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check (deallocation_status, emsg)
+            deallocate(BC%flowR_timeseries, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg)
 
-        deallocate(BC%flowIdx, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check (deallocation_status, emsg)
+            deallocate(BC%flowIdx, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg)
+        end if
 
-        deallocate(BC%headI, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check (deallocation_status, emsg)
+        if (N_headBC > 0) then
+            deallocate(BC%headI, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg)
 
-        deallocate(BC%headR_timeseries, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check (deallocation_status, emsg)
+            deallocate(BC%headR_timeseries, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg)
 
-        deallocate(BC%headIdx, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check (deallocation_status, emsg)
+            deallocate(BC%headIdx, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg)
+        end if
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
     end subroutine util_deallocate_bc

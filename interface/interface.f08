@@ -4,6 +4,7 @@ module interface
     use c_library
     use utility
     use utility_datetime
+    use define_indexes
     use define_keys
     use define_api_keys
     use define_globals
@@ -28,6 +29,9 @@ module interface
     public :: interface_get_link_attribute
     public :: interface_get_obj_name_len
     public :: interface_update_linknode_names
+    public :: interface_get_BC_resolution
+    public :: interface_get_next_inflow_time
+    public :: interface_get_flowBC
 
     !% -------------------------------------------------------------------------------
     !% PRIVATE
@@ -115,14 +119,14 @@ module interface
             real(c_double) :: api_get_end_datetime
         end function api_get_end_datetime
 
-        function api_get_inflow_bc(api, k, current_datetime)
+        function api_get_flowBC(api, k, current_datetime)
             use, intrinsic :: iso_c_binding
             implicit none
             type(c_ptr),    value, intent(in) :: api
             integer(c_int), value, intent(in) :: k
             real(c_double),        intent(in) :: current_datetime
-            real(c_double)                    :: api_get_inflow_bc
-        end function api_get_inflow_bc
+            real(c_double)                    :: api_get_flowBC
+        end function api_get_flowBC
     end interface
 
     procedure(api_initialize),          pointer :: ptr_api_initialize
@@ -134,14 +138,11 @@ module interface
     procedure(api_get_object_name),     pointer :: ptr_api_get_object_name
     procedure(api_get_start_datetime),  pointer :: ptr_api_get_start_datetime
     procedure(api_get_end_datetime),    pointer :: ptr_api_get_end_datetime
-    procedure(api_get_inflow_bc),       pointer :: ptr_api_get_inflow_bc
+    procedure(api_get_flowBC),          pointer :: ptr_api_get_flowBC
 
     !% Error handling
     character(len = 1024) :: errmsg
     integer :: errstat
-
-    !% Time constants
-    real(8) :: swmm_start_time, swmm_end_time ! in days
 
 contains
 
@@ -207,18 +208,18 @@ contains
         !% such that our start time is zero and our end time is
         !% the total simulation duration in seconds.
 
-        swmm_start_time = get_start_datetime()
-        swmm_end_time = get_end_datetime()
+        setting%Time%StartEpoch = get_start_datetime()
+        setting%Time%EndEpoch = get_end_datetime()
         setting%time%starttime = 0
-        setting%time%endtime = (swmm_end_time - swmm_start_time) * real(secsperday)
+        setting%time%endtime = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday)
 
         if (setting%Debug%File%interface) then
             print *, new_line("")
             print *, "N_link", N_link
             print *, "N_node", N_node
             print *, new_line("")
-            print *, "SWMM start time", swmm_start_time
-            print *, "SWMM end time", swmm_end_time
+            print *, "SWMM start time", setting%Time%StartEpoch
+            print *, "SWMM end time", setting%Time%EndEpoch
             print *, "setting%time%starttime", setting%time%starttime
             print *, "setting%time%endtime", setting%time%endtime
             print *, '*** leave ', subroutine_name
@@ -509,12 +510,121 @@ contains
     !%  V
     !%-----------------------------------------------------------------------------
 
-    ! subroutine interface_fetch_QBC()
-    !     integer :: ii
-    !     do ii = 1, N_QBC_R
-    !         BC%QR(ii,)
-    !     end do
-    ! end subroutine interface_fetch_QBC
+    function interface_get_BC_resolution(node_idx) result(resolution)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Computes the finest pattern resolution associated with a node's BC.
+    !%    The resulting pattern type is stored in node%I(:,ni_pattern_resolution)
+    !%    and is reused to fetch inflow BCs such that the amount of inflow points
+    !%    is minimized.
+    !% Notes:
+    !%    * Currently patterns are only associated with inflow BCs. It is necessary
+    !%      to preserve the order of api_monthly, api_weekend, api_daily, and
+    !%      api_hourly in define_api_index.f08 for the function to work.
+    !%    * The function is called during the intialization of the node%I table
+    !%-----------------------------------------------------------------------------
+        integer, intent(in) :: node_idx
+        integer             :: resolution
+        integer             :: p0, p1, p2, p3, p4
+    !%-----------------------------------------------------------------------------
+
+        if (node%YN(node_idx, nYN_has_inflow)) then ! Upstream/Lateral BC
+
+            resolution = -1
+
+            if (node%YN(node_idx, nYN_has_extInflow)) then
+
+                p0 = interface_get_node_attribute(node_idx, api_node_extInflow_basePat_type)
+
+                if (p0 == api_hourly_pattern) then
+                    resolution = api_hourly
+                else if (p0 == api_weekend_pattern) then
+                    resolution = api_weekend
+                else if (p0 == api_daily_pattern) then
+                    resolution = api_daily
+                else if (p0 == api_monthly_pattern) then
+                    resolution = api_monthly
+                end if
+
+            end if
+
+            if (node%YN(node_idx, nYN_has_dwfInflow)) then
+
+                p1 = interface_get_node_attribute(node_idx, api_node_dwfInflow_hourly_pattern)
+                p2 = interface_get_node_attribute(node_idx, api_node_dwfInflow_weekend_pattern)
+                p3 = interface_get_node_attribute(node_idx, api_node_dwfInflow_daily_pattern)
+                p4 = interface_get_node_attribute(node_idx, api_node_dwfInflow_monthly_pattern)
+
+                if (p1 > 0) then
+                    resolution = max(api_hourly, resolution)
+                else if (p2 > 0) then
+                    resolution = max(api_weekend, resolution)
+                else if (p3 > 0) then
+                    resolution = max(api_daily, resolution)
+                else if (p4 > 0) then
+                    resolution = max(api_monthly, resolution)
+                end if
+
+            end if
+
+        end if
+
+    end function interface_get_BC_resolution
+
+    function interface_get_next_inflow_time(bc_idx, tnow) result(tnext)
+        integer, intent(in) :: bc_idx
+        real(8), intent(in) :: tnow
+        real(8)             :: tnext, tnextp
+        integer             :: nidx, nres, tseries
+
+        nidx = BC%flowI(bc_idx, bi_node_idx)
+        if (.not. node%YN(nidx, nYN_has_inflow)) then
+            print *, "Error, node " // node%Names(nidx)%str // " does not have an inflow"
+        end if
+        nres = node%I(nidx, ni_pattern_resolution)
+        print *, "nres", nres, node%Names(nidx)%str
+        if (nres > 0) then
+            tnextp = util_datetime_get_next_time(tnow, nres)
+            if (node%YN(nidx, nYN_has_extInflow)) then
+                tseries = interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
+                if (tseries >= 0) then
+                    tnext = interface_get_node_attribute(nidx, api_node_extInflow_tSeries_x2)
+                    tnext = util_datetime_epoch_to_secs(tnext)
+                else
+                    tnext = setting%Time%EndTime
+                end if
+            end if
+            tnext = min(tnext, tnextp)
+        else
+            tnext = setting%Time%EndTime
+        end if
+    end function interface_get_next_inflow_time
+
+    function interface_get_flowBC(bc_idx, tnow) result(bc_value)
+        integer, intent(in) :: bc_idx
+        real(8), intent(in) :: tnow
+        integer             :: nidx
+        real(8)             :: epochNow, bc_value
+        character(64) :: subroutine_name
+
+        subroutine_name = 'interface_get_flowBC'
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
+
+        c_lib%procname = "api_get_flowBC"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
+        nidx = BC%flowI(bc_idx, bi_node_idx)
+        epochNow = util_datetime_secs_to_epoch(tnow)
+        bc_value = ptr_api_get_flowBC(api, nidx-1, epochNow)
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
+
+    end function interface_get_flowBC
 
     !%=============================================================================
     !% PRIVATE

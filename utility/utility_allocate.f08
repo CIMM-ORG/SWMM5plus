@@ -979,23 +979,27 @@ contains
             stop
         end if
 
-        allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg)
+        if (N_headBC > 0) then
+            allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
 
-        allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg)
+            allocate(BC%headR_timeseries(N_headBC, setting%BC%BCSlots, N_headR), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
 
-        allocate(BC%headR_timeseries(N_headBC, setting%BC%BCSlots, N_headR), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg)
+            allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
+        end if
 
-        allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg)
+        if (N_flowBC > 0) then
+            allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
 
-        allocate(BC%flowR_timeseries(N_flowBC, setting%BC%BCSlots, N_flowR), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg)
+            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%BCSlots, N_flowR), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
 
-        allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg)
+            allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
+        end if
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
     end subroutine util_allocate_bc

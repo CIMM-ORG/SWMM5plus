@@ -4,7 +4,8 @@ module utility
     use define_keys
     use define_globals
     use define_settings, only: setting
-
+    use, intrinsic :: iso_fortran_env, only: error_unit
+    
     implicit none
 
 !-----------------------------------------------------------------------------
@@ -19,7 +20,8 @@ module utility
     public :: util_export_linknode_csv
     public :: util_count_node_types
     public :: util_sign_with_ones
-
+    public :: util_print_warning
+    
     contains
     !%
     !%==========================================================================  
@@ -70,9 +72,9 @@ module utility
             "nr_ElementLength_d3"
 
         write(4, '(A)')                                                                                 &
-            "ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_curve_type,ni_assigned,ni_total_inflow," // &
-            "ni_P_image,ni_P_is_boundary,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,"           // &
-            "ni_Mlink_d2,ni_Mlink_d3"
+            "ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_curve_type,ni_assigned,"                 // &
+            "ni_P_image,ni_P_is_boundary,ni_elemface_idx, ni_pattern_resolution,"                    // &
+            "ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3"
 
         do ii = 1, N_node
             write(3,'(*(G0.6,:,","))') node%R(ii,:)
@@ -118,8 +120,35 @@ module utility
         outarray = oneR
         outarray = sign(outarray,inarray)
 
-    end function util_sign_with_ones  
+    end function util_sign_with_ones
+
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+
+    subroutine util_print_warning(msg,async)
+        !% Used for opening up the warning files and writing to the file
+
+        character(len = *), intent(in) :: msg
+        logical, optional, intent(in) :: async
+        logical :: async_actual
+        
+        if(present(async)) then
+            async_actual = async
+        else
+            async_actual = .true.
+        end if
+        if(this_image() == 1) then
+            print *, "Warning: "//trim(msg)
+        else if(async_actual) then
+            print *, "Warning: "//trim(msg)
+        end if
+        
+
+    end subroutine util_print_warning
+    
     !%========================================================================== 
     !% END OF MODULE
-    !%+=========================================================================    
+    !%==========================================================================    
 end module utility

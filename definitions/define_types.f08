@@ -71,8 +71,8 @@ module define_types
     !% ==============================================================
 
     type NodePack
-        integer, allocatable :: have_flowBC(:)
-        integer, allocatable :: have_headBC(:)
+        integer,      allocatable :: have_flowBC(:)
+        integer,      allocatable :: have_headBC(:)
     end type NodePack
 
     type NodeArray

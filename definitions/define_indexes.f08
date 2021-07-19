@@ -79,19 +79,18 @@ module define_indexes
     enum, bind(c)
         enumerator :: ni_idx = 1
         enumerator :: ni_node_type
-        enumerator :: ni_node_subtype
         enumerator :: ni_N_link_u      ! number of upstream links at this node
         enumerator :: ni_N_link_d      ! number of downstram links at this node
         enumerator :: ni_curve_type    ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
         enumerator :: ni_assigned      ! given 1 when node has been assigned to face/elem,
-        enumerator :: ni_total_inflow  ! index to total_inflow (-1 if not total_inflow)
         enumerator :: ni_P_image       ! image number assigned from BIPquick
         enumerator :: ni_P_is_boundary ! 0=this node has nothing to do with image communication; >0=this node is a partition boundary
         ! if node is BCup or BCdn, ni_elemface_idx is the index of its associated BC face
         ! if node is nJm or nJ2, ni_elemface_idx is the index of the associated element
         enumerator :: ni_elemface_idx
+        enumerator :: ni_pattern_resolution ! minimum resolution of patterns associated with node BC
     end enum
-    integer, parameter :: ni_idx_base1 = ni_elemface_idx
+    integer, parameter :: ni_idx_base1 = ni_pattern_resolution
 
     !% column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
@@ -127,8 +126,6 @@ module define_indexes
         enumerator :: nr_Eta
         enumerator :: nr_Depth
         enumerator :: nr_Volume
-        enumerator :: nr_LateralInflow
-        enumerator :: nr_TotalInflow
         enumerator :: nr_Flooding
         enumerator :: nr_JunctionBranch_Kfactor
     end enum
@@ -156,10 +153,11 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: nYN_has_inflow = 1
-        enumerator :: nYN_temp1
+        enumerator :: nYN_has_extInflow
+        enumerator :: nYN_has_dwfInflow
     end enum
     !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_nodeYN  = nYN_temp1
+    integer, target :: Ncol_nodeYN  = nYN_has_dwfInflow
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for link%R(:,:) arrays
@@ -200,18 +198,18 @@ module define_indexes
     !% Column indexes for BC%xI(:,:)
     enum, bind(c)
         enumerator :: bi_idx = 1
-        enumerator :: bi_now         ! index of current BC value
         enumerator :: bi_node_idx
         enumerator :: bi_face_idx    ! Index of face nBCup nodes
         enumerator :: bi_elem_idx    ! Index of element associated with either nJ2 or nJm node with lateral inflow
         enumerator :: bi_category
         enumerator :: bi_subcategory
+        enumerator :: bi_fetch       ! 1 if BC%xR_timeseries needs to be fetched, 0 otherwise
     end enum
     !% HACK - we will probably want to create a different set of indexes for BC%flowI and BC%headI tables
     !% For instance, BC%flowI tables will probably need addititonal information to distribute flowrates
     !% over link elements.
-    integer, parameter :: N_flowI = bi_subcategory
-    integer, parameter :: N_headI = bi_subcategory
+    integer, parameter :: N_flowI = bi_fetch
+    integer, parameter :: N_headI = bi_fetch
 
     !% Column indexes for BC_xR_timeseries(:,:,:)
     enum, bind(c)
@@ -581,6 +579,7 @@ module define_indexes
         enumerator ::  fi_GhostElem_uL              !% map to upstream ghost element
         enumerator ::  fi_GhostElem_dL              !% map to downstream ghost element
         enumerator ::  fi_Connected_image           !% image number a shared face connected to
+        enumerator ::  fi_node_idx                  !% if the face is originated from a node, then the idx
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
         ! enumerator ::  fi_Melem_dG                 !% map to element upstream (global index)
@@ -591,7 +590,7 @@ module define_indexes
 
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceI =  fi_Connected_image
+    integer, target :: Ncol_faceI =  fi_node_idx
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceM(:,:) arrays

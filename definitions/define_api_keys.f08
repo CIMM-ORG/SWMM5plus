@@ -90,8 +90,10 @@ module define_api_keys
         enumerator :: api_node_invertElev
         enumerator :: api_node_initDepth
         enumerator :: api_node_extInflow_tSeries
+        enumerator :: api_node_extInflow_tSeries_x2
         enumerator :: api_node_extInflow_basePat
         enumerator :: api_node_extInflow_baseline
+        enumerator :: api_node_extInflow_basePat_type
         enumerator :: api_node_extInflow_sFactor
         enumerator :: api_node_has_extInflow
         enumerator :: api_node_dwfInflow_monthly_pattern
@@ -100,6 +102,7 @@ module define_api_keys
         enumerator :: api_node_dwfInflow_weekend_pattern
         enumerator :: api_node_dwfInflow_avgvalue
         enumerator :: api_node_has_dwfInflow
+        enumerator :: api_node_depth
         enumerator :: api_node_inflow
         enumerator :: api_node_volume
         enumerator :: api_node_overflow
@@ -132,9 +135,9 @@ module define_api_keys
     ! Datetime resolution types
     enum, bind(c)
         enumerator :: api_monthly = 1
+        enumerator :: api_weekend
         enumerator :: api_daily
         enumerator :: api_hourly
-        enumerator :: api_weekend
     end enum
 
 end module define_api_keys
