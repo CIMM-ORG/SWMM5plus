@@ -60,7 +60,7 @@ contains
         sync all
 
         !% print result
-        ! if (setting%Debug%File%network_define) then
+        if (setting%Debug%File%network_define) then
             !% only using the first processor to print results
             if (this_image() == 1) then
                 do ii = 1,num_images()
@@ -103,7 +103,7 @@ contains
                     call execute_command_line('')
                 enddo
             endif
-        ! endif
+        endif
         
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
     end subroutine init_network
