@@ -41,7 +41,7 @@ module face
         !% face reconstruction of all the interior faces
         Npack => npack_faceP(faceCol)
         if (Npack > 0) then
-            call face_interpolation_interior_byPack (faceCol, Npack)
+            !call face_interpolation_interior_byPack (faceCol, Npack)
         endif
 
         !% face interpolation for all BC faces
@@ -77,13 +77,13 @@ module face
 
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
 
-        call interpolation_BC(BCflow_interp_output, BChead_interp_output)
+        !call interpolation_BC(BCflow_interp_output, BChead_interp_output)
 
-        call face_interpolation_upBC_byPack (BCflow_interp_output)
+        !call face_interpolation_upBC_byPack (BCflow_interp_output)
 
-        call face_interpolation_latBC_byPack(BCflow_interp_output)
+        !call face_interpolation_latBC_byPack(BCflow_interp_output)
 
-        call face_interpolation_dnBC_byPack (BChead_interp_output)
+        !call face_interpolation_dnBC_byPack (BChead_interp_output)
 
         if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
 

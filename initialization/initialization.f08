@@ -321,12 +321,12 @@ contains
         end if
 
         !% We initialze the pack array for BC interpolation use later
-        P_BC_up_face_idx  = pack(BC%flowI(:, bi_face_idx), (BC%flowI(ii, bi_category) == BCup))
-        P_BC_up_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(ii, bi_category) == BCup))
-        P_BC_lat_elem_idx = pack(BC%flowI(:, bi_elem_idx), (BC%flowI(ii, bi_category) == BClat))
-        P_BC_lat_order_idx= pack(BC%flowI(:, bi_idx), (BC%flowI(ii, bi_category) == BClat))
-        P_BC_dn_face_idx  = pack(BC%headI(:, bi_face_idx), (BC%headI(ii, bi_category) == BCdn))
-        P_BC_dn_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(ii, bi_category) == BCdn)) 
+        P_BC_up_face_idx  = pack(BC%flowI(:, bi_face_idx), (BC%flowI(:, bi_category) == BCup))
+        P_BC_up_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BCup))
+        P_BC_lat_elem_idx = pack(BC%flowI(:, bi_elem_idx), (BC%flowI(:, bi_category) == BClat))
+        P_BC_lat_order_idx= pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BClat))
+        P_BC_dn_face_idx  = pack(BC%headI(:, bi_face_idx), (BC%headI(:, bi_category) == BCdn))
+        P_BC_dn_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BCdn)) 
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_bc
