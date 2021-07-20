@@ -580,6 +580,7 @@ module define_indexes
         enumerator ::  fi_GhostElem_dL              !% map to downstream ghost element
         enumerator ::  fi_Connected_image           !% image number a shared face connected to
         enumerator ::  fi_node_idx                  !% if the face is originated from a node, then the idx
+        enumerator ::  fi_link_idx                  !% face connected to a link element 
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
         ! enumerator ::  fi_Melem_dG                 !% map to element upstream (global index)
@@ -590,7 +591,7 @@ module define_indexes
 
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceI =  fi_node_idx
+    integer, target :: Ncol_faceI =  fi_link_idx
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceM(:,:) arrays

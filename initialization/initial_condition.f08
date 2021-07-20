@@ -642,7 +642,7 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_weir_geometry'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
 
         !% pointer to specific weir type
         specificWeirType => link%I(thisLink,li_weir_type)
@@ -732,7 +732,7 @@ contains
 
         end select
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
     end subroutine init_IC_get_weir_geometry
     !
@@ -752,7 +752,7 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
 
         !% pointer to specific orifice type
         specificOrificeType => link%I(thisLink,li_orif_type)
@@ -813,8 +813,7 @@ contains
             end select
 
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_get_orifice_geometry
     !
     !==========================================================================
@@ -834,7 +833,7 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_channel_pipe_velocity'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
 
         !% HACK: this might not be right
         where ( (elemI(:,ei_link_Gidx_SWMM) == thisLink) .and. &
@@ -855,7 +854,7 @@ contains
 
         endwhere
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
 
     end subroutine init_IC_get_channel_pipe_velocity
     !
