@@ -30,7 +30,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_array.f08\
               $UTIL_DIR/utility_debug.f08\
               $UTIL_DIR/utility_output.f08\
-              $UTIL_DIR/utility_bc_interpolation.f08\
+              $UTIL_DIR/utility_interpolate.f08\
               $INIT_DIR/pack_mask_arrays.f08\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/partitioning.f08\
@@ -45,10 +45,10 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $GEO_DIR/rectangular_channel.f08\
               $GEO_DIR/trapezoidal_channel.f08\
               $GEO_DIR/geometry.f08\
-              $TL_DIR/boundary_conditions.f08\
               $TL_DIR/lowlevel_rk2.f08\
               $TL_DIR/update.f08\
               $TL_DIR/face.f08\
+              $TL_DIR/boundary_conditions.f08\
               $TL_DIR/diagnostic_elements.f08\
               $TL_DIR/runge_kutta2.f08\
               $TL_DIR/timeloop.f08\

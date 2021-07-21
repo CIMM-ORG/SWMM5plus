@@ -89,6 +89,7 @@ contains
 
         call init_IC_setup ()
 
+        !% Initializes boundary conditions
         call init_bc()
 
         !% wait for all the processors to reach this stage before starting the time loop
