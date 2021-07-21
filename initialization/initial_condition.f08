@@ -77,6 +77,9 @@ contains
         !% update the initial condition in all diagnostic elements
         call diagnostic_toplevel()
 
+        !% set small volume values in elements 
+        call init_IC_set_SmallVolumes ()
+        
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
@@ -1197,6 +1200,38 @@ contains
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_diagnostic_interpolation_weights
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_IC_set_SmallVolumes ()
+    !--------------------------------------------------------------------------
+    !
+    !% set the small volume values in elements
+    !
+    !--------------------------------------------------------------------------
+
+        character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
+
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
+
+        if (setting%SmallVolume%UseSmallVolumes) then
+            where (elemI(:,ei_geometryType) == rectangular)
+                elemR(:,er_SmallVolume) = setting%SmallVolume%DepthCutoff * elemSGR(:,eSGR_Rectangular_Breadth) * &
+                    elemR(:,er_Length)
+            
+            elsewhere (elemI(:,ei_geometryType) == trapezoidal)
+                elemR(:,er_SmallVolume) = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                    (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
+                    setting%SmallVolume%DepthCutoff) * setting%SmallVolume%DepthCutoff
+            endwhere
+        else
+            elemR(:,er_SmallVolume) = zeroR
+        endif
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_set_SmallVolumes
     !
     !==========================================================================
     !==========================================================================

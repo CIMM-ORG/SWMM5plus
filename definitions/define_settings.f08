@@ -409,6 +409,13 @@ module define_settings
         character(len=256) :: out ! path to SWMM output (.out) file
     end type PathType
 
+        !% setting%Output
+    type OutputType
+        real(8)  :: report_time
+        real(8)  :: report_tol
+    end type OutputType
+    
+
     ! -
     ! --
 
@@ -436,6 +443,7 @@ module define_settings
         type(TestCaseType)       :: TestCase
         type(PathType)           :: Paths
         type(DebugType)          :: Debug
+        type(OutputType)         :: Output
         logical                  :: Verbose
         logical                  :: Warning = .true.
     end type settingType
@@ -1049,14 +1057,17 @@ contains
         setting%Debug%FileGroup%utility = logical_value
         if (.not. found) stop 152
         call def_update_debug_options()
+        call json%get('Output.report_time', real_value, found)
+        setting%Output%report_time = real_value
+        if (.not. found) stop 153
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 153
+        if (.not. found) stop 154
 
         call json%destroy()
-        if (json%failed()) stop 154
+        if (json%failed()) stop 155
 
         if (setting%Debug%File%define_settings) print *, '*** leave ', subroutine_name
     end subroutine def_load_settings

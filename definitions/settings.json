@@ -243,6 +243,10 @@
             "utility" : false
         }
     },
+    "Output" : {
+	"report_time" : 10.0,
+	"report_tol"  : 0.35
+    },
     "Warning"  : false,
     "Verbose" : false
 }
