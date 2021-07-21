@@ -15,6 +15,7 @@ module boundary_conditions
 contains
 
      subroutine bc_step()
+    !%-----------------------------------------------------------------------------
         integer :: ii, nidx
         integer :: tstep_larger_than_resolution
         real(8) :: ttime, tnow, tend
@@ -57,6 +58,7 @@ contains
                 end if
             end do
         end if
+
         if (N_headBC > 0) then
             do ii = 1, N_headBC
                 nidx = BC%headI(ii, bi_node_idx)
@@ -89,6 +91,8 @@ contains
         end if
 
         if (setting%Debug%File%boundary_conditions) then
+            print *, "INFLOW BC"
+            print *, new_line("")
             print *, "BC times"
             do ii = 1, setting%BC%BCSlots
                 print *, BC%flowR_timeseries(:, ii, br_time)
@@ -98,11 +102,23 @@ contains
                 print *, BC%flowR_timeseries(:, ii, br_value)
             end do
             print *, '*** leave ', subroutine_name
+
+            print *, "HEAD BC"
+            print *, "BC times"
+            do ii = 1, setting%BC%BCSlots
+                print *, BC%headR_timeseries(:, ii, br_time)
+            end do
+            print *, "BC values"
+            do ii = 1, setting%BC%BCSlots
+                print *, BC%headR_timeseries(:, ii, br_value)
+            end do
+            print *, '*** leave ', subroutine_name
         end if
 
     end subroutine bc_step
 
     subroutine bc_fetch_flow(bc_idx)
+    !%-----------------------------------------------------------------------------
         integer, intent(in) :: bc_idx
         integer             :: ii, NN
         real(8)             :: new_inflow_time
@@ -136,22 +152,33 @@ contains
 
     subroutine bc_fetch_head(bc_idx)
         integer, intent(in) :: bc_idx
-        ! integer             :: ii
-        ! real(8)             :: new_head
+        integer             :: ii, NN
+        real(8)             :: new_head_time
+        real(8)             :: new_head_value
+        character(64)       :: subroutine_name = "bc_fetch_head"
+    !%-----------------------------------------------------------------------------
 
-        ! if (BC%headIdx(bc_idx) == 0) then ! First fetch
-        !     BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%StartTime
-        ! else ! last value becomes first
-        !     BC%headR_timeseries(bc_idx, 1, br_time) = BC%headR_timeseries(bc_idx, setting%BC%BCSlots, br_time)
-        !     BC%headR_timeseries(bc_idx, 1, br_value) = BC%headR_timeseries(bc_idx, setting%BC%BCSlots, br_value)
-        ! end if
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
 
-        ! do ii = 2, setting%BC%BCSlots
-        !     new_head = interface_get_next_head_time(setting%Time%StartTime)
-        !     BC%headR_timeseries(bc_idx, ii, br_time) = new_head
-        !     BC%headR_timeseries(bc_idx, ii, br_value) = interface_get_headBC(bc_idx, new_head)
-        ! end do
-        ! BC%headIdx(bc_idx) = 2
+        NN = setting%BC%BCSlots
+
+        if (BC%headIdx(bc_idx) == 0) then ! First fetch
+            BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%StartTime
+            BC%headR_timeseries(bc_idx, 1, br_value) = interface_get_headBC(bc_idx, setting%Time%StartTime)
+        else ! last value becomes first
+            BC%headR_timeseries(bc_idx, 1, br_time) = BC%headR_timeseries(bc_idx, NN, br_time)
+            BC%headR_timeseries(bc_idx, 1, br_value) = BC%headR_timeseries(bc_idx, NN, br_value)
+        end if
+
+        do ii = 2, NN
+            new_head_time = min(setting%Time%EndTime, interface_get_next_head_time(bc_idx, setting%Time%StartTime))
+            BC%headR_timeseries(bc_idx, ii, br_time) = new_head_time
+            BC%headR_timeseries(bc_idx, ii, br_value) = interface_get_headBC(bc_idx, new_head_time)
+            if (new_head_time == setting%Time%EndTime) exit
+        end do
+        BC%headIdx(bc_idx) = 2
+
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
     end subroutine bc_fetch_head
 
 

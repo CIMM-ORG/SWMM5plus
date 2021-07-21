@@ -1673,6 +1673,7 @@ contains
         !% HACK -- this assumes that a head BC is always a downstream BC.
         N_headBC = count((node%I(:, ni_node_type) == nBCdn) .and. &
                         (node%I(:,ni_P_image) == this_image()))
+
         if (N_headBC > 0) then
             allocate(node%P%have_headBC(N_headBC))
             node%P%have_headBC = pack(node%I(:,ni_idx), &

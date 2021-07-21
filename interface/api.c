@@ -115,6 +115,15 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
 
     if (attr == node_type)
         *value = Node[k].type;
+    else if (attr == node_outfall_type)
+    {
+        if (Node[k].type == OUTFALL)
+        {
+            *value = Outfall[Node[k].subIndex].type;
+        }
+        else
+            *value = -1;
+    }
     else if (attr == node_invertElev)
         *value = FTTOM(Node[k].invertElev);
     else if (attr == node_initDepth)
@@ -424,8 +433,23 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
     return total_inflow;
 }
 
-double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime) {
+double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime)
+{
+    int i = Node[node_idx].subIndex;
+    double yNew;
 
+    switch (Outfall[i].type)
+    {
+    case FIXED_OUTFALL:
+        yNew = Outfall[i].fixedStage;
+        break;
+
+    default:
+        yNew = -1;
+        break;
+    }
+
+    return FTTOM(yNew);
 }
 
 int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
@@ -682,32 +706,21 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
 // v
 // -------------------------------------------------------------------------
 
-double api_get_outfall_depth(int outfall_idx, double current_datetime, double z)
-//
-//  Input:   j = node index
-//           yNorm = normal flow depth in outfall conduit (ft)
-//           yCrit = critical flow depth in outfall conduit (ft)
-//           z = height to outfall conduit invert (ft)
-//  Output:  none
-//  Purpose: sets water depth at an outfall node.
-//
+double api_get_outfall_depth(int node_idx, int link_idx, double currentDate, double z, double q)
 {
-    // double   x, y;                     // x,y values in table
-    // double   yNew, yNorm, yCrit;       // new depth above invert elev. (ft)
-    // double   stage;                    // water elevation at outfall (ft)
-    // int      k;                        // table index
-    // int      i = Node[outfall_idx].subIndex;     // outfall index
-    // DateTime currentDate;              // current date/time in days
+    // double   x, y;                         // x,y values in table
+    // double   yNew, yNorm, yCrit;           // new depth above invert elev. (ft)
+    // double   stage;                        // water elevation at outfall (ft)
+    // int      k;                            // table index
+    // int      i = Node[node_idx].subIndex;  // outfall index
 
     // // Compute normal and critical depths
 
+    // yNorm = link_getYnorm(link_idx, q);
+    // yCrit = link_getYcrit(link_idx, q);
+
     // switch ( Outfall[i].type )
     // {
-    //   case FREE_OUTFALL:
-    //     if ( z > 0.0 ) yNew = 0.0;
-    //     else yNew = MIN(yNorm, yCrit);
-    //     return yNew;
-
     //   case NORMAL_OUTFALL:
     //     if ( z > 0.0 ) yNew = 0.0;
     //     else yNew = yNorm;
@@ -720,7 +733,6 @@ double api_get_outfall_depth(int outfall_idx, double current_datetime, double z)
     //   case TIDAL_OUTFALL:
     //     k = Outfall[i].tideCurve;
     //     table_getFirstEntry(&Curve[k], &x, &y);
-    //     currentDate = NewRoutingTime / MSECperDAY;
     //     x += ( currentDate - floor(currentDate) ) * 24.0;
     //     stage = table_lookup(&Curve[k], x) / UCF(LENGTH);
     //     break;
@@ -731,7 +743,7 @@ double api_get_outfall_depth(int outfall_idx, double current_datetime, double z)
     //     stage = table_tseriesLookup(&Tseries[k], currentDate, TRUE) /
     //             UCF(LENGTH);
     //     break;
-    //   default: stage = Node[j].invertElev;
+    //   default: stage = Node[node_idx].invertElev;
     // }
 
     // // --- now determine depth at node given outfall stage elev.
@@ -741,9 +753,9 @@ double api_get_outfall_depth(int outfall_idx, double current_datetime, double z)
 
     // // --- if elev. of critical depth is below outfall stage elev. then
     // //     the outfall stage determines node depth
-    // if ( yCrit + z + Node[j].invertElev < stage )
+    // if ( yCrit + z + Node[node_idx].invertElev < stage )
     // {
-    //     yNew = stage - Node[j].invertElev;
+    //     yNew = stage - Node[node_idx].invertElev;
     // }
 
     // // --- otherwise if the outfall conduit lies above the outfall invert
@@ -751,8 +763,8 @@ double api_get_outfall_depth(int outfall_idx, double current_datetime, double z)
     // {
     //     // --- if the outfall stage lies below the bottom of the outfall
     //     //     conduit then the result is distance from node invert to stage
-    //     if ( stage < Node[j].invertElev + z )
-    //         yNew = MAX(0.0, (stage - Node[j].invertElev));
+    //     if ( stage < Node[node_idx].invertElev + z )
+    //         yNew = MAX(0.0, (stage - Node[node_idx].invertElev));
 
     //     // --- otherwise stage lies between bottom of conduit and critical
     //     //     depth in conduit so result is elev. of critical depth

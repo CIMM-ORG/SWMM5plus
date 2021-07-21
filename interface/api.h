@@ -39,7 +39,7 @@
 enum api_node_attributes {
   node_ID = 1,
   node_type,
-  node_subtype,
+  node_outfall_type,
   node_invertElev,
   node_initDepth,
   node_extInflow_tSeries,

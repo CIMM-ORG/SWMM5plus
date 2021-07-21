@@ -70,7 +70,7 @@ contains
         if (this_image() == 1) then
             call execute_command_line ("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
-        
+
         !% read and store the command-line options
         call init_read_arguments ()
 
@@ -183,7 +183,7 @@ contains
             node%YN(ii, nYN_has_dwfInflow) = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
-                if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then 
+                if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then
                     node%I(ii, ni_node_type) = nBCup
                 end if
             end if
@@ -244,6 +244,7 @@ contains
             BC%flowR_timeseries = nullValueR
         end if
         if (N_headBC > 0) then
+            BC%headI = nullvalueI
             BC%headI(:,bi_fetch) = 1
             BC%headIdx(:) = 0
             BC%headR_timeseries = nullValueR
@@ -306,15 +307,16 @@ contains
 
                 BC%headI(ii, bi_idx) = ii
                 BC%headI(ii, bi_node_idx) = nidx
-                if (interface_get_node_attribute(nidx, api_node_subtype) == API_FREE_OUTFALL) then
+
+                if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_FREE_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_free
-                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_NORMAL_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_NORMAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_normal
-                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_FIXED_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_FIXED_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_fixed
-                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_TIDAL_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_TIDAL_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tidal
-                else if (interface_get_node_attribute(nidx, api_node_subtype) == API_TIMESERIES_OUTFALL) then
+                else if (interface_get_node_attribute(nidx, api_node_outfall_type) == API_TIMESERIES_OUTFALL) then
                     BC%headI(ii, bi_subcategory) = BCH_tseries
                 end if
             end do
@@ -326,7 +328,7 @@ contains
         P_BC_lat_elem_idx = pack(BC%flowI(:, bi_elem_idx), (BC%flowI(:, bi_category) == BClat))
         P_BC_lat_order_idx= pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BClat))
         P_BC_dn_face_idx  = pack(BC%headI(:, bi_face_idx), (BC%headI(:, bi_category) == BCdn))
-        P_BC_dn_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BCdn)) 
+        P_BC_dn_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BCdn))
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_bc

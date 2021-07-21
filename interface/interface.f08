@@ -31,7 +31,9 @@ module interface
     public :: interface_update_linknode_names
     public :: interface_get_BC_resolution
     public :: interface_get_next_inflow_time
+    public :: interface_get_next_head_time
     public :: interface_get_flowBC
+    public :: interface_get_headBC
 
     !% -------------------------------------------------------------------------------
     !% PRIVATE
@@ -127,6 +129,15 @@ module interface
             real(c_double),        intent(in) :: current_datetime
             real(c_double)                    :: api_get_flowBC
         end function api_get_flowBC
+
+        function api_get_headBC(api, k, current_datetime)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr),    value, intent(in) :: api
+            integer(c_int), value, intent(in) :: k
+            real(c_double),        intent(in) :: current_datetime
+            real(c_double)                    :: api_get_headBC
+        end function api_get_headBC
     end interface
 
     procedure(api_initialize),          pointer :: ptr_api_initialize
@@ -139,6 +150,7 @@ module interface
     procedure(api_get_start_datetime),  pointer :: ptr_api_get_start_datetime
     procedure(api_get_end_datetime),    pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),          pointer :: ptr_api_get_flowBC
+    procedure(api_get_headBC),          pointer :: ptr_api_get_headBC
 
     !% Error handling
     character(len = 1024) :: errmsg
@@ -576,13 +588,17 @@ contains
         real(8), intent(in) :: tnow
         real(8)             :: tnext, tnextp
         integer             :: nidx, nres, tseries
+        character(64) :: subroutine_name
+
+        subroutine_name = 'interface_get_next_inflow_time'
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
 
         nidx = BC%flowI(bc_idx, bi_node_idx)
         if (.not. node%YN(nidx, nYN_has_inflow)) then
             print *, "Error, node " // node%Names(nidx)%str // " does not have an inflow"
         end if
         nres = node%I(nidx, ni_pattern_resolution)
-        print *, "nres", nres, node%Names(nidx)%str
         if (nres > 0) then
             tnextp = util_datetime_get_next_time(tnow, nres)
             if (node%YN(nidx, nYN_has_extInflow)) then
@@ -598,7 +614,32 @@ contains
         else
             tnext = setting%Time%EndTime
         end if
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
     end function interface_get_next_inflow_time
+
+    function interface_get_next_head_time(bc_idx, tnow) result(tnext)
+        integer, intent(in) :: bc_idx
+        real(8), intent(in) :: tnow
+        real(8)             :: tnext, tnextp
+        integer             :: nidx, nres, tseries
+        character(64) :: subroutine_name
+
+        subroutine_name = 'interface_get_next_head_time'
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
+
+        nidx = BC%headI(bc_idx, bi_node_idx)
+        if (BC%headI(bc_idx, bi_subcategory) == BCH_fixed) then
+            tnext = setting%Time%EndTime
+        else
+            print *, "Error, unsupported head boundary condition for node " // node%Names(nidx)%str
+            stop
+        end if
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
+
+    end function interface_get_next_head_time
 
     function interface_get_flowBC(bc_idx, tnow) result(bc_value)
         integer, intent(in) :: bc_idx
@@ -625,6 +666,33 @@ contains
         if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
 
     end function interface_get_flowBC
+
+
+    function interface_get_headBC(bc_idx, tnow) result(bc_value)
+        integer, intent(in) :: bc_idx
+        real(8), intent(in) :: tnow
+        integer             :: nidx
+        real(8)             :: epochNow, bc_value
+        character(64) :: subroutine_name
+
+        subroutine_name = 'interface_get_headBC'
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
+
+        c_lib%procname = "api_get_headBC"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
+        nidx = BC%headI(bc_idx, bi_node_idx)
+        epochNow = util_datetime_secs_to_epoch(tnow)
+        bc_value = ptr_api_get_headBC(api, nidx-1, epochNow)
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
+
+    end function interface_get_headBC
 
     !%=============================================================================
     !% PRIVATE
