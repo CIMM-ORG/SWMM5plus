@@ -209,7 +209,7 @@
             "finalization" : false,
             "geometry" : false,
             "discretization"  : false,
-            "initial_condition" : false,
+            "initial_condition" : true,
             "initialization" : false,
             "interface" : false,
             "jump" : false,
