@@ -14,7 +14,10 @@ module utility_datetime
     public :: util_datetime_get_next_time
     public :: util_datetime_epoch_to_secs
     public :: util_datetime_secs_to_epoch
-
+    public :: util_datetime_decodedate
+    public :: util_datetime_decodetime
+    
+    
     contains
 
     function util_datetime_get_next_time(secsTime, resolution_type) result(nextSecsTime)

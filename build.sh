@@ -29,6 +29,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_deallocate.f08\
               $UTIL_DIR/utility_array.f08\
               $UTIL_DIR/utility_debug.f08\
+              $UTIL_DIR/utility_output.f08\
               $UTIL_DIR/utility_bc_interpolation.f08\
               $INIT_DIR/pack_mask_arrays.f08\
               $INIT_DIR/discretization.f08\
