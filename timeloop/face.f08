@@ -5,7 +5,6 @@ module face
     use define_keys
     use define_settings, only: setting
     use jump
-    use utility_bc_interpolation
 
     implicit none
 
@@ -20,6 +19,7 @@ module face
     private
 
     public :: face_interpolation
+    public :: face_interpolate_bc
 
     contains
     !%==========================================================================
@@ -41,13 +41,7 @@ module face
         !% face reconstruction of all the interior faces
         Npack => npack_faceP(faceCol)
         if (Npack > 0) then
-            !call face_interpolation_interior_byPack (faceCol, Npack)
-        endif
-
-        !% face interpolation for all BC faces
-        !% =============
-        if (N_flowBC > 0 .or. N_headBC > 0) then
-            call BC_interpolation ()
+            call face_interpolation_interior_byPack (faceCol, Npack)
         endif
 
         sync all
@@ -65,43 +59,39 @@ module face
     !% PRIVATE
     !%==========================================================================
     !%
-    
-    subroutine BC_interpolation ()
+
+    subroutine face_interpolate_bc()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Upper level BC interpolation face data population
         !%-----------------------------------------------------------------------------
-        real(8) :: BCflow_interp_output(N_flowBC), BChead_interp_output(N_headBC) !% interpolated array of BCs
-        character (64) :: subroutine_name = 'BC_interpolation'
+        character (64) :: subroutine_name = 'face_interpolate_bc'
         !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face)  print *, '*** enter ', subroutine_name
 
-        !call interpolation_BC(BCflow_interp_output, BChead_interp_output)
+        call face_interpolation_upBC_byPack()
 
-        !call face_interpolation_upBC_byPack (BCflow_interp_output)
+        call face_interpolation_latBC_byPack()
 
-        !call face_interpolation_latBC_byPack(BCflow_interp_output)
+        call face_interpolation_dnBC_byPack()
 
-        !call face_interpolation_dnBC_byPack (BChead_interp_output)
+        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
-
-    end subroutine BC_interpolation
+    end subroutine face_interpolate_bc
     !%
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine face_interpolation_upBC_byPack(BCflow_interp_output)
+    subroutine face_interpolation_upBC_byPack()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Interpolates all boundary faces using a pack arrays -- base on bi_category
         !%-----------------------------------------------------------------------------
-        
+
         integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
         integer :: fFlowSet(1), eFlowSet(1)
         integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
-        real(8), intent(in) :: BCflow_interp_output(:)
         character(64) :: subroutine_name = 'face_interpolation_upBC_byPack'
         integer :: ii
         integer, pointer :: face_P(:), edn(:), idx_P(:)
@@ -110,8 +100,8 @@ module face
 
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
 
-        !% For the head/geometry at the upstream faces, we directly take the dnwnstream element 
-        !% So there is no eup for upstream BCs 
+        !% For the head/geometry at the upstream faces, we directly take the dnwnstream element
+        !% So there is no eup for upstream BCs
         edn => faceI(:,fi_Melem_dL)
 
         face_P => P_BC_up_face_idx(:)
@@ -128,11 +118,10 @@ module face
         fFlowSet = [fr_Flowrate]
         eFlowSet = [er_Flowrate]
 
-
         do ii=1,size(fFlowSet)
-            faceR(face_P, fFlowSet(ii)) = BCflow_interp_output(idx_P)
+            faceR(face_P, fFlowSet(ii)) = BC%flowRI(idx_P)
         end do
-        
+
         !% Copying other data to the BC faces
 
         do ii = 1,size(fGeoSetU)
@@ -141,8 +130,8 @@ module face
 
         do ii=1,size(fHeadSetU)
             faceR(face_P,fHeadSetU(ii)) = elemR(edn(face_P),eHeadSet(ii)) !Copying the Head
-        end do 
-        
+        end do
+
         if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
 
     end subroutine face_interpolation_upBC_byPack
@@ -150,7 +139,7 @@ module face
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine face_interpolation_latBC_byPack(BCflow_interp_output)
+    subroutine face_interpolation_latBC_byPack()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Interpolates all boundary faces using a pack arrays -- base on bi_category
@@ -158,7 +147,6 @@ module face
         integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
         integer :: fFlowSet(1), eFlowSet(1)
         integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
-        real(8), intent(in) :: BCflow_interp_output(:)
         character(64) :: subroutine_name = 'face_interpolation_latBC_byPack'
         integer :: ii
         integer, pointer :: elem_P(:), idx_P(:)
@@ -184,10 +172,10 @@ module face
 
 
         do ii=1,size(eFlowSet)
-            elemR(elem_P,eFlowSet(ii)) = BCflow_interp_output(idx_P)
+            elemR(elem_P,eFlowSet(ii)) = BC%flowRI(idx_P)
         end do
         !% For lateral flow, just update the flow at the element >> elemR(flow) + BC_lateral_flow
-        
+
         if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
 
     end subroutine face_interpolation_latBC_byPack
@@ -196,7 +184,7 @@ module face
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine face_interpolation_dnBC_byPack(BChead_interp_output)
+    subroutine face_interpolation_dnBC_byPack()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Interpolates all boundary faces using a pack arrays -- base on bi_category
@@ -204,7 +192,6 @@ module face
         integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
         integer :: fFlowSet(1), eFlowSet(1)
         integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
-        real(8), intent(in) :: BChead_interp_output(:)
         character(64) :: subroutine_name = 'face_interpolation_dnBC_byPack'
         integer :: ii
         integer, pointer :: face_P(:), eup(:), idx_P(:)
@@ -232,17 +219,17 @@ module face
 
 
         do ii=1,size(fHeadSetD)
-            faceR(face_P, fHeadSetD(ii)) = BChead_interp_output(idx_P) !% downstream head update
+            faceR(face_P, fHeadSetD(ii)) = BC%headRI(idx_P) !% downstream head update
         end do
-        
+
         do ii=1,size(fFlowSet)
             faceR(face_P, fFlowSet(ii)) = elemR(eup(face_P), eFlowSet(ii)) !% Copying the flow from the upstream element
         end do
-        
+
         do ii=1,size(fGeoSetD)
             faceR(face_P, fGeoSetD(ii)) = elemR(eup(face_P), eGeoSet(ii)) !% Copying other geo factors from the upstream element
         end do
-        
+
         if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
 
     end subroutine face_interpolation_dnBC_byPack
@@ -382,10 +369,10 @@ module face
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
 
 
-        !% Face flow interpolation  
+        !% Face flow interpolation
 
 
-        !% Face flow interpolation 
+        !% Face flow interpolation
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)

@@ -94,8 +94,10 @@ module define_types
         integer,      allocatable :: flowI(:,:)              !% integer data for inflow BCs
         real(8),      allocatable :: flowR_timeseries(:,:,:) !% time series data for inflow BC
         integer,      allocatable :: flowIdx(:)              !% indexes of current entry in flowR_timeseries
+        real(8),      allocatable :: flowRI(:)               !% values of interpolated inflows at current time
         integer,      allocatable :: headI(:,:)              !% integer data for elevation BCs
         real(8),      allocatable :: headR_timeseries(:,:,:) !% time series data for elevation BC
         integer,      allocatable :: headIdx(:)              !% indexes of current entry in headR_timeseries
+        real(8),      allocatable :: headRI(:)               !% values of interpolated heads at current time
     end type BCArray
 end module define_types

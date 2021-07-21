@@ -4,8 +4,9 @@ module boundary_conditions
     use define_indexes
     use define_globals
     use utility, only: util_print_warning
+    use utility_interpolate
     use define_settings, only: setting
-
+    use face, only: face_interpolate_bc
     implicit none
 
     private
@@ -90,9 +91,14 @@ contains
             end do
         end if
 
+        !% face interpolation for all BC faces
+        if (N_flowBC > 0 .or. N_headBC > 0) then
+            call bc_interpolate() ! computes interpolation
+            call face_interpolate_bc() ! broadcast interopation to face & elem arrays
+        endif
+
         if (setting%Debug%File%boundary_conditions) then
             print *, "INFLOW BC"
-            print *, new_line("")
             print *, "BC times"
             do ii = 1, setting%BC%BCSlots
                 print *, BC%flowR_timeseries(:, ii, br_time)
@@ -182,4 +188,70 @@ contains
     end subroutine bc_fetch_head
 
 
+    subroutine bc_interpolate()
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !% This subroutine is for boundary condition interpolation.
+    !% Base on the time passed from the time loop, we interpolate (linear interpolation for now)
+    !% the boundary condition to get the corresponding value.
+    !%-----------------------------------------------------------------------------
+        real(8) :: tnow
+        integer :: ii, slot_idx, upper_idx, lower_idx
+        character(64) :: subroutine_name = 'bc_interpolate'
+    !%-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+
+        tnow = setting%Time%Hydraulics%timeNow
+
+        do ii=1, N_flowBC
+            slot_idx = BC%flowIdx(ii)
+            upper_idx = slot_idx
+            lower_idx = slot_idx - 1
+            !% Find the cloest index first, assign it to lower_idx for now
+            if (BC%flowR_timeseries(ii, lower_idx, br_time) == tnow) then
+                !% no need to do the interpolation, directly take the existing BC data
+                BC%flowRI(ii) = BC%flowR_timeseries(ii, lower_idx, br_value)
+            else if (lower_idx > 0) then
+                if ( BC%flowR_timeseries(ii, lower_idx, br_value) .eq. BC%flowR_timeseries(ii, upper_idx, br_value)) then
+                    BC%flowRI(ii) = BC%flowR_timeseries(ii, lower_idx, br_value)
+                    !% constant value, no need to do the interpolation
+                else
+                    !% interpolation step
+                    BC%flowRI(ii) = util_interpolate_linear( &
+                        tnow, &
+                        BC%flowR_timeseries(ii, lower_idx, br_time), &
+                        BC%flowR_timeseries(ii, upper_idx, br_time), &
+                        BC%flowR_timeseries(ii, lower_idx, br_value), &
+                        BC%flowR_timeseries(ii, upper_idx, br_value))
+                end if
+            end if
+        end do
+
+        do ii=1, N_headBC
+            slot_idx = BC%headIdx(ii)
+            upper_idx = slot_idx
+            lower_idx = slot_idx - 1
+            !% Find the cloest index first, assign it to lower_idx just for now
+            if (BC%headR_timeseries(ii, lower_idx, br_time) == tnow) then
+                !% no need to do the interpolation, directly take the existing BC data
+                BC%headRI(ii) = BC%headR_timeseries(ii, lower_idx, br_value)
+            else if (lower_idx .ne. 0) then
+                if ( BC%headR_timeseries(ii, lower_idx, br_value) .eq. BC%headR_timeseries(ii, upper_idx, br_value)) then
+                    BC%headRI(ii) = BC%headR_timeseries(ii, lower_idx, br_value)
+                    !% constant value, no need to do the interpolation
+                else
+                    BC%headRI(ii) = util_interpolate_linear( &
+                        tnow, &
+                        BC%headR_timeseries(ii, lower_idx, br_time), &
+                        BC%headR_timeseries(ii, upper_idx, br_time), &
+                        BC%headR_timeseries(ii, lower_idx, br_value), &
+                        BC%headR_timeseries(ii, upper_idx, br_value))
+                end if
+            end if
+        end do
+
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
+
+    end subroutine bc_interpolate
 end module boundary_conditions

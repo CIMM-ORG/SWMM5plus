@@ -988,6 +988,9 @@ contains
 
             allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
+
+            allocate(BC%headRI(N_headBC), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
         end if
 
         if (N_flowBC > 0) then
@@ -998,6 +1001,9 @@ contains
             call util_allocate_check (allocation_status, emsg)
 
             allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
+
+            allocate(BC%flowRI(N_flowBC), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
         end if
 

@@ -318,6 +318,9 @@ contains
 
             deallocate(BC%flowIdx, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check (deallocation_status, emsg)
+
+            deallocate(BC%flowRI, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg)
         end if
 
         if (N_headBC > 0) then
@@ -328,6 +331,9 @@ contains
             call util_deallocate_check (deallocation_status, emsg)
 
             deallocate(BC%headIdx, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check (deallocation_status, emsg)
+
+            deallocate(BC%headRI, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check (deallocation_status, emsg)
         end if
 

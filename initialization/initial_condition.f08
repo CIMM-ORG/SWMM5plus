@@ -72,7 +72,7 @@ contains
         call init_IC_small_values_diagnostic_elements
 
         !% update faces
-        call face_interpolation (fp_all)  
+        call face_interpolation(fp_all)
 
         !% update the initial condition in all diagnostic elements
         call diagnostic_toplevel()
@@ -111,6 +111,7 @@ contains
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_setup
+
     !
     !==========================================================================
     ! PRIVATE
@@ -506,7 +507,7 @@ contains
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
                     elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                    
+
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Trapezoidal_Breadth) + (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + &
                                 elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_ZbreadthMax)
@@ -612,7 +613,7 @@ contains
                 elemR(:,er_FullArea)    = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
                             (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
                             elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
-                elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)   
+                elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
             endwhere
 
         case default

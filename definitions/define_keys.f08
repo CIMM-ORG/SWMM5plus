@@ -89,6 +89,9 @@ module define_keys
         enumerator :: type3_Pump            !% type 3 pump type
         enumerator :: type4_Pump            !% type 4 pump type
         !% BC types
+        enumerator :: BCFlow
+        enumerator :: BCHead
+        !% BC category
         enumerator :: BCdn                  !% downstream BC
         enumerator :: BCup                  !% upstream BC
         enumerator :: BClat                 !% lateral BC
