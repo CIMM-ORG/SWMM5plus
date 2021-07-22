@@ -1712,17 +1712,18 @@ contains
                 npack_elemP(ep_BClat) = N_nBClat
                 elemP(1:N_nBClat,ep_BClat) = BC%flowI(BC%P%BClat, bi_elem_idx)
             end if
+        end if
 
-            N_nBCdn = count(BC%flowI(:, bi_category) == BCdn)
+        if (N_headBC > 0) then
+            N_nBCdn = count(BC%headI(:, bi_category) == BCdn)
             if (N_nBCdn > 0) then
                 allocate(BC%P%BCdn(N_nBCdn))
-                BC%P%BCdn = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BCdn)
+                BC%P%BCdn = pack(BC%headI(:, bi_idx), BC%headI(:, bi_category) == BCdn)
                 !% Face packs
                 npack_faceP(fp_BCdn) = N_nBCdn
                 faceP(1:N_nBCdn,fp_BCdn) = BC%headI(BC%P%BCdn, bi_face_idx)
             end if
         end if
-
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_bc
 end module pack_mask_arrays

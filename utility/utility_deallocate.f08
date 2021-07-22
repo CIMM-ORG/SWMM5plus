@@ -327,11 +327,6 @@ contains
                 call util_deallocate_check (deallocation_status, emsg)
             end if
 
-            if (allocated(BC%P%BCdn)) then
-                deallocate(BC%P%BCdn, stat=deallocation_status, errmsg=emsg)
-                call util_deallocate_check (deallocation_status, emsg)
-            end if
-
             if (allocated(BC%P%BClat)) then
                 deallocate(BC%P%BClat, stat=deallocation_status, errmsg=emsg)
                 call util_deallocate_check (deallocation_status, emsg)
@@ -350,6 +345,11 @@ contains
 
             deallocate(BC%headRI, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check (deallocation_status, emsg)
+
+            if (allocated(BC%P%BCdn)) then
+                deallocate(BC%P%BCdn, stat=deallocation_status, errmsg=emsg)
+                call util_deallocate_check (deallocation_status, emsg)
+            end if
         end if
 
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ',subroutine_name
