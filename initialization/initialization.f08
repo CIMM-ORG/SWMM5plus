@@ -1,10 +1,12 @@
 module initialization
+    use boundary_conditions
     use define_keys
     use define_globals
     use define_settings
     use define_indexes
     use interface
     use partitioning
+    use pack_mask_arrays, only: pack_nodes
     use discretization
     use utility_allocate
     use utility_array
@@ -87,10 +89,10 @@ contains
 
         call init_network ()
 
-        call init_IC_setup ()
-
-        !% Initializes boundary conditions
+        !% initialize boundary conditions
         call init_bc()
+
+        call init_IC_setup ()
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
@@ -231,6 +233,7 @@ contains
 
         if (setting%Debug%File%initialization)  print *, '*** enter ', subroutine_name
 
+        call pack_nodes()
         call util_allocate_bc()
 
         !% Convention to denote that xR_timeseries arrays haven't been fetched
@@ -323,6 +326,8 @@ contains
             end do
         end if
 
+        call bc_step()
+
         !% We initialze the pack array for BC interpolation use later
         P_BC_up_face_idx  = pack(BC%flowI(:, bi_face_idx), (BC%flowI(:, bi_category) == BCup))
         P_BC_up_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BCup))
@@ -331,7 +336,10 @@ contains
         P_BC_dn_face_idx  = pack(BC%headI(:, bi_face_idx), (BC%headI(:, bi_category) == BCdn))
         P_BC_dn_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BCdn))
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization) then
+            if (this_image() == 1) call util_export_linknode_csv()
+            print *, '*** leave ', subroutine_name
+        end if
     end subroutine init_bc
     !%
     !%==========================================================================
@@ -372,12 +380,6 @@ contains
 
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
-
-        ! if (setting%Debug%File%initialization) then
-            if (this_image() == 1) then
-                call util_export_linknode_csv()
-            end if
-        ! end if
 
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 

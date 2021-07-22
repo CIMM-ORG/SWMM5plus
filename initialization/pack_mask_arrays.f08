@@ -19,6 +19,7 @@ module pack_mask_arrays
 
     public :: pack_mask_arrays_all
     public :: pack_dynamic_arrays
+    public :: pack_nodes
 
 contains
     !
@@ -50,7 +51,6 @@ contains
         call pack_static_shared_faces()
         call pack_dynamic_interior_faces()
         call pack_dynamic_shared_faces()
-        call pack_nodes()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results

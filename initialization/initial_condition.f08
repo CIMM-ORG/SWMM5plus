@@ -77,9 +77,9 @@ contains
         !% update the initial condition in all diagnostic elements
         call diagnostic_toplevel()
 
-        !% set small volume values in elements 
+        !% set small volume values in elements
         call init_IC_set_SmallVolumes ()
-        
+
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
@@ -1220,7 +1220,7 @@ contains
             where (elemI(:,ei_geometryType) == rectangular)
                 elemR(:,er_SmallVolume) = setting%SmallVolume%DepthCutoff * elemSGR(:,eSGR_Rectangular_Breadth) * &
                     elemR(:,er_Length)
-            
+
             elsewhere (elemI(:,ei_geometryType) == trapezoidal)
                 elemR(:,er_SmallVolume) = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
                     (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
