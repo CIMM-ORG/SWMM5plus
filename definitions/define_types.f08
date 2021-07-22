@@ -90,14 +90,22 @@ module define_types
         type(string), allocatable :: Names(:) !% names for links retrieved from EPA-SWMM
     end type LinkArray
 
+    type BCPack
+        !% We initialze the pack array for BC interpolation use later
+        integer, allocatable :: BCup(:)
+        integer, allocatable :: BClat(:)
+        integer, allocatable :: BCdn(:)
+    end type BCPack
+
     type BCArray
-        integer,      allocatable :: flowI(:,:)              !% integer data for inflow BCs
-        real(8),      allocatable :: flowR_timeseries(:,:,:) !% time series data for inflow BC
-        integer,      allocatable :: flowIdx(:)              !% indexes of current entry in flowR_timeseries
-        real(8),      allocatable :: flowRI(:)               !% values of interpolated inflows at current time
-        integer,      allocatable :: headI(:,:)              !% integer data for elevation BCs
-        real(8),      allocatable :: headR_timeseries(:,:,:) !% time series data for elevation BC
-        integer,      allocatable :: headIdx(:)              !% indexes of current entry in headR_timeseries
-        real(8),      allocatable :: headRI(:)               !% values of interpolated heads at current time
+        integer,        allocatable :: flowI(:,:)              !% integer data for inflow BCs
+        real(8),        allocatable :: flowR_timeseries(:,:,:) !% time series data for inflow BC
+        integer,        allocatable :: flowIdx(:)              !% indexes of current entry in flowR_timeseries
+        real(8),        allocatable :: flowRI(:)               !% values of interpolated inflows at current time
+        integer,        allocatable :: headI(:,:)              !% integer data for elevation BCs
+        real(8),        allocatable :: headR_timeseries(:,:,:) !% time series data for elevation BC
+        integer,        allocatable :: headIdx(:)              !% indexes of current entry in headR_timeseries
+        real(8),        allocatable :: headRI(:)               !% values of interpolated heads at current time
+        type(BCPack)                :: P                       !% packs of boundary conditions
     end type BCArray
 end module define_types

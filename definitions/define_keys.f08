@@ -54,6 +54,7 @@ module define_keys
         enumerator :: nStorage              !% storage node
         enumerator :: nBCdn                 !% downstream BC node
         enumerator :: nBCup                 !% upstream BC node
+        enumerator :: nBClat                !% lateral BC node
         !% SWMM5+ elements types
         enumerator :: CC                    !% conduit or channel element
         enumerator :: weir                  !% weir element

@@ -70,11 +70,11 @@ module face
 
         if (setting%Debug%File%face)  print *, '*** enter ', subroutine_name
 
-        call face_interpolation_upBC_byPack()
+        if (N_nBCup > 0) call face_interpolation_upBC_byPack()
 
-        call face_interpolation_latBC_byPack()
-
-        call face_interpolation_dnBC_byPack()
+        if (N_nBClat > 0) call face_interpolation_latBC_byPack()
+        print*, N_nBCdn, 'N_nBCdn'
+        if (N_nBCdn > 0) call face_interpolation_dnBC_byPack()
 
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
 
@@ -104,8 +104,8 @@ module face
         !% So there is no eup for upstream BCs
         edn => faceI(:,fi_Melem_dL)
 
-        face_P => P_BC_up_face_idx(:)
-        idx_P  => P_BC_up_order_idx(:)
+        face_P => faceP(1:npack_faceP(fp_BCup),fp_BCup)
+        idx_P  => BC%P%BCup(:)
 
         fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
         fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
@@ -156,8 +156,8 @@ module face
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
 
 
-        elem_P => P_BC_lat_elem_idx(:)
-        idx_P  => P_BC_lat_order_idx(:)
+        elem_P => elemP(1:npack_elemP(ep_BClat),ep_BClat)
+        idx_P  => BC%P%BClat
 
         fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
         fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
@@ -203,8 +203,10 @@ module face
 
         eup => faceI(:,fi_Melem_uL)
 
-        face_P => P_BC_dn_face_idx(:)
-        idx_P  => P_BC_dn_order_idx(:)
+        face_P => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
+        idx_P  => BC%P%BCdn
+
+        print*, face_P, 'face_P'
 
         fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
         fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
@@ -220,6 +222,7 @@ module face
 
         do ii=1,size(fHeadSetD)
             faceR(face_P, fHeadSetD(ii)) = BC%headRI(idx_P) !% downstream head update
+            print*, faceR(face_P, fHeadSetD(ii)), 'faceR(face_P, fHeadSetD(ii))'
         end do
 
         do ii=1,size(fFlowSet)

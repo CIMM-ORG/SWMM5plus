@@ -50,7 +50,8 @@ module timeloop
         if (useHydrology .and. useHydraulics) then
             !% set the counters used for outer loop iteration
             call tl_setup_counters(hydrology)
-            call bc_step()
+            call bc_update()
+
             !% only using the first processor to print results
             if (this_image() == 1) then
                 do ii = 1,num_images()
@@ -80,6 +81,7 @@ module timeloop
                    call execute_command_line('')
                 enddo
             endif
+
             !% outer loop (Hydrology) time stepping
             do while (.not. isTLfinished)
                 !% Perform one time step of hydrology
@@ -87,7 +89,7 @@ module timeloop
                 !% Call inner loop (multiple subtime steps) of hydraulics
                 call tl_hydraulics()
                 call tl_increment_counters(hydrology)
-                call bc_step()
+                call bc_update()
                 call tl_check_finish_status(isTLfinished)
 
             !% HACK to prevent infinite loop in testing

@@ -38,13 +38,12 @@ module utility
         !%-----------------------------------------------------------------------------
         open(unit=1,file='debug/linkR.csv',status='new')
         open(unit=2,file='debug/linkI.csv',status='new')
-
         write(1, '(A)')                                                                    &
-            "lr_Length,lr_InletOffset,lr_OutletOffset,lr_BreadthScale,"                 // &
+            "lr_Length,lr_AdjustedLength,lr_InletOffset,lr_OutletOffset,lr_BreadthScale,"                 // &
             "lr_TopWidth,lr_ElementLength,lr_Slope,lr_LeftSlope,lr_RightSlope,"         // &
             "lr_Roughness,lr_InitialFlowrate,lr_InitialDepth,lr_InitialUpstreamDepth,"  // &
             "lr_InitialDnstreamDepth,lr_ParabolaValue,lr_SideSlope,lr_DischargeCoeff1," // &
-            "lr_DischargeCoeff2,lr_FullDepth,lr_EndContractions,lr_Flowrate,lr_Depth,"  // &
+            "lr_DischargeCoeff2,lr_FullDepth,lr_Flowrate,lr_Depth,"  // &
             "lr_DepthUp,lr_DepthDn,lr_Volume,lr_Velocity,lr_Capacity"
 
         write(2, '(A)')                                                                    &

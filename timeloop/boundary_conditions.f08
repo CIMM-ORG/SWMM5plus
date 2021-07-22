@@ -12,15 +12,56 @@ module boundary_conditions
     private
 
     public :: bc_step
+    public :: bc_update
 
 contains
 
-     subroutine bc_step()
+    subroutine bc_update()
+        integer :: ii
+        character(64) :: subroutine_name = "bc_update"
+        !%-----------------------------------------------------------------------------
+    
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+
+        call bc_step()
+
+        !% face interpolation for all BC faces
+        if (N_flowBC > 0 .or. N_headBC > 0) then
+            call bc_interpolate() ! computes interpolation
+            call face_interpolate_bc() ! broadcast interopation to face & elem arrays
+        endif
+
+        if (setting%Debug%File%boundary_conditions) then
+            print *, "INFLOW BC"
+            print *, "BC times"
+            do ii = 1, setting%BC%BCSlots
+                print *, BC%flowR_timeseries(:, ii, br_time)
+            end do
+            print *, "BC values"
+            do ii = 1, setting%BC%BCSlots
+                print *, BC%flowR_timeseries(:, ii, br_value)
+            end do
+            print *, '*** leave ', subroutine_name
+
+            print *, "HEAD BC"
+            print *, "BC times"
+            do ii = 1, setting%BC%BCSlots
+                print *, BC%headR_timeseries(:, ii, br_time)
+            end do
+            print *, "BC values"
+            do ii = 1, setting%BC%BCSlots
+                print *, BC%headR_timeseries(:, ii, br_value)
+            end do
+            print *, '*** leave ', subroutine_name
+        end if
+    end subroutine bc_update
+
+    subroutine bc_step()
     !%-----------------------------------------------------------------------------
-        integer :: ii, nidx
+        integer :: ii, nidx, lidx
         integer :: tstep_larger_than_resolution
         real(8) :: ttime, tnow, tend
-        character(64) :: subroutine_name = "bc_step" 
+        character(64) :: subroutine_name = "bc_step"
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
@@ -65,6 +106,9 @@ contains
                 nidx = BC%headI(ii, bi_node_idx)
                 if (BC%headIdx(ii) == 0) then ! First fetch
                     call bc_fetch_head(ii)
+                    !% HACK - we are assuming that outfalls can only have one link upstream
+                    lidx = node%I(nidx, ni_Mlink_u1)
+                    link%R(lidx, lr_InitialDnstreamDepth) = BC%headR_timeseries(ii, 1, br_value)
                 else
                     ttime = BC%headR_timeseries(ii, BC%headIdx(ii), br_time) ! Current time slot (upper bound of time interval)
                     if (tnow > ttime) then ! Needs update
@@ -90,37 +134,6 @@ contains
                 end if
             end do
         end if
-
-        !% face interpolation for all BC faces
-        if (N_flowBC > 0 .or. N_headBC > 0) then
-            call bc_interpolate() ! computes interpolation
-            call face_interpolate_bc() ! broadcast interopation to face & elem arrays
-        endif
-
-        if (setting%Debug%File%boundary_conditions) then
-            print *, "INFLOW BC"
-            print *, "BC times"
-            do ii = 1, setting%BC%BCSlots
-                print *, BC%flowR_timeseries(:, ii, br_time)
-            end do
-            print *, "BC values"
-            do ii = 1, setting%BC%BCSlots
-                print *, BC%flowR_timeseries(:, ii, br_value)
-            end do
-            print *, '*** leave ', subroutine_name
-
-            print *, "HEAD BC"
-            print *, "BC times"
-            do ii = 1, setting%BC%BCSlots
-                print *, BC%headR_timeseries(:, ii, br_time)
-            end do
-            print *, "BC values"
-            do ii = 1, setting%BC%BCSlots
-                print *, BC%headR_timeseries(:, ii, br_value)
-            end do
-            print *, '*** leave ', subroutine_name
-        end if
-
     end subroutine bc_step
 
     subroutine bc_fetch_flow(bc_idx)
