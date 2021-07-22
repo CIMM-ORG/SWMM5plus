@@ -52,6 +52,9 @@ contains
         !% get data that can be extracted from nodes
         call init_IC_from_nodedata ()
 
+        !% set small volume values in elements 
+        call init_IC_set_SmallVolumes ()
+
         !% update time marching type
         call init_IC_solver_select (solver)
 

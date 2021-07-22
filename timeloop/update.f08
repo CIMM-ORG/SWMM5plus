@@ -42,7 +42,7 @@ module update
         call geometry_toplevel (whichTM)
 
         !% adjust velocity with limiters and small volume treatment
-        call adjust_velocity (whichTM, er_Volume, er_Velocity)
+        call adjust_velocity (whichTM, er_Velocity, er_Volume)
 
         !% set packed column for updated elements
         select case (whichTM)
