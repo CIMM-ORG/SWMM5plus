@@ -370,9 +370,10 @@ module define_indexes
         enumerator :: ep_CCJM_H_AC_surcharged       !% all CCJM surcharged for H and AC solution
         enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
         enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
+        enumerator :: ep_BClat                      !% all elements with lateral BC
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemP = ep_CCJB_eAC_i_fETM
+    integer, target :: Ncol_elemP = ep_BClat
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemPGalltm(:,:), elemPGetm(:,:),
@@ -641,9 +642,11 @@ module define_indexes
         enumerator :: fp_Diag                   !% face with adjacent diagnostic element
         enumerator :: fp_JumpDn                 !% face with hydraulic jump from nominal downstream to upstream
         enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
+        enumerator :: fp_BCup
+        enumerator :: fp_BCdn
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceP =  fp_JumpUp
+    integer, target :: Ncol_faceP =  fp_BCdn
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceYN(:,:) arrays

@@ -321,6 +321,21 @@ contains
 
             deallocate(BC%flowRI, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check (deallocation_status, emsg)
+
+            if (allocated(BC%P%BCup)) then
+                deallocate(BC%P%BCup, stat=deallocation_status, errmsg=emsg)
+                call util_deallocate_check (deallocation_status, emsg)
+            end if
+
+            if (allocated(BC%P%BCdn)) then
+                deallocate(BC%P%BCdn, stat=deallocation_status, errmsg=emsg)
+                call util_deallocate_check (deallocation_status, emsg)
+            end if
+
+            if (allocated(BC%P%BClat)) then
+                deallocate(BC%P%BClat, stat=deallocation_status, errmsg=emsg)
+                call util_deallocate_check (deallocation_status, emsg)
+            end if
         end if
 
         if (N_headBC > 0) then

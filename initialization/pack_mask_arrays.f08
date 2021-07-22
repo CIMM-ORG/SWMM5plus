@@ -20,6 +20,7 @@ module pack_mask_arrays
     public :: pack_mask_arrays_all
     public :: pack_dynamic_arrays
     public :: pack_nodes
+    public :: pack_bc
 
 contains
     !
@@ -1661,6 +1662,10 @@ contains
         !% With this approach using the P type, each of the arrays on the images
         !% are allocated to the size needed.
         !--------------------------------------------------------------------------
+        character(64)    :: subroutine_name = 'pack_nodes'
+        !--------------------------------------------------------------------------
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+
         N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
                         (node%I(:,ni_P_image) == this_image()))
 
@@ -1680,7 +1685,44 @@ contains
             (node%I(:, ni_node_type) == nBCdn) .and. &
             (node%I(:,ni_P_image) == this_image()))
         end if
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_nodes
 
+    subroutine pack_bc
+        integer :: psize
+        character(64) :: subroutine_name = 'pack_bc'
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
+        !% BC packs
+        if (N_flowBC > 0) then
+            N_nBCup = count(BC%flowI(:, bi_category) == BCup)
+            if (N_nBCup > 0) then
+                allocate(BC%P%BCup(N_nBCup))
+                BC%P%BCup = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BCup)
+                !% Face packs
+                npack_faceP(fp_BCup) = N_nBCup
+                faceP(1:N_nBCup,fp_BCup) = BC%flowI(BC%P%BCup, bi_face_idx)
+            end if
+
+            N_nBClat = count(BC%flowI(:, bi_category) == BClat)
+            if (N_nBClat > 0) then
+                allocate(BC%P%BClat(N_nBClat))
+                BC%P%BClat = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BClat)
+                !% Elem Packs
+                npack_elemP(ep_BClat) = N_nBClat
+                elemP(1:N_nBClat,ep_BClat) = BC%flowI(BC%P%BClat, bi_elem_idx)
+            end if
+
+            N_nBCdn = count(BC%flowI(:, bi_category) == BCdn)
+            if (N_nBCdn > 0) then
+                allocate(BC%P%BCdn(N_nBCdn))
+                BC%P%BCdn = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BCdn)
+                !% Face packs
+                npack_faceP(fp_BCdn) = N_nBCdn
+                faceP(1:N_nBCdn,fp_BCdn) = BC%headI(BC%P%BCdn, bi_face_idx)
+            end if
+        end if
+
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+    end subroutine pack_bc
 end module pack_mask_arrays

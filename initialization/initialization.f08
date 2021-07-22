@@ -14,6 +14,7 @@ module initialization
     use network_define
     use utility, only: util_export_linknode_csv
     use utility_array
+    use pack_mask_arrays
 
 
     implicit none
@@ -327,19 +328,9 @@ contains
         end if
 
         call bc_step()
+        call pack_bc()
 
-        !% We initialze the pack array for BC interpolation use later
-        P_BC_up_face_idx  = pack(BC%flowI(:, bi_face_idx), (BC%flowI(:, bi_category) == BCup))
-        P_BC_up_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BCup))
-        P_BC_lat_elem_idx = pack(BC%flowI(:, bi_elem_idx), (BC%flowI(:, bi_category) == BClat))
-        P_BC_lat_order_idx= pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BClat))
-        P_BC_dn_face_idx  = pack(BC%headI(:, bi_face_idx), (BC%headI(:, bi_category) == BCdn))
-        P_BC_dn_order_idx = pack(BC%flowI(:, bi_idx), (BC%flowI(:, bi_category) == BCdn))
-
-        if (setting%Debug%File%initialization) then
-            if (this_image() == 1) call util_export_linknode_csv()
-            print *, '*** leave ', subroutine_name
-        end if
+        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_bc
     !%
     !%==========================================================================
