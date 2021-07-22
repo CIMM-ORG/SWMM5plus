@@ -59,7 +59,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 10.0,
+        "NominalElemLength" : 500.0,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -209,7 +209,7 @@
             "finalization" : false,
             "geometry" : false,
             "discretization"  : false,
-            "initial_condition" : true,
+            "initial_condition" : false,
             "initialization" : false,
             "interface" : false,
             "jump" : false,
@@ -222,7 +222,7 @@
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
             "runge_kutta2" : false,
-            "timeloop" : false,
+            "timeloop" : true,
             "update" : false,
             "utility" : false,
             "utility_allocate" : false,
