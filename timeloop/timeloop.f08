@@ -52,36 +52,6 @@ module timeloop
             call tl_setup_counters(hydrology)
             call bc_update()
 
-            !% only using the first processor to print results
-            if (this_image() == 1) then
-                do ii = 1,num_images()
-                   print*, '----------------------------------------------------'
-                   print*, 'image = ', ii
-                   print*, '.....................elements.......................'
-                   print*, elemI(:,ei_elementType)[ii], 'element type'
-                   print*, elemI(:,ei_geometryType)[ii],'element geometry'
-                   print*, '-------------------Geometry Data--------------------'
-                   print*, elemR(:,er_Depth)[ii], 'depth'
-                   print*, elemR(:,er_Area)[ii], 'area'
-                   print*, elemR(:,er_Head)[ii], 'head'
-                   print*, elemR(:,er_Topwidth)[ii], 'topwidth'
-                   print*, elemR(:,er_Volume)[ii],'volume'
-                   print*, '-------------------Dynamics Data--------------------'
-                   print*, elemR(:,er_Flowrate)[ii], 'flowrate'
-                   print*, elemR(:,er_Velocity)[ii], 'velocity'
-                   print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
-                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'timescale Q up'
-                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'timescale Q dn'
-                   print*, '..................faces..........................'
-                   print*, faceR(:,fr_Area_u)[ii], 'face area up'
-                   print*, faceR(:,fr_Area_d)[ii], 'face area dn'
-                   print*, faceR(:,fr_Head_u)[ii], 'face head up'
-                   print*, faceR(:,fr_Head_d)[ii], 'face head dn'
-                   print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
-                   call execute_command_line('')
-                enddo
-            endif
-
             !% outer loop (Hydrology) time stepping
             do while (.not. isTLfinished)
                 !% Perform one time step of hydrology
@@ -93,8 +63,8 @@ module timeloop
                 call tl_check_finish_status(isTLfinished)
 
             !% HACK to prevent infinite loop in testing
-            print *, "HACK hard-code stopping time loop  39872"
-            isTLfinished = .true.
+            ! print *, "HACK hard-code stopping time loop  39872"
+            ! isTLfinished = .true.
 
             end do !% (while not isTLfinished)
         !%
@@ -156,15 +126,6 @@ module timeloop
             timeStart => setting%Time%StartTime
             !% Note the timeEnd for hydrology (outer loop) is simulation end time
             timeEnd => setting%Time%EndTime
-            print*, 'in hydrology step counter'
-            print*, stepNow, 'stepNow'
-            print*, stepNext, 'stepNext'
-            print*, timeNow, 'timeNow'
-            print*, timeNext, 'timeNext'
-            print*, dt, 'dt'
-            print*, loopTimeFinal, 'loopTimeFinal'
-            print*, timeStart, 'timeStart'
-            print*, timeEnd, 'timeEnd'
         case (hydraulics)
             stepNow       => setting%Time%Hydraulics%stepNow
             stepNext      => setting%Time%Hydraulics%stepNext
@@ -184,15 +145,6 @@ module timeloop
                 timeEnd     => setting%Time%EndTime
             endif
 
-            print*, 'in hydraulics step counter'
-            print*, stepNow, 'stepNow'
-            print*, stepNext, 'stepNext'
-            print*, timeNow, 'timeNow'
-            print*, timeNext, 'timeNext'
-            print*, dt, 'dt'
-            print*, loopTimeFinal, 'loopTimeFinal'
-            print*, timeStart, 'timeStart'
-            print*, timeEnd, 'timeEnd'
         case default
             print *, 'error -- should be unreachable'
             stop 1001
@@ -205,10 +157,6 @@ module timeloop
         timeNext = timeNow + dt
 
         loopTimeFinal = timeEnd
-
-        print*, timeNow, 'timeNow'
-        print*, timeNext,'timeNext'
-        print*, loopTimeFinal,'loopTimeFinal'
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_setup_counters
@@ -229,7 +177,7 @@ module timeloop
 
         !% need to execute a hydrology step and extract boundary conditions for
         !% upstream, downstream, and lateral inflows.
-        print *, "Hydrology calls to SWMM-C are needed 8473"
+        ! print *, "Hydrology calls to SWMM-C are needed 8473"
         !% stop 8473
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
@@ -270,7 +218,7 @@ module timeloop
             call tl_set_hydraulic_substep()
 
         !% HACK to prevent infinite loop in testing
-        print *, "Hard-code hydrualic subtime-step loop exit for testing 7647"
+        ! print *, "Hard-code hydrualic subtime-step loop exit for testing 7647"
         ! timeNext = timeFinal+1.0
 
         end do
@@ -342,12 +290,12 @@ module timeloop
                 !% as the target CFL.
                 thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * timeleft / length(thisP) )
 
-                if(mod(timeNow, setting%output%report_time) < setting%output%report_tol) then
-                    print*, '--------------------------------------'
-                    print*, 'This Time = ', timeNow
-                    print*, 'CFL max = ', thisCFL, 'Velocity Max = ', &
-                    maxval(abs(elemR(1:size(elemR,1)-1,er_Velocity))) 
-                end if
+                ! if(mod(timeNow, setting%output%report_time) < setting%output%report_tol) then
+                    ! print*, '--------------------------------------'
+                    ! print*, 'This Time = ', timeNow
+                    ! print*, 'CFL max = ', thisCFL, 'Velocity Max = ', &
+                    ! maxval(abs(elemR(1:size(elemR,1)-1,er_Velocity))), dt, 'dt' 
+                ! end if
                 !% check to see if max CFL is exceeded
                 if (thisCFL < maxCFL) then
                     !% use a single hydraulics step for the remaining hydrology time
@@ -368,12 +316,12 @@ module timeloop
                 !% exceeds CFL limits (both high and low limits).
                 thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
 
-                if(mod(timeNow, setting%output%report_time) < setting%output%report_tol) then
-                    print*, '--------------------------------------'
-                    print*, 'This Time = ', timeNow
-                    print*, 'CFL max = ', thisCFL, 'Velocity Max = ', &
-                    maxval(abs(elemR(1:size(elemR,1)-1,er_Velocity))) 
-                end if
+                ! if(mod(timeNow, setting%output%report_time) < setting%output%report_tol) then
+                    ! print*, '--------------------------------------'
+                    ! print*, 'This Time = ', timeNow
+                    ! print*, 'CFL max = ', thisCFL, 'Velocity Max = ', &
+                    ! maxval(abs(elemR(1:size(elemR,1)-1,er_Velocity))), dt, 'dt' 
+                ! end if
                 
                 if (thisCFL > maxCFL) then
                     !% decrease the time step and reset the checkStep counter
@@ -393,8 +341,7 @@ module timeloop
         else
             !% for timeleft <= 0 there is no change as the hydraulics loop should exit
         endif
-        print*, timeleft, 'timeleft'
-        print*, dt, 'dt'
+
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_set_hydraulic_substep
     !%
@@ -431,7 +378,7 @@ module timeloop
         !% H^{n} = H^{m-1/2} + n(3 * 60) dH/dt
         !% The above should be written out more clearly in the SWMM5+ Code Narration.
 
-        print *, "Need tl_updated_hydraulic_BC to be written 38972"
+        ! print *, "Need tl_updated_hydraulic_BC to be written 38972"
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_update_hydraulic_BC
@@ -456,7 +403,7 @@ module timeloop
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
         call pack_dynamic_arrays
-        print *, "Need to decide on pack_dynamic_arrays 94837"
+        ! print *, "Need to decide on pack_dynamic_arrays 94837"
 
         !%  push the old values down the stack for AC solver
         call tl_save_previous_values ()
@@ -523,13 +470,6 @@ module timeloop
         !% increment step
         thisstep = nextstep
         nextstep = nextstep + 1
-
-        print*, 'in increment counter timeloop_type', timeloop_type
-        print*, '2 is hydraulics'
-        print*, thisstep, 'thisstep'
-        print*, thistime, 'thistime'
-        print*, nextstep, 'nextstep'
-        print*, nexttime, 'nexttime'
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_increment_counters
@@ -630,10 +570,6 @@ module timeloop
         thisstep  => setting%Time%Hydrology%stepNow
         finalstep => setting%Time%Hydrology%stepFinal
         !%-----------------------------------------------------------------------------
-        print*, endtime, 'endtime'
-        print*, thistime, 'thistime'
-        print*, thisstep, 'thisstep'
-        print*, finalstep, 'finalstep'
 
         if ((thistime > endtime) .or. (thisstep > finalstep)) then
             isTLfinished = .true.

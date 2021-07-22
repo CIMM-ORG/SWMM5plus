@@ -54,15 +54,15 @@ module lowlevel_rk2
         real(8), pointer :: fQ(:), eQlat(:)
         integer, pointer :: iup(:), idn(:), thisP(:)
         !%-----------------------------------------------------------------------------  
-        thisP => elemP(:1:Npack,thisCol)
+        thisP => elemP(1:Npack,thisCol)
         fQ    => faceR(:,fr_Flowrate)
         eQlat => elemR(:,er_FlowrateLateral)
         iup   => elemI(:,ei_Mface_uL)
         idn   => elemI(:,ei_Mface_dL)
         !%-----------------------------------------------------------------------------
 
-        elemR(thisP,outCol) = fQ(iup(thisP)) - fQ(idn(thisP)) + eQlat(:)        
-
+        elemR(thisP,outCol) = fQ(iup(thisP)) - fQ(idn(thisP)) + eQlat(thisP)
+        
     end subroutine ll_continuity_netflowrate_CC
     !%
     !%==========================================================================  
@@ -144,7 +144,7 @@ module lowlevel_rk2
               ( VolumeM(thisP) + crk * dtau * Csource(thisP) ) &
               / (oneR + crk * dtau * Cgamma(thisP) )
              
-    end subroutine ll_continuity_volume_CCJM_AC_open    
+    end subroutine ll_continuity_volume_CCJM_AC_open
     !%
     !%==========================================================================  
     !%==========================================================================  
@@ -339,8 +339,7 @@ module lowlevel_rk2
                 stop 2382
             !% Error
         end select
-        
-    end subroutine ll_momentum_Ksource_CC    
+    end subroutine ll_momentum_Ksource_CC
     !%
     !%==========================================================================  
     !%==========================================================================  
@@ -389,8 +388,7 @@ module lowlevel_rk2
                     - fAup(idn(thisP)) * fHup(idn(thisP))  &
                     ) &
                 + eKsource(thisP)   
-    
-    end subroutine ll_momentum_source_CC  
+    end subroutine ll_momentum_source_CC
     !%
     !%==========================================================================  
     !%==========================================================================  
@@ -459,7 +457,7 @@ module lowlevel_rk2
         elemR(thisP,outCol) =  &
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) ) 
-          
+       
     end subroutine ll_momentum_solve_CC
     !%
     !%==========================================================================  
@@ -487,7 +485,7 @@ module lowlevel_rk2
         where (elemYN(thisP,eYN_isNearZeroVolume))
             elemR(thisP,inoutCol) = zeroR
         endwhere
-        
+            
     end subroutine ll_momentum_velocity_CC
     !%
     !%==========================================================================  

@@ -4,6 +4,7 @@ module face
     use define_indexes
     use define_keys
     use define_settings, only: setting
+    use adjust
     use jump
 
     implicit none
@@ -73,7 +74,7 @@ module face
         if (N_nBCup > 0) call face_interpolation_upBC_byPack()
 
         if (N_nBClat > 0) call face_interpolation_latBC_byPack()
-        print*, N_nBCdn, 'N_nBCdn'
+
         if (N_nBCdn > 0) call face_interpolation_dnBC_byPack()
 
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
@@ -123,17 +124,49 @@ module face
         end do
 
         !% Copying other data to the BC faces
-
         do ii = 1,size(fGeoSetU)
-            faceR(face_P,fGeoSetU(ii)) = elemR(edn(face_P),eGeoSet(ii)) ! Copying the Geo
+            faceR(face_P,fGeoSetD(ii)) = elemR(edn(face_P),eGeoSet(ii)) ! Copying the Geo
+            faceR(face_P,fGeoSetU(ii)) = faceR(face_P,fGeoSetD(ii))
         end do
 
-        do ii=1,size(fHeadSetU)
-            faceR(face_P,fHeadSetU(ii)) = elemR(edn(face_P),eHeadSet(ii)) !Copying the Head
-        end do
+        faceR(face_P,fr_Head_d) = elemR(edn(face_P),er_HydDepth) + faceR(face_P,fr_Zbottom)!Copying the Head
+        faceR(face_P,fr_Head_u) = faceR(face_P,fr_Head_d)
+        
+        !% HACK: This is needed to be revisited later
+        if (setting%ZeroValue%UseZeroValues) then
+            !% ensure face area_u is not smaller than zerovalue
+            where (faceR(face_P,fr_Area_d) < setting%ZeroValue%Area)
+                faceR(face_P,fr_Area_d) = setting%ZeroValue%Area
+                faceR(face_P,fr_Area_u) = setting%ZeroValue%Area
+            endwhere
+
+            where (faceR(face_P,fr_Area_d) >= setting%ZeroValue%Area)
+                faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
+                faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)  
+            endwhere
+        else
+            !% ensure face area_u is not smaller than zerovalue
+            where (faceR(face_P,fr_Area_d) < zeroR)
+                faceR(face_P,fr_Area_d) = zeroR
+            endwhere
+
+            where (faceR(face_P,fr_Area_d) >= zeroR)
+                faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
+                faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
+            endwhere
+        endif
+
+        !%  limit high velocities
+        if (setting%Limiter%Velocity%UseLimitMax) then
+            where(abs(faceR(face_P,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
+                faceR(face_P,fr_Velocity_d) = sign(0.99 * setting%Limiter%Velocity%Maximum, &
+                    faceR(face_P,fr_Velocity_d))
+
+                faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
+            endwhere
+        endif
 
         if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
-
     end subroutine face_interpolation_upBC_byPack
     !%
     !%==========================================================================
@@ -170,17 +203,14 @@ module face
         fFlowSet = [fr_Flowrate]
         eFlowSet = [er_FlowrateLateral]
 
-
         do ii=1,size(eFlowSet)
             elemR(elem_P,eFlowSet(ii)) = BC%flowRI(idx_P)
         end do
         !% For lateral flow, just update the flow at the element >> elemR(flow) + BC_lateral_flow
 
         if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
-
     end subroutine face_interpolation_latBC_byPack
-
-        !%
+    !%
     !%==========================================================================
     !%==========================================================================
     !%
@@ -206,8 +236,6 @@ module face
         face_P => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
         idx_P  => BC%P%BCdn
 
-        print*, face_P, 'face_P'
-
         fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
         fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
         eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
@@ -222,7 +250,7 @@ module face
 
         do ii=1,size(fHeadSetD)
             faceR(face_P, fHeadSetD(ii)) = BC%headRI(idx_P) !% downstream head update
-            print*, faceR(face_P, fHeadSetD(ii)), 'faceR(face_P, fHeadSetD(ii))'
+            faceR(face_P, fHeadSetU(ii)) = faceR(face_P, fHeadSetD(ii))
         end do
 
         do ii=1,size(fFlowSet)
@@ -231,10 +259,44 @@ module face
 
         do ii=1,size(fGeoSetD)
             faceR(face_P, fGeoSetD(ii)) = elemR(eup(face_P), eGeoSet(ii)) !% Copying other geo factors from the upstream element
+            faceR(face_P, fGeoSetU(ii)) = faceR(face_P, fGeoSetD(ii))
         end do
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
+        !% HACK: This is needed to be revisited later
+        if (setting%ZeroValue%UseZeroValues) then
+            !% ensure face area_u is not smaller than zerovalue
+            where (faceR(face_P,fr_Area_d) < setting%ZeroValue%Area)
+                faceR(face_P,fr_Area_d) = setting%ZeroValue%Area
+                faceR(face_P,fr_Area_u) = setting%ZeroValue%Area
+            endwhere
 
+            where (faceR(face_P,fr_Area_d) >= setting%ZeroValue%Area)
+                faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
+                faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)  
+            endwhere
+        else
+            !% ensure face area_u is not smaller than zerovalue
+            where (faceR(face_P,fr_Area_d) < zeroR)
+                faceR(face_P,fr_Area_d) = zeroR
+            endwhere
+
+            where (faceR(face_P,fr_Area_d) >= zeroR)
+                faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
+                faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
+            endwhere
+        endif
+
+        !%  limit high velocities
+        if (setting%Limiter%Velocity%UseLimitMax) then
+            where(abs(faceR(face_P,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
+                faceR(face_P,fr_Velocity_d) = sign(0.99 * setting%Limiter%Velocity%Maximum, &
+                    faceR(face_P,fr_Velocity_d))
+
+                faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
+            endwhere
+        endif
+
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_dnBC_byPack
 
     !%
@@ -298,6 +360,7 @@ module face
         call face_copy_upstream_to_downstream_interior_byPack &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
 
+        call adjust_face_dynamic_limit (facePackCol, .true.)
         !% reset all the hydraulic jump interior faces
         call jump_compute
 
@@ -386,8 +449,9 @@ module face
         call face_copy_upstream_to_downstream_shared_byPack &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
 
+        call adjust_face_dynamic_limit (facePackCol, .false.)
         !% HACK needs jump computation for across shared faces
-        print *, "HACK missing hydraulic jump that occurs on shared faces 36987"
+        ! print *, "HACK missing hydraulic jump that occurs on shared faces 36987"
 
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_shared_byPack

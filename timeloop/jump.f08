@@ -213,7 +213,7 @@ module jump
                 faceR(thisP,fsetUp) = elemR(eUp(thisP),eset)
         end select
         
-    end subroutine jump_enforce 
+    end subroutine jump_enforce
     !%
     !%==========================================================================
     !% END OF MODULE

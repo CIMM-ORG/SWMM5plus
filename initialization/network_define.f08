@@ -537,7 +537,8 @@ contains
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
                         faceI(FaceLocalCounter,fi_BCtype)   = BCup
                         node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
-
+                        !% set zbottom
+                        faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
                     endif
@@ -559,6 +560,8 @@ contains
                         faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
                         faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
+                        !% set zbottom
+                        faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                         !% First assign the face index to the nJ2 node, then will
                         !% update with the elem_uL index of the upstream element
                         node%I(thisNode,ni_elemface_idx)     = FaceLocalCounter
@@ -698,7 +701,7 @@ contains
         integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
 
         integer                 :: ii
-        real(8)                 :: zCenter
+        real(8)                 :: zCenter, zDownstream
         integer, pointer        :: lAssignStatus, NlinkElem
         real(8), pointer        :: zUpstream
 
@@ -718,8 +721,8 @@ contains
             !% store the ID of the first (upstream) element in this link
             link%I(thisLink,li_first_elem_idx)   = ElemLocalCounter
             !% reference elevations at cell center
-            zCenter = zUpstream - 0.5 * link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
-
+            zCenter     = zUpstream - 0.5 * link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
+            zDownstream = zUpstream - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
             do ii = 1, NlinkElem
                 !%................................................................
                 !% Element arrays update
@@ -754,10 +757,12 @@ contains
                     faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
                     faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                     faceI(FaceLocalCounter,fi_link_idx) = thisLink
+                    faceR(FaceLocalCounter,fr_Zbottom)  = zDownstream
                 endif
 
                 !% counter for element z bottom calculation
-                zCenter = zCenter - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
+                zCenter     = zCenter - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
+                zDownstream = zDownstream - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
 
                 !% Advance the element counter
                 ElemLocalCounter  = ElemLocalCounter  + oneI
@@ -824,6 +829,8 @@ contains
                         faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_BCtype)   = BCdn
                         faceI(FacelocalCounter,fi_node_idx) = thisNode
+                        !% set zbottom
+                        faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                         node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
 
                         !% change the node assignmebt value
@@ -845,6 +852,8 @@ contains
                         faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI 
                         faceI(FacelocalCounter,fi_Melem_dL) = ElemLocalCounter 
+                        !% set zbottom
+                        faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                         !% First assign the face index to the nJ2 node, then will
                         !% update with the elem_uL index of the upstream element
                         node%I(thisNode,ni_elemface_idx)   = FaceLocalCounter
@@ -1050,6 +1059,8 @@ contains
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection)  = upBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(upBranchIdx)
                     faceI(FaceLocalCounter,fi_link_idx) = upBranchIdx
+                    !% set zbottom
+                    faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                     !% Check 4: this node is the connecting node across partitions
                     if ( (node%I(thisNode,ni_P_is_boundary) == EdgeNode)  .and. &
                          (link%I(upBranchIdx,li_P_image)    /= image   ) )  then
@@ -1117,6 +1128,8 @@ contains
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection) = dnBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(dnBranchIdx)
                     faceI(FacelocalCounter,fi_link_idx) = dnBranchIdx
+                    !% set zbottom
+                    faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                     !% Check 4: if the link connecting this branch is a part of this partition and
                     !% the node is not an edge node (meaning this node is the connecting node
                     !% across partitions)

@@ -616,6 +616,7 @@ module define_indexes
         enumerator :: fr_Flowrate_N0            !% flowrate through face (time N)    enumerator :: fr_Head_d  !% Piezometric head on downstream side of face
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
+        enumerator :: fr_Zbottom                !% zbottom of faces
         enumerator :: fr_HydDepth_d             !% hydraulic Depth on downstream side of face
         enumerator :: fr_HydDepth_u             !% hydraulic Depth on upstream side of face
         enumerator :: fr_Topwidth_d             !% topwidth on downstream side of face

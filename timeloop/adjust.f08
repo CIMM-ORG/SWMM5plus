@@ -22,6 +22,7 @@ module adjust
     public :: adjust_limit_by_zerovalues
     public :: adjust_limit_by_zerovalues_singular
     public :: adjust_velocity
+    public :: adjust_face_dynamic_limit
    
 
     contains
@@ -211,6 +212,92 @@ module adjust
         
         if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
     end subroutine adjust_velocity
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine adjust_face_dynamic_limit (facePackCol, isInterior)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% This subroutine calculates the face valocity and adjusts for limiter
+        !%-----------------------------------------------------------------------------   
+        integer, intent(in) :: facePackCol
+        logical, intent(in) :: isInterior
+        integer, pointer :: Npack, thisP(:)
+        real(8), pointer :: f_area_u(:), f_area_d(:), f_velocity_u(:), f_velocity_d(:)
+        real(8), pointer :: f_flowrate(:), zeroValue, vMax
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'adjust_face_dynamic_limit'
+        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        !%-----------------------------------------------------------------------------
+        f_area_u     => faceR(:,fr_Area_u)
+        f_area_d     => faceR(:,fr_Area_d)
+        f_velocity_u => faceR(:,fr_Velocity_u)
+        f_velocity_d => faceR(:,fr_Velocity_d)
+        f_flowrate   => faceR(:,fr_Flowrate)
+        zeroValue    => setting%ZeroValue%Area
+        vMax         => setting%Limiter%Velocity%Maximum
+        !%-----------------------------------------------------------------------------
+        if (isInterior) then
+            !% face velocity calculation at the interior faces
+            Npack => npack_faceP(facePackCol)
+            thisP => faceP(1:Npack,facePackCol)
+        else
+            !% face velocity calculation at the shared faces
+            Npack => npack_facePS(facePackCol)
+            thisP => facePS(1:Npack,facePackCol)
+        endif
+
+        if (Npack > 0) then
+            if (setting%ZeroValue%UseZeroValues) then
+                !% ensure face area_u is not smaller than zerovalue
+                where (f_area_u(thisP) < zeroValue)
+                    f_area_u(thisP) = zeroValue
+                endwhere
+                !% ensure face area_d is not smaller than zerovalue
+                where (f_area_d(thisP) < zeroValue)
+                    f_area_d(thisP) = zeroValue
+                endwhere
+
+                where (f_area_u(thisP) >= zeroValue)
+                    f_velocity_u(thisP) = f_flowrate(thisP)/f_area_u(thisP)
+                endwhere
+
+                where (f_area_d(thisP) >= zeroValue)
+                    f_velocity_d(thisP) = f_flowrate(thisP)/f_area_d(thisP)
+                endwhere
+            else
+                where (f_area_u(thisP) < zeroR)
+                    f_area_u(thisP) = zeroR
+                endwhere 
+
+                where (f_area_d(thisP) < zeroValue)
+                    f_area_d(thisP) = zeroR
+                endwhere 
+
+                where (f_area_u(thisP) >= zeroR)
+                    f_velocity_u(thisP) = f_flowrate(thisP)/f_area_u(thisP)
+                endwhere
+
+                where (f_area_d(thisP) >= zeroR)
+                    f_velocity_d(thisP) = f_flowrate(thisP)/f_area_d(thisP)
+                endwhere
+            endif
+
+            !%  limit high velocities
+            if (setting%Limiter%Velocity%UseLimitMax) then
+                where(abs(f_velocity_u(thisP))  > vMax)
+                    f_velocity_u(thisP) = sign(0.99 * vMax, f_velocity_u(thisP))
+                endwhere
+
+                where(abs(f_velocity_d(thisP))  > vMax)
+                    f_velocity_d(thisP) = sign(0.99 * vMax, f_velocity_d(thisP))
+                endwhere
+            endif
+        endif
+        
+        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+    end subroutine adjust_face_dynamic_limit
     !%
     !%==========================================================================
     !% PRIVATE

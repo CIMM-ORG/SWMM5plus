@@ -52,6 +52,9 @@ contains
         !% get data that can be extracted from nodes
         call init_IC_from_nodedata ()
 
+        !% zero out the lateral inflow column
+        call init_IC_set_zero_lateral_inflow ()
+
         !% update time marching type
         call init_IC_solver_select (solver)
 
@@ -75,10 +78,13 @@ contains
         call init_IC_small_values_diagnostic_elements
 
         !% update faces
-        call face_interpolation(fp_all)
+        call face_interpolation (fp_all)
 
         !% update the initial condition in all diagnostic elements
-        call diagnostic_toplevel()
+        call diagnostic_toplevel ()
+
+        !% populate er_ones columns with ones
+        call init_IC_oneVectors ()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -114,7 +120,6 @@ contains
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_setup
-
     !
     !==========================================================================
     ! PRIVATE
@@ -1232,6 +1237,46 @@ contains
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
     end subroutine init_IC_set_SmallVolumes
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_IC_set_zero_lateral_inflow ()
+    !--------------------------------------------------------------------------
+    !
+    !% set all the lateral inflows to zero before start of a simulation
+    !
+    !--------------------------------------------------------------------------
+
+        character(64)       :: subroutine_name = 'init_IC_set_zero_lateral_inflow'
+
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
+
+        elemR(1:size(elemR,1)-1,er_FlowrateLateral) = zeroR
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_set_zero_lateral_inflow
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_IC_oneVectors ()
+    !--------------------------------------------------------------------------
+    !
+    !% set all the lateral inflows to zero before start of a simulation
+    !
+    !--------------------------------------------------------------------------
+
+        character(64)       :: subroutine_name = 'init_IC_oneVectors'
+
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) print *, '*** enter ',subroutine_name
+
+        elemR(1:size(elemR,1)-1,er_ones) = oneR
+
+        if (setting%Debug%File%initial_condition) print *, '*** leave ',subroutine_name
+    end subroutine init_IC_oneVectors
     !
     !==========================================================================
     !==========================================================================

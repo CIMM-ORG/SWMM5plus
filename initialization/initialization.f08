@@ -304,7 +304,7 @@ contains
 
                 if (ntype == nBCdn) then
                     BC%headI(ii, bi_category) = BCdn
-                    BC%headI(ii, bi_face_idx) = node%I(ii, ni_elemface_idx) !% face idx
+                    BC%headI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                 else
                     print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
                     stop

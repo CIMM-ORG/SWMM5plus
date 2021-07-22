@@ -4,7 +4,6 @@ module runge_kutta2
     use define_indexes
     use define_keys
     use define_settings, only: setting
-    use adjust
     use update
     use face
     use lowlevel_rk2
@@ -33,7 +32,7 @@ module runge_kutta2
         !% Description:
         !% single RK2 step for explicit time advance of SVE
         !%-----------------------------------------------------------------------------
-        integer :: istep
+        integer :: istep, ii
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         if (setting%Debug%File%runge_kutta2) print *, '*** enter ', subroutine_name

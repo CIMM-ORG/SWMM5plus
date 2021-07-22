@@ -59,7 +59,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 500.0,
+        "NominalElemLength" : 100.0,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -138,7 +138,7 @@
             "timeFinal" : 1.0,
             "stepNow"  : 0,
             "stepNext"  : 1,
-            "stepFinal" : 1
+            "stepFinal" : 1000
         },
         "Hydraulics" : {
             "Dt" : 100.0,
@@ -222,7 +222,7 @@
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
             "runge_kutta2" : false,
-            "timeloop" : true,
+            "timeloop" : false,
             "update" : false,
             "utility" : false,
             "utility_allocate" : false,
