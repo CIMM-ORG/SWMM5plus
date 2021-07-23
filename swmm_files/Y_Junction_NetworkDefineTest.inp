@@ -5,7 +5,7 @@
 ;;Option             Value
 FLOW_UNITS           CMS
 INFILTRATION         HORTON
-FLOW_ROUTING         KINWAVE
+FLOW_ROUTING         DYNWAVE
 LINK_OFFSETS         DEPTH
 MIN_SLOPE            0
 ALLOW_PONDING        NO
@@ -48,40 +48,34 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-J1               1.60698         0          1          0          0         
-J2               1.60698         0          1          0          0         
-J3               0.8035          0          1          0          0         
+J1               8.7523     0          1          0          0         
+J2               8.7523     0          1          0          0         
+J3               4.3762     0          1          0          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-J4               0          FREE                        NO                       
+J4               0          FIXED      1                NO                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1               J1               J3               30         0.01       0          0          3.132          0         
-C2               J2               J3               30         0.01       0          0          3.132          0         
-C3               J3               J4               30         0.01       0          0          3.132          0         
+C1               J1               J3               1000       0.03       0          0          4.6981     0         
+C2               J2               J3               1000       0.03       0          0          4.6981     0         
+C3               J3               J4               1000       0.03       0          0          4.6981     0         
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1               RECT_OPEN    1                5          0          0          1                    
-C2               RECT_OPEN    1                5          0          0          1                    
-C3               RECT_OPEN    1                5          0          0          1                    
+C1               RECT_OPEN    4                3          0          0          1                    
+C2               RECT_OPEN    4                3          0          0          1                    
+C3               RECT_OPEN    4                3          0          0          1                    
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-J1               FLOW             T1               FLOW     1.0      1.0              
-J2               FLOW             T1               FLOW     1.0      1.0              
-
-[TIMESERIES]
-;;Name           Date       Time       Value     
-;;-------------- ---------- ---------- ----------
-T1                          00:00      1.0       
-T1                          24:00      1.0       
+J1               FLOW             ""               FLOW     1.0      1.0      4.6981  
+J2               FLOW             ""               FLOW     1.0      1.0      4.6981  
 
 [REPORT]
 ;;Reporting Options
