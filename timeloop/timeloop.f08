@@ -191,6 +191,7 @@ module timeloop
         !% Description:
         !% Performs inner loop of hydraulics for a single hydrology step
         !%-----------------------------------------------------------------------------
+        integer :: ii
         integer, pointer :: stepnext, stepfinal
         real(8), pointer :: timeNext, timeFinal
         !%-----------------------------------------------------------------------------
@@ -204,7 +205,7 @@ module timeloop
         call tl_setup_counters(hydraulics)
 
         !% set the expected number of substeps for hydraulics given the present CFL
-        call tl_set_hydraulic_substep()
+        call tl_set_hydraulic_substep()   
 
         !% setup for checking volume conservation during the hydraulic steps.
         ! FUTURE 20210609 brh need to decide where to place this and pull code from old version
@@ -289,13 +290,6 @@ module timeloop
                 !% For combined hydrology and hydraulics use the hydrology time step
                 !% as the target CFL.
                 thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * timeleft / length(thisP) )
-
-                ! if(mod(timeNow, setting%output%report_time) < setting%output%report_tol) then
-                    ! print*, '--------------------------------------'
-                    ! print*, 'This Time = ', timeNow
-                    ! print*, 'CFL max = ', thisCFL, 'Velocity Max = ', &
-                    ! maxval(abs(elemR(1:size(elemR,1)-1,er_Velocity))), dt, 'dt' 
-                ! end if
                 !% check to see if max CFL is exceeded
                 if (thisCFL < maxCFL) then
                     !% use a single hydraulics step for the remaining hydrology time
@@ -311,17 +305,12 @@ module timeloop
                         dt = real(floor(dt),8)
                     endif
                 endif
+                sync all
+                call co_min(dt)
             else
                 !% For hydraulics only, keep the timestep stable unless it
                 !% exceeds CFL limits (both high and low limits).
                 thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
-
-                ! if(mod(timeNow, setting%output%report_time) < setting%output%report_tol) then
-                    ! print*, '--------------------------------------'
-                    ! print*, 'This Time = ', timeNow
-                    ! print*, 'CFL max = ', thisCFL, 'Velocity Max = ', &
-                    ! maxval(abs(elemR(1:size(elemR,1)-1,er_Velocity))), dt, 'dt' 
-                ! end if
                 
                 if (thisCFL > maxCFL) then
                     !% decrease the time step and reset the checkStep counter
@@ -341,6 +330,16 @@ module timeloop
         else
             !% for timeleft <= 0 there is no change as the hydraulics loop should exit
         endif
+
+        !% print the cfl to check for model blowout
+        ! thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
+        ! if(mod(timeNow, setting%output%report_time) < setting%output%report_tol) then
+            ! print*, '--------------------------------------'
+            ! print*, 'In image', this_image()
+            ! print*, 'This Time = ', timeNow, 'dt = ', dt
+            ! print*, 'CFL max = ', thisCFL, 'Velocity Max = ', maxval(abs(velocity(thisP))) 
+            ! print*, '--------------------------------------'
+        ! end if
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_set_hydraulic_substep

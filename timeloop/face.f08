@@ -360,7 +360,9 @@ module face
         call face_copy_upstream_to_downstream_interior_byPack &
             (fHeadSetD, fHeadSetU, facePackCol, Npack)
 
+        !% calculate the velocity in faces and put limiter
         call adjust_face_dynamic_limit (facePackCol, .true.)
+
         !% reset all the hydraulic jump interior faces
         call jump_compute
 
@@ -433,12 +435,6 @@ module face
             (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
         call face_interp_shared_set_byPack &
             (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
-
-
-        !% Face flow interpolation
-
-
-        !% Face flow interpolation
 
         !% copy upstream to downstream storage at a face
         !% (only for Head and Geometry types)
