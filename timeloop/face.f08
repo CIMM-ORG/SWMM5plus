@@ -53,6 +53,9 @@ module face
             call face_interpolation_shared_byPack (faceCol, Npack)
         endif
 
+        !% wait for all the processors to finish face interpolation across images
+        sync all
+
         if (setting%Debug%File%face)  print *, '*** leave ', subroutine_name
     end subroutine face_interpolation
     !%
@@ -60,7 +63,6 @@ module face
     !% PRIVATE
     !%==========================================================================
     !%
-
     subroutine face_interpolate_bc()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -364,7 +366,9 @@ module face
         call adjust_face_dynamic_limit (facePackCol, .true.)
 
         !% reset all the hydraulic jump interior faces
-        call jump_compute
+        !% HACK: I commented out the jump
+        !% this needs revisiting
+        ! call jump_compute
 
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_interior_byPack

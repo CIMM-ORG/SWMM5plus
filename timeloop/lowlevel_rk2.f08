@@ -91,8 +91,7 @@ module lowlevel_rk2
             +fQ(iup(thisP+1)) - fQ(idn(thisP+2)) &
             +fQ(iup(thisP+3)) - fQ(idn(thisP+4)) &
             +fQ(iup(thisP+5)) - fQ(idn(thisP+6)) &
-            +eQlat(thisP) 
-        
+            +eQlat(thisP)
     end subroutine ll_continuity_netflowrate_JM
     !%
     !%==========================================================================  
@@ -485,7 +484,7 @@ module lowlevel_rk2
         where (elemYN(thisP,eYN_isNearZeroVolume))
             elemR(thisP,inoutCol) = zeroR
         endwhere
-            
+
     end subroutine ll_momentum_velocity_CC
     !%
     !%==========================================================================  
@@ -717,7 +716,7 @@ module lowlevel_rk2
                 end do
             end do
         end if
-       
+
     end subroutine ll_junction_branch_flowrate_and_velocity
     !%
     !%==========================================================================  

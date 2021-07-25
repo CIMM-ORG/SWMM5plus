@@ -113,6 +113,8 @@ contains
                    print*, faceR(:,fr_Head_u)[ii], 'face head up'
                    print*, faceR(:,fr_Head_d)[ii], 'face head dn'
                    print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
+                   print*, faceR(:,fr_Topwidth_u)[ii], 'face topwidth up'
+                   print*, faceR(:,fr_Topwidth_d)[ii], 'face topwidth dn'
                    call execute_command_line('')
                 enddo
             endif
@@ -937,9 +939,19 @@ contains
         JMidx = minval(elemI(:,ei_Lidx), elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
 
         !% the first element index is a junction main
-        elemI(JMidx,ei_elementType) = JM
-        elemI(JMidx,ei_HeqType)     = time_march
-        elemR(JMidx,er_Depth)       = node%R(thisJunctionNode,nr_InitialDepth)
+        elemI(JMidx,ei_elementType)  = JM
+        elemI(JMidx,ei_HeqType)      = time_march
+        
+        !%-----------------------------------------------------------------------
+        !% HACK: For now I am assuming the junction main as rectangular geometry
+        !% Talk with dr. hodges about this issue
+        elemI(JMidx,ei_geometryType) = rectangular
+        !% initializing the breadth as zero. I will add all the link breadth from the 
+        !% links in the do loop
+        elemSGR(JMidx,eSGR_Rectangular_Breadth) =  zeroR
+        !%-----------------------------------------------------------------------
+
+        elemR(JMidx,er_Depth)        = node%R(thisJunctionNode,nr_InitialDepth)
 
         !% find if the node can surcharge
         if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
@@ -966,6 +978,13 @@ contains
 
                 !% set the head equation as time-march for existing branches
                 elemI(JBidx,ei_HeqType) = time_march
+                elemR(JBidx,er_Depth)   = elemR(JMidx,er_Depth)
+
+                !%-------------------------------------------------
+                !% HACK: to get the breadth of JM, I am simply addind 
+                !% all the link breadths (assuming JM will always be rectangular)
+                elemSGR(JMidx,eSGR_Rectangular_Breadth) = elemSGR(JMidx,eSGR_Rectangular_Breadth) + &
+                                                            link%R(BranchIdx,lr_BreadthScale)
 
                 !% get the geometry data
                 select case (geometryType)
@@ -996,12 +1015,14 @@ contains
 
                         !% HACK: not sure if we need surcharge condition for junction branches
                         if (link%I(BranchIdx,li_link_type) == lPipe) then
+
                             elemYN(JBidx,eYN_canSurcharge)  = .true.
 
                             elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
                             elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
                             elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
                             elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
+                            elemR(JBidx,er_BreadthMax)  =  zeroR
                         else
                             elemR(JBidx,er_ZbreadthMax)  = link%R(BranchIdx,lr_FullDepth)
 
@@ -1015,6 +1036,62 @@ contains
                             elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
 
                         end if
+
+                    case (lTrapezoidal)
+
+                            elemI(JBidx,ei_geometryType) = rectangular
+
+                            !% store geometry specific data
+                            elemSGR(JBidx,eSGR_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
+                            elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
+                            elemSGR(JBidx,eSGR_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
+
+                            ! (Bottom width + averageSlope * Depth)*Depth
+                            elemR(JBidx,er_Area)         = (elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                                        (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * &
+                                        elemR(JBidx,er_Depth)) * elemR(JBidx,er_Depth)
+
+                            elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
+                            elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
+                            elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
+                            elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
+                            elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
+
+                            !% Junction branch k-factor
+                            !% HACK: if the user does not input the k-factor for junction brnaches,
+                            !% get a default value from the setting
+                            if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
+                                elemSR(JBidx,eSr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
+                            else
+                                elemSR(JBidx,eSr_JunctionBranch_Kfactor) = setting%Junction%kFactor
+                            end if
+                            
+                            if (link%I(BranchIdx,li_link_type) == lPipe) then
+
+                                elemYN(JBidx,eYN_canSurcharge)  = .true.
+
+                                elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
+                                elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
+                                elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
+                                elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                                        (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * &
+                                        elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth)
+                                elemR(JBidx,er_BreadthMax)  = zeroR
+
+                            else
+
+                                elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + &
+                                            (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + &
+                                            elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * elemR(JBidx,er_ZbreadthMax)
+                                elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
+                                                        link%R(BranchIdx,lr_BreadthScale)
+                                elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
+                           
+                                elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                                        (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * &
+                                        elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth)
+                                elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
+                            endif
 
                     case default
 
@@ -1045,10 +1122,12 @@ contains
                                      elemR(JMidx+5,er_Length)) + &
                                  max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
                                      elemR(JMidx+6,er_Length))
+
         !% Volume
         elemR(JMidx,er_Volume) = elemR(JMidx+1,er_Volume) + elemR(JMidx+2,er_Volume) + &
                                  elemR(JMidx+3,er_Volume) + elemR(JMidx+4,er_Volume) + &
                                  elemR(JMidx+5,er_Volume) + elemR(JMidx+6,er_Volume)
+
 
         elemR(JBidx,er_Volume_N0) = elemR(JMidx,er_Volume)
         elemR(JBidx,er_Volume_N1) = elemR(JMidx,er_Volume)

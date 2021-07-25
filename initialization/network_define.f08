@@ -1022,7 +1022,6 @@ contains
 
             !% real data
             elemR(ElemLocalCounter,er_Zbottom) = node%R(thisNode,nr_zbottom)
-            elemR(ElemLocalCounter,er_Depth)   = node%R(thisNode,nr_InitialDepth)
 
             !% advance the face counters for the branch
             FaceLocalCounter  = FaceLocalCounter  + oneI
@@ -1535,6 +1534,7 @@ contains
         !% set everything to zero for a non existant branch
         elemR(ElemIdx,:)                            = zeroR
         elemSR(ElemIdx,:)                           = zeroR
+        elemSGR(ElemIdx,:)                          = zeroR
         elemSI(ElemIdx,eSI_JunctionBranch_Exists)   = zeroI
         faceR(FaceIdx,:)                            = zeroR
         faceYN(FaceIdx,fYN_isnull)                  = .true.

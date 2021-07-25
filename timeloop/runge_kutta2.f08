@@ -54,7 +54,7 @@ module runge_kutta2
         if (N_diag > 0) then
             call diagnostic_toplevel()
         endif
-
+        
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
 

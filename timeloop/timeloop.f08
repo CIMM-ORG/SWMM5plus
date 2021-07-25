@@ -32,7 +32,6 @@ module timeloop
         !% Description:
         !% Loops over all the major time-stepping routines
         !%-----------------------------------------------------------------------------
-        integer :: ii
         logical :: isTLfinished
         logical, pointer :: useHydrology, useHydraulics
         !%-----------------------------------------------------------------------------
@@ -305,8 +304,7 @@ module timeloop
                         dt = real(floor(dt),8)
                     endif
                 endif
-                sync all
-                call co_min(dt)
+                
             else
                 !% For hydraulics only, keep the timestep stable unless it
                 !% exceeds CFL limits (both high and low limits).
@@ -330,6 +328,9 @@ module timeloop
         else
             !% for timeleft <= 0 there is no change as the hydraulics loop should exit
         endif
+
+        sync all
+        call co_min(dt)
 
         !% print the cfl to check for model blowout
         ! thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
