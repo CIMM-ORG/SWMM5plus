@@ -946,9 +946,6 @@ contains
         !% HACK: For now I am assuming the junction main as rectangular geometry
         !% Talk with dr. hodges about this issue
         elemI(JMidx,ei_geometryType) = rectangular
-        !% initializing the breadth as zero. I will add all the link breadth from the 
-        !% links in the do loop
-        elemSGR(JMidx,eSGR_Rectangular_Breadth) =  zeroR
         !%-----------------------------------------------------------------------
 
         elemR(JMidx,er_Depth)        = node%R(thisJunctionNode,nr_InitialDepth)
@@ -979,12 +976,6 @@ contains
                 !% set the head equation as time-march for existing branches
                 elemI(JBidx,ei_HeqType) = time_march
                 elemR(JBidx,er_Depth)   = elemR(JMidx,er_Depth)
-
-                !%-------------------------------------------------
-                !% HACK: to get the breadth of JM, I am simply addind 
-                !% all the link breadths (assuming JM will always be rectangular)
-                elemSGR(JMidx,eSGR_Rectangular_Breadth) = elemSGR(JMidx,eSGR_Rectangular_Breadth) + &
-                                                            link%R(BranchIdx,lr_BreadthScale)
 
                 !% get the geometry data
                 select case (geometryType)
@@ -1122,6 +1113,16 @@ contains
                                      elemR(JMidx+5,er_Length)) + &
                                  max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
                                      elemR(JMidx+6,er_Length))
+
+        !% HACK: finding the average breadth. This will not work for channels with ohter than rectangular geometry.
+        !% we need to generalize this
+        elemSGR(JMidx,eSGR_Rectangular_Breadth) = (elemR(JMidx+1,er_Length)*elemSGR(JMidx+1,eSGR_Rectangular_Breadth) + &
+                                                   elemR(JMidx+2,er_Length)*elemSGR(JMidx+2,eSGR_Rectangular_Breadth) + &
+                                                   elemR(JMidx+3,er_Length)*elemSGR(JMidx+3,eSGR_Rectangular_Breadth) + &
+                                                   elemR(JMidx+4,er_Length)*elemSGR(JMidx+4,eSGR_Rectangular_Breadth) + &
+                                                   elemR(JMidx+5,er_Length)*elemSGR(JMidx+5,eSGR_Rectangular_Breadth) + &
+                                                   elemR(JMidx+6,er_Length)*elemSGR(JMidx+6,eSGR_Rectangular_Breadth))/ &   
+                                                   elemR(JMidx,er_Length)
 
         !% Volume
         elemR(JMidx,er_Volume) = elemR(JMidx+1,er_Volume) + elemR(JMidx+2,er_Volume) + &
