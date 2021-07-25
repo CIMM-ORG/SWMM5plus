@@ -333,8 +333,9 @@ module timeloop
         call co_min(dt)
 
         !% print the cfl to check for model blowout
-        ! thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
+        
         ! if(mod(timeNow, setting%output%report_time) < setting%output%report_tol) then
+            ! thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
             ! print*, '--------------------------------------'
             ! print*, 'In image', this_image()
             ! print*, 'This Time = ', timeNow, 'dt = ', dt
