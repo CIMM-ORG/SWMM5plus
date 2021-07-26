@@ -949,6 +949,12 @@ contains
         !%-----------------------------------------------------------------------
 
         elemR(JMidx,er_Depth)        = node%R(thisJunctionNode,nr_InitialDepth)
+        !% HACK: JM elements are not solved for momentum. Thus, setting small 
+        !% momentum values so that it does not cause issues later
+        elemR(JMidx,er_Flowrate)     = 1E-6
+        elemR(JMidx,er_Velocity)     = 1E-4
+        elemR(JMidx,er_WaveSpeed)    = 1E-4
+        elemR(JMidx,er_FroudeNumber) = 1E-4
 
         !% find if the node can surcharge
         if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
@@ -973,9 +979,15 @@ contains
                 BranchIdx    => elemSI(JBidx,eSI_JunctionBranch_Link_Connection)
                 geometryType => link%I(BranchIdx,li_geometry)
 
-                !% set the head equation as time-march for existing branches
-                elemI(JBidx,ei_HeqType) = time_march
+                !% set the head equation as as JB for now for existing branches
+                !% only JM is time marched 
+                elemI(JBidx,ei_HeqType) = JB
                 elemR(JBidx,er_Depth)   = elemR(JMidx,er_Depth)
+
+                !% HACK: JB elements are not solved for momentum. Thus, setting small 
+                !% momentum values so that it does not cause issues later
+                elemR(JBidx,er_WaveSpeed)    = 1E-4
+                elemR(JBidx,er_FroudeNumber) = 1E-4
 
                 !% get the geometry data
                 select case (geometryType)

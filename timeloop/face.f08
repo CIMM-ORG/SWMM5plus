@@ -366,9 +366,7 @@ module face
         call adjust_face_dynamic_limit (facePackCol, .true.)
 
         !% reset all the hydraulic jump interior faces
-        !% HACK: I commented out the jump
-        !% this needs revisiting
-        ! call jump_compute
+        call jump_compute
 
         if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
     end subroutine face_interpolation_interior_byPack

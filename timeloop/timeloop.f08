@@ -220,7 +220,6 @@ module timeloop
         !% HACK to prevent infinite loop in testing
         ! print *, "Hard-code hydrualic subtime-step loop exit for testing 7647"
         ! timeNext = timeFinal+1.0
-
         end do
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
@@ -241,7 +240,7 @@ module timeloop
         !% only occur every N time steps, as set by setting.VariableDT.NstepsForCheck
         !%-----------------------------------------------------------------------------
         real(8) :: timeleft, thisCFL
-        integer :: neededSteps
+        integer :: neededSteps, ii
 
         real(8), pointer :: dt, maxCFL, maxCFLlow, targetCFL
         real(8), pointer :: timeNow, timeFinal, decreaseFactor, increaseFactor
@@ -272,8 +271,8 @@ module timeloop
         checkStepInterval => setting%VariableDT%NstepsForCheck
         lastCheckStep     => setting%VariableDT%LastCheckStep
 
-        thisCol => col_elemP(ep_ALLtm)
-        Npack   => col_elemP(thisCol)
+        thisCol => col_elemP(ep_CC_ALLtm)
+        Npack   => npack_elemP(thisCol)
         thisP   => elemP(1:Npack,thisCol)
 
         velocity  => elemR(:,er_Velocity)
@@ -334,14 +333,32 @@ module timeloop
 
         !% print the cfl to check for model blowout
         
-        ! if(mod(timeNow, setting%output%report_time) < setting%output%report_tol) then
-            ! thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
-            ! print*, '--------------------------------------'
-            ! print*, 'In image', this_image()
-            ! print*, 'This Time = ', timeNow, 'dt = ', dt
-            ! print*, 'CFL max = ', thisCFL, 'Velocity Max = ', maxval(abs(velocity(thisP))) 
-            ! print*, '--------------------------------------'
-        ! end if
+        if(mod(timeNow, setting%output%report_time) == 0) then
+            thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
+            print*, '--------------------------------------'
+            print*, 'In image', this_image()
+            print*, 'This Time = ', timeNow, 'dt = ', dt
+            print*, 'CFL max = ', thisCFL, 'Velocity Max = ', maxval(abs(velocity(thisP))) , &
+            'Wavespeed max = ', maxval(abs(wavespeed(thisP))) 
+        
+            ! if (this_image() == 1) then
+            !     do ii = 1,num_images()
+            !        print*, 'lagged output at image = ', ii
+            !        print*, '.....................elements.......................'
+            !        print*, elemR(:,er_Depth)[ii], 'depth'
+            !        print*, elemR(:,er_Volume)[ii],'volume'
+            !        print*, '-------------------Dynamics Data--------------------'
+            !        print*, elemR(:,er_Flowrate)[ii], 'flowrate'
+            !        print*, elemR(:,er_Velocity)[ii], 'velocity'
+            !        print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
+            !        print*, '.....................faces.......................'
+            !        print*, faceR(:,fr_Head_u)[ii], 'face head up'
+            !        print*, faceR(:,fr_Head_d)[ii], 'face head dn'
+            !        print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
+            !        call execute_command_line('')
+            !     enddo
+            ! endif
+        end if
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_set_hydraulic_substep

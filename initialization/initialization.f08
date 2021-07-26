@@ -62,8 +62,8 @@ contains
         !% HACK: for clarity and consistency, this probably should be moved into
         !% the init_network. Placed here for the time being in case we need it
         !% for translating link/node from SWMM-C or partitioning.
-        branchsign(1:2:max_branch_per_node-1) = +oneR
-        branchsign(2:2:max_branch_per_node)   = -oneR
+        branchsign(1:max_branch_per_node-1:2) = +oneR
+        branchsign(2:max_branch_per_node:2)   = -oneR
 
         !% load the settings.json file with the default setting% model control structure
         !% def_load_settings is one of the few subroutines in the Definition modules
