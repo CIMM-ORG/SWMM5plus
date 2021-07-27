@@ -377,7 +377,7 @@ module adjust
                             (  w_uQ(thisP) * faceflow(mapDn(thisP))    &
                              + w_dQ(thisP) * faceflow(mapUp(thisP)) )  &
                         / ( w_uQ(thisP) + w_dQ(thisP) )
-                    
+
                     !% reset the velocity      
                     elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)     
                 endwhere

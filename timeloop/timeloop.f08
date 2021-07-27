@@ -354,6 +354,8 @@ module timeloop
             !        print*, '.....................faces.......................'
             !        print*, faceR(:,fr_Head_u)[ii], 'face head up'
             !        print*, faceR(:,fr_Head_d)[ii], 'face head dn'
+            !        print*, faceR(:,fr_HydDepth_u)[ii], 'face Hyddepth up'
+            !        print*, faceR(:,fr_HydDepth_d)[ii], 'face Hyddepth dn'
             !        print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
             !        call execute_command_line('')
             !     enddo

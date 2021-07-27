@@ -137,22 +137,27 @@ module face
         !% HACK: This is needed to be revisited later
         if (setting%ZeroValue%UseZeroValues) then
             !% ensure face area_u is not smaller than zerovalue
-            where (faceR(face_P,fr_Area_d) < setting%ZeroValue%Area)
-                faceR(face_P,fr_Area_d) = setting%ZeroValue%Area
-                faceR(face_P,fr_Area_u) = setting%ZeroValue%Area
+            where (faceR(face_P,fr_Area_d) <= setting%ZeroValue%Area)
+                faceR(face_P,fr_Area_d)     = setting%ZeroValue%Area
+                faceR(face_P,fr_Area_u)     = setting%ZeroValue%Area
+                faceR(face_P,fr_Velocity_d) = zeroR
+                faceR(face_P,fr_Velocity_u) = zeroR
             endwhere
 
-            where (faceR(face_P,fr_Area_d) >= setting%ZeroValue%Area)
+            where (faceR(face_P,fr_Area_d) > setting%ZeroValue%Area)
                 faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
                 faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)  
             endwhere
         else
             !% ensure face area_u is not smaller than zerovalue
-            where (faceR(face_P,fr_Area_d) < zeroR)
-                faceR(face_P,fr_Area_d) = zeroR
+            where (faceR(face_P,fr_Area_d) <= zeroR)
+                faceR(face_P,fr_Area_d)     = zeroR
+                faceR(face_P,fr_Area_u)     = zeroR
+                faceR(face_P,fr_Velocity_d) = zeroR
+                faceR(face_P,fr_Velocity_u) = zeroR
             endwhere
 
-            where (faceR(face_P,fr_Area_d) >= zeroR)
+            where (faceR(face_P,fr_Area_d) > zeroR)
                 faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
                 faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
             endwhere
@@ -251,8 +256,9 @@ module face
 
 
         do ii=1,size(fHeadSetD)
-            faceR(face_P, fHeadSetD(ii)) = BC%headRI(idx_P) !% downstream head update
-            faceR(face_P, fHeadSetU(ii)) = faceR(face_P, fHeadSetD(ii))
+            !%  linear interpolation using ghost and interior cells
+            faceR(face_P, fHeadSetU(ii)) = 0.5 * (elemR(eup(face_P), er_Head) + BC%headRI(idx_P)) !% downstream head update
+            faceR(face_P, fHeadSetD(ii)) = faceR(face_P, fHeadSetU(ii))
         end do
 
         do ii=1,size(fFlowSet)
