@@ -24,8 +24,8 @@ module define_globals
     !% ===================================================================================
 
     !% Number of maximum branches for a junction
-    !integer, parameter :: max_us_branch_per_node = 3
-    !integer, parameter :: max_ds_branch_per_node = 3
+    integer, parameter :: max_us_branch_per_node = 3
+    integer, parameter :: max_ds_branch_per_node = 3
     integer, parameter :: max_branch_per_node = 6
     real(8) :: branchsign(max_branch_per_node)
 
@@ -88,10 +88,15 @@ module define_globals
     integer, allocatable, target :: facePS(:,:)[:]      !% coarray for shared faces pack array
     logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array
 
-    !% BIPquick Arrays
+    !% BIPquick Arrays - (De)Allocated in BIPquick.f08
     integer, allocatable :: B_nodeI(:,:)
     real(8), allocatable :: B_nodeR(:,:)
-
+    real(8), allocatable :: weight_range(:,:)
+    logical, allocatable :: totalweight_visited_nodes(:)
+    logical, allocatable :: partitioned_nodes(:)
+    logical, allocatable :: partitioned_links(:)
+    logical, allocatable :: accounted_for_links(:)
+ 
     !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable :: adjacent_links(:)
     integer, allocatable :: elem_per_image(:)
@@ -191,19 +196,6 @@ module define_globals
     !real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
     !real(8), pointer :: elem_shorten_cof => setting%Discretization%LinkShortingFactor
 
-    !% BIPquick Arrays - (De)Allocated in BIPquick.f08
-    integer, allocatable :: B_nodeI(:,:)
-    real(8), allocatable :: B_nodeR(:,:)
-    real(8), allocatable :: weight_range(:,:)
-    logical, allocatable :: totalweight_visited_nodes(:)
-    logical, allocatable :: partitioned_nodes(:)
-    logical, allocatable :: partitioned_links(:)
-    logical, allocatable :: accounted_for_links(:)
- 
-    !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
-    integer, allocatable :: adjacent_links(:)
-    integer, allocatable :: elem_per_image(:)
-    logical, allocatable :: image_full(:)
     integer, parameter   :: NoAdjust       = 1   !% no link length adjustment has done
     integer, parameter   :: OneSideAdjust  = 2   !% one sided link length adjustment has done
     integer, parameter   :: BothSideAdjust = 3   !% both sided link length adjustment has done

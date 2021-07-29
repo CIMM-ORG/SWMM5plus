@@ -1505,7 +1505,7 @@ contains
       if(num_images() /= counter) then
          print *, "error in NodeI images. This_image :: ", this_image()
       else
-         print *, "correct number in nodeI images. This_image :: ", this_image()
+         print *, "correct number in node%I images. This_image :: ", this_image()
       end if
 
       !% We reset the counter and do the same process for the Links
@@ -1528,10 +1528,10 @@ contains
 
 
       if(num_images() /= counter) then
-         print *, "error in linkI images. This_image :: ", this_image()
+         print *, "error in link%I images. This_image :: ", this_image()
          print *, "counter", counter
       else
-         print *, "correct number in linkI images.  This_image :: ", this_image()
+         print *, "correct number in link%I images.  This_image :: ", this_image()
       end if
       if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
 

@@ -87,8 +87,6 @@ contains
 
         call init_partitioning()
 
-        stop
-
         sync all
         !% HACK: this sync call is probably not needed
 

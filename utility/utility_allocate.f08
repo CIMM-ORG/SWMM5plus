@@ -124,13 +124,13 @@ contains
 
         !% If BIPquick is being used for Partitioning, allocate additional arrays
         if (setting%Partitioning%PartitioningMethod == BQuick) then
-            allocate(B_nodeI(size(nodeI,1), max_us_branch_per_node))
-            allocate(B_nodeR(size(nodeR,1), twoI))
-            allocate(totalweight_visited_nodes(size(nodeI, oneI)))
-            allocate(partitioned_nodes(size(nodeI, oneI)))
-            allocate(partitioned_links(size(linkI, oneI)))
-            allocate(weight_range(size(linkI, oneI), twoI))
-            allocate(accounted_for_links(size(linkI, oneI)))
+            allocate(B_nodeI(size(node%I,1), max_us_branch_per_node))
+            allocate(B_nodeR(size(node%R,1), twoI))
+            allocate(totalweight_visited_nodes(size(node%I, oneI)))
+            allocate(partitioned_nodes(size(node%I, oneI)))
+            allocate(partitioned_links(size(link%I, oneI)))
+            allocate(weight_range(size(link%I, oneI), twoI))
+            allocate(accounted_for_links(size(link%I, oneI)))
         end if
     end subroutine util_allocate_partitioning_arrays
     !

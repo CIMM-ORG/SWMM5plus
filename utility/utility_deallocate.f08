@@ -57,7 +57,7 @@ contains
     !   of the network connectivity
     !
     ! Method:
-    !   Release the memory used by the tables node%I, link%I, node%R, linkR, node%YN,
+    !   Release the memory used by the tables node%I, link%I, node%R, link%R, node%YN,
     !   link%YN.
     !   These are defined in globals.f08), and allocated in allocate_storage.f08
     !   Every time memory is deallocated, the utility_check_deallocation functionality

@@ -36,8 +36,8 @@ module utility
         integer :: ii
         logical :: ex
         !%-----------------------------------------------------------------------------
-        open(unit=1,file='debug/linkR.csv',status='new')
-        open(unit=2,file='debug/linkI.csv',status='new')
+        open(unit=1,file='debug/link%R.csv',status='new')
+        open(unit=2,file='debug/link%I.csv',status='new')
         write(1, '(A)')                                                                    &
             "lr_Length,lr_AdjustedLength,lr_InletOffset,lr_OutletOffset,lr_BreadthScale,"                 // &
             "lr_TopWidth,lr_ElementLength,lr_Slope,lr_LeftSlope,lr_RightSlope,"         // &
@@ -60,8 +60,8 @@ module utility
         close(1)
         close(2)
 
-        open(unit=3,file='debug/nodeR.csv',status='new')
-        open(unit=4,file='debug/nodeI.csv',status='new')
+        open(unit=3,file='debug/node%R.csv',status='new')
+        open(unit=4,file='debug/node%I.csv',status='new')
 
         write(3, '(A)')                                                                              &
             "nr_Zbottom,nr_InitialDepth,nr_FullDepth,nr_StorageConstant,nr_StorageCoeff,"         // &
