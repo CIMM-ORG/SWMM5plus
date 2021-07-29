@@ -29,13 +29,13 @@ static int  Ntokens;                   // Number of tokens in line of input
 
 // --- Simulation
 
-// Initializes the SWMM C simulation. It creates an Interface
+// Initializes the EPA-SWMM simulation. It creates an Interface
 // variable (details about Interface in interface.h). The
 // function opens de SWMM input file and creates report and
 // output files. Although the .inp is parsed within swmm_start,
 // not every property is extracted, e.g., slopes of trapezoidal channels.
 // In swmm.c
-// to parse the .inp again using SWMM C functionalities
+// to parse the .inp again using EPA-SWMM functionalities
 // within api_load_vars
 // The interface object is passed to many functions in interface.c
 // but it is passed as a void pointer. This is because the object
@@ -65,7 +65,7 @@ void DLLEXPORT api_finalize(void* f_api)
 //
 //  Input: f_api is an Interface object passed as a void*
 //  Output: None
-//  Purpose: Closes the link with the SWMM C library
+//  Purpose: Closes the link with the EPA-SWMM library
 //
 {
     int i;
@@ -93,45 +93,6 @@ void DLLEXPORT api_finalize(void* f_api)
 
 // --- Property-extraction
 
-// * During Simulation
-
-int DLLEXPORT api_get_node_results(void* f_api, char* node_name, float* inflow, float* overflow, float* depth, float* volume)
-//
-//  Input:    f_api = Interface object passed as a void*
-//            node_name = string identifier of node
-//            inflow, overflow, depth, volume =
-//  Output: None
-//  Purpose: Closes the link with the SWMM C library
-//
-{
-    int j, error;
-    Interface * api = (Interface*) f_api;
-
-    error = check_api_is_initialized(api);
-    if (error != 0) return error;
-
-    j = project_findObject(NODE, node_name);
-    *inflow = Node[j].inflow;
-    *overflow = Node[j].overflow;
-    *depth = Node[j].newDepth;
-    *volume = Node[j].newVolume;
-    return 0;
-}
-
-int DLLEXPORT api_get_link_results(void* f_api, char* link_name, float* flow, float* depth, float* volume)
-{
-    int j, error;
-    Interface * api = (Interface*) f_api;
-
-    error = check_api_is_initialized(api);
-    if (error != 0) return error;
-    j = project_findObject(LINK, link_name);
-    *flow = Link[j].newFlow;
-    *depth = Link[j].newDepth;
-    *volume = Link[j].newVolume;
-    return 0;
-}
-
 // * After Initialization
 
 double DLLEXPORT api_get_start_datetime()
@@ -146,13 +107,23 @@ double DLLEXPORT api_get_end_datetime()
 
 int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value)
 {
-    int error;
+    int error, bpat, tseries_idx;
     Interface * api = (Interface*) f_api;
+
     error = check_api_is_initialized(api);
     if (error != 0) return error;
 
     if (attr == node_type)
         *value = Node[k].type;
+    else if (attr == node_outfall_type)
+    {
+        if (Node[k].type == OUTFALL)
+        {
+            *value = Outfall[Node[k].subIndex].type;
+        }
+        else
+            *value = -1;
+    }
     else if (attr == node_invertElev)
         *value = FTTOM(Node[k].invertElev);
     else if (attr == node_initDepth)
@@ -164,10 +135,26 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
         else
             *value = -1;
     }
+    else if (attr == node_extInflow_tSeries_x2)
+    {
+        tseries_idx = Node[k].extInflow->tSeries;
+        if (tseries_idx >= 0)
+            *value = Tseries[tseries_idx].x2;
+        else
+            *value = -1;
+    }
     else if (attr == node_extInflow_basePat)
     {
         if (Node[k].extInflow)
-            *value = Node[k].extInflow->basePat;
+            *value = CFTOCM(Node[k].extInflow->cFactor * Node[k].extInflow->basePat);
+        else
+            *value = -1;
+    }
+    else if (attr == node_extInflow_basePat_type)
+    {
+        bpat = Node[k].extInflow->basePat;
+        if (bpat >= 0) // baseline pattern exists
+            *value = Pattern[bpat].type;
         else
             *value = -1;
     }
@@ -175,7 +162,7 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     {
         if (Node[k].extInflow)
         {
-            *value = CFTOCM(Node[k].extInflow->baseline);
+            *value = CFTOCM(Node[k].extInflow->cFactor * Node[k].extInflow->baseline);
         }
         else
             *value = 0;
@@ -353,119 +340,117 @@ int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int obj
     error = check_api_is_initialized(api);
     if (error != 0) return error;
     if (object_type == NODE)
-        object_name = Node[k].ID;
+    {
+        for (int i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
+        {
+            object_name[i] = Node[k].ID[i];
+        }
+    }
     else if (object_type == LINK)
-        object_name = Link[k].ID;
+    {
+        for (int i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
+        {
+            object_name[i] = Link[k].ID[i];
+        }
+    }
     else
         return ERROR_FEATURE_NOT_COMPATIBLE;
     return 0;
 }
 
-int DLLEXPORT api_get_first_table_entry(int k, int table_type, double* x, double* y)
-{
-    int success;
-    if (table_type == TSERIES)
-    {
-        success = table_getFirstEntry(&Tseries[k], x, y);
-        if (Tseries[k].curveType == -1 && Tseries[k].refersTo == EXTERNAL_INFLOW)
-            *y = CFTOCM(*y);
-        return success;
-    }
-    else
-    {
-        return ERR_API_WRONG_TYPE;
-    }
-}
+double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime) {
 
-int DLLEXPORT api_get_next_table_entry(int k, int table_type, double* x, double* y)
-{
-    int success;
-    if (table_type == TSERIES)
-    {
-        success = table_getNextEntry(&Tseries[k], x, y);
-        if (Tseries[k].curveType == -1 && Tseries[k].refersTo == EXTERNAL_INFLOW)
-            *y = CFTOCM(*y);
-        return success;
-    }
-    else
-    {
-        return ERR_API_WRONG_TYPE;
-    }
-}
+    int ptype, pcount, i, j, p;
+    int yy, mm, dd;
+    int h, m, s, dow;
+    double val;
+    double x, y, next_datetime;
+    double bline, sfactor;
+    double total_factor = 1;
+    double total_extinflow = 0;
+    double total_inflow = 0;
 
-int DLLEXPORT api_get_pattern_count(int k)
-{
-    return Pattern[k].count;
-}
+    datetime_decodeDate(current_datetime, &yy, &mm, &dd);
+    datetime_decodeTime(current_datetime, &h, &m, &s);
+    dow = datetime_dayOfWeek(current_datetime);
 
-double DLLEXPORT api_get_pattern_factor(int k, int j)
-{
-    return Pattern[k].factor[j];
-}
-
-int DLLEXPORT api_get_pattern_type(int k)
-{
-    return Pattern[k].type;
-}
-
-// --- Print-out
-
-void DLLEXPORT api_print_object_name(int k, int object_type)
-{
-    if (object_type == NODE) printf("%s\n", Node[k].ID);
-    if (object_type == LINK) printf("%s\n", Link[k].ID);
-}
-
-int add_link(
-    int li_idx,
-    int ni_idx,
-    int direction,
-    int* ni_N_link_u,
-    int* ni_Mlink_u1,
-    int* ni_Mlink_u2,
-    int* ni_Mlink_u3,
-    int* ni_N_link_d,
-    int* ni_Mlink_d1,
-    int* ni_Mlink_d2,
-    int* ni_Mlink_d3)
-{
-
-    if (direction == UPSTREAM) {
-        ni_N_link_u[ni_idx] ++;
-        if (ni_N_link_u[ni_idx] <= 3) {
-            if (ni_N_link_u[ni_idx] == 1) {
-                ni_Mlink_u1[ni_idx] = li_idx;
-            } else if (ni_N_link_u[ni_idx] == 2) {
-                ni_Mlink_u2[ni_idx] = li_idx;
-            } else if (ni_N_link_u[ni_idx] == 3) {
-                ni_Mlink_u3[ni_idx] = li_idx;
-            } else {
-                return -500;
+    api_get_node_attribute(f_api, node_idx, node_has_dwfInflow, &val);
+    if (val == 1) { // node_has_dwfInflow
+        for (int i=0; i<4; i++)
+        {
+            j = Node[node_idx].dwfInflow->patterns[i];
+            if (j > 0)
+            {
+                ptype = Pattern[j].type;
+                if (ptype == MONTHLY_PATTERN)
+                    total_factor *= Pattern[j].factor[mm-1];
+                else if (ptype == DAILY_PATTERN)
+                    total_factor *= Pattern[j].factor[dow-1];
+                else if (ptype == HOURLY_PATTERN)
+                    total_factor *= Pattern[j].factor[h];
+                else if (ptype == WEEKEND_PATTERN)
+                {
+                    if ((dow == 1) || (dow == 7))
+                        total_factor *= Pattern[j].factor[h];
+                }
             }
-            return 0;
-        } else {
-            return -400;
         }
-    } else {
-        ni_N_link_d[ni_idx] ++;
-        if (ni_N_link_d[ni_idx] <= 3) {
-            if (ni_N_link_d[ni_idx] == 1) {
-                ni_Mlink_d1[ni_idx] = li_idx;
-            } else if (ni_N_link_d[ni_idx] == 2) {
-                ni_Mlink_d2[ni_idx] = li_idx;
-            } else if (ni_N_link_d[ni_idx] == 3) {
-                ni_Mlink_d3[ni_idx] = li_idx;
-            } else {
-                return -500;
-            }
-            return 0;
-        } else {
-            return -400;
-        }
+        total_inflow += total_factor * CFTOCM(Node[node_idx].dwfInflow->avgValue);
     }
-    return -296;
+
+    api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
+    if (val == 1) { // node_has_extInflow
+        p = Node[node_idx].extInflow->basePat; // pattern
+        bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
+        if (p >= 0)
+        {
+            ptype = Pattern[p].type;
+            if (ptype == MONTHLY_PATTERN)
+                total_extinflow += Pattern[j].factor[mm-1] * bline;
+            else if (ptype == DAILY_PATTERN)
+                total_extinflow += Pattern[j].factor[dow-1] * bline;
+            else if (ptype == HOURLY_PATTERN)
+                total_extinflow += Pattern[j].factor[h] * bline;
+            else if (ptype == WEEKEND_PATTERN)
+            {
+                if ((dow == 1) || (dow == 7))
+                    total_extinflow += Pattern[j].factor[h] * bline;
+            }
+        }
+        else if (bline > 0)
+        {
+            total_extinflow += bline;
+        }
+
+        j = Node[node_idx].extInflow->tSeries; // tseries
+        sfactor = Node[node_idx].extInflow->sFactor; // scale factor
+        if (j >= 0)
+        {
+            total_extinflow += table_tseriesLookup(&Tseries[j], current_datetime, FALSE) * sfactor;
+        }
+        total_inflow += total_extinflow;
+    }
+    return total_inflow;
 }
 
+double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime)
+{
+    int i = Node[node_idx].subIndex;
+    double yNew;
+
+    switch (Outfall[i].type)
+    {
+    case FIXED_OUTFALL:
+        yNew = Outfall[i].fixedStage;
+        break;
+
+    default:
+        yNew = -1;
+        break;
+    }
+
+    return FTTOM(yNew);
+}
 
 int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
 {
@@ -715,20 +700,84 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
     return 0;
 }
 
-// --- Utils
-int check_api_is_initialized(Interface* api)
-{
-    if ( ErrorCode ) return error_getCode(ErrorCode);
-    if ( !api->IsInitialized )
-    {
-        report_writeErrorMsg(ERR_NOT_OPEN, "");
-        return error_getCode(ErrorCode);
-    }
+// -------------------------------------------------------------------------
+// |
+// |  Private functionalities
+// v
+// -------------------------------------------------------------------------
 
-    return 0;
+double api_get_outfall_depth(int node_idx, int link_idx, double currentDate, double z, double q)
+{
+    // double   x, y;                         // x,y values in table
+    // double   yNew, yNorm, yCrit;           // new depth above invert elev. (ft)
+    // double   stage;                        // water elevation at outfall (ft)
+    // int      k;                            // table index
+    // int      i = Node[node_idx].subIndex;  // outfall index
+
+    // // Compute normal and critical depths
+
+    // yNorm = link_getYnorm(link_idx, q);
+    // yCrit = link_getYcrit(link_idx, q);
+
+    // switch ( Outfall[i].type )
+    // {
+    //   case NORMAL_OUTFALL:
+    //     if ( z > 0.0 ) yNew = 0.0;
+    //     else yNew = yNorm;
+    //     return yNew;
+
+    //   case FIXED_OUTFALL:
+    //     stage = Outfall[i].fixedStage;
+    //     break;
+
+    //   case TIDAL_OUTFALL:
+    //     k = Outfall[i].tideCurve;
+    //     table_getFirstEntry(&Curve[k], &x, &y);
+    //     x += ( currentDate - floor(currentDate) ) * 24.0;
+    //     stage = table_lookup(&Curve[k], x) / UCF(LENGTH);
+    //     break;
+
+    //   case TIMESERIES_OUTFALL:
+    //     k = Outfall[i].stageSeries;
+    //     currentDate = StartDateTime + NewRoutingTime / MSECperDAY;
+    //     stage = table_tseriesLookup(&Tseries[k], currentDate, TRUE) /
+    //             UCF(LENGTH);
+    //     break;
+    //   default: stage = Node[node_idx].invertElev;
+    // }
+
+    // // --- now determine depth at node given outfall stage elev.
+
+    // // --- let critical flow depth be min. of critical & normal depth
+    // yCrit = MIN(yCrit, yNorm);
+
+    // // --- if elev. of critical depth is below outfall stage elev. then
+    // //     the outfall stage determines node depth
+    // if ( yCrit + z + Node[node_idx].invertElev < stage )
+    // {
+    //     yNew = stage - Node[node_idx].invertElev;
+    // }
+
+    // // --- otherwise if the outfall conduit lies above the outfall invert
+    // else if ( z > 0.0 )
+    // {
+    //     // --- if the outfall stage lies below the bottom of the outfall
+    //     //     conduit then the result is distance from node invert to stage
+    //     if ( stage < Node[node_idx].invertElev + z )
+    //         yNew = MAX(0.0, (stage - Node[node_idx].invertElev));
+
+    //     // --- otherwise stage lies between bottom of conduit and critical
+    //     //     depth in conduit so result is elev. of critical depth
+    //     else yNew = z + yCrit;
+    // }
+
+    // // --- and for case where there is no conduit offset and outfall stage
+    // //     lies below critical depth, then node depth = critical depth
+    // else yNew = yCrit;
+
+    // return yNew;
 }
 
-// ---
 int api_load_vars(void * f_api)
 {
     Interface * api = (Interface*) f_api;
@@ -786,14 +835,75 @@ int api_load_vars(void * f_api)
     return 0;
 }
 
-
 int api_findObject(int type, char *id)
 {
     return project_findObject(type, id);
 }
 
+int add_link(
+    int li_idx,
+    int ni_idx,
+    int direction,
+    int* ni_N_link_u,
+    int* ni_Mlink_u1,
+    int* ni_Mlink_u2,
+    int* ni_Mlink_u3,
+    int* ni_N_link_d,
+    int* ni_Mlink_d1,
+    int* ni_Mlink_d2,
+    int* ni_Mlink_d3)
+{
+
+    if (direction == UPSTREAM) {
+        ni_N_link_u[ni_idx] ++;
+        if (ni_N_link_u[ni_idx] <= 3) {
+            if (ni_N_link_u[ni_idx] == 1) {
+                ni_Mlink_u1[ni_idx] = li_idx;
+            } else if (ni_N_link_u[ni_idx] == 2) {
+                ni_Mlink_u2[ni_idx] = li_idx;
+            } else if (ni_N_link_u[ni_idx] == 3) {
+                ni_Mlink_u3[ni_idx] = li_idx;
+            } else {
+                return -500;
+            }
+            return 0;
+        } else {
+            return -400;
+        }
+    } else {
+        ni_N_link_d[ni_idx] ++;
+        if (ni_N_link_d[ni_idx] <= 3) {
+            if (ni_N_link_d[ni_idx] == 1) {
+                ni_Mlink_d1[ni_idx] = li_idx;
+            } else if (ni_N_link_d[ni_idx] == 2) {
+                ni_Mlink_d2[ni_idx] = li_idx;
+            } else if (ni_N_link_d[ni_idx] == 3) {
+                ni_Mlink_d3[ni_idx] = li_idx;
+            } else {
+                return -500;
+            }
+            return 0;
+        } else {
+            return -400;
+        }
+    }
+    return -296;
+}
+
+int check_api_is_initialized(Interface* api)
+{
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( !api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    return 0;
+}
+
 // Copy pasted getTokens from src/input.c to ensure independence
-// from the original SWMM C code. In the original code
+// from the original EPA-SWMM code. In the original code
 // getTokens is not defined as an external API function
 
 int getTokens(char *s)

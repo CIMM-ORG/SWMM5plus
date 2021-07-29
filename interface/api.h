@@ -39,10 +39,13 @@
 enum api_node_attributes {
   node_ID = 1,
   node_type,
+  node_outfall_type,
   node_invertElev,
   node_initDepth,
   node_extInflow_tSeries,
+  node_extInflow_tSeries_x2,
   node_extInflow_basePat,
+  node_extInflow_basePat_type,
   node_extInflow_baseline,
   node_extInflow_sFactor,
   node_has_extInflow,
@@ -139,11 +142,7 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
 int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value);
 int DLLEXPORT api_get_num_objects(void* f_api, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
-int DLLEXPORT api_get_first_table_entry(int k, int table_type, double* x, double* y);
-int DLLEXPORT api_get_next_table_entry(int k, int table_type, double* x, double* y);
-int DLLEXPORT api_get_pattern_count(int k);
-double DLLEXPORT api_get_pattern_factor(int k, int j);
-int DLLEXPORT api_get_pattern_type(int k);
+double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime);
 double DLLEXPORT api_get_start_datetime();
 double DLLEXPORT api_get_end_datetime();
 int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type);

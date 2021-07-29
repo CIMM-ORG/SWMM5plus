@@ -15,29 +15,46 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $JSON_DIR/json_file_module.F90\
               $JSON_DIR/json_module.F90\
               $UTIL_DIR/utility_string.f08\
-              $UTIL_DIR/utility_datetime.f08\
               $DEF_DIR/define_types.f08\
+              $DEF_DIR/define_api_keys.f08\
               $DEF_DIR/define_globals.f08\
               $DEF_DIR/define_keys.f08\
               $DEF_DIR/define_settings.f08\
               $DEF_DIR/define_indexes.f08\
               $UTIL_DIR/utility.f08\
-              $UTIL_DIR/utility_allocate.f08\
-              $UTIL_DIR/utility_array.f08\
-              $API_DIR/dll.f08\
+              $UTIL_DIR/utility_datetime.f08\
+              $API_DIR/c_library.f08\
               $API_DIR/interface.f08\
+              $UTIL_DIR/utility_allocate.f08\
+              $UTIL_DIR/utility_deallocate.f08\
+              $UTIL_DIR/utility_array.f08\
+              $UTIL_DIR/utility_debug.f08\
+              $UTIL_DIR/utility_output.f08\
+              $UTIL_DIR/utility_interpolate.f08\
+              $INIT_DIR/pack_mask_arrays.f08\
               $INIT_DIR/discretization.f08\
               $INIT_DIR/BIPquick.f08\
               $INIT_DIR/partitioning.f08\
               $INIT_DIR/network_define.f08\
-              $INIT_DIR/initial_condition.f08\
-              $INIT_DIR/initialization.f08\
-              $TL_DIR/lowlevel_rk2.f08\
+              $UTIL_DIR/utility_unit_testing.f08\
               $TL_DIR/adjust.f08\
+              $TL_DIR/jump.f08\
+              $TL_DIR/common_elements.f08\
+              $TL_DIR/weir_elements.f08\
+              $TL_DIR/orifice_elements.f08\
+              $TL_DIR/pump_elements.f08\
+              $GEO_DIR/rectangular_channel.f08\
+              $GEO_DIR/trapezoidal_channel.f08\
+              $GEO_DIR/geometry.f08\
+              $TL_DIR/lowlevel_rk2.f08\
               $TL_DIR/update.f08\
               $TL_DIR/face.f08\
+              $TL_DIR/boundary_conditions.f08\
+              $TL_DIR/diagnostic_elements.f08\
               $TL_DIR/runge_kutta2.f08\
               $TL_DIR/timeloop.f08\
+              $INIT_DIR/initial_condition.f08\
+              $INIT_DIR/initialization.f08\
               $FIN_DIR/finalization.f08"
 
 # --------------------------------------------------------------------------------------
@@ -47,7 +64,7 @@ for i in $(find $TEST_DIR -name '*.f08')
 do
     fname=$(basename -- "$i")
     fname="${fname%.*}"
-    if [[ $fname != _* ]]
+    if [[ $fname != _* ]] && [[ $fname != "main" ]]
     then
         TEST_FILES="$TEST_FILES $i"
     fi
@@ -57,17 +74,18 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
 
+
+$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f08 -ldl -o $PROGRAM
 # --------------------------------------------------------------------------------------
 
 $clean:
-    echo
-    echo Clean Object files ...
-    echo
-    rm -rf *.o *.mod *.out
-    if [[ -d debug ]]; then rm -r debug; fi
-    mkdir debug
+echo
+echo Clean Object files ...
+echo
+rm -rf *.o *.mod *.out
+if [[ -d debug ]]; then rm -r debug; fi
+mkdir debug
 
 echo
 echo Complete!

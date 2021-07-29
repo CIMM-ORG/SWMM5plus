@@ -7,6 +7,7 @@ module partitioning
     use utility
     use utility_allocate
     use BIPquick
+    use utility_deallocate
 
     implicit none
 
@@ -67,12 +68,11 @@ subroutine init_partitioning_method()
     if (setting%Debug%File%partitioning) then
         print *, '*** leave ', subroutine_name
 
-        do ii = 1, size(nodeI, 1)
-            print*, nodeI(ii, ni_idx), nodeI(ii, ni_P_image:ni_P_is_boundary)
+        do ii = 1, size(node%I, 1)
+            print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
         end do
-        print*, "-----------------------------------------------------------"
-        do ii = 1, size(linkI, 1)
-            print*, linkI(ii, li_idx), linkI(ii, li_Mnode_u), linkI(ii, li_Mnode_d), linkI(ii, li_P_image), linkR(ii, lr_Length)
+        do ii = 1, size(link%I, 1)
+            print*, link%I(ii, li_idx), link%I(ii, li_P_image)
         end do
 
         stop
@@ -95,7 +95,7 @@ subroutine init_partitioning_default()
     ! ----------------------------------------------------------------------------------------------------------------
     !
     ! Description:
-    !   The default partitioning algorithm populates the partitioning columns of the linkI-nodeI arrays.  Rather than
+    !   The default partitioning algorithm populates the partitioning columns of the link%I-node%I arrays.  Rather than
     !   assigning links-nodes to images topologically (as in BIPquick), the default partitioning algorithm assigns them
     !   in the order in which they appear in the link-node arrays.
     !
@@ -111,26 +111,26 @@ subroutine init_partitioning_default()
 
     !% HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
     !% multiplied by how many elements are expected for that node_type
-    total_num_elements = sum(linkI(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
+    total_num_elements = sum(link%I(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
         (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
     partition_threshold = total_num_elements / real(num_images())
 
     !% This loop counts the elements attributed to each link, and assigns the link to an image
     num_attributed_elements = 0
     assigning_image = 1
-    do ii = 1, size(linkI, 1)
+    do ii = 1, size(link%I, 1)
 
         !% The num_attributed elements is incremented by the li_N_element for that link
-        num_attributed_elements = num_attributed_elements + linkI(ii, li_N_element)
+        num_attributed_elements = num_attributed_elements + link%I(ii, li_N_element)
 
         !% The link's P column is assigned
-        linkI(ii, li_P_image) = assigning_image
+        link%I(ii, li_P_image) = assigning_image
 
         !% If the link is the last link, we need to not reset the num_attributed_elem going into the nodes loop
-        if ( ii == size(linkI, 1) ) then
+        if ( ii == size(link%I, 1) ) then
 
             !% The last link is assigned to the current image and the link do-loop is exited
-            linkI(ii, li_P_image) = assigning_image
+            link%I(ii, li_P_image) = assigning_image
             exit
         end if
 
@@ -146,18 +146,18 @@ subroutine init_partitioning_default()
 
     !% This loop counts the elements attributed to each node, and assigns the node to an image
     !% It also determines if that node has an adjacent link on a different image
-    do ii = 1, size(nodeI, 1)
+    do ii = 1, size(node%I, 1)
 
         !% This if statement increments the num_attributed_elements by the number of elements associated with that node type
-        if ( nodeI(ii, ni_node_type) == nBCup ) then
+        if ( node%I(ii, ni_node_type) == nBCup ) then
             num_attributed_elements = num_attributed_elements + N_elem_nBCup
-        else if ( nodeI(ii, ni_node_type) == nBCdn ) then
+        else if ( node%I(ii, ni_node_type) == nBCdn ) then
             num_attributed_elements = num_attributed_elements + N_elem_nBCdn
-        else if ( nodeI(ii, ni_node_type) == nStorage ) then
+        else if ( node%I(ii, ni_node_type) == nStorage ) then
             num_attributed_elements = num_attributed_elements + N_elem_nStorage
-        else if ( nodeI(ii, ni_node_type) == nJ2 ) then
+        else if ( node%I(ii, ni_node_type) == nJ2 ) then
             num_attributed_elements = num_attributed_elements + N_elem_nJ2
-        else if ( nodeI(ii, ni_node_type) == nJm ) then
+        else if ( node%I(ii, ni_node_type) == nJm ) then
             num_attributed_elements = num_attributed_elements + N_elem_nJm
         end if
 
@@ -169,21 +169,21 @@ subroutine init_partitioning_default()
                 assigning_image = assigning_image + 1
             end if
         end if
-        !% Fills in the nodeI array P columns
-        nodeI(ii, ni_P_image) = assigning_image
-        nodeI(ii, ni_P_is_boundary) = 0
+        !% Fills in the node%I array P columns
+        node%I(ii, ni_P_image) = assigning_image
+        node%I(ii, ni_P_is_boundary) = 0
 
         !% This bit of code checks the current node image, and compares it to the images of the adjacent links
-        current_node_image = nodeI(ii, ni_P_image)
-        adjacent_links = nodeI(ii, ni_Mlink_u1:ni_Mlink_d3)
+        current_node_image = node%I(ii, ni_P_image)
+        adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
         do jj = 1, size(adjacent_links)
             if ( adjacent_links(jj) == nullValueI ) then
                 cycle
             end if
-            adjacent_link_image = linkI(adjacent_links(jj), li_P_image)
+            adjacent_link_image = link%I(adjacent_links(jj), li_P_image)
             !% If the adjacent link and current node are on different images, then that node is a boundary
             if ( adjacent_link_image /= current_node_image ) then
-                nodeI(ii, ni_P_is_boundary) = nodeI(ii, ni_P_is_boundary) + 1
+                node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
             end if
         end do
     end do
@@ -197,7 +197,7 @@ subroutine init_partitioning_random()
     ! ----------------------------------------------------------------------------------------------------------------
     !
     ! Description:
-    !   The random partitioning algorithm populates the partitioning columns of the linkI-nodeI arrays.  An alternative
+    !   The random partitioning algorithm populates the partitioning columns of the link%I-node%I arrays.  An alternative
     !   to the default partitioning algorithm, the random partitioning algorithm looks at each link and node and assigns
     !   it to a random image (after checking to ensure that image is not full).
     !
@@ -213,7 +213,7 @@ subroutine init_partitioning_random()
 
     !% HACK The total number of elements is the sum of the elements from the links, plus the number of each node_type
     !% multiplied by how many elements are expected for that node_type
-    total_num_elements = sum(linkI(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
+    total_num_elements = sum(link%I(:, li_N_element)) + (N_nBCup * N_elem_nBCup) + (N_nBCdn * N_elem_nBCdn) + &
         (N_nJm * N_elem_nJm) + (N_nStorage * N_elem_nStorage) + (N_nJ2 * N_elem_nJ2)
     partition_threshold = ( total_num_elements / real(num_images()) )
 
@@ -222,7 +222,7 @@ subroutine init_partitioning_random()
     image_full(:) = .false.
 
     !% This loop counts the elements attributed to each link, and assigns the link to an image
-    do ii = 1, size(linkI, 1)
+    do ii = 1, size(link%I, 1)
 
         !% Calculates a random number and maps it onto an image number
         call random_number(rand_num)
@@ -235,7 +235,7 @@ subroutine init_partitioning_random()
         end do
 
         !% elem_per_image is incremented by li_N_element for the current link
-        elem_per_image(assigning_image) = elem_per_image(assigning_image) + linkI(ii, li_N_element)
+        elem_per_image(assigning_image) = elem_per_image(assigning_image) + link%I(ii, li_N_element)
 
         !% If the number of elements is greater than the partition threshold, that image number is closed
         !% Note, this check after the assigning_image has been selected allows for images be over-filled
@@ -244,11 +244,11 @@ subroutine init_partitioning_random()
         end if
 
         !% Assign the link to the current image
-        linkI(ii, li_P_image) = assigning_image
+        link%I(ii, li_P_image) = assigning_image
     end do
 
     !% This loop counts the elements attributed to each node, and assigns the node to an image
-    do ii = 1, size(nodeI, 1)
+    do ii = 1, size(node%I, 1)
 
         !% Calculates a random number and maps it onto an image number
         call random_number(rand_num)
@@ -261,15 +261,15 @@ subroutine init_partitioning_random()
         end do
 
         !% elem_per_image is incremented by the number of elements associated with each node type
-        if ( nodeI(ii, ni_node_type) == nBCup ) then
+        if ( node%I(ii, ni_node_type) == nBCup ) then
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCup
-        else if ( nodeI(ii, ni_node_type) == nBCdn ) then
+        else if ( node%I(ii, ni_node_type) == nBCdn ) then
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nBCdn
-        else if ( nodeI(ii, ni_node_type) == nStorage ) then
+        else if ( node%I(ii, ni_node_type) == nStorage ) then
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nStorage
-        else if ( nodeI(ii, ni_node_type) == nJ2 ) then
+        else if ( node%I(ii, ni_node_type) == nJ2 ) then
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJ2
-        else if ( nodeI(ii, ni_node_type) == nJm ) then
+        else if ( node%I(ii, ni_node_type) == nJm ) then
             elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
         end if
 
@@ -280,20 +280,20 @@ subroutine init_partitioning_random()
         end if
 
         !% Assigns the nodes to an image, initializes the is_boundary check to 0
-        nodeI(ii, ni_P_image) = assigning_image
-        nodeI(ii, ni_P_is_boundary) = 0
+        node%I(ii, ni_P_image) = assigning_image
+        node%I(ii, ni_P_is_boundary) = 0
 
         !% This bit of code checks the current node image, and compares it to the images of the adjacent links
-        current_node_image = nodeI(ii, ni_P_image)
-        adjacent_links = nodeI(ii, ni_Mlink_u1:ni_Mlink_d3)
+        current_node_image = node%I(ii, ni_P_image)
+        adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
         do jj = 1, size(adjacent_links)
             if ( adjacent_links(jj) == nullValueI ) then
                 cycle
             end if
-            adjacent_link_image = linkI(adjacent_links(jj), li_P_image)
+            adjacent_link_image = link%I(adjacent_links(jj), li_P_image)
             !% If the adjacent link and current node are on different images, then that node is a boundary
             if ( adjacent_link_image /= current_node_image ) then
-                nodeI(ii, ni_P_is_boundary) = nodeI(ii, ni_P_is_boundary) + 1
+                node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
             end if
         end do
     end do
@@ -338,32 +338,32 @@ subroutine init_partitioning_linkbalance()
                 end_id = start_id + (count - 1)
             end if
 
-            linkI(start_id+1:end_id+1, li_P_image) = rank+1
+            link%I(start_id+1:end_id+1, li_P_image) = rank+1
         end do
-        nodeI(:, ni_P_is_boundary) = 0
+        node%I(:, ni_P_is_boundary) = 0
         do ii = 1, N_node
             assigned_image = nullvalueI
-            do jj = 1, (max_us_branch_per_node + max_ds_branch_per_node)
-                clink = nodeI(ii, ni_idx_base1+jj)
+            do jj = 1,max_branch_per_node
+                clink = node%I(ii, ni_idx_base1+jj)
                 if (clink /= nullvalueI) then
-                    clink_image = linkI(clink, li_P_image)
+                    clink_image = link%I(clink, li_P_image)
                     if ((assigned_image /= nullValueI) .and. &
                         (assigned_image /= clink_image) .and. &
-                        (nodeI(ii, ni_P_is_boundary) == 0)) then
-                        nodeI(ii, ni_P_is_boundary) = 1
+                        (node%I(ii, ni_P_is_boundary) == 0)) then
+                        node%I(ii, ni_P_is_boundary) = 1
                     end if
                     if (clink_image < assigned_image) then
                         assigned_image = clink_image
                     end if
                 end if
             end do
-            nodeI(ii, ni_P_image) = assigned_image
+            node%I(ii, ni_P_image) = assigned_image
         end do
     end if
     if (setting%Debug%File%partitioning) then
-        print *, linkI(:, li_P_image), "nodeI(:, li_P_image)"
-        print *, nodeI(:, ni_P_image), "nodeI(:, ni_P_image)"
-        print *, nodeI(:, ni_P_is_boundary), "nodeI(:, ni_P_is_boundary)"
+        print *, link%I(:, li_P_image), "node%I(:, li_P_image)"
+        print *, node%I(:, ni_P_image), "node%I(:, ni_P_image)"
+        print *, node%I(:, ni_P_is_boundary), "node%I(:, ni_P_is_boundary)"
     end if
 
     if (setting%Debug%File%partitioning)  print *, '*** leave ', subroutine_name
@@ -388,32 +388,32 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
     !% Reset the elem_per_image array to all zeros
     elem_per_image(:) = 0
 
-    !% Iterate through the linkI array
-    do ii = 1, size(linkI, 1)
+    !% Iterate through the link%I array
+    do ii = 1, size(link%I, 1)
 
         !% The current image is the one to which the current link has been assigned
-        current_image = linkI(ii, li_P_image)
+        current_image = link%I(ii, li_P_image)
 
         !% Iterate the number of elements for the current image by li_N_element for that link
-        elem_per_image(current_image) = elem_per_image(current_image) + linkI(ii, li_N_element)
+        elem_per_image(current_image) = elem_per_image(current_image) + link%I(ii, li_N_element)
     end do
 
-    !% Iterate through the nodeI array
-    do ii = 1, size(nodeI, 1)
+    !% Iterate through the node%I array
+    do ii = 1, size(node%I, 1)
 
         !% The current image is the one to which the current link has been assigned
-        current_image = nodeI(ii, ni_P_image)
+        current_image = node%I(ii, ni_P_image)
 
         !% elem_per_image for the current image is incremented by the number of elements associated with each node type
-        if ( nodeI(ii, ni_node_type) == nBCup ) then
+        if ( node%I(ii, ni_node_type) == nBCup ) then
             elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCup
-        else if ( nodeI(ii, ni_node_type) == nBCdn ) then
+        else if ( node%I(ii, ni_node_type) == nBCdn ) then
             elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nBCdn
-        else if ( nodeI(ii, ni_node_type) == nStorage ) then
+        else if ( node%I(ii, ni_node_type) == nStorage ) then
             elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nStorage
-        else if ( nodeI(ii, ni_node_type) == nJ2 ) then
+        else if ( node%I(ii, ni_node_type) == nJ2 ) then
             elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJ2
-        else if ( nodeI(ii, ni_node_type) == nJm ) then
+        else if ( node%I(ii, ni_node_type) == nJm ) then
             elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
         end if
     end do
@@ -437,7 +437,7 @@ function init_partitioning_metric_connectivity() result(connectivity)
     ! Description:
     !   This function is used to calculate the connectivity metric for the given partition set (i.e. the output
     !   from any of the partitioning algorithms).  The connectivity metric is equal to the sum of the ni_is_boundary
-    !   column of the nodeI array after the partition has been completed.  Note: the ni_is_boundary column is given a
+    !   column of the node%I array after the partition has been completed.  Note: the ni_is_boundary column is given a
     !   value of 0 when the node is an internal partition node, and is incremented by 1 for each additional partition
     !   the node touches.
     !
@@ -446,7 +446,7 @@ function init_partitioning_metric_connectivity() result(connectivity)
     ! -----------------------------------------------------------------------------------------------------------------
 
     !% The sum of the ni_is_boundary column is the connectivity
-    connectivity = sum(nodeI(:, ni_P_is_boundary))
+    connectivity = sum(node%I(:, ni_P_is_boundary))
 end function init_partitioning_metric_connectivity
 !
 !==========================================================================

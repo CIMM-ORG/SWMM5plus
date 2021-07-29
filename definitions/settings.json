@@ -59,12 +59,15 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 10.0,
+        "NominalElemLength" : 100.0,
         "LinkShortingFactor" : 0.33
-    },   
+    },
     "Eps" : {
         "FroudeJump" : 0.1,
         "InflowDepthIncreaseFroudeLimit" : 0.1
+    },
+    "Junction" : {
+        "kFactor" : 0.7
     },
     "Limiter" : {
         "BC" : {
@@ -72,11 +75,14 @@
             "FroudeInflowMaximum" : 1.5,
             "UseInflowLimiter" : true
         },
+        "Channel" : {
+            "LargeDepthFactor" : 10.0
+        },
         "Flowrate" : {
             "FaceVolumeTransport" : 0.5,
             "UseFaceVolumeTransport" : true
         },
-        "Timescale" : {
+        "InterpWeight" : {
             "Maximum" : 1e6,
             "Minimum" : 1e-6
         },
@@ -89,8 +95,12 @@
             "TotalInflows" : 50
         }
     },
+    "Link" : {
+        "DefaultInitDepthType" : "Linear", // uniform, linear, exponential
+        "PropertiesFile" : "" // HACK - TODO file for properties of specific links
+    },
     "Partitioning" : {
-        "PartitioningMethod" : "BQuick"   
+        "PartitioningMethod" : "BQuick"
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -109,14 +119,14 @@
         "crk2" : 1.0,
         "MomentumSourceMethod" : "T00",
         "PreissmanSlot" : false,
-        "SolverSelect" : "ETM_AC",
+        "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9
     },
     "TestCase" : {
         "UseTestCase" : false,
         "TestName" : "testcase"
-    }, 
+    },
     "Time" : {
         "DateTimeStamp" : 0.0,
         "EndTime" : 0.0,
@@ -128,7 +138,7 @@
             "timeFinal" : 1.0,
             "stepNow"  : 0,
             "stepNext"  : 1,
-            "stepFinal" : 1
+            "stepFinal" : 1000
         },
         "Hydraulics" : {
             "Dt" : 100.0,
@@ -138,7 +148,33 @@
             "stepNow"  : 0,
             "stepNext"  : 1,
             "stepFinal" : 1
-        }        
+        }
+    },
+    "Weir" : {
+        "Transverse" : {
+            "WeirExponent" : 1.5,
+            "WeirContractionFactor" : 0.1,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 0.385
+        },
+        "SideFlow" : {
+            "WeirExponent" : 1.67,
+            "WeirContractionFactor" : 0.1,
+            "SideFlowWeirCrestExponent" : 0.83,
+            "VillemonteCorrectionExponent" : 0.385
+        },
+        "VNotch" : {
+            "WeirExponent" : 2.5,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 0.385
+        },
+        "Trapezoidal" : {
+            "WeirExponent" : 1.5,
+            "WeirContractionFactor" : 1.0,
+            "SideFlowWeirCrestExponent" : 1.0,
+            "VillemonteCorrectionExponent" : 0.385
+        }
     },
     "VariableDT" : {
         "Apply" : true,
@@ -160,35 +196,56 @@
     "Debug" : {
         "Tests" : true,
         "File" : {
+            "adjust" : false,
+            "boundary_conditions" : false,
+            "c_library" : false,
             "define_globals" : false,
             "define_indexes" : false,
             "define_keys" : false,
             "define_settings" : false,
             "define_types" : false,
+            "diagnostic_elements" : false,
+            "face" : false,
             "finalization" : false,
+            "geometry" : false,
             "discretization"  : false,
             "initial_condition" : false,
             "initialization" : false,
+            "interface" : false,
+            "jump" : false,
+            "lowlevel_rk2" : false,
             "network_define" : false,
+            "orifice_elements" : false,
             "pack_mask_arrays" : false,
             "partitioning" : false,
-            "interface" : false,
+            "pump_elements" : false,
+            "rectangular_channel" : false,
+            "trapezoidal_channel" : false,
+            "runge_kutta2" : false,
             "timeloop" : false,
+            "update" : false,
             "utility" : false,
             "utility_allocate" : false,
+            "utility_deallocate" : false,
             "utility_array" : false,
             "utility_datetime" : false,
-            "utility_string" : false
+            "utility_string" : false,
+            "weir_elements" : false
         },
         "FileGroup" : {
             "all" : false,
             "definitions" : false,
             "finalization" : false,
-            "initialization" : true,
+            "geometry" : false,
+            "initialization" : false,
             "interface" : false,
             "timeloop" : false,
             "utility" : false
-        },
+        }
+    },
+    "Output" : {
+	"report_time" : 600.0,
+	"report_tol"  : 0.35
     },
     "Warning"  : false,
     "Verbose" : false

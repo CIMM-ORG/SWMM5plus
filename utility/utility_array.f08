@@ -1,6 +1,6 @@
 ! this is a test module for figuring out how to distribute the BIPquick output to Coarray
 !
-! BIPquick information is merged to linkI and nodeI (for now)
+! BIPquick information is merged to link%I and node%I (for now)
 !
 !
 !==========================================================================
@@ -33,10 +33,10 @@ module utility_array
 
         if (setting%Debug%File%utility_array) print *, '*** enter ',subroutine_name
 
-        allocate(img_arr(size(linkI,1)))
-        allocate(unique(size(linkI,1)))
+        allocate(img_arr(size(link%I,1)))
+        allocate(unique(size(link%I,1)))
 
-        img_arr = linkI(:,li_P_image) ! original information from BIPquick -- image numbers
+        img_arr = link%I(:,li_P_image) ! original information from BIPquick -- image numbers
 
         min_val = minval(img_arr) - 1
         max_val = maxval(img_arr)

@@ -34,6 +34,11 @@ module lowlevel_rk2
     public :: ll_momentum_velocity_CC
     public :: ll_momentum_add_gamma_CC_AC
     public :: ll_momentum_add_source_CC_AC
+    public :: ll_store_in_temporary
+    public :: ll_restore_from_temporary
+    public :: ll_extrapolate_values
+    public :: ll_interpolate_values
+    public :: ll_junction_branch_flowrate_and_velocity
 
     contains
     !%==========================================================================
@@ -49,15 +54,15 @@ module lowlevel_rk2
         real(8), pointer :: fQ(:), eQlat(:)
         integer, pointer :: iup(:), idn(:), thisP(:)
         !%-----------------------------------------------------------------------------  
-        thisP => elemP(:1:Npack,thisCol)
+        thisP => elemP(1:Npack,thisCol)
         fQ    => faceR(:,fr_Flowrate)
         eQlat => elemR(:,er_FlowrateLateral)
         iup   => elemI(:,ei_Mface_uL)
         idn   => elemI(:,ei_Mface_dL)
         !%-----------------------------------------------------------------------------
 
-        elemR(thisP,outCol) = fQ(iup(thisP)) - fQ(idn(thisP)) + eQlat(:)        
-
+        elemR(thisP,outCol) = fQ(iup(thisP)) - fQ(idn(thisP)) + eQlat(thisP)
+        
     end subroutine ll_continuity_netflowrate_CC
     !%
     !%==========================================================================  
@@ -75,14 +80,18 @@ module lowlevel_rk2
         thisP => elemP(1:Npack,thisCol)          
         fQ    => faceR(:,fr_Flowrate)
         eQlat => elemR(:,er_FlowrateLateral)
+        iup   => elemI(:,ei_Mface_uL)
+        idn   => elemI(:,ei_Mface_dL)
         !%-----------------------------------------------------------------------------
+        
+        !% note that 1, 3 and 5 are nominal upstream branches and 2, 4, 6 are nominal
+        !% downstream branches
         
         elemR(thisP,outCol) =  &
             +fQ(iup(thisP+1)) - fQ(idn(thisP+2)) &
             +fQ(iup(thisP+3)) - fQ(idn(thisP+4)) &
             +fQ(iup(thisP+5)) - fQ(idn(thisP+6)) &
-            +eQlat(thisP) 
-        
+            +eQlat(thisP)
     end subroutine ll_continuity_netflowrate_JM
     !%
     !%==========================================================================  
@@ -134,7 +143,7 @@ module lowlevel_rk2
               ( VolumeM(thisP) + crk * dtau * Csource(thisP) ) &
               / (oneR + crk * dtau * Cgamma(thisP) )
              
-    end subroutine ll_continuity_volume_CCJM_AC_open    
+    end subroutine ll_continuity_volume_CCJM_AC_open
     !%
     !%==========================================================================  
     !%==========================================================================  
@@ -205,6 +214,9 @@ module lowlevel_rk2
         !         (Qnet(:) - (a2/dt) * volumeN0(:) - (a3/dt) * volumeN1(:))
         ! endwhere
 
+        print *, "inside ll_continuity_add_source_CCJM_AC_open stub"
+        stop 9366
+
     end subroutine ll_continuity_add_source_CCJM_AC_open
     !%
     !%==========================================================================  
@@ -239,6 +251,10 @@ module lowlevel_rk2
         !     elemR(:,inoutCol) =  &
         !         (ell(:) * (Fr**twoR) / area(:)) * Qnet(:)
         ! endwhere
+
+        print *, "inside ll_continuity_add_source_CCMJM_AC_surcharged stub"
+        stop 84792
+
     end subroutine ll_continuity_add_source_CCJM_AC_surcharged
     !%
     !%==========================================================================  
@@ -276,7 +292,8 @@ module lowlevel_rk2
         !         / ( dt * ( area(:) * dHdA(:) + head(:) ) )
         ! endwhere   
         
-        
+        print *, "inside ll_continuity_add_gamma_CCJM_AC_open stub"
+        stop 29870
 
     end subroutine ll_continuity_add_gamma_CCJM_AC_open
     !%    
@@ -321,8 +338,7 @@ module lowlevel_rk2
                 stop 2382
             !% Error
         end select
-        
-    end subroutine ll_momentum_Ksource_CC    
+    end subroutine ll_momentum_Ksource_CC
     !%
     !%==========================================================================  
     !%==========================================================================  
@@ -371,8 +387,7 @@ module lowlevel_rk2
                     - fAup(idn(thisP)) * fHup(idn(thisP))  &
                     ) &
                 + eKsource(thisP)   
-    
-    end subroutine ll_momentum_source_CC  
+    end subroutine ll_momentum_source_CC
     !%
     !%==========================================================================  
     !%==========================================================================  
@@ -441,7 +456,7 @@ module lowlevel_rk2
         elemR(thisP,outCol) =  &
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) ) 
-          
+       
     end subroutine ll_momentum_solve_CC
     !%
     !%==========================================================================  
@@ -469,7 +484,7 @@ module lowlevel_rk2
         where (elemYN(thisP,eYN_isNearZeroVolume))
             elemR(thisP,inoutCol) = zeroR
         endwhere
-        
+
     end subroutine ll_momentum_velocity_CC
     !%
     !%==========================================================================  
@@ -486,6 +501,7 @@ module lowlevel_rk2
         real(8), pointer :: a1, dt, GammaM(:)    
         !%-----------------------------------------------------------------------------
         !%   
+        thisP => elemP(1:Npack,thisCol)
         a1 => setting%ACmethod%ImplicitCoef%a1
         dt => setting%Time%Hydraulics%Dt
         GammaM => elemR(:,er_GammaM) ! used and updated
@@ -529,39 +545,186 @@ module lowlevel_rk2
     !%==========================================================================  
     !%==========================================================================  
     !%
+    subroutine ll_store_in_temporary (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% Copies data to a temporary storage space.
+        !% Used in RK2 with ETM/AC to handle time n+1/2 and n+1* communication issues
         !%-----------------------------------------------------------------------------
-    
-        !%-----------------------------------------------------------------------------
-        !%             
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================    
-    
-    
-    !%
-    !%==========================================================================  
-    !%==========================================================================  
-    !%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Performs a single hydrology step 
-        !%-----------------------------------------------------------------------------
-    
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer :: thisP(:)
+        integer :: er_store(3), er_data(3)       
         !%-----------------------------------------------------------------------------
         !%   
+        !% elements in pack
+        thisP => elemP(1:Npack,thisCol)
+        
+        !% locations for storage
+        !% HACK these should be temporary storage that can be re-used outside of
+        !% the particular portion of the timeloop. However, this could be tricky 
+        !% because they need to be not written over!
+        er_store= [er_FlowrateStore, er_VolumeStore, er_HeadStore]
+        
+        !% locations of data to store
+        er_data= [er_Flowrate, er_Volume, er_Head]
+        
+        !% copy data to storage
+        elemR(thisP,er_store) = elemR(thisP,er_data)
+            
+    end subroutine ll_store_in_temporary    
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine ll_restore_from_temporary (thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% restores data that was temporarily moved in ll_store_in_temporary
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer :: thisP(:)
+        integer :: er_store(3), er_data(3)    
+        !%-----------------------------------------------------------------------------
+        !% elements in pack
+        thisP => elemP(1:Npack,thisCol)
+        
+        !% locations of storage
+        er_store= [er_FlowrateStore, er_VolumeStore, er_HeadStore]
+        
+        !% locations of data to be overwritten
+        er_data= [er_Flowrate, er_Volume, er_Head]
+        
+        !% overwrite data with storage
+        elemR(thisP,er_data) = elemR(thisP,er_store)
+         
+    end subroutine ll_restore_from_temporary
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine ll_extrapolate_values (thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Extrapolates from time 0 to time 1 using difference  (time 1/2 - time 0)
+        !% Used for matching RK2 time levels between AC and ETM methods.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer :: thisP(:)
+        integer :: eN0(3), eNow(3)
+        !%----------------------------------------------------------------------------- 
+        !% elements in pack
+        thisP => elemP(1:Npack,thisCol)   
 
-    
-    
+        !% NOTE eN0 and eNow should probably be in settings.
+        !% values at time n
+        eN0 = [er_Flowrate_N0, er_Volume_N0, er_Head_N0]
+
+        !% values at time n+1/2
+        eNow = [er_Flowrate, er_Volume, er_Head]
+
+        !% linear extrapolation to n+1
+        elemR(thisP,eNow) = elemR(thisP,eN0) &
+                + twoR * ( elemR(thisP,eNow) - elemR(thisP,eN0) )
+            
+    end subroutine ll_extrapolate_values
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine ll_interpolate_values (thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Interpolates to time n+1/2 from time n=0 and time n+1 data
+        !% Used for matching RK2 time levels between AC and ETM methods
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer :: thisP(:)
+        integer :: eN0(3), eNow(3)   
+        !%-----------------------------------------------------------------------------
+        !% elements in pack
+        thisP => elemP(1:Npack,thisCol)   
+        
+        !% values at time n
+        eN0 = [er_Flowrate_N0, er_Volume_N0, er_Head_N0]
+        
+        !% values at time n+1
+        eNow = [er_Flowrate, er_Volume, er_Head]
+        
+        !% linear interpolation to n+1/2
+        elemR(thisP,eNow) = onehalfR * ( elemR(thisP,eN0) + elemR(thisP,eNow) )
+
+    end subroutine ll_interpolate_values
+    !%
+    !%==========================================================================  
+    !%==========================================================================  
+    !%
+    subroutine ll_junction_branch_flowrate_and_velocity (whichTM)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Updates the flowrate and velocity on junction branches from face values
+        !% obtained in the face interpolation
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: whichTM
+        integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
+        integer, pointer :: Npack
+        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:)
+        integer :: ii, kk, tB
+        !%-----------------------------------------------------------------------------
+        !%   
+        BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
+        eArea        => elemR(:,er_Area)
+        eVelocity    => elemR(:,er_Velocity)
+        eFlow        => elemR(:,er_Flowrate)
+        fFlow        => faceR(:,fr_Flowrate)
+        iup          => elemI(:,ei_Mface_uL)
+        idn          => elemI(:,ei_Mface_dL)
+         
+        !%-----------------------------------------------------------------------------
+        !% 
+        select case (whichTM)
+        case (ALLtm)
+            thisColP_JM            => col_elemP(ep_JM_ALLtm)
+         case (ETM)
+            thisColP_JM            => col_elemP(ep_JM_ETM)
+        case (AC)  
+            thisColP_JM            => col_elemP(ep_JM_AC) 
+        case default
+            print *, 'error, case default should never be reached.'
+            stop 7659
+        end select
+
+        Npack => npack_elemP(thisColP_JM) 
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,thisColP_JM)
+            do ii=1,Npack
+                tM => thisP(ii)
+                ! handle the upstream branches
+                do kk=1,max_branch_per_node,2
+                    tB = tM + kk
+                    if (BranchExists(tB)==1) then
+                        eFlow(tB) = fFlow(iup(tB))    
+                        eVelocity(tB) = eFlow(tB) / eArea(tB)
+                    end if
+                end do
+                !% handle the downstram branches
+                do kk=2,max_branch_per_node,2
+                    tB = tM + kk
+                    if (BranchExists(tB)==1) then
+                        eFlow(tB) = fFlow(idn(tB)) 
+                        eVelocity(tB) = eFlow(tB) / eArea(tB)
+                    end if
+                end do
+            end do
+        end if
+
+    end subroutine ll_junction_branch_flowrate_and_velocity
     !%
     !%==========================================================================  
     !%==========================================================================  
     !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Performs a single hydrology step 
+        !% 
         !%-----------------------------------------------------------------------------
     
         !%-----------------------------------------------------------------------------
@@ -570,4 +733,8 @@ module lowlevel_rk2
     !%==========================================================================
     !% END OF MODULE
     !%+=========================================================================
+    !%==========================================================================
+    !% PRIVATE
+    !%==========================================================================    
+
 end module lowlevel_rk2

@@ -1,55 +1,61 @@
 module utility_datetime
 
+    use define_settings, only: setting
+    use define_api_keys, only: api_daily, &
+                               api_hourly, &
+                               api_weekend, &
+                               api_monthly
+    use define_globals, only: datedelta, secsperday, dayspermonth
+
     implicit none
 
-    integer :: dayspermonth(12,2) = &
-        reshape((/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, & ! normal years
-        31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/), (/12,2/)) ! leap years
+    private
 
-    integer, parameter :: datedelta = 693594
-    integer, parameter :: secsperday = 86400
-
-    ! Resolution types
-    integer, parameter :: monthly = 1
-    integer, parameter :: daily = 2
-    integer, parameter :: hourly = 3
-    integer, parameter :: weekend = 4
-
+    public :: util_datetime_get_next_time
+    public :: util_datetime_epoch_to_secs
+    public :: util_datetime_secs_to_epoch
+    public :: util_datetime_decodedate
+    public :: util_datetime_decodetime
+    
+    
     contains
 
-    function util_datetime_get_next_time(date_in_days, resolution_type)
-        real(8), intent(in) :: date_in_days
+    function util_datetime_get_next_time(secsTime, resolution_type) result(nextSecsTime)
+        real(8), intent(in) :: secsTime
         integer, intent(in) :: resolution_type
-        real(8) :: util_datetime_get_next_time
+        real(8)             :: epochTime
+        real(8)             :: nextSecsTime
 
-        if (resolution_type == daily) then
-            util_datetime_get_next_time = util_datetime_get_next_day(date_in_days)
-        else if (resolution_type == hourly) then
-            util_datetime_get_next_time = util_datetime_get_next_hour(date_in_days)
-        else if (resolution_type == monthly) then
-            util_datetime_get_next_time = util_datetime_get_next_month(date_in_days)
-        else if (resolution_type == weekend) then
-            util_datetime_get_next_time = util_datetime_get_next_weekendday_hour(date_in_days)
+        epochTime = util_datetime_secs_to_epoch(secsTime)
+        if (resolution_type == api_daily) then
+            nextSecsTime = util_datetime_get_next_day(epochTime)
+        else if (resolution_type == api_hourly) then
+            nextSecsTime = util_datetime_get_next_hour(epochTime)
+        else if (resolution_type == api_monthly) then
+            nextSecsTime = util_datetime_get_next_month(epochTime)
+        else if (resolution_type == api_weekend) then
+            nextSecsTime = util_datetime_get_next_weekendday_hour(epochTime)
         else
             print *, "Resolution type not supported, use"
             print *, "(1) monthly, (2) daily, (3) hourly, (4) weekend"
             stop
         endif
+
+        nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
+
     end function util_datetime_get_next_time
 
-    function util_datetime_days_to_secs(date_in_days, start_date_in_days)
-        real(8), intent(in) :: date_in_days
-        real(8), intent(in) :: start_date_in_days
-        real(8) :: util_datetime_days_to_secs
-        util_datetime_days_to_secs = (date_in_days - start_date_in_days) * real(secsperday)
-    end function util_datetime_days_to_secs
+    function util_datetime_epoch_to_secs(epochTime) result(secsTime)
+        real(8), intent(in) :: epochTime
+        real(8) :: secsTime
+        secsTime = (epochTime - setting%Time%StartEpoch) * real(secsperday)
+    end function util_datetime_epoch_to_secs
 
-    function util_datetime_secs_to_days(date_in_secs, start_date_in_days)
-        real(8), intent(in) :: date_in_secs
-        real(8), intent(in) :: start_date_in_days
-        real(8) :: util_datetime_secs_to_days
-        util_datetime_secs_to_days = date_in_secs/real(secsperday) + start_date_in_days
-    end function util_datetime_secs_to_days
+    function util_datetime_secs_to_epoch(secsTime) result(epochTime)
+        real(8), intent(in) :: secsTime
+        real(8) :: epochTime
+        epochTime = secsTime/real(secsperday) + setting%Time%StartEpoch
+    end function util_datetime_secs_to_epoch
 
     function util_datetime_isleapyear(year)
         integer, intent(in) :: year
@@ -91,15 +97,15 @@ module utility_datetime
         util_datetime_encodetime = 0
     end function util_datetime_encodetime
 
-    subroutine util_datetime_decodedate(date_in_days, year, month, day)
+    subroutine util_datetime_decodedate(epochTime, year, month, day)
         !-----------------------------------------------------------------------------
         ! Description:
         !
         !
         ! Method:
-        !    
+        !
         !-----------------------------------------------------------------------------
-        real(8), intent(in) :: date_in_days
+        real(8), intent(in) :: epochTime
         integer, intent(inout) :: year, month, day
         integer :: d1, d4, d100, d400
         integer :: y, m, d, i, k, t
@@ -109,7 +115,7 @@ module utility_datetime
         d100 = d4 * 25 - 1
         d400 = d100 * 4 + 1
 
-        t = int(floor(date_in_days)) + datedelta
+        t = int(floor(epochTime)) + datedelta
         if (t <= 0) then
             year = 0
             month = 1
@@ -149,20 +155,20 @@ module utility_datetime
         endif
     end subroutine util_datetime_decodedate
 
-    subroutine util_datetime_decodetime(time_in_days, h, m, s)
+    subroutine util_datetime_decodetime(epochTime, h, m, s)
         !-----------------------------------------------------------------------------
         ! Description:
         !
         !
         ! Method:
-        !    
+        !
         !-----------------------------------------------------------------------------
-        real(8), intent(in) :: time_in_days
+        real(8), intent(in) :: epochTime
         integer, intent(inout) :: h, m, s
         integer :: secs, mins
         real(8) :: fracday
 
-        fracday = (time_in_days - floor(time_in_days)) * real(secsperday)
+        fracday = (epochTime - floor(epochTime)) * real(secsperday)
         secs = int(floor(fracday + 0.5))
         if (secs >= real(secsperday)) secs = 86399
         call util_datetime_divmod(secs, 60, mins, s)
@@ -170,57 +176,57 @@ module utility_datetime
         if (h > 23) h = 0
     end subroutine util_datetime_decodetime
 
-    function util_datetime_dayofweek(date_in_days)
-        real(8), intent(in) :: date_in_days
+    function util_datetime_dayofweek(epochTime)
+        real(8), intent(in) :: epochTime
         integer :: t, util_datetime_dayofweek
-        t = floor(date_in_days) + datedelta
+        t = floor(epochTime) + datedelta
         util_datetime_dayofweek = mod(t, 7)+1
     end function
 
-    function util_datetime_get_next_month(date_in_days)
-        real(8), intent(in) :: date_in_days
+    function util_datetime_get_next_month(epochTime)
+        real(8), intent(in) :: epochTime
         real(8) :: util_datetime_get_next_month
         real(8) :: elapsed_days, days_til_next_month
         integer :: yy, mm, dd, i
 
-        call util_datetime_decodedate(date_in_days, yy, mm, dd)
+        call util_datetime_decodedate(epochTime, yy, mm, dd)
         i = util_datetime_isleapyear(yy)
-        elapsed_days = real(date_in_days - int(date_in_days))
+        elapsed_days = real(epochTime - int(epochTime))
         days_til_next_month = real(dayspermonth(mm,i)) - real(dd)
-        util_datetime_get_next_month = date_in_days + days_til_next_month + 1 - elapsed_days
+        util_datetime_get_next_month = epochTime + days_til_next_month + 1 - elapsed_days
     end function util_datetime_get_next_month
 
-    function util_datetime_get_next_day(date_in_days)
-        real(8), intent(in) :: date_in_days
+    function util_datetime_get_next_day(epochTime)
+        real(8), intent(in) :: epochTime
         real(8) :: util_datetime_get_next_day
-        if (date_in_days - int(date_in_days) > 0) then
-            util_datetime_get_next_day = real(ceiling(date_in_days))
+        if (epochTime - int(epochTime) > 0) then
+            util_datetime_get_next_day = real(ceiling(epochTime))
         else
-            util_datetime_get_next_day = date_in_days + real(1.0)
+            util_datetime_get_next_day = epochTime + real(1.0)
         endif
     end function util_datetime_get_next_day
 
-    function util_datetime_get_next_hour(date_in_days)
-        real(8), intent(in) :: date_in_days
+    function util_datetime_get_next_hour(epochTime)
+        real(8), intent(in) :: epochTime
         real(8) :: util_datetime_get_next_hour
         real(8) :: n24 = 24.0
         real(8) :: n1 = 1.0
-        util_datetime_get_next_hour = (int(date_in_days*n24) + n1) / n24
+        util_datetime_get_next_hour = (int(epochTime*n24) + n1) / n24
     end function util_datetime_get_next_hour
 
-    recursive function util_datetime_get_next_weekendday_hour(date_in_days) result(next)
+    recursive function util_datetime_get_next_weekendday_hour(epochTime) result(next)
         ! sun = 1, ..., sat = 7
-        real(8), intent(in) :: date_in_days
+        real(8), intent(in) :: epochTime
         real(8) :: next
         real(8) :: days_til_weekendday
         integer :: dayofweek, h, m, s
 
-        dayofweek = util_datetime_dayofweek(date_in_days)
+        dayofweek = util_datetime_dayofweek(epochTime)
         if ((dayofweek > 1) .and. (dayofweek < 7)) then
-            days_til_weekendday = real(7) - real(dayofweek) - real(date_in_days - floor(date_in_days))
-            next = date_in_days + days_til_weekendday
+            days_til_weekendday = real(7) - real(dayofweek) - real(epochTime - floor(epochTime))
+            next = epochTime + days_til_weekendday
         else
-            next = util_datetime_get_next_hour(date_in_days)
+            next = util_datetime_get_next_hour(epochTime)
             dayofweek = util_datetime_dayofweek(next)
             call util_datetime_decodetime(next, h, m, s)
             if ((dayofweek .ne. 1) .and. (dayofweek .ne. 7)) then
@@ -236,7 +242,7 @@ module utility_datetime
 	    !
         !
         ! Method:
-        !    
+        !
         !-----------------------------------------------------------------------------
         integer, intent(in) :: n, d
         integer, intent(inout) :: result, remainder
