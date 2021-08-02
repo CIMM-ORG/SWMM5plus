@@ -23,7 +23,7 @@ program main
     ! --- Finalization
     call finalize_all()
 
-    sync all 
+    sync all
 
     call cpu_time(end_time)
     print*, 'Simulation Time = ', end_time - start_time

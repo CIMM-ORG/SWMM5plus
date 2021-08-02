@@ -706,6 +706,11 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
 // v
 // -------------------------------------------------------------------------
 
+int DLLEXPORT api_find_object(int type, char *id)
+{
+    return project_findObject(type, id);
+}
+
 double api_get_outfall_depth(int node_idx, int link_idx, double currentDate, double z, double q)
 {
     // double   x, y;                         // x,y values in table
@@ -833,11 +838,6 @@ int api_load_vars(void * f_api)
         continue;
     }
     return 0;
-}
-
-int api_findObject(int type, char *id)
-{
-    return project_findObject(type, id);
 }
 
 int add_link(
