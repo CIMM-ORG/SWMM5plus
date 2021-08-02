@@ -56,6 +56,8 @@ module face
         !% wait for all the processors to finish face interpolation across images
         sync all
 
+        call face_interpolate_bc ()
+
         if (setting%Debug%File%face)  print *, '*** leave ', subroutine_name
     end subroutine face_interpolation
     !%

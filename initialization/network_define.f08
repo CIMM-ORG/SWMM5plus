@@ -46,7 +46,6 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
 
-
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
 
@@ -619,15 +618,15 @@ contains
 
                 !% Handle storage nodes
                 case (nStorage)
-
+                    print*
                     print*, 'In ', subroutine_name
                     print*, 'error: storage node is not handeled yet'
 
                 case default
-
+                    print*
                     print*, 'In ', subroutine_name
                     print*, 'error: node ' // node%Names(thisNode)%str // &
-                            ' has an unexpected nodeType at upstream boundary', nodeType
+                            ' has an unexpected nodeType', nodeType
                     stop
             end select
 
@@ -904,14 +903,16 @@ contains
                     endif
 
                 case (nStorage)
-
+                    print*
                     print*, 'In ', subroutine_name
                     print*, 'error: storage node is not handeled yet'
 
                 case default
 
+                    print*
                     print*, 'In ', subroutine_name
-                    print*, 'error: unexpected node, ', nodeType,'  at downstream node'
+                    print*, 'error: node ' // node%Names(thisNode)%str // &
+                            ' has an unexpected nodeType', nodeType
                     stop
             end select
         else

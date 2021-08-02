@@ -144,9 +144,6 @@ contains
             link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
             link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
 
-            !% HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
-            link%I(ii, li_N_element) = 10
-
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
             node%I(link%I(ii,li_Mnode_d), ni_idx_base1 + node%I(link%I(ii,li_Mnode_d), ni_N_link_u)) = ii
             node%I(link%I(ii,li_Mnode_u), ni_N_link_d) = node%I(link%I(ii,li_Mnode_u), ni_N_link_d) + 1
@@ -176,7 +173,7 @@ contains
             node%I(ii, ni_idx) = ii
             if (interface_get_node_attribute(ii, api_node_type) == API_OUTFALL) then
                 node%I(ii, ni_node_type) = nBCdn
-            else if ((total_n_links == twoI)         .and. &
+            else if ((total_n_links == twoI)          .and. &
                      (node%I(ii,ni_N_link_u) == oneI) .and. &
                      (node%I(ii,ni_N_link_d) == oneI) )then
                 node%I(ii, ni_node_type) = nJ2

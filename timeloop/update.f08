@@ -69,8 +69,7 @@ module update
         call update_interpolation_weights_element (thisCol_all, whichTM)
    
         if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
-    end subroutine update_auxiliary_variables  
- 
+    end subroutine update_auxiliary_variables
     !%
     !%==========================================================================
     !% PRIVATE
@@ -121,7 +120,7 @@ module update
             Froude(thisP) = velocity(thisP) / sqrt(grav * depth(thisP))
         endif
     
-    end subroutine update_Froude_number_element 
+    end subroutine update_Froude_number_element
     !%   
     !%==========================================================================   
     !%==========================================================================   

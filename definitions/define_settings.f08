@@ -728,9 +728,9 @@ contains
         if (.not. found) stop 55
 
         ! Load Solver Settings
-        call json%get('Solver.crk2', real_value, found)
-        setting%Solver%crk2 = real_value
-        if (.not. found) stop 56
+        ! call json%get('Solver.crk2', real_value, found)
+        ! setting%Solver%crk2 = [real_value, real_value]
+        ! if (.not. found) stop 56
         call json%get('Solver.MomentumSourceMethod', c, found)
         call util_lower_case(c)
         if (c == 't00') then

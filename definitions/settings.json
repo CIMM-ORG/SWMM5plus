@@ -59,7 +59,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 100.0,
+        "NominalElemLength" : 10.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -116,7 +116,6 @@
         "UseSmallVolumes" : true
     },
     "Solver" : {
-        "crk2" : 1.0,
         "MomentumSourceMethod" : "T00",
         "PreissmanSlot" : false,
         "SolverSelect" : "ETM",
@@ -244,7 +243,7 @@
         }
     },
     "Output" : {
-	"report_time" : 600.0,
+	"report_time" : 1000.0,
 	"report_tol"  : 0.35
     },
     "Warning"  : false,
