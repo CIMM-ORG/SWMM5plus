@@ -289,7 +289,7 @@ contains
 
         time_secs = setting%Time%Hydraulics%timeNow
 
-        if(mod(time_secs, setting%output%report_time) < setting%output%report_tol) then
+        if(mod(time_secs, setting%output%report_time) <= setting%output%report_tol) then
             call util_output_write_elemR_faceR()
         end if
         

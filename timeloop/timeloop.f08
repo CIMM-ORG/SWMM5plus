@@ -6,6 +6,7 @@ module timeloop
     use define_keys
     use pack_mask_arrays
     use runge_kutta2
+    use utility_output
     use boundary_conditions
 
     implicit none
@@ -60,6 +61,8 @@ module timeloop
                 call bc_update()
                 call tl_check_finish_status(isTLfinished)
 
+                !% report timestep
+                call util_output_report()
             !% HACK to prevent infinite loop in testing
             ! print *, "HACK hard-code stopping time loop  39872"
             ! isTLfinished = .true.

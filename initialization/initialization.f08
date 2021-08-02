@@ -13,6 +13,7 @@ module initialization
     use initial_condition
     use network_define
     use utility, only: util_export_linknode_csv
+    use utility_output
     use utility_array
     use pack_mask_arrays
 
@@ -95,6 +96,12 @@ contains
 
         call init_IC_setup ()
 
+        !% creating output_folders and files
+        call util_output_create_folder()
+        call util_output_create_elemR_files()
+        call util_output_create_faceR_files()
+        
+        
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
