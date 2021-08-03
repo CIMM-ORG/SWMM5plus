@@ -414,7 +414,7 @@ module define_settings
         real(8)  :: report_time
         real(8)  :: report_tol
     end type OutputType
-    
+
 
     ! -
     ! --
@@ -1060,14 +1060,17 @@ contains
         call json%get('Output.report_time', real_value, found)
         setting%Output%report_time = real_value
         if (.not. found) stop 153
+        call json%get('Output.report_tol', real_value, found)
+        setting%Output%report_tol = real_value
+        if (.not. found) stop 154
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 154
+        if (.not. found) stop 155
 
         call json%destroy()
-        if (json%failed()) stop 155
+        if (json%failed()) stop 156
 
         if (setting%Debug%File%define_settings) print *, '*** leave ', subroutine_name
     end subroutine def_load_settings

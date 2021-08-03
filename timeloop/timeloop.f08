@@ -412,7 +412,8 @@ module timeloop
         call tl_save_previous_values ()
 
         !% print the cfl to check for model blowout
-        if(mod(timeNow, setting%output%report_time) == 0) then
+        if(abs(mod(timeNow, setting%output%report_time) - setting%output%report_time) &
+            <= setting%output%report_tol) then
             thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
             print*, '--------------------------------------'
             print*, 'In image', this_image()

@@ -243,8 +243,8 @@
         }
     },
     "Output" : {
-	"report_time" : 600.0,
-	"report_tol"  : 0.35
+        "report_time" : 1272.123123,
+        "report_tol"  : 10
     },
     "Warning"  : false,
     "Verbose" : false
