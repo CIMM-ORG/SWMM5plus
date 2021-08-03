@@ -241,7 +241,7 @@ contains
             write(fu,'(A)', advance = 'no') ', '
             write(fu, '(F32.16)', advance = 'no') time_secs
             write(fu,'(A)', advance = 'no') ', '
-            write(fu, *) elemR(ii,:)
+            write(fu, '(*(G0.6,:,","))') elemR(ii,:)
             endfile(fu)
             close(fu)
         end do
@@ -270,7 +270,7 @@ contains
             write(fu,'(A)', advance = 'no') ', '
             write(fu, '(F32.16)', advance = 'no') time_secs
             write(fu,'(A)', advance = 'no') ', '
-            write(fu, *) faceR(ii, :)
+            write(fu, '(*(G0.6,:,","))') faceR(ii, :)
 
             endfile(fu)
             close(fu)

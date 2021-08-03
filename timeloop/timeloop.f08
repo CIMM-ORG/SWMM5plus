@@ -60,9 +60,6 @@ module timeloop
                 call tl_increment_counters(hydrology)
                 call bc_update()
                 call tl_check_finish_status(isTLfinished)
-
-                !% report timestep
-                call util_output_report()
             !% HACK to prevent infinite loop in testing
             ! print *, "HACK hard-code stopping time loop  39872"
             ! isTLfinished = .true.
@@ -459,6 +456,9 @@ module timeloop
                 print *, 'error, code should not be reached.'
                 STOP 1001 !% need error statement
         end select
+
+        !% report timestep
+        call util_output_report()
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_hydraulic_solver
