@@ -77,7 +77,6 @@ contains
                 else
                     ttime = BC%flowR_timeseries(ii, BC%flowIdx(ii), br_time) ! Current time slot (upper bound of time interval)
                     if (tnow > ttime) then ! Needs update
-                        print *, "tnow:", tnow, "ttime", ttime
                         if (BC%flowIdx(ii) == setting%BC%BCSlots) then
                             call bc_fetch_flow(ii)
                         else
