@@ -936,11 +936,13 @@ contains
         !% Junction main
         !%................................................................
         !% find the first element ID associated with that nJm
+        !% masked on the global node number for this node.
         JMidx = minval(elemI(:,ei_Lidx), elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
 
         !% the first element index is a junction main
         elemI(JMidx,ei_elementType)  = JM
         elemI(JMidx,ei_HeqType)      = time_march
+        elemI(JMidx,ei_QeqType)      = none
         
         !%-----------------------------------------------------------------------
         !% HACK: For now I am assuming the junction main as rectangular geometry
@@ -949,22 +951,28 @@ contains
         !%-----------------------------------------------------------------------
 
         elemR(JMidx,er_Depth)        = node%R(thisJunctionNode,nr_InitialDepth)
-        !% HACK: JM elements are not solved for momentum. Thus, setting small 
-        !% momentum values so that it does not cause issues later
-        elemR(JMidx,er_Flowrate)     = 1E-6
-        elemR(JMidx,er_Velocity)     = 1E-4
-        elemR(JMidx,er_WaveSpeed)    = 1E-4
-        elemR(JMidx,er_FroudeNumber) = 1E-4
+        !% HACK: JM elements are not solved for momentum. We will start by setting
+        !% these to zero, and see what effect this has. May need small values.
+        elemR(JMidx,er_Flowrate)     = zeroR
+        elemR(JMidx,er_Velocity)     = zeroR
+        !% wave speed is the gravity wave speed for the depth
+        elemR(JMidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JMidx,er_Depth))
+        elemR(JMidx,er_FroudeNumber) = zeroR
 
         !% find if the node can surcharge
         if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
             elemYN(JMidx,eYN_canSurcharge)  = .true.
+        else    
+            elemYN(JMidx,eYN_canSurcharge)  = .false.
         end if
 
         !%................................................................
         !% Junction Branches
         !%................................................................
         !% loopthrough all the branches
+        !% HACK -- replace much of this with a call to the standard geometry after all other IC have
+        !% been done. The branch depth should be based on the upstream or downstream depth of the 
+        !% adjacent element.
         do ii = 1,max_branch_per_node
 
             !% find the element id of junction branches
@@ -973,7 +981,8 @@ contains
             !% set the junction branch element type
             elemI(JBidx,ei_elementType) = JB
 
-            !% set the geometry for eisting branches
+            !% set the geometry for existing branches
+            !% Note that elemSI(,...Exists) is set in init_network_handle_nJm
             if (elemSI(JBidx,eSI_JunctionBranch_Exists) == oneI) then
 
                 BranchIdx    => elemSI(JBidx,eSI_JunctionBranch_Link_Connection)
@@ -981,13 +990,16 @@ contains
 
                 !% set the head equation as as JB for now for existing branches
                 !% only JM is time marched 
+                !% HACK -- might need to get a realistic depth -- this perhaps should be done
+                !% as an adjustment after all the other IC is done (e.g., we may want to compare
+                !% with the upstream element depth.)
                 elemI(JBidx,ei_HeqType) = JB
                 elemR(JBidx,er_Depth)   = elemR(JMidx,er_Depth)
 
-                !% HACK: JB elements are not solved for momentum. Thus, setting small 
-                !% momentum values so that it does not cause issues later
-                elemR(JBidx,er_WaveSpeed)    = 1E-4
-                elemR(JBidx,er_FroudeNumber) = 1E-4
+                !% HACK: JB elements are not solved for momentum. 
+                !% set zero here and revise later if needed
+                elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
+                elemR(JBidx,er_FroudeNumber) = zeroR
 
                 !% get the geometry data
                 select case (geometryType)
@@ -1017,6 +1029,7 @@ contains
                         elemSGR(JBidx,eSGR_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
 
                         !% HACK: not sure if we need surcharge condition for junction branches
+                        !% ANSWER -- yes, we do need surcharge on JB for pipes
                         if (link%I(BranchIdx,li_link_type) == lPipe) then
 
                             elemYN(JBidx,eYN_canSurcharge)  = .true.
@@ -1025,7 +1038,7 @@ contains
                             elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
                             elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
                             elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
-                            elemR(JBidx,er_BreadthMax)  =  zeroR
+                            elemR(JBidx,er_BreadthMax)  = zeroR
                         else
                             elemR(JBidx,er_ZbreadthMax)  = link%R(BranchIdx,lr_FullDepth)
 
@@ -1118,15 +1131,18 @@ contains
             end if
         end do
 
-        !% HACK: check with Dr. Hodges
+        !% HACK: 
         !% set initial conditions for junction main from the junction branch data
-        !% length
+        !% For the momentum we are simply using rectangular geometry as a damping pot for the junctions.
+        !% Goal is to ensure consistency with the links and mass conservation.
+        !% Need to replace how JM geometry is handled in timeloop before we change this.
+        !% length -- here uses the largest 2 input and output to get a maximum length
         elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
                                      elemR(JMidx+5,er_Length)) + &
                                  max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
                                      elemR(JMidx+6,er_Length))
 
-        !% HACK: finding the average breadth. This will not work for channels with ohter than rectangular geometry.
+        !% HACK: finding the average breadth. This will not work for channels with other than rectangular geometry.
         !% we need to generalize this
         elemSGR(JMidx,eSGR_Rectangular_Breadth) = (elemR(JMidx+1,er_Length)*elemSGR(JMidx+1,eSGR_Rectangular_Breadth) + &
                                                    elemR(JMidx+2,er_Length)*elemSGR(JMidx+2,eSGR_Rectangular_Breadth) + &
@@ -1137,11 +1153,9 @@ contains
                                                    elemR(JMidx,er_Length)
 
         !% Volume
-        elemR(JMidx,er_Volume) = elemR(JMidx+1,er_Volume) + elemR(JMidx+2,er_Volume) + &
-                                 elemR(JMidx+3,er_Volume) + elemR(JMidx+4,er_Volume) + &
-                                 elemR(JMidx+5,er_Volume) + elemR(JMidx+6,er_Volume)
-
-
+        !% rectangular volume depends on characteristic length and breadth.
+        elemR(JMidx,er_Volume) =   elemSGR(JMidx,eSGR_Rectangular_Breadth) * elemR(JMidx,er_Length) * elemR(JMidx,er_Depth)
+                                                                                    
         elemR(JBidx,er_Volume_N0) = elemR(JMidx,er_Volume)
         elemR(JBidx,er_Volume_N1) = elemR(JMidx,er_Volume)
 

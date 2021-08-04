@@ -22,7 +22,7 @@ module network_define
 
     private
 
-    public :: init_network
+    public :: init_network_define_toplevel
 
 contains
     !
@@ -30,7 +30,7 @@ contains
     ! PUBLIC
     !==========================================================================
     !
-    subroutine init_network ()
+    subroutine init_network_define_toplevel ()
     !--------------------------------------------------------------------------
     !
     !% Initializes a element-face network from a link-node network.
@@ -40,7 +40,7 @@ contains
 
         integer :: ii, jj
 
-        character(64) :: subroutine_name = 'init_network'
+        character(64) :: subroutine_name = 'init_network_define_toplevel'
 
     !--------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ contains
         endif
         
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
-    end subroutine init_network
+    end subroutine init_network_define_toplevel
     !
     !==========================================================================
     ! PRIVATE

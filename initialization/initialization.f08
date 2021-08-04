@@ -89,7 +89,7 @@ contains
         !% partition the network for multi-processor parallel computation
         call init_partitioning ()
 
-        call init_network ()
+        call init_network_define_toplevel ()
 
         !% initialize boundary conditions
         call init_bc()

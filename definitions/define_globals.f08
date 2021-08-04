@@ -29,7 +29,7 @@ module define_globals
     integer, parameter :: max_branch_per_node = 6
     real(8) :: branchsign(max_branch_per_node)
 
-    !% Main Arrays - Allocated in allocate_storage.f08
+    !% Main Arrays - Allocated in utility_allocate.f08
     !%  links are the building blocks from SWMM link-node formulation
     type(LinkArray), target :: link
 
