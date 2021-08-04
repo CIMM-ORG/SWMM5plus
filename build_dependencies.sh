@@ -20,6 +20,13 @@
 
 shopt -s extglob
 
+# handle flags
+while getopts 't' flag; do
+  case "${flag}" in
+    t) tacc="true" ;;
+  esac
+done
+
 # Create directory for dependencies
 if [[ ! -d $DDIR ]]
 then
@@ -364,8 +371,13 @@ if [[ ! -f $CAF ]]
 then
     if [[ $machine = "linux" ]]
     then
-        opencoarray_prerequisite
-        install_opencoarray_linux
+        if [[ $tacc = true ]]
+        then
+            CAF="ifort -coarray=distributed"
+        else
+            opencoarray_prerequisite
+            install_opencoarray_linux
+        fi
     elif [[ $machine = "mac" ]]
     then
         install_opencoarray_mac

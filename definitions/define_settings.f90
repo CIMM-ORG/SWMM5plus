@@ -207,6 +207,8 @@ module define_settings
         logical :: utility_deallocate  = .false.
         logical :: utility_array       = .false.
         logical :: utility_datetime    = .false.
+        logical :: utility_interpolate = .false.
+        logical :: utility_output      = .false.
         logical :: utility_string      = .false.
         logical :: weir_elements       = .false.
     end type DebugFileYNType
@@ -414,7 +416,7 @@ module define_settings
         real(8)  :: report_time
         real(8)  :: report_tol
     end type OutputType
-    
+
 
     ! -
     ! --
@@ -1024,50 +1026,59 @@ contains
         call json%get('Debug.File.utility_datetime', logical_value, found)
         setting%Debug%File%utility_datetime = logical_value
         if (.not. found) stop 142
+        call json%get('Debug.File.utility_interpolate', logical_value, found)
+        setting%Debug%File%utility_interpolate = logical_value
+        if (.not. found) stop 143
+        call json%get('Debug.File.utility_output', logical_value, found)
+        setting%Debug%File%utility_output = logical_value
+        if (.not. found) stop 144
         call json%get('Debug.File.utility_string', logical_value, found)
         setting%Debug%File%utility_string = logical_value
-        if (.not. found) stop 143
+        if (.not. found) stop 145
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
         call json%get('Debug.File.weir_elements', logical_value, found)
         setting%Debug%File%weir_elements = logical_value
-        if (.not. found) stop 144
+        if (.not. found) stop 146
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
-        if (.not. found) stop 145
+        if (.not. found) stop 147
         call json%get('Debug.FileGroup.definitions', logical_value, found)
         setting%Debug%FileGroup%definitions = logical_value
-        if (.not. found) stop 146
+        if (.not. found) stop 148
         call json%get('Debug.FileGroup.finalization', logical_value, found)
         setting%Debug%FileGroup%finalization = logical_value
-        if (.not. found) stop 147
+        if (.not. found) stop 149
         call json%get('Debug.FileGroup.geometry', logical_value, found)
         setting%Debug%FileGroup%geometry = logical_value
-        if (.not. found) stop 148
+        if (.not. found) stop 150
         call json%get('Debug.FileGroup.initialization', logical_value, found)
         setting%Debug%FileGroup%initialization = logical_value
-        if (.not. found) stop 149
+        if (.not. found) stop 151
         call json%get('Debug.FileGroup.interface', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop 150
+        if (.not. found) stop 152
         call json%get('Debug.FileGroup.timeloop', logical_value, found)
         setting%Debug%FileGroup%timeloop = logical_value
-        if (.not. found) stop 151
+        if (.not. found) stop 153
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%utility = logical_value
-        if (.not. found) stop 152
+        if (.not. found) stop 154
         call def_update_debug_options()
         call json%get('Output.report_time', real_value, found)
         setting%Output%report_time = real_value
-        if (.not. found) stop 153
+        if (.not. found) stop 155
+        call json%get('Output.report_tol', real_value, found)
+        setting%Output%report_tol = real_value
+        if (.not. found) stop 156
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 154
+        if (.not. found) stop 157
 
         call json%destroy()
-        if (json%failed()) stop 155
+        if (json%failed()) stop 158
 
         if (setting%Debug%File%define_settings) print *, '*** leave ', subroutine_name
     end subroutine def_load_settings
@@ -1128,6 +1139,8 @@ contains
             setting%Debug%File%utility_deallocate = .true.
             setting%Debug%File%utility_array = .true.
             setting%Debug%File%utility_datetime = .true.
+            setting%Debug%File%utility_interpolate = .true.
+            setting%Debug%File%utility_output = .true.
             setting%Debug%File%utility_string = .true.
             setting%Debug%File%utility = .true.
         end if

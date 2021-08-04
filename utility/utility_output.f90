@@ -16,46 +16,44 @@ Module utility_output
     public :: util_output_create_folder
     public :: util_output_create_elemR_files
     public :: util_output_create_faceR_files
+    public :: util_output_create_summary_files
     public :: util_output_write_elemR_faceR
     public :: util_output_report
-    public :: util_output_debug_elemI
-    public :: util_output_debug_elemR
-    public :: util_output_debug_faceI
-    public :: util_output_debug_faceR
-    public :: util_output_debug_elemYN
-    public :: util_output_debug_faceYN
-    
-    
-    
+    public :: util_output_report_summary
+
 contains
 
     subroutine util_output_create_folder
 
         !creates and empties the folder before creating the debug files
-        call system('mkdir debug_output')
 
         if( this_image() == 1) then
-            call system('rm debug_output/*.csv')
+            call system('rm -r debug_output')
+            call system('mkdir debug_output')
+            call system('mkdir debug_output/elemR')
+            call system('mkdir debug_output/faceR')
+            call system('mkdir debug_output/summary')
         end if
 
-        call system('mkdir debug_output/elemR')
-
-        if( this_image() == 1) then
-            call system('rm debug_output/elemR/*.csv')
-        end if
-
-        call system('mkdir debug_output/faceR')
-
-        if( this_image() == 1) then
-            call system('rm debug_output/faceR/*.csv')
-        end if
-        
         sync all
 
     end subroutine util_output_create_folder
 
-    subroutine util_output_create_elemR_files
+    subroutine util_output_create_summary_files
+        integer :: fu, open_status
+        character(64) :: file_name
 
+        write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
+
+        open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
+        form   = 'formatted', action = 'write', iostat = open_status)
+
+        write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
+            endfile(fu)
+        close(fu)
+    end subroutine util_output_create_summary_files
+
+    subroutine util_output_create_elemR_files
 
         integer :: fu, open_status, ii
         character(len = 250) :: file_name
@@ -63,7 +61,7 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_elem_idx
-        
+
         fu = this_image()
 
         write(str_image, '(i1)') fu
@@ -71,8 +69,8 @@ contains
         do ii = 1, N_elem(this_image())
 
             write(str_elem_idx,'(I10)') elemI(ii,ei_Gidx)
-            
-            if(elemI(ii,ei_elementType) == CC) then             
+
+            if(elemI(ii,ei_elementType) == CC) then
                 file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
                     // trim(link%names(elemI(ii,ei_link_Gidx_SWMM))%str) // &
                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
@@ -84,13 +82,13 @@ contains
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
                 end if
 
-                
+
             else if(elemI(ii,ei_elementType) == JM) then
                 file_name = "debug_output/elemR/"//trim(str_image)//"_JM_" &
                     // trim(node%names(elemI(ii,ei_node_Gidx_SWMM))%str) // &
                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
-                
+
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
                 form   = 'formatted', action = 'write', iostat = open_status)
 
@@ -113,20 +111,21 @@ contains
                 end if
 
             end if
-            
-            write(fu, *) "Timestamp, Time_In_Secs, Area, Area_N0, Area_N1, AreaBelowBreadthMax, BreathMax, Depth, dHdA, ell,"//&
-                " Flowrate, Flowrate_N0, Flowrate_N1, FlowrateLateral, FlowrateStore, FroudeNumber, FullArea, FullDepth,"// &
-                " FullHydDepth, FullPerimeter, FullVolume, GammaC, GammaM, Head, Head_N0, HeadLastAc, HydDepth, HydRadius,"//&
-                " InterpWeight_uG, InterpWeight_dg, InterpWeight_uH, InterpWeight_dH, InterpWeight_uQ, InterpWeight_dQ,"//&
-                " Ksource, Length, ones,Perimeter, Roughness, SmallVolume, SmallVolume_CMvelocity, SmallVolume_HeadSlope,"//&
-                " SmallVolume_ManningsN, SmallVolumeRatio, SourceContinuity, SourceMomentum, Temp01,"// &
-                " TopWidth, Velocity, Velocity_N0, Velocity_N1, VelocityLastAc, Volume, Volume_N0, Volume_n1, VolumeLastAC,"//& 
-                " VolumeStore, WaveSpeed, ZBottom, ZbreadthMax, Zcrown"
+
+            write(fu, *) "Timestamp,Time_In_Secs,Area,Area_N0,Area_N1,AreaBelowBreadthMax,BreadthMax,Depth,dHdA,ell,&
+                Flowrate,Flowrate_N0,Flowrate_N1,FlowrateLateral,FlowrateStore,FroudeNumber,&
+                FullArea,FullDepth,FullHydDepth,FullPerimeter,FullVolume,GammaC,GammaM,Head,&
+                Head_N0,HeadLastAC,HeadStore,HydDepth,HydRadius,InterpWeight_uG,InterpWeight_dG,&
+                InterpWeight_uH,InterpWeight_dH,InterpWeight_uQ,InterpWeight_dQ,Ksource,Length,ones,&
+                Perimeter,Roughness,SmallVolume,SmallVolume_CMvelocity,SmallVolume_HeadSlope,&
+                SmallVolume_ManningsN,SmallVolumeRatio,SourceContinuity,SourceMomentum,Temp01,&
+                Topwidth,Velocity,Velocity_N0,Velocity_N1,VelocityLastAC,Volume,Volume_N0,&
+                Volume_N1,VolumeLastAC,VolumeStore,WaveSpeed,Zbottom,ZbreadthMax,Zcrown"
             endfile(fu)
             close(fu)
-               
+
         end do
-        
+
     end subroutine util_output_create_elemR_files
 
     subroutine util_output_create_faceR_files
@@ -146,7 +145,7 @@ contains
         do ii = 1, N_face(this_image())
 
             write(str_face_idx,'(I10)') faceI(ii,fi_Gidx)
-            
+
             file_name = "debug_output/faceR/"//trim(str_image)//"_face_" &
                 // trim(ADJUSTL(str_face_idx))//".csv"
 
@@ -161,14 +160,14 @@ contains
             write(fu, *) "Timestamp, Time_In_Secs, Area_d, Area_u, Flowrate, Flowrate_N0, Head_u, Head_d,"// &
                 "HydDepth_d, HydDepth_u, Topwidth_d, Topwidth_u, Velocity_d, Velocity_u"
             endfile(fu)
-            
+
             close(fu)
 
         end do
-        
+
 
     end subroutine util_output_create_faceR_files
-    
+
 
     subroutine util_output_write_elemR_faceR
 
@@ -179,22 +178,22 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_elem_face_idx
-       
-        
+
+
         fu = this_image()
         time_secs = setting%Time%Hydraulics%timeNow
         time_epoch = util_datetime_secs_to_epoch(time_secs)
         call util_datetime_decodedate(time_epoch, yr, mnth, dy)
         call util_datetime_decodetime(time_epoch, hr, min, sec)
-        
-        write(str_image, '(i1)') fu        
+
+        write(str_image, '(i1)') fu
 
 
         do ii = 1, N_elem(this_image())
 
             write(str_elem_face_idx,'(I10)') elemI(ii,ei_Gidx)
-            
-            if(elemI(ii,ei_elementType) == CC) then             
+
+            if(elemI(ii,ei_elementType) == CC) then
                 file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
                     // trim(link%names(elemI(ii,ei_link_Gidx_SWMM))%str) // &
                     "_" // trim(ADJUSTL(str_elem_face_idx))//".csv"
@@ -206,13 +205,13 @@ contains
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
                 end if
 
-                
+
             else if(elemI(ii,ei_elementType) == JM) then
                 file_name = "debug_output/elemR/"//trim(str_image)//"_JM_" &
                     // trim(node%names(elemI(ii,ei_node_Gidx_SWMM))%str) // &
                     "_" // trim(ADJUSTL(str_elem_face_idx))//".csv"
 
-                
+
                 open(newunit=fu, file = file_name, status = 'old',access = 'append', &
                 form   = 'formatted', action = 'write', iostat = open_status)
 
@@ -233,26 +232,26 @@ contains
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
                 end if
-                            
-            end if             
-            write(fu,fmt='(3i0)',advance = 'no') yr,mnth,dy
-            write(fu,fmt = '(A)',advance = 'no') 'T'
-            write(fu,fmt='(3i0)',advance = 'no') hr,min,sec
+
+            end if
+            write(fu,fmt='(i4, 2(a,i2.2))',advance = 'no') yr,"/",mnth,"/",dy
+            write(fu,fmt = '(A)',advance = 'no') ' '
+            write(fu,fmt='(2(i2.2,a), i2.2)',advance = 'no') hr,":",min,":",sec
             write(fu,'(A)', advance = 'no') ', '
             write(fu, '(F32.16)', advance = 'no') time_secs
             write(fu,'(A)', advance = 'no') ', '
-            write(fu, *) elemR(ii,:)
+            write(fu, '(*(G0.6,:,","))') elemR(ii,:)
             endfile(fu)
             close(fu)
         end do
-        
+
 
 
         do ii = 1, N_face(this_image())
 
 
             write(str_elem_face_idx,'(I10)') faceI(ii,fi_Gidx)
-            
+
             file_name = "debug_output/faceR/"//trim(str_image)//"_face_" &
                 // trim(ADJUSTL(str_elem_face_idx))//".csv"
 
@@ -264,38 +263,74 @@ contains
             end if
 
             !write the data to the file
-            write(fu,fmt='(3i0)',advance = 'no') yr,mnth,dy
-            write(fu,fmt = '(A)',advance = 'no') 'T'
-            write(fu,fmt='(3i0)',advance = 'no') hr,min,sec
+            write(fu,fmt='(i4, 2(a,i2.2))',advance = 'no') yr,"/",mnth,"/",dy
+            write(fu,fmt = '(A)',advance = 'no') ' '
+            write(fu,fmt='(2(i2.2,a), i2.2)',advance = 'no') hr,":",min,":",sec
             write(fu,'(A)', advance = 'no') ', '
             write(fu, '(F32.16)', advance = 'no') time_secs
             write(fu,'(A)', advance = 'no') ', '
-            write(fu, *) faceR(ii, :)
+            write(fu, '(*(G0.6,:,","))') faceR(ii, :)
 
             endfile(fu)
             close(fu)
 
         end do
 
-
-
     end subroutine util_output_write_elemR_faceR
 
-
     subroutine util_output_report
+        character(64) :: subroutine_name = "util_output_report"
 
-        real(8) :: time_secs
-        real    :: report_tol
+        if (setting%Debug%File%utility_output) print *, '*** enter ', subroutine_name
 
-        time_secs = setting%Time%Hydraulics%timeNow
-
-        if(mod(time_secs, setting%output%report_time) <= setting%output%report_tol) then
+        if (util_output_must_report()) then
             call util_output_write_elemR_faceR()
         end if
-        
+
+        if (setting%Debug%File%utility_output) print *, '*** leave ', subroutine_name
     end subroutine util_output_report
 
-    
+    subroutine util_output_report_summary()
+        integer :: fu, open_status
+        real(8) :: thisCFL
+        real(8), pointer :: dt, timeNow, velocity(:), wavespeed(:), length(:)
+        integer, pointer :: thisCol, Npack, thisP(:)
+        character(64) :: file_name
+        character(64) :: subroutine_name = "util_output_report_summary"
+
+        if (setting%Debug%File%utility_output) print *, '*** enter ', subroutine_name
+
+        if (util_output_must_report()) then
+            write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
+            timeNow   => setting%Time%Hydraulics%timeNow
+            dt        => setting%Time%Hydraulics%Dt
+            velocity  => elemR(:,er_Velocity)
+            wavespeed => elemR(:,er_WaveSpeed)
+            length    => elemR(:,er_Length)
+            thisCol   => col_elemP(ep_CC_ALLtm)
+            Npack     => npack_elemP(thisCol)
+            thisP     => elemP(1:Npack,thisCol)
+            thisCFL = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
+
+            open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
+                form = 'formatted', action = 'write', iostat = open_status)
+            write(fu, fmt='(*(G0.6 : ","))') &
+                this_image(), timeNow, thisCFL, dt, maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))
+            endfile(fu)
+            close(fu)
+        end if
+        if (setting%Debug%File%utility_output) print *, '*** leave ', subroutine_name
+    end subroutine util_output_report_summary
+
+    function util_output_must_report() result(report)
+        logical :: report
+        real(8), pointer :: timeNow
+        timeNow => setting%Time%Hydraulics%timeNow
+        report = ((abs(mod(timeNow, setting%output%report_time) - &
+             setting%output%report_time) <= setting%output%report_tol) .or. &
+             (timeNow == 0))
+    end function util_output_must_report
+
     subroutine util_output_debug_elemI
 
         integer :: fu, open_status
@@ -303,7 +338,7 @@ contains
         character(len = 4) :: str_image
 
         fu = this_image()
-        
+
         write(str_image, '(i1)') fu
 
         !-----------------------------------------------------------------------------------------------
@@ -311,7 +346,7 @@ contains
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -320,13 +355,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_Gidx_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -335,13 +370,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_elementType_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -350,13 +385,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_geometryType_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -365,13 +400,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_HeqType_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -380,13 +415,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_link_Gidx_SWMM_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -395,13 +430,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_link_Gidx_BIPquick_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -410,13 +445,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_link_pos_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -425,13 +460,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_Mface_uL_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -440,13 +475,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_Mface_dL_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -455,13 +490,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_node_Gidx_SWMM_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -470,13 +505,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_node_Gidx_BIPquick_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -485,13 +520,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_QeqType_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -500,13 +535,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_specificType_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -515,13 +550,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_Temp01_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -530,13 +565,13 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemI_ei_tmType_"//trim(str_image)//".csv"
 
         open(newunit=fu, file = file_name, status = 'new',access = 'sequential', &
             form   = 'formatted', action = 'write', iostat = open_status)
-        
+
         if (open_status /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
         end if
@@ -544,7 +579,7 @@ contains
         write(fu,*) elemI(:,ei_tmType)
 
         close(fu)
-         
+
 
     end subroutine util_output_debug_elemI
 
@@ -954,7 +989,7 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemR_er_InterpWeight_dG_"//trim(str_image)//".csv"
 
@@ -1082,7 +1117,7 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemR_er_Roughness_"//trim(str_image)//".csv"
 
@@ -1154,7 +1189,7 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemR_er_SmallVolumeRatio_"//trim(str_image)//".csv"
 
@@ -1169,7 +1204,7 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemR_er_SourceContinuity_"//trim(str_image)//".csv"
 
@@ -1397,7 +1432,7 @@ contains
 
         close(fu)
 
-        
+
         !-----------------------------------------------------------------------------------------------
         file_name = "debug_output/debug_elemR_er_Zcrown_"//trim(str_image)//".csv"
 
@@ -1411,7 +1446,7 @@ contains
         write(fu,*) elemR(:,er_Zcrown)
 
         close(fu)
-        
+
     end subroutine util_output_debug_elemR
 
 
@@ -1735,7 +1770,7 @@ contains
 
         write(fu,*) faceR(:,fr_Velocity_u)
 
-        close(fu)        
+        close(fu)
 
     end subroutine util_output_debug_faceR
 
@@ -1833,7 +1868,7 @@ contains
         write(fu,*) elemYN(:,eYN_isDummy)
 
         close(fu)
-        
+
 
     end subroutine util_output_debug_elemYN
 
@@ -1935,7 +1970,7 @@ contains
     end subroutine util_output_debug_faceYN
 
 
-        
-    
+
+
 
 end Module utility_output
