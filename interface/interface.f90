@@ -299,11 +299,19 @@ contains
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
 
         do ii = 1, N_node
-            call ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
+            errstat = ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
+            if (errstat /= 0) then
+                write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
+                stop
+            end if
         end do
 
         do ii = 1, N_link
-            call ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
+            errstat = ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
+            if (errstat /= 0) then
+                write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
+                stop
+            end if
         end do
 
         if (setting%Debug%File%interface) then
@@ -323,7 +331,7 @@ contains
 
     end subroutine interface_update_linknode_names
 
-    function interface_get_obj_name_len(obj_idx, obj_type) result(obj_name_len)
+    integer function interface_get_obj_name_len(obj_idx, obj_type) result(obj_name_len)
     !%-----------------------------------------------------------------------------
     !% Description:
     !%    Returns the lenght of the name string associated to the EPA-SWMM object.
@@ -333,7 +341,6 @@ contains
     !%-----------------------------------------------------------------------------
         integer, intent(in) :: obj_idx  ! index of the EPA-SWMM object
         integer, intent(in) :: obj_type ! type of EPA-SWMM object (API_NODE, API_LINK)
-        integer :: obj_name_len
         character(64) :: subroutine_name = "interface_get_obj_name_len"
     !%-----------------------------------------------------------------------------
 
