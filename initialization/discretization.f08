@@ -34,7 +34,7 @@ contains
         character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%discretization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%discretization) print *, '*** enter ',this_image(), subroutine_name
 
         do ii =1, N_link
             temp_length = link%R(ii,lr_Length) ! lenght of link ii
@@ -54,7 +54,7 @@ contains
             link%I(ii,li_length_adjusted) = Adjustment_flag
         enddo
 
-        if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%discretization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine init_discretization_adjustlinklength
     !
     !==========================================================================
@@ -74,7 +74,7 @@ contains
                
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%discretization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%discretization) print *, '*** enter ',this_image(), subroutine_name
 
         do ii = 1, N_link
             remainder = mod(link%R(ii,lr_Length), elem_nominal_length)
@@ -90,7 +90,7 @@ contains
             endif
         enddo
 
-        if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%discretization)  print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine init_discretization_nominal
     !

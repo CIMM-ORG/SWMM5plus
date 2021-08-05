@@ -217,7 +217,7 @@
             "network_define" : false,
             "orifice_elements" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : false,
+            "partitioning" : true,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,

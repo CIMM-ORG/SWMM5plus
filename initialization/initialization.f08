@@ -55,7 +55,7 @@ contains
     !%
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
     !%-----------------------------------------------------------------------------
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
@@ -87,8 +87,8 @@ contains
 
         call init_partitioning()
 
-        sync all
         !% HACK: this sync call is probably not needed
+        sync all
 
         call init_network ()
 
@@ -101,7 +101,7 @@ contains
         sync all
 
         !% wait for all the processors to reach this stage before starting the time loop
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine initialize_all
     !%
     !%==========================================================================
@@ -126,7 +126,7 @@ contains
 
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
@@ -202,7 +202,6 @@ contains
         !% Update Link/Node names
         call interface_update_linknode_names()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_linknode_arrays
     !%
     !%==========================================================================
@@ -234,7 +233,7 @@ contains
         character(64) :: subroutine_name = "init_bc"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** enter ',this_image(), subroutine_name
 
         call pack_nodes()
         call util_allocate_bc()
@@ -332,7 +331,7 @@ contains
         call bc_step()
         call pack_bc()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine init_bc
     !%
     !%==========================================================================
@@ -351,7 +350,7 @@ contains
         character(64) :: subroutine_name = 'init_partitioning'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
 
         !% find the number of elements in a link based on nominal element length
         call init_discretization_nominal()
@@ -374,7 +373,7 @@ contains
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine init_partitioning
     !%
@@ -391,7 +390,7 @@ contains
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
 
-        if (setting%Debug%File%utility_array) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_array) print *, '*** enter ',this_image(),subroutine_name
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
@@ -471,7 +470,7 @@ contains
             end do
         endif
 
-        if (setting%Debug%File%utility_array)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_array)  print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine init_coarray_length
     !%

@@ -55,7 +55,7 @@ contains
         real(8) :: start, intermediate, finish
         call cpu_time(start)
         ! -----------------------------------------------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% Initialize the temporary arrays needed for BIPquick
         call bip_initialize_arrays()
@@ -154,7 +154,7 @@ contains
 
         connectivity = connectivity_metric()
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_partitioning_BIPquick
     !
     !==========================================================================
@@ -170,7 +170,7 @@ contains
     ! -----------------------------------------------------------------------------------------------------------------
         character(64) :: subroutine_name = 'bip_allocate_arrays'
     ! -----------------------------------------------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         B_nodeI(:,:) = nullValueI
         B_nodeR(:,:) = zeroR
@@ -180,7 +180,7 @@ contains
         weight_range(:,:) = zeroR
         accounted_for_links = .false.
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine bip_initialize_arrays
     !
     !==========================================================================
@@ -201,37 +201,34 @@ contains
         integer :: upstream_link, upstream_node, uplink_counter
         integer ii, jj, uplinks
     ! ----------------------------------------------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% Iterate through the nodes array
         do ii= 1,size(node%I,1)
 
-        if ( node%I(ii, ni_idx) == nullValueI ) then
-        cycle
-        end if
+            if ( node%I(ii, ni_idx) == nullValueI ) then
+                cycle
+            end if
 
-        !% The number of links upstream of a node
-        uplink_counter = node%I(ii, ni_N_link_u)
-        print*, node%I(ii, ni_idx), "has", node%I(ii, ni_N_link_u), "upstream links"
+            !% The number of links upstream of a node
+            uplink_counter = node%I(ii, ni_N_link_u)
+            write (*,"(A,I2,A)") "Node " // node%Names(node%I(ii, ni_idx))%str // " has", node%I(ii, ni_N_link_u), " upstream links"
 
-        !% Iterate through the links upstream of a node
-        do uplinks= 1, uplink_counter
+            !% Iterate through the links upstream of a node
+            do uplinks= 1, uplink_counter
+                !% If the link entry is not nullValueI (i.e. if it exists)
+                if ( node%I(ii, ni_idx_base1 + uplinks) /= nullValueI ) then
+                    !% Go to the upstream link to find the next upstream node
+                    upstream_link = node%I(ii, ni_idx_base1 + uplinks)
+                    upstream_node = link%I(upstream_link, li_Mnode_u)
 
-        !% If the link entry is not nullValueI (i.e. if it exists)
-        if ( node%I(ii, ni_idx_base1 + uplinks) /= nullValueI ) then
-
-        !% Go to the upstream link to find the next upstream node
-        upstream_link = node%I(ii, ni_idx_base1 + uplinks)
-        upstream_node = link%I(upstream_link, li_Mnode_u)
-
-        !% Add the adjacent upstream node to B_nodeI
-        B_nodeI(ii, uplinks) = upstream_node
-
-        endif
-        enddo
+                    !% Add the adjacent upstream node to B_nodeI
+                    B_nodeI(ii, uplinks) = upstream_node
+                endif
+            enddo
         enddo
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine bip_network_processing
     !
     !============================================================================
@@ -252,7 +249,7 @@ contains
         integer, intent(in) :: link_index
         real(8)             :: weight, length, element_length
     ! --------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),function_name
 
         !% Sometimes the Interface gives garbage for these values so I need to adjust
         length = link%R(link_index, lr_Length)
@@ -269,7 +266,7 @@ contains
         !% The link weight is equal to the link length divided by the element length
         weight = length / element_length
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),function_name
     end function calc_link_weights
     !
     !============================================================================
@@ -291,7 +288,7 @@ contains
         integer :: ii, jj
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% Calculates directweight for each node
         do ii = 1, size(node%I,1)
@@ -313,7 +310,7 @@ contains
         enddo
         enddo
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine calc_directweight
     !
     !============================================================================
@@ -334,7 +331,7 @@ contains
         integer, intent(in out) :: weight_index, root
         integer :: jj
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% If the node has not been visited this traversal (protective against cross connection bugs)
         !% and the node has not already been partitioned
@@ -362,7 +359,7 @@ contains
         enddo
         endif
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine calc_upstream_weight
     !
     !============================================================================
@@ -383,7 +380,7 @@ contains
         integer :: ii, weight_index
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% Calculates the totalweight for all nodes
         do ii=1, size(node%I,1)
@@ -410,7 +407,7 @@ contains
         !% The max_weight is the largest totalweight value for this partition
         max_weight = (maxval(B_nodeR(:, totalweight)))
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine calc_totalweight
     !
@@ -433,7 +430,7 @@ contains
         integer :: upstream_node_list(3)
         integer :: ii, jj, kk
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% If the root node has not been added to a partition
         if  ( partitioned_nodes(root) .eqv. .false. ) then
@@ -468,7 +465,7 @@ contains
         endif
 
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine trav_subnetwork
     !
     !============================================================================
@@ -489,7 +486,7 @@ contains
         integer :: jj
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% Save the system nodes as potential endpoints
         potential_endpoints(:) = node%I(:, ni_idx)
@@ -530,7 +527,7 @@ contains
         end if
         end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine trav_assign_link
     !
     !============================================================================
@@ -554,7 +551,7 @@ contains
         real(8) :: nearest_overestimate
         integer :: ii
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% The nearest overestimate is set above the max_weight as a buffer
         nearest_overestimate = max_weight*1.1
@@ -597,7 +594,7 @@ contains
         !% reverse The Price Is Right style
         print*, "Effective root:", effective_root
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end function calc_effective_root
     !
     !============================================================================
@@ -621,7 +618,7 @@ contains
         integer :: upstream_node
         integer :: ii, jj
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% Check each link for spanning the partition threshold
         do jj=1, size(link%I,1)
@@ -660,7 +657,7 @@ contains
         endif
         enddo
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine calc_spanning_link
     !
     !==========================================================================
@@ -682,7 +679,7 @@ contains
         real(8) :: length_from_start, total_length, start_weight, weight_ratio, link_weight
         integer :: upstream_node
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),function_name
 
         !% The length of the spanning_link
         total_length = link%R(spanning_link, lr_Length)
@@ -704,7 +701,7 @@ contains
         !% the upstream node that the phantom_node should be generated
         length_from_start = weight_ratio * total_length
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),function_name
     end function calc_phantom_node_loc
     !
     !==========================================================================
@@ -723,7 +720,7 @@ contains
 
         integer, intent(in out) :: phantom_node_idx, phantom_link_idx
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',function_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),function_name
 
         !% The phantom_node_idx is equal to 1 more than the largest ni_idx (that is not nullValueI)
         phantom_node_idx = maxval(node%I(:, ni_idx), MASK= ( node%I(:, ni_idx) /= nullValueI )) + 1
@@ -731,7 +728,7 @@ contains
         !% The phantom_link_idx is equal to 1 more than the largest li_idx (that is not nullValueI)
         phantom_link_idx = maxval(link%I(:, li_idx), MASK= ( link%I(:, ni_idx) /= nullValueI )) + 1
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',function_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),function_name
     end subroutine phantom_naming_convention
     !
     !==========================================================================
@@ -755,14 +752,14 @@ contains
         integer :: downstream_node, upstream_node
         integer :: kk
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% The phantom node index is given
         node%I(phantom_node_idx, ni_idx) = phantom_node_idx
 
         !% The phantom node type is guaranteed to be a simple 2 link junction
         !% HACK - need to figure out if I make this more robust than the integer
-        node%I(phantom_node_idx, ni_node_type) = zeroI
+        node%I(phantom_node_idx, ni_node_type) = nJ2
 
         !% The phantom node is guaranteed to have one upstream and one downstream link
         node%I(phantom_node_idx, ni_N_link_u) = oneI
@@ -828,7 +825,7 @@ contains
 
         !% HACK - need to check with Saz/Gerardo in Network_Define to see if I missed anything here
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine phantom_node_generator
     !
     !==========================================================================
@@ -855,7 +852,7 @@ contains
         integer   :: jj
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         print*, "Case 3 Found, effective_root is: ", effective_root
 
@@ -919,7 +916,7 @@ contains
         !% Resets the effective root to reflect updated system
         effective_root = calc_effective_root(ideal_exists, max_weight, partition_threshold)
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine trav_casethree
     !
     !==========================================================================
@@ -941,7 +938,7 @@ contains
         integer    :: ii, kk
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         !% Initialize the ni_P_is_boundary column to 0
         node%I(:, ni_P_is_boundary) = zeroI
@@ -970,7 +967,7 @@ contains
         end do
         end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine calc_is_boundary
     !
@@ -991,7 +988,7 @@ contains
         integer  :: connectivity, ii
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
         connectivity = 0
 
@@ -1000,7 +997,7 @@ contains
         connectivity = connectivity + node%I(ii, ni_P_is_boundary)
         end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
 
     end function connectivity_metric
     !

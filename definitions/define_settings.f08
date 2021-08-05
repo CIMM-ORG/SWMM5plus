@@ -468,7 +468,7 @@ contains
 
         character(64) :: subroutine_name = 'def_load_settings'
 
-        if (setting%Debug%File%define_settings) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%define_settings) print *, '*** enter ',this_image(), subroutine_name
 
         ! ---  Define paths
         call getcwd(setting%Paths%project)
@@ -1070,7 +1070,7 @@ contains
         call json%destroy()
         if (json%failed()) stop 155
 
-        if (setting%Debug%File%define_settings) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%define_settings) print *, '*** leave ', this_image(), subroutine_name
     end subroutine def_load_settings
 
     subroutine def_update_debug_options()

@@ -74,7 +74,7 @@ contains
         character(64) :: subroutine_name = "c_lib_load"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%c_library) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%c_library) print *, '*** enter ',this_image(), subroutine_name
 
         errmsg = ''
 
@@ -101,7 +101,7 @@ contains
 
         errstat = 0
 
-        if (setting%Debug%File%c_library) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%c_library) print *, '*** leave ', this_image(), subroutine_name
     end subroutine c_lib_load
 
     subroutine c_lib_close (c_lib, errstat, errmsg)
@@ -115,7 +115,7 @@ contains
         character(64) :: subroutine_name = "c_lib_close"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%c_library) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%c_library) print *, '*** enter ',this_image(), subroutine_name
 
         errmsg = ''
         errstat = dlclose( c_lib%fileaddrx )
@@ -125,6 +125,6 @@ contains
             return
         end if
 
-        if (setting%Debug%File%c_library) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%c_library) print *, '*** leave ', this_image(), subroutine_name
     end subroutine c_lib_close
 end module c_library

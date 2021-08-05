@@ -36,8 +36,8 @@ module utility
         integer :: ii
         logical :: ex
         !%-----------------------------------------------------------------------------
-        open(unit=1,file='debug/link%R.csv',status='new')
-        open(unit=2,file='debug/link%I.csv',status='new')
+        open(unit=1,file='debug/linkR.csv',status='new')
+        open(unit=2,file='debug/linkI.csv',status='new')
         write(1, '(A)')                                                                    &
             "lr_Length,lr_AdjustedLength,lr_InletOffset,lr_OutletOffset,lr_BreadthScale,"                 // &
             "lr_TopWidth,lr_ElementLength,lr_Slope,lr_LeftSlope,lr_RightSlope,"         // &
@@ -52,7 +52,7 @@ module utility
             "li_InitialDepthType, li_length_adjusted,li_P_image, li_first_elem_idx,"     //&
             "li_last_elem_idx"
 
-        do ii = 1, N_link
+        do ii = 1, size(link%R, 1)
             write(1,'(*(G0.6,:,","))') link%R(ii,:)
             write(2,'(*(G0.6,:,","))') link%I(ii,:)
         end do
@@ -60,8 +60,8 @@ module utility
         close(1)
         close(2)
 
-        open(unit=3,file='debug/node%R.csv',status='new')
-        open(unit=4,file='debug/node%I.csv',status='new')
+        open(unit=3,file='debug/nodeR.csv',status='new')
+        open(unit=4,file='debug/nodeI.csv',status='new')
 
         write(3, '(A)')                                                                              &
             "nr_Zbottom,nr_InitialDepth,nr_FullDepth,nr_StorageConstant,nr_StorageCoeff,"         // &
@@ -75,7 +75,7 @@ module utility
             "ni_P_image,ni_P_is_boundary,ni_elemface_idx, ni_pattern_resolution,"                    // &
             "ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3"
 
-        do ii = 1, N_node
+        do ii = 1, size(node%R, 1)
             write(3,'(*(G0.6,:,","))') node%R(ii,:)
             write(4,'(*(G0.6,:,","))') node%I(ii,:)
         end do

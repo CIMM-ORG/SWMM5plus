@@ -36,7 +36,7 @@ module timeloop
         logical, pointer :: useHydrology, useHydraulics
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'timeloop_toplevel'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         useHydrology  => setting%Simulation%useHydrology
         useHydraulics => setting%simulation%useHydraulics
@@ -94,7 +94,7 @@ module timeloop
             stop 76408
         endif
 
-        if (setting%Debug%File%timeloop)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine timeloop_toplevel
     !%
     !%==========================================================================
@@ -111,7 +111,7 @@ module timeloop
         real(8), pointer :: timeNow, timeNext, timeStart, timeEnd, loopTimeFinal, dt
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_setup_counters'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         select case (timeloop_type)
         case (hydrology)
@@ -157,7 +157,7 @@ module timeloop
 
         loopTimeFinal = timeEnd
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_setup_counters
     !
     !%==========================================================================
@@ -171,7 +171,7 @@ module timeloop
 
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_hydrology'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
 
         !% need to execute a hydrology step and extract boundary conditions for
@@ -179,7 +179,7 @@ module timeloop
         ! print *, "Hydrology calls to SWMM-C are needed 8473"
         !% stop 8473
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_hydrology
 
     !%==========================================================================
@@ -195,7 +195,7 @@ module timeloop
         real(8), pointer :: timeNext, timeFinal
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_hydraulics'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         timeNext  => setting%Time%Hydraulics%timeNext
         timeFinal => setting%Time%Hydraulics%timeFinal
@@ -204,7 +204,7 @@ module timeloop
         call tl_setup_counters(hydraulics)
 
         !% set the expected number of substeps for hydraulics given the present CFL
-        call tl_set_hydraulic_substep()   
+        call tl_set_hydraulic_substep()
 
         !% setup for checking volume conservation during the hydraulic steps.
         ! FUTURE 20210609 brh need to decide where to place this and pull code from old version
@@ -222,7 +222,7 @@ module timeloop
         ! timeNext = timeFinal+1.0
         end do
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_hydraulics
 
     !%==========================================================================
@@ -250,7 +250,7 @@ module timeloop
         logical, pointer :: useHydrology, useHydraulics
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_set_hydraulic_substep'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         useHydrology  => setting%Simulation%useHydrology
         useHydraulics => setting%Simulation%useHydraulics
@@ -303,12 +303,12 @@ module timeloop
                         dt = real(floor(dt),8)
                     endif
                 endif
-                
+
             else
                 !% For hydraulics only, keep the timestep stable unless it
                 !% exceeds CFL limits (both high and low limits).
                 thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
-                
+
                 if (thisCFL > maxCFL) then
                     !% decrease the time step and reset the checkStep counter
                     dt = dt * decreaseFactor * maxCFL /thisCFL
@@ -332,37 +332,38 @@ module timeloop
         call co_min(dt)
 
         !% print the cfl to check for model blowout
-        
-        if(mod(timeNow, setting%output%report_time) == 0) then
-            thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
-            print*, '--------------------------------------'
-            print*, 'In image', this_image()
-            print*, 'This Time = ', timeNow, 'dt = ', dt
-            print*, 'CFL max = ', thisCFL, 'Velocity Max = ', maxval(abs(velocity(thisP))) , &
-            'Wavespeed max = ', maxval(abs(wavespeed(thisP))) 
-        
-            ! if (this_image() == 1) then
-            !     do ii = 1,num_images()
-            !        print*, 'lagged output at image = ', ii
-            !        print*, '.....................elements.......................'
-            !        print*, elemR(:,er_Depth)[ii], 'depth'
-            !        print*, elemR(:,er_Volume)[ii],'volume'
-            !        print*, '-------------------Dynamics Data--------------------'
-            !        print*, elemR(:,er_Flowrate)[ii], 'flowrate'
-            !        print*, elemR(:,er_Velocity)[ii], 'velocity'
-            !        print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
-            !        print*, '.....................faces.......................'
-            !        print*, faceR(:,fr_Head_u)[ii], 'face head up'
-            !        print*, faceR(:,fr_Head_d)[ii], 'face head dn'
-            !        print*, faceR(:,fr_HydDepth_u)[ii], 'face Hyddepth up'
-            !        print*, faceR(:,fr_HydDepth_d)[ii], 'face Hyddepth dn'
-            !        print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
-            !        call execute_command_line('')
-            !     enddo
-            ! endif
+        if (setting%Debug%File%timeloop) then
+            if(mod(timeNow, setting%output%report_time) == 0) then
+                thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
+                print*, '--------------------------------------'
+                print*, 'In image', this_image()
+                print*, 'This Time = ', timeNow, 'dt = ', dt
+                print*, 'CFL max = ', thisCFL, 'Velocity Max = ', maxval(abs(velocity(thisP))) , &
+                'Wavespeed max = ', maxval(abs(wavespeed(thisP)))
+
+                ! if (this_image() == 1) then
+                !     do ii = 1,num_images()
+                !        print*, 'lagged output at image = ', ii
+                !        print*, '.....................elements.......................'
+                !        print*, elemR(:,er_Depth)[ii], 'depth'
+                !        print*, elemR(:,er_Volume)[ii],'volume'
+                !        print*, '-------------------Dynamics Data--------------------'
+                !        print*, elemR(:,er_Flowrate)[ii], 'flowrate'
+                !        print*, elemR(:,er_Velocity)[ii], 'velocity'
+                !        print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
+                !        print*, '.....................faces.......................'
+                !        print*, faceR(:,fr_Head_u)[ii], 'face head up'
+                !        print*, faceR(:,fr_Head_d)[ii], 'face head dn'
+                !        print*, faceR(:,fr_HydDepth_u)[ii], 'face Hyddepth up'
+                !        print*, faceR(:,fr_HydDepth_d)[ii], 'face Hyddepth dn'
+                !        print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
+                !        call execute_command_line('')
+                !     enddo
+                ! endif
+            end if
         end if
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_set_hydraulic_substep
     !%
     !%==========================================================================
@@ -375,7 +376,7 @@ module timeloop
         !% and lateral inflows.
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_update_hydraulic_BC'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         !% This needs to take the BC from the hydrology step (obtained in tl_hydrology)
         !% and subdivide for the subtime stepping of the hydraulics. For flow rates this
@@ -400,7 +401,7 @@ module timeloop
 
         ! print *, "Need tl_updated_hydraulic_BC to be written 38972"
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_update_hydraulic_BC
     !%
     !%==========================================================================
@@ -412,7 +413,7 @@ module timeloop
         !% Top level hydraulic solver for a single time step
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_hydraulic_solver'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
 
         !% check for where solver needs to switch in dual-solver model
@@ -444,7 +445,7 @@ module timeloop
                 STOP 1001 !% need error statement
         end select
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_hydraulic_solver
     !%
     !%==========================================================================
@@ -462,7 +463,7 @@ module timeloop
         real(8), pointer :: thistime, nexttime, dt
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_increment_counters'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
 
         select case (timeloop_type)
@@ -491,7 +492,7 @@ module timeloop
         thisstep = nextstep
         nextstep = nextstep + 1
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_increment_counters
     !%
     !%==========================================================================
@@ -510,7 +511,7 @@ module timeloop
         real(8), pointer :: volume(:), FullVolume(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_solver_select'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
 
         thiscol = ep_ALLtm
@@ -536,7 +537,7 @@ module timeloop
             tmType(thisP) = ETM
         endwhere
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_solver_select
     !%
     !%==========================================================================
@@ -552,7 +553,7 @@ module timeloop
         !% debugged.
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_save_previous_values'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         !%  push the old values down the stack
         !%  N values is the present, N0 is the last time step, and N1
@@ -564,7 +565,7 @@ module timeloop
         elemR(:,er_Volume_N1)    = elemR(:,er_Volume_N0)
         elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_save_previous_values
     !%
     !%==========================================================================
@@ -582,7 +583,7 @@ module timeloop
         integer, pointer :: thisstep, finalstep
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_check_finish_status'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
 
         endtime   => setting%Time%EndTime
@@ -596,7 +597,7 @@ module timeloop
         endif
 
         !% FUTURE brh 20210607 Need a control to exit on error
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_check_finish_status
     !%
     !%==========================================================================

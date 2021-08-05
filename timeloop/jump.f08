@@ -33,7 +33,7 @@ module jump
         integer, pointer :: facePackCol, Npack
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'jump_compute'
-        if (setting%Debug%File%jump) print *, '*** enter ', subroutine_name 
+        if (setting%Debug%File%jump) print *, '*** enter ',this_image(), subroutine_name 
         !%-----------------------------------------------------------------------------
         !%  
         !% identify hydraulic jump (create pack facemap in global)
@@ -53,7 +53,7 @@ module jump
             call jump_enforce (facePackCol, Npack, jump_from_upstream)
         endif
 
-        if (setting%Debug%File%jump)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%jump)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine jump_compute   
     !%
     !%==========================================================================

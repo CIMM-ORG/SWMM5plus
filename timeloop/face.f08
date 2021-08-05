@@ -36,7 +36,7 @@ module face
         integer, pointer :: Npack
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interpolation'
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
 
         !% face reconstruction of all the interior faces
@@ -56,7 +56,7 @@ module face
         !% wait for all the processors to finish face interpolation across images
         sync all
 
-        if (setting%Debug%File%face)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%face)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_interpolation
     !%
     !%==========================================================================
@@ -71,7 +71,7 @@ module face
         character (64) :: subroutine_name = 'face_interpolate_bc'
         !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%face)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face)  print *, '*** enter ',this_image(), subroutine_name
 
         if (N_nBCup > 0) call face_interpolation_upBC_byPack()
 
@@ -79,7 +79,7 @@ module face
 
         if (N_nBCdn > 0) call face_interpolation_dnBC_byPack()
 
-        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine face_interpolate_bc
     !%
@@ -101,7 +101,7 @@ module face
 
         !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ',this_image(), subroutine_name
 
         !% For the head/geometry at the upstream faces, we directly take the dnwnstream element
         !% So there is no eup for upstream BCs
@@ -173,7 +173,7 @@ module face
             endwhere
         endif
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_interpolation_upBC_byPack
     !%
     !%==========================================================================
@@ -193,7 +193,7 @@ module face
 
         !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ',this_image(), subroutine_name
 
 
         elem_P => elemP(1:npack_elemP(ep_BClat),ep_BClat)
@@ -215,7 +215,7 @@ module face
         end do
         !% For lateral flow, just update the flow at the element >> elemR(flow) + BC_lateral_flow
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_interpolation_latBC_byPack
     !%
     !%==========================================================================
@@ -235,7 +235,7 @@ module face
 
         !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ',this_image(), subroutine_name
 
 
         eup => faceI(:,fi_Melem_uL)
@@ -304,7 +304,7 @@ module face
             endwhere
         endif
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_interpolation_dnBC_byPack
 
     !%
@@ -323,7 +323,7 @@ module face
         integer :: fFlowSet(1), eFlowSet(1)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interpolation_byPack'
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         !% Face values are needed for
         !% Area_u, Area_d, Head_u, Head_d, Flowrate,
@@ -374,7 +374,7 @@ module face
         !% reset all the hydraulic jump interior faces
         call jump_compute
 
-        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_interpolation_interior_byPack
     !%
     !%==========================================================================
@@ -408,7 +408,7 @@ module face
         integer :: fFlowSet(1), eFlowSet(1)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interpolation_shared_byPack'
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         !% Face values are needed for
         !% Area_u, Area_d, Head_u, Head_d, Flowrate,
@@ -457,7 +457,7 @@ module face
         !% HACK needs jump computation for across shared faces
         ! print *, "HACK missing hydraulic jump that occurs on shared faces 36987"
 
-        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_interpolation_shared_byPack
     !%
     !%==========================================================================
@@ -474,7 +474,7 @@ module face
         integer :: ii
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interp_set_byMask'
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         eup => faceI(:,fi_Melem_uL)
         edn => faceI(:,fi_Melem_dL)
@@ -493,7 +493,7 @@ module face
         print *, 'in face_interp_set_byMask -- may be obsolete'
         stop 87098
 
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
     end subroutine face_interp_set_byMask
     !%
     !%==========================================================================
@@ -510,7 +510,7 @@ module face
         integer :: ii
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interp_interior_set_byPack'
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         thisP => faceP(1:Npack,facePackCol)
 
@@ -534,7 +534,7 @@ module face
         !% elemR(eup(thisp),eWdn) is the downstream weighting of the upstream element
         !% elemR(edn(thisp),eWup)) is the upstream weighting of the downstream element
 
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
     end subroutine face_interp_interior_set_byPack
     !%
     !%==========================================================================
@@ -552,7 +552,7 @@ module face
         integer :: ii, jj
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interp_shared_set_byPack'
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         !% cycle through all the shared faces
         do ii = 1,Npack
@@ -602,7 +602,7 @@ module face
         !% elemR(ghostUp,eWdn)[connected_image] is the downstream weighting of the upstream image element
         !% elemR(ghostDn,eWup))[connected_image] is the upstream weighting of the downstream image element
 
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
     end subroutine face_interp_shared_set_byPack
     !%
     !%==========================================================================
@@ -619,14 +619,14 @@ module face
         integer, pointer :: thisP(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_copy_upstream_to_downstream_interior_byPack'
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
 
         thisP => faceP(1:Npack,facePackCol)
 
         faceR(thisP,downstreamSet) = faceR(thisP,upstreamSet)
 
-        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_copy_upstream_to_downstream_interior_byPack
     !%
     !%==========================================================================
@@ -643,14 +643,14 @@ module face
         integer, pointer :: thisP(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_copy_upstream_to_downstream_byPack'
-        if (setting%Debug%File%face) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
 
         thisP => facePS(1:Npack,facePackCol)
 
         faceR(thisP,downstreamSet) = faceR(thisP,upstreamSet)
 
-        if (setting%Debug%File%face) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%face) print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_copy_upstream_to_downstream_shared_byPack
     !%
     !%==========================================================================

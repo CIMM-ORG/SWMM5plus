@@ -38,7 +38,7 @@ module adjust
         integer, intent(in) :: whichTM  !% indicates which Time marching method
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_values'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         
         !% ad hoc adjustments to flowrate 
@@ -66,7 +66,7 @@ module adjust
             end select
         endif
         
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_values
     !%
     !%==========================================================================
@@ -84,7 +84,7 @@ module adjust
         real(8), pointer :: geovalue(:)        
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         Npack    => npack_elemP(thisCol)  
         geovalue => elemR(:,geocol)
@@ -103,7 +103,7 @@ module adjust
             endif
         endif    
 
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_limit_by_zerovalues
     !%
     !%==========================================================================  
@@ -120,7 +120,7 @@ module adjust
         real(8), pointer :: geovalue(:)        
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues_singular'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         geovalue => elemR(:,geocol)
         !%-----------------------------------------------------------------------------
@@ -134,7 +134,7 @@ module adjust
             endif 
         endif 
 
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_limit_by_zerovalues_singular
     !%
     !%==========================================================================  
@@ -154,7 +154,7 @@ module adjust
         !%-------------------------------------------------
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_velocity'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         select case (whichTM)
             case (ALLtm)
@@ -210,7 +210,7 @@ module adjust
                 (Npack, thiscol_all, velocityCol, volumeCol)
         endif
         
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_velocity
     !%
     !%==========================================================================  
@@ -228,7 +228,7 @@ module adjust
         real(8), pointer :: f_flowrate(:), zeroValue, vMax
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_face_dynamic_limit'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         f_area_u     => faceR(:,fr_Area_u)
         f_area_d     => faceR(:,fr_Area_d)
@@ -296,7 +296,7 @@ module adjust
             endif
         endif
         
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_face_dynamic_limit
     !%
     !%==========================================================================
@@ -315,7 +315,7 @@ module adjust
         real(8), pointer :: faceFlow(:), elemFlow(:), elemVel(:), w_uQ(:), w_dQ(:), elemArea(:)
         !%-----------------------------------------------------------------------------  
         character(64) :: subroutine_name = 'adjust_Vshaped_flowrate'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------  
         select case (whichTM)
             case (ALLtm)
@@ -384,7 +384,7 @@ module adjust
             endif
         endif
         
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_Vshaped_flowrate
     !%
     !%==========================================================================  
@@ -403,7 +403,7 @@ module adjust
         real(8), pointer :: w_uH(:), w_dH(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         select case (whichTM)
             case (ALLtm)
@@ -463,7 +463,7 @@ module adjust
             endif
         endif
         
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name 
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name 
     end subroutine
         !%    
     !%==========================================================================
@@ -478,14 +478,14 @@ module adjust
         integer, pointer :: thisP(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_smallvolumes_reset_old'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         thisP => elemP(1:Npack,thisCol)
         !%----------------------------------------------------------------------------- 
         elemYN(thisP,eYN_IsSmallVolume) = .false.
         elemR(thisP,er_SmallVolumeRatio) = nullvalueR
         
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine  adjust_smallvolumes_reset_old
     !%
     !%==========================================================================
@@ -503,7 +503,7 @@ module adjust
         logical, pointer :: isSmallVol(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_smallvolumes_identify'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------  
         thisP       => elemP(1:Npack,thisCol)
         volume      => elemR(:,thisVolumeCol)
@@ -523,7 +523,7 @@ module adjust
             sVratio(thisP) = zeroR
         endwhere
         
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_smallvolumes_identify
     !%  
     !%==========================================================================
@@ -541,7 +541,7 @@ module adjust
         logical, pointer :: isSmallVol(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_smallvolumes_pack'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         thisP      => elemP(1:Npack,thisColP)
         eIdx       => elemI(:,ei_Lidx)
@@ -555,7 +555,7 @@ module adjust
             elemP(1:newpack,thisNewPackCol) = pack(eIdx(thisP), isSmallVol(thisP) )
         endif
 
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_smallvolumes_pack
     !%
     !%==========================================================================
@@ -571,14 +571,14 @@ module adjust
         integer, pointer :: thisP(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_velocity_limiter_reset_old'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         thisP => elemP(1:Npack,thisCol)
         !%-----------------------------------------------------------------------------
 
         elemYN(thisP,eYN_IsAdhocFlowrate) = .false.
     
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_velocity_limiter_reset_old
     !%
     !%==========================================================================
@@ -596,7 +596,7 @@ module adjust
         logical, pointer :: isAdhocFlowrate(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_velocity_limiter'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         thisP           => elemP(1:Npack,thisPackCol)
         velocity        => elemR(:,thisVelocityCol)
@@ -609,7 +609,7 @@ module adjust
             isAdhocFlowrate(thisP) = .true.
         endwhere 
 
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_velocity_limiter
     !%==========================================================================
     !%==========================================================================
@@ -627,7 +627,7 @@ module adjust
         real(8), pointer :: velocityBlend(:), svRatio(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_velocity_smallvolume_blended'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         thisP     => elemP(1:Npack,thisCol) !% only elements with small volumes
         fheadUp   => faceR(:,fr_Head_d)
@@ -670,7 +670,7 @@ module adjust
 
         velocityBlend(thisP) = nullvalueR
 
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_velocity_smallvolume_blended
     !%
     !%==========================================================================
@@ -689,7 +689,7 @@ module adjust
         logical, pointer :: isAdhocFlowrate(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_zero_velocity_at_zero_volume'
-        if (setting%Debug%File%adjust) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** enter ',this_image(), subroutine_name
         !%----------------------------------------------------------------------------- 
         thisP    => elemP(1:Npack,thisCol)
         volume   => elemR(:,thisVolumeCol)
@@ -702,7 +702,7 @@ module adjust
             isAdhocFlowrate(thisP) = .true.
         endwhere    
 
-        if (setting%Debug%File%adjust) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_zero_velocity_at_zero_volume
     !%
     !%==========================================================================
