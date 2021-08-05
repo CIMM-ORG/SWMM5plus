@@ -1289,8 +1289,8 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         endif
 
-        if allocated(fup) deallocate(fup)
-        if allocated(fdn) deallocate(fdn)
+        if (allocated(fup)) deallocate(fup)
+        if (allocated(fdn)) deallocate(fdn)
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_nongeometry_dynamic_elements
