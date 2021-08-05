@@ -97,10 +97,10 @@ contains
         call init_IC_setup ()
 
         !% creating output_folders and files
-        call util_output_create_folder()
-        call util_output_create_elemR_files()
-        call util_output_create_faceR_files()
-        call util_output_create_summary_files()
+        !call util_output_create_folder()
+        !call util_output_create_elemR_files()
+        !call util_output_create_faceR_files()
+        !call util_output_create_summary_files()
         
         !% wait for all the processors to reach this stage before starting the time loop
         sync all

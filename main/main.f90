@@ -16,6 +16,9 @@ program main
     call cpu_time(start_time)
     ! --- Initialization
     call initialize_all()
+    
+    print *, N_elem(this_image()), "N_elem"
+    if (this_image() == 1) print *, link%I(:,li_P_image)
 
     ! --- Time Loop
     call timeloop_toplevel()

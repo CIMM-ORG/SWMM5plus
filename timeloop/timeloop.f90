@@ -412,7 +412,7 @@ module timeloop
         call tl_save_previous_values()
 
         !% print the cfl to check for model blowout
-        call util_output_report_summary()
+        !call util_output_report_summary()
 
         !%  Reset the flowrate adhoc detection before flowrates are updated.
         !%  Note that we do not reset the small volume detection here -- that should
@@ -431,7 +431,7 @@ module timeloop
         end select
 
         !% report timestep
-        call util_output_report()
+        !call util_output_report()
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_hydraulic_solver
