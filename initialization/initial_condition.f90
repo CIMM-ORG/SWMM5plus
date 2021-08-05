@@ -489,7 +489,7 @@ contains
                     !% where the factor is an user controlled paratmeter.
                     elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
                                                 link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth)
+                    elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)    = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
@@ -520,13 +520,13 @@ contains
 
                     ! Bottom width + (lslope + rslope) * BankFullDepth
                     elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Trapezoidal_Breadth) + (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + &
-                                elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_ZbreadthMax)
+                                elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
                     elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
                                                 link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth)
+                    elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                     elemR(:,er_FullArea)    = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
                                 (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
@@ -585,7 +585,7 @@ contains
                 elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
                 elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
                 elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth)
+                elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                 elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                 elemR(:,er_FullArea)        = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
                 elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
@@ -616,9 +616,9 @@ contains
 
                 !% HACK: not sure if it is the correct breadth max for trapezoidal conduits
                 elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Trapezoidal_Breadth) + (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + &
-                            elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_ZbreadthMax)
+                            elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
                 elemR(:,er_FullDepth)   = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth)
+                elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                 elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
                 elemR(:,er_FullArea)    = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
                             (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
