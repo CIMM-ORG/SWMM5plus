@@ -600,7 +600,7 @@ contains
         if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
-        
+
         fup = pack(elemI(:,ei_Mface_uL), elemI(:,ei_Mface_uL) /= nullvalueI)
         fdn = pack(elemI(:,ei_Mface_dL), elemI(:,ei_Mface_dL) /= nullvalueI)
 
@@ -1288,6 +1288,9 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
         endif
+
+        if allocated(fup) deallocate(fup)
+        if allocated(fdn) deallocate(fdn)
 
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
     end subroutine pack_nongeometry_dynamic_elements
