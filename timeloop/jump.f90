@@ -111,7 +111,7 @@ module jump
         npack_faceP(fp_JumpUp) = count( &
             isInterior &
             .and. &
-            (Fr(eup) >= oneR + feps)  &
+            (Fr(eup) > oneR + feps)  &
             .and. &
             (Fr(edn) < oneR - feps)   &
             .and. &
@@ -126,7 +126,7 @@ module jump
             faceP(1:Npack_JumpUp, fp_JumpUp) = pack(faceIdx, &
                 isInterior &
                 .and. &
-                (Fr(eup) >= oneR + feps)  &
+                (Fr(eup) > oneR + feps)  &
                 .and. &
                 (Fr(edn) < oneR - feps)   &
                 .and. &
@@ -147,9 +147,9 @@ module jump
         npack_faceP(fp_JumpDn)  = count( &
             isInterior &
             .and. &
-            (Fr(eup) <= -oneR + feps) &
+            (Fr(eup) < -oneR + feps) &
             .and. &
-            (Fr(edn) >  -oneR - feps) &
+            (Fr(edn) > -oneR - feps) &
             .and. &
             (.not. isSurcharged(eup)) &
             .and. &
@@ -163,9 +163,9 @@ module jump
             faceP(1:Npack_JumpDn, fp_JumpDn) = pack(faceIdx, &
                 isInterior &
                 .and. &
-                (Fr(eup) <= -oneR + feps) &
+                (Fr(eup) < -oneR + feps) &
                 .and. &
-                (Fr(edn) >  -oneR - feps) &
+                (Fr(edn) > -oneR - feps) &
                 .and. &
                 (.not. isSurcharged(eup)) &
                 .and. &
@@ -207,10 +207,14 @@ module jump
                 !% enforce jump from upstream faces
                 !% so that downstream face is the downstream element value
                 faceR(thisP,fsetDn) = elemR(eDn(thisP),eset)
+                faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
+                faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
             case (jump_from_downstream)
                 !% enforce jump from downstream faces
                 !%  so that upstream face is the upstream element value
                 faceR(thisP,fsetUp) = elemR(eUp(thisP),eset)
+                faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_u)
+                faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_flowrate) / faceR(thisP,fr_Area_d)
         end select
         
     end subroutine jump_enforce

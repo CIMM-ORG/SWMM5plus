@@ -22,7 +22,7 @@ module network_define
 
     private
 
-    public :: init_network
+    public :: init_network_define_toplevel
 
 contains
     !
@@ -30,7 +30,7 @@ contains
     ! PUBLIC
     !==========================================================================
     !
-    subroutine init_network ()
+    subroutine init_network_define_toplevel ()
     !--------------------------------------------------------------------------
     !
     !% Initializes a element-face network from a link-node network.
@@ -40,12 +40,11 @@ contains
 
         integer :: ii, jj
 
-        character(64) :: subroutine_name = 'init_network'
+        character(64) :: subroutine_name = 'init_network_define_toplevel'
 
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) print *, '*** enter ',this_image(),subroutine_name
-
 
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
@@ -104,9 +103,9 @@ contains
                 enddo
             endif
         endif
-
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
-    end subroutine init_network
+        
+        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+    end subroutine init_network_define_toplevel
     !
     !==========================================================================
     ! PRIVATE
@@ -621,15 +620,15 @@ contains
 
                 !% Handle storage nodes
                 case (nStorage)
-
+                    print*
                     print*, 'In ', subroutine_name
                     print*, 'error: storage node is not handeled yet'
 
                 case default
-
+                    print*
                     print*, 'In ', subroutine_name
                     print*, 'error: node ' // node%Names(thisNode)%str // &
-                            ' has an unexpected nodeType at upstream boundary', nodeType
+                            ' has an unexpected nodeType', nodeType
                     stop
             end select
 
@@ -906,14 +905,16 @@ contains
                     endif
 
                 case (nStorage)
-
+                    print*
                     print*, 'In ', subroutine_name
                     print*, 'error: storage node is not handeled yet'
 
                 case default
 
+                    print*
                     print*, 'In ', subroutine_name
-                    print*, 'error: unexpected node type ', nodeType,' at downstream node ' // node%Names(thisNode)%str
+                    print*, 'error: node ' // node%Names(thisNode)%str // &
+                            ' has an unexpected nodeType', nodeType
                     stop
             end select
         else

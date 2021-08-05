@@ -34,6 +34,7 @@ module interface
     public :: interface_get_next_head_time
     public :: interface_get_flowBC
     public :: interface_get_headBC
+    public :: interface_find_object
 
     !% -------------------------------------------------------------------------------
     !% PRIVATE
@@ -138,6 +139,15 @@ module interface
             real(c_double),        intent(in) :: current_datetime
             real(c_double)                    :: api_get_headBC
         end function api_get_headBC
+
+        function api_find_object(object_type, object_name)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: object_type
+            character(c_char), dimension(*) :: object_name
+            integer(c_int) :: api_find_object
+        end function api_find_object
+
     end interface
 
     procedure(api_initialize),          pointer :: ptr_api_initialize
@@ -151,6 +161,7 @@ module interface
     procedure(api_get_end_datetime),    pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),          pointer :: ptr_api_get_flowBC
     procedure(api_get_headBC),          pointer :: ptr_api_get_headBC
+    procedure(api_find_object),         pointer :: ptr_api_find_object
 
     !% Error handling
     character(len = 1024) :: errmsg
@@ -288,11 +299,19 @@ contains
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
 
         do ii = 1, N_node
-            call ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
+            errstat = ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
+            if (errstat /= 0) then
+                write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
+                stop
+            end if
         end do
 
         do ii = 1, N_link
-            call ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
+            errstat = ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
+            if (errstat /= 0) then
+                write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
+                stop
+            end if
         end do
 
         if (setting%Debug%File%interface) then
@@ -312,7 +331,7 @@ contains
 
     end subroutine interface_update_linknode_names
 
-    function interface_get_obj_name_len(obj_idx, obj_type) result(obj_name_len)
+    integer function interface_get_obj_name_len(obj_idx, obj_type) result(obj_name_len)
     !%-----------------------------------------------------------------------------
     !% Description:
     !%    Returns the lenght of the name string associated to the EPA-SWMM object.
@@ -322,7 +341,6 @@ contains
     !%-----------------------------------------------------------------------------
         integer, intent(in) :: obj_idx  ! index of the EPA-SWMM object
         integer, intent(in) :: obj_type ! type of EPA-SWMM object (API_NODE, API_LINK)
-        integer :: obj_name_len
         character(64) :: subroutine_name = "interface_get_obj_name_len"
     !%-----------------------------------------------------------------------------
 
@@ -667,7 +685,6 @@ contains
 
     end function interface_get_flowBC
 
-
     function interface_get_headBC(bc_idx, tnow) result(bc_value)
         integer, intent(in) :: bc_idx
         real(8), intent(in) :: tnow
@@ -693,6 +710,29 @@ contains
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
 
     end function interface_get_headBC
+
+    function interface_find_object(object_type, object_name) result(object_idx)
+        character(*), intent(in) :: object_name
+        integer, intent(in) :: object_type
+        integer :: object_idx
+        character(64) :: subroutine_name
+
+        subroutine_name = 'interface_find_object'
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
+
+        c_lib%procname = "api_find_object"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
+        object_idx = ptr_api_find_object(object_type, trim(object_name)//c_null_char) + 1
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
+
+    end function interface_find_object
 
     !%=============================================================================
     !% PRIVATE

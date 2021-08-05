@@ -23,9 +23,11 @@ program main
     ! --- Finalization
     call finalize_all()
 
-    sync all 
+    sync all
 
     call cpu_time(end_time)
-    print*, 'Simulation Time = ', end_time - start_time
+
+    print *, new_line("")
+    write(*, "(A,i2,A,G0.6,A)") 'Processor ', this_image(), " | Simulation Time = ", (end_time - start_time), " [s]"
 
 end program main

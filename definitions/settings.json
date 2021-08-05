@@ -59,7 +59,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 100.0,
+        "NominalElemLength" : 10.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -116,7 +116,6 @@
         "UseSmallVolumes" : true
     },
     "Solver" : {
-        "crk2" : 1.0,
         "MomentumSourceMethod" : "T00",
         "PreissmanSlot" : false,
         "SolverSelect" : "ETM",
@@ -229,6 +228,8 @@
             "utility_deallocate" : false,
             "utility_array" : false,
             "utility_datetime" : false,
+            "utility_interpolate" : false,
+            "utility_output" : false,
             "utility_string" : false,
             "weir_elements" : false
         },
@@ -244,8 +245,8 @@
         }
     },
     "Output" : {
-	"report_time" : 600.0,
-	"report_tol"  : 0.35
+        "report_time" : 1272.123123,
+        "report_tol"  : 10
     },
     "Warning"  : false,
     "Verbose" : false

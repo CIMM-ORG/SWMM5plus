@@ -334,21 +334,21 @@ int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type)
 
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type)
 {
-    int error;
+    int error, i;
     Interface * api = (Interface*) f_api;
 
     error = check_api_is_initialized(api);
     if (error != 0) return error;
     if (object_type == NODE)
     {
-        for (int i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
+        for(i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
         {
             object_name[i] = Node[k].ID[i];
         }
     }
     else if (object_type == LINK)
     {
-        for (int i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
+        for(i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
         {
             object_name[i] = Link[k].ID[i];
         }
@@ -376,7 +376,7 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
 
     api_get_node_attribute(f_api, node_idx, node_has_dwfInflow, &val);
     if (val == 1) { // node_has_dwfInflow
-        for (int i=0; i<4; i++)
+        for(i=0; i<4; i++)
         {
             j = Node[node_idx].dwfInflow->patterns[i];
             if (j > 0)
@@ -706,6 +706,11 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
 // v
 // -------------------------------------------------------------------------
 
+int DLLEXPORT api_find_object(int type, char *id)
+{
+    return project_findObject(type, id);
+}
+
 double api_get_outfall_depth(int node_idx, int link_idx, double currentDate, double z, double q)
 {
     // double   x, y;                         // x,y values in table
@@ -833,11 +838,6 @@ int api_load_vars(void * f_api)
         continue;
     }
     return 0;
-}
-
-int api_findObject(int type, char *id)
-{
-    return project_findObject(type, id);
 }
 
 int add_link(

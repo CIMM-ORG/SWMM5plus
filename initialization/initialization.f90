@@ -13,6 +13,7 @@ module initialization
     use initial_condition
     use network_define
     use utility, only: util_export_linknode_csv
+    use utility_output
     use utility_array
     use pack_mask_arrays
 
@@ -90,13 +91,19 @@ contains
         !% HACK: this sync call is probably not needed
         sync all
 
-        call init_network ()
+        call init_network_define_toplevel ()
 
         !% initialize boundary conditions
         call init_bc()
 
         call init_IC_setup ()
 
+        !% creating output_folders and files
+        call util_output_create_folder()
+        call util_output_create_elemR_files()
+        call util_output_create_faceR_files()
+        call util_output_create_summary_files()
+        
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
@@ -146,9 +153,6 @@ contains
             link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
             link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
 
-            !% HACK This is a temporary hardcode until Gerardo can populate this column from the CFL condition
-            link%I(ii, li_N_element) = 10
-
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
             node%I(link%I(ii,li_Mnode_d), ni_idx_base1 + node%I(link%I(ii,li_Mnode_d), ni_N_link_u)) = ii
             node%I(link%I(ii,li_Mnode_u), ni_N_link_d) = node%I(link%I(ii,li_Mnode_u), ni_N_link_d) + 1
@@ -178,7 +182,7 @@ contains
             node%I(ii, ni_idx) = ii
             if (interface_get_node_attribute(ii, api_node_type) == API_OUTFALL) then
                 node%I(ii, ni_node_type) = nBCdn
-            else if ((total_n_links == twoI)         .and. &
+            else if ((total_n_links == twoI)          .and. &
                      (node%I(ii,ni_N_link_u) == oneI) .and. &
                      (node%I(ii,ni_N_link_d) == oneI) )then
                 node%I(ii, ni_node_type) = nJ2

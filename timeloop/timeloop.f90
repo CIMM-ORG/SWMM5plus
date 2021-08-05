@@ -6,6 +6,7 @@ module timeloop
     use define_keys
     use pack_mask_arrays
     use runge_kutta2
+    use utility_output
     use boundary_conditions
 
     implicit none
@@ -50,7 +51,6 @@ module timeloop
             !% set the counters used for outer loop iteration
             call tl_setup_counters(hydrology)
             call bc_update()
-
             !% outer loop (Hydrology) time stepping
             do while (.not. isTLfinished)
                 !% Perform one time step of hydrology
@@ -60,7 +60,6 @@ module timeloop
                 call tl_increment_counters(hydrology)
                 call bc_update()
                 call tl_check_finish_status(isTLfinished)
-
             !% HACK to prevent infinite loop in testing
             ! print *, "HACK hard-code stopping time loop  39872"
             ! isTLfinished = .true.
@@ -331,39 +330,7 @@ module timeloop
         sync all
         call co_min(dt)
 
-        !% print the cfl to check for model blowout
-        if (setting%Debug%File%timeloop) then
-            if(mod(timeNow, setting%output%report_time) == 0) then
-                thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
-                print*, '--------------------------------------'
-                print*, 'In image', this_image()
-                print*, 'This Time = ', timeNow, 'dt = ', dt
-                print*, 'CFL max = ', thisCFL, 'Velocity Max = ', maxval(abs(velocity(thisP))) , &
-                'Wavespeed max = ', maxval(abs(wavespeed(thisP)))
-
-                ! if (this_image() == 1) then
-                !     do ii = 1,num_images()
-                !        print*, 'lagged output at image = ', ii
-                !        print*, '.....................elements.......................'
-                !        print*, elemR(:,er_Depth)[ii], 'depth'
-                !        print*, elemR(:,er_Volume)[ii],'volume'
-                !        print*, '-------------------Dynamics Data--------------------'
-                !        print*, elemR(:,er_Flowrate)[ii], 'flowrate'
-                !        print*, elemR(:,er_Velocity)[ii], 'velocity'
-                !        print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
-                !        print*, '.....................faces.......................'
-                !        print*, faceR(:,fr_Head_u)[ii], 'face head up'
-                !        print*, faceR(:,fr_Head_d)[ii], 'face head dn'
-                !        print*, faceR(:,fr_HydDepth_u)[ii], 'face Hyddepth up'
-                !        print*, faceR(:,fr_HydDepth_d)[ii], 'face Hyddepth dn'
-                !        print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
-                !        call execute_command_line('')
-                !     enddo
-                ! endif
-            end if
-        end if
-
-        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_set_hydraulic_substep
     !%
     !%==========================================================================
@@ -412,22 +379,40 @@ module timeloop
         !% Description:
         !% Top level hydraulic solver for a single time step
         !%-----------------------------------------------------------------------------
+        real(8) :: thisCFL
+
+        real(8), pointer :: dt, timeNow
+        real(8), pointer :: velocity(:), wavespeed(:), length(:)
+        integer, pointer :: thisCol, Npack, thisP(:)
+        !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_hydraulic_solver'
         if (setting%Debug%File%timeloop) print *, '*** enter ',this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
+        dt        => setting%Time%Hydraulics%Dt
+        timeNow   => setting%Time%Hydraulics%timeNow
+        thisCol   => col_elemP(ep_CC_ALLtm)
+        Npack     => npack_elemP(thisCol)
+        thisP     => elemP(1:Npack,thisCol)
+
+        velocity  => elemR(:,er_Velocity)
+        wavespeed => elemR(:,er_WaveSpeed)
+        length    => elemR(:,er_Length)
 
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
-            call tl_solver_select ()
+            call tl_solver_select()
         endif
 
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
-        call pack_dynamic_arrays
+        call pack_dynamic_arrays()
         ! print *, "Need to decide on pack_dynamic_arrays 94837"
 
         !%  push the old values down the stack for AC solver
-        call tl_save_previous_values ()
+        call tl_save_previous_values()
+
+        !% print the cfl to check for model blowout
+        call util_output_report_summary()
 
         !%  Reset the flowrate adhoc detection before flowrates are updated.
         !%  Note that we do not reset the small volume detection here -- that should
@@ -435,17 +420,20 @@ module timeloop
         elemYN(:,eYN_IsAdhocFlowrate) = .false.
         select case (setting%Solver%SolverSelect)
             case (ETM_AC)
-                call rk2_toplevel_ETMAC ()
+                call rk2_toplevel_ETMAC()
             case (ETM)
-                call rk2_toplevel_ETM ()
+                call rk2_toplevel_ETM()
             case (AC)
-                call rk2_toplevel_AC ()
+                call rk2_toplevel_AC()
             case DEFAULT
                 print *, 'error, code should not be reached.'
                 STOP 1001 !% need error statement
         end select
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+        !% report timestep
+        call util_output_report()
+
+        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_hydraulic_solver
     !%
     !%==========================================================================
@@ -543,7 +531,7 @@ module timeloop
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine tl_save_previous_values ()
+    subroutine tl_save_previous_values()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Pushes the time N values into time N-1 storage, and the time N+1 values into

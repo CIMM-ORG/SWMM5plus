@@ -156,10 +156,10 @@ int DLLEXPORT interface_export_link_results(void* f_api, char* link_name);
 int DLLEXPORT interface_export_node_results(void* f_api, char* node_name);
 
 // --- Utils
+int DLLEXPORT api_find_object(int type, char *id);
 int check_api_is_initialized(Interface* api);
 int api_load_vars(void * f_api);
 int getTokens(char *s);
-int api_findObject(int type, char *id);
 
 #ifdef __cplusplus
 }   // matches the linkage specification from above */
