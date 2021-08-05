@@ -312,6 +312,14 @@ contains
             thisP     => elemP(1:Npack,thisCol)
             thisCFL = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
 
+            if (setting%verbose) then
+                print*, '--------------------------------------'
+                print*, 'In image', this_image()
+                print*, 'This Time = ', timeNow, 'dt = ', dt
+                print*, 'CFL max = ', thisCFL, 'Velocity Max = ', maxval(abs(velocity(thisP))) , &
+                'Wavespeed max = ', maxval(abs(wavespeed(thisP)))
+            end if
+
             open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
                 form = 'formatted', action = 'write', iostat = open_status)
             write(fu, fmt='(*(G0.6 : ","))') &

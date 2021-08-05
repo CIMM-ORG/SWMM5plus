@@ -348,8 +348,6 @@ contains
             thisLink => packed_link_idx(ii)
             upNode   => link%I(thisLink,li_Mnode_u)
             dnNode   => link%I(thisLink,li_Mnode_d)
-            print *, node%I(5, :)
-            print *, dnNode, "THE NODE", this_image(), N_node
 
             !% handle the upstream node of the link to create elements and faces
             call init_network_handle_upstreamnode &
