@@ -49,14 +49,16 @@ contains
 
         if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
-        write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
+        if (setting%verbose) then
+            write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
 
-        open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
-        form   = 'formatted', action = 'write', iostat = open_status)
+            open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
+            form = 'formatted', action = 'write', iostat = open_status)
 
-        write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
+            write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
             endfile(fu)
-        close(fu)
+            close(fu)
+        end if
 
         if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
     end subroutine util_output_create_summary_files
@@ -319,7 +321,7 @@ contains
 
         if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
 
-        if (util_output_must_report()) then
+        if (util_output_must_report() .and. setting%verbose) then
             write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
             timeNow   => setting%Time%Hydraulics%timeNow
             dt        => setting%Time%Hydraulics%Dt
@@ -331,13 +333,11 @@ contains
             thisP     => elemP(1:Npack,thisCol)
             thisCFL = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
 
-            if (setting%verbose) then
-                print*, '--------------------------------------'
-                print*, 'In image', this_image()
-                print*, 'This Time = ', timeNow, 'dt = ', dt
-                print*, 'CFL max = ', thisCFL, 'Velocity Max = ', maxval(abs(velocity(thisP))) , &
-                'Wavespeed max = ', maxval(abs(wavespeed(thisP)))
-            end if
+            print*, '--------------------------------------'
+            print*, 'In image', this_image()
+            print*, 'This Time = ', timeNow, 'dt = ', dt
+            print*, 'CFL max = ', thisCFL, 'Velocity Max = ', maxval(abs(velocity(thisP))) , &
+            'Wavespeed max = ', maxval(abs(wavespeed(thisP)))
 
             open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
                 form = 'formatted', action = 'write', iostat = open_status)
