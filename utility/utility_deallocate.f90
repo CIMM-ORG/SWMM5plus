@@ -95,11 +95,11 @@ contains
         end if
 
         !% Deallocate link/node names
-        do ii = 1, N_link
+        do ii = 1, size(link%Names)
             deallocate(link%Names(ii)%str, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check(deallocation_status, emsg)
         end do
-        do ii = 1, N_node
+        do ii = 1, size(node%Names)
             deallocate(node%Names(ii)%str, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check(deallocation_status, emsg)
         end do
