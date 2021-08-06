@@ -12,7 +12,7 @@ module BIPquick
     use define_indexes
     use define_globals
     use define_settings
-
+    use discretization, only: init_discretization_nominal
     implicit none
 
     private
@@ -727,6 +727,7 @@ contains
         integer :: upstream_node_list(3)
         integer :: downstream_node, upstream_node
         integer :: kk
+        real    :: l1, l2, y1, y2
         !--------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
 
@@ -768,6 +769,8 @@ contains
         !% The phantom link length is the spanning_link length - the phantom node location
         link%R(phantom_link_idx, lr_Length) = link%R(spanning_link, lr_Length) - phantom_node_start
         link%R(spanning_link, lr_Length) = phantom_node_start
+        call init_discretization_nominal(phantom_link_idx)
+        call init_discretization_nominal(spanning_link)
 
         !% Save the original downstream node for the spanning link
         downstream_node = link%I(spanning_link, li_Mnode_d)
@@ -779,20 +782,31 @@ contains
         B_nodeR(downstream_node, directweight) = B_nodeR(downstream_node, directweight) &
         - calc_link_weights(spanning_link)
 
+        y1 = node%R(upstream_node, nr_Zbottom)
+        y2 = node%R(downstream_node, nr_Zbottom)
+        l1 = phantom_node_start
+        l2 = link%R(phantom_link_idx, lr_Length)
+        !% Interpolate zBottom
+        node%R(phantom_node_idx, nr_Zbottom) = y2 + l2*(y1 - y2)/(l1 + l2)
+        !% Interpolate InitialDepth
+        y1 = node%R(upstream_node, nr_InitialDepth)
+        y2 = node%R(downstream_node, nr_InitialDepth)
+        node%R(phantom_node_idx, nr_InitialDepth) = y2 + l2*(y1 - y2)/(l1 + l2)
+
         !% Checks the adjacent nodes that were originally upstream of the downstream node
         upstream_node_list(:) = B_nodeI(downstream_node, :)
         do kk = 1, size(upstream_node_list)
 
-        !% If the adjacent upstream node is the upstream node from the spanning link
-        if ( upstream_node_list(kk) == upstream_node ) then
+            !% If the adjacent upstream node is the upstream node from the spanning link
+            if ( upstream_node_list(kk) == upstream_node ) then
 
-        !% Then replace it with the phantom node in B_nodeI
-        B_nodeI(downstream_node, kk) = phantom_node_idx
+            !% Then replace it with the phantom node in B_nodeI
+            B_nodeI(downstream_node, kk) = phantom_node_idx
 
-        !% Also replace the downstream node's upstream link with the phantom link
-        node%I(downstream_node, ni_idx_base1 + kk) = phantom_link_idx
+            !% Also replace the downstream node's upstream link with the phantom link
+            node%I(downstream_node, ni_idx_base1 + kk) = phantom_link_idx
 
-        end if
+            end if
         end do
 
         !% The resets the phantom index to having the phantom link and phantom node (as upstream node)

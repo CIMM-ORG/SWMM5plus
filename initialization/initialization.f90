@@ -353,13 +353,16 @@ contains
     !%   must be.
     !%
     !%-----------------------------------------------------------------------------
+        integer       :: ii
         character(64) :: subroutine_name = 'init_partitioning'
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
 
         !% find the number of elements in a link based on nominal element length
-        call init_discretization_nominal()
+        do ii = 1, N_link
+            call init_discretization_nominal(ii)
+        end do
 
         !% Set the network partitioning method used for multi-processor parallel computation
         call init_partitioning_method()

@@ -40,7 +40,7 @@ subroutine init_partitioning_method()
     !
     !---------------------------------------------------------
         logical :: partition_correct
-        integer :: connectivity, ii
+        integer :: connectivity, ii, nn
         real(8) :: part_size_balance
         character(64) :: subroutine_name = 'init_partitioning_method'
     !% --------------------------------------------------------
