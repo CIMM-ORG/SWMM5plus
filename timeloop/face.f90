@@ -58,7 +58,7 @@ module face
 
         call face_interpolate_bc ()
 
-        if (setting%Debug%File%face)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%face)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_interpolation
     !%
     !%==========================================================================

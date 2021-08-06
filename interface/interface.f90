@@ -719,7 +719,7 @@ contains
 
         subroutine_name = 'interface_find_object'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         c_lib%procname = "api_find_object"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -730,7 +730,7 @@ contains
         call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
         object_idx = ptr_api_find_object(object_type, trim(object_name)//c_null_char) + 1
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
 
     end function interface_find_object
 

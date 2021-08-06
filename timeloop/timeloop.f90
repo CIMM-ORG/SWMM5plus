@@ -330,7 +330,7 @@ module timeloop
         sync all
         call co_min(dt)
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_set_hydraulic_substep
     !%
     !%==========================================================================
@@ -431,9 +431,9 @@ module timeloop
         end select
 
         !% report timestep
-        call util_output_report()
+        if (setting%Output%report) call util_output_report()
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_hydraulic_solver
     !%
     !%==========================================================================

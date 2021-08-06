@@ -68,7 +68,7 @@ module update
         !% compute element face interpolation weights on CC, JM
         call update_interpolation_weights_element (thisCol_all, whichTM)
    
-        if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%update)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine update_auxiliary_variables
     !%
     !%==========================================================================

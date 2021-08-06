@@ -216,7 +216,7 @@
             "network_define" : false,
             "orifice_elements" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
@@ -245,8 +245,9 @@
         }
     },
     "Output" : {
-        "report_time" : 1272.123123,
-        "report_tol"  : 10
+        "report" : false,
+        "report_time" : 10,
+        "report_tol"  : 2
     },
     "Warning"  : false,
     "Verbose" : false

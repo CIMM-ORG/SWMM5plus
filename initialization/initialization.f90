@@ -91,6 +91,8 @@ contains
         !% HACK: this sync call is probably not needed
         sync all
 
+        if (this_image() == 1) call util_export_linknode_csv()
+
         call init_network_define_toplevel ()
 
         !% initialize boundary conditions
@@ -99,11 +101,11 @@ contains
         call init_IC_setup ()
 
         !% creating output_folders and files
-        call util_output_create_folder()
-        call util_output_create_elemR_files()
-        call util_output_create_faceR_files()
+        if (setting%Output%report) call util_output_create_folder()
+        if (setting%Output%report) call util_output_create_elemR_files()
+        if (setting%Output%report) call util_output_create_faceR_files()
         call util_output_create_summary_files()
-        
+
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 

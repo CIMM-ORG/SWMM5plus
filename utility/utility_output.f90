@@ -24,7 +24,9 @@ Module utility_output
 contains
 
     subroutine util_output_create_folder
+        character(64) :: subroutine_name = 'util_output_create_folder'
 
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
         !creates and empties the folder before creating the debug files
 
         if( this_image() == 1) then
@@ -37,11 +39,15 @@ contains
 
         sync all
 
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
     end subroutine util_output_create_folder
 
     subroutine util_output_create_summary_files
         integer :: fu, open_status
         character(64) :: file_name
+        character(64) :: subroutine_name = 'util_output_create_summary_files'
+
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
         write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
 
@@ -51,6 +57,8 @@ contains
         write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
             endfile(fu)
         close(fu)
+
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
     end subroutine util_output_create_summary_files
 
     subroutine util_output_create_elemR_files
@@ -61,6 +69,9 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_elem_idx
+        character(64) :: subroutine_name = 'util_output_create_elemR_files'
+
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
         fu = this_image()
 
@@ -72,8 +83,7 @@ contains
 
             if(elemI(ii,ei_elementType) == CC) then
                 file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
-                    // trim(link%names(elemI(ii,ei_link_Gidx_SWMM))%str) // &
-                    "_" // trim(ADJUSTL(str_elem_idx))//".csv"
+                    // trim(ADJUSTL(str_elem_idx))//".csv"
 
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
                 form   = 'formatted', action = 'write', iostat = open_status)
@@ -125,6 +135,7 @@ contains
             close(fu)
 
         end do
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
 
     end subroutine util_output_create_elemR_files
 
@@ -137,6 +148,10 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_face_idx
+        character(64) :: subroutine_name = 'util_output_create_faceR_files'
+
+
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
         fu = this_image()
 
@@ -165,6 +180,7 @@ contains
 
         end do
 
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
 
     end subroutine util_output_create_faceR_files
 
@@ -178,7 +194,9 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_elem_face_idx
+        character(64) :: subroutine_name = 'util_output_write_elemR_faceR'
 
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
         fu = this_image()
         time_secs = setting%Time%Hydraulics%timeNow
@@ -275,19 +293,20 @@ contains
             close(fu)
 
         end do
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
 
     end subroutine util_output_write_elemR_faceR
 
     subroutine util_output_report
         character(64) :: subroutine_name = "util_output_report"
 
-        if (setting%Debug%File%utility_output) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
 
-        if (util_output_must_report()) then
+        if (setting%Output%report .and. util_output_must_report()) then
             call util_output_write_elemR_faceR()
         end if
 
-        if (setting%Debug%File%utility_output) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
     end subroutine util_output_report
 
     subroutine util_output_report_summary()
@@ -298,7 +317,7 @@ contains
         character(64) :: file_name
         character(64) :: subroutine_name = "util_output_report_summary"
 
-        if (setting%Debug%File%utility_output) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
 
         if (util_output_must_report()) then
             write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
@@ -327,7 +346,7 @@ contains
             endfile(fu)
             close(fu)
         end if
-        if (setting%Debug%File%utility_output) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
     end subroutine util_output_report_summary
 
     function util_output_must_report() result(report)

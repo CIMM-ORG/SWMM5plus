@@ -414,8 +414,9 @@ module define_settings
 
         !% setting%Output
     type OutputType
-        real(8)  :: report_time
-        real(8)  :: report_tol
+        logical :: report
+        real(8) :: report_time
+        real(8) :: report_tol
     end type OutputType
 
 
@@ -1066,20 +1067,23 @@ contains
         setting%Debug%FileGroup%utility = logical_value
         if (.not. found) stop 154
         call def_update_debug_options()
+        call json%get('Output.report', logical_value, found)
+        setting%Output%report = logical_value
+        if (.not. found) stop 155
         call json%get('Output.report_time', real_value, found)
         setting%Output%report_time = real_value
-        if (.not. found) stop 155
+        if (.not. found) stop 156
         call json%get('Output.report_tol', real_value, found)
         setting%Output%report_tol = real_value
-        if (.not. found) stop 156
+        if (.not. found) stop 157
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 157
+        if (.not. found) stop 158
 
         call json%destroy()
-        if (json%failed()) stop 158
+        if (json%failed()) stop 159
 
         if (setting%Debug%File%define_settings) print *, '*** leave ', this_image(), subroutine_name
     end subroutine def_load_settings

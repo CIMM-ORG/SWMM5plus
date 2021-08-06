@@ -63,8 +63,9 @@ contains
         !% This subroutine populates B_nodeI with the upstream neighbors for a given node
         call bip_network_processing()
 
-        !% This subroutine determines what the phantom nodes will be named
-        call phantom_naming_convention(phantom_node_idx, phantom_link_idx)
+        !% Determine what the phantom nodes will be named
+        phantom_node_idx = N_node + 1
+        phantom_link_idx = N_link + 1
 
         !% This subroutine populates the directweight column of B_nodeR
         call calc_directweight()
@@ -72,77 +73,78 @@ contains
         !% BIPquick sweeps through the network a finite number of times
         do mp = 1, num_images()
 
-        !% Save the current processor as image (used as input to trav_subnetwork)
-        image = mp
-        print*, "Partition", mp
+            !% Save the current processor as image (used as input to trav_subnetwork)
+            image = mp
+            print*, "Partition", mp
 
-        !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
-        B_nodeR(:, totalweight) = 0.0
-        ideal_exists = .false.
-        spanning_link = nullValueI
+            !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
+            B_nodeR(:, totalweight) = 0.0
+            ideal_exists = .false.
+            spanning_link = nullValueI
 
-        !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
-        call calc_totalweight(max_weight)
+            !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
+            call calc_totalweight(max_weight)
 
-        do ii = 1, size(B_nodeR, 1)
-        print*, node%I(ii, ni_idx), B_nodeR(ii, :)
-        end do
+            do ii = 1, size(B_nodeR, 1)
+                print*, node%I(ii, ni_idx), B_nodeR(ii, :)
+            end do
 
-        !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
-        partition_threshold = max_weight/real(num_images() - mp + 1, 8)
+            !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
+            partition_threshold = max_weight/real(num_images() - mp + 1, 8)
 
-        !% This subroutine determines if there is an ideal partition possible and what the effective root is
-        effective_root = calc_effective_root(ideal_exists, max_weight, partition_threshold)
+            !% This subroutine determines if there is an ideal partition possible and what the effective root is
+            effective_root = calc_effective_root(ideal_exists, max_weight, partition_threshold)
 
-        if (ideal_exists) then
+            if (ideal_exists) then
 
-        !% This subroutine traverses the subnetwork upstream of the effective root
-        !% and populates the partition column of node%I
-        call trav_subnetwork(effective_root, image)
+                !% This subroutine traverses the subnetwork upstream of the effective root
+                !% and populates the partition column of node%I
+                call trav_subnetwork(effective_root, image)
 
-        else
+            else
 
-        !% This subroutine checks if the partition threshold is spanned by any link (Case 2)
-        call calc_spanning_link(spanning_link, partition_threshold)
+                !% This subroutine checks if the partition threshold is spanned by any link (Case 2)
+                call calc_spanning_link(spanning_link, partition_threshold)
 
-        !% While the spanning link doesn't exist (i.e. when the system is still Case 3)
-        do while ( (spanning_link == nullValueI) .and. ( ideal_exists .eqv. .false. ) )
+                !% While the spanning link doesn't exist (i.e. when the system is still Case 3)
+                do while ( (spanning_link == nullValueI) .and. ( ideal_exists .eqv. .false. ) )
 
-        !% This subroutine houses the litany of steps that are required for a Case 3 partition
-        call trav_casethree(effective_root, spanning_link, image, partition_threshold, max_weight, ideal_exists)
+                    !% This subroutine houses the litany of steps that are required for a Case 3 partition
+                    call trav_casethree(effective_root, spanning_link, image, partition_threshold, max_weight, ideal_exists)
 
-        !% HACK - I'm fairly sure that this do-loop will work for repeated instances of Case 3
+                    !% HACK - I'm fairly sure that this do-loop will work for repeated instances of Case 3
 
-        end do
+                end do
 
-        !% The outcomes of the Case 3 while loop are a Case 1
-        if ( ideal_exists .eqv. .true. ) then
+                !% The outcomes of the Case 3 while loop are a Case 1
+                if ( ideal_exists .eqv. .true. ) then
 
-        !% In which case traverse the subnetwork from the effective_root
-        call trav_subnetwork(effective_root, image)
+                !% In which case traverse the subnetwork from the effective_root
+                call trav_subnetwork(effective_root, image)
 
-        !% Or Case 2
-        else if ( spanning_link /= nullValueI ) then
+                !% Or Case 2
+                else if ( spanning_link /= nullValueI ) then
 
-        !% In which case the distance along the spanning_link to the phantom node is calculated
-        phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
+                !% In which case the distance along the spanning_link to the phantom node is calculated
+                phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
 
-        !% This subroutine creates a phantom node/link and adds it to node%I/link%I
-        call phantom_node_generator(spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
+                !% This subroutine creates a phantom node/link and adds it to node%I/link%I
+                call phantom_node_generator&
+                (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
 
-        !% This subroutine does the same thing as the previous call to trav_subnetwork()
-        call trav_subnetwork(phantom_node_idx, image)
+                !% This subroutine does the same thing as the previous call to trav_subnetwork()
+                call trav_subnetwork(phantom_node_idx, image)
 
-        phantom_node_idx = phantom_node_idx + 1
-        phantom_link_idx = phantom_link_idx + 1
+                phantom_node_idx = phantom_node_idx + 1
+                phantom_link_idx = phantom_link_idx + 1
 
-        else
-        print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
-        stop
+                else
+                print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
+                stop
 
-        end if
+                end if
 
-        endif
+            endif
 
         end do
 
@@ -707,34 +709,8 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine phantom_naming_convention(phantom_node_idx, phantom_link_idx)
-        !-----------------------------------------------------------------------------
-        !
-        ! Description: This subroutine is used to establish what the first phantom node/link
-        !  will be named.  The phantom_node/link is simply named for the index of the node%I/link%I
-        !  array in which it is populated.
-        !
-        !-----------------------------------------------------------------------------
-
-        character(64)   :: function_name = 'phantom_naming_convention'
-
-        integer, intent(in out) :: phantom_node_idx, phantom_link_idx
-        !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),function_name
-
-        !% The phantom_node_idx is equal to 1 more than the largest ni_idx (that is not nullValueI)
-        phantom_node_idx = maxval(node%I(:, ni_idx), MASK= ( node%I(:, ni_idx) /= nullValueI )) + 1
-
-        !% The phantom_link_idx is equal to 1 more than the largest li_idx (that is not nullValueI)
-        phantom_link_idx = maxval(link%I(:, li_idx), MASK= ( link%I(:, ni_idx) /= nullValueI )) + 1
-
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),function_name
-    end subroutine phantom_naming_convention
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine phantom_node_generator(spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
+    subroutine phantom_node_generator &
+        (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
         !-----------------------------------------------------------------------------
         !
         ! Description: This subroutine populates the node%I/link%I/link%R arrays with the phantom
