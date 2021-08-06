@@ -122,15 +122,15 @@ contains
 
             end if
 
-            write(fu, *) "Timestamp,Time_In_Secs,Area,Area_N0,Area_N1,AreaBelowBreadthMax,BreadthMax,Depth,dHdA,ell,&
-                Flowrate,Flowrate_N0,Flowrate_N1,FlowrateLateral,FlowrateStore,FroudeNumber,&
-                FullArea,FullDepth,FullHydDepth,FullPerimeter,FullVolume,GammaC,GammaM,Head,&
-                Head_N0,HeadLastAC,HeadStore,HydDepth,HydRadius,InterpWeight_uG,InterpWeight_dG,&
-                InterpWeight_uH,InterpWeight_dH,InterpWeight_uQ,InterpWeight_dQ,Ksource,Length,ones,&
-                Perimeter,Roughness,SmallVolume,SmallVolume_CMvelocity,SmallVolume_HeadSlope,&
-                SmallVolume_ManningsN,SmallVolumeRatio,SourceContinuity,SourceMomentum,Temp01,&
-                Topwidth,Velocity,Velocity_N0,Velocity_N1,VelocityLastAC,Volume,Volume_N0,&
-                Volume_N1,VolumeLastAC,VolumeStore,WaveSpeed,Zbottom,ZbreadthMax,Zcrown"
+            write(fu, "(A)") "Timestamp,Time_In_Secs,Area,Area_N0,Area_N1,AreaBelowBreadthMax,BreadthMax,Depth,dHdA,ell," //&
+                "Flowrate,Flowrate_N0,Flowrate_N1,FlowrateLateral,FlowrateStore,FroudeNumber," // &
+                "FullArea,FullDepth,FullHydDepth,FullPerimeter,FullVolume,GammaC,GammaM,Head," // &
+                "Head_N0,HeadLastAC,HeadStore,HydDepth,HydRadius,InterpWeight_uG,InterpWeight_dG," // &
+                "InterpWeight_uH,InterpWeight_dH,InterpWeight_uQ,InterpWeight_dQ,Ksource,Length,ones," // &
+                "Perimeter,Roughness,SmallVolume,SmallVolume_CMvelocity,SmallVolume_HeadSlope," // &
+                "SmallVolume_ManningsN,SmallVolumeRatio,SourceContinuity,SourceMomentum,Temp01," // &
+                "Topwidth,Velocity,Velocity_N0,Velocity_N1,VelocityLastAC,Volume,Volume_N0," // &
+                "Volume_N1,VolumeLastAC,VolumeStore,WaveSpeed,Zbottom,ZbreadthMax,Zcrown"
             endfile(fu)
             close(fu)
 
