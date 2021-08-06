@@ -554,9 +554,11 @@ contains
     !%    * The function is called during the intialization of the node%I table
     !%-----------------------------------------------------------------------------
         integer, intent(in) :: node_idx
-        integer             :: resolution
         integer             :: p0, p1, p2, p3, p4
+        integer             :: resolution
     !%-----------------------------------------------------------------------------
+
+        resolution = nullvalueI
 
         if (node%YN(node_idx, nYN_has_inflow)) then ! Upstream/Lateral BC
 
@@ -596,7 +598,6 @@ contains
                 end if
 
             end if
-
         end if
 
     end function interface_get_BC_resolution

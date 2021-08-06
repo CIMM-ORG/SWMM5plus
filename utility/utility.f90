@@ -62,6 +62,7 @@ module utility
 
         open(unit=3,file='debug/nodeR.csv', status='unknown', action='write')
         open(unit=4,file='debug/nodeI.csv', status='unknown', action='write')
+        open(unit=5,file='debug/nodeYN.csv', status='unknown', action='write')
 
         write(3, '(A)')                                                                              &
             "nr_Zbottom,nr_InitialDepth,nr_FullDepth,nr_StorageConstant,nr_StorageCoeff,"         // &
@@ -75,13 +76,18 @@ module utility
             "ni_P_image,ni_P_is_boundary,ni_elemface_idx, ni_pattern_resolution,"                    // &
             "ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3"
 
+        write(5, '(A)')                                                                                 &
+            "nYN_has_inflow,nYN_has_extInflow,nYN_has_dwfInflow"
+
         do ii = 1, size(node%R, 1)
             write(3,'(*(G0.6,:,","))') node%R(ii,:)
             write(4,'(*(G0.6,:,","))') node%I(ii,:)
+            write(5,'(*(G0.6,:,","))') node%YN(ii,:)
         end do
 
         close(3)
         close(4)
+        close(5)
 
     end subroutine util_export_linknode_csv
     !%
