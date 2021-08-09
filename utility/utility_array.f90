@@ -39,7 +39,7 @@ module utility_array
         img_arr = link%I(:,li_P_image) ! original information from BIPquick -- image numbers
 
         min_val = minval(img_arr) - 1
-        max_val = maxval(img_arr)
+        max_val = maxval(img_arr, mask=img_arr<nullValueI)
 
         do while (min_val .lt. max_val)
             ii = ii+1
@@ -50,6 +50,11 @@ module utility_array
         allocate(unique_imagenum(ii), source = unique(1:ii)) ! The list of image number from BIPquick
 
         nimgs_assign = size(unique_imagenum,1) ! The number of images assigned by BIPquick
+
+        if ( nimgs_assign /= num_images() ) then
+            print*, "There is a mismatch between the assigned images and num_images", nimgs_assign, num_images()
+            stop
+        end if
 
         if (setting%Debug%File%utility_array)  print *, '*** leave ', this_image(),subroutine_name
     end subroutine util_image_number_calculation

@@ -367,6 +367,7 @@ contains
         !% Set the network partitioning method used for multi-processor parallel computation
         call init_partitioning_method()
 
+
         !% adjust the link lengths by cutting off a certain portion for the junction branch
         !% this subroutine is called here to correctly estimate the number of elements and faces
         !% to allocate the coarrays.
@@ -403,11 +404,12 @@ contains
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
-        allocate(N_elem(size(unique_imagenum,1)))
-        allocate(N_face(size(unique_imagenum,1)))
-        allocate(N_unique_face(size(unique_imagenum,1)))
+        allocate(N_elem(num_images()))
+        allocate(N_face(num_images()))
+        allocate(N_unique_face(num_images()))
 
-        do ii=1, size(unique_imagenum,1)
+        do ii=1, num_images()
+
             node_index = PACK([(counter, counter=1,size(node%I,1))], node%I(:, ni_P_image) == unique_imagenum(ii))
             link_index = PACK([(counter, counter=1,size(link%I,1))], link%I(:, li_P_image) == unique_imagenum(ii))
             !% create corresponding indices for node and link in this image
@@ -455,7 +457,6 @@ contains
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
                 endif
-
             enddo
 
             N_elem(ii) = elem_counter
@@ -466,6 +467,7 @@ contains
             face_counter = zeroI
             junction_counter = zeroI
             duplicated_face_counter = zeroI
+
         enddo
 
         max_caf_elem_N = maxval(N_elem)

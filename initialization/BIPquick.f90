@@ -75,7 +75,7 @@ contains
 
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
-            print*, "Partition", mp
+            ! print*, "Partition", mp
 
             !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
             B_nodeR(:, totalweight) = 0.0
@@ -85,9 +85,9 @@ contains
             !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
             call calc_totalweight(max_weight)
 
-            do ii = 1, size(B_nodeR, 1)
-                print*, node%I(ii, ni_idx), B_nodeR(ii, :)
-            end do
+            ! do ii = 1, size(B_nodeR, 1)
+            !     print*, node%I(ii, ni_idx), B_nodeR(ii, :)
+            ! end do
 
             !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
             partition_threshold = max_weight/real(num_images() - mp + 1, 8)
@@ -594,7 +594,7 @@ contains
 
         !% The effective root is the one that most nearly overestimates the partition threshold
         !% reverse The Price Is Right style
-        print*, "Effective root:", effective_root
+        ! print*, "Effective root:", effective_root
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end function calc_effective_root
@@ -649,7 +649,7 @@ contains
 
         !% The current link is the spanning link
         spanning_link = link%I(jj, li_idx)
-        print*, "The new spanning link is:  ", spanning_link
+        ! print*, "The new spanning link is:  ", spanning_link
 
         !% Mark this link as being partitioned
         partitioned_links(jj) = .true.
@@ -865,7 +865,7 @@ contains
         !% The clipped weight is the upstream totalweight + the link weight
         total_clipped_weight = B_nodeR(upstream_node, totalweight) &
         + calc_link_weights(jj)
-        print*, "The weight being clipped from the effective node is", total_clipped_weight
+        ! print*, "The weight being clipped from the effective node is", total_clipped_weight
 
         !% Tags the link as being partitioned (removes it from the spanning link potential)
         partitioned_links(jj) = .true.
@@ -884,8 +884,8 @@ contains
         B_nodeR(effective_root, totalweight) - total_clipped_weight
 
         if ( total_clipped_weight <= zeroR ) then
-        print*, "BIPquick Case 3: Haven't removed any weight"
-        stop
+            print*, "BIPquick Case 3: Haven't removed any weight"
+            stop
         end if
 
         !% Reduce the partition_threshold by the total_clipped_weight too
