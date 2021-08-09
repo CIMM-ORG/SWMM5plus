@@ -67,6 +67,8 @@ module update
 
         !% compute element face interpolation weights on CC, JM
         call update_interpolation_weights_element (thisCol_all, whichTM)
+        !% testin a new branch interp technique
+        call update_interpolation_weights_ds_JB ()
    
         if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
     end subroutine update_auxiliary_variables
@@ -204,7 +206,60 @@ module update
         endif
 
     end subroutine update_interpolation_weights_element
-    !%   !%
+    !%   
+    !%==========================================================================   
+    !%==========================================================================   
+    !%  
+    subroutine update_interpolation_weights_ds_JB ()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% This is a test subroutine that violates no neighbour algorithm
+        !% This subroutine sets the interpolation wights in ds JB to its 
+        !% conneceted link element
+        !%-----------------------------------------------------------------------------
+        integer, pointer :: thisColP_JM, fUp(:), fDn(:), eUp(:), eDn(:), tM
+        integer, pointer :: Npack, Npack2, thisCol_AC,  thisP(:), thisP2(:), BranchExists(:)
+        real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
+        integer :: ii, kk, tB
+        !%-----------------------------------------------------------------------------
+        w_uQ      => elemR(:,er_InterpWeight_uQ)
+        w_dQ      => elemR(:,er_InterpWeight_dQ)
+        w_uG      => elemR(:,er_InterpWeight_uG)
+        w_dG      => elemR(:,er_InterpWeight_dG)
+        w_uH      => elemR(:,er_InterpWeight_uH)
+        w_dH      => elemR(:,er_InterpWeight_dH)
+        fUp       => elemI(:,ei_Mface_uL)    
+        fDn       => elemI(:,ei_Mface_dL) 
+        eUp       => faceI(:,fi_Melem_uL) 
+        eDn       => faceI(:,fi_Melem_dL)
+        BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
+        !%-----------------------------------------------------------------------------
+
+        thisColP_JM  => col_elemP(ep_JM_ALLtm)
+        Npack        => npack_elemP(thisColP_JM)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,thisColP_JM)
+            do ii=1,Npack
+                tM => thisP(ii) !% junction main ID
+                !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
+                !% setting the interp weight of ds JB same as its ds link element
+                !% handle the downstram branches
+                do kk=2,max_branch_per_node,2
+                    tB = tM + kk
+                    if (BranchExists(tB)==1) then
+                        w_uQ(tB) = w_uQ(eDn(fDn(tB)))
+                        w_dQ(tB) = w_dQ(eDn(fDn(tB)))
+                        w_uG(tB) = w_uG(eDn(fDn(tB)))
+                        w_dG(tB) = w_dG(eDn(fDn(tB)))
+                        w_uH(tB) = w_uH(eDn(fDn(tB)))
+                        w_dH(tB) = w_dH(eDn(fDn(tB)))
+                    end if
+                end do
+            end do
+        endif
+
+    end subroutine update_interpolation_weights_ds_JB
+    !% 
     !%==========================================================================
     !% END OF MODULE
     !%+=========================================================================

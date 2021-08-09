@@ -67,7 +67,7 @@
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
     "Junction" : {
-        "kFactor" : 0.7
+        "kFactor" : 0.0
     },
     "Limiter" : {
         "BC" : {
@@ -245,7 +245,7 @@
         }
     },
     "Output" : {
-        "report_time" : 1272.123123,
+        "report_time" : 600.00,
         "report_tol"  : 10
     },
     "Warning"  : false,

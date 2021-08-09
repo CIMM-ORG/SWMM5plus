@@ -153,7 +153,10 @@ module timeloop
 
         timeNow = timeStart
         timeNext = timeNow + dt
-
+        print*, 'timeNow = ', timeNow
+        print*, 'timeNext = ',  timeNext
+        print*, 'timeEnd = ', timeEnd
+        print*, 'dt = ', dt
         loopTimeFinal = timeEnd
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name

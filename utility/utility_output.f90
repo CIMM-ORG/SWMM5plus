@@ -158,7 +158,7 @@ contains
 
 
             write(fu, *) "Timestamp, Time_In_Secs, Area_d, Area_u, Flowrate, Flowrate_N0, Head_u, Head_d,"// &
-                "HydDepth_d, HydDepth_u, Topwidth_d, Topwidth_u, Velocity_d, Velocity_u"
+                "Zbottom, HydDepth_d, HydDepth_u, Topwidth_d, Topwidth_u, Velocity_d, Velocity_u"
             endfile(fu)
 
             close(fu)
@@ -301,7 +301,7 @@ contains
         if (setting%Debug%File%utility_output) print *, '*** enter ', subroutine_name
 
         if (util_output_must_report()) then
-            write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
+            ! write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
             timeNow   => setting%Time%Hydraulics%timeNow
             dt        => setting%Time%Hydraulics%Dt
             velocity  => elemR(:,er_Velocity)
@@ -312,12 +312,13 @@ contains
             thisP     => elemP(1:Npack,thisCol)
             thisCFL = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
 
-            open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
-                form = 'formatted', action = 'write', iostat = open_status)
-            write(fu, fmt='(*(G0.6 : ","))') &
-                this_image(), timeNow, thisCFL, dt, maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))
-            endfile(fu)
-            close(fu)
+            ! open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
+                ! form = 'formatted', action = 'write', iostat = open_status)
+            print*, 'Image = ',this_image(), 'Time = ', timeNow, 'dt = ', dt 
+            print*, 'Max cfl = ', thisCFL, 'Max vel = ', maxval(abs(velocity(thisP))), &
+                'Max wavespeed = ', maxval(abs(wavespeed(thisP)))
+            ! endfile(fu)
+            ! close(fu)
         end if
         if (setting%Debug%File%utility_output) print *, '*** leave ', subroutine_name
     end subroutine util_output_report_summary
@@ -326,8 +327,11 @@ contains
         logical :: report
         real(8), pointer :: timeNow
         timeNow => setting%Time%Hydraulics%timeNow
-        report = ((abs(mod(timeNow, setting%output%report_time) - &
-             setting%output%report_time) <= setting%output%report_tol) .or. &
+        ! report = ((abs(mod(timeNow, setting%output%report_time) - &
+        !      setting%output%report_time) <= setting%output%report_tol) .or. &
+        !      (timeNow == 0))
+
+        report = ((mod(timeNow, setting%output%report_time) == 0) .or. &
              (timeNow == 0))
     end function util_output_must_report
 
