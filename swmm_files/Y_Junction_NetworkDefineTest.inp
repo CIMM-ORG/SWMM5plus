@@ -16,7 +16,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    06/06/2021
 REPORT_START_TIME    00:00:00
 END_DATE             06/06/2021
-END_TIME             12:00:00
+END_TIME             06:00:00
 SWEEP_START          1/1
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -47,9 +47,9 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-J1               2.1808     0          1          0          0         
-J2               2.1808     0          1          0          0         
-J3               1.0904     0          1          0          0         
+J1               0.3489     0          1          0          0         
+J2               0.3489     0          1          0          0         
+J3               0.1745     0          1          0          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
@@ -59,9 +59,9 @@ J4               0          FIXED      1                NO
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1               J1               J3               1000       0.03       0          0          2.3491     0         
-C2               J2               J3               1000       0.03       0          0          2.3491     0         
-C3               J3               J4               1000       0.03       0          0          2.3491     0         
+C1               J1               J3               1000       0.03       0          0          0.9396     0         
+C2               J2               J3               1000       0.03       0          0          0.9396     0         
+C3               J3               J4               1000       0.03       0          0          0.9396     0         
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -73,8 +73,8 @@ C3               RECT_OPEN    4                3          0          0          
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-J1               FLOW             ""               FLOW     1.0      1.0      2.3491 
-J2               FLOW             ""               FLOW     1.0      1.0      2.3491  
+J1               FLOW             ""               FLOW     1.0      1.0      0.9396 
+J2               FLOW             ""               FLOW     1.0      1.0      0.9396  
 
 [REPORT]
 ;;Reporting Options
