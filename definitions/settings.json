@@ -245,7 +245,7 @@
         }
     },
     "Output" : {
-        "report" : false,
+        "report" : true,
         "report_time" : 10,
         "report_tol"  : 2
     },
