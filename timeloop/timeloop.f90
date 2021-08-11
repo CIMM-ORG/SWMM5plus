@@ -330,6 +330,12 @@ module timeloop
         sync all
         call co_min(dt)
 
+        if ((setting%Limiter%Dt%UseLimitMin) .and. (dt <= setting%Limiter%Dt%Minimum)) then
+            print*, 'timeNow = ', timeNow
+            print*, 'dt = ', dt, 'minDt = ',  setting%Limiter%Dt%Minimum
+            print*, 'warning: the dt value is smaller than the user supplied min dt value'
+        endif
+
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_set_hydraulic_substep
     !%

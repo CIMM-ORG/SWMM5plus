@@ -93,7 +93,11 @@
         "ArraySize" : {
             "TemporalInflows" : 10,
             "TotalInflows" : 50
-        }
+        },
+        "Dt"     : {
+            "Minimum"       :  1e-6,
+            "UseLimitMin"   :  true,
+        }, 
     },
     "Link" : {
         "DefaultInitDepthType" : "Linear", // uniform, linear, exponential
