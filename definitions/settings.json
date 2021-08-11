@@ -131,7 +131,7 @@
         "EndTime" : 0.0,
         "StartTime" : 0.0,
         "Hydrology" : {
-            "Dt" : 100.0,
+            "Dt" : 10.0,
             "timeNow" : 0.0,
             "timeNext" : 1.0,
             "timeFinal" : 1.0,
@@ -245,7 +245,7 @@
         }
     },
     "Output" : {
-        "report_time" : 1272.123123,
+        "report_time" : 60.0,
         "report_tol"  : 10
     },
     "Warning"  : false,
