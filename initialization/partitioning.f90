@@ -324,7 +324,7 @@ subroutine init_partitioning_linkbalance()
     character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
-    if (setting%Debug%File%partitioning) print *, '*** enter ',this_image(), subroutine_name
+    if (setting%Debug%File%partitioning) print *, '*** enter ', this_image(), subroutine_name
 
     if (N_link < num_images()) then
         call init_partitioning_default()

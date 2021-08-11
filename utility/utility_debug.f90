@@ -28,7 +28,7 @@ contains
     character(len = 4) :: str_image
     integer :: ii, jj, fu, rc, image
 
-    if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
     
     !% fu stands for file unit which will be tied to the image and tells the system what file to open
@@ -103,7 +103,7 @@ contains
     integer :: ii, total_faces
 
     character(64) :: subroutine_name = 'debug_Nface_check'
-    if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
 
     total_faces = 0

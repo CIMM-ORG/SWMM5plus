@@ -58,7 +58,7 @@ contains
 
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% If BIPquick is being used for Partitioning, include additional rows to the link-node arrays
         if (setting%Partitioning%PartitioningMethod == BQuick) then
@@ -171,7 +171,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !==== elem allocation ====
         ncol => Ncol_elemR ! the maxmiumu number of columns
@@ -275,7 +275,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% allocation of the col_elemX and npack_elemX
         call util_allocate_col_elemI
@@ -319,7 +319,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         ncol => Ncol_elemI
 
@@ -368,7 +368,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemP
@@ -412,7 +412,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemPGalltm !% whatever the last item in the enumerator
@@ -456,7 +456,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemPGac!% whatever the last item in the enumerator
@@ -500,7 +500,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemPGetm   !% whatever the last item in the enumerator
@@ -541,7 +541,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemR
@@ -575,7 +575,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSI
@@ -609,7 +609,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSR
@@ -643,7 +643,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSGR
@@ -677,7 +677,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemWDI
@@ -711,7 +711,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemWDR
@@ -745,7 +745,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemYN
@@ -779,7 +779,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceI
@@ -813,7 +813,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceM
@@ -851,7 +851,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceP
@@ -899,7 +899,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceP
@@ -940,7 +940,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceR  !global
@@ -974,7 +974,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceYN  !global
@@ -1005,7 +1005,7 @@ contains
 
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         if (setting%BC%BCSlots < 2) then
             print *, "Error: the number of BCSlots has to be greater than 2"
@@ -1061,7 +1061,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-            if (setting%Debug%File%utility) print *, '*** enter ',this_image(),subroutine_name
+            if (setting%Debug%File%utility) print *, '*** enter ', this_image(),subroutine_name
 
             if (allocation_status > 0) then
                 print *, trim(emsg)

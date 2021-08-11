@@ -55,7 +55,7 @@ contains
         real(8) :: start, intermediate, finish
         call cpu_time(start)
         ! -----------------------------------------------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% Initialize the temporary arrays needed for BIPquick
         call bip_initialize_arrays()
@@ -172,7 +172,7 @@ contains
     ! -----------------------------------------------------------------------------------------------------------------
         character(64) :: subroutine_name = 'bip_allocate_arrays'
     ! -----------------------------------------------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         B_nodeI(:,:) = nullValueI
         B_nodeR(:,:) = zeroR
@@ -203,7 +203,7 @@ contains
         integer :: upstream_link, upstream_node, uplink_counter
         integer ii, jj, uplinks
     ! ----------------------------------------------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% Iterate through the nodes array
         do ii= 1,size(node%I,1)
@@ -214,7 +214,11 @@ contains
 
             !% The number of links upstream of a node
             uplink_counter = node%I(ii, ni_N_link_u)
-            write (*,"(A,I2,A)") "Node " // node%Names(node%I(ii, ni_idx))%str // " has", node%I(ii, ni_N_link_u), " upstream links"
+
+            if (setting%Debug%File%BIPquick) then
+                write (*,"(A,I2,A)") "Node " // node%Names(node%I(ii, ni_idx))%str &
+                    // " has", node%I(ii, ni_N_link_u), " upstream links"
+            end if
 
             !% Iterate through the links upstream of a node
             do uplinks= 1, uplink_counter
@@ -251,7 +255,7 @@ contains
         integer, intent(in) :: link_index
         real(8)             :: weight, length, element_length
     ! --------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),function_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),function_name
 
         !% Sometimes the Interface gives garbage for these values so I need to adjust
         length = link%R(link_index, lr_Length)
@@ -290,7 +294,7 @@ contains
         integer :: ii, jj
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% Calculates directweight for each node
         do ii = 1, size(node%I,1)
@@ -333,7 +337,7 @@ contains
         integer, intent(in out) :: weight_index, root
         integer :: jj
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% If the node has not been visited this traversal (protective against cross connection bugs)
         !% and the node has not already been partitioned
@@ -382,7 +386,7 @@ contains
         integer :: ii, weight_index
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% Calculates the totalweight for all nodes
         do ii=1, size(node%I,1)
@@ -432,7 +436,7 @@ contains
         integer :: upstream_node_list(3)
         integer :: ii, jj, kk
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% If the root node has not been added to a partition
         if  ( partitioned_nodes(root) .eqv. .false. ) then
@@ -488,7 +492,7 @@ contains
         integer :: jj
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% Save the system nodes as potential endpoints
         potential_endpoints(:) = node%I(:, ni_idx)
@@ -553,7 +557,7 @@ contains
         real(8) :: nearest_overestimate
         integer :: ii
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% The nearest overestimate is set above the max_weight as a buffer
         nearest_overestimate = max_weight*1.1
@@ -620,7 +624,7 @@ contains
         integer :: upstream_node
         integer :: ii, jj
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% Check each link for spanning the partition threshold
         do jj=1, size(link%I,1)
@@ -681,7 +685,7 @@ contains
         real(8) :: length_from_start, total_length, start_weight, weight_ratio, link_weight
         integer :: upstream_node
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),function_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),function_name
 
         !% The length of the spanning_link
         total_length = link%R(spanning_link, lr_Length)
@@ -729,7 +733,7 @@ contains
         integer :: kk
         real    :: l1, l2, y1, y2
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% The phantom node index is given
         node%I(phantom_node_idx, ni_idx) = phantom_node_idx
@@ -842,7 +846,7 @@ contains
         integer   :: jj
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         print*, "Case 3 Found, effective_root is: ", effective_root
 
@@ -928,7 +932,7 @@ contains
         integer    :: ii, kk
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         !% Initialize the ni_P_is_boundary column to 0
         node%I(:, ni_P_is_boundary) = zeroI
@@ -978,7 +982,7 @@ contains
         integer  :: connectivity, ii
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
         connectivity = 0
 

@@ -27,7 +27,7 @@ contains
     integer ii, jj, kk, min_val, max_val
     logical dup_found
     character(64) :: subroutine_name = 'local_global_unique'
-    if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
     !% Looping through the array and finding all of the unqiue values
     min_val = minval(link%I(:,li_idx)) - 1
@@ -154,7 +154,7 @@ contains
       integer ii, jj, kk, min_val, max_val
       logical dup_found
       character(64) :: subroutine_name = 'pack_arrays_unique'
-      if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+      if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
 
 
@@ -1476,7 +1476,7 @@ contains
       !% In this subroutine we are checking whether the every image has atleast one node and link assigned to it.
       integer :: ii, jj, kk, counter
       character(64) :: subroutine_name = 'init_face_check'
-      if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+      if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
       kk = 1
       counter = 0
@@ -1544,7 +1544,7 @@ contains
       integer :: ii, jj
       logical :: invalid_slope
       character(64) :: subroutine_name = 'slope_checking'
-      if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+      if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
       invalid_slope = .false.
       do ii = 1, size(link%R(:,lr_Slope))
@@ -1572,7 +1572,7 @@ contains
       integer :: ii, current_length, counter
       character(64) :: subroutine_name = 'global_index_checking'
 
-      if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+      if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
       !% here we find the current length of the global index by looking at the first value of elemI on that image and subtracting one.
 

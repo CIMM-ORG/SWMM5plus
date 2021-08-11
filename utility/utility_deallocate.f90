@@ -35,7 +35,7 @@ contains
         character(64) :: subroutine_name = 'util_deallocate_network_data'
 
     !-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_deallocate) print *, '*** enter ', this_image(),subroutine_name
 
         call util_deallocate_linknode()
         call util_deallocate_elemX_faceX()
@@ -70,7 +70,7 @@ contains
         character(64) :: subroutine_name = 'util_deallocate_linknode'
 
     !-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_deallocate) print *, '*** enter ', this_image(),subroutine_name
 
         deallocate(node%I, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
@@ -129,7 +129,7 @@ contains
     !-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'util_deallocate_partitioning_arrays'
     !-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_deallocate) print *, '*** enter ', this_image(),subroutine_name
 
         deallocate(adjacent_links, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
@@ -160,7 +160,7 @@ contains
         character(64) :: subroutine_name = 'util_deallocate_elemX_faceX'
 
     !-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_deallocate) print *, '*** enter ', this_image(),subroutine_name
 
         !==== elem deallocation ====
         deallocate(elemR, stat=deallocation_status, errmsg=emsg)
@@ -224,7 +224,7 @@ contains
         character(64) :: subroutine_name = 'util_deallocate_columns'
 
     !-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_deallocate) print *, '*** enter ', this_image(),subroutine_name
 
         !==== col_elemI====
         deallocate(col_elemI, stat=deallocation_status, errmsg=emsg)
@@ -307,7 +307,7 @@ contains
 
         character(64) :: subroutine_name = 'util_deallocate_bc'
 
-        if (setting%Debug%File%utility_deallocate) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_deallocate) print *, '*** enter ', this_image(),subroutine_name
 
         if (N_flowBC > 0) then
             deallocate(BC%flowI, stat=deallocation_status, errmsg=emsg)
@@ -376,7 +376,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-            if (setting%Debug%File%utility) print *, '*** enter ',this_image(),subroutine_name
+            if (setting%Debug%File%utility) print *, '*** enter ', this_image(),subroutine_name
 
             if (deallocation_status > 0) then
                 print *, trim(emsg)

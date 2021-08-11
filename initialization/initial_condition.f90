@@ -653,7 +653,7 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_weir_geometry'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
         !% pointer to specific weir type
         specificWeirType => link%I(thisLink,li_weir_type)
@@ -763,7 +763,7 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
         !% pointer to specific orifice type
         specificOrificeType => link%I(thisLink,li_orif_type)
@@ -844,7 +844,7 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_channel_pipe_velocity'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
         !% HACK: this might not be right
         where ( (elemI(:,ei_link_Gidx_SWMM) == thisLink) .and. &
@@ -930,7 +930,7 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
         !%................................................................
         !% Junction main
@@ -1177,7 +1177,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_solver_select'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
 
         select case (solver)
@@ -1230,7 +1230,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_small_values_diagnostic_elements'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
         where ( (elemI(:,ei_QeqType) == diagnostic) .or. (elemI(:,ei_HeqType) == diagnostic))
             !% HACK: settings%ZeroValues should be used here
@@ -1260,7 +1260,7 @@ contains
         integer, pointer ::  Npack, thisP(:), tM
         integer :: ii, kk, tB
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
 
         !% Q-diagnostic elements will have minimum interp weights for Q
@@ -1325,7 +1325,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
         if (setting%SmallVolume%UseSmallVolumes) then
             where (elemI(:,ei_geometryType) == rectangular)
@@ -1357,7 +1357,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_set_zero_lateral_inflow'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
         elemR(1:size(elemR,1)-1,er_FlowrateLateral) = zeroR
 
@@ -1377,7 +1377,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_oneVectors'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
 
         elemR(1:size(elemR,1)-1,er_ones) = oneR
 

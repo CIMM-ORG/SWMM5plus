@@ -140,6 +140,13 @@ module interface
             real(c_double)                    :: api_get_headBC
         end function api_get_headBC
 
+        function api_get_next_entry_tseries(k)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: k
+            integer(c_int)                    :: api_get_next_entry_tseries
+        end function api_get_next_entry_tseries
+
         function api_find_object(object_type, object_name)
             use, intrinsic :: iso_c_binding
             implicit none
@@ -150,18 +157,19 @@ module interface
 
     end interface
 
-    procedure(api_initialize),          pointer :: ptr_api_initialize
-    procedure(api_finalize),            pointer :: ptr_api_finalize
-    procedure(api_get_node_attribute),  pointer :: ptr_api_get_node_attribute
-    procedure(api_get_link_attribute),  pointer :: ptr_api_get_link_attribute
-    procedure(api_get_num_objects),     pointer :: ptr_api_get_num_objects
-    procedure(api_get_object_name_len), pointer :: ptr_api_get_object_name_len
-    procedure(api_get_object_name),     pointer :: ptr_api_get_object_name
-    procedure(api_get_start_datetime),  pointer :: ptr_api_get_start_datetime
-    procedure(api_get_end_datetime),    pointer :: ptr_api_get_end_datetime
-    procedure(api_get_flowBC),          pointer :: ptr_api_get_flowBC
-    procedure(api_get_headBC),          pointer :: ptr_api_get_headBC
-    procedure(api_find_object),         pointer :: ptr_api_find_object
+    procedure(api_initialize),             pointer :: ptr_api_initialize
+    procedure(api_finalize),               pointer :: ptr_api_finalize
+    procedure(api_get_node_attribute),     pointer :: ptr_api_get_node_attribute
+    procedure(api_get_link_attribute),     pointer :: ptr_api_get_link_attribute
+    procedure(api_get_num_objects),        pointer :: ptr_api_get_num_objects
+    procedure(api_get_object_name_len),    pointer :: ptr_api_get_object_name_len
+    procedure(api_get_object_name),        pointer :: ptr_api_get_object_name
+    procedure(api_get_start_datetime),     pointer :: ptr_api_get_start_datetime
+    procedure(api_get_end_datetime),       pointer :: ptr_api_get_end_datetime
+    procedure(api_get_flowBC),             pointer :: ptr_api_get_flowBC
+    procedure(api_get_headBC),             pointer :: ptr_api_get_headBC
+    procedure(api_get_next_entry_tseries), pointer :: ptr_api_get_next_entry_tseries
+    procedure(api_find_object),            pointer :: ptr_api_find_object
 
     !% Error handling
     character(len = 1024) :: errmsg
@@ -192,7 +200,7 @@ contains
         character(64) :: subroutine_name = 'interface_init'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         !% Initialize C API
 
@@ -257,7 +265,7 @@ contains
         character(64) :: subroutine_name = 'interface_finalize'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         c_lib%procname = "api_finalize"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -288,7 +296,7 @@ contains
         character(64) :: subroutine_name = "interface_update_linknode_names"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         c_lib%procname = "api_get_object_name"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -344,7 +352,7 @@ contains
         character(64) :: subroutine_name = "interface_get_obj_name_len"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         c_lib%procname = "api_get_object_name_len"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -381,7 +389,7 @@ contains
 
         cptr_value = c_loc(node_value)
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         if ((attr > N_api_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
@@ -435,7 +443,7 @@ contains
 
         cptr_value = c_loc(link_value)
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         if ((attr > N_api_total_link_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
@@ -556,13 +564,14 @@ contains
         integer, intent(in) :: node_idx
         integer             :: p0, p1, p2, p3, p4
         integer             :: resolution
+        real(8)             :: baseline
     !%-----------------------------------------------------------------------------
 
         resolution = nullvalueI
 
         if (node%YN(node_idx, nYN_has_inflow)) then ! Upstream/Lateral BC
 
-            resolution = -1
+            resolution = 0
 
             if (node%YN(node_idx, nYN_has_extInflow)) then
 
@@ -575,7 +584,8 @@ contains
                 else if (p0 == api_daily_pattern) then
                     resolution = api_daily
                 else if (p0 == api_monthly_pattern) then
-                    resolution = api_monthly
+                    baseline = interface_get_node_attribute(node_idx, api_node_extInflow_baseline)
+                    if (baseline > 0) resolution = api_monthly
                 end if
 
             end if
@@ -605,26 +615,34 @@ contains
     function interface_get_next_inflow_time(bc_idx, tnow) result(tnext)
         integer, intent(in) :: bc_idx
         real(8), intent(in) :: tnow
-        real(8)             :: tnext, tnextp
-        integer             :: nidx, nres, tseries
+        real(8)             :: tnext, t1, t2, tnextp
+        integer             :: nidx, nres, tseries, success
         character(64) :: subroutine_name
 
         subroutine_name = 'interface_get_next_inflow_time'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         nidx = BC%flowI(bc_idx, bi_node_idx)
         if (.not. node%YN(nidx, nYN_has_inflow)) then
             print *, "Error, node " // node%Names(nidx)%str // " does not have an inflow"
         end if
         nres = node%I(nidx, ni_pattern_resolution)
-        if (nres > 0) then
+        if (nres >= 0) then
             tnextp = util_datetime_get_next_time(tnow, nres)
             if (node%YN(nidx, nYN_has_extInflow)) then
                 tseries = interface_get_node_attribute(nidx, api_node_extInflow_tSeries)
                 if (tseries >= 0) then
-                    tnext = interface_get_node_attribute(nidx, api_node_extInflow_tSeries_x2)
+                    success = get_next_entry_tseries(tseries)
+                    tnext = interface_get_node_attribute(nidx, api_node_extInflow_tSeries_x1)
                     tnext = util_datetime_epoch_to_secs(tnext)
+                    if (success == 0) then ! unsuccessful
+                        tnext = interface_get_node_attribute(nidx, api_node_extInflow_tSeries_x2)
+                        tnext = util_datetime_epoch_to_secs(tnext)
+                        if (tnext == tnow) then
+                            tnext = setting%Time%endtime
+                        end if
+                    end if
                 else
                     tnext = setting%Time%EndTime
                 end if
@@ -646,7 +664,7 @@ contains
 
         subroutine_name = 'interface_get_next_head_time'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         nidx = BC%headI(bc_idx, bi_node_idx)
         if (BC%headI(bc_idx, bi_subcategory) == BCH_fixed) then
@@ -669,7 +687,7 @@ contains
 
         subroutine_name = 'interface_get_flowBC'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         c_lib%procname = "api_get_flowBC"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -695,7 +713,7 @@ contains
 
         subroutine_name = 'interface_get_headBC'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         c_lib%procname = "api_get_headBC"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -739,6 +757,27 @@ contains
     !% PRIVATE
     !%=============================================================================
 
+    function get_next_entry_tseries(k) result(success)
+        integer, intent(in   ) :: k
+        integer                :: success
+        character(64)          :: subroutine_name
+
+        subroutine_name = 'get_next_entry_tseries'
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+
+        c_lib%procname = "api_get_next_entry_tseries"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
+        success = ptr_api_get_next_entry_tseries(k-1) ! Fortran to C convention
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+    end function get_next_entry_tseries
+
     function get_num_objects(obj_type)
 
         integer :: obj_type
@@ -747,7 +786,7 @@ contains
 
         subroutine_name = 'get_num_objects'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         c_lib%procname = "api_get_num_objects"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -765,7 +804,7 @@ contains
         real(8) :: get_start_datetime
         character(64) :: subroutine_name = 'get_start_datetime'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         c_lib%procname = "api_get_start_datetime"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -784,7 +823,7 @@ contains
 
         subroutine_name = 'get_end_datetime'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
         c_lib%procname = "api_get_end_datetime"
         call c_lib_load(c_lib, errstat, errmsg)

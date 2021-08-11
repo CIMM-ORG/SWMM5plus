@@ -56,7 +56,7 @@ contains
     !%
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
-        if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
     !%-----------------------------------------------------------------------------
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
@@ -135,7 +135,7 @@ contains
 
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
@@ -239,7 +239,7 @@ contains
         character(64) :: subroutine_name = "init_bc"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization)  print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** enter ', this_image(), subroutine_name
 
         call pack_nodes()
         call util_allocate_bc()
@@ -357,7 +357,7 @@ contains
         character(64) :: subroutine_name = 'init_partitioning'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
         !% find the number of elements in a link based on nominal element length
         do ii = 1, N_link
@@ -400,7 +400,7 @@ contains
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
 
-        if (setting%Debug%File%utility_array) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_array) print *, '*** enter ', this_image(),subroutine_name
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 

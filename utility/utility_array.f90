@@ -31,7 +31,7 @@ module utility_array
         integer :: ii=0, min_val, max_val
         character(64) :: subroutine_name = 'util_image_number_calculation'
 
-        if (setting%Debug%File%utility_array) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%utility_array) print *, '*** enter ', this_image(),subroutine_name
 
         allocate(img_arr(size(link%I,1)))
         allocate(unique(size(link%I,1)))

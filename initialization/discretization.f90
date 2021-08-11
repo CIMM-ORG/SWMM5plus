@@ -34,7 +34,7 @@ contains
         character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%discretization) print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%discretization) print *, '*** enter ', this_image(), subroutine_name
 
         do ii =1, N_link
             temp_length = link%R(ii,lr_Length) ! lenght of link ii
@@ -74,7 +74,7 @@ contains
 
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%discretization) print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%discretization) print *, '*** enter ', this_image(), subroutine_name
 
         remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
         if ( remainder == zeroR ) then

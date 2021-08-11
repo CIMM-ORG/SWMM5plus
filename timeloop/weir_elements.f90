@@ -32,7 +32,7 @@ module weir_elements
         logical, pointer :: isSurcharged
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'weir_toplevel'
-        if (setting%Debug%File%weir_elements) print *, '*** enter ',this_image(), subroutine_name
+        if (setting%Debug%File%weir_elements) print *, '*** enter ', this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         isSurcharged => elemYN(eIdx,eYN_isSurcharged)
         !%  

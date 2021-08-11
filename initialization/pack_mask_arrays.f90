@@ -40,7 +40,7 @@ contains
         character(64) :: subroutine_name = 'pack_mask_arrays_all'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         call mask_faces_whole_array_static()
         call pack_geometry_alltm_elements()
@@ -90,7 +90,7 @@ contains
         character(64) :: subroutine_name = 'pack_dynamic_arrays'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         call pack_geometry_etm_elements()
         call pack_geometry_ac_elements()
@@ -117,7 +117,7 @@ contains
         character(64) :: subroutine_name = 'mask_faces_whole_array_static'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         mcol => col_faceM(fm_all)
 
@@ -147,7 +147,7 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -247,7 +247,7 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -335,7 +335,7 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_etm_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -430,7 +430,7 @@ contains
         character(64) :: subroutine_name = 'pack_nongeometry_static_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -597,7 +597,7 @@ contains
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -1311,7 +1311,7 @@ contains
         character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1387,7 +1387,7 @@ contains
         character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1472,7 +1472,7 @@ contains
         character(64) :: subroutine_name = 'pack_static_shared_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1565,7 +1565,7 @@ contains
         character(64)    :: subroutine_name = 'pack_dynamic_shared_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         sync all
 
@@ -1661,7 +1661,7 @@ contains
         !--------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'pack_nodes'
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
                         (node%I(:,ni_P_image) == this_image()))
@@ -1688,7 +1688,7 @@ contains
     subroutine pack_bc
         integer :: psize
         character(64) :: subroutine_name = 'pack_bc'
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         !% BC packs
         if (N_flowBC > 0) then

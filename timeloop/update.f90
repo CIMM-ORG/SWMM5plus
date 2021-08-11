@@ -34,7 +34,7 @@ module update
         integer, pointer :: thisCol_all
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'update_auxiliary_variables'
-        if (setting%Debug%File%update) print *, '*** enter ',this_image(), subroutine_name     
+        if (setting%Debug%File%update) print *, '*** enter ', this_image(), subroutine_name     
         !%-----------------------------------------------------------------------------
         !%  
         !% update the head (non-surcharged) and geometry
