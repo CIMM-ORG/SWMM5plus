@@ -242,7 +242,7 @@ module timeloop
         integer :: neededSteps, ii
 
         real(8), pointer :: dt, maxCFL, maxCFLlow, targetCFL
-        real(8), pointer :: timeNow, timeFinal, decreaseFactor, increaseFactor
+        real(8), pointer :: timeNow, timeNext, timeFinal, decreaseFactor, increaseFactor
         real(8), pointer :: velocity(:), wavespeed(:), length(:)
         integer, pointer :: stepNow, stepNext, stepfinal, checkStepInterval, lastCheckStep
         integer, pointer :: thisCol, Npack, thisP(:)
@@ -255,6 +255,7 @@ module timeloop
         useHydraulics => setting%Simulation%useHydraulics
         dt        => setting%Time%Hydraulics%Dt
         timeNow   => setting%Time%Hydraulics%timeNow
+        timeNext  => setting%Time%Hydraulics%timeNext
         timeFinal => setting%Time%Hydraulics%timeFinal
         stepNow   => setting%Time%Hydraulics%stepNow
         stepNext  => setting%Time%Hydraulics%stepNext
@@ -329,6 +330,7 @@ module timeloop
 
         sync all
         call co_min(dt)
+        timeNext = timeNow + dt
 
         if ((setting%Limiter%Dt%UseLimitMin) .and. (dt <= setting%Limiter%Dt%Minimum)) then
             print*, 'timeNow = ', timeNow
@@ -586,7 +588,7 @@ module timeloop
         finalstep => setting%Time%Hydrology%stepFinal
         !%-----------------------------------------------------------------------------
 
-        if ((thistime > endtime) .or. (thisstep > finalstep)) then
+        if ((thistime >= endtime) .or. (thisstep >= finalstep)) then
             isTLfinished = .true.
         endif
 
