@@ -84,8 +84,9 @@ contains
             write(str_elem_idx,'(I10)') elemI(ii,ei_Gidx)
 
             if(elemI(ii,ei_elementType) == CC) then
-                file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
-                    // trim(ADJUSTL(str_elem_idx))//".csv"
+                file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" & 
+                    // trim(link%names(elemI(ii,ei_link_Gidx_SWMM))%str) // &
+                    "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
                 form   = 'formatted', action = 'write', iostat = open_status)
