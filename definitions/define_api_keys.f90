@@ -90,6 +90,7 @@ module define_api_keys
         enumerator :: api_node_invertElev
         enumerator :: api_node_initDepth
         enumerator :: api_node_extInflow_tSeries
+        enumerator :: api_node_extInflow_tSeries_x1
         enumerator :: api_node_extInflow_tSeries_x2
         enumerator :: api_node_extInflow_basePat
         enumerator :: api_node_extInflow_baseline

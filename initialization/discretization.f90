@@ -11,7 +11,7 @@ module discretization
     real(8), pointer :: elem_shorten_cof    => setting%Discretization%LinkShortingFactor
 
 contains
-    
+
     !
     !==========================================================================
     !==========================================================================
@@ -34,7 +34,7 @@ contains
         character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%discretization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%discretization) print *, '*** enter ', this_image(), subroutine_name
 
         do ii =1, N_link
             temp_length = link%R(ii,lr_Length) ! lenght of link ii
@@ -56,13 +56,13 @@ contains
             link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)
         enddo
 
-        if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%discretization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine init_discretization_adjustlinklength
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine init_discretization_nominal()
+    subroutine init_discretization_nominal(link_idx)
     !-----------------------------------------------------------------------------
     !
     ! Description:
@@ -70,29 +70,27 @@ contains
     !   is adjusted so that an integer number of elements is assigned to each link.
     !
     !-----------------------------------------------------------------------------
-        integer :: ii
+        integer, intent(in) :: link_idx
         real(8) :: remainder
         character(64) :: subroutine_name = 'init_discretization_nominal'
-               
+
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%discretization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%discretization) print *, '*** enter ', this_image(), subroutine_name
 
-        do ii = 1, N_link
-            remainder = mod(link%R(ii,lr_Length), elem_nominal_length)
-            if ( remainder == zeroR ) then
-                link%I(ii, li_N_element) = int(link%R(ii, lr_Length)/elem_nominal_length)
-                link%R(ii, lr_ElementLength) = link%R(ii, lr_Length)/link%I(ii, li_N_element)
-            elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
-                link%I(ii, li_N_element) = ceiling(link%R(ii,lr_Length)/elem_nominal_length)
-                link%R(ii, lr_ElementLength) = link%R(ii, lr_Length)/link%I(ii, li_N_element)
-            else
-                link%I(ii, li_N_element) = floor(link%R(ii,lr_Length)/elem_nominal_length)
-                link%R(ii, lr_ELementLength) = link%R(ii, lr_Length)/link%I(ii, li_N_element)
-            endif
-        enddo
+        remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
+        if ( remainder == zeroR ) then
+            link%I(link_idx, li_N_element) = int(link%R(link_idx, lr_Length)/elem_nominal_length)
+            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+        elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
+            link%I(link_idx, li_N_element) = ceiling(link%R(link_idx,lr_Length)/elem_nominal_length)
+            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+        else
+            link%I(link_idx, li_N_element) = floor(link%R(link_idx,lr_Length)/elem_nominal_length)
+            link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+        endif
 
-        if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%discretization)  print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine init_discretization_nominal
     !

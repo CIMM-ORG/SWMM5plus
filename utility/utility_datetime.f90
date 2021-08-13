@@ -5,7 +5,7 @@ module utility_datetime
                                api_hourly, &
                                api_weekend, &
                                api_monthly
-    use define_globals, only: datedelta, secsperday, dayspermonth
+    use define_globals, only: datedelta, secsperday, dayspermonth, nullvalueR
 
     implicit none
 
@@ -35,6 +35,8 @@ module utility_datetime
             nextSecsTime = util_datetime_get_next_month(epochTime)
         else if (resolution_type == api_weekend) then
             nextSecsTime = util_datetime_get_next_weekendday_hour(epochTime)
+        else if (resolution_type == 0) then
+            nextSecsTime = nullvalueR
         else
             print *, "Resolution type not supported, use"
             print *, "(1) monthly, (2) daily, (3) hourly, (4) weekend"

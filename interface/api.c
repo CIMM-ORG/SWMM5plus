@@ -135,6 +135,14 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
         else
             *value = -1;
     }
+    else if (attr == node_extInflow_tSeries_x1)
+    {
+        tseries_idx = Node[k].extInflow->tSeries;
+        if (tseries_idx >= 0)
+            *value = Tseries[tseries_idx].x1;
+        else
+            *value = -1;
+    }
     else if (attr == node_extInflow_tSeries_x2)
     {
         tseries_idx = Node[k].extInflow->tSeries;
@@ -450,6 +458,22 @@ double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_dateti
     }
 
     return FTTOM(yNew);
+}
+
+int DLLEXPORT api_get_next_entry_tseries(int k)
+{
+    int success;
+    double x2, y2;
+
+    x2 = Tseries[k].x2;
+    y2 = Tseries[k].y2;
+    success = table_getNextEntry(&(Tseries[k]), &(Tseries[k].x2), &(Tseries[k].y2));
+    if (success == TRUE)
+    {
+        Tseries[k].x1 = x2;
+        Tseries[k].y1 = y2;
+    }
+    return success;
 }
 
 int DLLEXPORT api_export_linknode_properties(void* f_api, int units)

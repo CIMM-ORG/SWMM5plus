@@ -56,7 +56,7 @@ contains
     !%
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
     !%-----------------------------------------------------------------------------
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
@@ -86,8 +86,12 @@ contains
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays ()
 
-        !% partition the network for multi-processor parallel computation
-        call init_partitioning ()
+        call init_partitioning()
+
+        !% HACK: this sync call is probably not needed
+        sync all
+
+        if (this_image() == 1) call util_export_linknode_csv()
 
         call init_network_define_toplevel ()
 
@@ -102,16 +106,16 @@ contains
 
 
         !% creating output_folders and files
-        call util_output_create_folder()
-        call util_output_create_elemR_files()
-        call util_output_create_faceR_files()
+        if (setting%Output%report) call util_output_create_folder()
+        if (setting%Output%report) call util_output_create_elemR_files()
+        if (setting%Output%report) call util_output_create_faceR_files()
         call util_output_create_summary_files()
-        
+
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
   
         !% wait for all the processors to reach this stage before starting the time loop
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine initialize_all
     !%
     !%==========================================================================
@@ -136,7 +140,7 @@ contains
 
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
@@ -209,7 +213,6 @@ contains
         !% Update Link/Node names
         call interface_update_linknode_names()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_linknode_arrays
     !%
     !%==========================================================================
@@ -241,7 +244,7 @@ contains
         character(64) :: subroutine_name = "init_bc"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** enter ', this_image(), subroutine_name
 
         call pack_nodes()
         call util_allocate_bc()
@@ -339,7 +342,7 @@ contains
         call bc_step()
         call pack_bc()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine init_bc
     !%
     !%==========================================================================
@@ -355,16 +358,20 @@ contains
     !%   must be.
     !%
     !%-----------------------------------------------------------------------------
+        integer       :: ii
         character(64) :: subroutine_name = 'init_partitioning'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
         !% find the number of elements in a link based on nominal element length
-        call init_discretization_nominal()
+        do ii = 1, N_link
+            call init_discretization_nominal(ii)
+        end do
 
         !% Set the network partitioning method used for multi-processor parallel computation
         call init_partitioning_method()
+
 
         !% adjust the link lengths by cutting off a certain portion for the junction branch
         !% this subroutine is called here to correctly estimate the number of elements and faces
@@ -381,7 +388,7 @@ contains
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine init_partitioning
     !%
@@ -398,15 +405,16 @@ contains
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
 
-        if (setting%Debug%File%utility_array) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_array) print *, '*** enter ', this_image(),subroutine_name
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
-        allocate(N_elem(size(unique_imagenum,1)))
-        allocate(N_face(size(unique_imagenum,1)))
-        allocate(N_unique_face(size(unique_imagenum,1)))
+        allocate(N_elem(num_images()))
+        allocate(N_face(num_images()))
+        allocate(N_unique_face(num_images()))
 
-        do ii=1, size(unique_imagenum,1)
+        do ii=1, num_images()
+
             node_index = PACK([(counter, counter=1,size(node%I,1))], node%I(:, ni_P_image) == unique_imagenum(ii))
             link_index = PACK([(counter, counter=1,size(link%I,1))], link%I(:, li_P_image) == unique_imagenum(ii))
             !% create corresponding indices for node and link in this image
@@ -454,7 +462,6 @@ contains
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
                 endif
-
             enddo
 
             N_elem(ii) = elem_counter
@@ -465,6 +472,7 @@ contains
             face_counter = zeroI
             junction_counter = zeroI
             duplicated_face_counter = zeroI
+
         enddo
 
         max_caf_elem_N = maxval(N_elem)
@@ -478,7 +486,7 @@ contains
             end do
         endif
 
-        if (setting%Debug%File%utility_array)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_array)  print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine init_coarray_length
     !%

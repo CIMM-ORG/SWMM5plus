@@ -35,7 +35,7 @@ module update
         integer, pointer :: thisCol_all
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'update_auxiliary_variables'
-        if (setting%Debug%File%update) print *, '*** enter ', subroutine_name     
+        if (setting%Debug%File%update) print *, '*** enter ', this_image(), subroutine_name     
         !%-----------------------------------------------------------------------------
         !%  
         !% update the head (non-surcharged) and geometry
@@ -93,7 +93,7 @@ module update
         !print *, '---- in ',subroutine_name,'   y07'
         !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
    
-        if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%update)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine update_auxiliary_variables
     !%
     !%==========================================================================
