@@ -19,6 +19,10 @@ module define_globals
     ! rm gr24269 - there is an elementh_length defined in setting%Discretization%NominalElemLength
     ! real(8), parameter :: element_length = 10.0 ! This is a temporary element length
 
+    !% HACK brh -- element indexes for junction test
+    integer :: ietmp(7) = (/99,100,102,101,103,208,209/)
+    integer :: iftmp(6) = (/100,101,1,1,102,207/)
+
     !% ===================================================================================
     !% ARRAYS
     !% ===================================================================================

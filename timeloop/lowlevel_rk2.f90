@@ -667,8 +667,14 @@ module lowlevel_rk2
         integer, intent(in) :: whichTM
         integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
         integer, pointer :: Npack
+        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) ! BRHbugfix 20210811
         real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:)
         integer :: ii, kk, tB
+        !% BRHbugfix 20210812 start
+        real(8) :: dHead 
+        integer, pointer :: iFaceUp(:), iFaceDn(:), iElemUp(:), iElemDn(:)
+        integer, pointer :: tFup, tEup, tFdn, tEdn
+        !% BRHbugfix 20210812 end
         !%-----------------------------------------------------------------------------
         !%   
         BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
@@ -676,9 +682,16 @@ module lowlevel_rk2
         eVelocity    => elemR(:,er_Velocity)
         eFlow        => elemR(:,er_Flowrate)
         fFlow        => faceR(:,fr_Flowrate)
-        iup          => elemI(:,ei_Mface_uL)
-        idn          => elemI(:,ei_Mface_dL)
-         
+        iFaceUp      => elemI(:,ei_Mface_uL) !% BRHbugfix 20210811 
+        iFaceDn      => elemI(:,ei_Mface_dL)!% BRHbugfix 20210811 
+        iElemUp      => faceI(:,fi_Melem_uL) !% BRHbugfix 20210811 
+        iElemDn       => faceI(:,fi_Melem_dL)!% BRHbugfix 20210811 
+        !% BRHbugfix 20210811 start
+        eHead        => elemR(:,er_Head)
+        fHead_u       => faceR(:,fr_Head_u)
+        fHead_d       => faceR(:,fr_Head_d)    
+        
+        !% BRHbugfix 20210811 end
         !%-----------------------------------------------------------------------------
         !% 
         select case (whichTM)
@@ -696,25 +709,79 @@ module lowlevel_rk2
         Npack => npack_elemP(thisColP_JM) 
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisColP_JM)
+            ! BRHbugfix 20210811 start           
             do ii=1,Npack
                 tM => thisP(ii)
                 ! handle the upstream branches
                 do kk=1,max_branch_per_node,2
                     tB = tM + kk
                     if (BranchExists(tB)==1) then
-                        eFlow(tB) = fFlow(iup(tB))    
+                        ! head difference across the branch
+                        tFup => iFaceUp(tB)
+                        !tEup => iElemUp(tFup)
+                        !dHead = eHead(tEup) - eHead(tB) !% using elem to elem
+                        dHead = fHead_u(tFup) - eHead(tB) !% using elem to face
+                        if (dHead >= zeroR) then
+                            ! downstream flow in an upstream branch use upstream values
+                            eFlow(tB) = fFlow(tFup) !% using face
+                            !eFlow(tB) = eFlow(tEup)!%  using elem
+                        else
+                            ! upstream flow in an upstream branch 
+                            eFlow(tB) = - eArea(tB) * sqrt(twoR * setting%Constant%gravity * (-dHead))
+                        end if
                         eVelocity(tB) = eFlow(tB) / eArea(tB)
+                        
+                        !print *,'A', tB, eFlow(tB), dHead, eVelocity(tB) ,' Flow, dHead, velocity in JB'  !BRHbugfix20210812 test
+                        !print *, eHead(tEup), fHead_u(tFup), fHead_d(tFup), eHead(tB), ' heads'
                     end if
                 end do
-                !% handle the downstram branches
+                !% handle the downstream branches
                 do kk=2,max_branch_per_node,2
                     tB = tM + kk
                     if (BranchExists(tB)==1) then
-                        eFlow(tB) = fFlow(idn(tB)) 
+                        tFdn => iFaceDn(tB)
+                        !tEdn => iElemDn(tFdn) 
+                        !dHead =  eHead(tB) - eHead(tEdn) !% using elem to elem
+                        dHead = eHead(tB) - fHead_d(tFdn) !% using elem to face
+                        if (dHead < zeroR) then
+                            ! upstream flow in a downstream branch use downstream values
+                            eFlow(tB) = fFlow(tFdn) !% using face
+                            !eFlow(tB) = eFlow(tEdn) !%  using elem
+                        else
+                            ! downstream flow in an downstream branch
+                            eFlow(tB) =  + eArea(tB) * sqrt(twoR * setting%Constant%gravity * dHead )
+                        end if
                         eVelocity(tB) = eFlow(tB) / eArea(tB)
-                    end if
+
+                        !print *
+                        !print *,'B', tB, eFlow(tB), dHead, eVelocity(tB) ,' Flow, dHead, velocity in JB'
+                        !print * 
+
+                    end if                
                 end do
+
             end do
+            
+            ! remove old stuff
+            !     ! handle the upstream branches
+            !     do kk=1,max_branch_per_node,2
+            !         tB = tM + kk
+            !         if (BranchExists(tB)==1) then
+            !             eFlow(tB) = fFlow(iup(tB))    
+            !             eVelocity(tB) = eFlow(tB) / eArea(tB) 
+            !         end if
+            !     end do
+            !     !% handle the downstream branches
+            !     do kk=2,max_branch_per_node,2
+            !         tB = tM + kk
+            !         if (BranchExists(tB)==1) then
+
+            !             eFlow(tB) = fFlow(idn(tB)) 
+            !             eVelocity(tB) = eFlow(tB) / eArea(tB)                   
+            !         end if
+            !     end do
+            ! end do
+            ! BRHbugfix 20210811 end
         end if
 
     end subroutine ll_junction_branch_flowrate_and_velocity

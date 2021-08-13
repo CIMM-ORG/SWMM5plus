@@ -39,43 +39,211 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1
+
+        !% HACKbrh
+        print *, '--------------- at start in ',trim(subroutine_name),' ------------------------------'
+        print *, ietmp ,' element ID'
+        print *, iftmp ,' face ID'
+        print *, elemI(ietmp,ei_Mface_uL) ,' up face'
+        print *, elemI(ietmp,ei_Mface_dL) ,' dn face'
+        !print *, faceI(elemI(ietmp,ei_Mface_uL),fi_Melem_uL) , 'up elem'
+        !print *, faceI(elemI(ietmp,ei_Mface_dL),fi_Melem_dL) , 'dn elem'
+
+
+        write(*,'(11F9.4,A15)') &
+            elemR(ietmp(1),er_Head), &
+            faceR(iftmp(1),fr_Head_u), &
+            elemR(ietmp(2),er_Head), &
+            faceR(iftmp(2),fr_Head_u), &
+            elemR(ietmp(3),er_Head), &
+            elemR(ietmp(4),er_Head), &
+            elemR(ietmp(5),er_Head), &
+            faceR(iftmp(5),fr_Head_u), &
+            elemR(ietmp(6),er_Head), &
+            faceR(iftmp(6),fr_Head_u), &
+            elemR(ietmp(7),er_Head), 'Head all'
+  
+        print *, '---- in ',subroutine_name,'       00'    
+        write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'    
+        !stop 2987
+
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Volume),' Volume elem'
+
+        !print *, 'first step RK2'    
         call rk2_step_ETM (istep)
 
+        !print *, '---- in ',subroutine_name,'  01'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
+        !print *, 'update aux variables'
         !% RK2 solution step 3 -- all aux variables for non-diagnostic
         call update_auxiliary_variables (ETM)
 
+        !print *, '---- in ',subroutine_name,'  02'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
+        !BRHbugfix 20210812 MOVED THES ABOVE FACE INTERP
+        !print *, 'junction branch Q and U'
+        !% junction branch flowrate and velocity update
+        call ll_junction_branch_flowrate_and_velocity(ETM) 
+        !% compute element Froude number for JB
+        call update_Froude_number_junction_branch (ep_JM_ETM) 
+        !BRHbugfix 20210812
+
+        !print *, 'face interpolation'
         !% RK2 solution step 4 -- all face interpolation
         call face_interpolation(fp_all)
 
-        !% junction branch flowrate and velocity update
-        call ll_junction_branch_flowrate_and_velocity(ETM)
+        !print *, '---- in ',subroutine_name,'  03'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
 
+        !print *, 'junction branch Q and U'
+        !% junction branch flowrate and velocity update
+        !call ll_junction_branch_flowrate_and_velocity(ETM) 
+
+        !% compute element Froude number for JB
+        !call update_Froude_number_junction_branch (ep_JM_ETM) !BRHbugfix 20210812
+
+        !print *, '---- in ',subroutine_name,'  04'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
+        !print *, 'diagnostic'
         !% RK2 solution step 5 -- update diagnostic elements and faces
         if (N_diag > 0) then
             call diagnostic_toplevel()
         endif
         
+        !print *, '---- in ',subroutine_name,'  05'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
         !% RK2 solution step X -- make ad hoc adjustments
+        !print *, 'ad hoc adjust'
         call adjust_values (ETM)
 
+        !print *, '---- in ',subroutine_name,'  06'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
+        !print *, 'second step RK2'
         !% RK2 solution step 8 -- RK2 second step for ETM
         !% RK2 solution step 8(a)
         istep=2
         call rk2_step_ETM (istep)
 
+        !print *, '---- in ',subroutine_name,'  07'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
+        !print *, 'update aux variables'
         !% RK2 solution step 8(c)
         call update_auxiliary_variables(ETM)
 
+        !print *, '---- in ',subroutine_name,'  08'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
+        !BRHbugfix 20210812 There was no branch handling after second step!
+        !print *, 'junction branch Q and U'
+        !% junction branch flowrate and velocity update
+        call ll_junction_branch_flowrate_and_velocity(ETM) 
+        !% compute element Froude number for JB
+        call update_Froude_number_junction_branch (ep_JM_ETM) 
+        !BRHbugfix 20210812
+
+        !print *, 'face interpolation'
         !% RK2 solution step 8(d,e) -- update all faces
         call face_interpolation(fp_all)
 
+
+
+
+        ! print *, '---- in ',trim(subroutine_name),'-------------------------------------------------------  09'
+        ! write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        ! write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        ! !write(*,'(7F9.4,A15)') elemR(ietmp,er_Depth),'Depth elem'        
+        ! !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        ! !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+        ! write(*,'(7F9.4,A15)') elemR(ietmp,er_Area),' Area elem'
+        ! write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Area_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Area_u), 'Area_u face'
+        ! write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Area_d), 0.0, 0.0, faceR(iftmp(5:6),fr_Area_d), 'Area_d face'
+        ! print *
+        ! write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        ! write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
+        !print *, 'diagnostic'
         !% RK2 solution step 9 -- update diagnostic elements and faces
         if (N_diag > 0) then
             call diagnostic_toplevel()
         endif
 
+        !print *, '---- in ',subroutine_name,'  10'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        !print *
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        !write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+
+        !print *, 'ad hoc adjust'
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
+
+        print *, '---- in ',trim(subroutine_name),'-------------------------------------------------------  11'
+        write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem'
+        write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Head_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Head_u), 'Head face'
+        print *
+        write(*,'(7F9.4,A15)') elemR(ietmp,er_Flowrate),' Flowrate elem'
+        write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Flowrate), 0.0, 0.0, faceR(iftmp(5:6),fr_Flowrate), 'Flowrate face'
+        print *
+        write(*,'(7F9.4,A15)') elemR(ietmp,er_Area),' Area elem'
+        write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Area_u), 0.0, 0.0, faceR(iftmp(5:6),fr_Area_u), 'Area_u face'
+        write(*,'(A4,6F9.4,A15)') '    ',faceR(iftmp(1:2),fr_Area_d), 0.0, 0.0, faceR(iftmp(5:6),fr_Area_d), 'Area_d face'       !stop 9379
+
+        !print *, '---- in ',trim(subroutine_name),'-------------------------------------------------------  12'
+        !write(*,'(5F9.4,A25)') &
+        !faceR(iftmp(5),fr_Head_u), &
+        !faceR(iftmp(5),fr_Head_d), &
+        !elemR(ietmp(6),er_Head) , &
+        !faceR(iftmp(6),fr_Head_u), &
+        !faceR(iftmp(6),fr_Head_d), ' head just downstream of JB'
+
+        ! BRHbugfix check to see if one cell is causing it -- not the case.
+        !elemR(ietmp(6),er_Head) = 0.5*(faceR(iftmp(5),fr_Head_d) + faceR(iftmp(6),fr_Head_u))
+        !write(*,'(1F9.4,A25)') elemR(ietmp(6),er_Head), ' head after V-fix'
+
 
         if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', subroutine_name
     end subroutine rk2_toplevel_ETM

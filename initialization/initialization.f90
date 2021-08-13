@@ -91,10 +91,15 @@ contains
 
         call init_network_define_toplevel ()
 
+
+        call init_time ()  !% BRHbugfix 20210811
+
         !% initialize boundary conditions
         call init_bc()
 
         call init_IC_setup ()
+
+
 
         !% creating output_folders and files
         call util_output_create_folder()
@@ -104,7 +109,7 @@ contains
         
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
-
+  
         !% wait for all the processors to reach this stage before starting the time loop
         if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine initialize_all
@@ -529,6 +534,24 @@ contains
             end if
         end do
     end subroutine init_read_arguments
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%   
+    subroutine init_time ()
+    !% BRHbugfix20210811  Entire subroutine is new    
+
+    !% adjust for inconsistent time settings
+
+    if (setting%Time%Hydrology%timeFinal > setting%Time%EndTime) then
+        setting%Time%Hydrology%timeFinal = setting%Time%EndTime
+    endif
+
+    if (setting%Time%Hydrology%Dt > setting%Time%EndTime - setting%Time%StartTime) then
+        setting%Time%Hydrology%Dt = setting%Time%EndTime - setting%Time%StartTime
+    endif   
+   
+    end subroutine init_time
     !%
     !%==========================================================================
     !% END OF MODULE

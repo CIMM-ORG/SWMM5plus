@@ -131,13 +131,13 @@
         "EndTime" : 0.0,
         "StartTime" : 0.0,
         "Hydrology" : {
-            "Dt" : 100.0,
+            "Dt" : 10.0,
             "timeNow" : 0.0,
             "timeNext" : 1.0,
             "timeFinal" : 1.0,
             "stepNow"  : 0,
             "stepNext"  : 1,
-            "stepFinal" : 1000
+            "stepFinal" : 10000
         },
         "Hydraulics" : {
             "Dt" : 100.0,
