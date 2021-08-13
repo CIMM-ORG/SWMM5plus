@@ -91,7 +91,6 @@ contains
 
         call init_network_define_toplevel ()
 
-
         call init_time ()  !% BRHbugfix 20210811
 
         !% initialize boundary conditions

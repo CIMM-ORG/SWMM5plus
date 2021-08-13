@@ -57,13 +57,13 @@ module timeloop
             !% outer loop (Hydrology) time stepping
             do while (.not. isTLfinished)
 
-                print *, '--- in ',trim(subroutine_name),'    AAA'
-                print *, setting%Time%Hydrology%timeNow, setting%Time%Hydrology%timeNext, &
-                    setting%Time%Hydrology%timeFinal, 'Hydrology timeNow timeNext, timeFinal'
-                print *, setting%Time%Hydrology%stepNow, setting%Time%Hydrology%stepNext, &
-                    setting%Time%Hydrology%stepFinal, 'Hydrology stepNow, stepNext StepFinal'
-                print *, setting%Time%Hydrology%Dt, 'Hydrology Dt'
-                print *, setting%Time%EndTime , 'end time'
+                ! print *, '--- in ',trim(subroutine_name),'    AAA'
+                ! print *, setting%Time%Hydrology%timeNow, setting%Time%Hydrology%timeNext, &
+                !     setting%Time%Hydrology%timeFinal, 'Hydrology timeNow timeNext, timeFinal'
+                ! print *, setting%Time%Hydrology%stepNow, setting%Time%Hydrology%stepNext, &
+                !     setting%Time%Hydrology%stepFinal, 'Hydrology stepNow, stepNext StepFinal'
+                ! print *, setting%Time%Hydrology%Dt, 'Hydrology Dt'
+                ! print *, setting%Time%EndTime , 'end time'
 
                 !% Perform one time step of hydrology
                 call tl_hydrology()
@@ -73,10 +73,6 @@ module timeloop
                 
                 call bc_update()
                 call tl_check_finish_status(isTLfinished)
-
-                !itemp = 103
-                !print *,  elemR(faceI(elemI(itemp,ei_Mface_dL),fi_Melem_dL) ,er_InterpWeight_uQ), 'w_uQ(eDn(fDn(tB)))'
-                !print *,  elemR(itemp,er_InterpWeight_dQ), 'w_dQ(tB)'
                 
             !% HACK to prevent infinite loop in testing
             ! print *, "HACK hard-code stopping time loop  39872"
@@ -226,31 +222,9 @@ module timeloop
         !% set the counters used for inner loop iteration
         call tl_setup_counters(hydraulics)
 
-        ! print *, '--- in ',trim(subroutine_name),'    x01'
-        ! print *, setting%Time%Hydraulics%timeNow, setting%Time%Hydraulics%timeNext, &
-        !     setting%Time%Hydraulics%timeFinal, 'Hydraulics timeNow timeNext, timeFinal'
-        ! print *, setting%Time%Hydraulics%stepNow, setting%Time%Hydraulics%stepNext, &
-        !     setting%Time%Hydraulics%stepFinal, 'Hydraulics stepNow, stepNext StepFinal'
-        ! print *, setting%Time%Hydraulics%Dt, 'Hydraulics Dt'
-        ! print *, setting%Time%EndTime , 'end time'
-
-        
-
+    
         !% set the expected number of substeps for hydraulics given the present CFL
         call tl_set_hydraulic_substep()   
-
-        print *, '--- in ',trim(subroutine_name),'    x02'
-        print *, setting%Time%Hydraulics%timeNow, setting%Time%Hydraulics%timeNext, &
-            setting%Time%Hydraulics%timeFinal, 'Hydraulics timeNow timeNext, timeFinal'
-        print *, setting%Time%Hydraulics%stepNow, setting%Time%Hydraulics%stepNext, &
-            setting%Time%Hydraulics%stepFinal, 'Hydraulics stepNow, stepNext StepFinal'
-        print *, setting%Time%Hydraulics%Dt, 'Hydraulics Dt'
-        print *, setting%Time%EndTime , 'end time'
-
-        print * 
-        print *, timeNext, timeFinal, 'timeNext timeFinal'
-
-        !stop 58793
 
         !% setup for checking volume conservation during the hydraulic steps.
         ! FUTURE 20210609 brh need to decide where to place this and pull code from old version
@@ -267,10 +241,10 @@ module timeloop
         ! print *, "Hard-code hydrualic subtime-step loop exit for testing 7647"
         ! timeNext = timeFinal+1.0
 
-            print *, '--- in ',trim(subroutine_name),' in hydraulics loop'
-            print *, setting%Time%Hydraulics%timeNow, setting%Time%Hydraulics%timeFinal, 'Hydraulics timeNow, timeFinal'
-            print *, setting%Time%Hydraulics%stepNow, setting%Time%Hydraulics%stepFinal, 'Hydraulics stepNow, StepFinal'    
-            print *, '------------------------------------------'
+            !print *, '--- in ',trim(subroutine_name),' in hydraulics loop'
+            !print *, setting%Time%Hydraulics%timeNow, setting%Time%Hydraulics%timeFinal, 'Hydraulics timeNow, timeFinal'
+            !print *, setting%Time%Hydraulics%stepNow, setting%Time%Hydraulics%stepFinal, 'Hydraulics stepNow, StepFinal'    
+            !print *, '------------------------------------------'
             
         end do
 
@@ -346,9 +320,6 @@ module timeloop
                 !% For combined hydrology and hydraulics use the hydrology time step
                 !% as the target CFL.
                 thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * timeleft / length(thisP) )
-
-                !print *, '---- in ',trim(subroutine_name),'    z02'
-                !print *, thisCFL, ' thisCFL'
 
                 !% check to see if max CFL is exceeded
                 if (thisCFL < maxCFL) then
@@ -471,10 +442,8 @@ module timeloop
         wavespeed => elemR(:,er_WaveSpeed)
         length    => elemR(:,er_Length)
 
-        print *
-        print *, '********************************** in ',subroutine_name
-        print *, timeNow, dt, ' timeNow, dt'
-        print *
+        ! BRH useful for debugging -- comment out if you want quiet
+        print *, '** in ',trim(subroutine_name), ' timeNow=',timeNow,' dt=', dt
 
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
@@ -559,8 +528,8 @@ module timeloop
         nextstep = nextstep + 1
 
         !% HACK to prevent inifinite looping
-        print *, '======================= in ',trim(subroutine_name),'; nexstep = ',nextstep
-        if (nextstep > 10000) then
+        !print *, '======================= in ',trim(subroutine_name),'; nexstep = ',nextstep
+        if (nextstep > 100000) then
             print *, 'stopping because too many time steps (HACK) in ',subroutine_name
             stop 2987
         endif
@@ -667,15 +636,18 @@ module timeloop
 
 
 
-        !if ((thistime > endtime) .or. (thisstep > finalstep)) then
+        !!% BRHbugfix 20210811 if ((thistime > endtime) .or. (thisstep > finalstep)) then
         if ((thistime >= endtime) .or. (thisstep >= finalstep)) then !% BRHbugfix20210811
             isTLfinished = .true.
         endif
 
-        print *, '---- in ',subroutine_name
-        print *, endtime, thistime, '  endtime, thistime'
-        print *, thisstep, finalstep, ' thisstep finalstep'
-        print *, isTLfinished, ' isTLfinished'
+        !% BRHbugfix 20210813 start
+        if (isTLfinished) then
+            print *, '** in ',subroutine_name
+            print *,  thistime, ' = thistime'
+            print *, endtime, ' = planned endtime'
+        endif
+        !% BRHbugfix 20210813 end
         
         !% FUTURE brh 20210607 Need a control to exit on error
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name

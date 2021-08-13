@@ -165,7 +165,7 @@ contains
 
             call init_IC_get_geometry_from_linkdata (thisLink)
 
-            !% we need a small/zero volume adjustment here
+            !% we need to add a small/zero volume adjustment here
 
             call init_IC_get_channel_pipe_velocity (thisLink)
 
@@ -1041,7 +1041,8 @@ contains
                         elemR(JBidx,er_ZbreadthMax) = zeroR
 
                         !% HACK: not sure if we need surcharge condition for junction branches
-                        !% ANSWER -- yes, we do need surcharge on JB for pipes
+                        !% ANSWER -- yes, we do need surcharge on JB for pipes, but should be more general
+                        !% That is, does not need to be in rectangular sectoin
                         ! BRHbugfix 20210813 if (link%I(BranchIdx,li_link_type) == lPipe) then
                             ! BRHbugfix 20210813 elemYN(JBidx,eYN_canSurcharge)  = .true.
                             ! BRHbugfix 20210813 elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
@@ -1151,9 +1152,6 @@ contains
                 elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
                 elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
                 elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
-
-                !elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
-                !elemR(JBidx,er_FroudeNumber) = elemR(JBidx,er_Velocity) / elemR(JBidx,er_WaveSpeed)
                 ! BRHbugfix 20210813 end
 
             end if

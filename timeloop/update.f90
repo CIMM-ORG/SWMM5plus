@@ -176,7 +176,7 @@ module update
                     tB = tM + kk
                     if (BranchExists(tB)==1) then
                         Froude(tB) = velocity(tB) / sqrt(grav * depth(tB))
-                        print *, kk, tB, Froude(tB), velocity(tB),'  Froude JB'
+                        !print *, kk, tB, Froude(tB), velocity(tB),'  Froude JB'
                     end if
                 end do
             end do
@@ -243,15 +243,12 @@ module update
                     wavespeed(thisP2) = wavespeed(thisP2) * setting%ACmethod%Celerity%RC
                 endif    
             endif
-            
-            !BRHbugfix --- trial with 0.5 reducing wave speed **********************************
-            ! that made it worse!
-            !--- trial with 2.0 increasing wave speed **********************************
-            !--- trial weighting velocity with Fr **********************************
+    
 
             !% timescale interpolation weights for flowrate
-            !% Note that Fr is +/- depending on flow direction, so if the square is removed from the Fr
-            !% it needs to have an abs() abs(Fr(thisp)**2) *
+            !% Modified from original approach by Froude number weighting
+            !% Note that Fr is +/- depending on flow direction, so if the Fr is an odd power
+            !% it needs to have an abs() e.g, abs(Fr(thisp)**3) *
             w_uQ(thisP) = - onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) - wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
             w_dQ(thisP) = + onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) + wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
             
@@ -276,9 +273,7 @@ module update
             
             w_uH(thisP) = onehalfR * length(thisP)
             w_dH(thisP) = onehalfR * length(thisP)
-
-            !w_uH(thisP) = w_uQ(thisP) ! BRHbugfix 20210812 test
-            !w_dH(thisP) = w_dQ(thisP) ! BRHbugfix 20210812 test          
+         
         endif
 
         !print *

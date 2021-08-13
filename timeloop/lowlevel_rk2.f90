@@ -672,8 +672,8 @@ module lowlevel_rk2
         integer :: ii, kk, tB
         !% BRHbugfix 20210812 start
         real(8) :: dHead 
-        integer, pointer :: iFaceUp(:), iFaceDn(:), iElemUp(:), iElemDn(:)
-        integer, pointer :: tFup, tEup, tFdn, tEdn
+        integer, pointer :: iFaceUp(:), iFaceDn(:) !, iElemUp(:), iElemDn(:)
+        integer, pointer :: tFup, tFdn !, tEup, tEdn
         !% BRHbugfix 20210812 end
         !%-----------------------------------------------------------------------------
         !%   
@@ -684,8 +684,8 @@ module lowlevel_rk2
         fFlow        => faceR(:,fr_Flowrate)
         iFaceUp      => elemI(:,ei_Mface_uL) !% BRHbugfix 20210811 
         iFaceDn      => elemI(:,ei_Mface_dL)!% BRHbugfix 20210811 
-        iElemUp      => faceI(:,fi_Melem_uL) !% BRHbugfix 20210811 
-        iElemDn       => faceI(:,fi_Melem_dL)!% BRHbugfix 20210811 
+        !iElemUp      => faceI(:,fi_Melem_uL) !% BRHbugfix 20210811 
+        !iElemDn       => faceI(:,fi_Melem_dL)!% BRHbugfix 20210811 
         !% BRHbugfix 20210811 start
         eHead        => elemR(:,er_Head)
         fHead_u       => faceR(:,fr_Head_u)
@@ -730,9 +730,6 @@ module lowlevel_rk2
                             eFlow(tB) = - eArea(tB) * sqrt(twoR * setting%Constant%gravity * (-dHead))
                         end if
                         eVelocity(tB) = eFlow(tB) / eArea(tB)
-                        
-                        !print *,'A', tB, eFlow(tB), dHead, eVelocity(tB) ,' Flow, dHead, velocity in JB'  !BRHbugfix20210812 test
-                        !print *, eHead(tEup), fHead_u(tFup), fHead_d(tFup), eHead(tB), ' heads'
                     end if
                 end do
                 !% handle the downstream branches
@@ -752,11 +749,6 @@ module lowlevel_rk2
                             eFlow(tB) =  + eArea(tB) * sqrt(twoR * setting%Constant%gravity * dHead )
                         end if
                         eVelocity(tB) = eFlow(tB) / eArea(tB)
-
-                        !print *
-                        !print *,'B', tB, eFlow(tB), dHead, eVelocity(tB) ,' Flow, dHead, velocity in JB'
-                        !print * 
-
                     end if                
                 end do
 
