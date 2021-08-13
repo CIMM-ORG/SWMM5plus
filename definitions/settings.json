@@ -67,7 +67,7 @@
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
     "Junction" : {
-        "kFactor" : 0.7
+        "kFactor" : 0.0
     },
     "Limiter" : {
         "BC" : {
@@ -93,7 +93,11 @@
         "ArraySize" : {
             "TemporalInflows" : 10,
             "TotalInflows" : 50
-        }
+        },
+        "Dt"     : {
+            "Minimum"       :  1e-6,
+            "UseLimitMin"   :  true,
+        } 
     },
     "Link" : {
         "DefaultInitDepthType" : "Linear", // uniform, linear, exponential
@@ -131,13 +135,13 @@
         "EndTime" : 0.0,
         "StartTime" : 0.0,
         "Hydrology" : {
-            "Dt" : 100.0,
+            "Dt" : 10.0,
             "timeNow" : 0.0,
             "timeNext" : 1.0,
             "timeFinal" : 1.0,
             "stepNow"  : 0,
             "stepNext"  : 1,
-            "stepFinal" : 1000
+            "stepFinal" : 10000
         },
         "Hydraulics" : {
             "Dt" : 100.0,
@@ -246,7 +250,7 @@
     },
     "Output" : {
         "report" : true,
-        "report_time" : 1000,
+        "report_time" : 60,
         "report_tol"  : 2
     },
     "Warning"  : false,

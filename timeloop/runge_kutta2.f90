@@ -39,16 +39,27 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1
+  
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 3 -- all aux variables for non-diagnostic
         call update_auxiliary_variables (ETM)
 
+        !BRHbugfix 20210812 MOVED THES ABOVE FACE INTERP
+        !% junction branch flowrate and velocity update
+        call ll_junction_branch_flowrate_and_velocity(ETM) 
+        !% compute element Froude number for JB
+        call update_Froude_number_junction_branch (ep_JM_ETM) 
+        !BRHbugfix 20210812
+
         !% RK2 solution step 4 -- all face interpolation
         call face_interpolation(fp_all)
 
         !% junction branch flowrate and velocity update
-        call ll_junction_branch_flowrate_and_velocity(ETM)
+        !call ll_junction_branch_flowrate_and_velocity(ETM)  !BRHbugfix 20210812
+
+        !% compute element Froude number for JB
+        !call update_Froude_number_junction_branch (ep_JM_ETM) !BRHbugfix 20210812
 
         !% RK2 solution step 5 -- update diagnostic elements and faces
         if (N_diag > 0) then
@@ -65,6 +76,13 @@ module runge_kutta2
 
         !% RK2 solution step 8(c)
         call update_auxiliary_variables(ETM)
+
+        !BRHbugfix 20210812 There was no branch handling after second step!
+        !% junction branch flowrate and velocity update
+        call ll_junction_branch_flowrate_and_velocity(ETM) 
+        !% compute element Froude number for JB
+        call update_Froude_number_junction_branch (ep_JM_ETM) 
+        !BRHbugfix 20210812
 
         !% RK2 solution step 8(d,e) -- update all faces
         call face_interpolation(fp_all)

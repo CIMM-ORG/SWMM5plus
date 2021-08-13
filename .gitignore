@@ -24,7 +24,7 @@ SWMM
 
 # Directories
 interface/src
-debug
+debug*
 tests/*
 !tests/test*
 .vscode

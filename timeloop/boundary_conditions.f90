@@ -20,7 +20,7 @@ contains
         integer :: ii
         character(64) :: subroutine_name = "bc_update"
         !%-----------------------------------------------------------------------------
-    
+
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
         call bc_step()
