@@ -52,6 +52,8 @@ contains
 
             link%R(ii,lr_AdjustedLength) = temp_length
             link%I(ii,li_length_adjusted) = Adjustment_flag
+            !% set the new element length based on the adjusted link length
+            link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)
         enddo
 
         if (setting%Debug%File%discretization)  print *, '*** leave ', subroutine_name

@@ -312,13 +312,19 @@ contains
             thisP     => elemP(1:Npack,thisCol)
             thisCFL = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
 
-            ! open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
-                ! form = 'formatted', action = 'write', iostat = open_status)
-            print*, 'Image = ',this_image(), 'Time = ', timeNow, 'dt = ', dt 
-            print*, 'Max cfl = ', thisCFL, 'Max vel = ', maxval(abs(velocity(thisP))), &
-                'Max wavespeed = ', maxval(abs(wavespeed(thisP)))
-            ! endfile(fu)
-            ! close(fu)
+            open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
+                form = 'formatted', action = 'write', iostat = open_status)
+            write(fu, fmt='(*(G0.6 : ","))') &
+                this_image(), timeNow, thisCFL, dt, maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))
+            endfile(fu)
+            close(fu)
+
+            !% also print the summary in the terminal
+            print*
+            print('(*(G0.6))'), 'image = ', this_image(), ',  timeNow = ', timeNow, ',  dt = ', dt
+            print('(*(G0.6))'), 'thisCFL = ',thisCFL, ',  max velocity = ', maxval(abs(velocity(thisP))), &
+            ',  max wavespeed = ', maxval(abs(wavespeed(thisP)))
+
         end if
         if (setting%Debug%File%utility_output) print *, '*** leave ', subroutine_name
     end subroutine util_output_report_summary
@@ -327,11 +333,7 @@ contains
         logical :: report
         real(8), pointer :: timeNow
         timeNow => setting%Time%Hydraulics%timeNow
-        ! report = ((abs(mod(timeNow, setting%output%report_time) - &
-        !      setting%output%report_time) <= setting%output%report_tol) .or. &
-        !      (timeNow == 0))
-
-        report = ((mod(timeNow, setting%output%report_time) == 0) .or. &
+        report = ((mod(timeNow, setting%output%report_time)  == zeroI) .or. &
              (timeNow == 0))
     end function util_output_must_report
 

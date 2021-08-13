@@ -269,8 +269,7 @@ module timeloop
         integer :: neededSteps, ii
 
         real(8), pointer :: dt, maxCFL, maxCFLlow, targetCFL
-        real(8), pointer :: timeNow, timeFinal, decreaseFactor, increaseFactor
-        real(8), pointer :: timeNext !% BRHbugfix20210811
+        real(8), pointer :: timeNow, timeNext, timeFinal, decreaseFactor, increaseFactor
         real(8), pointer :: velocity(:), wavespeed(:), length(:)
         integer, pointer :: stepNow, stepNext, stepfinal, checkStepInterval, lastCheckStep
         integer, pointer :: thisCol, Npack, thisP(:)
@@ -283,7 +282,7 @@ module timeloop
         useHydraulics => setting%Simulation%useHydraulics
         dt        => setting%Time%Hydraulics%Dt
         timeNow   => setting%Time%Hydraulics%timeNow
-        timeNext  => setting%Time%Hydraulics%timeNext   !% BRHbugfix20210811
+        timeNext  => setting%Time%Hydraulics%timeNext
         timeFinal => setting%Time%Hydraulics%timeFinal
         stepNow   => setting%Time%Hydraulics%stepNow
         stepNext  => setting%Time%Hydraulics%stepNext
@@ -365,14 +364,13 @@ module timeloop
         !% set the smallest time step on any processor as the time step
         sync all
         call co_min(dt)
-        timeNext = timeNow + dt !% BRHbugfix20210811
+        timeNext = timeNow + dt
 
-        !print *, '---- in ',trim(subroutine_name),'    z03'
-        !print *, neededSteps, ' neededSteps'
-        !print *, stepFinal, ' stepFinal'
-        !print *, dt, ' dt'
-        !print *, dt * neededSteps, ' time to be used in loop'
-        !print *,  maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) ), ' max CFL'
+        if ((setting%Limiter%Dt%UseLimitMin) .and. (dt <= setting%Limiter%Dt%Minimum)) then
+            print*, 'timeNow = ', timeNow
+            print*, 'dt = ', dt, 'minDt = ',  setting%Limiter%Dt%Minimum
+            print*, 'warning: the dt value is smaller than the user supplied min dt value'
+        endif
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_set_hydraulic_substep
@@ -443,7 +441,7 @@ module timeloop
         length    => elemR(:,er_Length)
 
         ! BRH useful for debugging -- comment out if you want quiet
-        print *, '** in ',trim(subroutine_name), ' timeNow=',timeNow,' dt=', dt
+        !print *, '** in ',trim(subroutine_name), ' timeNow=',timeNow,' dt=', dt
 
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
@@ -634,10 +632,7 @@ module timeloop
         finalstep => setting%Time%Hydrology%stepFinal
         !%-----------------------------------------------------------------------------
 
-
-
-        !!% BRHbugfix 20210811 if ((thistime > endtime) .or. (thisstep > finalstep)) then
-        if ((thistime >= endtime) .or. (thisstep >= finalstep)) then !% BRHbugfix20210811
+        if ((thistime >= endtime) .or. (thisstep >= finalstep)) then
             isTLfinished = .true.
         endif
 

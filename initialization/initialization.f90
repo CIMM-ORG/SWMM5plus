@@ -91,8 +91,9 @@ contains
 
         call init_network_define_toplevel ()
 
-        call init_time ()  !% BRHbugfix 20210811
-
+        !%set up time Dr. Hodges bug fix
+        call init_time()
+        
         !% initialize boundary conditions
         call init_bc()
 
@@ -536,20 +537,18 @@ contains
     !%
     !%==========================================================================
     !%==========================================================================
-    !%   
+    !%  
     subroutine init_time ()
-    !% BRHbugfix20210811  Entire subroutine is new    
-
-    !% adjust for inconsistent time settings
-
-    if (setting%Time%Hydrology%timeFinal > setting%Time%EndTime) then
-        setting%Time%Hydrology%timeFinal = setting%Time%EndTime
-    endif
-
-    if (setting%Time%Hydrology%Dt > setting%Time%EndTime - setting%Time%StartTime) then
-        setting%Time%Hydrology%Dt = setting%Time%EndTime - setting%Time%StartTime
-    endif   
-   
+        !% BRHbugfix20210811  Entire subroutine is new
+        !% adjust for inconsistent time settings
+        
+        if (setting%Time%Hydrology%timeFinal > setting%Time%EndTime) then
+            setting%Time%Hydrology%timeFinal = setting%Time%EndTime
+        endif
+        if (setting%Time%Hydrology%Dt > setting%Time%EndTime - setting%Time%StartTime) then
+            setting%Time%Hydrology%Dt = setting%Time%EndTime - setting%Time%StartTime
+        endif
+         
     end subroutine init_time
     !%
     !%==========================================================================

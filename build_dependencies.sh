@@ -170,7 +170,7 @@ opencoarray_prerequisite()
                         if [[ $result = 0 ]] || [[ $result = 2 ]]
                         then
                             echo "Current cmake version is ${CMAKE_VERSION}, higher than required version (${CMAKE_REQUIRE_VERSION})."
-                            export CMAKE_EXEC=$(which cmake)
+                            export CMAKE_EXEC=$CMAKE_INSTALL/bin/cmake
                             echo "cmake path: $CMAKE_EXEC" >> $INSTALLATION_LOG
                         else # version is outdated
                             echo "Local cmake is outdated. Installing a newer version of cmake ..."
@@ -339,8 +339,9 @@ install_opencoarray_linux()
         cd OpenCoarrays
         mkdir opencoarrays-build
         cd opencoarrays-build
+        echo ${CMAKE_EXEC}
         CC=gcc FC=gfortran ${CMAKE_EXEC} .. -DCMAKE_INSTALL_PREFIX=$COARRAY_INSTALL -DMPI_HOME=$MPICH_PATH
-            make
+        make
         echo "Installing Opencoarrays ... "
         sudo make install
         cd $SWMM5PLUS_DIR

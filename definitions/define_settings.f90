@@ -154,6 +154,11 @@ module define_settings
         integer :: TotallInflows = 50
     end type LimiterArraySizeType
 
+    type LimiterDtType
+        logical :: UseLimitMin = .true.
+        real(8) :: Minimum     = 1e-6
+    end type LimiterDtType
+
     ! setting%Time%Hydrology or Hydraulics
     type HydrologyHydraulicsTimeType
         real(8) :: Dt = 100  !% time step (seconds)
@@ -290,6 +295,7 @@ module define_settings
         type(LimiterInterpWeightType) :: InterpWeight
         type(LimiterVelocityType)     :: Velocity
         type(LimiterArraySizeType)    :: ArraySize
+        type(LimiterDtType)           :: Dt    
     end type LimiterType
 
     type LinkType
@@ -662,6 +668,13 @@ contains
         call json%get('Limiter.Velocity.UseLimitMax', logical_value, found)
         setting%Limiter%Velocity%UseLimitMax = logical_value
         if (.not. found) stop 43
+
+        call json%get('Limiter.Dt.Minimum', real_value, found)
+        setting%Limiter%Dt%Minimum = real_value
+        if (.not. found) stop 44
+        call json%get('Limiter.Dt.UseLimitMin', logical_value, found)
+        setting%Limiter%Dt%UseLimitMin = logical_value
+        if (.not. found) stop 45
 
         ! Load Link settings
         call json%get('Link.DefaultInitDepthType', c, found)
