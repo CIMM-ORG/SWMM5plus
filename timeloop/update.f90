@@ -35,7 +35,7 @@ module update
         integer, pointer :: thisCol_all
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'update_auxiliary_variables'
-        if (setting%Debug%File%update) print *, '*** enter ', subroutine_name     
+        if (setting%Debug%File%update) print *, '*** enter ', this_image(), subroutine_name     
         !%-----------------------------------------------------------------------------
         !%  
         !% update the head (non-surcharged) and geometry
@@ -90,7 +90,7 @@ module update
         !print *, '---- in ',subroutine_name,'   y06'
         !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
    
-        if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%update)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine update_auxiliary_variables
     !%
     !%==========================================================================
@@ -153,6 +153,7 @@ module update
         !% computes Froude number on each junction branch element
         !% BRHbugfix 20210812
         !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'update_Froude_number_junction_branch'
         integer, intent(in) :: thisCol_JM
         integer, pointer :: Npack, thisP(:), tM, BranchExists(:)
         real(8), pointer :: Froude(:), velocity(:), depth(:)
@@ -163,6 +164,7 @@ module update
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
         BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%update) print *, '*** enter ', this_image(), subroutine_name
     
         Npack => npack_elemP(thisCol_JM)
         if (Npack > 0) then
@@ -179,6 +181,7 @@ module update
             end do
         end if
 
+        if (setting%Debug%File%update)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine update_Froude_number_junction_branch
     !%   
     !%==========================================================================   
@@ -196,7 +199,7 @@ module update
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
         real(8), pointer :: Fr(:) !BRHbugfix20210811 test
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%update) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%update) print *, '*** enter ', this_image(), subroutine_name
 
         velocity  => elemR(:,er_Velocity)
         wavespeed => elemR(:,er_WaveSpeed)
@@ -294,7 +297,7 @@ module update
         ! print *, elemR(ietmp(6), er_InterpWeight_dQ)
         ! print *, elemR(ietmp(7), er_InterpWeight_dQ)
 
-        if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%update)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine update_interpolation_weights_element
     !%   
     !%==========================================================================   

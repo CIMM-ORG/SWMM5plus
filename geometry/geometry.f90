@@ -43,7 +43,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         !% set the packed geometry element array (elemPG) to use and columns of the
         !% packed elemP to use
@@ -141,7 +141,7 @@ module geometry
             call geo_dHdA (ep_NonSurcharged_AC)
         endif
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geometry_toplevel
 
     !%==========================================================================
@@ -164,7 +164,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         Npack => npack_elemP(thisColP)
         !%-------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisColP)
@@ -177,7 +177,7 @@ module geometry
             elemR(thisP,er_Topwidth)  = setting%ZeroValue%Topwidth
         endif
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_surcharged
     !%
     !%==========================================================================
@@ -194,7 +194,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_depth_from_volume'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
         !% cycle through different geometries
         !% RECTANGULAR
         thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
@@ -212,7 +212,7 @@ module geometry
 
         !% HACK Needs additional geometries, including surcharged rectangular conduits
         !% with and without Preissman slot.
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_depth_from_volume
     !%
     !%==========================================================================
@@ -233,7 +233,7 @@ module geometry
         geovalue   => elemR(:,geocol)
         fullvalue  => elemR(:,fullcol)
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         if (Npack > 0) then
             thisP      => elemP(1:Npack,thisColP)
@@ -242,7 +242,7 @@ module geometry
             endwhere
         endif
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_limit_incipient_surcharge
     !%
     !%==========================================================================
@@ -266,14 +266,14 @@ module geometry
         Zbtm      => elemR(:,er_Zbottom)
         !%-----------------------------------------------------------------------------
         !%
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         if (Npack > 0) then
             thisP     => elemP(1:Npack,thisColP)
             head(thisP) = depth(thisP) + Zbtm(thisP)
         endif
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_head_from_depth
     !%
     !%==========================================================================
@@ -314,7 +314,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_assign_JB'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         Npack         => npack_elemP(thisColP_JM)
         area          => elemR(:,er_Area)
@@ -435,7 +435,7 @@ module geometry
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
         !% difficult to read.
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_assign_JB
     !%
     !%==========================================================================
@@ -458,14 +458,14 @@ module geometry
         volume => elemR(:,er_Volume)
         length => elemR(:,er_Length)
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         if (Npack > 0) then
             thisP  => elemP(1:Npack,thisColP)
             area(thisP) = volume(thisP) / length(thisP)
         endif
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_area_from_volume
     !%
     !%==========================================================================
@@ -484,7 +484,7 @@ module geometry
         character(64) :: subroutine_name = 'geo_topwidth_from_depth'
         !%-----------------------------------------------------------------------------
         !% cycle through different geometries
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
         if (Npack > 0) then
@@ -499,7 +499,7 @@ module geometry
         endif
 
         !% HACK NEED OTHER GEOMETRIES
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_topwidth_from_depth
     !%
     !%==========================================================================
@@ -517,7 +517,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_perimeter_from_depth'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         !% cycle through different geometries
         Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
@@ -534,7 +534,7 @@ module geometry
         endif
 
         !% HACK NEED OTHER GEOMETRIES
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_perimeter_from_depth
     !%
     !%==========================================================================
@@ -553,7 +553,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hyddepth_from_depth'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         !% cycle through different geometries
         Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
@@ -570,7 +570,7 @@ module geometry
         endif
 
         !% HACK need other geometries
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_hyddepth_from_depth
     !%
     !%==========================================================================
@@ -588,7 +588,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hydradius_from_area_perimeter'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         Npack     => npack_elemP(thisColP)
         area      => elemR(:,er_Area)
@@ -601,7 +601,7 @@ module geometry
             hydradius(thisP) = area(thisP) / perimeter(thisP)
         endif
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_hydradius_from_area_perimeter
     !%
     !%==========================================================================
@@ -619,7 +619,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_ell'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         Npack               => npack_elemP(thisColP)
         ell                 => elemR(:,er_ell)
@@ -641,7 +641,7 @@ module geometry
             endwhere
         endif
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_ell
     !%
     !%==========================================================================
@@ -659,7 +659,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_ell_singular'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         head                => elemR(:,er_Head)
         area                => elemR(:,er_Area)
@@ -675,7 +675,7 @@ module geometry
                             + areaBelowBreadthMax(indx) ) / breadthMax(indx)
         endif
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end function geo_ell_singular
     !%
     !%==========================================================================
@@ -694,7 +694,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_dHdA'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%geometry) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** enter ', this_image(),subroutine_name
 
         Npack    => npack_elemP(thisColP)
         dHdA     => elemR(:,er_dHdA)
@@ -706,7 +706,7 @@ module geometry
             dHdA(thisP) = oneR / topwidth(thisP)
         endif
 
-        if (setting%Debug%File%geometry) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_dHdA
     !%
     !%==========================================================================

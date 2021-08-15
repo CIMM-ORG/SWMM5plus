@@ -24,7 +24,9 @@ Module utility_output
 contains
 
     subroutine util_output_create_folder
+        character(64) :: subroutine_name = 'util_output_create_folder'
 
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
         !creates and empties the folder before creating the debug files
 
         if( this_image() == 1) then
@@ -37,20 +39,28 @@ contains
 
         sync all
 
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
     end subroutine util_output_create_folder
 
     subroutine util_output_create_summary_files
         integer :: fu, open_status
         character(64) :: file_name
+        character(64) :: subroutine_name = 'util_output_create_summary_files'
 
-        write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
-        open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
-        form   = 'formatted', action = 'write', iostat = open_status)
+        if (setting%verbose) then
+            write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
 
-        write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
+            open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
+            form = 'formatted', action = 'write', iostat = open_status)
+
+            write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
             endfile(fu)
-        close(fu)
+            close(fu)
+        end if
+
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
     end subroutine util_output_create_summary_files
 
     subroutine util_output_create_elemR_files
@@ -61,6 +71,9 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_elem_idx
+        character(64) :: subroutine_name = 'util_output_create_elemR_files'
+
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
         fu = this_image()
 
@@ -71,7 +84,7 @@ contains
             write(str_elem_idx,'(I10)') elemI(ii,ei_Gidx)
 
             if(elemI(ii,ei_elementType) == CC) then
-                file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
+                file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" & 
                     // trim(link%names(elemI(ii,ei_link_Gidx_SWMM))%str) // &
                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
@@ -112,19 +125,20 @@ contains
 
             end if
 
-            write(fu, *) "Timestamp,Time_In_Secs,Area,Area_N0,Area_N1,AreaBelowBreadthMax,BreadthMax,Depth,dHdA,ell,&
-                Flowrate,Flowrate_N0,Flowrate_N1,FlowrateLateral,FlowrateStore,FroudeNumber,&
-                FullArea,FullDepth,FullHydDepth,FullPerimeter,FullVolume,GammaC,GammaM,Head,&
-                Head_N0,HeadLastAC,HeadStore,HydDepth,HydRadius,InterpWeight_uG,InterpWeight_dG,&
-                InterpWeight_uH,InterpWeight_dH,InterpWeight_uQ,InterpWeight_dQ,Ksource,Length,ones,&
-                Perimeter,Roughness,SmallVolume,SmallVolume_CMvelocity,SmallVolume_HeadSlope,&
-                SmallVolume_ManningsN,SmallVolumeRatio,SourceContinuity,SourceMomentum,Temp01,&
-                Topwidth,Velocity,Velocity_N0,Velocity_N1,VelocityLastAC,Volume,Volume_N0,&
-                Volume_N1,VolumeLastAC,VolumeStore,WaveSpeed,Zbottom,ZbreadthMax,Zcrown"
+            write(fu, "(A)") "Timestamp,Time_In_Secs,Area,Area_N0,Area_N1,AreaBelowBreadthMax,BreadthMax,Depth,dHdA,ell," //&
+                "Flowrate,Flowrate_N0,Flowrate_N1,FlowrateLateral,FlowrateStore,FroudeNumber," // &
+                "FullArea,FullDepth,FullHydDepth,FullPerimeter,FullVolume,GammaC,GammaM,Head," // &
+                "Head_N0,HeadLastAC,HeadStore,HydDepth,HydRadius,InterpWeight_uG,InterpWeight_dG," // &
+                "InterpWeight_uH,InterpWeight_dH,InterpWeight_uQ,InterpWeight_dQ,Ksource,Length,ones," // &
+                "Perimeter,Roughness,SmallVolume,SmallVolume_CMvelocity,SmallVolume_HeadSlope," // &
+                "SmallVolume_ManningsN,SmallVolumeRatio,SourceContinuity,SourceMomentum,Temp01," // &
+                "Topwidth,Velocity,Velocity_N0,Velocity_N1,VelocityLastAC,Volume,Volume_N0," // &
+                "Volume_N1,VolumeLastAC,VolumeStore,WaveSpeed,Zbottom,ZbreadthMax,Zcrown"
             endfile(fu)
             close(fu)
 
         end do
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
 
     end subroutine util_output_create_elemR_files
 
@@ -137,6 +151,10 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_face_idx
+        character(64) :: subroutine_name = 'util_output_create_faceR_files'
+
+
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
         fu = this_image()
 
@@ -165,6 +183,7 @@ contains
 
         end do
 
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
 
     end subroutine util_output_create_faceR_files
 
@@ -178,7 +197,9 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_elem_face_idx
+        character(64) :: subroutine_name = 'util_output_write_elemR_faceR'
 
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
         fu = this_image()
         time_secs = setting%Time%Hydraulics%timeNow
@@ -275,19 +296,20 @@ contains
             close(fu)
 
         end do
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
 
     end subroutine util_output_write_elemR_faceR
 
     subroutine util_output_report
         character(64) :: subroutine_name = "util_output_report"
 
-        if (setting%Debug%File%utility_output) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
 
-        if (util_output_must_report()) then
+        if (setting%Output%report .and. util_output_must_report()) then
             call util_output_write_elemR_faceR()
         end if
 
-        if (setting%Debug%File%utility_output) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
     end subroutine util_output_report
 
     subroutine util_output_report_summary()
@@ -298,7 +320,7 @@ contains
         character(64) :: file_name
         character(64) :: subroutine_name = "util_output_report_summary"
 
-        if (setting%Debug%File%utility_output) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
 
         if (util_output_must_report()) then
             ! write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
@@ -312,21 +334,22 @@ contains
             thisP     => elemP(1:Npack,thisCol)
             thisCFL = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
 
-            open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
-                form = 'formatted', action = 'write', iostat = open_status)
-            write(fu, fmt='(*(G0.6 : ","))') &
-                this_image(), timeNow, thisCFL, dt, maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))
-            endfile(fu)
-            close(fu)
-
+            print*, '--------------------------------------'
             !% also print the summary in the terminal
             print*
             print('(*(G0.6))'), 'image = ', this_image(), ',  timeNow = ', timeNow, ',  dt = ', dt
             print('(*(G0.6))'), 'thisCFL = ',thisCFL, ',  max velocity = ', maxval(abs(velocity(thisP))), &
             ',  max wavespeed = ', maxval(abs(wavespeed(thisP)))
 
+            open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
+                form = 'formatted', action = 'write', iostat = open_status)
+            write(fu, fmt='(*(G0.6 : ","))') &
+                this_image(), timeNow, thisCFL, dt, maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))
+            endfile(fu)
+            close(fu)
         end if
-        if (setting%Debug%File%utility_output) print *, '*** leave ', subroutine_name
+
+        if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
     end subroutine util_output_report_summary
 
     function util_output_must_report() result(report)

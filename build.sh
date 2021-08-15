@@ -33,6 +33,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_interpolate.f90\
               $INIT_DIR/pack_mask_arrays.f90\
               $INIT_DIR/discretization.f90\
+              $INIT_DIR/BIPquick.f90\
               $INIT_DIR/partitioning.f90\
               $INIT_DIR/network_define.f90\
               $UTIL_DIR/utility_unit_testing.f90\

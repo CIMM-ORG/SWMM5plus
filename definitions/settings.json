@@ -107,7 +107,7 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Partitioning" : {
-        "PartitioningMethod" : "BLink"
+        "PartitioningMethod" : "Blink"
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -252,8 +252,9 @@
         }
     },
     "Output" : {
-        "report_time" : 600.0,
-        "report_tol"  : 10
+        "report" : true,
+        "report_time" : 600,
+        "report_tol"  : 2
     },
     "Warning"  : false,
     "Verbose" : false

@@ -35,7 +35,7 @@ module runge_kutta2
         integer :: istep, ii
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'rk2_toplevel_ETM'
-        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1
@@ -95,7 +95,7 @@ module runge_kutta2
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
 
-        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine rk2_toplevel_ETM
     !%
     !%==========================================================================
@@ -107,9 +107,9 @@ module runge_kutta2
         !%
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'rk2_toplevel_AC'
-        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', this_image(), subroutine_name
 
 
         print *, "need rk2_toplevel_AC to be written"
@@ -128,7 +128,7 @@ module runge_kutta2
         integer :: istep, faceMaskCol, thisCol
         integer, pointer :: Npack
         character(64) :: subroutine_name = 'rk2_toplevel_ETMAC'
-        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         !% step 1 -- RK2 step 1 for ETM
 
@@ -210,7 +210,7 @@ module runge_kutta2
         !% step X -- make ad hoc adjustments
         call adjust_values (ALLtm)
 
-        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine rk2_toplevel_ETMAC
     !%
     !%==========================================================================

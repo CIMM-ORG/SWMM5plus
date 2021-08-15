@@ -6,6 +6,7 @@ module partitioning
     use define_settings, only: setting
     use utility
     use utility_allocate
+    use BIPquick
     use utility_deallocate
 
     implicit none
@@ -38,11 +39,10 @@ subroutine init_partitioning_method()
     !   check that the output is correct (if debug == true)
     !
     !---------------------------------------------------------
-    logical :: partition_correct
-    integer :: connectivity, ii
-    real(8) :: part_size_balance
-    character(64) :: subroutine_name = 'init_partitioning_method'
-
+        logical :: partition_correct
+        integer :: connectivity, ii, nn
+        real(8) :: part_size_balance
+        character(64) :: subroutine_name = 'init_partitioning_method'
     !% --------------------------------------------------------
 
     call util_allocate_partitioning_arrays()
@@ -57,16 +57,27 @@ subroutine init_partitioning_method()
     else if (setting%Partitioning%PartitioningMethod == BLink) then
         if (setting%Verbose) print*, "Using Balanced Link Partitioning"
         call init_partitioning_linkbalance()
+    else if (setting%Partitioning%PartitioningMethod == BQuick) then
+        if (setting%Verbose) print*, "Using BIPquick Partitioning"
+        call init_partitioning_BIPquick()
+        N_node = count(node%I(:,ni_idx) /= nullvalueI)
+        N_link = count(link%I(:,li_idx) /= nullvalueI)
     else
         print *, "Error, partitioning method not supported"
         stop
     end if
-    if (setting%Debug%File%partitioning) then
-        print *, '*** leave ', subroutine_name
 
+    if (setting%Debug%File%partitioning) then
+        print *, '*** leave ', this_image(), subroutine_name
+
+        print *, "Node Partitioning"
+        print *, new_line("")
         do ii = 1, size(node%I, 1)
             print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
         end do
+
+        print *, "Link Partitioning"
+        print *, new_line("")
         do ii = 1, size(link%I, 1)
             print*, link%I(ii, li_idx), link%I(ii, li_P_image)
         end do
@@ -301,7 +312,7 @@ subroutine init_partitioning_linkbalance()
 !-----------------------------------------------------------------------------
 !
 ! Description:
-!   a balanced partitioning algorithm which distriutes all the links equally 
+!   a balanced partitioning algorithm which distriutes all the links equally
 !   to the available number of processors
 !
 !-----------------------------------------------------------------------------
@@ -313,7 +324,7 @@ subroutine init_partitioning_linkbalance()
     character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
-    if (setting%Debug%File%partitioning) print *, '*** enter ', subroutine_name
+    if (setting%Debug%File%partitioning) print *, '*** enter ', this_image(), subroutine_name
 
     if (N_link < num_images()) then
         call init_partitioning_default()
@@ -360,7 +371,7 @@ subroutine init_partitioning_linkbalance()
         print *, node%I(:, ni_P_is_boundary), "node%I(:, ni_P_is_boundary)"
     end if
 
-    if (setting%Debug%File%partitioning)  print *, '*** leave ', subroutine_name
+    if (setting%Debug%File%partitioning)  print *, '*** leave ', this_image(), subroutine_name
 end subroutine init_partitioning_linkbalance
 !
 !==========================================================================

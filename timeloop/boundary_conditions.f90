@@ -20,8 +20,8 @@ contains
         integer :: ii
         character(64) :: subroutine_name = "bc_update"
         !%-----------------------------------------------------------------------------
-    
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
         call bc_step()
 
@@ -41,7 +41,7 @@ contains
             do ii = 1, setting%BC%BCSlots
                 print *, BC%flowR_timeseries(:, ii, br_value)
             end do
-            print *, '*** leave ', subroutine_name
+            print *, '*** leave ', this_image(), subroutine_name
 
             print *, "HEAD BC"
             print *, "BC times"
@@ -52,7 +52,7 @@ contains
             do ii = 1, setting%BC%BCSlots
                 print *, BC%headR_timeseries(:, ii, br_value)
             end do
-            print *, '*** leave ', subroutine_name
+            print *, '*** leave ', this_image(), subroutine_name
         end if
     end subroutine bc_update
 
@@ -64,7 +64,7 @@ contains
         character(64) :: subroutine_name = "bc_step"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
         tnow = setting%Time%Hydraulics%timeNow
         tend = setting%Time%EndTime
@@ -144,7 +144,7 @@ contains
         character(64)       :: subroutine_name = "bc_fetch_flow"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
         NN = setting%BC%BCSlots
 
@@ -156,15 +156,21 @@ contains
             BC%flowR_timeseries(bc_idx, 1, br_value) = BC%flowR_timeseries(bc_idx, NN, br_value)
         end if
 
+        new_inflow_time = setting%Time%StartTime
         do ii = 2, NN
-            new_inflow_time = min(setting%Time%EndTime, interface_get_next_inflow_time(bc_idx, setting%Time%StartTime))
+            new_inflow_time = min(setting%Time%EndTime, interface_get_next_inflow_time(bc_idx, new_inflow_time))
             BC%flowR_timeseries(bc_idx, ii, br_time) = new_inflow_time
             BC%flowR_timeseries(bc_idx, ii, br_value) = interface_get_flowBC(bc_idx, new_inflow_time)
             if (new_inflow_time == setting%Time%EndTime) exit
         end do
         BC%flowIdx(bc_idx) = 2
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%boundary_conditions) then
+            do ii = 1, NN
+                write(*, "(*(G0.4 : ','))") BC%flowR_timeseries(bc_idx, ii, :)
+            end do
+            print *, '*** leave ', this_image(), subroutine_name
+        end if
 
     end subroutine bc_fetch_flow
 
@@ -176,7 +182,7 @@ contains
         character(64)       :: subroutine_name = "bc_fetch_head"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
         NN = setting%BC%BCSlots
 
@@ -196,7 +202,7 @@ contains
         end do
         BC%headIdx(bc_idx) = 2
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', this_image(), subroutine_name
     end subroutine bc_fetch_head
 
 
@@ -212,7 +218,7 @@ contains
         character(64) :: subroutine_name = 'bc_interpolate'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
         tnow = setting%Time%Hydraulics%timeNow
 
@@ -263,7 +269,7 @@ contains
             end if
         end do
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine bc_interpolate
 end module boundary_conditions
