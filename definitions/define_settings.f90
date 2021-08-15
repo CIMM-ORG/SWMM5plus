@@ -282,6 +282,12 @@ module define_settings
         real(8) :: InflowDepthIncreaseFroudeLimit = 0.1
     end type EpsilonType
 
+    !% setting%FaceInterp
+    type FaceInterpType
+        integer :: DownJBFaceInterp = Static
+    end type FaceInterpType
+
+
     ! setting%Junction
     type JunctionType
         real(8) :: kFactor = 0.7    !% junction branch k-factor for entrance or exit losses
@@ -435,6 +441,7 @@ module define_settings
         type(ConstantType)       :: Constant ! Constants
         type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
+        type(FaceInterpType)     :: FaceInterp ! Temporary: setting for face interpolation in downstream JB
         type(JunctionType)       :: Junction
         type(LimiterType)        :: Limiter ! maximum and minimum limiters
         type(LinkType)           :: Link
@@ -620,6 +627,18 @@ contains
         call json%get('Eps.InflowDepthIncreaseFroudeLimit', real_value, found)
         setting%Eps%InflowDepthIncreaseFroudeLimit = real_value
         if (.not. found) stop 32
+
+        ! Load FaceInterp Settings
+        call json%get('FaceInterp.DownJBFaceInterp', c, found)
+        call util_lower_case(c)
+        if (c == 'static') then
+            setting%FaceInterp%DownJBFaceInterp = static
+        else if (c == 'dynamic') then
+            setting%FaceInterp%DownJBFaceInterp = dynamic
+        else
+            print *, "Error, the setting '" // trim(c) // "' is not supported for DownJBFaceInterp"
+            stop 3230
+        end if
 
         ! Load Junction Settings
         call json%get('Junction.kFactor', real_value, found)

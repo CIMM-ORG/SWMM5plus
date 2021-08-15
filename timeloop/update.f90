@@ -81,16 +81,13 @@ module update
         !print *, '---- in ',subroutine_name,'   y05'
         !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
 
+        !print *, '---- in ',subroutine_name,'   y07'
+        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
+
         !% compute element face interpolation weights on CC, JM
         call update_interpolation_weights_element (thisCol_all, whichTM)
 
         !print *, '---- in ',subroutine_name,'   y06'
-        !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
-
-        !% testin a new branch interp technique
-        call update_interpolation_weights_ds_JB ()
-
-        !print *, '---- in ',subroutine_name,'   y07'
         !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
    
         if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
@@ -276,6 +273,15 @@ module update
          
         endif
 
+        if (setting%FaceInterp%DownJBFaceInterp == dynamic) then
+            if (num_images() > oneI) then
+                print*, 'error: dynamic face interpolation for ds JB does not support multiple processors yet'
+            else
+                !% testin a new branch interp technique
+                call update_interpolation_weights_ds_JB ()
+            endif
+        endif
+
         !print *
         !print *,'--- in ',trim(subroutine_name),' ----------------------------------------- end'
         !write(*,'(7e11.4,A15)') elemR(ietmp,er_InterpWeight_dQ),' InterpWeight_dQ'
@@ -301,11 +307,13 @@ module update
         !% This subroutine sets the interpolation wights in ds JB to its 
         !% conneceted link element
         !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'update_interpolation_weights_ds_JB'
         integer, pointer :: thisColP_JM, fUp(:), fDn(:), eUp(:), eDn(:), tM
         integer, pointer :: Npack, Npack2, thisCol_AC,  thisP(:), thisP2(:), BranchExists(:)
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
         integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%update)  print *, '*** enter ', subroutine_name
         w_uQ      => elemR(:,er_InterpWeight_uQ)
         w_dQ      => elemR(:,er_InterpWeight_dQ)
         w_uG      => elemR(:,er_InterpWeight_uG)
@@ -334,16 +342,15 @@ module update
                         !% Baseline is all commented
                         !% case 1  Q of downstream JB equal with Q upstream of next element down
                         w_dQ(tB) = w_uQ(eDn(fDn(tB)))
-                        w_uQ(tB) = w_dQ(eUp(fUp(tB)))
+                        ! w_uQ(tB) = w_dQ(eUp(fUp(tB)))
 
                         !% case 2  G of downstream JB equal with G upstream of next element down
                         w_dG(tB) = w_uG(eDn(fDn(tB)))
-                        w_uG(tB) = w_dG(eUp(fUp(tB)))
+                        ! w_uG(tB) = w_dG(eUp(fUp(tB)))
 
                         !% case 3 H of downstream JB equal with H of upstream of next element down  
                         w_dH(tB) = w_uH(eDn(fDn(tB)))
-                        w_uH(tB) = w_dH(eUp(fUp(tB)))
-
+                        ! w_uH(tB) = w_dH(eUp(fUp(tB)))
 
 
                         !% case 4 Q,G,H all changed 
@@ -378,6 +385,7 @@ module update
             end do
         endif
 
+        if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
     end subroutine update_interpolation_weights_ds_JB
     !% 
     !%==========================================================================

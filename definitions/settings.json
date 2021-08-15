@@ -66,6 +66,9 @@
         "FroudeJump" : 0.1,
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
+    "FaceInterp" : {
+        "DownJBFaceInterp" : "static",
+    },
     "Junction" : {
         "kFactor" : 0.0
     },
@@ -249,7 +252,7 @@
         }
     },
     "Output" : {
-        "report_time" : 60.0,
+        "report_time" : 600.0,
         "report_tol"  : 10
     },
     "Warning"  : false,
