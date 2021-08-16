@@ -71,6 +71,7 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_elem_idx
+        character(len = 10)  :: str_link_node_idx
         character(64) :: subroutine_name = 'util_output_create_elemR_files'
 
         if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
@@ -79,15 +80,22 @@ contains
 
         write(str_image, '(i1)') fu
 
+        !print *, "N_elem", N_elem(this_image())
+        !print *, "size(elemI(:,ei_Gidx)",size(elemI(:,ei_Gidx))
+        !print *, "size(link%names(:))", size(link%names(:))
+
         do ii = 1, N_elem(this_image())
 
             write(str_elem_idx,'(I10)') elemI(ii,ei_Gidx)
 
             if(elemI(ii,ei_elementType) == CC) then
-                file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" & 
-                    // trim(link%names(elemI(ii,ei_link_Gidx_SWMM))%str) // &
-                    "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+      
+                file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
+                    // trim(ADJUSTL(str_link_node_idx))// &
+                    "_" // trim(ADJUSTL(str_elem_idx))//".csv"
+                
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
                 form   = 'formatted', action = 'write', iostat = open_status)
 
@@ -97,8 +105,11 @@ contains
 
 
             else if(elemI(ii,ei_elementType) == JM) then
+
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                
                 file_name = "debug_output/elemR/"//trim(str_image)//"_JM_" &
-                    // trim(node%names(elemI(ii,ei_node_Gidx_SWMM))%str) // &
+                    // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
 
@@ -111,9 +122,12 @@ contains
 
 
             else if(elemI(ii,ei_elementType) == JB) then
-                file_name = "debug_output/elemR/"//trim(str_image)//"_JB_" &
-                    // trim(node%names(elemI(ii,ei_node_Gidx_SWMM))%str) // &
-                    "_" // trim(ADJUSTL(str_elem_idx))//".csv"
+
+                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                
+                 file_name = "debug_output/elemR/"//trim(str_image)//"_JB_" &
+                     // trim(ADJUSTL(str_link_node_idx))// &
+                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
 
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
@@ -197,6 +211,7 @@ contains
         character(len = 4)   :: str_image
         character(len = 100) :: link_name
         character(len = 40)  :: str_elem_face_idx
+        character(len = 10)  :: str_link_node_idx
         character(64) :: subroutine_name = 'util_output_write_elemR_faceR'
 
         if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
@@ -215,8 +230,11 @@ contains
             write(str_elem_face_idx,'(I10)') elemI(ii,ei_Gidx)
 
             if(elemI(ii,ei_elementType) == CC) then
+
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                
                 file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
-                    // trim(link%names(elemI(ii,ei_link_Gidx_SWMM))%str) // &
+                    // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_face_idx))//".csv"
 
                 open(newunit=fu, file = file_name, status = 'old',access = 'append', &
@@ -228,8 +246,11 @@ contains
 
 
             else if(elemI(ii,ei_elementType) == JM) then
+
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                
                 file_name = "debug_output/elemR/"//trim(str_image)//"_JM_" &
-                    // trim(node%names(elemI(ii,ei_node_Gidx_SWMM))%str) // &
+                    // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_face_idx))//".csv"
 
 
@@ -242,8 +263,11 @@ contains
 
 
             else if(elemI(ii,ei_elementType) == JB) then
+
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                
                 file_name = "debug_output/elemR/"//trim(str_image)//"_JB_" &
-                    // trim(node%names(elemI(ii,ei_node_Gidx_SWMM))%str) // &
+                    // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_face_idx))//".csv"
 
 
@@ -322,8 +346,8 @@ contains
 
         if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
 
-        if (util_output_must_report()) then
-            ! write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
+        if (util_output_must_report() .and. setting%verbose) then
+            write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
             timeNow   => setting%Time%Hydraulics%timeNow
             dt        => setting%Time%Hydraulics%Dt
             velocity  => elemR(:,er_Velocity)
@@ -345,6 +369,7 @@ contains
                 form = 'formatted', action = 'write', iostat = open_status)
             write(fu, fmt='(*(G0.6 : ","))') &
                 this_image(), timeNow, thisCFL, dt, maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))
+
             endfile(fu)
             close(fu)
         end if
