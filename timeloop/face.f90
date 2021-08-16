@@ -234,6 +234,7 @@ module face
         character(64) :: subroutine_name = 'face_interpolation_dnBC_byPack'
         integer :: ii
         integer, pointer :: face_P(:), eup(:), idx_P(:)
+        real :: DownStreamBcHead
 
         !%-----------------------------------------------------------------------------
 

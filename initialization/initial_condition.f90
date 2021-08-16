@@ -87,39 +87,39 @@ contains
         !% populate er_ones columns with ones
         call init_IC_oneVectors ()
 
-        ! if (setting%Debug%File%initial_condition) then
-        !     !% only using the first processor to print results
-        !     if (this_image() == 1) then
-        !         do ii = 1,num_images()
-        !            print*, '----------------------------------------------------'
-        !            print*, 'image = ', ii
-        !            print*, '.....................elements.......................'
-        !            print*, elemI(:,ei_elementType)[ii], 'element type'
-        !            print*, elemI(:,ei_geometryType)[ii],'element geometry'
-        !            print*, '-------------------Geometry Data--------------------'
-        !            print*, elemR(:,er_Depth)[ii], 'depth'
-        !            print*, elemR(:,er_Area)[ii], 'area'
-        !            print*, elemR(:,er_Head)[ii], 'head'
-        !            print*, elemR(:,er_Topwidth)[ii], 'topwidth'
-        !            print*, elemR(:,er_Volume)[ii],'volume'
-        !            print*, '-------------------Dynamics Data--------------------'
-        !            print*, elemR(:,er_Flowrate)[ii], 'flowrate'
-        !            print*, elemR(:,er_Velocity)[ii], 'velocity'
-        !            print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
-        !            print*, elemR(:,er_InterpWeight_uQ)[ii], 'timescale Q up'
-        !            print*, elemR(:,er_InterpWeight_dQ)[ii], 'timescale Q dn'
-        !            print*, '..................faces..........................'
-        !            print*, faceR(:,fr_Area_u)[ii], 'face area up'
-        !            print*, faceR(:,fr_Area_d)[ii], 'face area dn'
-        !            print*, faceR(:,fr_Head_u)[ii], 'face head up'
-        !            print*, faceR(:,fr_Head_d)[ii], 'face head dn'
-        !            print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
-        !            print*, faceR(:,fr_Topwidth_u)[ii], 'face topwidth up'
-        !            print*, faceR(:,fr_Topwidth_d)[ii], 'face topwidth dn'
-        !            call execute_command_line('')
-        !         enddo
-        !     endif
-        ! endif
+        if (setting%Debug%File%initial_condition) then
+            !% only using the first processor to print results
+            if (this_image() == 1) then
+                do ii = 1,num_images()
+                   print*, '----------------------------------------------------'
+                   print*, 'image = ', ii
+                   print*, '.....................elements.......................'
+                   print*, elemI(:,ei_elementType)[ii], 'element type'
+                   print*, elemI(:,ei_geometryType)[ii],'element geometry'
+                   print*, '-------------------Geometry Data--------------------'
+                   print*, elemR(:,er_Depth)[ii], 'depth'
+                   print*, elemR(:,er_Area)[ii], 'area'
+                   print*, elemR(:,er_Head)[ii], 'head'
+                   print*, elemR(:,er_Topwidth)[ii], 'topwidth'
+                   print*, elemR(:,er_Volume)[ii],'volume'
+                   print*, '-------------------Dynamics Data--------------------'
+                   print*, elemR(:,er_Flowrate)[ii], 'flowrate'
+                   print*, elemR(:,er_Velocity)[ii], 'velocity'
+                   print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
+                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'timescale Q up'
+                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'timescale Q dn'
+                   print*, '..................faces..........................'
+                   print*, faceR(:,fr_Area_u)[ii], 'face area up'
+                   print*, faceR(:,fr_Area_d)[ii], 'face area dn'
+                   print*, faceR(:,fr_Head_u)[ii], 'face head up'
+                   print*, faceR(:,fr_Head_d)[ii], 'face head dn'
+                   print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
+                   print*, faceR(:,fr_Topwidth_u)[ii], 'face topwidth up'
+                   print*, faceR(:,fr_Topwidth_d)[ii], 'face topwidth dn'
+                   call execute_command_line('')
+                enddo
+            endif
+        endif
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_IC_setup

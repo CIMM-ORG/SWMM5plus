@@ -91,8 +91,6 @@ contains
         !% HACK: this sync call is probably not needed
         sync all
 
-        if (this_image() == 1) call util_export_linknode_csv()
-
         call init_network_define_toplevel ()
 
         !%set up time Dr. Hodges bug fix
@@ -100,6 +98,8 @@ contains
         
         !% initialize boundary conditions
         call init_bc()
+
+        if (this_image() == 1) call util_export_linknode_csv()
 
         call init_IC_setup ()
 
