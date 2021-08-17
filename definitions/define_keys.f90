@@ -114,6 +114,9 @@ module define_keys
         enumerator :: T00                   !% type of momentum source
         enumerator :: T10                   !% type of momentum source
         enumerator :: T20                   !% type of momentum source
+        !% type of face interpolation for downstream JB
+        enumerator :: static
+        enumerator :: dynamic
         !% MISC keys
         enumerator :: doesnotexist          !% used in various places to indicate something doesn't exist
         enumerator :: vshape                !% type of adjustment

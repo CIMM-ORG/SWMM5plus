@@ -107,7 +107,7 @@ contains
                     call bc_fetch_head(ii)
                     !% HACK - we are assuming that outfalls can only have one link upstream
                     lidx = node%I(nidx, ni_Mlink_u1)
-                    link%R(lidx, lr_InitialDnstreamDepth) = BC%headR_timeseries(ii, 1, br_value)
+                    link%R(lidx, lr_InitialDnstreamDepth) = BC%headR_timeseries(ii, 1, br_value) - node%R(nidx,nr_Zbottom)
                 else
                     ttime = BC%headR_timeseries(ii, BC%headIdx(ii), br_time) ! Current time slot (upper bound of time interval)
                     if (tnow > ttime) then ! Needs update

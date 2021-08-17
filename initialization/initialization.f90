@@ -91,8 +91,6 @@ contains
         !% HACK: this sync call is probably not needed
         sync all
 
-        if (this_image() == 1) call util_export_linknode_csv()
-
         call init_network_define_toplevel ()
 
         !%set up time Dr. Hodges bug fix
@@ -101,9 +99,9 @@ contains
         !% initialize boundary conditions
         call init_bc()
 
+        if (this_image() == 1) call util_export_linknode_csv()
+
         call init_IC_setup ()
-
-
 
         !% creating output_folders and files
         if (setting%Output%report) call util_output_create_folder()
@@ -371,7 +369,6 @@ contains
 
         !% Set the network partitioning method used for multi-processor parallel computation
         call init_partitioning_method()
-
 
         !% adjust the link lengths by cutting off a certain portion for the junction branch
         !% this subroutine is called here to correctly estimate the number of elements and faces

@@ -59,12 +59,15 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 10.00,
+        "NominalElemLength" : 100.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
         "FroudeJump" : 0.1,
         "InflowDepthIncreaseFroudeLimit" : 0.1
+    },
+    "FaceInterp" : {
+        "DownJBFaceInterp" : "static",
     },
     "Junction" : {
         "kFactor" : 0.0
@@ -104,7 +107,7 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Partitioning" : {
-        "PartitioningMethod" : "BQuick"
+        "PartitioningMethod" : "Blink"
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -250,7 +253,7 @@
     },
     "Output" : {
         "report" : true,
-        "report_time" : 60,
+        "report_time" : 600,
         "report_tol"  : 2
     },
     "Warning"  : false,

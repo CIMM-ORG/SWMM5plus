@@ -370,6 +370,7 @@ module timeloop
             print*, 'timeNow = ', timeNow
             print*, 'dt = ', dt, 'minDt = ',  setting%Limiter%Dt%Minimum
             print*, 'warning: the dt value is smaller than the user supplied min dt value'
+            stop 3369
         endif
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
