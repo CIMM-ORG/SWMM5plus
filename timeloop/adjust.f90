@@ -311,8 +311,9 @@ module adjust
         integer, intent(in) :: whichTM
         integer, pointer :: thisCol, Npack
         integer, pointer :: thisP(:), mapUp(:), mapDn(:)
-        real(8), pointer :: coef
+        real(8), pointer :: coef, vMax
         real(8), pointer :: faceFlow(:), elemFlow(:), elemVel(:), w_uQ(:), w_dQ(:), elemArea(:)
+        logical, pointer :: isAdhocFlowrate(:)
         !%-----------------------------------------------------------------------------  
         character(64) :: subroutine_name = 'adjust_Vshaped_flowrate'
         if (setting%Debug%File%adjust) print *, '*** enter ', this_image(), subroutine_name
@@ -328,7 +329,7 @@ module adjust
                 print *, 'error, this default case should not be reached'
                 stop 9239
         end select
-
+        
         !% HACK: below is the original code.
         !% I think the v-shape adjustment should only be called for CC elements
         !% because flowrate is only solved for CC elements
@@ -352,7 +353,7 @@ module adjust
         !% if coef == 1 then the V-shape element flowrate is replaced by the weighted
         !% average of its faces.
         coef => setting%Adjust%Flowrate%Coef
-        
+        vMax => setting%Limiter%Velocity%Maximum
         if (coef > zeroR) then      
             Npack => npack_elemP(thisCol)
 
@@ -366,6 +367,8 @@ module adjust
                 elemArea => elemR(:,er_Area)
                 w_uQ     => elemR(:,er_InterpWeight_uQ)
                 w_dQ     => elemR(:,er_InterpWeight_dQ)
+                isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
+
 
                 !% identify the V-shape condition
                 where  ( (util_sign_with_ones(faceFlow(mapUp(thisP)) - elemFlow(thisP)))      &
@@ -379,8 +382,13 @@ module adjust
                         / ( w_uQ(thisP) + w_dQ(thisP) )
 
                     !% reset the velocity      
-                    elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)     
+                    elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
                 endwhere
+                
+                where (abs(elemVel(thisP)) > vMax)
+                    elemVel(thisP) = sign( 0.99 * vMax, elemVel(thisP) )
+                    isAdhocFlowrate(thisP) = .true.
+                endwhere 
             endif
         endif
         
@@ -605,7 +613,7 @@ module adjust
         !%-----------------------------------------------------------------------------
 
         where (abs(velocity(thisP)) > vMax)
-            velocity(thisP) = sign( 0.99 * vMax, velocity )
+            velocity(thisP) = sign( 0.99 * vMax, velocity(thisP) )
             isAdhocFlowrate(thisP) = .true.
         endwhere 
 
