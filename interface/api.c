@@ -129,7 +129,7 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     else if (attr == node_initDepth)
     {
         if (Node[k].type == OUTFALL)
-            *value = api_get_headBC(f_api, k, StartDateTime);
+            *value = api_get_headBC(f_api, k, StartDateTime) - FTTOM(Node[k].invertElev);
         else
             *value = FTTOM(Node[k].initDepth);
     }
