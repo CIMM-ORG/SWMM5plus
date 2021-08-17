@@ -70,7 +70,7 @@
         "DownJBFaceInterp" : "static",
     },
     "Junction" : {
-        "kFactor" : 0.0
+        "kFactor" : 0.7
     },
     "Limiter" : {
         "BC" : {

@@ -86,8 +86,6 @@ contains
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays ()
 
-        if (this_image() == 1) call util_export_linknode_csv()
-
         call init_partitioning()
 
         !% HACK: this sync call is probably not needed
@@ -100,6 +98,8 @@ contains
 
         !% initialize boundary conditions
         call init_bc()
+
+        if (this_image() == 1) call util_export_linknode_csv()
 
         call init_IC_setup ()
 
