@@ -86,6 +86,8 @@ contains
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays ()
 
+        if (this_image() == 1) call util_export_linknode_csv()
+
         call init_partitioning()
 
         !% HACK: this sync call is probably not needed
@@ -95,11 +97,9 @@ contains
 
         !%set up time Dr. Hodges bug fix
         call init_time()
-        
+
         !% initialize boundary conditions
         call init_bc()
-
-        if (this_image() == 1) call util_export_linknode_csv()
 
         call init_IC_setup ()
 
@@ -111,7 +111,7 @@ contains
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
-  
+
         !% wait for all the processors to reach this stage before starting the time loop
         if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine initialize_all
@@ -194,8 +194,10 @@ contains
             else if (total_n_links >= twoI) then
                 node%I(ii, ni_node_type) = nJm
             end if
+
             node%YN(ii, nYN_has_extInflow) = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
             node%YN(ii, nYN_has_dwfInflow) = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
+
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
                 if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then
@@ -542,18 +544,18 @@ contains
     !%
     !%==========================================================================
     !%==========================================================================
-    !%  
+    !%
     subroutine init_time ()
         !% BRHbugfix20210811  Entire subroutine is new
         !% adjust for inconsistent time settings
-        
+
         if (setting%Time%Hydrology%timeFinal > setting%Time%EndTime) then
             setting%Time%Hydrology%timeFinal = setting%Time%EndTime
         endif
         if (setting%Time%Hydrology%Dt > setting%Time%EndTime - setting%Time%StartTime) then
             setting%Time%Hydrology%Dt = setting%Time%EndTime - setting%Time%StartTime
         endif
-         
+
     end subroutine init_time
     !%
     !%==========================================================================
