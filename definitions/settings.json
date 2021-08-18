@@ -238,7 +238,8 @@
             "utility_interpolate" : false,
             "utility_output" : false,
             "utility_string" : false,
-            "weir_elements" : false
+            "weir_elements" : false,
+	    "output" : false
         },
         "FileGroup" : {
             "all" : false,

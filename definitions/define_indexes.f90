@@ -47,7 +47,7 @@ module define_indexes
     integer, target :: Nelem_in_Junction = Junction_branch_6_out
 
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for node%I(:,:) arrays
+    !% Define the column indexes for link%I(:,:) arrays
     !% These are the for the full arrays of integer data
     !%-------------------------------------------------------------------------
     enum, bind(c)

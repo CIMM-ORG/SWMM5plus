@@ -52,7 +52,8 @@ contains
         call pack_static_shared_faces()
         call pack_dynamic_interior_faces()
         call pack_dynamic_shared_faces()
-
+        call Pack_output()
+       
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
@@ -1723,4 +1724,22 @@ contains
         end if
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_bc
+
+    subroutine pack_output
+        integer :: ii, jj,link_output_idx_length
+        character(64)    :: subroutine_name = 'pack_output'
+        !--------------------------------------------------------------------------
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+
+        !count the amount of valid output links
+        link_output_idx_length = count(link_output_idx(1:N_link_output) /= nullvalueI)
+
+        !allocate the pack
+        allocate(link%P%have_output(link_output_idx_length))
+
+        !fill the pack 
+        link%P%have_output = pack(link_output_idx,link%I(link_output_idx(1:link_output_idx_length), li_P_image) == this_image())
+
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+    end subroutine pack_output
 end module pack_mask_arrays

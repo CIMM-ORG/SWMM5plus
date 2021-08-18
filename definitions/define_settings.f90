@@ -217,6 +217,7 @@ module define_settings
         logical :: utility_output      = .false.
         logical :: utility_string      = .false.
         logical :: weir_elements       = .false.
+        logical :: output              = .false.
     end type DebugFileYNType
 
     ! setting%Debug%FileGroup
@@ -925,7 +926,6 @@ contains
         call json%get("Weir.Trapezoidal.VillemonteCorrectionExponent", real_value, found)
         setting%Weir%Trapezoidal%VillemonteCorrectionExponent = real_value
         if (.not. found) stop 99
-
         !% load variable time step settings
         call json%get("VariableDT.Apply", logical_value, found)
         setting%VariableDT%Apply = logical_value
@@ -1077,6 +1077,9 @@ contains
         call json%get('Debug.File.weir_elements', logical_value, found)
         setting%Debug%File%weir_elements = logical_value
         if (.not. found) stop 147
+        call json%get('Debug.File.output', logical_value, found)
+        setting%Debug%File%output = logical_value
+        if (.not. found) stop 160
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
         if (.not. found) stop 148
@@ -1118,7 +1121,7 @@ contains
         if (.not. found) stop 159
 
         call json%destroy()
-        if (json%failed()) stop 160
+        if (json%failed()) stop 161
 
         if (setting%Debug%File%define_settings) print *, '*** leave ', this_image(), subroutine_name
     end subroutine def_load_settings

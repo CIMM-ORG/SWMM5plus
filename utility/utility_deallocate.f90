@@ -110,6 +110,12 @@ contains
         deallocate(link%Names, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
+        deallocate(node_output_idx,stat=deallocation_status,errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg)
+        
+        deallocate(link_output_idx,stat=deallocation_status,errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg)
+
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_deallocate_linknode

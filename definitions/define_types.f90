@@ -75,6 +75,10 @@ module define_types
         integer,      allocatable :: have_headBC(:)
     end type NodePack
 
+    type LinkPack
+        integer, allocatable :: have_output(:)
+    end type LinkPack
+    
     type NodeArray
         integer,      allocatable :: I(:,:)   !% integer data for nodes
         real(8),      allocatable :: R(:,:)   !% real data for nodes
@@ -88,6 +92,7 @@ module define_types
         real(8),      allocatable :: R(:,:)   !% real data for links
         logical,      allocatable :: YN(:,:)  !% logical data for links
         type(string), allocatable :: Names(:) !% names for links retrieved from EPA-SWMM
+        type(LinkPack)            :: P        !% pack for links
     end type LinkArray
 
     type BCPack

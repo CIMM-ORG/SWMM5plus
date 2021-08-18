@@ -7,6 +7,7 @@ Module utility_output
     use define_types
     use interface
     use utility_datetime
+    use output
     use, intrinsic :: iso_fortran_env, only: error_unit
 
     implicit none
@@ -20,7 +21,7 @@ Module utility_output
     public :: util_output_write_elemR_faceR
     public :: util_output_report
     public :: util_output_report_summary
-
+    
 contains
 
     subroutine util_output_create_folder
@@ -35,6 +36,7 @@ contains
             call system('mkdir debug_output/elemR')
             call system('mkdir debug_output/faceR')
             call system('mkdir debug_output/summary')
+            call system('mkdir debug_output/link')
         end if
 
         sync all
@@ -331,6 +333,7 @@ contains
 
         if (setting%Output%report .and. util_output_must_report()) then
             call util_output_write_elemR_faceR()
+            call output_write_link_files()
         end if
 
         if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
