@@ -77,11 +77,11 @@ contains
                     print*
                     print*, '.......................Faces.............................'
                     print*, 'a)  fi_Lidx     fi_Gidx     elem_uL     elem_dL     C_image' //&
-                    '    GElem_up    GElem_dn     node_id     link_id'
+                    '    GElem_up    GElem_dn     node_id     link_id      zbottom'
                     do jj = 1,N_face(ii)
                         print*, faceI(jj,fi_Lidx)[ii],faceI(jj,fi_Gidx)[ii],faceI(jj,fi_Melem_uL)[ii], &
                         faceI(jj,fi_Melem_dL)[ii],faceI(jj,fi_Connected_image)[ii], faceI(jj,fi_GhostElem_uL)[ii],&
-                        faceI(jj,fi_GhostElem_dL)[ii],faceI(jj,fi_node_idx)[ii],faceI(jj, fi_link_idx)[ii]
+                        faceI(jj,fi_GhostElem_dL)[ii],faceI(jj,fi_node_idx)[ii],faceI(jj, fi_link_idx)[ii], faceR(jj,fr_Zbottom)[ii]
                     end do
 
                     ! print*
@@ -645,6 +645,9 @@ contains
             faceI(FacelocalCounter,fi_link_idx) = thisLink
             faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
 
+            !% real data
+            faceR(FaceLocalCounter,fr_Zbottom) = node%R(thisNode,nr_Zbottom)
+
             !% if the upstream node is not in the partiton,
             !% the face map to upstream is mapped to
             !% the dummy element
@@ -932,6 +935,9 @@ contains
             faceI(FacelocalCounter,fi_link_idx) = thisLink
             faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
             faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
+
+            !% real data
+            faceR(FaceLocalCounter,fr_Zbottom) = node%R(thisNode,nr_Zbottom)
 
             !% logical data
             faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
