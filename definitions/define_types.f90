@@ -73,6 +73,7 @@ module define_types
     type NodePack
         integer,      allocatable :: have_flowBC(:)
         integer,      allocatable :: have_headBC(:)
+        integer,      allocatable :: have_output(:) 
     end type NodePack
 
     type LinkPack

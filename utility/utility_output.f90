@@ -37,6 +37,7 @@ contains
             call system('mkdir debug_output/faceR')
             call system('mkdir debug_output/summary')
             call system('mkdir debug_output/link')
+            call system('mkdir debug_output/node')
         end if
 
         sync all
@@ -334,6 +335,7 @@ contains
         if (setting%Output%report .and. util_output_must_report()) then
             call util_output_write_elemR_faceR()
             call output_write_link_files()
+            call output_write_node_files()
         end if
 
         if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name

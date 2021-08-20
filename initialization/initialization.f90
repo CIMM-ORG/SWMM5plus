@@ -98,8 +98,9 @@ contains
         call init_time()
 
         !% read in link names for output 
-        call output_read_csv_link_names('link_input.csv')
-
+        if (setting%Output%report) call output_read_csv_link_names('link_input.csv')
+        if (setting%Output%report) call output_read_csv_node_names('node_input.csv')
+        
         !% initialize boundary conditions
         call init_bc()
 
@@ -112,6 +113,7 @@ contains
         if (setting%Output%report) call util_output_create_elemR_files()
         if (setting%Output%report) call util_output_create_faceR_files()
         if (setting%Output%report) call output_create_link_files()
+        if (setting%Output%report) call output_create_node_files()
         call util_output_create_summary_files()
 
         !% wait for all the processors to reach this stage before starting the time loop
