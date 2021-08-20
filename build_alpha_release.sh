@@ -4,7 +4,7 @@ shopt -s extglob
 # --------------------------------------------------------------------------------------
 
 . ./build_vars.sh
-. ./build_dependencies.sh
+. ./build_dependencies_alpha.sh
 
 # --------------------------------------------------------------------------------------
 
@@ -29,7 +29,6 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_deallocate.f90\
               $UTIL_DIR/utility_array.f90\
               $UTIL_DIR/utility_debug.f90\
-	          $OUT_DIR/output.f90\
               $UTIL_DIR/utility_output.f90\
               $UTIL_DIR/utility_interpolate.f90\
               $INIT_DIR/pack_mask_arrays.f90\
