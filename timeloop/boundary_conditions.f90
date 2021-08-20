@@ -28,7 +28,7 @@ contains
         !% face interpolation for all BC faces
         if (N_flowBC > 0 .or. N_headBC > 0) then
             call bc_interpolate() ! computes interpolation
-            call face_interpolate_bc() ! broadcast interopation to face & elem arrays
+            call face_interpolate_bc() ! broadcast interpolation to face & elem arrays
         endif
 
         if (setting%Debug%File%boundary_conditions) then
@@ -66,8 +66,8 @@ contains
 
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
-        tnow = setting%Time%Hydraulics%timeNow
-        tend = setting%Time%EndTime
+        tnow = setting%Time%Now
+        tend = setting%Time%End
 
         if (N_flowBC > 0) then
             do ii = 1, N_flowBC
@@ -149,19 +149,19 @@ contains
         NN = setting%BC%BCSlots
 
         if (BC%flowIdx(bc_idx) == 0) then ! First fetch
-            BC%flowR_timeseries(bc_idx, 1, br_time) = setting%Time%StartTime
-            BC%flowR_timeseries(bc_idx, 1, br_value) = interface_get_flowBC(bc_idx, setting%Time%StartTime)
+            BC%flowR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
+            BC%flowR_timeseries(bc_idx, 1, br_value) = interface_get_flowBC(bc_idx, setting%Time%Start)
         else ! last value becomes first
             BC%flowR_timeseries(bc_idx, 1, br_time) = BC%flowR_timeseries(bc_idx, NN, br_time)
             BC%flowR_timeseries(bc_idx, 1, br_value) = BC%flowR_timeseries(bc_idx, NN, br_value)
         end if
 
-        new_inflow_time = setting%Time%StartTime
+        new_inflow_time = setting%Time%Start
         do ii = 2, NN
-            new_inflow_time = min(setting%Time%EndTime, interface_get_next_inflow_time(bc_idx, new_inflow_time))
+            new_inflow_time = min(setting%Time%End, interface_get_next_inflow_time(bc_idx, new_inflow_time))
             BC%flowR_timeseries(bc_idx, ii, br_time) = new_inflow_time
             BC%flowR_timeseries(bc_idx, ii, br_value) = interface_get_flowBC(bc_idx, new_inflow_time)
-            if (new_inflow_time == setting%Time%EndTime) exit
+            if (new_inflow_time == setting%Time%End) exit
         end do
         BC%flowIdx(bc_idx) = 2
 
@@ -175,6 +175,7 @@ contains
     end subroutine bc_fetch_flow
 
     subroutine bc_fetch_head(bc_idx)
+    !%-----------------------------------------------------------------------------
         integer, intent(in) :: bc_idx
         integer             :: ii, NN
         real(8)             :: new_head_time
@@ -187,18 +188,18 @@ contains
         NN = setting%BC%BCSlots
 
         if (BC%headIdx(bc_idx) == 0) then ! First fetch
-            BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%StartTime
-            BC%headR_timeseries(bc_idx, 1, br_value) = interface_get_headBC(bc_idx, setting%Time%StartTime)
+            BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
+            BC%headR_timeseries(bc_idx, 1, br_value) = interface_get_headBC(bc_idx, setting%Time%Start)
         else ! last value becomes first
             BC%headR_timeseries(bc_idx, 1, br_time) = BC%headR_timeseries(bc_idx, NN, br_time)
             BC%headR_timeseries(bc_idx, 1, br_value) = BC%headR_timeseries(bc_idx, NN, br_value)
         end if
 
         do ii = 2, NN
-            new_head_time = min(setting%Time%EndTime, interface_get_next_head_time(bc_idx, setting%Time%StartTime))
+            new_head_time = min(setting%Time%End, interface_get_next_head_time(bc_idx, setting%Time%Start))
             BC%headR_timeseries(bc_idx, ii, br_time) = new_head_time
             BC%headR_timeseries(bc_idx, ii, br_value) = interface_get_headBC(bc_idx, new_head_time)
-            if (new_head_time == setting%Time%EndTime) exit
+            if (new_head_time == setting%Time%End) exit
         end do
         BC%headIdx(bc_idx) = 2
 
@@ -220,7 +221,7 @@ contains
 
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
-        tnow = setting%Time%Hydraulics%timeNow
+        tnow = setting%Time%Now
 
         do ii=1, N_flowBC
             slot_idx = BC%flowIdx(ii)

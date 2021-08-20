@@ -103,7 +103,6 @@ contains
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
                 end if
 
-
             else if(elemI(ii,ei_elementType) == JM) then
 
                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
@@ -112,14 +111,12 @@ contains
                     // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
-
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
                 form   = 'formatted', action = 'write', iostat = open_status)
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
                 end if
-
 
             else if(elemI(ii,ei_elementType) == JB) then
 
@@ -216,7 +213,7 @@ contains
         if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
         fu = this_image()
-        time_secs = setting%Time%Hydraulics%timeNow
+        time_secs = setting%Time%Now
         time_epoch = util_datetime_secs_to_epoch(time_secs)
         call util_datetime_decodedate(time_epoch, yr, mnth, dy)
         call util_datetime_decodetime(time_epoch, hr, min, sec)
@@ -347,8 +344,8 @@ contains
 
         if (util_output_must_report() .and. setting%verbose) then
             write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
-            timeNow   => setting%Time%Hydraulics%timeNow
-            dt        => setting%Time%Hydraulics%Dt
+            timeNow   => setting%Time%Now
+            dt        => setting%Time%Dt
             velocity  => elemR(:,er_Velocity)
             wavespeed => elemR(:,er_WaveSpeed)
             length    => elemR(:,er_Length)
@@ -379,8 +376,8 @@ contains
     function util_output_must_report() result(report)
         logical :: report
         real(8), pointer :: timeNow
-        timeNow => setting%Time%Hydraulics%timeNow
-        report = ((mod(timeNow, setting%output%report_time)  == zeroI) .or. &
+        timeNow => setting%Time%Now
+        report = ((mod(timeNow, setting%output%reportStep) == zeroI) .or. &
              (timeNow == 0))
     end function util_output_must_report
 

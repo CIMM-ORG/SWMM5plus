@@ -16,7 +16,7 @@ module initialization
     use utility_output
     use utility_array
     use pack_mask_arrays
-
+    use, intrinsic :: ISO_FORTRAN_ENV, only: team_type
 
     implicit none
 
@@ -93,11 +93,10 @@ contains
 
         call init_network_define_toplevel ()
 
-        !%set up time Dr. Hodges bug fix
-        call init_time()
-        
         !% initialize boundary conditions
         call init_bc()
+
+        call init_time()
 
         if (this_image() == 1) call util_export_linknode_csv()
 
@@ -111,7 +110,7 @@ contains
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
-  
+
         !% wait for all the processors to reach this stage before starting the time loop
         if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine initialize_all
@@ -542,18 +541,19 @@ contains
     !%
     !%==========================================================================
     !%==========================================================================
-    !%  
-    subroutine init_time ()
-        !% BRHbugfix20210811  Entire subroutine is new
-        !% adjust for inconsistent time settings
-        
-        if (setting%Time%Hydrology%timeFinal > setting%Time%EndTime) then
-            setting%Time%Hydrology%timeFinal = setting%Time%EndTime
-        endif
-        if (setting%Time%Hydrology%Dt > setting%Time%EndTime - setting%Time%StartTime) then
-            setting%Time%Hydrology%Dt = setting%Time%EndTime - setting%Time%StartTime
-        endif
-         
+    !%
+    subroutine init_time()
+        logical :: doHydraulics
+        real(8) :: newDt
+
+        setting%Time%HydrologyStep = minval(BC%flowR_timeseries(:, BC%flowIdx, br_time))
+        setting%Time%Dt = min(setting%Time%HydraulicStep, setting%Time%HydrologyStep)
+        doHydraulics = (setting%Time%Dt == setting%Time%HydraulicStep)
+        newDt = setting%Time%Dt
+        call co_min(newDt)
+        if (doHydraulics) setting%Time%Dt = newDt
+        setting%Time%Now = 0
+
     end subroutine init_time
     !%
     !%==========================================================================
