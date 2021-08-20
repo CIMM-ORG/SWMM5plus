@@ -99,19 +99,25 @@
         },
         "Dt"     : {
             "Minimum"       :  1e-6,
-            "UseLimitMin"   :  true,
-        } 
+            "UseLimitMin"   :  true
+        }
     },
     "Link" : {
         "DefaultInitDepthType" : "Linear", // uniform, linear, exponential
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
+    },
+    "Output" : {
+        "report" : true,
+        "StartTime" : 0.0,
+        "reportStep" : 100.0
     },
     "Partitioning" : {
         "PartitioningMethod" : "Blink"
     },
     "Simulation" : {
         "useHydrology" : true,
-        "useHydraulics" : true
+        "useHydraulics" : true,
+        "useSWMMC" : false
     },
     "SmallVolume" : {
         "DepthCutoff" : 0.01,
@@ -134,27 +140,14 @@
         "TestName" : "testcase"
     },
     "Time" : {
+        "Dt" : 10.0,
+        "Step" : 0,
+        "HydraulicStep" : 10.0,
+        "HydrologyStep" : 10.0,
         "DateTimeStamp" : 0.0,
-        "EndTime" : 0.0,
-        "StartTime" : 0.0,
-        "Hydrology" : {
-            "Dt" : 10.0,
-            "timeNow" : 0.0,
-            "timeNext" : 1.0,
-            "timeFinal" : 1.0,
-            "stepNow"  : 0,
-            "stepNext"  : 1,
-            "stepFinal" : 10000
-        },
-        "Hydraulics" : {
-            "Dt" : 100.0,
-            "timeNow" : 0.0,
-            "timeNext" : 1.0,
-            "timeFinal" : 1.0,
-            "stepNow"  : 0,
-            "stepNext"  : 1,
-            "stepFinal" : 1
-        }
+        "Start" : 0.0,
+        "Now" : 0.0,
+        "End" : 0.0
     },
     "Weir" : {
         "Transverse" : {
@@ -250,11 +243,6 @@
             "timeloop" : false,
             "utility" : false
         }
-    },
-    "Output" : {
-        "report" : true,
-        "report_time" : 600,
-        "report_tol"  : 2
     },
     "Warning"  : false,
     "Verbose" : false
