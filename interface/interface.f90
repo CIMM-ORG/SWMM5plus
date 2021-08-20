@@ -25,6 +25,7 @@ module interface
     !% Public subroutines/functions
     public :: interface_init
     public :: interface_finalize
+    ! public :: interface_run_step
     public :: interface_get_node_attribute
     public :: interface_get_link_attribute
     public :: interface_get_obj_name_len
@@ -45,12 +46,13 @@ module interface
 
         ! --- Simulation
 
-        function api_initialize(inp_file, report_file, out_file)
+        function api_initialize(inp_file, report_file, out_file, run_routing)
             use, intrinsic :: iso_c_binding
             implicit none
             character(c_char), dimension(*) :: inp_file
             character(c_char), dimension(*) :: report_file
             character(c_char), dimension(*) :: out_file
+            integer(c_int),    value        :: run_routing
             type(c_ptr) :: api_initialize
         end function api_initialize
 
@@ -60,9 +62,58 @@ module interface
             type(c_ptr), value, intent(in) :: api
         end subroutine api_finalize
 
+        function api_run_step(api)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr), value, intent(in) :: api
+            real(c_double) :: api_run_step
+        end function api_run_step
+
         ! --- Property-extraction
 
         ! * After Initialization
+
+        function api_get_start_datetime()
+            use, intrinsic :: iso_c_binding
+            implicit none
+            real(c_double) :: api_get_start_datetime
+        end function api_get_start_datetime
+
+        function api_get_end_datetime()
+            use, intrinsic :: iso_c_binding
+            implicit none
+            real(c_double) :: api_get_end_datetime
+        end function api_get_end_datetime
+
+        function api_get_flowBC(api, k, current_datetime)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr),    value, intent(in) :: api
+            integer(c_int), value, intent(in) :: k
+            real(c_double),        intent(in) :: current_datetime
+            real(c_double)                    :: api_get_flowBC
+        end function api_get_flowBC
+
+        function api_get_headBC(api, k, current_datetime)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr),    value, intent(in) :: api
+            integer(c_int), value, intent(in) :: k
+            real(c_double),        intent(in) :: current_datetime
+            real(c_double)                    :: api_get_headBC
+        end function api_get_headBC
+
+        function api_get_report_times &
+            (api, report_start_datetime, report_step, hydrology_step)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr), value, intent(in) :: api
+            type(c_ptr), value, intent(in) :: report_start_datetime
+            type(c_ptr), value, intent(in) :: report_step
+            type(c_ptr), value, intent(in) :: hydrology_step
+            integer(c_int) :: api_get_report_times
+        end function api_get_report_times
+
         function api_get_node_attribute(api, k, attr, value)
             use, intrinsic :: iso_c_binding
             implicit none
@@ -110,36 +161,6 @@ module interface
             integer(c_int) :: api_get_object_name
         end function api_get_object_name
 
-        function api_get_start_datetime()
-            use, intrinsic :: iso_c_binding
-            implicit none
-            real(c_double) :: api_get_start_datetime
-        end function api_get_start_datetime
-
-        function api_get_end_datetime()
-            use, intrinsic :: iso_c_binding
-            implicit none
-            real(c_double) :: api_get_end_datetime
-        end function api_get_end_datetime
-
-        function api_get_flowBC(api, k, current_datetime)
-            use, intrinsic :: iso_c_binding
-            implicit none
-            type(c_ptr),    value, intent(in) :: api
-            integer(c_int), value, intent(in) :: k
-            real(c_double),        intent(in) :: current_datetime
-            real(c_double)                    :: api_get_flowBC
-        end function api_get_flowBC
-
-        function api_get_headBC(api, k, current_datetime)
-            use, intrinsic :: iso_c_binding
-            implicit none
-            type(c_ptr),    value, intent(in) :: api
-            integer(c_int), value, intent(in) :: k
-            real(c_double),        intent(in) :: current_datetime
-            real(c_double)                    :: api_get_headBC
-        end function api_get_headBC
-
         function api_get_next_entry_tseries(k)
             use, intrinsic :: iso_c_binding
             implicit none
@@ -168,8 +189,10 @@ module interface
     procedure(api_get_end_datetime),       pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),             pointer :: ptr_api_get_flowBC
     procedure(api_get_headBC),             pointer :: ptr_api_get_headBC
+    procedure(api_get_report_times),       pointer :: ptr_api_get_report_times
     procedure(api_get_next_entry_tseries), pointer :: ptr_api_get_next_entry_tseries
     procedure(api_find_object),            pointer :: ptr_api_find_object
+    procedure(api_run_step),               pointer :: ptr_api_run_step
 
     !% Error handling
     character(len = 1024) :: errmsg
@@ -225,7 +248,11 @@ contains
             stop
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
-        api = ptr_api_initialize(setting%Paths%inp, setting%Paths%rpt, setting%Paths%out)
+        api = ptr_api_initialize( &
+            setting%Paths%inp, &
+            setting%Paths%rpt, &
+            setting%Paths%out, &
+            setting%Simulation%useSWMMC)
         api_is_initialized = .true.
 
         !% Get number of objects
@@ -241,8 +268,10 @@ contains
 
         setting%Time%StartEpoch = get_start_datetime()
         setting%Time%EndEpoch = get_end_datetime()
-        setting%time%starttime = 0
-        setting%time%endtime = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday)
+        setting%Time%Start = 0
+        setting%Time%End = (setting%Time%EndEpoch - setting%Time%StartEpoch) * real(secsperday)
+
+        call interface_get_report_times()
 
         if (setting%Debug%File%interface) then
             print *, new_line("")
@@ -251,8 +280,8 @@ contains
             print *, new_line("")
             print *, "SWMM start time", setting%Time%StartEpoch
             print *, "SWMM end time", setting%Time%EndEpoch
-            print *, "setting%time%starttime", setting%time%starttime
-            print *, "setting%time%endtime", setting%time%endtime
+            print *, "setting%time%start", setting%Time%Start
+            print *, "setting%time%end", setting%Time%End
             print *, '*** leave ', this_image(), subroutine_name
         end if
     end subroutine interface_init
@@ -278,6 +307,33 @@ contains
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine interface_finalize
+
+    ! subroutine interface_run_step()
+    ! !%-----------------------------------------------------------------------------
+    ! !% Description:
+    ! !%    runs steps of EPA-SWMM model. If setting%Simulation%useSWMMC was defined
+    ! !%    true, steps include routing model. If false, steps are for hydrology only
+    ! !%-----------------------------------------------------------------------------
+    !     real(8), pointer :: timeNow
+    !     character(64)    :: subroutine_name = 'interface_run_step'
+    ! !%-----------------------------------------------------------------------------
+
+    !     if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+
+    !     timeNow => setting%Time%Now
+
+    !     c_lib%procname = "api_run_step"
+    !     call c_lib_load(c_lib, errstat, errmsg)
+    !     if (errstat /= 0) then
+    !         print *, "ERROR: " // trim(errmsg)
+    !         stop
+    !     end if
+    !     call c_f_procpointer(c_lib%procaddr, ptr_api_run_step)
+
+    !     timeNow = ptr_api_run_step(api)
+    !     if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+
+    ! end subroutine interface_run_step
 
     !%-----------------------------------------------------------------------------
     !%  |
@@ -640,16 +696,16 @@ contains
                         tnext = interface_get_node_attribute(nidx, api_node_extInflow_tSeries_x2)
                         tnext = util_datetime_epoch_to_secs(tnext)
                         if (tnext == tnow) then
-                            tnext = setting%Time%endtime
+                            tnext = setting%Time%End
                         end if
                     end if
                 else
-                    tnext = setting%Time%EndTime
+                    tnext = setting%Time%End
                 end if
             end if
             tnext = min(tnext, tnextp)
         else
-            tnext = setting%Time%EndTime
+            tnext = setting%Time%End
         end if
 
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
@@ -668,7 +724,7 @@ contains
 
         nidx = BC%headI(bc_idx, bi_node_idx)
         if (BC%headI(bc_idx, bi_subcategory) == BCH_fixed) then
-            tnext = setting%Time%EndTime
+            tnext = setting%Time%End
         else
             print *, "Error, unsupported head boundary condition for node " // node%Names(nidx)%str
             stop
@@ -729,6 +785,40 @@ contains
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
 
     end function interface_get_headBC
+
+    subroutine interface_get_report_times()
+        integer                :: error
+        real(c_double), target :: reportStart
+        integer(c_int), target :: reportStep, hydroStep
+        type(c_ptr)            :: cptr_reportStart, cptr_reportStep, cptr_hydroStep
+        character(64)          :: subroutine_name = 'interface_get_report_times'
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+
+        cptr_reportStart = c_loc(reportStart)
+        cptr_reportStep = c_loc(reportStep)
+        cptr_hydroStep = c_loc(hydroStep)
+
+        c_lib%procname = "api_get_report_times"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_report_times)
+
+        !% reportStart is given in epoch datetime
+        !% reportStep and hydroStep are given in integer seconds
+        error = ptr_api_get_report_times(api, cptr_reportStart, cptr_reportStep, cptr_hydroStep)
+        if (error /= 0) stop "ERROR: couldn't retrieve report times"
+        reportStart = util_datetime_epoch_to_secs(reportStart)
+
+        setting%Output%StartTime = reportStart
+        setting%Output%reportStep = reportStep
+        setting%Time%HydrologyStep = hydroStep
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+    end subroutine interface_get_report_times
 
     function interface_find_object(object_type, object_name) result(object_idx)
         character(*), intent(in) :: object_name

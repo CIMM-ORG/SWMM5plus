@@ -42,7 +42,7 @@ static int  Ntokens;                   // Number of tokens in line of input
 // is also used by the Fortran engine. Treating Interface as void*
 // facilitates interoperability
 
-void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3)
+void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing)
 {
     int error;
     Interface* api = (Interface*) malloc(sizeof(Interface));
@@ -58,6 +58,7 @@ void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3)
     }
     api->IsInitialized = TRUE;
     error = api_load_vars((void*) api);
+    if (!run_routing) IgnoreRouting = TRUE;
     return (void*) api;
 }
 
@@ -91,6 +92,13 @@ void DLLEXPORT api_finalize(void* f_api)
     free((Interface*) f_api);
 }
 
+double DLLEXPORT api_run_step(void* f_api)
+{
+    Interface * api = (Interface*) f_api;
+    swmm_step(&(api->elapsedTime));
+    return api->elapsedTime;
+}
+
 // --- Property-extraction
 
 // * After Initialization
@@ -103,6 +111,114 @@ double DLLEXPORT api_get_start_datetime()
 double DLLEXPORT api_get_end_datetime()
 {
     return EndDateTime;
+}
+
+double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime) {
+
+    int ptype, pcount, i, j, p;
+    int yy, mm, dd;
+    int h, m, s, dow;
+    double val;
+    double x, y, next_datetime;
+    double bline, sfactor;
+    double total_factor = 1;
+    double total_extinflow = 0;
+    double total_inflow = 0;
+
+    datetime_decodeDate(current_datetime, &yy, &mm, &dd);
+    datetime_decodeTime(current_datetime, &h, &m, &s);
+    dow = datetime_dayOfWeek(current_datetime);
+
+    api_get_node_attribute(f_api, node_idx, node_has_dwfInflow, &val);
+    if (val == 1) { // node_has_dwfInflow
+        for(i=0; i<4; i++)
+        {
+            j = Node[node_idx].dwfInflow->patterns[i];
+            if (j > 0)
+            {
+                ptype = Pattern[j].type;
+                if (ptype == MONTHLY_PATTERN)
+                    total_factor *= Pattern[j].factor[mm-1];
+                else if (ptype == DAILY_PATTERN)
+                    total_factor *= Pattern[j].factor[dow-1];
+                else if (ptype == HOURLY_PATTERN)
+                    total_factor *= Pattern[j].factor[h];
+                else if (ptype == WEEKEND_PATTERN)
+                {
+                    if ((dow == 1) || (dow == 7))
+                        total_factor *= Pattern[j].factor[h];
+                }
+            }
+        }
+        total_inflow += total_factor * CFTOCM(Node[node_idx].dwfInflow->avgValue);
+    }
+
+    api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
+    if (val == 1) { // node_has_extInflow
+        p = Node[node_idx].extInflow->basePat; // pattern
+        bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
+        if (p >= 0)
+        {
+            ptype = Pattern[p].type;
+            if (ptype == MONTHLY_PATTERN)
+                total_extinflow += Pattern[j].factor[mm-1] * bline;
+            else if (ptype == DAILY_PATTERN)
+                total_extinflow += Pattern[j].factor[dow-1] * bline;
+            else if (ptype == HOURLY_PATTERN)
+                total_extinflow += Pattern[j].factor[h] * bline;
+            else if (ptype == WEEKEND_PATTERN)
+            {
+                if ((dow == 1) || (dow == 7))
+                    total_extinflow += Pattern[j].factor[h] * bline;
+            }
+        }
+        else if (bline > 0)
+        {
+            total_extinflow += bline;
+        }
+
+        j = Node[node_idx].extInflow->tSeries; // tseries
+        sfactor = Node[node_idx].extInflow->sFactor; // scale factor
+        if (j >= 0)
+        {
+            total_extinflow += table_tseriesLookup(&Tseries[j], current_datetime, FALSE) * sfactor;
+        }
+        total_inflow += total_extinflow;
+    }
+    return total_inflow;
+}
+
+double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime)
+{
+    int i = Node[node_idx].subIndex;
+    double yNew;
+
+    switch (Outfall[i].type)
+    {
+    case FIXED_OUTFALL:
+        yNew = Outfall[i].fixedStage;
+        break;
+
+    default:
+        yNew = -1;
+        break;
+    }
+
+    return FTTOM(yNew);
+}
+
+int DLLEXPORT api_get_report_times(
+    void * f_api,
+    double * report_start_datetime,
+    int * report_step,
+    int * hydrology_step) // WET_STEP in SWMM 5.13
+{
+    Interface * api = (Interface*) f_api;
+    if (!api->IsInitialized) return -1;
+    *report_start_datetime = ReportStart;
+    *report_step = ReportStep;
+    *hydrology_step = WetStep;
+    return 0;
 }
 
 int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value)
@@ -364,100 +480,6 @@ int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int obj
     else
         return ERROR_FEATURE_NOT_COMPATIBLE;
     return 0;
-}
-
-double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime) {
-
-    int ptype, pcount, i, j, p;
-    int yy, mm, dd;
-    int h, m, s, dow;
-    double val;
-    double x, y, next_datetime;
-    double bline, sfactor;
-    double total_factor = 1;
-    double total_extinflow = 0;
-    double total_inflow = 0;
-
-    datetime_decodeDate(current_datetime, &yy, &mm, &dd);
-    datetime_decodeTime(current_datetime, &h, &m, &s);
-    dow = datetime_dayOfWeek(current_datetime);
-
-    api_get_node_attribute(f_api, node_idx, node_has_dwfInflow, &val);
-    if (val == 1) { // node_has_dwfInflow
-        for(i=0; i<4; i++)
-        {
-            j = Node[node_idx].dwfInflow->patterns[i];
-            if (j > 0)
-            {
-                ptype = Pattern[j].type;
-                if (ptype == MONTHLY_PATTERN)
-                    total_factor *= Pattern[j].factor[mm-1];
-                else if (ptype == DAILY_PATTERN)
-                    total_factor *= Pattern[j].factor[dow-1];
-                else if (ptype == HOURLY_PATTERN)
-                    total_factor *= Pattern[j].factor[h];
-                else if (ptype == WEEKEND_PATTERN)
-                {
-                    if ((dow == 1) || (dow == 7))
-                        total_factor *= Pattern[j].factor[h];
-                }
-            }
-        }
-        total_inflow += total_factor * CFTOCM(Node[node_idx].dwfInflow->avgValue);
-    }
-
-    api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
-    if (val == 1) { // node_has_extInflow
-        p = Node[node_idx].extInflow->basePat; // pattern
-        bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
-        if (p >= 0)
-        {
-            ptype = Pattern[p].type;
-            if (ptype == MONTHLY_PATTERN)
-                total_extinflow += Pattern[j].factor[mm-1] * bline;
-            else if (ptype == DAILY_PATTERN)
-                total_extinflow += Pattern[j].factor[dow-1] * bline;
-            else if (ptype == HOURLY_PATTERN)
-                total_extinflow += Pattern[j].factor[h] * bline;
-            else if (ptype == WEEKEND_PATTERN)
-            {
-                if ((dow == 1) || (dow == 7))
-                    total_extinflow += Pattern[j].factor[h] * bline;
-            }
-        }
-        else if (bline > 0)
-        {
-            total_extinflow += bline;
-        }
-
-        j = Node[node_idx].extInflow->tSeries; // tseries
-        sfactor = Node[node_idx].extInflow->sFactor; // scale factor
-        if (j >= 0)
-        {
-            total_extinflow += table_tseriesLookup(&Tseries[j], current_datetime, FALSE) * sfactor;
-        }
-        total_inflow += total_extinflow;
-    }
-    return total_inflow;
-}
-
-double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime)
-{
-    int i = Node[node_idx].subIndex;
-    double yNew;
-
-    switch (Outfall[i].type)
-    {
-    case FIXED_OUTFALL:
-        yNew = Outfall[i].fixedStage;
-        break;
-
-    default:
-        yNew = -1;
-        break;
-    }
-
-    return FTTOM(yNew);
 }
 
 int DLLEXPORT api_get_next_entry_tseries(int k)

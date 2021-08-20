@@ -127,7 +127,7 @@ extern "C" {
 
 // --- Simulation
 
-void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3);
+void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing);
 void DLLEXPORT api_finalize(void* f_api);
 
 // --- Property-extraction
@@ -138,16 +138,16 @@ int DLLEXPORT api_get_node_results(void* f_api, char* node_name, float* inflow, 
 int DLLEXPORT api_get_link_results(void* f_api, char* link_name, float* flow, float* depth, float* volume);
 
 // * After Initialization
-
+double DLLEXPORT api_get_start_datetime();
+double DLLEXPORT api_get_end_datetime();
+double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime);
+double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime);
+int DLLEXPORT api_get_report_times(void * f_api, double * report_start_datetime, int * report_step, int * hydrology_step);
 int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value);
 int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value);
 int DLLEXPORT api_get_num_objects(void* f_api, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
-double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime);
-double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime);
 int DLLEXPORT api_get_next_entry_tseries(int k);
-double DLLEXPORT api_get_start_datetime();
-double DLLEXPORT api_get_end_datetime();
 int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
 
