@@ -106,6 +106,10 @@ module define_globals
     integer, allocatable :: elem_per_image(:)
     logical, allocatable :: image_full(:)
 
+    !%link and node output_idx
+    integer, allocatable :: link_output_idx(:)
+    integer, allocatable :: node_output_idx(:)
+
     !% ===================================================================================
     !% CONSTANTS
     !% ===================================================================================
@@ -158,6 +162,8 @@ module define_globals
     integer :: N_diag
     integer :: N_ac
     integer :: N_etm
+    integer :: N_link_output
+    integer :: N_node_output
 
     !% Number of API parameters
     integer, parameter :: N_api_node_attributes = api_node_overflow

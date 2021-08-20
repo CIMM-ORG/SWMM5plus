@@ -206,6 +206,7 @@ module define_settings
         logical :: utility_output      = .false.
         logical :: utility_string      = .false.
         logical :: weir_elements       = .false.
+        logical :: output              = .false.
     end type DebugFileYNType
 
     ! setting%Debug%FileGroup
@@ -1054,6 +1055,9 @@ contains
         call json%get('Debug.File.weir_elements', logical_value, found)
         setting%Debug%File%weir_elements = logical_value
         if (.not. found) stop "Error - setting " // 'Debug.File.weir_elements not found'
+        call json%get('Debug.File.output', logical_value, found)
+        setting%Debug%File%output = logical_value
+        if (.not. found) stop "Error - setting " // 'Debug.File.output not found'
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
         if (.not. found) stop "Error - setting " // 'Debug.FileGroup.all not found'

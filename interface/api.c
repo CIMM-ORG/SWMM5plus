@@ -243,7 +243,12 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     else if (attr == node_invertElev)
         *value = FTTOM(Node[k].invertElev);
     else if (attr == node_initDepth)
-        *value = FTTOM(Node[k].initDepth);
+    {
+        if (Node[k].type == OUTFALL)
+            *value = api_get_headBC(f_api, k, StartDateTime) - FTTOM(Node[k].invertElev);
+        else
+            *value = FTTOM(Node[k].initDepth);
+    }
     else if (attr == node_extInflow_tSeries)
     {
         if (Node[k].extInflow)
@@ -755,78 +760,6 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
 int DLLEXPORT api_find_object(int type, char *id)
 {
     return project_findObject(type, id);
-}
-
-double api_get_outfall_depth(int node_idx, int link_idx, double currentDate, double z, double q)
-{
-    // double   x, y;                         // x,y values in table
-    // double   yNew, yNorm, yCrit;           // new depth above invert elev. (ft)
-    // double   stage;                        // water elevation at outfall (ft)
-    // int      k;                            // table index
-    // int      i = Node[node_idx].subIndex;  // outfall index
-
-    // // Compute normal and critical depths
-
-    // yNorm = link_getYnorm(link_idx, q);
-    // yCrit = link_getYcrit(link_idx, q);
-
-    // switch ( Outfall[i].type )
-    // {
-    //   case NORMAL_OUTFALL:
-    //     if ( z > 0.0 ) yNew = 0.0;
-    //     else yNew = yNorm;
-    //     return yNew;
-
-    //   case FIXED_OUTFALL:
-    //     stage = Outfall[i].fixedStage;
-    //     break;
-
-    //   case TIDAL_OUTFALL:
-    //     k = Outfall[i].tideCurve;
-    //     table_getFirstEntry(&Curve[k], &x, &y);
-    //     x += ( currentDate - floor(currentDate) ) * 24.0;
-    //     stage = table_lookup(&Curve[k], x) / UCF(LENGTH);
-    //     break;
-
-    //   case TIMESERIES_OUTFALL:
-    //     k = Outfall[i].stageSeries;
-    //     currentDate = StartDateTime + NewRoutingTime / MSECperDAY;
-    //     stage = table_tseriesLookup(&Tseries[k], currentDate, TRUE) /
-    //             UCF(LENGTH);
-    //     break;
-    //   default: stage = Node[node_idx].invertElev;
-    // }
-
-    // // --- now determine depth at node given outfall stage elev.
-
-    // // --- let critical flow depth be min. of critical & normal depth
-    // yCrit = MIN(yCrit, yNorm);
-
-    // // --- if elev. of critical depth is below outfall stage elev. then
-    // //     the outfall stage determines node depth
-    // if ( yCrit + z + Node[node_idx].invertElev < stage )
-    // {
-    //     yNew = stage - Node[node_idx].invertElev;
-    // }
-
-    // // --- otherwise if the outfall conduit lies above the outfall invert
-    // else if ( z > 0.0 )
-    // {
-    //     // --- if the outfall stage lies below the bottom of the outfall
-    //     //     conduit then the result is distance from node invert to stage
-    //     if ( stage < Node[node_idx].invertElev + z )
-    //         yNew = MAX(0.0, (stage - Node[node_idx].invertElev));
-
-    //     // --- otherwise stage lies between bottom of conduit and critical
-    //     //     depth in conduit so result is elev. of critical depth
-    //     else yNew = z + yCrit;
-    // }
-
-    // // --- and for case where there is no conduit offset and outfall stage
-    // //     lies below critical depth, then node depth = critical depth
-    // else yNew = yCrit;
-
-    // return yNew;
 }
 
 int api_load_vars(void * f_api)

@@ -111,6 +111,13 @@ contains
             call util_allocate_check(allocation_status, emsg)
         end do
 
+        !% allocate link_node_output_idx
+        allocate(node_output_idx(N_node + additional_rows),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        
+        allocate(link_output_idx(N_link + additional_rows),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+
         if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
     end subroutine util_allocate_linknode
     !

@@ -17,6 +17,8 @@ module initialization
     use utility_array
     use pack_mask_arrays
     use, intrinsic :: ISO_FORTRAN_ENV, only: team_type
+    use output
+
 
     implicit none
 
@@ -93,6 +95,13 @@ contains
 
         call init_network_define_toplevel ()
 
+        !% set up time Dr. Hodges bug fix
+        call init_time()
+
+        !% read in link names for output 
+        if (setting%Output%report) call output_read_csv_link_names('link_input.csv')
+        if (setting%Output%report) call output_read_csv_node_names('node_input.csv')
+        
         !% initialize boundary conditions
         call init_bc()
 
@@ -106,6 +115,8 @@ contains
         if (setting%Output%report) call util_output_create_folder()
         if (setting%Output%report) call util_output_create_elemR_files()
         if (setting%Output%report) call util_output_create_faceR_files()
+        if (setting%Output%report) call output_create_link_files()
+        if (setting%Output%report) call output_create_node_files()
         call util_output_create_summary_files()
 
         !% wait for all the processors to reach this stage before starting the time loop
@@ -193,8 +204,10 @@ contains
             else if (total_n_links >= twoI) then
                 node%I(ii, ni_node_type) = nJm
             end if
+
             node%YN(ii, nYN_has_extInflow) = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
             node%YN(ii, nYN_has_dwfInflow) = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
+
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
                 if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then

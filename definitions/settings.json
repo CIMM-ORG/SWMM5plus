@@ -59,7 +59,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 100.00,
+        "NominalElemLength" : 50.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -70,7 +70,7 @@
         "DownJBFaceInterp" : "static",
     },
     "Junction" : {
-        "kFactor" : 0.0
+        "kFactor" : 0.7
     },
     "Limiter" : {
         "BC" : {
@@ -112,7 +112,7 @@
         "reportStep" : 100.0
     },
     "Partitioning" : {
-        "PartitioningMethod" : "Blink"
+        "PartitioningMethod" : "BQuick"
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -231,7 +231,8 @@
             "utility_interpolate" : false,
             "utility_output" : false,
             "utility_string" : false,
-            "weir_elements" : false
+            "weir_elements" : false,
+	    "output" : false
         },
         "FileGroup" : {
             "all" : false,
@@ -245,5 +246,5 @@
         }
     },
     "Warning"  : false,
-    "Verbose" : false
+    "Verbose" : true
 }
