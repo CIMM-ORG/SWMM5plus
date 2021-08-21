@@ -109,13 +109,14 @@
     "Output" : {
         "report" : true,
         "StartTime" : 0.0,
-        "reportStep" : 100.0
+        "reportStep" : 1000.0,
+        "reportTol" : 10
     },
     "Partitioning" : {
-        "PartitioningMethod" : "BQuick"
+        "PartitioningMethod" : "blink"
     },
     "Simulation" : {
-        "useHydrology" : true,
+        "useHydrology" : false,
         "useHydraulics" : true,
         "useSWMMC" : false
     },
@@ -140,14 +141,20 @@
         "TestName" : "testcase"
     },
     "Time" : {
-        "Dt" : 10.0,
-        "Step" : 0,
-        "HydraulicStep" : 10.0,
-        "HydrologyStep" : 10.0,
-        "DateTimeStamp" : 0.0,
         "Start" : 0.0,
         "Now" : 0.0,
-        "End" : 0.0
+        "End" : 0.0,
+        "Dt" : 10.0,
+        "Step" : 0,
+        "Hydraulics" : {
+            "Dt" : 10.0,
+            "Step" : 0
+        },
+        "Hydrology" : {
+            "Dt" : 10.0,
+            "Step" : 0
+        },
+        "DateTimeStamp" : 0.0
     },
     "Weir" : {
         "Transverse" : {

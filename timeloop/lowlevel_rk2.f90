@@ -111,7 +111,7 @@ module lowlevel_rk2
         VolumeN0 => elemR(:,er_Volume_N0)
         Csource  => elemR(:,er_SourceContinuity)
         crk      => setting%Solver%crk2
-        dt       => setting%Time%HydraulicStep
+        dt       => setting%Time%Hydraulics%Dt
         !%-----------------------------------------------------------------------------
 
         elemR(thisP,outCol) = VolumeN0(thisP) + crk(istep) * dt * Csource(thisP)
@@ -442,7 +442,7 @@ module lowlevel_rk2
             volumeLast   => elemR(:,er_VolumeLastAC)
             velocityLast => elemR(:,er_VelocityLastAC)
         elseif (thisMethod == ETM) then !% real time march
-            delt         => setting%Time%HydraulicStep
+            delt         => setting%Time%Hydraulics%Dt
             volumeLast   => elemR(:,er_Volume_N0)
             velocityLast => elemR(:,er_Velocity_N0)
         else
@@ -503,7 +503,7 @@ module lowlevel_rk2
         !%
         thisP => elemP(1:Npack,thisCol)
         a1 => setting%ACmethod%ImplicitCoef%a1
-        dt => setting%Time%HydraulicStep
+        dt => setting%Time%Hydraulics%Dt
         GammaM => elemR(:,er_GammaM) ! used and updated
         !%-----------------------------------------------------------------------------
 
@@ -526,7 +526,7 @@ module lowlevel_rk2
         real(8), pointer :: a2, a3, dt
         !%-----------------------------------------------------------------------------
         thisP => elemP(1:Npack,thisCol)
-        dt => setting%Time%HydraulicStep
+        dt => setting%Time%Hydraulics%Dt
         a2 => setting%ACmethod%ImplicitCoef%a2
         a3 => setting%ACmethod%ImplicitCoef%a3
         !%-----------------------------------------------------------------------------

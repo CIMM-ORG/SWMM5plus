@@ -221,6 +221,11 @@ module define_settings
         logical :: utility          = .false.
     end type DebugFileGroupYNType
 
+    type TimeStepType
+        real(8) :: Dt
+        integer :: Step
+    end type TimeStepType
+
     ! -
     ! --
     ! ---
@@ -277,7 +282,6 @@ module define_settings
     type FaceInterpType
         integer :: DownJBFaceInterp = Static
     end type FaceInterpType
-
 
     ! setting%Junction
     type JunctionType
@@ -343,15 +347,6 @@ module define_settings
         real(8) :: SwitchFractionUp = 0.9
     end type SolverType
 
-    !% REMOVED 20210607 brh -- rolled into setting%Time
-    ! ! setting%Step
-    ! type StepType
-    !     integer :: First
-    !     integer :: Current
-    !     integer :: Final
-    ! end type StepType
-    !%  setting%TestCase
-
     type TestCaseType
         logical       :: UseTestCase = .false.
         character(64) :: TestName
@@ -359,16 +354,16 @@ module define_settings
 
     ! setting%Time
     type TimeType
-        real(8)       :: Dt
-        integer       :: Step
-        real(8)       :: HydraulicStep
-        real(8)       :: HydrologyStep
-        character(14) :: DateTimeStamp
-        real(8)       :: Start
-        real(8)       :: Now
-        real(8)       :: End
-        real(8)       :: StartEpoch
-        real(8)       :: EndEpoch
+        type(TimeStepType) :: Hydraulics
+        type(TimeStepType) :: Hydrology
+        character(14)      :: DateTimeStamp
+        integer            :: Step
+        real(8)            :: Dt
+        real(8)            :: Start
+        real(8)            :: Now
+        real(8)            :: End
+        real(8)            :: StartEpoch
+        real(8)            :: EndEpoch
     end type TimeType
 
     type WeirType
@@ -421,6 +416,7 @@ module define_settings
         logical :: report
         real(8) :: StartTime
         real(8) :: reportStep
+        real(8) :: reportTol
     end type OutputType
 
 
@@ -810,21 +806,6 @@ contains
         !rm 20210607 brh if (.not. found) stop "Error - setting " // 'Step.First not found'
 
         ! Load Time Settings
-        call json%get('Time.Dt', real_value, found)
-        setting%Time%Dt = real_value
-        if (.not. found) stop "Error - setting " // 'Time.Dt not found'
-        call json%get('Time.Step', integer_value, found)
-        setting%Time%Step = integer_value
-        if (.not. found) stop "Error - setting " // 'Time.Step not found'
-        call json%get('Time.HydraulicStep', real_value, found)
-        setting%Time%HydraulicStep = real_value
-        if (.not. found) stop "Error - setting " // 'Time.HydraulicStep not found'
-        call json%get('Time.HydrologyStep', real_value, found)
-        setting%Time%HydrologyStep = real_value
-        if (.not. found) stop "Error - setting " // 'Time.HydrologyStep not found'
-        call json%get('Time.DateTimeStamp', c, found)
-        setting%Time%DateTimeStamp = c
-        if (.not. found) stop "Error - setting " // 'Time.DateTimeStamp not found'
         call json%get('Time.Start', real_value, found)
         setting%Time%Start = real_value
         if (.not. found) stop "Error - setting " // 'Time.Start not found'
@@ -834,6 +815,27 @@ contains
         call json%get('Time.End', real_value, found)
         setting%Time%End = real_value
         if (.not. found) stop "Error - setting " // 'Time.End not found'
+        call json%get('Time.Dt', real_value, found)
+        setting%Time%Dt = real_value
+        if (.not. found) stop "Error - setting " // 'Time.Dt not found'
+        call json%get('Time.Step', integer_value, found)
+        setting%Time%Step = integer_value
+        if (.not. found) stop "Error - setting " // 'Time.Step not found'
+        call json%get('Time.Hydraulics.Dt', real_value, found)
+        setting%Time%Hydraulics%Dt = real_value
+        if (.not. found) stop "Error - setting " // 'Time.Hydraulics.Dt not found'
+        call json%get('Time.Hydraulics.Step', integer_value, found)
+        setting%Time%Hydraulics%Step = integer_value
+        if (.not. found) stop "Error - setting " // 'Time.Hydraulics.Step not found'
+        call json%get('Time.Hydrology.Dt', real_value, found)
+        setting%Time%Hydrology%Dt = real_value
+        if (.not. found) stop "Error - setting " // 'Time.Hydrology.Dt not found'
+        call json%get('Time.Hydrology.Step', integer_value, found)
+        setting%Time%Hydrology%Step = integer_value
+        if (.not. found) stop "Error - setting " // 'Time.Hydrology.Step not found'
+        call json%get('Time.DateTimeStamp', c, found)
+        setting%Time%DateTimeStamp = c
+        if (.not. found) stop "Error - setting " // 'Time.DateTimeStamp not found'
 
         call json%get('Weir.Transverse.WeirExponent', real_value, found)
         setting%Weir%Transverse%WeirExponent = real_value
@@ -937,6 +939,9 @@ contains
         call json%get('Output.reportStep', real_value, found)
         setting%Output%reportStep = real_value
         if (.not. found) stop "Error - setting " // 'Output.reportStep not found'
+        call json%get('Output.reportTol', real_value, found)
+        setting%Output%reportTol = real_value
+        if (.not. found) stop "Error - setting " // 'Output.reportTol not found'
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)

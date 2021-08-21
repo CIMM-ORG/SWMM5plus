@@ -21,7 +21,7 @@ Module utility_output
     public :: util_output_write_elemR_faceR
     public :: util_output_report
     public :: util_output_report_summary
-    
+
 contains
 
     subroutine util_output_create_folder
@@ -380,10 +380,15 @@ contains
 
     function util_output_must_report() result(report)
         logical :: report
-        real(8), pointer :: timeNow
-        timeNow => setting%Time%Now
-        report = ((mod(timeNow, setting%output%reportStep) == zeroI) .or. &
-             (timeNow == 0))
+        real(8), pointer :: timeNow, reportStep, reportTol, startReport
+
+        timeNow     => setting%Time%Now
+        reportStep  => setting%output%reportStep
+        reportTol   => setting%output%reportTol
+        startReport => setting%output%StartTime
+
+        report = ((abs(mod(timeNow, reportStep) - reportStep) <= reportTol) .or. &
+             (timeNow == 0)) .and. (timeNow >= startReport)
     end function util_output_must_report
 
     subroutine util_output_debug_elemI

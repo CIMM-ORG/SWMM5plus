@@ -35,23 +35,20 @@ contains
     !%     Loops over all the major time-stepping routines
     !%-----------------------------------------------------------------------------
         logical          :: isTLfinished
-        logical          :: doHydraulics = .true.
-        logical, pointer :: useHydrology, useHydraulics
+        logical          :: doHydraulics, doHydrology
         character(64)    :: subroutine_name = 'timeloop_toplevel'
     !%-----------------------------------------------------------------------------
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
-        useHydrology  => setting%Simulation%useHydrology
-        useHydraulics => setting%simulation%useHydraulics
-
         !% Combined hydrology (SWMM-C) and hydraulics simulation
         do while (setting%Time%Now <= setting%Time%End)
 
-            if (.not. useHydraulics) stop "ERROR - Hydraulics solver disabled"
-
-            call bc_update()
-            if (doHydraulics) call tl_hydraulics()
-            doHydraulics = tl_increment_counters()
+            if (doHydrology) call tl_hydrology()
+            if (doHydraulics) then
+                call bc_update()
+                call tl_hydraulics()
+            end if
+            call tl_increment_counters(doHydraulics, doHydrology)
         end do
 
         if (setting%Debug%File%timeloop)  print *, '*** leave ', this_image(), subroutine_name
@@ -70,7 +67,6 @@ contains
     !%-----------------------------------------------------------------------------
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
-        call bc_update()
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_hydrology
@@ -87,8 +83,6 @@ contains
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
-
-        call tl_update_hydraulic_step()
 
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
@@ -150,7 +144,7 @@ contains
 
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
-        dt                => setting%Time%HydraulicStep
+        dt                => setting%Time%Hydraulics%Dt
         maxCFL            => setting%VariableDT%CFL_hi_max
         targetCFL         => setting%VariableDT%CFL_target
         maxCFLlow         => setting%VariableDT%CFL_lo_max
@@ -187,7 +181,6 @@ contains
             endif
         endif
 
-        print *, dt, maxval(velocity(thisP))
         if ((setting%Limiter%Dt%UseLimitMin) .and. (dt <= setting%Limiter%Dt%Minimum)) then
             print*, 'timeNow = ', timeNow
             print*, 'dt = ', dt, 'minDt = ',  setting%Limiter%Dt%Minimum
@@ -201,37 +194,56 @@ contains
     !%==========================================================================
     !%==========================================================================
     !%
-    function tl_increment_counters() result(doHydraulics)
+    subroutine tl_increment_counters(doHydraulics, doHydrology)
     !%-----------------------------------------------------------------------------
     !% Description:
     !%-----------------------------------------------------------------------------
-        logical         :: doHydraulics
-        real(8)         :: newDt
-        character(64)   :: subroutine_name     = 'tl_increment_counters'
+        logical, intent(inout) :: doHydraulics, doHydrology
+        logical                :: useHydrology, useHydraulics
+        real(8)                :: newDt, nextTimeHydraulics, nextTimeHydrology, nextTime
+        real(8), pointer       :: timeNow, dt
+        integer, pointer       :: hydraulicStep, hydrologyStep, step
+        character(64)          :: subroutine_name = 'tl_increment_counters'
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
+        hydraulicStep => setting%Time%Hydraulics%Step
+        hydrologyStep => setting%Time%Hydrology%Step
+        dt            => setting%Time%Dt
+        timeNow       => setting%Time%Now
+        step          => setting%Time%Step
+
+        useHydrology = setting%Simulation%useHydrology
+        useHydraulics = setting%Simulation%useHydraulics
+
+        !% Check if CFL > CFLmax condition
+        if (useHydraulics) call tl_update_hydraulic_step()
+
+        nextTimeHydraulics = timeNow + setting%Time%Hydraulics%Dt
+        nextTimeHydrology = (hydrologyStep + 1) * setting%Time%Hydrology%Dt
+
         !% Check what needs to be computed next (Hydrology | Hydraulics)
         !% 1. Update simulation time step
-        if (setting%Simulation%useHydrology) then
-            setting%Time%Dt = min(setting%Time%HydraulicStep, setting%Time%HydrologyStep)
-        else
-            setting%Time%Dt = setting%Time%HydraulicStep
-        end if
+        nextTime     = min(nextTimeHydraulics, nextTimeHydrology)
+        doHydrology  = (nextTime == nextTimeHydrology) .and. useHydrology
+        doHydraulics = (nextTime == nextTimeHydraulics) .and. useHydraulics
 
-        !% 2. Enable routing if Hydraulics is next
-        doHydraulics = (setting%Time%Dt == setting%Time%HydraulicStep)
-        !% Only the processors that run hydraulics next, exchange the minimum time step
-        newDt = setting%Time%Dt
+        newDt = nextTime - timeNow
         call co_min(newDt)
-        if (doHydraulics) setting%Time%Dt = newDt
+        !% Only the processors that run hydraulics next
+        !% exchange the minimum time step
+        if (doHydraulics) then
+            dt = newDt
+            hydraulicStep = hydraulicStep + 1
+        end if
+        if (doHydrology) hydrologyStep = hydrologyStep + 1
 
-        setting%Time%Step = setting%Time%Step + 1
-        setting%Time%Now = setting%Time%Now + setting%Time%Dt
+        step    = step + 1
+        timeNow = timeNow + dt
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
-    end function tl_increment_counters
+    end subroutine tl_increment_counters
     !%
     !%==========================================================================
     !%==========================================================================

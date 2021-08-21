@@ -4,21 +4,20 @@ module initialization
     use define_globals
     use define_settings
     use define_indexes
+    use discretization
+    use initial_condition
     use interface
+    use network_define
     use partitioning
     use pack_mask_arrays, only: pack_nodes
-    use discretization
     use utility_allocate
     use utility_array
-    use initial_condition
-    use network_define
     use utility, only: util_export_linknode_csv
     use utility_output
     use utility_array
     use pack_mask_arrays
     use, intrinsic :: ISO_FORTRAN_ENV, only: team_type
     use output
-
 
     implicit none
 
@@ -95,13 +94,10 @@ contains
 
         call init_network_define_toplevel ()
 
-        !% set up time Dr. Hodges bug fix
-        call init_time()
-
-        !% read in link names for output 
+        !% read in link names for output
         if (setting%Output%report) call output_read_csv_link_names('link_input.csv')
         if (setting%Output%report) call output_read_csv_node_names('node_input.csv')
-        
+
         !% initialize boundary conditions
         call init_bc()
 
@@ -559,14 +555,12 @@ contains
         logical :: doHydraulics
         real(8) :: newDt
 
-        setting%Time%HydrologyStep = minval(BC%flowR_timeseries(:, BC%flowIdx, br_time))
-        setting%Time%Dt = min(setting%Time%HydraulicStep, setting%Time%HydrologyStep)
-        doHydraulics = (setting%Time%Dt == setting%Time%HydraulicStep)
-        newDt = setting%Time%Dt
-        call co_min(newDt)
-        if (doHydraulics) setting%Time%Dt = newDt
+        setting%Time%Dt = setting%Time%Hydraulics%Dt
         setting%Time%Now = 0
-
+        setting%Time%Step = 0
+        setting%Time%Hydraulics%Step = 0
+        setting%Time%Hydrology%Step = 0
+        if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
     end subroutine init_time
     !%
     !%==========================================================================
