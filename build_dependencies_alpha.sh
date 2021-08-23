@@ -206,7 +206,7 @@ install_cmake()
 install_opencoarray_linux()
 {
     # Download Opencoarray
-    if [ ! -e $COARRAY_INSTALL/bin/caf ] || [ -e $COARRAY_INSTALL/bin/cafrun ]
+    if [ ! -e $COARRAY_INSTALL/bin/caf ] || [ ! -e $COARRAY_INSTALL/bin/cafrun ]
     then
         echo "opencoarray not found in local directory ... "
         rm -r -f $COARRAY_SOURCE # clean it and remake
