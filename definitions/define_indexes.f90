@@ -65,6 +65,7 @@ module define_indexes
         enumerator :: li_InitialDepthType    ! Uniform, LinearlyVarying, ExponentialDecay
         enumerator :: li_length_adjusted     ! 1 = length was not adjusted, 2 = one side was adjusted, 3 = both side was adjusted
         enumerator :: li_P_image             ! image number assigned from BIPquick
+        enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
         enumerator :: li_weir_EndContrations
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx

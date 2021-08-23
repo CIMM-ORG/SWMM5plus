@@ -60,8 +60,9 @@ contains
         !% One processor bypass for BIPquick
         if ( num_images() == 1 ) then
             node%I(:, ni_P_image) = oneI
-            node%I(:, ni_P_is_boundary) = oneI
+            node%I(:, ni_P_is_boundary) = zeroI
             link%I(:, li_P_image) = oneI
+            print*, "Triggered BIPquick Bypass"
             return
         end if
 
@@ -137,7 +138,7 @@ contains
                 phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
 
                 !% This subroutine creates a phantom node/link and adds it to node%I/link%I
-                call phantom_node_generator&
+                call phantom_node_generator &
                 (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
 
                 !% This subroutine does the same thing as the previous call to trav_subnetwork()
@@ -789,6 +790,9 @@ contains
 
         !% The downstream node for the spanning link is set as the phantom node
         link%I(spanning_link, li_Mnode_d) = phantom_node_idx
+
+        !% Maps the created phantom link back to the SWMM parent link
+        link%I(phantom_link_idx, li_parent_link) = spanning_link
 
         !% Reduce the downstream node directweight by the spanning link's new length
         B_nodeR(downstream_node, directweight) = B_nodeR(downstream_node, directweight) &
