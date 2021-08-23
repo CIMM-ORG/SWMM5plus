@@ -242,7 +242,7 @@
 	    "output" : false
         },
         "FileGroup" : {
-            "all" : false,
+            "all" : true,
             "definitions" : false,
             "finalization" : false,
             "geometry" : false,
@@ -253,7 +253,7 @@
         }
     },
     "Output" : {
-        "report" : true,
+        "report" : false,
         "report_time" : 600,
         "report_tol"  : 2
     },
