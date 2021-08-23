@@ -668,7 +668,8 @@ module lowlevel_rk2
         integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
         integer, pointer :: Npack
         real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) ! BRHbugfix 20210811
-        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:)
+        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), vMax
+        logical, pointer :: isAdhocFlowrate(:)
         integer :: ii, kk, tB
         !% BRHbugfix 20210812 start
         real(8) :: dHead
@@ -688,9 +689,10 @@ module lowlevel_rk2
         !iElemDn       => faceI(:,fi_Melem_dL)!% BRHbugfix 20210811
         !% BRHbugfix 20210811 start
         eHead        => elemR(:,er_Head)
-        fHead_u       => faceR(:,fr_Head_u)
-        fHead_d       => faceR(:,fr_Head_d)
-
+        fHead_u      => faceR(:,fr_Head_u)
+        fHead_d      => faceR(:,fr_Head_d)
+        vMax         => setting%Limiter%Velocity%Maximum
+        isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
         !% BRHbugfix 20210811 end
         !%-----------------------------------------------------------------------------
         !%
@@ -729,7 +731,14 @@ module lowlevel_rk2
                             ! upstream flow in an upstream branch
                             eFlow(tB) = - eArea(tB) * sqrt(twoR * setting%Constant%gravity * (-dHead))
                         end if
+
                         eVelocity(tB) = eFlow(tB) / eArea(tB)
+
+                        if (abs(eVelocity(tB)) > vMax) then
+                            eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
+                            isAdhocFlowrate(tB) = .true.
+                        end if
+
                     end if
                 end do
                 !% handle the downstream branches
@@ -748,7 +757,14 @@ module lowlevel_rk2
                             ! downstream flow in an downstream branch
                             eFlow(tB) =  + eArea(tB) * sqrt(twoR * setting%Constant%gravity * dHead )
                         end if
+
                         eVelocity(tB) = eFlow(tB) / eArea(tB)
+
+                        if (abs(eVelocity(tB)) > vMax) then
+                            eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
+                            isAdhocFlowrate(tB) = .true.
+                        end if
+
                     end if
                 end do
 
