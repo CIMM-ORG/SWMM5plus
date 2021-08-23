@@ -369,6 +369,7 @@ module timeloop
         if ((setting%Limiter%Dt%UseLimitMin) .and. (dt <= setting%Limiter%Dt%Minimum)) then
             print*, 'timeNow = ', timeNow
             print*, 'dt = ', dt, 'minDt = ',  setting%Limiter%Dt%Minimum
+            print*, 'max velocity = ', maxval(velocity(thisP)), 'max wavespeed = ', maxval(wavespeed(thisP)) 
             print*, 'warning: the dt value is smaller than the user supplied min dt value'
             stop 3369
         endif
