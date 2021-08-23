@@ -81,13 +81,15 @@ module adjust
         integer, intent(in) :: geocol, thisCol
         real(8), intent(in) :: geozero
         integer, pointer :: Npack, thisP(:)
-        real(8), pointer :: geovalue(:)        
+        real(8), pointer :: geovalue(:)    
+        logical, pointer :: NearZeroVolume(:)   
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues'
         if (setting%Debug%File%adjust) print *, '*** enter ', this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         Npack    => npack_elemP(thisCol)  
         geovalue => elemR(:,geocol)
+        NearZeroVolume => elemYN(:,eYN_isNearZeroVolume)
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
@@ -95,10 +97,12 @@ module adjust
             if (setting%ZeroValue%UseZeroValues) then
                 where (geovalue(thisP) < geozero)
                     geovalue(thisP) = geozero
+                    NearZeroVolume(thisP) = .true.
                 endwhere
             else
                 where (geovalue(thisP) < zeroR)
                     geovalue(thisP) = zeroR
+                    NearZeroVolume(thisP) = .true.
                 endwhere  
             endif
         endif    
