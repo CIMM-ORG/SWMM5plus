@@ -3,21 +3,21 @@
 # --------------------------------------------------------------------------------------
 #  Alpha Release:
 #  Shell script for installing dependencies
-# 
-#  [README] 
+#
+#  [README]
 #  This shell script is for downloading the dependencies of SWMM 5+. The dependencies
-#  include: 
+#  include:
 #  (1) json-fortran, from: https://github.com/jacobwilliams/json-fortran.git
 #  (2) SWMM 5 libraries, from: https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz
 #  (3) OpenCoarray and its dependencies, from: https://github.com/sourceryinstitute/OpenCoarrays
 #
 #  OpenCoarray is a Fortran Coarray libaray designed for GNC compiler (e.g. gfortran series).
-#  Before we start the installation/compile of SWMM5+, we strongly recommand users to check the 
+#  Before we start the installation/compile of SWMM5+, we strongly recommand users to check the
 #  of compiler version. If user is using Intel Compiler, then the OpenCoarray dependencies
-#  installation can be skipped by simply adding a "-t" flag after the command "./build.sh". If 
-#  user is using gcc compiler, please make sure the compiler version is higher than 6.1.0. 
+#  installation can be skipped by simply adding a "-t" flag after the command "./build.sh". If
+#  user is using gcc compiler, please make sure the compiler version is higher than 6.1.0.
 #  The dependencies of OpenCoarray include:
-# 
+#
 #  opencoarrays
 #  ├── cmake-3.4.0
 #  └── mpich-3.2
@@ -28,14 +28,14 @@
 #          ├── gmp
 #          ├── mpc
 #          └── mpfr
-#  
+#
 #  This script will first check if the above-mentioned pakcages exist in the local directory,
 #  If not found -> then download and install.
 #  For the OpenCoarray dependencies, script will check the existencce of local copy of cmake and mpich,
 #  For the user first time download/compile SWMM5+, all these packages will be downloaded and installed.
 #  This is an one-time installation work if user keeps working in the same SWMM5+ directory. However,
 #  the dependencies installation process is required everytime after cloning a new version of SWMM 5+.
-#  
+#
 #  More information for the packages can refer to :
 #  json fortran : https://github.com/jacobwilliams/json-fortran#brief-description
 #  SWMM 5 library: https://www.epa.gov/water-research/storm-water-management-model-swmm
@@ -262,7 +262,7 @@ install_opencoarray_mac()
 }
 
 opencoarray_prerequisite()
-{   # For simplicity, install everything in local directory. 
+{   # For simplicity, install everything in local directory.
     echo "Installing cmake in $CMAKE_INSTALL ..."
     install_cmake
     echo "Cmake installation complete. "
