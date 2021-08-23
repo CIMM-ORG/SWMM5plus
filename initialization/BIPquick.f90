@@ -57,6 +57,14 @@ contains
         ! -----------------------------------------------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
+        !% One processor bypass for BIPquick
+        if ( num_images() == 1 ) then
+            node%I(:, ni_P_image) = oneI
+            node%I(:, ni_P_is_boundary) = oneI
+            link%I(:, li_P_image) = oneI
+            return
+        end if
+
         !% Initialize the temporary arrays needed for BIPquick
         call bip_initialize_arrays()
 
