@@ -356,6 +356,7 @@ module define_settings
     type TimeType
         type(TimeStepType) :: Hydraulics
         type(TimeStepType) :: Hydrology
+        logical            :: matchHydrologyStep
         character(14)      :: DateTimeStamp
         integer            :: Step
         real(8)            :: Dt
@@ -807,6 +808,9 @@ contains
         !rm 20210607 brh if (.not. found) stop "Error - setting " // 'Step.First not found'
 
         ! Load Time Settings
+        call json%get('Time.matchHydrologyStep', logical_value, found)
+        setting%Time%matchHydrologyStep = logical_value
+        if (.not. found) stop "Error - setting " // 'Time.matchHydrologyStep not found'
         call json%get('Time.Start', real_value, found)
         setting%Time%Start = real_value
         if (.not. found) stop "Error - setting " // 'Time.Start not found'

@@ -146,6 +146,7 @@
         "End" : 0.0,
         "Dt" : 10.0,
         "Step" : 0,
+        "matchHydrologyStep" : true,
         "Hydraulics" : {
             "Dt" : 10.0,
             "Step" : 0

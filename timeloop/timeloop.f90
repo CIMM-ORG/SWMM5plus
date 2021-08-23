@@ -86,7 +86,7 @@ contains
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
             call tl_solver_select()
-        endif
+        end if
 
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
@@ -130,12 +130,12 @@ contains
     !% Description:
     !%-----------------------------------------------------------------------------
 
-        real(8) :: timeleft, thisCFL
-        integer :: neededSteps, ii
-        real(8), pointer :: dt, maxCFL, maxCFLlow, targetCFL
-        real(8), pointer :: timeNow, timeNext, timeFinal, decreaseFactor, increaseFactor
-        real(8), pointer :: velocity(:), wavespeed(:), length(:)
-        integer, pointer :: stepNow, stepNext, stepfinal, checkStepInterval, lastCheckStep
+        logical          :: matchHydrologyStep
+        real(8)          :: timeleft, timeNow, thisCFL, targetCFL, maxCFL, maxCFLlow
+        real(8)          :: decreaseFactor, increaseFactor, nextTimeHydrology
+        real(8), pointer :: dt, velocity(:), wavespeed(:), length(:)
+        integer          :: ii, neededSteps, checkStepInterval
+        integer, pointer :: stepNow, stepNext, stepfinal, lastCheckStep
         integer, pointer :: thisCol, Npack, thisP(:)
         character(64)    :: subroutine_name = 'tl_update_hydraulic_step'
 
@@ -143,13 +143,16 @@ contains
 
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
+        maxCFL             = setting%VariableDT%CFL_hi_max
+        targetCFL          = setting%VariableDT%CFL_target
+        maxCFLlow          = setting%VariableDT%CFL_lo_max
+        decreaseFactor     = setting%VariableDT%decreaseFactor
+        increaseFactor     = setting%VariableDT%increaseFactor
+        checkStepInterval  = setting%VariableDT%NstepsForCheck
+        matchHydrologyStep = setting%Time%matchHydrologyStep
+        timeNow            = setting%Time%Now
+
         dt                => setting%Time%Hydraulics%Dt
-        maxCFL            => setting%VariableDT%CFL_hi_max
-        targetCFL         => setting%VariableDT%CFL_target
-        maxCFLlow         => setting%VariableDT%CFL_lo_max
-        decreaseFactor    => setting%VariableDT%decreaseFactor
-        increaseFactor    => setting%VariableDT%increaseFactor
-        checkStepInterval => setting%VariableDT%NstepsForCheck
         stepNow           => setting%Time%Step
         lastCheckStep     => setting%VariableDT%LastCheckStep
 
@@ -161,31 +164,53 @@ contains
         wavespeed         => elemR(:,er_WaveSpeed)
         length            => elemR(:,er_Length)
 
-        !% For hydraulics only, keep the timestep stable unless it
-        !% exceeds CFL limits (both high and low limits).
-        thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
+        if (matchHydrologyStep) then
+            !% For combined hydrology and hydraulics use the hydrology time step
+            !% as the target CFL.
+            nextTimeHydrology = (setting%Time%Hydrology%Step + 1) * setting%Time%Hydrology%Dt
+            timeLeft = nextTimeHydrology - timeNow
+            thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * timeleft / length(thisP) )
 
-        if (thisCFL > maxCFL) then
-            !% decrease the time step and reset the checkStep counter
-            dt = dt * decreaseFactor * maxCFL / thisCFL
-            lastCheckStep = stepNow
-        else
-            if (stepNow > lastCheckStep + checkStepInterval) then
-                !% check for low CFL only on prescribed intervals and increase time step
-                if (thisCFL < maxCFLlow) then
-                    !% increase the time step and reset the checkStep Counter
-                    dt = dt * increaseFactor
-                    lastCheckStep = stepNow
+            !% check to see if max CFL is exceeded
+            if (thisCFL < maxCFL) then
+                !% use a single hydraulics step for the remaining hydrology time
+                dt = timeleft
+            else
+                !% compute the needed steps and time step size
+                neededSteps = ceiling( thisCFL / targetCFL )
+                dt = timeleft / real(neededSteps,8)
+                if ((dt > fiveR) .and. (neededSteps > 2)) then
+                    !% round larger dt to integer values
+                    dt = real(floor(dt),8)
                 endif
             endif
-        endif
+        else
+            !% For hydraulics only, keep the timestep stable unless it
+            !% exceeds CFL limits (both high and low limits).
+            thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
+
+            if (thisCFL > maxCFL) then
+                !% decrease the time step and reset the checkStep counter
+                dt = dt * decreaseFactor * maxCFL / thisCFL
+                lastCheckStep = stepNow
+            else
+                if (stepNow > lastCheckStep + checkStepInterval) then
+                    !% check for low CFL only on prescribed intervals and increase time step
+                    if (thisCFL < maxCFLlow) then
+                        !% increase the time step and reset the checkStep Counter
+                        dt = dt * increaseFactor
+                        lastCheckStep = stepNow
+                    end if
+                end if
+            end if
+        end if
 
         if ((setting%Limiter%Dt%UseLimitMin) .and. (dt <= setting%Limiter%Dt%Minimum)) then
             print*, 'timeNow = ', timeNow
             print*, 'dt = ', dt, 'minDt = ',  setting%Limiter%Dt%Minimum
             print*, 'warning: the dt value is smaller than the user supplied min dt value'
             stop 3369
-        endif
+        end if
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_update_hydraulic_step
