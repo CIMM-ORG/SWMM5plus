@@ -804,6 +804,7 @@ contains
         l2 = link%R(phantom_link_idx, lr_Length)
         !% Interpolate zBottom
         node%R(phantom_node_idx, nr_Zbottom) = y2 + l2*(y1 - y2)/(l1 + l2)
+
         !% Interpolate InitialDepth
         y1 = node%R(upstream_node, nr_InitialDepth)
         y2 = node%R(downstream_node, nr_InitialDepth)
@@ -828,8 +829,6 @@ contains
         !% The resets the phantom index to having the phantom link and phantom node (as upstream node)
         link%I(phantom_link_idx, li_idx) = phantom_link_idx
         link%I(phantom_link_idx, li_Mnode_u) = phantom_node_idx
-
-        !% HACK - need to check with Saz/Gerardo in Network_Define to see if I missed anything here
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine phantom_node_generator
