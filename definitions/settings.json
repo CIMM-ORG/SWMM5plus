@@ -109,14 +109,14 @@
     "Output" : {
         "report" : true,
         "StartTime" : 0.0,
-        "reportStep" : 1000.0,
+        "reportStep" : 10.0,
         "reportTol" : 10
     },
     "Partitioning" : {
         "PartitioningMethod" : "blink"
     },
     "Simulation" : {
-        "useHydrology" : false,
+        "useHydrology" : true,
         "useHydraulics" : true,
         "useSWMMC" : false
     },
@@ -154,7 +154,8 @@
             "Dt" : 10.0,
             "Step" : 0
         },
-        "DateTimeStamp" : 0.0
+        "DateTimeStamp" : 0.0,
+        "DtTol" : 1e-1
     },
     "Weir" : {
         "Transverse" : {
@@ -222,6 +223,7 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
+	        "output" : false,
             "pack_mask_arrays" : false,
             "partitioning" : false,
             "pump_elements" : false,
@@ -238,8 +240,7 @@
             "utility_interpolate" : false,
             "utility_output" : false,
             "utility_string" : false,
-            "weir_elements" : false,
-	    "output" : false
+            "weir_elements" : false
         },
         "FileGroup" : {
             "all" : false,

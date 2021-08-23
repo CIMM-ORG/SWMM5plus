@@ -359,6 +359,7 @@ module define_settings
         character(14)      :: DateTimeStamp
         integer            :: Step
         real(8)            :: Dt
+        real(8)            :: DtTol
         real(8)            :: Start
         real(8)            :: Now
         real(8)            :: End
@@ -833,10 +834,12 @@ contains
         call json%get('Time.Hydrology.Step', integer_value, found)
         setting%Time%Hydrology%Step = integer_value
         if (.not. found) stop "Error - setting " // 'Time.Hydrology.Step not found'
+        call json%get('Time.DtTol', real_value, found)
+        setting%Time%DtTol = real_value
+        if (.not. found) stop "Error - setting " // 'Time.Hydrology.DtTol not found'
         call json%get('Time.DateTimeStamp', c, found)
         setting%Time%DateTimeStamp = c
         if (.not. found) stop "Error - setting " // 'Time.DateTimeStamp not found'
-
         call json%get('Weir.Transverse.WeirExponent', real_value, found)
         setting%Weir%Transverse%WeirExponent = real_value
         if (.not. found) stop "Error - setting " // 'Weir.Transverse.WeirExponent not found'

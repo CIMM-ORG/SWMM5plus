@@ -561,6 +561,9 @@ contains
         setting%Time%Hydraulics%Step = 0
         setting%Time%Hydrology%Step = 0
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
+        if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
+            stop "Error: Hydrology time step can't be smaller than hydraulics time step"
+        end if
     end subroutine init_time
     !%
     !%==========================================================================

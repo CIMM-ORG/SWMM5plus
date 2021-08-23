@@ -8,7 +8,6 @@ module timeloop
     use runge_kutta2
     use utility_output
     use boundary_conditions
-    use, intrinsic :: ISO_FORTRAN_ENV, only: team_type
 
     implicit none
 
@@ -171,7 +170,7 @@ contains
             dt = dt * decreaseFactor * maxCFL / thisCFL
             lastCheckStep = stepNow
         else
-            if (dt > lastCheckStep + checkStepInterval) then
+            if (stepNow > lastCheckStep + checkStepInterval) then
                 !% check for low CFL only on prescribed intervals and increase time step
                 if (thisCFL < maxCFLlow) then
                     !% increase the time step and reset the checkStep Counter
@@ -200,8 +199,9 @@ contains
     !%-----------------------------------------------------------------------------
         logical, intent(inout) :: doHydraulics, doHydrology
         logical                :: useHydrology, useHydraulics
-        real(8)                :: newDt, nextTimeHydraulics, nextTimeHydrology, nextTime
+        real(8)                :: nextTimeHydraulics, nextTimeHydrology, nextTime, dtTol
         real(8), pointer       :: timeNow, dt
+        integer                :: minImg
         integer, pointer       :: hydraulicStep, hydrologyStep, step
         character(64)          :: subroutine_name = 'tl_increment_counters'
     !%-----------------------------------------------------------------------------
@@ -213,8 +213,8 @@ contains
         dt            => setting%Time%Dt
         timeNow       => setting%Time%Now
         step          => setting%Time%Step
-
-        useHydrology = setting%Simulation%useHydrology
+        dtTol         = setting%Time%DtTol
+        useHydrology  = setting%Simulation%useHydrology
         useHydraulics = setting%Simulation%useHydraulics
 
         !% Check if CFL > CFLmax condition
@@ -224,19 +224,25 @@ contains
         nextTimeHydrology = (hydrologyStep + 1) * setting%Time%Hydrology%Dt
 
         !% Check what needs to be computed next (Hydrology | Hydraulics)
-        !% 1. Update simulation time step
-        nextTime     = min(nextTimeHydraulics, nextTimeHydrology)
-        doHydrology  = (nextTime == nextTimeHydrology) .and. useHydrology
-        doHydraulics = (nextTime == nextTimeHydraulics) .and. useHydraulics
 
-        newDt = nextTime - timeNow
-        call co_min(newDt)
-        !% Only the processors that run hydraulics next
-        !% exchange the minimum time step
-        if (doHydraulics) then
-            dt = newDt
-            hydraulicStep = hydraulicStep + 1
+        !% 1. Update simulation time step
+        nextTime = min(nextTimeHydraulics, nextTimeHydrology)
+        doHydrology  = (abs(nextTime - nextTimeHydrology) <= dtTol) .and. useHydrology
+        doHydraulics = (abs(nextTime - nextTimeHydraulics) <= dtTol) .and. useHydraulics
+        dt = nextTime - timeNow
+
+        !% 2. Communicate new Dt (ALL the processors compute the same step)
+        call co_min(dt)
+        if (dt == (nextTime - timeNow)) then
+            minImg = this_image()
+        else
+            minImg = -1
         end if
+        call co_max(minImg)
+        call co_broadcast(doHydraulics, minImg)
+        call co_broadcast(doHydrology, minImg)
+
+        if (doHydraulics) hydraulicStep = hydraulicStep + 1
         if (doHydrology) hydrologyStep = hydrologyStep + 1
 
         step    = step + 1
