@@ -138,7 +138,7 @@
         "EndTime" : 0.0,
         "StartTime" : 0.0,
         "Hydrology" : {
-            "Dt" : 50.0,
+            "Dt" : 100.0,
             "timeNow" : 0.0,
             "timeNext" : 1.0,
             "timeFinal" : 1.0,
@@ -242,7 +242,7 @@
 	    "output" : false
         },
         "FileGroup" : {
-            "all" : true,
+            "all" : false,
             "definitions" : false,
             "finalization" : false,
             "geometry" : false,
@@ -254,7 +254,7 @@
     },
     "Output" : {
         "report" : false,
-        "report_time" : 600,
+        "report_time" : 100,
         "report_tol"  : 2
     },
     "Warning"  : false,
