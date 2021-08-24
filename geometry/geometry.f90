@@ -386,11 +386,22 @@ module geometry
                                 !% negligible depth is treated with ZeroValues
                                 depth(tB)     = setting%ZeroValue%Depth
                                 area(tB)      = setting%ZeroValue%Area
-                                topwidth(tB)  = setting%ZeroValue%Topwidth
-                                hyddepth(tB)  = setting%ZeroValue%Area / setting%ZeroValue%Topwidth
-                                perimeter(tB) = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
+                                ! HACK fix
+                                if (elemI(tB,ei_geometryType) == rectangular)  then
+                                    topwidth(tB) = elemSGR(tB,eSGR_Rectangular_Breadth)
+                                else
+                                    topwidth(tB)  = setting%ZeroValue%Topwidth
+                                endif
+                                !% HACK
+                                hyddepth(tB)  = setting%ZeroValue%Area / topwidth(tB)
+                                ! hyddepth(tB)  = setting%ZeroValue%Area / setting%ZeroValue%Topwidth
+                                !% HACK
+                                perimeter(tB) = topwidth(tB) + setting%ZeroValue%Depth
+                                ! perimeter(tB) = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
                                 hydRadius(tB) = setting%ZeroValue%Area / perimeter(tB)
-                                dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
+                                !% HACK
+                                dHdA(tB)      = oneR / topwidth(tB)
+                                ! dHdA(tB)      = oneR / setting%ZeroValue%Topwidth
                             elseif ((depth(tB) .le. zeroR) .and. (.not. setting%ZeroValue%UseZeroValues)) then
                                 !% negative depth is treated as exactly zero
                                 depth(tB) = zeroR

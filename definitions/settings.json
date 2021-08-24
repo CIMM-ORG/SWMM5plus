@@ -113,7 +113,7 @@
         "reportStep" : 0
     },
     "Partitioning" : {
-        "PartitioningMethod" : "blink"
+        "PartitioningMethod" : "bquick"
     },
     "Simulation" : {
         "useHydrology" : true,
