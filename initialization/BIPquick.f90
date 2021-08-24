@@ -62,6 +62,7 @@ contains
             node%I(:, ni_P_image) = oneI
             node%I(:, ni_P_is_boundary) = zeroI
             link%I(:, li_P_image) = oneI
+            print*, "Triggered BIPquick Bypass"
             return
         end if
 
@@ -137,7 +138,7 @@ contains
                 phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
 
                 !% This subroutine creates a phantom node/link and adds it to node%I/link%I
-                call phantom_node_generator&
+                call phantom_node_generator &
                 (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
 
                 !% This subroutine does the same thing as the previous call to trav_subnetwork()
@@ -576,32 +577,35 @@ contains
         !% Searching through each node
         do ii=1, size(node%I,1)
 
-        !% If the node has already been partitioned then go to the next one
-        if (partitioned_nodes(ii) .eqv. .true. ) then
-        cycle
-        end if
+            !% If the node has already been partitioned then go to the next one
+            if (partitioned_nodes(ii) .eqv. .true. ) then
+                cycle
+            end if
 
-        !% If the node's totalweight matches the partition_threshold to within a tolerance
-        if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
-        < precision_matching_tolerance )  then
+            !% If the node's totalweight matches the partition_threshold to within a tolerance
+            if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
+            < precision_matching_tolerance )  then
 
-        !% Then the effective root is set and the ideal (Case 1) boolean is set to true
-        effective_root = node%I(ii, ni_idx)
-        ideal_exists = .true.
-        exit
-        endif
+                !% Then the effective root is set and the ideal (Case 1) boolean is set to true
+                effective_root = node%I(ii, ni_idx)
+                ideal_exists = .true.
+                exit
+            endif
 
-        !% Alternatively, if the totalweight is greater than the partition threshold and
-        !% less than the nearest overestimate
-        if (&
-        (B_nodeR(ii, totalweight) > partition_threshold) .and. &
-        (B_nodeR(ii, totalweight) < nearest_overestimate) &
-        ) then
+            !% Alternatively, if the totalweight is greater than the partition threshold and
+            !% less than the nearest overestimate
+            if (&
+            (B_nodeR(ii, totalweight) > partition_threshold) .and. &
+            (B_nodeR(ii, totalweight) < nearest_overestimate) &
+            ) then
 
-        !% Then update the nearest overestimate and set the effective root
-        nearest_overestimate = B_nodeR(ii, totalweight)
-        effective_root = node%I(ii, ni_idx)
-        endif
+                !% Then update the nearest overestimate and set the effective root
+                nearest_overestimate = B_nodeR(ii, totalweight)
+                effective_root = node%I(ii, ni_idx)
+            endif
+
+            ! effective_root = ideal_junction_test(ii, partition_threshold, ideal_exists)
+
         enddo
 
         !% The effective root is the one that most nearly overestimates the partition threshold
@@ -610,6 +614,42 @@ contains
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end function calc_effective_root
+    !
+    !============================================================================
+    !============================================================================
+    !
+    function ideal_junction_test(node_index, partition_threshold, ideal_exists) result (ideal_junction)
+        !-----------------------------------------------------------------------------
+        !
+        ! Description: This subroutine is used to check for an ideal junction, meaning a junction
+        ! that has the partition_threshold if only some of the upstream links are considered
+        !
+        !-----------------------------------------------------------------------------
+
+        character(64) :: subroutine_name = 'ideal_junction_test'
+        integer :: ideal_junction
+
+        real(8), intent(in) :: partition_threshold
+        logical, intent(in out) :: ideal_exists
+        integer, intent(in) :: node_index
+
+        integer             :: upstream_nodes
+        real(8)             :: remainder
+        !--------------------------------------------------------------------------
+        
+        upstream_nodes = count((B_nodeI(node_index, :) .ne. nullValueI))
+        
+        remainder = mod(B_nodeR(node_index, totalweight), partition_threshold)
+
+        print*, remainder, partition_threshold, B_nodeR(node_index, totalweight)
+
+        if ( remainder == zeroR ) then
+            print*, "Found an ideal junction", node_index
+        end if
+
+
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+    end function ideal_junction_test
     !
     !============================================================================
     !============================================================================
@@ -790,6 +830,9 @@ contains
         !% The downstream node for the spanning link is set as the phantom node
         link%I(spanning_link, li_Mnode_d) = phantom_node_idx
 
+        !% Maps the created phantom link back to the SWMM parent link
+        link%I(phantom_link_idx, li_parent_link) = spanning_link
+
         !% Reduce the downstream node directweight by the spanning link's new length
         B_nodeR(downstream_node, directweight) = B_nodeR(downstream_node, directweight) &
         - calc_link_weights(spanning_link)
@@ -800,6 +843,7 @@ contains
         l2 = link%R(phantom_link_idx, lr_Length)
         !% Interpolate zBottom
         node%R(phantom_node_idx, nr_Zbottom) = y2 + l2*(y1 - y2)/(l1 + l2)
+
         !% Interpolate InitialDepth
         y1 = node%R(upstream_node, nr_InitialDepth)
         y2 = node%R(downstream_node, nr_InitialDepth)
@@ -824,8 +868,6 @@ contains
         !% The resets the phantom index to having the phantom link and phantom node (as upstream node)
         link%I(phantom_link_idx, li_idx) = phantom_link_idx
         link%I(phantom_link_idx, li_Mnode_u) = phantom_node_idx
-
-        !% HACK - need to check with Saz/Gerardo in Network_Define to see if I missed anything here
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine phantom_node_generator
