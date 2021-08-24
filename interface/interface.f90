@@ -813,9 +813,9 @@ contains
         if (error /= 0) stop "ERROR: couldn't retrieve report times"
         reportStart = util_datetime_epoch_to_secs(reportStart)
 
-        setting%Output%StartTime = reportStart
-        setting%Output%reportStep = reportStep
-        setting%Time%Hydrology%Step = hydroStep
+        setting%Output%reportStartTime = reportStart
+        setting%Output%reportDt = reportStep
+        setting%Time%Hydrology%Dt = hydroStep
 
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine interface_get_report_times

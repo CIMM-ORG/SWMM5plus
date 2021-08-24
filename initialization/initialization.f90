@@ -553,7 +553,6 @@ contains
     !%
     subroutine init_time()
         logical :: doHydraulics
-        real(8) :: newDt
 
         setting%Time%Dt = setting%Time%Hydraulics%Dt
         setting%Time%Now = 0
@@ -561,6 +560,8 @@ contains
         setting%Time%Hydraulics%Step = 0
         setting%Time%Hydrology%Step = 0
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
+        !% Initialize report step
+        setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
         if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
             stop "Error: Hydrology time step can't be smaller than hydraulics time step"
         end if
