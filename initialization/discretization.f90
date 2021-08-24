@@ -90,6 +90,12 @@ contains
             link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
         endif
 
+        !% Additional check to ensure that every link has at least one element
+        if ( link%R(link_idx, lr_Length) .le. elem_nominal_length ) then
+            link%I(link_idx, li_N_element) = oneI
+            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+        end if
+        
         if (setting%Debug%File%discretization)  print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine init_discretization_nominal
