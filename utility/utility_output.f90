@@ -348,6 +348,7 @@ contains
         if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
 
         if (util_output_must_report() .and. setting%verbose) then
+
             write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
             timeNow   => setting%Time%Now
             dt        => setting%Time%Dt
@@ -361,7 +362,6 @@ contains
 
             print*, '--------------------------------------'
             !% also print the summary in the terminal
-            print*
             print('(*(G0.6))'), 'image = ', this_image(), ',  timeNow = ', timeNow, ',  dt = ', dt
             print('(*(G0.6))'), 'thisCFL = ',thisCFL, ',  max velocity = ', maxval(abs(velocity(thisP))), &
             ',  max wavespeed = ', maxval(abs(wavespeed(thisP)))
@@ -391,6 +391,8 @@ contains
         if ((timeNow >= reportDt * (reportStep + 1)) .and. (timeNow > startReport)) then
             report = .true.
             reportStep = reportStep + 1
+        else
+            report = .false.
         end if
 
     end function util_output_must_report
