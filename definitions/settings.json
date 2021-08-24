@@ -113,7 +113,7 @@
         "reportTol" : 10
     },
     "Partitioning" : {
-        "PartitioningMethod" : "blink"
+        "PartitioningMethod" : "bquick"
     },
     "Simulation" : {
         "useHydrology" : true,

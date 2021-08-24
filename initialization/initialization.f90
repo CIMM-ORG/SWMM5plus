@@ -16,7 +16,6 @@ module initialization
     use utility_output
     use utility_array
     use pack_mask_arrays
-    use, intrinsic :: ISO_FORTRAN_ENV, only: team_type
     use output
 
     implicit none
