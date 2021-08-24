@@ -577,32 +577,35 @@ contains
         !% Searching through each node
         do ii=1, size(node%I,1)
 
-        !% If the node has already been partitioned then go to the next one
-        if (partitioned_nodes(ii) .eqv. .true. ) then
-        cycle
-        end if
+            !% If the node has already been partitioned then go to the next one
+            if (partitioned_nodes(ii) .eqv. .true. ) then
+                cycle
+            end if
 
-        !% If the node's totalweight matches the partition_threshold to within a tolerance
-        if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
-        < precision_matching_tolerance )  then
+            !% If the node's totalweight matches the partition_threshold to within a tolerance
+            if ( abs ((B_nodeR(ii, totalweight) - partition_threshold)/partition_threshold) &
+            < precision_matching_tolerance )  then
 
-        !% Then the effective root is set and the ideal (Case 1) boolean is set to true
-        effective_root = node%I(ii, ni_idx)
-        ideal_exists = .true.
-        exit
-        endif
+                !% Then the effective root is set and the ideal (Case 1) boolean is set to true
+                effective_root = node%I(ii, ni_idx)
+                ideal_exists = .true.
+                exit
+            endif
 
-        !% Alternatively, if the totalweight is greater than the partition threshold and
-        !% less than the nearest overestimate
-        if (&
-        (B_nodeR(ii, totalweight) > partition_threshold) .and. &
-        (B_nodeR(ii, totalweight) < nearest_overestimate) &
-        ) then
+            !% Alternatively, if the totalweight is greater than the partition threshold and
+            !% less than the nearest overestimate
+            if (&
+            (B_nodeR(ii, totalweight) > partition_threshold) .and. &
+            (B_nodeR(ii, totalweight) < nearest_overestimate) &
+            ) then
 
-        !% Then update the nearest overestimate and set the effective root
-        nearest_overestimate = B_nodeR(ii, totalweight)
-        effective_root = node%I(ii, ni_idx)
-        endif
+                !% Then update the nearest overestimate and set the effective root
+                nearest_overestimate = B_nodeR(ii, totalweight)
+                effective_root = node%I(ii, ni_idx)
+            endif
+
+            ! effective_root = ideal_junction_test(ii, partition_threshold, ideal_exists)
+
         enddo
 
         !% The effective root is the one that most nearly overestimates the partition threshold
@@ -611,6 +614,42 @@ contains
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end function calc_effective_root
+    !
+    !============================================================================
+    !============================================================================
+    !
+    function ideal_junction_test(node_index, partition_threshold, ideal_exists) result (ideal_junction)
+        !-----------------------------------------------------------------------------
+        !
+        ! Description: This subroutine is used to check for an ideal junction, meaning a junction
+        ! that has the partition_threshold if only some of the upstream links are considered
+        !
+        !-----------------------------------------------------------------------------
+
+        character(64) :: subroutine_name = 'ideal_junction_test'
+        integer :: ideal_junction
+
+        real(8), intent(in) :: partition_threshold
+        logical, intent(in out) :: ideal_exists
+        integer, intent(in) :: node_index
+
+        integer             :: upstream_nodes
+        real(8)             :: remainder
+        !--------------------------------------------------------------------------
+        
+        upstream_nodes = count((B_nodeI(node_index, :) .ne. nullValueI))
+        
+        remainder = mod(B_nodeR(node_index, totalweight), partition_threshold)
+
+        print*, remainder, partition_threshold, B_nodeR(node_index, totalweight)
+
+        if ( remainder == zeroR ) then
+            print*, "Found an ideal junction", node_index
+        end if
+
+
+        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+    end function ideal_junction_test
     !
     !============================================================================
     !============================================================================

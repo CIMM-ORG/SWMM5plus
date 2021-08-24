@@ -59,7 +59,7 @@ J4               0          FIXED      1                NO
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1               J1               J3               1000       0.03       0          0          0.9396     0         
+C1               J1               J3               2000       0.03       0          0          0.9396     0         
 C2               J2               J3               1000       0.03       0          0          0.9396     0         
 C3               J3               J4               1000       0.03       0          0          1.8792     0         
 
