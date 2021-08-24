@@ -4,20 +4,19 @@ module initialization
     use define_globals
     use define_settings
     use define_indexes
+    use discretization
+    use initial_condition
     use interface
+    use network_define
     use partitioning
     use pack_mask_arrays, only: pack_nodes
-    use discretization
     use utility_allocate
     use utility_array
-    use initial_condition
-    use network_define
     use utility, only: util_export_linknode_csv
     use utility_output
     use utility_array
     use pack_mask_arrays
     use output
-
 
     implicit none
 
@@ -94,14 +93,14 @@ contains
 
         call init_network_define_toplevel ()
 
-        !% set up time Dr. Hodges bug fix
-        call init_time()
-
-        !% read in link names for output 
-        call output_read_csv_link_names('link_input.csv')
+        !% read in link names for output
+        if (setting%Output%report) call output_read_csv_link_names('link_input.csv')
+        if (setting%Output%report) call output_read_csv_node_names('node_input.csv')
 
         !% initialize boundary conditions
         call init_bc()
+
+        call init_time()
 
         if (this_image() == 1) call util_export_linknode_csv()
 
@@ -112,6 +111,7 @@ contains
         if (setting%Output%report) call util_output_create_elemR_files()
         if (setting%Output%report) call util_output_create_faceR_files()
         if (setting%Output%report) call output_create_link_files()
+        if (setting%Output%report) call output_create_node_files()
         call util_output_create_summary_files()
 
         !% wait for all the processors to reach this stage before starting the time loop
@@ -551,17 +551,20 @@ contains
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine init_time ()
-        !% BRHbugfix20210811  Entire subroutine is new
-        !% adjust for inconsistent time settings
+    subroutine init_time()
+        logical :: doHydraulics
 
-        if (setting%Time%Hydrology%timeFinal > setting%Time%EndTime) then
-            setting%Time%Hydrology%timeFinal = setting%Time%EndTime
-        endif
-        if (setting%Time%Hydrology%Dt > setting%Time%EndTime - setting%Time%StartTime) then
-            setting%Time%Hydrology%Dt = setting%Time%EndTime - setting%Time%StartTime
-        endif
-
+        setting%Time%Dt = setting%Time%Hydraulics%Dt
+        setting%Time%Now = 0
+        setting%Time%Step = 0
+        setting%Time%Hydraulics%Step = 0
+        setting%Time%Hydrology%Step = 0
+        if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
+        !% Initialize report step
+        setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
+        if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
+            stop "Error: Hydrology time step can't be smaller than hydraulics time step"
+        end if
     end subroutine init_time
     !%
     !%==========================================================================

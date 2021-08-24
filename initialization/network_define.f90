@@ -60,48 +60,43 @@ contains
 
         !% print result
         if (setting%Debug%File%network_define) then
-            !% only using the first processor to print results
-            if (this_image() == 1) then
-                do ii = 1,num_images()
-                    print*
-                    print*, '===================================================================' //&
-                    '==================================================================='
-                    print*, 'image = ', ii
-                    print*, '.......................Elements...............................'
-                    print*
-                    print*, '     ei_Lidx     ei_Gidx     ei_link    ei_node    Mface_uL    Mface_dL'
-                    do jj = 1,N_elem(ii)
-                        print*, elemI(jj,ei_Lidx)[ii], elemI(jj,ei_Gidx)[ii], elemI(jj,ei_link_Gidx_SWMM)[ii], &
-                        elemI(jj,ei_node_Gidx_SWMM)[ii], elemI(jj,ei_Mface_uL)[ii], elemI(jj,ei_Mface_dL)[ii]
-                    end do
-                    print*
-                    print*, '.......................Faces.............................'
-                    print*, 'a)  fi_Lidx     fi_Gidx     elem_uL     elem_dL     C_image' //&
-                    '    GElem_up    GElem_dn     node_id     link_id'
-                    do jj = 1,N_face(ii)
-                        print*, faceI(jj,fi_Lidx)[ii],faceI(jj,fi_Gidx)[ii],faceI(jj,fi_Melem_uL)[ii], &
-                        faceI(jj,fi_Melem_dL)[ii],faceI(jj,fi_Connected_image)[ii], faceI(jj,fi_GhostElem_uL)[ii],&
-                        faceI(jj,fi_GhostElem_dL)[ii],faceI(jj,fi_node_idx)[ii],faceI(jj, fi_link_idx)[ii]
-                    end do
+            print*
+            print*, '===================================================================' //&
+            '==================================================================='
+            print*, 'image = ', this_image()
+            print*, '.......................Elements...............................'
+            print*
+            print*, '     ei_Lidx     ei_Gidx     ei_link    ei_node    Mface_uL    Mface_dL'
+            do jj = 1,N_elem(this_image())
+                print*, elemI(jj,ei_Lidx), elemI(jj,ei_Gidx), elemI(jj,ei_link_Gidx_SWMM), &
+                elemI(jj,ei_node_Gidx_SWMM), elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL)
+            end do
+            print*
+            print*, '.......................Faces.............................'
+            print*, 'a)  fi_Lidx     fi_Gidx     elem_uL     elem_dL     C_image' //&
+            '    GElem_up    GElem_dn     node_id     link_id      zbottom'
+            do jj = 1,N_face(this_image())
+                print*, faceI(jj,fi_Lidx),faceI(jj,fi_Gidx),faceI(jj,fi_Melem_uL), &
+                faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image), faceI(jj,fi_GhostElem_uL),&
+                faceI(jj,fi_GhostElem_dL),faceI(jj,fi_node_idx),faceI(jj, fi_link_idx), faceR(jj,fr_Zbottom)
+            end do
 
-                    ! print*
-                    ! print*, '.......................Faces..................................'
-                    ! print*, 'b)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
-                    ! '    fYN_isnull    fYN_isUpGhost    fYN_isDnGhost'
-                    ! do jj = 1,N_face(ii)
-                    !     print*, faceI(jj,fi_Lidx)[ii],' ',faceI(jj,fi_BCtype)[ii],&
-                    !     '           ',faceYN(jj,fYN_isInteriorFace)[ii], &
-                    !     '                    ',faceYN(jj,fYN_isSharedFace)[ii], &
-                    !     '              ',faceYN(jj,fYN_isnull)[ii], &
-                    !     '            ',faceYN(jj,fYN_isUpGhost)[ii], &
-                    !     '              ',faceYN(jj,fYN_isDnGhost)[ii]
-                    ! end do
-                    print*, '===================================================================' //&
-                    '==================================================================='
-                    print*
-                    call execute_command_line('')
-                end do
-            end if
+            ! print*
+            ! print*, '.......................Faces..................................'
+            ! print*, 'b)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
+            ! '    fYN_isnull    fYN_isUpGhost    fYN_isDnGhost'
+            ! do jj = 1,N_face(ii)
+            !     print*, faceI(jj,fi_Lidx)[ii],' ',faceI(jj,fi_BCtype)[ii],&
+            !     '           ',faceYN(jj,fYN_isInteriorFace)[ii], &
+            !     '                    ',faceYN(jj,fYN_isSharedFace)[ii], &
+            !     '              ',faceYN(jj,fYN_isnull)[ii], &
+            !     '            ',faceYN(jj,fYN_isUpGhost)[ii], &
+            !     '              ',faceYN(jj,fYN_isDnGhost)[ii]
+            ! end do
+            print*, '===================================================================' //&
+            '==================================================================='
+            print*
+            call execute_command_line('')
         end if
         
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
@@ -645,6 +640,9 @@ contains
             faceI(FacelocalCounter,fi_link_idx) = thisLink
             faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
 
+            !% real data
+            faceR(FaceLocalCounter,fr_Zbottom) = node%R(thisNode,nr_Zbottom)
+
             !% if the upstream node is not in the partiton,
             !% the face map to upstream is mapped to
             !% the dummy element
@@ -932,6 +930,9 @@ contains
             faceI(FacelocalCounter,fi_link_idx) = thisLink
             faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
             faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
+
+            !% real data
+            faceR(FaceLocalCounter,fr_Zbottom) = node%R(thisNode,nr_Zbottom)
 
             !% logical data
             faceYN(FacelocalCounter,fYN_isSharedFace) = .true.

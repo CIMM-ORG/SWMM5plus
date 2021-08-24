@@ -81,24 +81,31 @@ module adjust
         integer, intent(in) :: geocol, thisCol
         real(8), intent(in) :: geozero
         integer, pointer :: Npack, thisP(:)
-        real(8), pointer :: geovalue(:)        
+        real(8), pointer :: geovalue(:)    
+        logical, pointer :: NearZeroVolume(:)   
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues'
         if (setting%Debug%File%adjust) print *, '*** enter ', this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
         Npack    => npack_elemP(thisCol)  
         geovalue => elemR(:,geocol)
+        NearZeroVolume => elemYN(:,eYN_isNearZeroVolume)
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
+            !% reset the NearZeroVolumes
+            NearZeroVolume(thisP) = .false.
+            
             if (setting%ZeroValue%UseZeroValues) then
                 where (geovalue(thisP) < geozero)
                     geovalue(thisP) = geozero
+                    NearZeroVolume(thisP) = .true.
                 endwhere
             else
                 where (geovalue(thisP) < zeroR)
                     geovalue(thisP) = zeroR
+                    NearZeroVolume(thisP) = .true.
                 endwhere  
             endif
         endif    
@@ -158,15 +165,24 @@ module adjust
         !%-----------------------------------------------------------------------------
         select case (whichTM)
             case (ALLtm)
-                thisCol_all        => col_elemP(ep_ALLtm)
+                !% HACK: small velocity adjustment should only be done for CC elements
+                !% since the velocity is solved there
+                thisCol_all        => col_elemP(ep_CC_ALLtm)
+                ! thisCol_all        => col_elemP(ep_ALLtm)
                 thisSmallVolumeCol => col_elemP(ep_smallvolume_ALLtm)
                 thisVelocityCol    => col_elemR(er_Velocity)
             case (ETM)
-                thisCol_all        => col_elemP(ep_ETM)
+                !% HACK: small velocity adjustment should only be done for CC elements
+                !% since the velocity is solved there
+                thisCol_all        => col_elemP(ep_CC_ETM)
+                ! thisCol_all        => col_elemP(ep_ETM)
                 thisSmallVolumeCol => col_elemP(ep_smallvolume_ETM)
                 thisVelocityCol    => col_elemR(er_Velocity)        
             case (AC)
-                thisCol_all        => col_elemP(ep_AC)
+                !% HACK: small velocity adjustment should only be done for CC elements
+                !% since the velocity is solved there
+                thisCol_all        => col_elemP(ep_CC_AC)
+                ! thisCol_all        => col_elemP(ep_AC)
                 thisSmallVolumeCol => col_elemP(ep_smallvolume_AC)    
                 thisVelocityCol    => col_elemR(er_Velocity)        
             case default
@@ -525,7 +541,6 @@ module adjust
             isSmallVol(thisP) = .true.
             svRatio(thisP) = volume(thisP) / smallvolume(thisP)
         endwhere
-        
         !% for the elements that are near-zero, set the SV ratio to zero, This ensures only Chezy-Manning is used for solution
         where (volume(thisP) .le. setting%Zerovalue%Volume )
             sVratio(thisP) = zeroR

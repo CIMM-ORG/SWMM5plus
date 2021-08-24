@@ -21,7 +21,7 @@ Module utility_output
     public :: util_output_write_elemR_faceR
     public :: util_output_report
     public :: util_output_report_summary
-    
+
 contains
 
     subroutine util_output_create_folder
@@ -37,6 +37,7 @@ contains
             call system('mkdir debug_output/faceR')
             call system('mkdir debug_output/summary')
             call system('mkdir debug_output/link')
+            call system('mkdir debug_output/node')
         end if
 
         sync all
@@ -93,27 +94,25 @@ contains
             if(elemI(ii,ei_elementType) == CC) then
 
                 write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
-      
+
                 file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
-                
+
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
                 form   = 'formatted', action = 'write', iostat = open_status)
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
                 end if
-
 
             else if(elemI(ii,ei_elementType) == JM) then
 
                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
-                
+
                 file_name = "debug_output/elemR/"//trim(str_image)//"_JM_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
-
 
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
                 form   = 'formatted', action = 'write', iostat = open_status)
@@ -122,11 +121,10 @@ contains
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
                 end if
 
-
             else if(elemI(ii,ei_elementType) == JB) then
 
                  write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
-                
+
                  file_name = "debug_output/elemR/"//trim(str_image)//"_JB_" &
                      // trim(ADJUSTL(str_link_node_idx))// &
                      "_" // trim(ADJUSTL(str_elem_idx))//".csv"
@@ -203,7 +201,6 @@ contains
 
     end subroutine util_output_create_faceR_files
 
-
     subroutine util_output_write_elemR_faceR
 
         integer :: fu, open_status, ii, yr, mnth, dy, hr, min, sec
@@ -219,7 +216,7 @@ contains
         if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
         fu = this_image()
-        time_secs = setting%Time%Hydraulics%timeNow
+        time_secs = setting%Time%Now
         time_epoch = util_datetime_secs_to_epoch(time_secs)
         call util_datetime_decodedate(time_epoch, yr, mnth, dy)
         call util_datetime_decodetime(time_epoch, hr, min, sec)
@@ -234,7 +231,7 @@ contains
             if(elemI(ii,ei_elementType) == CC) then
 
                 write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
-                
+
                 file_name = "debug_output/elemR/"//trim(str_image)//"_CC_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_face_idx))//".csv"
@@ -250,7 +247,7 @@ contains
             else if(elemI(ii,ei_elementType) == JM) then
 
                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
-                
+
                 file_name = "debug_output/elemR/"//trim(str_image)//"_JM_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_face_idx))//".csv"
@@ -267,7 +264,7 @@ contains
             else if(elemI(ii,ei_elementType) == JB) then
 
                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
-                
+
                 file_name = "debug_output/elemR/"//trim(str_image)//"_JB_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
                     "_" // trim(ADJUSTL(str_elem_face_idx))//".csv"
@@ -334,6 +331,7 @@ contains
         if (setting%Output%report .and. util_output_must_report()) then
             call util_output_write_elemR_faceR()
             call output_write_link_files()
+            call output_write_node_files()
         end if
 
         if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
@@ -350,9 +348,10 @@ contains
         if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
 
         if (util_output_must_report() .and. setting%verbose) then
+
             write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
-            timeNow   => setting%Time%Hydraulics%timeNow
-            dt        => setting%Time%Hydraulics%Dt
+            timeNow   => setting%Time%Now
+            dt        => setting%Time%Dt
             velocity  => elemR(:,er_Velocity)
             wavespeed => elemR(:,er_WaveSpeed)
             length    => elemR(:,er_Length)
@@ -363,7 +362,6 @@ contains
 
             print*, '--------------------------------------'
             !% also print the summary in the terminal
-            print*
             print('(*(G0.6))'), 'image = ', this_image(), ',  timeNow = ', timeNow, ',  dt = ', dt
             print('(*(G0.6))'), 'thisCFL = ',thisCFL, ',  max velocity = ', maxval(abs(velocity(thisP))), &
             ',  max wavespeed = ', maxval(abs(wavespeed(thisP)))
@@ -382,10 +380,21 @@ contains
 
     function util_output_must_report() result(report)
         logical :: report
-        real(8), pointer :: timeNow
-        timeNow => setting%Time%Hydraulics%timeNow
-        report = ((mod(timeNow, setting%output%report_time)  == zeroI) .or. &
-             (timeNow == 0))
+        integer, pointer :: reportStep
+        real(8) :: timeNow, reportDt, startReport
+
+        reportStep  => setting%Output%reportStep
+        startReport = setting%output%reportStartTime
+        timeNow     = setting%Time%Now
+        reportDt    = setting%Output%reportDt
+
+        if ((timeNow >= reportDt * (reportStep + 1)) .and. (timeNow > startReport)) then
+            report = .true.
+            reportStep = reportStep + 1
+        else
+            report = .false.
+        end if
+
     end function util_output_must_report
 
     subroutine util_output_debug_elemI
@@ -1506,7 +1515,6 @@ contains
 
     end subroutine util_output_debug_elemR
 
-
     subroutine util_output_debug_faceI
 
         integer fu, open_status
@@ -1831,7 +1839,6 @@ contains
 
     end subroutine util_output_debug_faceR
 
-
     subroutine util_output_debug_elemYN
 
         integer fu, open_status
@@ -2026,8 +2033,61 @@ contains
 
     end subroutine util_output_debug_faceYN
 
+    ! subroutine utility_output_steady_state_check
+
+    !     integer :: ii
+    !     real(8), allocatable:: sum_outflow[:], sum_inflow[:]
+    !     logical :: log_sys_flow_tol, log_lat_flow_tol
+    !     real(8) :: lat_flow_tol, steady_state_tol
+
+    !     allocate(sum_outflow[*])
+    !     allocate(sum_inflow[*])
+
+    !     sum_outflow = 0.0
+    !     sum_inflow = 0.0
+    !     lat_flow_tol = 0.000001
+    !     steady_state_tol = 0.000001
+    !     log_sys_flow_tol = .false.
+    !     log_lat_flow_tol = .true.
+
+    !     do ii = 1, N_face(this_Image())
+
+    !        if(faceI(ii, fi_BCtype) == BCdn .and. faceR(ii, fr_Flowrate_N0) /= nullvalueR) then
+    !           sum_outflow = faceR(ii, fr_Flowrate_N0)
+    !        else if(faceI(ii, fi_BCtype) == BCup .and. faceR(ii,fr_Flowrate_N0) /= nullvalueR) then
+    !           sum_inflow = faceR(ii, fr_Flowrate_N0)
+    !        end if
+
+    !     end do
+
+    !     do ii = 1, N_elem(this_image())
+
+    !        if(elemR(ii, er_FlowrateLateral) /= nullvalueR) then
+    !           sum_inflow = elemR(ii, er_FlowrateLateral)
+    !        end if
+
+    !        if(abs(elemR(ii,er_Flowrate_N0) - elemR(ii,er_Flowrate_N1) ) > lat_flow_tol) then
+    !           log_lat_flow_tol = .false.
+    !        end if
+
+    !     end do
 
 
+    !     call co_sum(sum_inflow)
+    !     call co_sum(sum_outflow)
+    !     print *, "sum_outflow", sum_outflow, "this_image() ::", this_Image()
+    !     print *, "sum_inflow", sum_inflow, "this_image() :: ", this_Image()
 
+
+    !     if(abs(sum_inflow - sum_outflow) < steady_state_tol) then
+    !        log_sys_flow_tol = .true.
+    !     end if
+
+
+    !     if( log_sys_flow_tol .and. log_lat_flow_tol) then
+    !        print *, "steady state found"
+    !     end if
+
+    !   end subroutine utility_output_steady_state_check
 
 end Module utility_output

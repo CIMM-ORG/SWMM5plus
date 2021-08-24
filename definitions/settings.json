@@ -59,7 +59,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 50.00,
+        "NominalElemLength" : 150.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -99,19 +99,26 @@
         },
         "Dt"     : {
             "Minimum"       :  1e-6,
-            "UseLimitMin"   :  true,
-        } 
+            "UseLimitMin"   :  true
+        }
     },
     "Link" : {
         "DefaultInitDepthType" : "Linear", // uniform, linear, exponential
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
+    "Output" : {
+        "report" : true,
+        "reportStartTime" : 0.0,
+        "reportDt" : 100.0,
+        "reportStep" : 0
+    },
     "Partitioning" : {
-        "PartitioningMethod" : "BQuick"
+        "PartitioningMethod" : "bquick"
     },
     "Simulation" : {
         "useHydrology" : true,
-        "useHydraulics" : true
+        "useHydraulics" : true,
+        "useSWMMC" : false
     },
     "SmallVolume" : {
         "DepthCutoff" : 0.01,
@@ -134,27 +141,22 @@
         "TestName" : "testcase"
     },
     "Time" : {
-        "DateTimeStamp" : 0.0,
-        "EndTime" : 0.0,
-        "StartTime" : 0.0,
+        "Start" : 0.0,
+        "Now" : 0.0,
+        "End" : 0.0,
+        "Dt" : 10.0,
+        "Step" : 0,
+        "matchHydrologyStep" : true,
+        "Hydraulics" : {
+            "Dt" : 10.0,
+            "Step" : 0
+        },
         "Hydrology" : {
             "Dt" : 10.0,
-            "timeNow" : 0.0,
-            "timeNext" : 1.0,
-            "timeFinal" : 1.0,
-            "stepNow"  : 0,
-            "stepNext"  : 1,
-            "stepFinal" : 10000
+            "Step" : 0
         },
-        "Hydraulics" : {
-            "Dt" : 100.0,
-            "timeNow" : 0.0,
-            "timeNext" : 1.0,
-            "timeFinal" : 1.0,
-            "stepNow"  : 0,
-            "stepNext"  : 1,
-            "stepFinal" : 1
-        }
+        "DateTimeStamp" : 0.0,
+        "DtTol" : 1e-1
     },
     "Weir" : {
         "Transverse" : {
@@ -222,6 +224,7 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
+	        "output" : false,
             "pack_mask_arrays" : false,
             "partitioning" : true,
             "pump_elements" : false,
@@ -238,8 +241,7 @@
             "utility_interpolate" : false,
             "utility_output" : false,
             "utility_string" : false,
-            "weir_elements" : false,
-	    "output" : false
+            "weir_elements" : false
         },
         "FileGroup" : {
             "all" : false,
@@ -251,11 +253,6 @@
             "timeloop" : false,
             "utility" : false
         }
-    },
-    "Output" : {
-        "report" : false,
-        "report_time" : 600,
-        "report_tol"  : 2
     },
     "Warning"  : false,
     "Verbose" : true

@@ -10,7 +10,7 @@
 *.mod
 *.mod0
 *log*
-*.[0-9]
+*.[0-9]*
 
 # Dependencies
 cmake*

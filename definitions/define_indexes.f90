@@ -126,6 +126,7 @@ module define_indexes
         enumerator :: nr_MaxInflow
         enumerator :: nr_Eta
         enumerator :: nr_Depth
+        enumerator :: nr_head
         enumerator :: nr_Volume
         enumerator :: nr_Flooding
         enumerator :: nr_JunctionBranch_Kfactor

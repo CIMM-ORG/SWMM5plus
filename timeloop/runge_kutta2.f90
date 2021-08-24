@@ -39,7 +39,8 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1
-  
+        ! print*, '-------------------------------------------------------------------------'
+        ! print*, '1st RK step'
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 3 -- all aux variables for non-diagnostic
@@ -72,6 +73,8 @@ module runge_kutta2
         !% RK2 solution step 8 -- RK2 second step for ETM
         !% RK2 solution step 8(a)
         istep=2
+        ! print*, '-------------------------------------------------------------------------'
+        ! print*, '2nd RK step'
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 8(c)
@@ -94,7 +97,7 @@ module runge_kutta2
 
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
-
+        ! stop 11
         if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine rk2_toplevel_ETM
     !%
