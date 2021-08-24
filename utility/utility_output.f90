@@ -380,15 +380,19 @@ contains
 
     function util_output_must_report() result(report)
         logical :: report
-        real(8), pointer :: timeNow, reportStep, reportTol, startReport
+        integer, pointer :: reportStep
+        real(8) :: timeNow, reportDt, startReport
 
-        timeNow     => setting%Time%Now
-        reportStep  => setting%output%reportStep
-        reportTol   => setting%output%reportTol
-        startReport => setting%output%StartTime
+        reportStep  => setting%Output%reportStep
+        startReport = setting%output%reportStartTime
+        timeNow     = setting%Time%Now
+        reportDt    = setting%Output%reportDt
 
-        report = ((abs(mod(timeNow, reportStep) - reportStep) <= reportTol) .or. &
-             (timeNow == 0)) .and. (timeNow >= startReport)
+        if ((timeNow >= reportDt * (reportStep + 1)) .and. (timeNow > startReport)) then
+            report = .true.
+            reportStep = reportStep + 1
+        end if
+
     end function util_output_must_report
 
     subroutine util_output_debug_elemI

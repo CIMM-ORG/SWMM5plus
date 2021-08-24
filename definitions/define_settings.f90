@@ -416,9 +416,9 @@ module define_settings
         !% setting%Output
     type OutputType
         logical :: report
-        real(8) :: StartTime
-        real(8) :: reportStep
-        real(8) :: reportTol
+        real(8) :: reportStartTime
+        real(8) :: reportDt
+        integer :: reportStep
     end type OutputType
 
 
@@ -940,15 +940,15 @@ contains
         call json%get('Output.report', logical_value, found)
         setting%Output%report = logical_value
         if (.not. found) stop "Error - setting " // 'Output.report not found'
-        call json%get('Output.StartTime', real_value, found)
-        setting%Output%StartTime = real_value
-        if (.not. found) stop "Error - setting " // 'Output.StartTime not found'
-        call json%get('Output.reportStep', real_value, found)
-        setting%Output%reportStep = real_value
+        call json%get('Output.reportStartTime', real_value, found)
+        setting%Output%reportStartTime = real_value
+        if (.not. found) stop "Error - setting " // 'Output.reportStartTime not found'
+        call json%get('Output.reportDt', real_value, found)
+        setting%Output%reportDt = real_value
+        if (.not. found) stop "Error - setting " // 'Output.reportDt not found'
+        call json%get('Output.reportStep', integer_value, found)
+        setting%Output%reportStep = integer_value
         if (.not. found) stop "Error - setting " // 'Output.reportStep not found'
-        call json%get('Output.reportTol', real_value, found)
-        setting%Output%reportTol = real_value
-        if (.not. found) stop "Error - setting " // 'Output.reportTol not found'
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)

@@ -108,9 +108,9 @@
     },
     "Output" : {
         "report" : true,
-        "StartTime" : 0.0,
-        "reportStep" : 10.0,
-        "reportTol" : 10
+        "reportStartTime" : 0.0,
+        "reportDt" : 100.0,
+        "reportStep" : 0
     },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
