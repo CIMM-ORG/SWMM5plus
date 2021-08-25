@@ -246,10 +246,10 @@ install_opencoarray_linux()
 
 install_opencoarray_mac()
 {
-    # Download Opencoarray
-    if [ ! -d $COARRAY_SOURCE ]
+    if [ ! -e $COARRAY_INSTALL/bin/caf ] || [ ! -e $COARRAY_INSTALL/bin/cafrun ]
     then
-        echo "opencoarray is not found in $COARRAY_SOURCE"
+        echo "opencoarray not found in local directory ... "
+        rm -r -f $COARRAY_SOURCE # clean it and remake
         mkdir -p $COARRAY_INSTALL
         cd $COARRAY_SOURCE
         echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
@@ -258,7 +258,36 @@ install_opencoarray_mac()
         ./install.sh --install-prefix $COARRAY_INSTALL
         cd $SWMM5PLUS_DIR
     fi
-    echo "opencoarray path: $COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
+    
+    # Download Opencoarray from brew
+    #if ! command -v brew &> /dev/null
+    #then
+    #echo "Homebrew is not found on this mac machine..."
+    #echo "To install Opencoarray on mac, Homebrew is required."
+    #read -p "Do you wish to install Homebrew in your Mac? (Y/N) " yn
+    #case $yn in
+    #    [Yy]* ) /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; break;;
+    #    [Nn]* ) exit;;
+    #    * ) echo "Please answer yes or no.";;
+    #esac
+    #fi
+
+    #if brew ls --version opencoarrays &> /dev/null
+    #then
+    #echo "OpenCoarrays found in Homebrew Cellar: $(brew --prefix opencoarrays)/bin"
+    #echo "opencoarray path $(brew --prefix opencoarrays)/bin" >> $INSTALLATION_LOG
+    #else
+    #brew update
+    #brew install opencoarrays
+    #echo "opencoarray path $(brew --prefix opencoarrays)/bin" >> $INSTALLATION_LOG
+    #fi
+    
+    #Final check before leaving the function
+    #if ! brew ls --version opencoarrays &> /dev/null
+    #then
+    #    echo "OpenCoarray Mac installation failed."
+    #    echo "Please see http://www.opencoarrays.org/ for details about compatibility."
+    #fi
 }
 
 opencoarray_prerequisite()
@@ -288,7 +317,7 @@ then
     elif [[ $machine = "mac" ]]
     then
         install_opencoarray_mac
-        FC=$COARRAY_INSTALL/bin/caf
+        CAF="$COARRAY_INSTALL/bin/caf"
     fi
 fi
 # --------------------------------------------------------------------------------------

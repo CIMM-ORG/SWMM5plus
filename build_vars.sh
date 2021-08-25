@@ -66,7 +66,7 @@ then
     echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 elif [[ $machine = "mac" ]]
 then
-    CAF="$COARRAY_INSTALL/bin/caf" #"caf"
+    CAF= "$COARRAY_INSTALL/bin/caf" #"caf"
     echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 fi
 
