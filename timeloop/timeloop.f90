@@ -167,7 +167,7 @@ contains
             !% as the target CFL.
             nextTimeHydrology = (setting%Time%Hydrology%Step + 1) * setting%Time%Hydrology%Dt
             timeLeft = nextTimeHydrology - timeNow
-            thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * timeleft / length(thisP) )
+            thisCFL = maxval( (abs(velocity(thisP)) + abs(wavespeed(thisP))) * timeleft / length(thisP) )
 
             !% check to see if max CFL is exceeded
             if (thisCFL < maxCFL) then
@@ -185,7 +185,7 @@ contains
         else
             !% For hydraulics only, keep the timestep stable unless it
             !% exceeds CFL limits (both high and low limits).
-            thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
+            thisCFL = maxval( (abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP) )
 
             if (thisCFL > maxCFL) then
                 !% decrease the time step and reset the checkStep counter
