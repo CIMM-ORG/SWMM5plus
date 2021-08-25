@@ -41,20 +41,17 @@ contains
 
         doHydraulics = setting%simulation%useHydraulics
         doHydrology = setting%simulation%useHydrology
-        
-        !% report files with at the start of the simulation
-        call util_output_report()
 
         !% Combined hydrology (SWMM-C) and hydraulics simulation
+        !% The loop starts at t = setting%Time%Start
         do while (setting%Time%Now <= setting%Time%End)
             if (doHydrology) call tl_hydrology()
             if (doHydraulics) then
                 call bc_update()
                 call tl_hydraulics()
             end if
+            call util_output_report() !% Results must be reported before counter increment
             call tl_increment_counters(doHydraulics, doHydrology)
-            !% report files with results
-            call util_output_report()
         end do
 
         if (setting%Debug%File%timeloop)  print *, '*** leave ', this_image(), subroutine_name

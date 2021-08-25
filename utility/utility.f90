@@ -36,6 +36,7 @@ module utility
         integer :: ii
         logical :: ex
         !%-----------------------------------------------------------------------------
+        call system("mkdir debug")
         open(unit=1,file='debug/linkR.csv', status='unknown', action='write')
         open(unit=2,file='debug/linkI.csv', status='unknown', action='write')
         write(1, '(A)')                                                                    &

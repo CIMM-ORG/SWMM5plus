@@ -14,6 +14,7 @@ Module utility_output
 
     private
 
+    public :: util_output_clean_folders
     public :: util_output_create_folder
     public :: util_output_create_elemR_files
     public :: util_output_create_faceR_files
@@ -24,6 +25,22 @@ Module utility_output
 
 contains
 
+    subroutine util_output_clean_folders
+        character(64) :: subroutine_name = 'util_output_clean_folders'
+
+        if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
+
+        if (this_image() == 1) then
+            call system('mkdir -p debug_output')
+            call system('rm -r debug_output')
+            call system('mkdir -p debug')
+            call system('rm -r debug')
+        end if
+
+        if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
+
+    end subroutine util_output_clean_folders
+
     subroutine util_output_create_folder
         character(64) :: subroutine_name = 'util_output_create_folder'
 
@@ -31,7 +48,6 @@ contains
         !creates and empties the folder before creating the debug files
 
         if( this_image() == 1) then
-            call system('rm -r debug_output')
             call system('mkdir debug_output')
             call system('mkdir debug_output/elemR')
             call system('mkdir debug_output/faceR')
@@ -52,16 +68,16 @@ contains
 
         if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
-        if (setting%verbose) then
-            write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
+        call system("mkdir -p debug_output")
 
-            open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
-            form = 'formatted', action = 'write', iostat = open_status)
+        write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
 
-            write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
-            endfile(fu)
-            close(fu)
-        end if
+        open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
+        form = 'formatted', action = 'write', iostat = open_status)
+
+        write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
+        endfile(fu)
+        close(fu)
 
         if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
     end subroutine util_output_create_summary_files
@@ -347,7 +363,7 @@ contains
         character(64)    :: subroutine_name = "util_output_report_summary"
 
         if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
-        if (util_output_must_report() .and. setting%verbose) then
+        if (util_output_must_report() .and. setting%output%report) then
 
             write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
 
@@ -372,11 +388,13 @@ contains
             endfile(fu)
             close(fu)
 
-            print*, '--------------------------------------'
-            !% also print the summary in the terminal
-            print('(*(G0.6))'), 'image = ', this_image(), ',  timeNow = ', timeNow, ',  dt = ', dt
-            print('(*(G0.6))'), 'thisCFL = ',thisCFL, ',  max velocity = ', max_velocity, &
-            ',  max wavespeed = ', max_wavespeed
+            if (setting%verbose) then
+                print*, '--------------------------------------'
+                !% also print the summary in the terminal
+                print('(*(G0.6))'), 'image = ', this_image(), ',  timeNow = ', timeNow, ',  dt = ', dt
+                print('(*(G0.6))'), 'thisCFL = ',thisCFL, ',  max velocity = ', max_velocity, &
+                ',  max wavespeed = ', max_wavespeed
+            end if
         end if
 
         if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
