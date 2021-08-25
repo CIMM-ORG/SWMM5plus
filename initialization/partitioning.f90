@@ -79,7 +79,7 @@ subroutine init_partitioning_method()
         print *, "Link Partitioning"
         print *, new_line("")
         do ii = 1, size(link%I, 1)
-            print*, link%I(ii, li_idx), link%I(ii, li_P_image)
+            print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link)
         end do
 
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
