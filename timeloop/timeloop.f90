@@ -39,9 +39,11 @@ contains
     !%-----------------------------------------------------------------------------
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
+        doHydraulics = setting%simulation%useHydraulics
+        doHydrology = setting%simulation%useHydrology
+
         !% Combined hydrology (SWMM-C) and hydraulics simulation
         do while (setting%Time%Now <= setting%Time%End)
-
             if (doHydrology) call tl_hydrology()
             if (doHydraulics) then
                 call bc_update()
@@ -96,9 +98,6 @@ contains
         !%  push the old values down the stack for AC solver
         call tl_save_previous_values()
 
-        !% print the cfl to check for model blowout
-        call util_output_report_summary()
-
         !%  Reset the flowrate adhoc detection before flowrates are updated.
         !%  Note that we do not reset the small volume detection here -- that should
         !%  be in geometry routines.
@@ -116,8 +115,8 @@ contains
                 STOP 1001 !% need error statement
         end select
 
-        !% report timestep
-        if (setting%Output%report) call util_output_report()
+        !% report files with results
+        call util_output_report()
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_hydraulics
@@ -227,7 +226,7 @@ contains
         real(8)                :: nextTimeHydraulics, nextTimeHydrology, nextTime, dtTol
         real(8), pointer       :: timeNow, dt
         integer                :: minImg
-        integer, pointer       :: hydraulicStep, hydrologyStep, step
+        integer, pointer       :: hydraulicStep, hydrologyStep, step, reportStep
         character(64)          :: subroutine_name = 'tl_increment_counters'
     !%-----------------------------------------------------------------------------
 
@@ -238,6 +237,8 @@ contains
         dt            => setting%Time%Dt
         timeNow       => setting%Time%Now
         step          => setting%Time%Step
+        reportStep    => setting%Output%reportStep
+
         dtTol         = setting%Time%DtTol
         useHydrology  = setting%Simulation%useHydrology
         useHydraulics = setting%Simulation%useHydraulics
@@ -267,6 +268,7 @@ contains
         call co_broadcast(doHydraulics, minImg)
         call co_broadcast(doHydrology, minImg)
 
+        if (util_output_must_report()) reportStep = reportStep + 1
         if (doHydraulics) hydraulicStep = hydraulicStep + 1
         if (doHydrology) hydrologyStep = hydrologyStep + 1
 

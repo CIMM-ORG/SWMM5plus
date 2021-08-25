@@ -249,7 +249,6 @@ contains
                 file_name = "debug_output/link/"//trim(link%names(link%P%have_output(ii))%str)//"_"//trim(str_image)//".csv"
             end if
 
-
             open(newunit=fu, file = file_name, status = 'old',access = 'append', &
                 form   = 'formatted', action = 'write', iostat = open_status)
 
@@ -258,9 +257,9 @@ contains
             write(fu,fmt='(i4, 2(a,i2.2))',advance = 'no') yr,"/",mnth,"/",dy
             write(fu,fmt = '(A)',advance = 'no') ' '
             write(fu,fmt='(2(i2.2,a), i2.2)',advance = 'no') hr,":",min,":",sec
-            write(fu,'(A)', advance = 'no') ', '
-            write(fu, '(F32.16)', advance = 'no') time_secs
-            write(fu,'(A)', advance = 'no') ', '
+            write(fu,'(A)', advance = 'no') ','
+            write(fu, '(F0.16)', advance = 'no') time_secs
+            write(fu,'(A)', advance = 'no') ','
             write(fu, '(*(G0.6 : ","))') avg_flowrate
 
 
@@ -315,18 +314,18 @@ contains
                 write(fu,fmt='(i4, 2(a,i2.2))',advance = 'no') yr,"/",mnth,"/",dy
                 write(fu,fmt = '(A)',advance = 'no') ' '
                 write(fu,fmt='(2(i2.2,a), i2.2)',advance = 'no') hr,":",min,":",sec
-                write(fu,'(A)', advance = 'no') ', '
-                write(fu, '(F32.16)', advance = 'no') time_secs
-                write(fu,'(A)', advance = 'no') ', '
+                write(fu,'(A)', advance = 'no') ','
+                write(fu, '(F0.16)', advance = 'no') time_secs
+                write(fu,'(A)', advance = 'no') ','
                 write(fu, '(*(G0.6 : ","))') faceR(node%I(temp_node_idx,ni_elemface_idx),fr_Head_d)
 
             else if(node%I(temp_node_idx,ni_node_type) == nJ2 .or. node%I(temp_node_idx,ni_node_type) == nJm) then
                 write(fu,fmt='(i4, 2(a,i2.2))',advance = 'no') yr,"/",mnth,"/",dy
                 write(fu,fmt = '(A)',advance = 'no') ' '
                 write(fu,fmt='(2(i2.2,a), i2.2)',advance = 'no') hr,":",min,":",sec
-                write(fu,'(A)', advance = 'no') ', '
-                write(fu, '(F32.16)', advance = 'no') time_secs
-                write(fu,'(A)', advance = 'no') ', '
+                write(fu,'(A)', advance = 'no') ','
+                write(fu, '(F0.16)', advance = 'no') time_secs
+                write(fu,'(A)', advance = 'no') ','
                 write(fu, '(*(G0.6 : ","))') elemR(node%I(temp_node_idx,ni_elemface_idx),er_Head)
             !% if the node type is neither a BC or junction type then print the warning
             else

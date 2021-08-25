@@ -20,7 +20,7 @@ Module utility_output
     public :: util_output_create_summary_files
     public :: util_output_write_elemR_faceR
     public :: util_output_report
-    public :: util_output_report_summary
+    public :: util_output_must_report
 
 contains
 
@@ -223,7 +223,6 @@ contains
 
         write(str_image, '(i1)') fu
 
-
         do ii = 1, N_elem(this_image())
 
             write(str_elem_face_idx,'(I10)') elemI(ii,ei_Gidx)
@@ -278,12 +277,12 @@ contains
                 end if
 
             end if
-            write(fu,fmt='(i4, 2(a,i2.2))',advance = 'no') yr,"/",mnth,"/",dy
+            write(fu,fmt='(i4,2(a,i2.2))',advance = 'no') yr,"/",mnth,"/",dy
             write(fu,fmt = '(A)',advance = 'no') ' '
-            write(fu,fmt='(2(i2.2,a), i2.2)',advance = 'no') hr,":",min,":",sec
-            write(fu,'(A)', advance = 'no') ', '
-            write(fu, '(F32.16)', advance = 'no') time_secs
-            write(fu,'(A)', advance = 'no') ', '
+            write(fu,fmt='(2(i2.2,a),i2.2)',advance = 'no') hr,":",min,":",sec
+            write(fu,'(A)', advance = 'no') ','
+            write(fu, '(F0.16)', advance = 'no') time_secs
+            write(fu,'(A)', advance = 'no') ','
             write(fu, '(*(G0.6,:,","))') elemR(ii,:)
             endfile(fu)
             close(fu)
@@ -310,9 +309,9 @@ contains
             write(fu,fmt='(i4, 2(a,i2.2))',advance = 'no') yr,"/",mnth,"/",dy
             write(fu,fmt = '(A)',advance = 'no') ' '
             write(fu,fmt='(2(i2.2,a), i2.2)',advance = 'no') hr,":",min,":",sec
-            write(fu,'(A)', advance = 'no') ', '
-            write(fu, '(F32.16)', advance = 'no') time_secs
-            write(fu,'(A)', advance = 'no') ', '
+            write(fu,'(A)', advance = 'no') ','
+            write(fu, '(F0.16)', advance = 'no') time_secs
+            write(fu,'(A)', advance = 'no') ','
             write(fu, '(*(G0.6,:,","))') faceR(ii, :)
 
             endfile(fu)
@@ -329,6 +328,7 @@ contains
         if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
 
         if (setting%Output%report .and. util_output_must_report()) then
+            call util_output_report_summary()
             call util_output_write_elemR_faceR()
             call output_write_link_files()
             call output_write_node_files()
@@ -338,41 +338,44 @@ contains
     end subroutine util_output_report
 
     subroutine util_output_report_summary()
-        integer :: fu, open_status
-        real(8) :: thisCFL
+        integer          :: fu, open_status, thisCol, Npack
+        integer, pointer :: thisP(:)
+        real(8)          :: thisCFL, max_velocity, max_wavespeed
         real(8), pointer :: dt, timeNow, velocity(:), wavespeed(:), length(:)
-        integer, pointer :: thisCol, Npack, thisP(:)
-        character(64) :: file_name
-        character(64) :: subroutine_name = "util_output_report_summary"
+        character(512)    :: file_name
+        character(64)    :: subroutine_name = "util_output_report_summary"
 
         if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
-
         if (util_output_must_report() .and. setting%verbose) then
 
             write(file_name, "(A,i1,A)") "debug_output/summary/summary_", this_image(), ".csv"
+
+            thisCol   = col_elemP(ep_CC_ALLtm)
+            Npack     = npack_elemP(thisCol)
+
             timeNow   => setting%Time%Now
             dt        => setting%Time%Dt
             velocity  => elemR(:,er_Velocity)
             wavespeed => elemR(:,er_WaveSpeed)
             length    => elemR(:,er_Length)
-            thisCol   => col_elemP(ep_CC_ALLtm)
-            Npack     => npack_elemP(thisCol)
             thisP     => elemP(1:Npack,thisCol)
-            thisCFL = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
 
-            print*, '--------------------------------------'
-            !% also print the summary in the terminal
-            print('(*(G0.6))'), 'image = ', this_image(), ',  timeNow = ', timeNow, ',  dt = ', dt
-            print('(*(G0.6))'), 'thisCFL = ',thisCFL, ',  max velocity = ', maxval(abs(velocity(thisP))), &
-            ',  max wavespeed = ', maxval(abs(wavespeed(thisP)))
+            thisCFL       = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
+            max_velocity  = maxval(abs(velocity(thisP)))
+            max_wavespeed = maxval(abs(wavespeed(thisP)))
 
             open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
                 form = 'formatted', action = 'write', iostat = open_status)
             write(fu, fmt='(*(G0.6 : ","))') &
-                this_image(), timeNow, thisCFL, dt, maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))
-
+                this_image(), timeNow, thisCFL, dt, max_velocity, max_wavespeed
             endfile(fu)
             close(fu)
+
+            print*, '--------------------------------------'
+            !% also print the summary in the terminal
+            print('(*(G0.6))'), 'image = ', this_image(), ',  timeNow = ', timeNow, ',  dt = ', dt
+            print('(*(G0.6))'), 'thisCFL = ',thisCFL, ',  max velocity = ', max_velocity, &
+            ',  max wavespeed = ', max_wavespeed
         end if
 
         if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
@@ -384,17 +387,18 @@ contains
         real(8) :: timeNow, reportDt, startReport
 
         reportStep  => setting%Output%reportStep
-        startReport = setting%output%reportStartTime
         timeNow     = setting%Time%Now
         reportDt    = setting%Output%reportDt
+        startReport = setting%output%reportStartTime
 
-        if ((timeNow >= reportDt * (reportStep + 1)) .and. (timeNow > startReport)) then
+        if ((timeNow >= reportDt * (reportStep + 1)) .and. (timeNow > startReport))then
             report = .true.
-            reportStep = reportStep + 1
+        else if (timeNow == startReport) then
+            report = .true.
+            reportStep = -1
         else
             report = .false.
         end if
-
     end function util_output_must_report
 
     subroutine util_output_debug_elemI
