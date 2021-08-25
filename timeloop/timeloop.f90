@@ -41,6 +41,9 @@ contains
 
         doHydraulics = setting%simulation%useHydraulics
         doHydrology = setting%simulation%useHydrology
+        
+        !% report files with at the start of the simulation
+        call util_output_report()
 
         !% Combined hydrology (SWMM-C) and hydraulics simulation
         do while (setting%Time%Now <= setting%Time%End)
@@ -50,6 +53,8 @@ contains
                 call tl_hydraulics()
             end if
             call tl_increment_counters(doHydraulics, doHydrology)
+            !% report files with results
+            call util_output_report()
         end do
 
         if (setting%Debug%File%timeloop)  print *, '*** leave ', this_image(), subroutine_name
@@ -114,9 +119,6 @@ contains
                 print *, 'error, code should not be reached.'
                 STOP 1001 !% need error statement
         end select
-
-        !% report files with results
-        call util_output_report()
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_hydraulics
@@ -207,8 +209,9 @@ contains
         if ((setting%Limiter%Dt%UseLimitMin) .and. (dt <= setting%Limiter%Dt%Minimum)) then
             print*, 'timeNow = ', timeNow
             print*, 'dt = ', dt, 'minDt = ',  setting%Limiter%Dt%Minimum
+            print*, 'max velocity', maxval(velocity(thisP)), 'max wavespeed', maxval(wavespeed(thisP))
             print*, 'warning: the dt value is smaller than the user supplied min dt value'
-            stop 3369
+            stop 1123
         end if
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name

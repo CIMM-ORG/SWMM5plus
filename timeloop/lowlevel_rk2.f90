@@ -763,7 +763,12 @@ module lowlevel_rk2
                             eFlow(tB) =  + eArea(tB) * sqrt(twoR * setting%Constant%gravity * dHead )
                         end if
 
-                        eVelocity(tB) = eFlow(tB) / eArea(tB)
+                        !% HACK: Fix for velocity blowup
+                        if (eArea(tB) <= setting%ZeroValue%Area) then
+                            eVelocity(tB) = zeroR
+                        else
+                            eVelocity(tB) = eFlow(tB) / eArea(tB)
+                        endif
 
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )

@@ -59,7 +59,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 150.00,
+        "NominalElemLength" : 200.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -70,7 +70,7 @@
         "DownJBFaceInterp" : "static",
     },
     "Junction" : {
-        "kFactor" : 0.7
+        "kFactor" : 0.0
     },
     "Limiter" : {
         "BC" : {
@@ -90,7 +90,7 @@
             "Minimum" : 1e-6
         },
         "Velocity" : {
-            "Maximum" : 10.0,
+            "Maximum" : 20.0,
             "UseLimitMax" : true
         },
         "ArraySize" : {
@@ -98,7 +98,7 @@
             "TotalInflows" : 50
         },
         "Dt"     : {
-            "Minimum"       :  1e-6,
+            "Minimum"       :  1e-4,
             "UseLimitMin"   :  true
         }
     },
@@ -107,7 +107,7 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Output" : {
-        "report" : true,
+        "report" : false,
         "reportStartTime" : 0.0,
         "reportDt" : 100.0,
         "reportStep" : 0
@@ -226,7 +226,7 @@
             "orifice_elements" : false,
 	        "output" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
