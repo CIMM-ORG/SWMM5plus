@@ -459,12 +459,11 @@ module define_settings
 
 contains
 
-    subroutine def_load_settings(fpath)
+    subroutine def_load_settings()
     !%-----------------------------------------------------------------------------
     !% Description:
     !%    Loads setting values from external JSON file.
     !%-----------------------------------------------------------------------------
-        character(len=254), intent(in) :: fpath
         character(kind=json_CK, len=:), allocatable :: c
         real(8) :: real_value
         integer :: integer_value
@@ -476,12 +475,8 @@ contains
 
         if (setting%Debug%File%define_settings) print *, '*** enter ', this_image(), subroutine_name
 
-        ! ---  Define paths
-        call getcwd(setting%Paths%project)
-        setting%Paths%setting = trim(setting%Paths%project) // '/definitions/settings.json'
-
         call json%initialize()
-        call json%load(filename = fpath)
+        call json%load(filename = trim(setting%paths%setting))
 
         ! Load ACmethod Settings
         call json%get('ACmethod.dtau', real_value, found)

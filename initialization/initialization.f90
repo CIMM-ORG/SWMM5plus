@@ -58,6 +58,14 @@ contains
         character(64) :: subroutine_name = 'initialize_all'
         if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
     !%-----------------------------------------------------------------------------
+
+        !% ---  Define project & settings paths
+        call getcwd(setting%Paths%project)
+        setting%paths%setting = trim(setting%Paths%project) // "/definitions/settings.json"
+
+        !% read and store the command-line options
+        call init_read_arguments ()
+
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
         !% HACK: for clarity and consistency, this probably should be moved into
@@ -68,15 +76,12 @@ contains
 
         !% load the settings.json file with the default setting% model control structure
         !% def_load_settings is one of the few subroutines in the Definition modules
-        call def_load_settings(setting%Paths%setting)
+        call def_load_settings()
 
         !% execute the command line options provided when the code is run
         if (this_image() == 1) then
             call execute_command_line ("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
-
-        !% read and store the command-line options
-        call init_read_arguments ()
 
         if (setting%Verbose) print *, "Simulation Starts"
 

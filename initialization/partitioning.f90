@@ -49,16 +49,16 @@ subroutine init_partitioning_method()
 
     !% Determine which partitioning method is being used
     if (setting%Partitioning%PartitioningMethod == Default) then
-        if (setting%Verbose) print*, "Using Default Partitioning"
+        if (setting%Verbose) print*, new_line(""), "Using Default Partitioning"
         call init_partitioning_default()
     else if (setting%Partitioning%PartitioningMethod == Random) then
-        if (setting%Verbose) print*, "Using Random Partitioning"
+        if (setting%Verbose) print*, new_line(""), "Using Random Partitioning"
         call init_partitioning_random()
     else if (setting%Partitioning%PartitioningMethod == BLink) then
-        if (setting%Verbose) print*, "Using Balanced Link Partitioning"
+        if (setting%Verbose) print*, new_line(""), "Using Balanced Link Partitioning"
         call init_partitioning_linkbalance()
     else if (setting%Partitioning%PartitioningMethod == BQuick) then
-        if (setting%Verbose) print*, "Using BIPquick Partitioning"
+        if (setting%Verbose) print*, new_line(""), "Using BIPquick Partitioning"
         call init_partitioning_BIPquick()
         N_node = count(node%I(:,ni_idx) /= nullvalueI)
         N_link = count(link%I(:,li_idx) /= nullvalueI)
