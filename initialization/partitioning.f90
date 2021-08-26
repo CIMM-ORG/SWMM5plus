@@ -48,6 +48,7 @@ subroutine init_partitioning_method()
     call util_allocate_partitioning_arrays()
 
     !% Determine which partitioning method is being used
+    print *   !% this is needed because SWMM-C doesn't have a newline after their last printout
     if (setting%Partitioning%PartitioningMethod == Default) then
         if (setting%Verbose) print*, new_line(""), "Using Default Partitioning"
         call init_partitioning_default()

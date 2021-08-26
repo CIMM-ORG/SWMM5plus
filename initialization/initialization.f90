@@ -88,26 +88,39 @@ contains
         !% initialize the API with the SWMM-C code
         call interface_init ()
 
+        !if (setting%Verbose) print *, "begin link-node processing"
+
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays ()
+
+        !if (setting%Verbose) print *, "begin partitioning"
 
         call init_partitioning()
 
         !% HACK: this sync call is probably not needed
         sync all
 
+        !if (setting%Verbose) print *, "begin network definition"
+
         call init_network_define_toplevel ()
+
+        !if (setting%Verbose) print *, "begin reading csv"
 
         !% read in link names for output
         if (setting%Output%report) call output_read_csv_link_names('link_input.csv')
         if (setting%Output%report) call output_read_csv_node_names('node_input.csv')
+
+        !if (setting%Verbose) print *, "begin initializing boundary conditions" 
 
         !% initialize boundary conditions
         call init_bc()
 
         call init_time()
 
+        if (setting%Verbose) print *, "begin setting initial conditions (this takes several minutes for big systems)"
         call init_IC_setup ()
+
+        !if (setting%Verbose) print *, "begin setup of output files"
 
         !% creating output_folders and files
         call util_output_clean_folders()

@@ -115,6 +115,11 @@ module define_settings
         logical :: Apply = .true.
     end type AdjustWidthDepthType
 
+    type CommandLineType
+        logical :: quiet = .false.
+        integer :: interval = 10
+    end type CommandLineType
+
     ! setting%Limiter%BC
     type LimiterBCType
         logical :: UseInflowLimiter = .true.
@@ -225,6 +230,18 @@ module define_settings
         real(8) :: Dt
         integer :: Step
     end type TimeStepType
+
+    type RealTimeType
+        integer :: EpochStartSeconds = 0
+        integer :: EpochTimeLoopStartSeconds = 0
+        integer :: EpochNowSeconds  = 0
+    end type RealTimeType
+
+    type CPUTimeType
+        real (8) :: EpochStartSeconds = 0.0
+        real (8) :: EpochNowSeconds  = 0.0
+        real (8) :: EpochFinishSeconds  = 0.0
+    end type CPUTimeType   
 
     ! -
     ! --
@@ -366,6 +383,8 @@ module define_settings
         real(8)            :: End
         real(8)            :: StartEpoch
         real(8)            :: EndEpoch
+        type(RealTimeType) :: Real
+        type(CPUTimeType)  :: CPU
     end type TimeType
 
     type WeirType
@@ -419,6 +438,7 @@ module define_settings
         real(8) :: reportStartTime
         real(8) :: reportDt
         integer :: reportStep
+        type(CommandLineType) :: CommandLine
     end type OutputType
 
 
@@ -839,6 +859,27 @@ contains
         call json%get('Time.DateTimeStamp', c, found)
         setting%Time%DateTimeStamp = c
         if (.not. found) stop "Error - setting " // 'Time.DateTimeStamp not found'
+
+        ! NOTE: these are NOT initialized because we set the times before the json file is read
+        !call json%get('Time.Real.EpochStartSeconds', integer_value, found)
+        !setting%Time%Real%EpochStartSeconds = integer_value
+        !if (.not. found) stop "Error - setting " // 'Time.Real.EpochStartSeconds not found'
+        !call json%get('Time.Real.EpochNowSeconds', integer_value, found)
+        !setting%Time%Real%EpochNowSeconds = integer_value
+        !if (.not. found) stop "Error - setting " // 'Time.Real.EpochNowSeconds not found'
+        !call json%get('Time.CPU.EpochStartSeconds', integer_value, found)
+
+        ! NOTE: these are NOT initialized because we set the times before the json file is read
+        !setting%Time%CPU%EpochStartSeconds = real_value
+        !if (.not. found) stop "Error - setting " // 'Time.CPU.EpochStartSeconds not found'
+        !call json%get('Time.CPU.EpochNowSeconds', real_value, found)
+        !setting%Time%CPU%EpochNowSeconds = real_value
+        !if (.not. found) stop "Error - setting " // 'Time.CPU.EpochNowSeconds not found'
+        !call json%get('Time.CPU.EpochFinishSeconds', real_value, found)
+        !setting%Time%CPU%EpochFinishSeconds = real_value
+        !if (.not. found) stop "Error - setting " // 'Time.CPU.EpochFinishSeconds not found'
+
+        ! Transverse Weir settings
         call json%get('Weir.Transverse.WeirExponent', real_value, found)
         setting%Weir%Transverse%WeirExponent = real_value
         if (.not. found) stop "Error - setting " // 'Weir.Transverse.WeirExponent not found'
@@ -852,6 +893,7 @@ contains
         setting%Weir%Transverse%VillemonteCorrectionExponent = real_value
         if (.not. found) stop "Error - setting " // 'Weir.Transverse.VillemonteCorrectionExponent not found'
 
+        ! Sideflow Weir settings
         call json%get('Weir.SideFlow.WeirExponent', real_value, found)
         setting%Weir%SideFlow%WeirExponent = real_value
         if (.not. found) stop "Error - setting " // 'Weir.SideFlow.WeirExponent not found'
@@ -932,6 +974,7 @@ contains
         setting%ZeroValue%Volume = real_value
         if (.not. found) stop "Error - setting " // 'ZeroValue.Volume not found'
 
+        ! Load Output settings
         call json%get('Output.report', logical_value, found)
         setting%Output%report = logical_value
         if (.not. found) stop "Error - setting " // 'Output.report not found'
@@ -944,6 +987,12 @@ contains
         call json%get('Output.reportStep', integer_value, found)
         setting%Output%reportStep = integer_value
         if (.not. found) stop "Error - setting " // 'Output.reportStep not found'
+        call json%get('Output.CommandLine.quiet', logical_value, found)
+        setting%Output%CommandLine%quiet = logical_value
+        if (.not. found) stop "Error - setting " // 'Output.CommandLine.quiet not found'
+        call json%get('Output.CommandLine.interval', integer_value, found)
+        setting%Output%CommandLine%interval = integer_value
+        if (.not. found) stop "Error - setting " // 'Output.CommandLine.interval not found'
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
