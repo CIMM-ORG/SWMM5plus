@@ -83,7 +83,7 @@ contains
             call execute_command_line ("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
         end if
 
-        if (setting%Verbose) print *, "Simulation Starts"
+        !if (setting%Verbose) print *, "Simulation Starts"
 
         !% initialize the API with the SWMM-C code
         call interface_init ()
@@ -117,7 +117,14 @@ contains
 
         call init_time()
 
-        if (setting%Verbose) print *, "begin setting initial conditions (this takes several minutes for big systems)"
+        if (setting%Verbose) then
+            if (this_image() == 1) then
+            if ((N_link > 5000) .or. (N_node > 5000)) then
+                print *, "begin setting initial conditions (this takes several minutes for big systems)"
+                print *, "This system has ",N_link,"links and",N_node,"nodes"
+            endif
+        endif
+        endif    
         call init_IC_setup ()
 
         !if (setting%Verbose) print *, "begin setup of output files"
