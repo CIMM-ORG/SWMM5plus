@@ -128,6 +128,8 @@ module define_globals
     real(8), parameter :: sixR = 6.0
     real(8), parameter :: eightR = 8.0
     real(8), parameter :: tenR = 10.0
+    real(8), parameter :: twentyfourR = 24.0
+    real(8), parameter :: sixtyR = 60.0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
     real(8), parameter :: oneeighthR = oneR / eightR
@@ -139,6 +141,9 @@ module define_globals
     real(8), parameter :: threefourthR = threeR / fourR
     real(8), parameter :: threehalfR = threeR / twoR
     real(8), parameter :: fourthirdsR = fourR / threeR
+
+    real(8), parameter :: seconds_per_hour = 3600.0
+    real(8), parameter :: seconds_per_day  = 86400.0
 
     integer, parameter :: zeroI = 0
     integer, parameter :: oneI = 1
