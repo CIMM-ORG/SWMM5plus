@@ -258,37 +258,9 @@ install_opencoarray_mac()
         ./install.sh --install-prefix $COARRAY_INSTALL
         cd $SWMM5PLUS_DIR
     fi
-    
-    # Download Opencoarray from brew
-    #if ! command -v brew &> /dev/null
-    #then
-    #echo "Homebrew is not found on this mac machine..."
-    #echo "To install Opencoarray on mac, Homebrew is required."
-    #read -p "Do you wish to install Homebrew in your Mac? (Y/N) " yn
-    #case $yn in
-    #    [Yy]* ) /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; break;;
-    #    [Nn]* ) exit;;
-    #    * ) echo "Please answer yes or no.";;
-    #esac
-    #fi
-
-    #if brew ls --version opencoarrays &> /dev/null
-    #then
-    #echo "OpenCoarrays found in Homebrew Cellar: $(brew --prefix opencoarrays)/bin"
-    #echo "opencoarray path $(brew --prefix opencoarrays)/bin" >> $INSTALLATION_LOG
-    #else
-    #brew update
-    #brew install opencoarrays
-    #echo "opencoarray path $(brew --prefix opencoarrays)/bin" >> $INSTALLATION_LOG
-    #fi
-    
-    #Final check before leaving the function
-    #if ! brew ls --version opencoarrays &> /dev/null
-    #then
-    #    echo "OpenCoarray Mac installation failed."
-    #    echo "Please see http://www.opencoarrays.org/ for details about compatibility."
-    #fi
 }
+
+
 
 opencoarray_prerequisite()
 {   # For simplicity, install everything in local directory.
@@ -316,8 +288,8 @@ then
         fi
     elif [[ $machine = "mac" ]]
     then
-        install_opencoarray_mac
-        CAF="$COARRAY_INSTALL/bin/caf"
+        install_opencoarray_mac # If user want to use Homebrew to install OpenCoarrays, please comment out this line
+        CAF="$COARRAY_INSTALL/bin/caf" #If user want to use Homebrew to install OpenCoarrays, please change the CAF path 
     fi
 fi
 # --------------------------------------------------------------------------------------
