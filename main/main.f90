@@ -11,7 +11,8 @@ program main
     implicit none
 
     real :: start_time, end_time
-
+    integer :: ii
+    
     ! --- Clock the simulation time
     call cpu_time(start_time)
 
@@ -21,7 +22,6 @@ program main
     ! --- Time Loop
     call timeloop_toplevel()
 
-    ! --- Finalization
     call finalize_all()
 
     sync all

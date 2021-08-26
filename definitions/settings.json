@@ -107,7 +107,7 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Output" : {
-        "report" : false,
+        "report" : true,
         "reportStartTime" : 0.0,
         "reportDt" : 100.0,
         "reportStep" : 0
@@ -224,7 +224,7 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
-	        "output" : false,
+	    "output" : true,
             "pack_mask_arrays" : false,
             "partitioning" : false,
             "pump_elements" : false,
@@ -254,6 +254,6 @@
             "utility" : false
         }
     },
-    "Warning"  : false,
+    "Warning"  : true,
     "Verbose" : true
 }

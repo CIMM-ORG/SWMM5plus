@@ -108,8 +108,8 @@ contains
 
         !% creating output_folders and files
         if (setting%Output%report) call util_output_create_folder()
-        if (setting%Output%report) call util_output_create_elemR_files()
-        if (setting%Output%report) call util_output_create_faceR_files()
+        !if (setting%Output%report) call util_output_create_elemR_files()
+        !if (setting%Output%report) call util_output_create_faceR_files()
         if (setting%Output%report) call output_create_link_files()
         if (setting%Output%report) call output_create_node_files()
         call util_output_create_summary_files()

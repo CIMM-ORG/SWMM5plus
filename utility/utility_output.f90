@@ -62,6 +62,7 @@ contains
             endfile(fu)
             close(fu)
         end if
+        
 
         if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
     end subroutine util_output_create_summary_files
@@ -330,7 +331,7 @@ contains
         call util_output_report_summary()
 
         if (setting%Output%report .and. util_output_must_report()) then
-            call util_output_write_elemR_faceR()
+            !call util_output_write_elemR_faceR()
             call output_write_link_files()
             call output_write_node_files()
         end if
