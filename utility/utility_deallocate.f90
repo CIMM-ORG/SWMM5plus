@@ -116,6 +116,17 @@ contains
         deallocate(link_output_idx,stat=deallocation_status,errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg)
 
+        if (allocated(node%P%have_output)) then
+            deallocate(node%P%have_output,stat=deallocation_status,errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg)
+        end if
+
+        if (allocated(link%P%have_output)) then
+            deallocate(link%P%have_output,stat=deallocation_status,errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg)
+        end if
+        
+
         if (setting%Debug%File%utility_deallocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_deallocate_linknode
