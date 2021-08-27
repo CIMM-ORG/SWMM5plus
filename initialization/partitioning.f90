@@ -74,18 +74,26 @@ subroutine init_partitioning_method()
         print *, "Node Partitioning"
         print *, new_line("")
         do ii = 1, size(node%I, 1)
-            print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
+            if ( node%I(ii, ni_P_is_boundary) /= zeroI ) then
+                print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
+            endif
         end do
 
-        print *, "Link Partitioning"
-        print *, new_line("")
-        do ii = 1, size(link%I, 1)
-            print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link)
-        end do
+        ! print *, "Link Partitioning"
+        ! print *, new_line("")
+        ! do ii = 1, size(link%I, 1)
+        !     if ( link%I(ii, li_idx) == 18263) then
+        !         print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link)
+        !     end if
+        ! end do
+
+        print*, link%I(591, li_Mnode_u:li_Mnode_d), link%I(591, li_P_image)
+        print*, link%I(10822, li_Mnode_u:li_Mnode_d), link%I(10822, li_P_image)
 
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
         ! partition_correct = default_performance_check()
         connectivity = init_partitioning_metric_connectivity()
+        print*, "*** partitioning is complete", connectivity
         part_size_balance = init_partitioning_metric_partsizebalance()
 
         print*, "*** partitioning is complete", connectivity, part_size_balance

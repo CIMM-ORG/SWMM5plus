@@ -990,25 +990,25 @@ contains
         !% Check each node in the network
         do ii = 1, size(node%I, 1)
 
-        !% Create a list of links that are adjacent to the node
-        adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+            !% Create a list of links that are adjacent to the node
+            adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
 
-        !% Iterate through that list
-        do kk = 1, size(adjacent_links)
+            !% Iterate through that list
+            do kk = 1, size(adjacent_links)
 
-        !% If the adjacent link doesn't exist, skip it
-        if ( adjacent_links(kk) == nullValueI ) then
-        cycle
-        end if
+                !% If the adjacent link doesn't exist, skip it
+                if ( adjacent_links(kk) == nullValueI ) then
+                    cycle
+                end if
 
-        !% Check the image that the link has been assigned to (from trav_assign_link)
-        link_image = link%I(adjacent_links(kk), li_P_image)
+                !% Check the image that the link has been assigned to (from trav_assign_link)
+                link_image = link%I(adjacent_links(kk), li_P_image)
 
-        !% If the link and the image are on separate images, increment the ni_P_is_boundary
-        if ( link_image /= node%I(ii, ni_P_image) ) then
-        node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
-        end if
-        end do
+                !% If the link and the image are on separate images, increment the ni_P_is_boundary
+                if ( link_image /= node%I(ii, ni_P_image) ) then
+                    node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
+                end if
+            end do
         end do
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
