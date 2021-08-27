@@ -1,11 +1,11 @@
-module util_dynamic_array
+module util_prof_array
     type f_array
         integer :: max_size = 0
         integer :: len = 0
         real, allocatable :: arr(:)
     end type f_array
 contains
-    subroutine util_free_arr(this)
+    subroutine free_arr(this)
         type(f_array), intent(inout) :: this
         deallocate(this%arr)
     end subroutine
@@ -22,14 +22,14 @@ contains
             allocate(resized_arr(this%max_size * 2))
             resized_arr(1:this%max_size) = this%arr(1:this%max_size)
             this%max_size = this%max_size * 2
-            call util_free_arr(this)
+            call free_arr(this)
             this%arr = resized_arr
         end if
 
         this%len = this%len + 1
         this%arr(this%len) = x
     end subroutine append
-end module
+end module util_prof_array
 
 ! program main
 !     use Array

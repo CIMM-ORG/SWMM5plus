@@ -1,6 +1,6 @@
 module job_count
 
-    use array
+    use util_prof_array
     type job
         type(f_array) :: time_stamps
         real :: end_time
