@@ -1,0 +1,176 @@
+[TITLE]
+;;Project Title/Notes
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           03/16/2019
+START_TIME           00:00:00
+REPORT_START_DATE    03/16/2019
+REPORT_START_TIME    00:00:00
+END_DATE             03/16/2019
+END_TIME             23:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:15:00
+WET_STEP             00:05:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0:00:30 
+RULE_STEP            00:00:00
+
+INERTIAL_DAMPING     PARTIAL
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         1.167
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.0015
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+1                1000       0          3          0          0         
+2                999        0          3          0          0         
+4                997        0          3          0          0         
+5                996        0          3          0          0         
+6                995        0          3          0          0         
+7                994        0          3          0          0         
+9                1000       0          3          0          0         
+10               998        0          3          0          0         
+11               999        0          3          0          0         
+12               999        0          3          0          0         
+13               998        0          3          0          0         
+14               997        0          3          0          0         
+16               997        0          3          0          0         
+17               996        0          3          0          0         
+18               999        0          3          0          0         
+19               997        0          3          0          0         
+3                998        0          3          0          0         
+15               997        0          3          0          0         
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+8                993        FIXED       996              NO                       
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+1                1                2                1000       0.03       0          0          10.0        0         
+2                2                3                1000       0.03       0          0          10.0        0         
+3                3                4                1000       0.03       0          0          10.0        0         
+4                4                5                1000       0.03       0          0          10.0        0         
+5                5                6                1000       0.03       0          0          10.0        0         
+6                6                7                1000       0.03       0          0          10.0        0         
+7                7                8                1000       0.03       0          0          10.0        0         
+8                11               13               1000       0.03       0          0          10.0        0         
+9                12               13               1000       0.03       0          0          10.0        0         
+10               13               14               1000       0.03       0          0          10.0        0         
+11               14               5                1000       0.03       0          0          10.0        0         
+12               15               5                1000       0.03       0          0          10.0        0         
+13               19               17               1000       0.03       0          0          10.0        0         
+14               16               17               1000       0.03       0          0          10.0        0         
+15               17               6                1000       0.03       0          0          10.0        0         
+16               10               4                1000       0.03       0          0          10.0        0         
+17               9                2                1000       0.03       0          0          10.0        0         
+18               18               10               1000       0.03       0          0          10.0        0         
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+1                RECT_OPEN    10               10         0          0          1                    
+2                RECT_OPEN    10               10         0          0          1                    
+3                RECT_OPEN    10               10         0          0          1                    
+4                RECT_OPEN    10               10         0          0          1                    
+5                RECT_OPEN    10               10         0          0          1                    
+6                RECT_OPEN    10               10         0          0          1                    
+7                RECT_OPEN    10               10         0          0          1                    
+8                RECT_OPEN    10               10         0          0          1                    
+9                RECT_OPEN    10               10         0          0          1                    
+10               RECT_OPEN    10               10         0          0          1                    
+11               RECT_OPEN    10               10         0          0          1                    
+12               RECT_OPEN    10               10         0          0          1                    
+13               RECT_OPEN    10               10         0          0          1                    
+14               RECT_OPEN    10               10         0          0          1                    
+15               RECT_OPEN    10               10         0          0          1                    
+16               RECT_OPEN    10               10         0          0          1                    
+17               RECT_OPEN    10               10         0          0          1                    
+18               RECT_OPEN    10               10         0          0          1                    
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+1                FLOW             ""               FLOW     1.0      1.0     10.00   
+6                FLOW             ""               FLOW     1.0      1.0     10.00    
+9                FLOW             ""               FLOW     1.0      1.0     10.00   
+11               FLOW             ""               FLOW     1.0      1.0     10.00   
+12               FLOW             ""               FLOW     1.0      1.0     10.00   
+16               FLOW             ""               FLOW     1.0      1.0     10.00   
+18               FLOW             ""               FLOW     1.0      1.0     10.00   
+19               FLOW             ""               FLOW     1.0      1.0     10.00   
+15               FLOW             ""               FLOW     1.0      1.0     10.00   
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+T1                          00:00      10        
+T1                          01:00      10        
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 0.000 0.000 10000.000 10000.000
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+1                904.836            8003.120          
+2                2215.289           6833.073          
+4                4165.367           5101.404          
+5                4368.175           3104.524          
+6                5881.435           2074.883          
+7                7207.488           1731.669          
+9                3416.537           8065.523          
+10               4898.596           6068.643          
+11               982.839            4742.590          
+12               436.817            3510.140          
+13               1872.075           3759.750          
+14               2043.682           2683.307          
+16               8829.953           4477.379          
+17               7800.312           3338.534          
+18               5569.307           6806.931          
+19               6683.168           4220.297          
+3                3322.933           6021.841          
+15               5631.188           4183.168          
+8                7847.114           608.424           
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+
