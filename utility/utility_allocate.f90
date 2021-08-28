@@ -1016,8 +1016,8 @@ contains
 
         if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
-        if (setting%BC%BCSlots < 2) then
-            print *, "Error: the number of BCSlots has to be greater than 2"
+        if (setting%BC%slots < 2) then
+            print *, "Error: the number of slots has to be greater than 2"
             stop
         end if
 
@@ -1025,7 +1025,7 @@ contains
             allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
 
-            allocate(BC%headR_timeseries(N_headBC, setting%BC%BCSlots, N_headR), stat=allocation_status, errmsg=emsg)
+            allocate(BC%headR_timeseries(N_headBC, setting%BC%slots, N_headR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
 
             allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
@@ -1039,7 +1039,7 @@ contains
             allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
 
-            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%BCSlots, N_flowR), stat=allocation_status, errmsg=emsg)
+            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%slots, N_flowR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
 
             allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)

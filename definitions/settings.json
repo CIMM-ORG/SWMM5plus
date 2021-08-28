@@ -53,7 +53,7 @@
         }
     },
     "BC" : {
-        "BCSlots" : 10
+        "slots" : 10
     },
     "Constant" : {
         "gravity" : 9.81
@@ -110,7 +110,8 @@
         "report" : true,
         "reportStartTime" : 0.0,
         "reportDt" : 100.0,
-        "reportStep" : 0
+        "reportStep" : 0,
+        "slots" : 20
     },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
@@ -224,7 +225,7 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
-	    "output" : true,
+	    "output" : false,
             "pack_mask_arrays" : false,
             "partitioning" : false,
             "pump_elements" : false,
