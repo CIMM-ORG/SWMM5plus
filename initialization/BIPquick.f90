@@ -189,7 +189,8 @@ contains
         partitioned_nodes(:) = .false.
         partitioned_links(:) = .false.
         weight_range(:,:) = zeroR
-        accounted_for_links = .false.
+        accounted_for_links(:) = .false.
+        phantom_link_tracker(:) = nullValueI
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine bip_initialize_arrays
@@ -783,6 +784,8 @@ contains
         !--------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
+        phantom_link_tracker(phantom_link_idx) = phantom_link_idx
+
         !% The phantom node index is given
         node%I(phantom_node_idx, ni_idx) = phantom_node_idx
 
@@ -831,7 +834,11 @@ contains
         link%I(spanning_link, li_Mnode_d) = phantom_node_idx
 
         !% Maps the created phantom link back to the SWMM parent link
-        link%I(phantom_link_idx, li_parent_link) = spanning_link
+        if ( ANY( phantom_link_tracker == spanning_link) ) then
+            link%I(phantom_link_idx, li_parent_link) = link%I(spanning_link, li_parent_link)
+        else
+            link%I(phantom_link_idx, li_parent_link) = spanning_link
+        endif
 
         !% Reduce the downstream node directweight by the spanning link's new length
         B_nodeR(downstream_node, directweight) = B_nodeR(downstream_node, directweight) &
