@@ -256,7 +256,7 @@ module define_settings
 
     ! setting%BC
     type BCPropertiesType
-        integer :: BCSlots = 10
+        integer :: slots = 10
     end type BCPropertiesType
 
     ! setting%Constant
@@ -413,12 +413,13 @@ module define_settings
         character(len=256) :: out ! path to SWMM output (.out) file
     end type PathType
 
-        !% setting%Output
+    !% setting%Output
     type OutputType
         logical :: report
         real(8) :: reportStartTime
         real(8) :: reportDt
         integer :: reportStep
+        integer :: Slots
     end type OutputType
 
 
@@ -593,9 +594,9 @@ contains
         if (.not. found) stop "Error - setting " // 'Adjust.Head.Coef not found'
 
         ! Load BC Settings
-        call json%get('BC.BCSlots', real_value, found)
-        setting%BC%BCslots = real_value
-        if (.not. found) stop "Error - setting " // 'BC.BCSlots not found'
+        call json%get('BC.slots', real_value, found)
+        setting%BC%slots = real_value
+        if (.not. found) stop "Error - setting " // 'BC.slots not found'
 
         ! Load Constant Settings
         call json%get('Constant.gravity', real_value, found)

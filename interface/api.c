@@ -751,6 +751,65 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
     return 0;
 }
 
+// --- Output Writing (Post Processing)
+// * The follwing functions should only be executed after finishing
+//   and writing SWMM5+ report files. The following functions are
+//   meant to be called from Fortran in order to export .rpt and
+//   .out files according to the SWMM 5.13 standard. Fortran-generated
+//   report files are not manipulated here, the manipulation of
+//   SWMM5+ report files is kept within the Fortran code to ensure
+//   compatibility with future updates of the SWMM5+ standard
+
+int DLLEXPORT api_write_output(void* f_api)
+{
+    Interface * api = (Interface *) f_api;
+    int i;
+    DateTime t = datetime_addSeconds(StartDateTime, ReportStep);
+    double newNodeResults[MAX_API_OUTPUT_NODE_ATTR] = {1.55};
+    double newLinkResults[MAX_API_OUTPUT_LINK_ATTR] = {2.34};
+
+    // --- check that simulation can proceed
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    while (t <= EndDateTime)
+    {
+        for (i = 0; i<Nobjects[NODE]; i++)
+        {
+            api_update_nodeResults(i, newNodeResults);
+            api_update_linkResults(i, newLinkResults);
+        }
+        // Update routing times to skip interpolation when
+        // saving results.
+        OldRoutingTime = 0; NewRoutingTime = t;
+        output_saveResults(t*86400*1000);
+        t = datetime_addSeconds(t, ReportStep);
+    }
+    return 0;
+}
+
+int api_update_nodeResults(int j, double newNodeResults[])
+// j: node index
+{
+    Node[j].newDepth = newNodeResults[output_node_depth];
+    // Node[j].newVolume = newNodeResults[output_node_volume];
+    // Node[j].newLatFlow = newNodeResults[output_node_latflow];
+    // Node[j].inflow = newNodeResults[output_node_inflow];
+}
+
+int api_update_linkResults(int j, double* newLinkResults)
+// j: link index
+{
+    // Link[j].newDepth = newLinkResults[output_link_depth];
+    Link[j].newFlow = newLinkResults[output_link_flow];
+    // Link[j].newVolume = newLinkResults[output_link_volume];
+    // Link[j].direction = newLinkResults[output_link_direction];
+}
+
 // -------------------------------------------------------------------------
 // |
 // |  Private functionalities

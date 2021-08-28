@@ -11,8 +11,7 @@ program main
     implicit none
 
     real :: start_time, end_time
-    integer :: ii
-    
+
     ! --- Clock the simulation time
     call cpu_time(start_time)
 

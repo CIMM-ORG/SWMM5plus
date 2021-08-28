@@ -8,6 +8,7 @@ module timeloop
     use runge_kutta2
     use utility_output
     use boundary_conditions
+    use interface, only: interface_write_output
 
     implicit none
 
@@ -53,6 +54,9 @@ contains
             call util_output_report() !% Results must be reported before counter increment
             call tl_increment_counters(doHydraulics, doHydrology)
         end do
+
+        !% Write output
+        call interface_write_output()
 
         if (setting%Debug%File%timeloop)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine timeloop_toplevel

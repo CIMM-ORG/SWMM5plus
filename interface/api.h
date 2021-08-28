@@ -36,6 +36,22 @@
 // Interface error codes:
 #define ERROR_FEATURE_NOT_COMPATIBLE 100001
 
+#define MAX_API_OUTPUT_NODE_ATTR 4
+enum api_output_node_attribute {
+  output_node_depth = 0,
+  output_node_volume,
+  output_node_latflow,
+  output_node_inflow
+};
+
+#define MAX_API_OUTPUT_LINK_ATTR 4
+enum api_output_link_attribute {
+  output_link_depth = 0,
+  output_link_flow,
+  output_link_volume,
+  output_link_direction
+};
+
 enum api_node_attributes {
   node_ID = 1,
   node_type,
@@ -150,6 +166,11 @@ int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int obj
 int DLLEXPORT api_get_next_entry_tseries(int k);
 int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
+
+// Output fcns
+int DLLEXPORT api_write_output(void* f_api);
+int api_update_nodeResults(int j, double* newNodeResults);
+int api_update_linkResults(int j, double* newLinkResults);
 
 // --- Print-out
 void DLLEXPORT api_print_object_name(int k, int object_type);

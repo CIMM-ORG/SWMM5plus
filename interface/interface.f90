@@ -36,6 +36,7 @@ module interface
     public :: interface_get_flowBC
     public :: interface_get_headBC
     public :: interface_find_object
+    public :: interface_write_output
 
     !% -------------------------------------------------------------------------------
     !% PRIVATE
@@ -176,6 +177,13 @@ module interface
             integer(c_int) :: api_find_object
         end function api_find_object
 
+        ! --- Write Output
+        function api_write_output(api)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr), value, intent(in) :: api
+            integer(c_int) :: api_write_output
+        end function api_write_output
     end interface
 
     procedure(api_initialize),             pointer :: ptr_api_initialize
@@ -193,6 +201,7 @@ module interface
     procedure(api_get_next_entry_tseries), pointer :: ptr_api_get_next_entry_tseries
     procedure(api_find_object),            pointer :: ptr_api_find_object
     procedure(api_run_step),               pointer :: ptr_api_run_step
+    procedure(api_write_output),           pointer :: ptr_api_write_output
 
     !% Error handling
     character(len = 1024) :: errmsg
@@ -842,6 +851,30 @@ contains
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
 
     end function interface_find_object
+
+
+    subroutine interface_write_output()
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Writes .out file with SWMM5+ data
+    !%-----------------------------------------------------------------------------
+        integer       :: error
+        character(64) :: subroutine_name = "interface_write_output"
+    !%-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+
+        c_lib%procname = "api_write_output"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_write_output)
+        error = ptr_api_write_output(api)
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+    end subroutine interface_write_output
 
     !%=============================================================================
     !% PRIVATE
