@@ -11,7 +11,8 @@ contains
         if(this_image() == 1) then
             call output_combine_links()
         end if
-        sync all 
+        sync all
+        call output_move_node_files
         call interface_finalize()
         call util_deallocate_network_data()
     end subroutine finalize_all

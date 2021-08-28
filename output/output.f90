@@ -20,7 +20,8 @@ Module output
     public output_write_link_files
     public output_write_node_files
     public output_combine_links
-
+    public output_move_node_files
+    
 contains
 
     !% subroutine for reading the link input file and storing it in link_output_idx
@@ -547,6 +548,32 @@ contains
         
 
     end subroutine output_combine_links
-    
+
+    subroutine output_move_node_files
+        integer :: ii,fu, open_status
+        character(len = 250) :: file_name, file_name_new
+        character(len = 100) :: node_name
+        character(len = 4)   :: str_image
+        character(64) :: subroutine_name = 'output_move_node_files'
+        !%--------------------------------------------------------------------------
+        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+
+        !% Get current image as a string
+        write(str_image, '(i1)') this_image()
+
+        do ii=1, size(node%P%have_output)
+
+            !% Open the node file
+            file_name = "debug_output/partitioned/node/"//trim(node%names(node%P%have_output(ii))%str) &
+                //"_"//trim(str_image)//".csv"
+            file_name_new = "debug_output/swmm5/node/"//trim(node%names(node%P%have_output(ii))%str)//".csv"
+            call rename(file_name, file_name_new)
+            
+            
+        end do
+
+        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+
+    end subroutine output_move_node_files
 end module output
 
