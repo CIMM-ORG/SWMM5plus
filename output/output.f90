@@ -1,5 +1,5 @@
 Module output
-    
+
     use define_indexes
     use define_keys
     use define_globals
@@ -21,7 +21,7 @@ Module output
     public output_write_node_files
     public output_combine_links
     public output_move_node_files
-    
+
 contains
 
     !% subroutine for reading the link input file and storing it in link_output_idx
@@ -38,11 +38,11 @@ contains
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
 
-        
+
         if (setting%Partitioning%PartitioningMethod == BQuick) then
             additional_rows = num_images() - 1
         end if
-        
+
         !% open csv file of link names
         open (action='read', file=file_name, iostat=rc, newunit=fu)
         ii = 1
@@ -59,12 +59,12 @@ contains
 
             do while(ii <= N_link)
                 phantom_counter = 0
-                link_temp_idx = kk 
+                link_temp_idx = kk
                 link_output_idx(ii) = link_temp_idx
                 ii = ii + 1
                 kk = kk + 1
 
-                
+
                 do jj = N_link - additional_rows+1, N_link
 
                     if(link_temp_idx .eq. link%I(jj, li_parent_link)) then
@@ -76,10 +76,10 @@ contains
                 end do
 
                 link%I(link_temp_idx,li_num_phantom_links) = phantom_counter
-                
-                
+
+
             end do
-            
+
         end if
 
         !% loop through till the end of the file and save the valid links
@@ -93,7 +93,7 @@ contains
             !% converting link name to link idx using the interface
             link_temp_idx = interface_find_object(object_type=3, object_name = link_name)
             phantom_counter = 0
-            
+
             !% if it is an invalid link found while reading skip the loop and read the next line
             if(link_temp_idx == 0) then
                 cycle
@@ -106,22 +106,22 @@ contains
             !% checking if the link is spit across processors if so then store the id of the phantom link for output
 
             do jj = N_link - additional_rows+1, N_link
-                
+
                 if(link_temp_idx .eq. link%I(jj, li_parent_link)) then
                     link_output_idx(ii) = jj
                     ii = ii + 1
                     phantom_counter = phantom_counter + 1
                 end if
-                
+
             end do
-                
+
             link%I(link_temp_idx,li_num_phantom_links) = phantom_counter
-            
+
         end do
-        
+
         close(fu)
         link_output_idx(ii:N_link) = nullvalueI
-        
+
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine output_read_csv_link_names
@@ -138,7 +138,7 @@ contains
         if (setting%Partitioning%PartitioningMethod == BQuick) then
             additional_rows = num_images() - 1
         end if
-        
+
         open (action='read', file=file_name, iostat=rc, newunit=fu)
         if(rc /= 0) then
             write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
@@ -149,10 +149,10 @@ contains
         if(rc /= 0) then
             node_output_idx = (/ (ii, ii =1, N_node - additional_rows)/)
             ii = N_node+1
-            
+
         end if
-        
-        
+
+
         do
             !% read in the node name from the csv
             read(fu, *, iostat = rc) node_name
@@ -189,7 +189,7 @@ contains
         character(len = 250) :: file_name
         character(len = 100) :: link_name
         character(len = 4)   :: str_image
-        character(len = 10)  :: str_idx 
+        character(len = 10)  :: str_idx
         character(64) :: subroutine_name = 'output_create_link_files'
 
         !%--------------------------------------------------------------------------
@@ -206,7 +206,7 @@ contains
                 write(str_idx, '(i1)') link%P%have_output(ii)
                 temp_link_idx = link%P%have_output(ii)
                 file_name = "debug_output/partitioned/link/"//trim(link%names(link%I(temp_link_idx,li_parent_link))%str) &
-                    //"_"//trim(str_image)//"_"//trim(str_idx)//".csv"                
+                    //"_"//trim(str_image)//"_"//trim(str_idx)//".csv"
             else
                 file_name = "debug_output/partitioned/link/"//trim(link%names(link%P%have_output(ii))%str) &
                     //"_"//trim(str_image)//".csv"
@@ -292,7 +292,7 @@ contains
             !% store the store the location of the start and end elem for easier reading
             start_elem = link%I(link%P%have_output(ii),li_first_elem_idx)
             end_elem = link%I(link%P%have_output(ii),li_last_elem_idx)
-            
+
             !% calculate average flowrate by summing up the elems and diving about the number of elems
             avg_flowrate = sum(elemR(start_elem:end_elem,er_Flowrate))/(end_elem-start_elem)
 
@@ -310,8 +310,8 @@ contains
                 file_name = "debug_output/partitioned/link/"//trim(link%names(link%P%have_output(ii))%str) &
                     //"_"//trim(str_image)//".csv"
             end if
-            
-            
+
+
             open(newunit=fu, file = file_name, status = 'old',access = 'append', &
                 form   = 'formatted', action = 'write', iostat = open_status)
 
@@ -421,7 +421,7 @@ contains
         character(len = 4)   :: str_image
         character(len = 10)  :: str_idx
         character(len = 19)  :: str_time
-        
+
         character(64) :: subroutine_name = 'output_write_link_files'
 
 
@@ -432,7 +432,7 @@ contains
         do while (ii <= link_output_idx_length)
 
             !Set some starting values
-            full_length = 0            
+            full_length = 0
             fu = ii
             !we use temp_link_idx as the index of the parent link we are getting the output for
             temp_link_idx = link_output_idx(ii)
@@ -447,10 +447,10 @@ contains
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(parent_file_name), '" failed: ', rc
             end if
 
-            !we read the header as well as start calculating the full_length of the link for the phantom links 
+            !we read the header as well as start calculating the full_length of the link for the phantom links
             read (fu, *, iostat=rc) str_time
-            full_length = full_length + link%R(temp_link_idx,lr_AdjustedLength) 
-            
+            full_length = full_length + link%R(temp_link_idx,lr_AdjustedLength)
+
             !Now we open the Final file for the link output which is in a different location and just the name of the link
             !We also write the header
             final_file_name = "debug_output/swmm5/link/"//trim(link%names(temp_link_idx)%str)//".csv"
@@ -460,12 +460,12 @@ contains
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(Final_File_NAME), '" failed: ', open_status
             end if
             write(fu+1, *) "Timestamp,Time_In_Secs,flowrate"
-            
+
 
             !Now we check if the parent link has phantoms related to it and loop through those values
             !While looping we open each of the phantom link files and calculate the full_length
             if(link%I(temp_link_idx, li_num_phantom_links) > 0 .and. link%I(temp_link_idx, li_num_phantom_links) /= nullvalueI) then
-            
+
                 do jj = 1, link%I(temp_link_idx, li_num_phantom_links)
                     temp_phantom_link = link_output_idx(ii+jj)
                     write(str_image, '(i1)') link%I(temp_phantom_link,li_P_image)
@@ -474,7 +474,7 @@ contains
                         trim(link%names(link%I(temp_phantom_link,li_parent_link))%str) &
                         //"_"//trim(str_image)//"_"//trim(str_idx)//".csv"
 
-                    
+
                     full_length = full_length + link%R(temp_phantom_link,lr_AdjustedLength)
 
                     open (action='read', file=phantom_file_name, iostat=rc, unit = fu+jj+1)
@@ -489,8 +489,8 @@ contains
 
                 do
                     avg_flowrate = 0
-                    read (fu, *, iostat=rc) str_time, time_secs, flowrate                    
-                
+                    read (fu, *, iostat=rc) str_time, time_secs, flowrate
+
                     if(rc /= 0) then
                         exit
                     end if
@@ -532,20 +532,20 @@ contains
 
                 !If the link doesn't have any phantom links related to it we close the parent and final file and simply rename and move the parent file to the final file location.
                 !Then increment one.
-                
+
                 close(fu)
                 close(fu+1)
                 call rename(parent_file_name, final_file_name)
-                ii = ii + 1 
-                
-                
-            end if
-            
+                ii = ii + 1
 
-            
+
+            end if
+
+
+
         end do
 
-        
+
 
     end subroutine output_combine_links
 
@@ -568,8 +568,8 @@ contains
                 //"_"//trim(str_image)//".csv"
             file_name_new = "debug_output/swmm5/node/"//trim(node%names(node%P%have_output(ii))%str)//".csv"
             call rename(file_name, file_name_new)
-            
-            
+
+
         end do
 
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
