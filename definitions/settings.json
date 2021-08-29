@@ -225,7 +225,7 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
-	    "output" : false,
+	        "output" : false,
             "pack_mask_arrays" : false,
             "partitioning" : false,
             "pump_elements" : false,
@@ -256,5 +256,5 @@
         }
     },
     "Warning"  : true,
-    "Verbose" : true
+    "Verbose" : false
 }

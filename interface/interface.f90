@@ -37,6 +37,7 @@ module interface
     public :: interface_get_headBC
     public :: interface_find_object
     public :: interface_write_output
+    public :: interface_export_link_results
 
     !% -------------------------------------------------------------------------------
     !% PRIVATE
@@ -184,6 +185,15 @@ module interface
             type(c_ptr), value, intent(in) :: api
             integer(c_int) :: api_write_output
         end function api_write_output
+
+        function api_export_link_results(api, link_idx)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr), value, intent(in) :: api
+            integer(c_int), value, intent(in) :: link_idx
+            integer(c_int) :: api_export_link_results
+        end function api_export_link_results
+
     end interface
 
     procedure(api_initialize),             pointer :: ptr_api_initialize
@@ -202,6 +212,7 @@ module interface
     procedure(api_find_object),            pointer :: ptr_api_find_object
     procedure(api_run_step),               pointer :: ptr_api_run_step
     procedure(api_write_output),           pointer :: ptr_api_write_output
+    procedure(api_export_link_results),    pointer :: ptr_api_export_link_results
 
     !% Error handling
     character(len = 1024) :: errmsg
@@ -875,6 +886,27 @@ contains
 
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine interface_write_output
+
+    subroutine interface_export_link_results(link_idx)
+        integer, intent(in) :: link_idx
+        character(64) :: subroutine_name
+
+        subroutine_name = 'interface_export_link_results'
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+
+        c_lib%procname = "api_export_link_results"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_export_link_results)
+        call ptr_api_export_link_results(api, link_idx-1)
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+
+    end subroutine interface_export_link_results
 
     !%=============================================================================
     !% PRIVATE

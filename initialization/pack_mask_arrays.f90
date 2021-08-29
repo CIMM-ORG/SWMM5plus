@@ -53,7 +53,7 @@ contains
         call pack_dynamic_interior_faces()
         call pack_dynamic_shared_faces()
         call pack_output()
-       
+
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
@@ -1734,28 +1734,18 @@ contains
         !% count the amount of valid output links
         link_output_idx_length = count(link_output_idx(:) /= nullvalueI)
         node_output_idx_length = count(node_output_idx(:) /= nullvalueI)
-        print *, "link_output_idx_length", link_output_idx_length
-        
+
         !% allocate the pack
         allocate(link%P%have_output(link_output_idx_length))
         allocate(node%P%have_output(node_output_idx_length))
 
-        print *, "output pack allocation but before fill" 
-        print *, "size(link%I)", size(link%I)
-        print *, "size(link%P%have_output)", size(link%P%have_output)
-        print *, "size(link_output_idx)",size(link_output_idx)
-        print *, link_output_idx(1:link_output_idx_length)
-        print *, link%I(link_output_idx(1:link_output_idx_length), li_P_image)
-        
-        !% fill the pack 
+        !% fill the pack
         link%P%have_output = pack(link%I(link_output_idx(1:link_output_idx_length), li_idx), &
             link%I(link_output_idx(1:link_output_idx_length), li_P_image) == this_image())
-        print *, "after linkP have output pack"
         node%P%have_output = pack(node%I(node_output_idx(1:node_output_idx_length), ni_idx), &
             node%I(node_output_idx(1:node_output_idx_length), ni_P_image) == this_image())
 
-        print *, "link%P%have_output", link%P%have_output
-        
+
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_output
 end module pack_mask_arrays

@@ -8,7 +8,7 @@ module timeloop
     use runge_kutta2
     use utility_output
     use boundary_conditions
-    use interface, only: interface_write_output
+    use interface, only: interface_write_output, interface_export_link_results
 
     implicit none
 
@@ -34,6 +34,7 @@ contains
     !% Description:
     !%     Loops over all the major time-stepping routines
     !%-----------------------------------------------------------------------------
+        integer          :: ii, additional_rows
         logical          :: isTLfinished
         logical          :: doHydraulics, doHydrology
         character(64)    :: subroutine_name = 'timeloop_toplevel'
@@ -56,8 +57,13 @@ contains
         end do
 
         !% Write output
-        call interface_write_output()
-
+        if (this_image() == 1) then
+            call interface_write_output()
+            additional_rows = num_images() - 1
+            do ii = 1, size(Link%Names) - additional_rows
+                call interface_export_link_results(ii)
+            end do
+        end if
         if (setting%Debug%File%timeloop)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine timeloop_toplevel
 
@@ -88,7 +94,6 @@ contains
     !%-----------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'tl_hydraulics'
     !%-----------------------------------------------------------------------------
-
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
         !% check for where solver needs to switch in dual-solver model

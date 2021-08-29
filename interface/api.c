@@ -661,11 +661,11 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
     return 0;
 }
 
-int DLLEXPORT api_export_link_results(void* f_api, char* link_name)
+int DLLEXPORT api_export_link_results(void* f_api, int j)
 {
 	FILE* tmp;
     DateTime days;
-    int period, j;
+    int period;
     char theTime[20];
     char theDate[20];
 	char path[50];
@@ -674,8 +674,6 @@ int DLLEXPORT api_export_link_results(void* f_api, char* link_name)
     Interface * api = (Interface*) f_api;
     error = check_api_is_initialized(api);
     if (error != 0) return error;
-
-    j = project_findObject(LINK, link_name);
 
     if (stat("LinkResults", &st) == -1) {
         mkdir("LinkResults", 0700);
@@ -764,10 +762,15 @@ int DLLEXPORT api_write_output(void* f_api)
 {
     Interface * api = (Interface *) f_api;
     int i;
-    DateTime t = datetime_addSeconds(StartDateTime, ReportStep);
+    double t = 0;
     double newNodeResults[MAX_API_OUTPUT_NODE_ATTR] = {1.55};
     double newLinkResults[MAX_API_OUTPUT_LINK_ATTR] = {2.34};
 
+    for (i = 0; i<MAX_API_OUTPUT_LINK_ATTR; i++)
+    {
+        newNodeResults[i] = 1.55;
+        newLinkResults[i] = 1/0.02832;
+    }
     // --- check that simulation can proceed
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
@@ -785,9 +788,9 @@ int DLLEXPORT api_write_output(void* f_api)
         }
         // Update routing times to skip interpolation when
         // saving results.
-        OldRoutingTime = 0; NewRoutingTime = t;
-        output_saveResults(t*86400*1000);
-        t = datetime_addSeconds(t, ReportStep);
+        OldRoutingTime = 0; NewRoutingTime = t*1000; // times in msec
+        output_saveResults(t*1000);
+        t += ReportStep;
     }
     return 0;
 }

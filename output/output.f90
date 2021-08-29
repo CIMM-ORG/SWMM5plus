@@ -54,8 +54,6 @@ contains
         read(fu, *, iostat = rc) link_name
         if(rc /= 0) then
             link_output_idx = (/ (ii, ii =1, N_link)/)
-            print *, "link_output_idx", link_output_idx
-            print *, "inside of empty test"
             ii = N_link+1
 
         end if
@@ -131,7 +129,6 @@ contains
         if(rc /= 0) then
             node_output_idx = (/ (ii, ii =1, N_node - additional_rows)/)
             ii = N_node+1
-            print *, "node_output_idx", node_output_idx
         end if
 
 

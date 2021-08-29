@@ -104,9 +104,10 @@ contains
 
         call init_IC_setup ()
 
+        if (this_image() == 1) call util_export_linknode_csv()
+
         !% creating output_folders and files
         call util_output_clean_folders()
-        if (this_image() == 1) call util_export_linknode_csv()
         if (setting%Output%report) then
             call util_output_create_folder()
             ! call util_output_create_elemR_files()
