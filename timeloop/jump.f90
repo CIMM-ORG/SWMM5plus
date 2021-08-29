@@ -111,9 +111,11 @@ module jump
         npack_faceP(fp_JumpUp) = count( &
             isInterior &
             .and. &
-            (Fr(eup) > oneR + feps)  &
+            (Fr(eup) > oneR + feps)  &  ! supercritical downstream flow in upstream
             .and. &
-            (Fr(edn) < oneR - feps)   &
+            (Fr(edn) < oneR - feps)   &  ! subcritical in downstream
+            .and. &
+            (Fr(edn) >= zeroR)        &  ! not a reverse flow downstream
             .and. &
             (.not. isSurcharged(eup)) &
             .and. &
@@ -126,9 +128,11 @@ module jump
             faceP(1:Npack_JumpUp, fp_JumpUp) = pack(faceIdx, &
                 isInterior &
                 .and. &
-                (Fr(eup) > oneR + feps)  &
+                (Fr(eup) > oneR + feps)  & ! supercritical downstream flow in upstream
                 .and. &
-                (Fr(edn) < oneR - feps)   &
+                (Fr(edn) < oneR - feps)   & ! subcritical in downstream
+                .and. &
+                (Fr(edn) >= zeroR)        &  ! not a reverse flow downstream
                 .and. &
                 (.not. isSurcharged(eup)) &
                 .and. &
@@ -147,9 +151,11 @@ module jump
         npack_faceP(fp_JumpDn)  = count( &
             isInterior &
             .and. &
-            (Fr(eup) < -oneR + feps) &
+            (Fr(eup) > -oneR + feps) &  ! subcritical reverse flow in upstream
             .and. &
-            (Fr(edn) > -oneR - feps) &
+            (Fr(eup) <= zeroR) &        ! not a downstream flow in upstream
+            .and. &
+            (Fr(edn) < -oneR - feps) &   ! supercritical reverse flow in downstream
             .and. &
             (.not. isSurcharged(eup)) &
             .and. &
@@ -163,9 +169,11 @@ module jump
             faceP(1:Npack_JumpDn, fp_JumpDn) = pack(faceIdx, &
                 isInterior &
                 .and. &
-                (Fr(eup) < -oneR + feps) &
+                (Fr(eup) > -oneR + feps) & ! subcritical reverse flow in upstream
                 .and. &
-                (Fr(edn) > -oneR - feps) &
+                (Fr(eup) <= zeroR) &        ! not a downstream flow in upstream
+                .and. &
+                (Fr(edn) < -oneR - feps) & ! supercritical reverse flow in downstream
                 .and. &
                 (.not. isSurcharged(eup)) &
                 .and. &

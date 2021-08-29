@@ -67,7 +67,7 @@
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
     "FaceInterp" : {
-        "DownJBFaceInterp" : "static",
+        "DownJBFaceInterp" : "dynamic",
     },
     "Junction" : {
         "kFactor" : 0.0
@@ -150,7 +150,7 @@
         "End" : 0.0,
         "Dt" : 10.0,
         "Step" : 0,
-        "matchHydrologyStep" : false,
+        "matchHydrologyStep" : true,
         "Hydraulics" : {
             "Dt" : 10.0,
             "Step" : 0
