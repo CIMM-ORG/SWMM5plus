@@ -237,12 +237,16 @@ contains
                     !% constant value, no need to do the interpolation
                 else
                     !% interpolation step
-                    BC%flowRI(ii) = util_interpolate_linear( &
-                        tnow, &
-                        BC%flowR_timeseries(ii, lower_idx, br_time), &
-                        BC%flowR_timeseries(ii, upper_idx, br_time), &
-                        BC%flowR_timeseries(ii, lower_idx, br_value), &
-                        BC%flowR_timeseries(ii, upper_idx, br_value))
+                    if (.not. setting%BC%disableInterpolation) then
+                        BC%flowRI(ii) = util_interpolate_linear( &
+                            tnow, &
+                            BC%flowR_timeseries(ii, lower_idx, br_time), &
+                            BC%flowR_timeseries(ii, upper_idx, br_time), &
+                            BC%flowR_timeseries(ii, lower_idx, br_value), &
+                            BC%flowR_timeseries(ii, upper_idx, br_value))
+                    else
+                        BC%flowRI(ii) = BC%flowR_timeseries(ii, upper_idx, br_value) !% will be zero
+                    end if
                 end if
             end if
         end do
