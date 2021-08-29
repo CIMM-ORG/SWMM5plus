@@ -86,7 +86,11 @@ contains
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays ()
 
+        call util_export_linknode_csv()
+        
         call init_partitioning()
+
+        !call util_export_linknode_csv()
 
         !% HACK: this sync call is probably not needed
         sync all
@@ -110,8 +114,8 @@ contains
         call util_output_clean_folders()
         if (setting%Output%report) then
             call util_output_create_folder()
-            ! call util_output_create_elemR_files()
-            ! call util_output_create_faceR_files()
+            call util_output_create_elemR_files()
+            call util_output_create_faceR_files()
             call output_create_link_files()
             call output_create_node_files()
             call util_output_create_summary_files()
