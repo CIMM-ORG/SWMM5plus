@@ -60,7 +60,7 @@ contains
           write (fu, *) 
        end do
 
-    else if(type == 'I' .or. type == 'i') then
+    else if (type == 'I' .or. type == 'i') then
 
        do ii = 1, size(arr_int(1,:))
           do jj = 1, size(arr_int(:,1))
@@ -71,7 +71,7 @@ contains
        end do
 
 
-    else if(type == 'L' .or. type == 'l') then
+    else if (type == 'L' .or. type == 'l') then
 
        do ii = 1, size(arr_log(1,:))
           do jj = 1, size(arr_log(:,1))
@@ -111,13 +111,13 @@ contains
     !% Looping through elemI, and finding the last local index
     do ii=1, size(elemI(:,ei_Lidx))
 
-       if(elemI(ii,ei_Mface_uL) /= nullvalueI .and.  total_faces < elemI(ii,ei_Mface_uL) ) then
+       if (elemI(ii,ei_Mface_uL) /= nullvalueI .and.  total_faces < elemI(ii,ei_Mface_uL) ) then
 
           total_faces = elemI(ii, ei_Mface_uL)
 
        end if
 
-       if(elemI(ii,ei_Mface_dL) /= nullvalueI .and. total_faces < elemI(ii,ei_Mface_dL)) then
+       if (elemI(ii,ei_Mface_dL) /= nullvalueI .and. total_faces < elemI(ii,ei_Mface_dL)) then
 
           total_faces = elemI(ii, ei_Mface_dL)
 
@@ -127,7 +127,7 @@ contains
 
     !% Then we compare it to N_Face and print if it is the same or not.
 
-    if(total_faces == N_face(this_image())) then
+    if (total_faces == N_face(this_image())) then
 
        print *, "CORRECT NUMBER OF FACES ON IMAGE ::", this_image()
 

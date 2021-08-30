@@ -346,8 +346,8 @@ contains
         !     do jj = 1, num_images()
         !         print*, jj, 'image no'
         !         print*, col_elemI(:)[jj], 'col_elemI(:)[jj]'
-        !     enddo
-        ! endif
+        !     end do
+        ! end if
         ! print*, 'press return to continue'
         ! read(*,*)
         !%--------------------------------------------------------------

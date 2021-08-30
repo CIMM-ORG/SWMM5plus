@@ -45,7 +45,7 @@ module utility_array
             ii = ii+1
             min_val = minval(img_arr, mask=img_arr>min_val)
             unique(ii) = min_val
-        enddo
+        end do
 
         allocate(unique_imagenum(ii), source = unique(1:ii)) ! The list of image number from BIPquick
 
