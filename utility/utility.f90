@@ -36,7 +36,7 @@ module utility
         integer :: ii
         logical :: ex
         !%-----------------------------------------------------------------------------
-        call system("mkdir debug")
+        call system("mkdir -p debug")
         open(unit=1,file='debug/linkR.csv', status='unknown', action='write')
         open(unit=2,file='debug/linkI.csv', status='unknown', action='write')
         write(1, '(A)')                                                                    &
@@ -48,14 +48,14 @@ module utility
             "lr_DepthUp,lr_DepthDn,lr_Volume,lr_Velocity,lr_Capacity"
 
         write(2, '(A)')                                                                    &
-            "li_idx,li_link_type,li_weir_type,li_orif_type,li_pump_type,li_geometry,"    //&
+            "link_name,li_idx,li_link_type,li_weir_type,li_orif_type,li_pump_type,li_geometry,"    //&
             "li_roughness_type,li_N_element,li_Mnode_u,li_Mnode_d,li_assigned,"         // &
-            "li_InitialDepthType,li_length_adjusted,li_P_image,li_parent_link,li_weir_EndContrations,"     //&
-            "li_first_elem_idx,li_last_elem_idx"
+            "li_InitialDepthType,li_length_adjusted,li_P_image,li_parent_link,"     //&
+            "li_weir_EndContrations,li_first_elem_idx,li_last_elem_idx"
 
         do ii = 1, size(link%R, 1)
             write(1,'(*(G0.6,:,","))') link%R(ii,:)
-            write(2,'(*(G0.6,:,","))') link%I(ii,:)
+            write(2,'(A,*(G0.6,:,","))') link%Names(ii)%str//",", link%I(ii,:)
         end do
 
         close(1)
@@ -73,7 +73,7 @@ module utility
             "nr_ElementLength_d3"
 
         write(4, '(A)')                                                                                 &
-            "ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_curve_type,ni_assigned,"                 // &
+            "node_name,ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_curve_type,ni_assigned,"                 // &
             "ni_P_image,ni_P_is_boundary,ni_elemface_idx, ni_pattern_resolution,"                    // &
             "ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3"
 
@@ -82,7 +82,7 @@ module utility
 
         do ii = 1, size(node%R, 1)
             write(3,'(*(G0.6,:,","))') node%R(ii,:)
-            write(4,'(*(G0.6,:,","))') node%I(ii,:)
+            write(4,'(A,*(G0.6,:,","))') node%Names(ii)%str//",", node%I(ii,:)
             write(5,'(*(G0.6,:,","))') node%YN(ii,:)
         end do
 
