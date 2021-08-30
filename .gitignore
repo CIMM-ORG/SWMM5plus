@@ -28,3 +28,4 @@ debug*
 tests/*
 !tests/test*
 .vscode
+swmm5_output
