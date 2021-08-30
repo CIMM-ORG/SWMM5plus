@@ -105,8 +105,6 @@ subroutine init_partitioning_method()
         ! print*, "*** partitioning is complete", connectivity, part_size_balance
     end if
 
-    stop
-
     call util_deallocate_partitioning_arrays()
 end subroutine init_partitioning_method
 !

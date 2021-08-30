@@ -241,7 +241,7 @@
             "orifice_elements" : false,
 	        "output" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
