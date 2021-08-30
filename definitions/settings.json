@@ -97,9 +97,9 @@
             "TemporalInflows" : 10,
             "TotalInflows" : 50
         },
-        "Dt"     : {
-            "Minimum"       :  1e-4,
-            "UseLimitMin"   :  true
+        "Dt" : {
+            "Minimum"     : 1e-4,
+            "UseLimitMin" : true
         }
     },
     "Link" : {
@@ -111,7 +111,9 @@
         "reportStartTime" : 0.0,
         "reportDt" : 100.0,
         "reportStep" : 0,
-        "slots" : 20
+        "slots" : 20,
+        "links_file" : "",
+        "nodes_file" : ""
     },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
@@ -203,7 +205,6 @@
         "Volume" : 1e-6
     },
     "Debug" : {
-        "Tests" : true,
         "File" : {
             "adjust" : false,
             "boundary_conditions" : false,
@@ -253,7 +254,10 @@
             "interface" : false,
             "timeloop" : false,
             "utility" : false
-        }
+        },
+        "Input"  : true,
+        "Output" : false,
+        "Tests" : true
     },
     "Warning"  : true,
     "Verbose" : false

@@ -8,7 +8,7 @@ module timeloop
     use runge_kutta2
     use utility_output
     use boundary_conditions
-    use interface, only: interface_write_output, interface_export_link_results
+    use interface, only: interface_export_link_results
 
     implicit none
 
@@ -56,15 +56,20 @@ contains
             call tl_increment_counters(doHydraulics, doHydrology)
         end do
 
-        !% Write output
-        if (this_image() == 1) then
-            call interface_write_output()
-            additional_rows = num_images() - 1
-            do ii = 1, size(Link%Names) - additional_rows
-                call interface_export_link_results(ii)
-            end do
-        end if
-        if (setting%Debug%File%timeloop)  print *, '*** leave ', this_image(), subroutine_name
+        !% >>> BEGIN HACK
+        !%     Temporary for debugging (can be deleted for deployment)
+            if (setting%Debug%Output) then
+                !% Write .out in readable .csv
+                if (this_image() == 1) then
+                    additional_rows = num_images() - 1
+                    do ii = 1, size(Link%Names) - additional_rows
+                        call interface_export_link_results(ii)
+                    end do
+                end if
+            end if
+        !% >>> END HACK
+
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine timeloop_toplevel
 
     !%==========================================================================
@@ -189,8 +194,8 @@ contains
                 if ((dt > fiveR) .and. (neededSteps > 2)) then
                     !% round larger dt to integer values
                     dt = real(floor(dt),8)
-                endif
-            endif
+                end if
+            end if
         else
             !% For hydraulics only, keep the timestep stable unless it
             !% exceeds CFL limits (both high and low limits).

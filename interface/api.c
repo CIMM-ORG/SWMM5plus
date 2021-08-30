@@ -616,8 +616,8 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
         ni_node_type[i] = Node[i].type;
     }
 
-    f_nodes = fopen("debug/nodes_info.csv", "w");
-    f_links = fopen("debug/links_info.csv", "w");
+    f_nodes = fopen("debug_input/node/nodes_info.csv", "w");
+    f_links = fopen("debug_input/link/links_info.csv", "w");
 
     fprintf(f_nodes,
         "n_left,node_id,ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3\n");
@@ -675,12 +675,8 @@ int DLLEXPORT api_export_link_results(void* f_api, int j)
     error = check_api_is_initialized(api);
     if (error != 0) return error;
 
-    if (stat("LinkResults", &st) == -1) {
-        mkdir("LinkResults", 0700);
-    }
-
     /* File path writing */
-    strcpy(path, "LinkResults/");
+    strcpy(path, "debug_output/swmm5/link/");
     strcat(path, Link[j].ID); strcat(path, ".csv");
     tmp = fopen(path, "w");
     fprintf(tmp, "date,time,flow,velocity,depth,volume,capacity\n");

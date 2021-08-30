@@ -402,6 +402,8 @@ module define_settings
         logical :: Tests = .false.
         type(DebugFileYNType) :: File
         type(DebugFileGroupYNType) :: FileGroup
+        logical :: Input
+        logical :: Output
     end type DebugType
 
     !% setting%Paths
@@ -419,7 +421,9 @@ module define_settings
         real(8) :: reportStartTime
         real(8) :: reportDt
         integer :: reportStep
-        integer :: Slots
+        integer :: Slots = 20
+        character(len=256) :: nodes_file = ""
+        character(len=256) :: links_file = ""
     end type OutputType
 
 
@@ -950,6 +954,15 @@ contains
         call json%get('Output.reportStep', integer_value, found)
         setting%Output%reportStep = integer_value
         if (.not. found) stop "Error - setting " // 'Output.reportStep not found'
+        call json%get('Output.slots', integer_value, found)
+        setting%Output%slots = integer_value
+        if (.not. found) stop "Error - setting " // 'Output.slots not found'
+        call json%get('Output.links_file', c, found)
+        setting%Output%links_file = c
+        if (.not. found) stop "Error - setting " // 'Output.links_file not found'
+        call json%get('Output.nodes_file', c, found)
+        setting%Output%nodes_file = c
+        if (.not. found) stop "Error - setting " // 'Output.nodes_file not found'
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
@@ -1095,6 +1108,12 @@ contains
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%utility = logical_value
         if (.not. found) stop "Error - setting " // 'Debug.FileGroup.utility not found'
+        call json%get('Debug.Input', logical_value, found)
+        setting%Debug%Input = logical_value
+        if (.not. found) stop "Error - setting " // 'Debug.Input not found'
+        call json%get('Debug.Output', logical_value, found)
+        setting%Debug%Output = logical_value
+        if (.not. found) stop "Error - setting " // 'Debug.Output not found'
 
         call def_update_debug_options()
 
@@ -1155,7 +1174,7 @@ contains
             setting%Debug%File%timeloop = .true.
             setting%Debug%File%update = .true.
             setting%Debug%File%weir_elements = .true.
-        endif
+        end if
         if (setting%Debug%FileGroup%utility) then
             setting%Debug%File%utility_allocate = .true.
             setting%Debug%File%utility_deallocate = .true.
