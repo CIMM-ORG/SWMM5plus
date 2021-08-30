@@ -34,22 +34,22 @@ contains
         if (setting%Debug%File%boundary_conditions) then
             print *, "INFLOW BC"
             print *, "BC times"
-            do ii = 1, setting%BC%BCSlots
+            do ii = 1, setting%BC%slots
                 print *, BC%flowR_timeseries(:, ii, br_time)
             end do
             print *, "BC values"
-            do ii = 1, setting%BC%BCSlots
+            do ii = 1, setting%BC%slots
                 print *, BC%flowR_timeseries(:, ii, br_value)
             end do
             print *, '*** leave ', this_image(), subroutine_name
 
             print *, "HEAD BC"
             print *, "BC times"
-            do ii = 1, setting%BC%BCSlots
+            do ii = 1, setting%BC%slots
                 print *, BC%headR_timeseries(:, ii, br_time)
             end do
             print *, "BC values"
-            do ii = 1, setting%BC%BCSlots
+            do ii = 1, setting%BC%slots
                 print *, BC%headR_timeseries(:, ii, br_value)
             end do
             print *, '*** leave ', this_image(), subroutine_name
@@ -77,14 +77,14 @@ contains
                 else
                     ttime = BC%flowR_timeseries(ii, BC%flowIdx(ii), br_time) ! Current time slot (upper bound of time interval)
                     if (tnow > ttime) then ! Needs update
-                        if (BC%flowIdx(ii) == setting%BC%BCSlots) then
+                        if (BC%flowIdx(ii) == setting%BC%slots) then
                             call bc_fetch_flow(ii)
                         else
                             tstep_larger_than_resolution = -1
-                            do while((tnow > ttime) .and. (BC%flowIdx(ii) < setting%BC%BCSlots))
+                            do while((tnow > ttime) .and. (BC%flowIdx(ii) < setting%BC%slots))
                                 BC%flowIdx(ii) = BC%flowIdx(ii) + 1
                                 ttime = BC%flowR_timeseries(ii, BC%flowIdx(ii), br_time)
-                                if ((BC%flowIdx(ii) == setting%BC%BCSlots) .and. (tnow > ttime)) then
+                                if ((BC%flowIdx(ii) == setting%BC%slots) .and. (tnow > ttime)) then
                                     call bc_fetch_flow(ii)
                                     ttime = BC%flowR_timeseries(ii, BC%flowIdx(ii), br_time)
                                 end if
@@ -111,14 +111,14 @@ contains
                 else
                     ttime = BC%headR_timeseries(ii, BC%headIdx(ii), br_time) ! Current time slot (upper bound of time interval)
                     if (tnow > ttime) then ! Needs update
-                        if (BC%headIdx(ii) == setting%BC%BCSlots) then
+                        if (BC%headIdx(ii) == setting%BC%slots) then
                             call bc_fetch_head(ii)
                         else
                             tstep_larger_than_resolution = -1
-                            do while((tnow > ttime) .and. (BC%headIdx(ii) < setting%BC%BCSlots))
+                            do while((tnow > ttime) .and. (BC%headIdx(ii) < setting%BC%slots))
                                 BC%headIdx(ii) = BC%headIdx(ii) + 1
                                 ttime = BC%headR_timeseries(ii, BC%headIdx(ii), br_time)
-                                if ((BC%headIdx(ii) == setting%BC%BCSlots) .and. (tnow > ttime)) then
+                                if ((BC%headIdx(ii) == setting%BC%slots) .and. (tnow > ttime)) then
                                     call bc_fetch_head(ii)
                                     ttime = BC%headR_timeseries(ii, BC%headIdx(ii), br_time)
                                 end if
@@ -146,7 +146,7 @@ contains
 
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
-        NN = setting%BC%BCSlots
+        NN = setting%BC%slots
 
         if (BC%flowIdx(bc_idx) == 0) then ! First fetch
             BC%flowR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
@@ -185,7 +185,7 @@ contains
 
         if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
 
-        NN = setting%BC%BCSlots
+        NN = setting%BC%slots
 
         if (BC%headIdx(bc_idx) == 0) then ! First fetch
             BC%headR_timeseries(bc_idx, 1, br_time) = setting%Time%Start
