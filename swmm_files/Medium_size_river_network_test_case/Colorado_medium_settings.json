@@ -68,7 +68,7 @@
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
     "FaceInterp" : {
-        "DownJBFaceInterp" : "static",
+        "DownJBFaceInterp" : "dynamic",
     },
     "Junction" : {
         "kFactor" : 0.0
