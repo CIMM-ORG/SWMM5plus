@@ -363,9 +363,11 @@ contains
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_command_line_step_output'
         real (8), pointer :: dt, timeNow, timeEnd
+        real (8) :: thistime
         integer, pointer :: step, interval
         integer :: execution_realtime
-        real(8) :: simulation_fraction, seconds_to_completion
+        real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
+        character(3) :: timeunit
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
         dt            => setting%Time%Dt
@@ -376,24 +378,49 @@ contains
 
         setting%Time%Real%EpochNowSeconds = time() ! Fortran function returns real epoch time
 
+        ! estimate the remaining time
         execution_realtime = setting%Time%Real%EpochNowSeconds - setting%Time%Real%EpochTimeLoopStartSeconds
-        simulation_fraction =  (setting%Time%Now - setting%Time%Start) / (setting%Time%End - setting%Time%Start)
-        seconds_to_completion = execution_realtime * (setting%Time%End - setting%Time%Start) &
-                                                   / (setting%Time%Now - setting%Time%Start)
+        seconds_to_completion = execution_realtime * (setting%Time%End - setting%Time%Now) &
+                                                   / (setting%Time%Now - setting%Time%Start)                                
 
         if (setting%Verbose) then
             if (this_image() == 1) then
                 if (mod(step,interval) == 0) then
-                    print *, 'time step = ',step, '; at ', timeNow, 's; with hydraulic dt =',dt
-                    if (seconds_to_completion < sixtyR) then
-                        print *, 'estimated ',seconds_to_completion,'seconds to completion'
-                    elseif (seconds_to_completion >=sixtyR .and. seconds_to_completion < seconds_per_hour ) then
-                        print *, 'estimated ',seconds_to_completion / sixtyR ,'minutes to completion'
-                    elseif (seconds_to_completion >=seconds_per_hour .and. seconds_to_completion < seconds_per_day) then
-                        print *, 'estimated ',seconds_to_completion / seconds_per_hour ,'hours to completion'
-                    else
-                        print *, 'estimated ',seconds_to_completion / seconds_per_day ,'days to completion'
+                    ! translate time in seconds into something more useful
+                    if (timeNow  < sixtyR) then
+                        thistime = timeNow
+                        timeunit = 's  '
+                    elseif (timeNow >= sixtyR .and. timeNow < seconds_per_hour) then
+                        thistime = timeNow / sixtyR
+                        timeunit = 'min'    
+                    elseif (timeNow >= seconds_per_hour .and. timeNow < 3.0*seconds_per_day) then
+                        thistime = timeNow / seconds_per_hour
+                        timeunit = 'hr '
+                    elseif (timeNow >= 3.0 * seconds_per_day) then
+                        thistime = timeNow / seconds_per_day    
+                        timeunit = 'day'
                     endif
+
+                    ! write a time counter
+                    write(*,"(A12,i8,a17,F9.2,a1,a3,a6,f5.2)") &
+                        'time step = ',step,'; model time = ',thistime, &
+                        ' ',timeunit,'; dt = ',dt
+
+                    ! write estimate of time remaining    
+                    if (seconds_to_completion < sixtyR) then
+                        timeunit = 's  '
+                        time_to_completion = seconds_to_completion
+                    elseif (seconds_to_completion >=sixtyR .and. seconds_to_completion < seconds_per_hour ) then
+                        timeunit = 'min'
+                        time_to_completion = seconds_to_completion / sixtyR
+                    elseif (seconds_to_completion >=seconds_per_hour .and. seconds_to_completion < seconds_per_day) then
+                        timeunit = 'hr '
+                        time_to_completion = seconds_to_completion / seconds_per_hour
+                    else
+                        timeunit = 'day'
+                        time_to_completion = seconds_to_completion / seconds_per_day
+                    endif
+                    write(*,"(A9,F6.2,A1,A3,A28)") 'estimate ',time_to_completion,' ',timeunit,' clock time until completion'
                     print *
                 endif
             endif

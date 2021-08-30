@@ -122,6 +122,7 @@ contains
             if ((N_link > 5000) .or. (N_node > 5000)) then
                 print *, "begin setting initial conditions (this takes several minutes for big systems)"
                 print *, "This system has ",N_link,"links and",N_node,"nodes"
+                print *, "The finite-volume system is ", sum(N_elem(:)), " elements"
             endif
         endif
         endif    
