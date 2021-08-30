@@ -577,6 +577,44 @@ contains
                 )
         endif
 
+        !% ep_JB_DownStreamJB
+        !% - all downstream JB elements
+        ptype => col_elemP(ep_JB_DownStreamJB)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemI(:,ei_elementType) == JB) &
+                .and. &
+                (elemYN(:,eYN_isDownstreamJB)) &
+                )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack( eIdx, &
+                ( &
+                (elemI(:,ei_elementType) == JB) &
+                .and. &
+                (elemYN(:,eYN_isDownstreamJB)) &
+                ))
+        endif
+
+        !% ep_CC_DownstreamJbAdjacent
+        !% - all CC element downstream of a JB 
+        ptype => col_elemP(ep_CC_DownstreamJbAdjacent)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemYN(:,eYN_isElementDownstreamOfJB)) &
+                )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack( eIdx, &
+                ( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemYN(:,eYN_isElementDownstreamOfJB)) &
+                ))
+        endif
+            
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_nongeometry_static_elements
     !

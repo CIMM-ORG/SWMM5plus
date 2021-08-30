@@ -20,7 +20,7 @@ END_TIME             23:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:00:30
+REPORT_STEP          00:30:00
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         00:00:30 
