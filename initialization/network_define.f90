@@ -651,6 +651,11 @@ contains
             !% the downstream element will be initialized elem idx
             faceI(FacelocalCounter,fi_Melem_dL) = ElemLocalCounter
 
+            !% special condition if a element will be immediate downsteam of a JB
+            if (node%I(thisNode,ni_node_type) == nJm) then
+                elemYN(ElemLocalCounter,eYN_isElementDownstreamOfJB) = .true.
+            endif
+
             !% since this is a shared face, it will have a copy in other image and they will
             !% both share same global index. so, the face immediately after this shared face
             !% will have the global index set from the init_network_set_global_indexes subroutine.
@@ -1128,9 +1133,12 @@ contains
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)          = oneI
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection) = dnBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(dnBranchIdx)
+                    elemYN(ElemLocalCounter,eYN_isDownstreamJB) = .true.
                     faceI(FacelocalCounter,fi_link_idx) = dnBranchIdx
                     !% set zbottom
                     faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
+                    !% identifier for downstream junction branch faces
+                    faceYN(FaceLocalCounter,fYN_isDownstreamJbFace) = .true.
                     !% Check 4: if the link connecting this branch is a part of this partition and
                     !% the node is not an edge node (meaning this node is the connecting node
                     !% across partitions)
@@ -1291,6 +1299,8 @@ contains
 
                             !% local map to upstream face for elemI
                             elemI(LinkFirstElem,ei_Mface_uL) = fLidx
+                            !% set the first element as the immediate downstream element of a JB
+                            elemYN(LinkFirstElem,eYN_isElementDownstreamOfJB) = .true.
 
                             !% local downstream element of the face
                             faceI(fLidx,fi_Melem_dL) = LinkFirstElem
