@@ -697,6 +697,7 @@ contains
                         tnext = util_datetime_epoch_to_secs(tnext)
                         if (tnext == tnow) then
                             tnext = setting%Time%End
+                            setting%BC%disableInterpolation = .true.
                         end if
                     end if
                 else

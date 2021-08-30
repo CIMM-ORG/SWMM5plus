@@ -53,7 +53,8 @@
         }
     },
     "BC" : {
-        "BCSlots" : 10
+        "slots" : 10,
+        "disableInterpolation": false
     },
     "Constant" : {
         "gravity" : 9.81

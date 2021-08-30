@@ -262,6 +262,18 @@ module update
             where (w_uQ(thisP) > setting%Limiter%InterpWeight%Maximum)    
                 w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
             endwhere    
+
+            !BRHbugfix 20210829
+            where (w_dQ(thisP) < zeroR)
+                w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
+            endwhere
+            where (w_dQ(thisP) < setting%Limiter%InterpWeight%Minimum)    
+                w_dQ(thisP) = setting%Limiter%InterpWeight%Minimum
+            endwhere
+            where (w_dQ(thisP) > setting%Limiter%InterpWeight%Maximum)    
+                w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
+            endwhere  
+            !BRHbugfix 20210829
             
             !% timescale interpolation for geometry are identical to flowrate
             !% but may be modified elsewhere

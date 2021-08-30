@@ -53,7 +53,8 @@
         }
     },
     "BC" : {
-        "BCSlots" : 10
+        "slots" : 10,
+        "disableInterpolation": false
     },
     "Constant" : {
         "gravity" : 9.81
@@ -67,7 +68,7 @@
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
     "FaceInterp" : {
-        "DownJBFaceInterp" : "dynamic",
+        "DownJBFaceInterp" : "static",
     },
     "Junction" : {
         "kFactor" : 0.0

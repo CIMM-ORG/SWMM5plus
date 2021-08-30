@@ -273,7 +273,8 @@ module define_settings
 
     ! setting%BC
     type BCPropertiesType
-        integer :: BCSlots = 10
+        integer :: slots = 10
+        logical :: disableInterpolation = .false.
     end type BCPropertiesType
 
     ! setting%Constant
@@ -608,9 +609,11 @@ contains
         if (.not. found) stop "Error - setting " // 'Adjust.Head.Coef not found'
 
         ! Load BC Settings
-        call json%get('BC.BCSlots', real_value, found)
-        setting%BC%BCslots = real_value
-        if (.not. found) stop "Error - setting " // 'BC.BCSlots not found'
+        call json%get('BC.slots', real_value, found)
+        setting%BC%slots = real_value
+        call json%get('BC.disableInterpolation', logical_value, found)
+        setting%BC%disableInterpolation = logical_value
+        if (.not. found) stop "Error - setting " // 'BC.disableInterpolation not found'
 
         ! Load Constant Settings
         call json%get('Constant.gravity', real_value, found)
