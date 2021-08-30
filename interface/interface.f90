@@ -36,7 +36,7 @@ module interface
     public :: interface_get_flowBC
     public :: interface_get_headBC
     public :: interface_find_object
-    public :: interface_write_output
+    public :: interface_write_output_line
     public :: interface_export_link_results
 
     !% -------------------------------------------------------------------------------
@@ -179,12 +179,6 @@ module interface
         end function api_find_object
 
         ! --- Write Output
-        function api_write_output(api)
-            use, intrinsic :: iso_c_binding
-            implicit none
-            type(c_ptr), value, intent(in) :: api
-            integer(c_int) :: api_write_output
-        end function api_write_output
 
         function api_export_link_results(api, link_idx)
             use, intrinsic :: iso_c_binding
@@ -193,6 +187,34 @@ module interface
             integer(c_int), value, intent(in) :: link_idx
             integer(c_int) :: api_export_link_results
         end function api_export_link_results
+
+        function api_write_output_line(api, t)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr),    value, intent(in) :: api
+            real(c_double),        intent(in) :: t
+            integer(c_int)                    :: api_write_output_line
+        end function api_write_output_line
+
+        function api_update_nodeResult(api, node_idx, newNodeResult, resultType)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr),    value, intent(in) :: api
+            integer(c_int), value, intent(in) :: node_idx
+            real(c_double),        intent(in) :: newNodeResult
+            integer(c_int), value, intent(in) :: resultType
+            integer(c_int)                    :: api_update_nodeResult
+        end function api_update_nodeResult
+
+        function api_update_linkResult(api, link_idx, newLinkResult, resultType)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr),    value, intent(in) :: api
+            integer(c_int), value, intent(in) :: link_idx
+            real(c_double),        intent(in) :: newLinkResult
+            integer(c_int), value, intent(in) :: resultType
+            integer(c_int)                    :: api_update_linkResult
+        end function api_update_linkResult
 
     end interface
 
@@ -211,8 +233,10 @@ module interface
     procedure(api_get_next_entry_tseries), pointer :: ptr_api_get_next_entry_tseries
     procedure(api_find_object),            pointer :: ptr_api_find_object
     procedure(api_run_step),               pointer :: ptr_api_run_step
-    procedure(api_write_output),           pointer :: ptr_api_write_output
     procedure(api_export_link_results),    pointer :: ptr_api_export_link_results
+    procedure(api_write_output_line),      pointer :: ptr_api_write_output_line
+    procedure(api_update_nodeResult),      pointer :: ptr_api_update_nodeResult
+    procedure(api_update_linkResult),      pointer :: ptr_api_update_linkResult
 
     !% Error handling
     character(len = 1024) :: errmsg
@@ -486,7 +510,7 @@ contains
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_node_attribute)
         !% Substracts 1 to every Fortran index (it becomes a C index)
         error = ptr_api_get_node_attribute(api, node_idx-1, attr, cptr_value)
-        call print_api_error(error)
+        call print_api_error(error, subroutine_name)
 
         interface_get_node_attribute = node_value
 
@@ -542,11 +566,11 @@ contains
         if (attr <= N_api_link_attributes) then
             ! Fortran index starts in 1, whereas in C starts in 0
             error = ptr_api_get_link_attribute(api, link_idx-1, attr, cptr_value)
-            call print_api_error(error)
+            call print_api_error(error, subroutine_name)
             interface_get_link_attribute = link_value
         else
             error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_type, cptr_value)
-            call print_api_error(error)
+            call print_api_error(error, subroutine_name)
             interface_get_link_attribute = link_value
             if (link_value == API_RECT_CLOSED) then
                 if (attr == api_link_geometry) then
@@ -555,7 +579,7 @@ contains
                     interface_get_link_attribute = lpipe
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_api_error(error)
+                    call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -567,7 +591,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_api_error(error)
+                    call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -579,7 +603,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yBot, cptr_value)
-                    call print_api_error(error)
+                    call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -591,7 +615,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_api_error(error)
+                    call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -603,7 +627,7 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_api_error(error)
+                    call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -806,6 +830,101 @@ contains
 
     end function interface_get_headBC
 
+    !%-----------------------------------------------------------------------------
+    !%  |
+    !%  |   Write Outputs (execute after initialization only)
+    !%  V
+    !%-----------------------------------------------------------------------------
+
+    subroutine interface_export_link_results(link_idx)
+        integer, intent(in) :: link_idx
+        character(64) :: subroutine_name
+
+        subroutine_name = 'interface_export_link_results'
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+
+        c_lib%procname = "api_export_link_results"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_export_link_results)
+        call ptr_api_export_link_results(api, link_idx-1)
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+
+    end subroutine interface_export_link_results
+
+    subroutine inteface_update_nodeResult(node_idx, node_result, result_type)
+        !%-----------------------------------------------------------------------------
+        integer :: node_idx, result_type, error
+        real(8) :: node_result
+        character(64) :: subroutine_name = "inteface_update_nodeResult"
+        !%-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+
+        c_lib%procname = "api_update_nodeResult"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
+        error = ptr_api_update_nodeResult(api, node_idx-1, node_result, result_type)
+        call print_api_error(error, subroutine_name)
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+    end subroutine inteface_update_nodeResult
+
+    subroutine inteface_update_linkResult(link_idx, link_result, result_type)
+        !%-----------------------------------------------------------------------------
+        integer :: link_idx, result_type, error
+        real(8) :: link_result
+        character(64) :: subroutine_name = "inteface_update_linkResult"
+        !%-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+
+        c_lib%procname = "api_update_linkResult"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
+        error = ptr_api_update_linkResult(api, link_idx-1, link_result, result_type)
+        call print_api_error(error, subroutine_name)
+
+        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+    end subroutine inteface_update_linkResult
+
+    subroutine interface_write_output_line(reportTime)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Writes .out file with SWMM5+ data
+    !%-----------------------------------------------------------------------------
+        real(8),       intent(in) :: reportTime ! time in seconds
+        integer                   :: error
+        character(64)             :: subroutine_name = "interface_write_output_line"
+    !%-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+
+        c_lib%procname = "api_write_output"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_write_output_line)
+        error = ptr_api_write_output_line(api, reportTime)
+        call print_api_error(error, subroutine_name)
+        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+    end subroutine interface_write_output_line
+
     subroutine interface_get_report_times()
         integer                :: error
         real(c_double), target :: reportStart
@@ -830,7 +949,8 @@ contains
         !% reportStart is given in epoch datetime
         !% reportStep and hydroStep are given in integer seconds
         error = ptr_api_get_report_times(api, cptr_reportStart, cptr_reportStep, cptr_hydroStep)
-        if (error /= 0) stop "ERROR: couldn't retrieve report times"
+        call print_api_error(error, subroutine_name)
+
         reportStart = util_datetime_epoch_to_secs(reportStart)
 
         setting%Output%reportStartTime = reportStart
@@ -862,51 +982,6 @@ contains
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
 
     end function interface_find_object
-
-
-    subroutine interface_write_output()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Writes .out file with SWMM5+ data
-    !%-----------------------------------------------------------------------------
-        integer       :: error
-        character(64) :: subroutine_name = "interface_write_output"
-    !%-----------------------------------------------------------------------------
-
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
-
-        c_lib%procname = "api_write_output"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_write_output)
-        error = ptr_api_write_output(api)
-
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
-    end subroutine interface_write_output
-
-    subroutine interface_export_link_results(link_idx)
-        integer, intent(in) :: link_idx
-        character(64) :: subroutine_name
-
-        subroutine_name = 'interface_export_link_results'
-
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
-
-        c_lib%procname = "api_export_link_results"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_export_link_results)
-        call ptr_api_export_link_results(api, link_idx-1)
-
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
-
-    end subroutine interface_export_link_results
 
     !%=============================================================================
     !% PRIVATE
@@ -991,10 +1066,12 @@ contains
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
     end function get_end_datetime
 
-    subroutine print_api_error(error)
+    subroutine print_api_error(error, subroutine_name)
         integer, intent(in) :: error
+        character(64), intent(in) :: subroutine_name
+
         if (error /= 0) then
-            print *, "EPA-SWMM Error Code: ", error
+            write(*, "(A,i2,A)") "EPA-SWMM Error Code: ", error, "in ", subroutine_name
             stop
         end if
     end subroutine print_api_error

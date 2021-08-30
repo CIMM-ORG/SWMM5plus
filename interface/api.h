@@ -168,10 +168,10 @@ int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
 
 // Output fcns
-int DLLEXPORT api_write_output(void* f_api);
+int DLLEXPORT api_write_output_line(void* f_api, double t);
+int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, double newNodeResult, int resultType);
+int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, double newLinkResult, int resultType);
 int DLLEXPORT api_export_link_results(void* f_api, int j);
-int api_update_nodeResults(int j, double* newNodeResults);
-int api_update_linkResults(int j, double* newLinkResults);
 
 // --- Print-out
 void DLLEXPORT api_print_object_name(int k, int object_type);

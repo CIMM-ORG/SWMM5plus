@@ -754,19 +754,11 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
 //   SWMM5+ report files is kept within the Fortran code to ensure
 //   compatibility with future updates of the SWMM5+ standard
 
-int DLLEXPORT api_write_output(void* f_api)
+int DLLEXPORT api_write_output_line(void* f_api, double t)
+// t: elapsed time in seconds
 {
     Interface * api = (Interface *) f_api;
-    int i;
-    double t = 0;
-    double newNodeResults[MAX_API_OUTPUT_NODE_ATTR] = {1.55};
-    double newLinkResults[MAX_API_OUTPUT_LINK_ATTR] = {2.34};
 
-    for (i = 0; i<MAX_API_OUTPUT_LINK_ATTR; i++)
-    {
-        newNodeResults[i] = 1.55;
-        newLinkResults[i] = 1/0.02832;
-    }
     // --- check that simulation can proceed
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
@@ -775,38 +767,60 @@ int DLLEXPORT api_write_output(void* f_api)
         return error_getCode(ErrorCode);
     }
 
-    while (t <= EndDateTime)
-    {
-        for (i = 0; i<Nobjects[NODE]; i++)
-        {
-            api_update_nodeResults(i, newNodeResults);
-            api_update_linkResults(i, newLinkResults);
-        }
-        // Update routing times to skip interpolation when
-        // saving results.
-        OldRoutingTime = 0; NewRoutingTime = t*1000; // times in msec
-        output_saveResults(t*1000);
-        t += ReportStep;
-    }
+    // Update routing times to skip interpolation when saving results.
+    OldRoutingTime = 0; NewRoutingTime = t*1000; // times in msec
+    output_saveResults(t*1000);
     return 0;
 }
 
-int api_update_nodeResults(int j, double newNodeResults[])
-// j: node index
+int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, double newNodeResult, int resultType)
 {
-    Node[j].newDepth = newNodeResults[output_node_depth];
-    // Node[j].newVolume = newNodeResults[output_node_volume];
-    // Node[j].newLatFlow = newNodeResults[output_node_latflow];
-    // Node[j].inflow = newNodeResults[output_node_inflow];
+    Interface * api = (Interface *) f_api;
+
+    // --- check that simulation can proceed
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    if (resultType == output_node_depth)
+        Node[node_idx].newDepth = newNodeResult;
+    else if (resultType == output_node_volume)
+        Node[node_idx].newVolume = newNodeResult;
+    else if (resultType == output_node_latflow)
+        Node[node_idx].newLatFlow = newNodeResult;
+    else if (resultType == output_node_inflow)
+        Node[node_idx].inflow = newNodeResult;
+    else
+        return -1;
+    return 0;
 }
 
-int api_update_linkResults(int j, double* newLinkResults)
-// j: link index
+int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, double newLinkResult, int resultType)
 {
-    // Link[j].newDepth = newLinkResults[output_link_depth];
-    Link[j].newFlow = newLinkResults[output_link_flow];
-    // Link[j].newVolume = newLinkResults[output_link_volume];
-    // Link[j].direction = newLinkResults[output_link_direction];
+    Interface * api = (Interface *) f_api;
+
+    // --- check that simulation can proceed
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    if (resultType == output_link_depth)
+        Link[link_idx].newDepth = newLinkResult;
+    else if (resultType == output_link_flow)
+        Link[link_idx].newFlow = newLinkResult;
+    else if (resultType == output_link_volume)
+        Link[link_idx].newVolume = newLinkResult;
+    else if (resultType == output_link_direction)
+        Link[link_idx].direction = newLinkResult;
+    else
+        return -1;
+    return 0;
 }
 
 // -------------------------------------------------------------------------

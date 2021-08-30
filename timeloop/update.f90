@@ -115,7 +115,7 @@ module update
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
-        endif
+        end if
 
     end subroutine update_CC_element_flowrate
     !%
@@ -140,7 +140,7 @@ module update
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisCol)
             Froude(thisP) = velocity(thisP) / sqrt(grav * depth(thisP))
-        endif
+        end if
     
     end subroutine update_Froude_number_element
     !%   
@@ -241,8 +241,8 @@ module update
                 if (Npack2 > 0) then
                     thisP2 => elemP(1:Npack2,thisCol_AC)
                     wavespeed(thisP2) = wavespeed(thisP2) * setting%ACmethod%Celerity%RC
-                endif    
-            endif
+                end if    
+            end if
     
 
             !% timescale interpolation weights for flowrate
@@ -274,7 +274,7 @@ module update
             w_uH(thisP) = onehalfR * length(thisP)
             w_dH(thisP) = onehalfR * length(thisP)
          
-        endif
+        end if
 
         if (setting%FaceInterp%DownJBFaceInterp == dynamic) then
             if (num_images() > oneI) then
@@ -282,8 +282,8 @@ module update
             else
                 !% testin a new branch interp technique
                 call update_interpolation_weights_ds_JB ()
-            endif
-        endif
+            end if
+        end if
 
         !print *
         !print *,'--- in ',trim(subroutine_name),' ----------------------------------------- end'
@@ -386,7 +386,7 @@ module update
                     end if
                 end do
             end do
-        endif
+        end if
 
         if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
     end subroutine update_interpolation_weights_ds_JB
