@@ -139,7 +139,7 @@ module geometry
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
             call geo_dHdA (ep_NonSurcharged_AC)
-        endif
+        end if
 
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geometry_toplevel
@@ -175,7 +175,7 @@ module geometry
             elemR(thisP,er_HydDepth)  = elemR(thisP,er_FullHydDepth)
             elemR(thisP,er_HydRadius) = elemR(thisP,er_FullArea) / elemR(thisP,er_FullPerimeter)
             elemR(thisP,er_Topwidth)  = setting%ZeroValue%Topwidth
-        endif
+        end if
 
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_surcharged
@@ -201,14 +201,14 @@ module geometry
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
-        endif
+        end if
 
         !% TRAPEZOIDAL
         thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
-        endif
+        end if
 
         !% HACK Needs additional geometries, including surcharged rectangular conduits
         !% with and without Preissman slot.
@@ -240,7 +240,7 @@ module geometry
             where (geovalue(thisP) > fullvalue(thisP))
                 geovalue(thisP) = fullvalue(thisP)
             endwhere
-        endif
+        end if
 
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_limit_incipient_surcharge
@@ -271,7 +271,7 @@ module geometry
         if (Npack > 0) then
             thisP     => elemP(1:Npack,thisColP)
             head(thisP) = depth(thisP) + Zbtm(thisP)
-        endif
+        end if
 
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_head_from_depth
@@ -370,7 +370,7 @@ module geometry
                                 head(tB) = zBtm(tB)  &
                                     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
                                     *(velocity(tB)**twoR) / grav
-                            endif
+                            end if
                             !% compute provisional depth
                             depth(tB) = head(tB) - zBtm(tB)
                             if (depth(tB) .ge. fulldepth(tB)) then
@@ -391,7 +391,7 @@ module geometry
                                     topwidth(tB) = elemSGR(tB,eSGR_Rectangular_Breadth)
                                 else
                                     topwidth(tB)  = setting%ZeroValue%Topwidth
-                                endif
+                                end if
                                 !% HACK
                                 hyddepth(tB)  = setting%ZeroValue%Area / topwidth(tB)
                                 ! hyddepth(tB)  = setting%ZeroValue%Area / setting%ZeroValue%Topwidth
@@ -437,11 +437,11 @@ module geometry
                                 end select
                             end if
                             volume(tB) = area(tB) * length(tB)
-                        endif
-                    enddo
-                endif
-            enddo
-        endif
+                        end if
+                    end do
+                end if
+            end do
+        end if
         !% Note, the above can only be made a concurrent loop if we replace the tM
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
         !% difficult to read.
@@ -474,7 +474,7 @@ module geometry
         if (Npack > 0) then
             thisP  => elemP(1:Npack,thisColP)
             area(thisP) = volume(thisP) / length(thisP)
-        endif
+        end if
 
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_area_from_volume
@@ -501,13 +501,13 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
             call rectangular_topwidth_from_depth (elemPGx, Npack, thisCol)
-        endif
+        end if
 
         Npack => npack_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
             call trapezoidal_topwidth_from_depth (elemPGx, Npack, thisCol)
-        endif
+        end if
 
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
@@ -535,14 +535,14 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
             call rectangular_perimeter_from_depth (elemPGx, Npack, thisCol)
-        endif
+        end if
 
         !% cycle through different geometries
         Npack => npack_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
             call trapezoidal_perimeter_from_depth (elemPGx, Npack, thisCol)
-        endif
+        end if
 
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
@@ -571,14 +571,14 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
             call rectangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        endif
+        end if
 
         !% cycle through different geometries
         Npack => npack_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CCJM_trapezoidal_nonsurcharged)
             call trapezoidal_hyddepth_from_depth (elemPGx, Npack, thisCol)
-        endif
+        end if
 
         !% HACK need other geometries
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
@@ -610,7 +610,7 @@ module geometry
         if (Npack > 0) then
             thisP     => elemP(1:Npack,thisColP)
             hydradius(thisP) = area(thisP) / perimeter(thisP)
-        endif
+        end if
 
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_hydradius_from_area_perimeter
@@ -650,7 +650,7 @@ module geometry
                 ell(thisP) = ( (head(thisP) - ZbreadthMax(thisP)) * breadthMax(thisP) &
                                 + areaBelowBreadthMax(thisP) ) / breadthMax(thisP)
             endwhere
-        endif
+        end if
 
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_ell
@@ -684,7 +684,7 @@ module geometry
         else
             outvalue = ( (head(indx) - ZbreadthMax(indx)) * breadthMax(indx) &
                             + areaBelowBreadthMax(indx) ) / breadthMax(indx)
-        endif
+        end if
 
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end function geo_ell_singular
@@ -715,7 +715,7 @@ module geometry
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
             dHdA(thisP) = oneR / topwidth(thisP)
-        endif
+        end if
 
         if (setting%Debug%File%geometry) print *, '*** leave ', this_image(),subroutine_name
     end subroutine geo_dHdA

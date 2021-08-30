@@ -45,7 +45,7 @@ module diagnostic_elements
         if (Npack > 0) then
             call diagnostic_by_type (thisCol, Npack)
             call face_interpolation (fp_Diag)
-        endif
+        end if
 
         if (setting%Debug%File%diagnostic_elements)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine diagnostic_toplevel
@@ -91,7 +91,7 @@ module diagnostic_elements
                     print *, 'error, default case should not be reached'
                     stop 9472
             end select
-        enddo
+        end do
 
         !% HACK not sure what we need for diagnostic aux variables
         !% The weir geometry is set in weir routines, as is flowrate, head, and velocity

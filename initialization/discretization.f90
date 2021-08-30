@@ -43,18 +43,18 @@ contains
             if ( node%I(link%I(ii,li_Mnode_u), ni_node_type) == nJm ) then
                 temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for upstream M junction
                 Adjustment_flag = Adjustment_flag + oneI
-            endif
+            end if
 
             if ( node%I(link%I(ii,li_Mnode_d), ni_node_type) == nJm ) then
                 temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for downstream M junction
                 Adjustment_flag = Adjustment_flag + oneI
-            endif
+            end if
 
             link%R(ii,lr_AdjustedLength) = temp_length
             link%I(ii,li_length_adjusted) = Adjustment_flag
             !% set the new element length based on the adjusted link length
             link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)
-        enddo
+        end do
 
         if (setting%Debug%File%discretization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine init_discretization_adjustlinklength
@@ -85,24 +85,24 @@ contains
         if ( remainder == zeroR ) then
             link%I(link_idx, li_N_element) = int(link%R(link_idx, lr_Length)/elem_nominal_length)
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
-        
+
         !% If the remainder is greater than half an element length
         elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
             link%I(link_idx, li_N_element) = ceiling(link%R(link_idx,lr_Length)/elem_nominal_length)
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
-        
+
         !% If the remainder is less than half an element length
         else
             link%I(link_idx, li_N_element) = floor(link%R(link_idx,lr_Length)/elem_nominal_length)
             link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
-        endif
+        end if
 
         !% Additional check to ensure that every link has at least one element
         if ( link%R(link_idx, lr_Length) .le. elem_nominal_length ) then
             link%I(link_idx, li_N_element) = oneI
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
         end if
-        
+
         if (setting%Debug%File%discretization)  print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine init_discretization_nominal

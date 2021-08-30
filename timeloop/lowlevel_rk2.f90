@@ -737,7 +737,7 @@ module lowlevel_rk2
                             eVelocity(tB) = zeroR
                         else
                             eVelocity(tB) = eFlow(tB) / eArea(tB)
-                        endif
+                        end if
 
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
@@ -768,7 +768,7 @@ module lowlevel_rk2
                             eVelocity(tB) = zeroR
                         else
                             eVelocity(tB) = eFlow(tB) / eArea(tB)
-                        endif
+                        end if
 
                         if (abs(eVelocity(tB)) > vMax) then
                             eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )

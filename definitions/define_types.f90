@@ -115,8 +115,4 @@ module define_types
         type(BCPack)             :: P                       !% packs of boundary conditions
     end type BCArray
 
-    type OutputArray
-        real(8), allocatable :: NodeResults(:,:)
-        real(8), allocatable :: LinkResults(:,:)
-    end type OutputArray
 end module define_types

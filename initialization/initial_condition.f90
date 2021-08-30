@@ -117,9 +117,9 @@ contains
                    print*, faceR(:,fr_Topwidth_u)[ii], 'face topwidth up'
                    print*, faceR(:,fr_Topwidth_d)[ii], 'face topwidth dn'
                    call execute_command_line('')
-                enddo
-            endif
-        endif
+                end do
+            end if
+        end if
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_IC_setup
@@ -220,7 +220,7 @@ contains
                     where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                         elemR(:,er_Depth) = onehalfR * (DepthUp + DepthDn)
                     endwhere
-                endif
+                end if
 
             case (LinearlyVarying)
 
@@ -275,7 +275,7 @@ contains
                                 (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
                             elemR(:,er_Depth) = DepthUp
                         endwhere
-                    endif
+                    end if
                 end do
 
             case default
@@ -1122,7 +1122,7 @@ contains
                                 !  BRHbugfix 20210813         (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * &
                                  !  BRHbugfix 20210813        elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth)
                                 !  BRHbugfix 20210813 elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
-                            endif
+                            end if
                             elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + onehalfR * &
                                     (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * &
                                     elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth) !  BRHbugfix 20210813 
@@ -1144,7 +1144,7 @@ contains
                     elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
                 else
                     elemR(JBidx,er_Velocity) = zeroR
-                endif
+                end if
 
                 ! BRHbugfix 20210813 start
                 !% Common geometry that do not depend on cross-section
@@ -1371,7 +1371,7 @@ contains
             endwhere
         else
             elemR(:,er_SmallVolume) = zeroR
-        endif
+        end if
 
         if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_IC_set_SmallVolumes
