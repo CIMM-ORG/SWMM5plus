@@ -74,21 +74,24 @@ subroutine init_partitioning_method()
         print *, "Node Partitioning"
         print *, new_line("")
         do ii = 1, size(node%I, 1)
-            print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
+            if ( node%I(ii, ni_P_is_boundary) /= zeroI ) then
+                print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
+            endif
         end do
 
-        print *, "Link Partitioning"
-        print *, new_line("")
-        do ii = 1, size(link%I, 1)
-            print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link)
-        end do
+        ! print *, "Link Partitioning"
+        ! print *, new_line("")
+        ! do ii = 1, size(link%I, 1)
+        !     print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link)
+        ! end do
+
 
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
         ! partition_correct = default_performance_check()
         connectivity = init_partitioning_metric_connectivity()
-        part_size_balance = init_partitioning_metric_partsizebalance()
+        ! part_size_balance = init_partitioning_metric_partsizebalance()
 
-        print*, "*** partitioning is complete", connectivity, part_size_balance
+        print*, "*** partitioning is complete", connectivity ! part_size_balance
     end if
 
     call util_deallocate_partitioning_arrays()
@@ -353,10 +356,9 @@ subroutine init_partitioning_linkbalance()
                 clink = node%I(ii, ni_idx_base1+jj)
                 if (clink /= nullvalueI) then
                     clink_image = link%I(clink, li_P_image)
-                    if ((assigned_image /= nullValueI) .and. &
-                        (assigned_image /= clink_image) .and. &
-                        (node%I(ii, ni_P_is_boundary) == 0)) then
-                        node%I(ii, ni_P_is_boundary) = 1
+                    if ( (assigned_image /= nullValueI) .and. &
+                        (assigned_image /= clink_image) ) then
+                        node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
                     end if
                     if (clink_image < assigned_image) then
                         assigned_image = clink_image
