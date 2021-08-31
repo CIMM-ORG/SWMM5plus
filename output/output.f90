@@ -142,8 +142,6 @@ contains
             end do
         end if
 
-        print *, node_output_idx, "node_output_idx"
-        stop "in " // subroutine_name
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine output_read_csv_node_names
