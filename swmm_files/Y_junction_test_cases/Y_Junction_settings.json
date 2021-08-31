@@ -261,12 +261,13 @@
             "weir_elements" : false
         },
         "FileGroup" : {
-            "all" : false,
+            "all" : true,
             "definitions" : false,
             "finalization" : false,
             "geometry" : false,
             "initialization" : false,
             "interface" : false,
+            "output" : false,
             "timeloop" : false,
             "utility" : false
         },

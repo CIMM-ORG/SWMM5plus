@@ -267,6 +267,7 @@
             "geometry" : false,
             "initialization" : false,
             "interface" : false,
+            "output" : false,
             "timeloop" : false,
             "utility" : false
         },

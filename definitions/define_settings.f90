@@ -222,6 +222,7 @@ module define_settings
         logical :: geometry         = .false.
         logical :: initialization   = .false.
         logical :: interface        = .false.
+        logical :: output           = .false.
         logical :: timeloop         = .false.
         logical :: utility          = .false.
     end type DebugFileGroupYNType
@@ -468,7 +469,6 @@ module define_settings
         type(SimulationType)     :: Simulation
         type(SmallVolumeType)    :: SmallVolume ! controls for small volumes
         type(SolverType)         :: Solver ! switch for solver
-        !rm 20210607 brh    type(StepType)           :: Step ! controls over simulation time stepping
         type(TimeType)           :: Time ! controls of time step
         type(VariableDTType)     :: VariableDT
         type(WeirType)           :: Weir
@@ -1150,6 +1150,9 @@ contains
         call json%get('Debug.FileGroup.interface', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
         if (.not. found) stop "Error - setting " // 'Debug.FileGroup.interface not found'
+        call json%get('Debug.FileGroup.output', logical_value, found)
+        setting%Debug%FileGroup%output = logical_value
+        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.output not found'
         call json%get('Debug.FileGroup.timeloop', logical_value, found)
         setting%Debug%FileGroup%timeloop = logical_value
         if (.not. found) stop "Error - setting " // 'Debug.FileGroup.timeloop not found'
@@ -1178,6 +1181,7 @@ contains
             setting%Debug%FileGroup%geometry = .true.
             setting%Debug%FileGroup%initialization = .true.
             setting%Debug%FileGroup%interface = .true.
+            setting%Debug%FileGroup%output  = .true.
             setting%Debug%FileGroup%timeloop  = .true.
             setting%Debug%FileGroup%utility = .true.
         end if
@@ -1208,6 +1212,9 @@ contains
         if (setting%Debug%FileGroup%interface) then
             setting%Debug%File%c_library = .true.
             setting%Debug%File%interface = .true.
+        end if
+        if (setting%Debug%FileGroup%output) then
+            setting%Debug%File%output = .true.
         end if
         if (setting%Debug%FileGroup%timeloop) then
             setting%Debug%File%adjust = .true.

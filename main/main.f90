@@ -19,17 +19,17 @@ program main
 
     ! --- Initialization
     if (setting%Verbose) &
-        write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Image ', this_image(), "] ..."
+        write(*,"(2A,i5.5,A)") new_line(" "), 'begin initialization [Image ', this_image(), "] ..."
     call initialize_all()
 
     ! --- Time Loop
     if (setting%Verbose) &
-        write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Image ', this_image(), "]"
+        write(*,"(2A,i5.5,A)") new_line(" "), 'begin timeloop [Image ', this_image(), "]"
     setting%Time%Real%EpochTimeLoopStartSeconds = time()
     call timeloop_toplevel()
 
     if (setting%Verbose) &
-        write(*,"(2A,i5,A)") new_line(" "), 'finalize [Image ', this_image(), "]"
+        write(*,"(2A,i5.5,A)") new_line(" "), 'finalize [Image ', this_image(), "]"
     ! --- Finalization
     call finalize_all()
 

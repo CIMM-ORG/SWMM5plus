@@ -159,7 +159,7 @@ contains
 
         fu = this_image()
 
-        write(str_image, '(i5)') fu
+        write(str_image, '(i5.5)') fu
 
         call system("mkdir -p debug_output")
 
@@ -251,7 +251,7 @@ contains
 
         fu = this_image()
 
-        write(str_image, '(i5)') fu
+        write(str_image, '(i5.5)') fu
 
         do ii = 1, N_face(this_image())
 
@@ -301,7 +301,7 @@ contains
         call util_datetime_decodedate(time_epoch, yr, mnth, dy)
         call util_datetime_decodetime(time_epoch, hr, min, sec)
 
-        write(str_image, '(i5)') fu
+        write(str_image, '(i5.5)') fu
 
         do ii = 1, N_elem(this_image())
 
@@ -409,7 +409,7 @@ contains
 
         if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
-        write(file_name, "(A,i5,A)") "debug_output/summary/summary_", this_image(), ".csv"
+        write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
 
         open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
             form = 'formatted', action = 'write', iostat = open_status)
@@ -448,7 +448,7 @@ contains
         if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
         if (util_output_must_report() .and. setting%output%report) then
 
-            write(file_name, "(A,i5,A)") "debug_output/summary/summary_", this_image(), ".csv"
+            write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
 
             thisCol   = col_elemP(ep_CC_ALLtm)
             Npack     = npack_elemP(thisCol)
