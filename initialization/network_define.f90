@@ -198,7 +198,7 @@ contains
         integer :: ElemGlobalIdx, FaceGlobalIdx
         integer :: ElemLocalIdx, FacelocalIdx
         integer :: unique_faces
-        integer, pointer :: N_Images, Lidx
+        integer, pointer :: Lidx
         integer, pointer :: NodeUp, NodeDn, NodeUpTyp, NodeDnTyp
 
         character(64) :: subroutine_name = 'init_network_datacreate'

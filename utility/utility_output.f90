@@ -414,7 +414,7 @@ contains
         open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
             form = 'formatted', action = 'write', iostat = open_status)
 
-        write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
+        write(fu, *) "In_Processor,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
         endfile(fu)
         close(fu)
 

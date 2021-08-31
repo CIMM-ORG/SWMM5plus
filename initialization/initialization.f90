@@ -522,7 +522,7 @@ contains
 
         if (setting%Debug%File%utility_array) then
             do ii = 1, size(unique_imagenum,1)
-                print*, 'Image => ', ii
+                print*, 'Processor => ', ii
                 print*, 'Elements expected ', N_elem(ii)
                 print*, 'Faces expected    ', N_face(ii)
             end do

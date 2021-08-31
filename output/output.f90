@@ -516,7 +516,7 @@ contains
                         write(file_idx(link_output_idx_length+pp), '(*(G0.6 : ","))') avg_flowrate(pp)
 
                         !% Stage entry for .out
-                        call inteface_update_linkResult(pp, api_output_link_flow, real(avg_flowrate(pp),8))
+                        call interface_update_linkResult(pp, api_output_link_flow, real(avg_flowrate(pp),8))
                         avg_flowrate(pp) = 0
                         tt(pp) = tt(pp) + 1
                     end if

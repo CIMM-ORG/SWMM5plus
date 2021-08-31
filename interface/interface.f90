@@ -37,7 +37,7 @@ module interface
     public :: interface_get_headBC
     public :: interface_find_object
     public :: inteface_update_nodeResult
-    public :: inteface_update_linkResult
+    public :: interface_update_linkResult
     public :: interface_write_output_line
     public :: interface_export_link_results
 
@@ -532,9 +532,8 @@ contains
             if (node_value /= -1) interface_get_node_attribute = interface_get_node_attribute + 1
         end if
 
-        if (setting%Debug%File%interface)  then
+        if (setting%Debug%File%interface) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-        end if
     end function interface_get_node_attribute
 
     function interface_get_link_attribute(link_idx, attr)
@@ -906,12 +905,12 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine inteface_update_nodeResult
 
-    subroutine inteface_update_linkResult(link_idx, result_type, link_result)
+    subroutine interface_update_linkResult(link_idx, result_type, link_result)
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: link_idx, result_type
         real(8), intent(in) :: link_result
         integer             :: error
-        character(64)       :: subroutine_name = "inteface_update_linkResult"
+        character(64)       :: subroutine_name = "interface_update_linkResult"
         !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
@@ -929,7 +928,7 @@ contains
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine inteface_update_linkResult
+    end subroutine interface_update_linkResult
 
     subroutine interface_write_output_line(reportTime)
     !%-----------------------------------------------------------------------------

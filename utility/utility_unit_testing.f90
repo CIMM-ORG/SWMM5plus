@@ -119,7 +119,7 @@ contains
 
 
 
-    if (ii /= n_face(this_Image())) then
+    if (ii /= n_face(this_image())) then
        print *, "ERROR:::: faceI(:,fi_Gidx) is not unique. This_image ::", this_image()
     else
        print *, "faceI(:,fi_Gidx) is unique. This_image ::", this_image()
@@ -1591,7 +1591,7 @@ contains
       do ii = 1, size(elemI(:,ei_Gidx))
 
          if (elemI(ii,ei_Gidx) /= current_length+elemI(ii,ei_Lidx) .and. elemI(ii,ei_Gidx)/= nullvalueI) then
-            print *, "error in elem global indexes. Image :: ", this_Image()
+            print *, "error in elem global indexes. Processor :: ", this_image()
             !%print *, "elemI(ii,ei_Gidx)", elemI(ii,ei_Gidx)
             !%print *, "elemI(ii,ei_Lidx)", elemI(ii,ei_Lidx)
             exit
@@ -1621,7 +1621,7 @@ contains
             cycle
 
          else if (faceI(ii,ei_Gidx) /= current_length+faceI(ii,ei_Lidx) .and. faceI(ii,ei_Gidx)/= nullvalueI) then
-            print *, "error in face global indexes. Image :: ", this_Image()
+            print *, "error in face global indexes. Processor :: ", this_image()
             !% print *, "faceI(ii,ei_Gidx)", faceI(ii,ei_Gidx)
             !% print *, "faceI(ii,ei_Lidx)", faceI(ii,ei_Lidx)
             exit
