@@ -60,7 +60,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 50.00,
+        "NominalElemLength" : 10.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -91,7 +91,7 @@
             "Minimum" : 1e-6
         },
         "Velocity" : {
-            "Maximum" : 20.0,
+            "Maximum" : 10.0,
             "UseLimitMax" : true
         },
         "ArraySize" : {
@@ -114,10 +114,10 @@
         "reportStep" : 0,
         "slots" : 20,
         "links_file" : "",
-        "nodes_file" : "node_input.csv",
+        "nodes_file" : "",
         "CommandLine" : {
             "quiet" : false,
-            "interval" : 1000
+            "interval" : 100000
         }
     },
     "Partitioning" : {
