@@ -68,7 +68,7 @@
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
     "FaceInterp" : {
-        "DownJBFaceInterp" : "static",
+        "DownJBFaceInterp" : "static"
     },
     "Junction" : {
         "kFactor" : 0.0
@@ -118,7 +118,7 @@
         "CommandLine" : {
             "quiet" : false,
             "interval" : 100
-        },
+        }
     },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"

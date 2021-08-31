@@ -58,7 +58,7 @@ contains
 
         !% if links_file is empty or no file is not specified we output all the nodes which
         !% are written here in the specific format which is handled below
-        if(no_file) then
+        if (no_file) then
             if (rc /= 0) then
                 do while(ii <= N_link)
                     phantom_counter = 0
@@ -66,7 +66,7 @@ contains
                     link_output_idx(ii) = link_temp_idx
                     ii = ii + 1
                     kk = kk + 1
-                    
+
                     do jj = N_link - additional_rows+1, N_link
                         if (link_temp_idx == link%I(jj, li_parent_link)) then
                             link_output_idx(ii) = jj
@@ -78,7 +78,7 @@ contains
                 end do
             end if
         end if
-          
+
         !% loop through till the end of the file and save the valid links
         do
             !% read in the link name from the csv
@@ -174,7 +174,7 @@ contains
         if (.not. no_file) close(fu)
         !% N_node_output holds the number of node idx stored
         node_output_idx(ii:N_node) = nullvalueI
-        
+
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine output_read_csv_node_names
