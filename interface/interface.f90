@@ -36,7 +36,7 @@ module interface
     public :: interface_get_flowBC
     public :: interface_get_headBC
     public :: interface_find_object
-    public :: inteface_update_nodeResult
+    public :: interface_update_nodeResult
     public :: interface_update_linkResult
     public :: interface_write_output_line
     public :: interface_export_link_results
@@ -880,12 +880,12 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine interface_export_link_results
 
-    subroutine inteface_update_nodeResult(node_idx, result_type, node_result)
+    subroutine interface_update_nodeResult(node_idx, result_type, node_result)
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: node_idx, result_type
         real(8), intent(in) :: node_result
         integer             :: error
-        character(64)       :: subroutine_name = "inteface_update_nodeResult"
+        character(64)       :: subroutine_name = "interface_update_nodeResult"
         !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
@@ -903,7 +903,7 @@ contains
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine inteface_update_nodeResult
+    end subroutine interface_update_nodeResult
 
     subroutine interface_update_linkResult(link_idx, result_type, link_result)
         !%-----------------------------------------------------------------------------

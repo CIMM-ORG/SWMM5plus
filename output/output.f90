@@ -21,6 +21,7 @@ module output
     public output_write_node_files
     public output_combine_links
     public output_move_node_files
+    public output_update_swmm_out
 
 contains
 
@@ -515,8 +516,6 @@ contains
                         write(file_idx(link_output_idx_length+pp), '(A)',     advance = 'no') ','
                         write(file_idx(link_output_idx_length+pp), '(*(G0.6 : ","))') avg_flowrate(pp)
 
-                        !% Stage entry for .out
-                        call interface_update_linkResult(pp, api_output_link_flow, real(avg_flowrate(pp),8))
                         avg_flowrate(pp) = 0
                         tt(pp) = tt(pp) + 1
                     end if
@@ -525,8 +524,6 @@ contains
                 ii = ii + link%I(temp_link_idx, li_num_phantom_links) + 1
                 pp = pp + 1
             end do
-            !% Write line of .out
-            call interface_write_output_line(time_secs)
         end do
 
         do ii = 1, size(file_idx)
@@ -540,10 +537,11 @@ contains
     end subroutine output_combine_links
 
     subroutine output_move_node_files
-        integer :: ii,fu, open_status
+        integer :: ii, fu, open_status
         character(len = 250) :: file_name, file_name_new
         character(len = 100) :: node_name
         character(len = 5)   :: str_image
+        character(24) :: timestamp
         character(64) :: subroutine_name = 'output_move_node_files'
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) &
@@ -566,5 +564,77 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine output_move_node_files
+
+    subroutine output_update_swmm_out()
+        character(len = 250) :: fname
+        character(len = 24) :: timestamp
+        logical :: wrote_all_links = .false.
+        logical :: wrote_all_nodes = .false.
+        integer :: ii, rc, node_idx, link_idx
+        integer, allocatable :: fus_nodes(:), fus_links(:)
+        real(8) :: node_head, node_result
+        real(8) :: link_flowrate, link_result
+        real(8) :: timesecs
+
+        if (this_image() == 1) then
+            allocate(fus_nodes(size(node%P%have_output)))
+            allocate(fus_links(size(link%P%have_output)))
+            fus_links = nullvalueI
+            fus_nodes = nullvalueI
+
+            do while(.not. (wrote_all_links .and. wrote_all_nodes))
+                do ii=1, size(node%P%have_output)
+                    node_idx = node%P%have_output(ii)
+                    if (fus_nodes(ii) == nullvalueI) then
+                        !% open files to process .out
+                        fname = "swmm5_output/node/"//trim(node%names(node_idx)%str)//".csv"
+                        open(action='read', file=trim(fname), iostat=rc, newunit=fus_nodes(ii))
+                        read(fus_nodes(ii), *, iostat = rc) timestamp
+                    end if
+
+                    read(fus_nodes(ii), "(A,2F10.8)", iostat = rc) timestamp, timesecs, node_head
+                    if (rc /= 0) then
+                        wrote_all_nodes = .true.
+                        close(fus_nodes(ii))
+                        !% Write line of .out
+                        exit
+                    end if
+                    node_result = node_head - node%R(node_idx,nr_Zbottom)
+                    !% stage values in .out
+                    call interface_update_nodeResult(node_idx, api_output_node_depth, node_result)
+                end do
+
+                do ii=1, size(link%P%have_output)
+                    link_idx = link%P%have_output(ii)
+                    if (fus_links(ii) == nullvalueI) then
+                        !% open files to process .out
+                        fname = "swmm5_output/link/"//trim(link%names(link_idx)%str)//".csv"
+                        open(action='read', file=trim(fname), iostat=rc, newunit=fus_links(ii))
+                        read(fus_links(ii), *, iostat = rc) timestamp
+                    end if
+
+                    read(fus_links(ii), "(A,2F10.8)", iostat = rc) timestamp, timesecs, link_flowrate
+                    if (rc /= 0) then
+                        wrote_all_links = .true.
+                        close(fus_links(ii))
+                        !% Write line of .out
+                        exit
+                    end if
+                    link_result = link_flowrate
+                    !% stage values in .out
+                    call interface_update_linkResult(link_idx, api_output_link_flow, link_result)
+                end do
+                call interface_write_output_line(timesecs)
+            end do
+
+            deallocate(fus_links)
+            deallocate(fus_nodes)
+
+            ! do ii = 1, size(link%P%have_output)
+            !     link_idx = link%P%have_output(ii)
+            !     call interface_export_link_results(link_idx)
+            ! end do
+        end if
+    end subroutine output_update_swmm_out
 end module output
 

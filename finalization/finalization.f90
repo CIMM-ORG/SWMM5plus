@@ -16,6 +16,7 @@ contains
         end if
         sync all
         if (setting%Output%report .or. setting%Debug%Output) call output_move_node_files
+        if (setting%Output%report .or. setting%Debug%Output) call output_update_swmm_out
         call interface_finalize()
         call util_deallocate_network_data()
 

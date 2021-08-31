@@ -683,7 +683,6 @@ int DLLEXPORT api_export_link_results(void* f_api, int link_idx)
 
     for ( period = 1; period <= Nperiods; period++ )
     {
-        printf("printing period %d link %d\n", period, link_idx);
         output_readDateTime(period, &days);
         datetime_dateToStr(days, theDate);
         datetime_timeToStr(days, theTime);
