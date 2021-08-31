@@ -51,8 +51,7 @@ contains
         end if
 
         if (no_file) then
-            !% if links_file is empty or no file is specified
-            !% we output all the links
+            !% if links_file is not specified we output all the links
             pp = 1 !% parent link
             do link_idx = 1, SWMM_N_link
                 phantom_counter = 0
@@ -92,7 +91,7 @@ contains
                 link_output_idx(pp) = link_idx
                 pp = pp + 1
 
-                !% checking if the link is spit across processors if
+                !% checking if the link is split across processors if
                 !% so then store the id of the phantom link for output
                 phantom_counter = 0
                 if (link%I(link_idx, li_parent_link) == link_idx) then
@@ -118,8 +117,8 @@ contains
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) print *, '*** enter ', this_image(), subroutine_name
 
-        !% Output all nodes if user does not specify CSV file
         if (trim(setting%Output%nodes_file) == "") then
+            !% Output all nodes if user does not specify CSV file
             node_output_idx = (/ (ii, ii =1, SWMM_N_node)/)
         else
             ii = 1
@@ -194,7 +193,6 @@ contains
 
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
     end subroutine output_create_link_files
-
 
     subroutine output_create_node_files
         integer :: ii,fu, open_status
