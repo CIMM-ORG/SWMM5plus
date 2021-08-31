@@ -55,7 +55,8 @@ contains
     !%
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
     !%-----------------------------------------------------------------------------
 
         !% ---  Define project & settings paths
@@ -146,7 +147,8 @@ contains
         sync all
 
         !% wait for all the processors to reach this stage before starting the time loop
-        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine initialize_all
     !%
     !%==========================================================================
@@ -171,7 +173,8 @@ contains
 
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
@@ -279,7 +282,8 @@ contains
         character(64) :: subroutine_name = "init_bc"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call pack_nodes()
         call util_allocate_bc()
@@ -377,7 +381,8 @@ contains
         call bc_step()
         call pack_bc()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_bc
     !%
     !%==========================================================================
@@ -397,7 +402,8 @@ contains
         character(64) :: subroutine_name = 'init_partitioning'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% find the number of elements in a link based on nominal element length
         do ii = 1, SWMM_N_link
@@ -422,7 +428,8 @@ contains
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_partitioning
     !%
@@ -439,7 +446,8 @@ contains
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
 
-        if (setting%Debug%File%utility_array) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%utility_array) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
@@ -520,7 +528,8 @@ contains
             end do
         end if
 
-        if (setting%Debug%File%utility_array)  print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%utility_array)  &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_coarray_length
     !%
@@ -534,7 +543,8 @@ contains
         character(len=256) :: arg
         character(64) :: subroutine_name = "init_read_arguments"
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         do ii = 1, iargc()
             call getarg(ii, arg)
@@ -579,7 +589,8 @@ contains
             end if
         end do
 
-        if (setting%Debug%File%initialization) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_read_arguments
     !%
     !%==========================================================================

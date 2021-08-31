@@ -499,7 +499,8 @@ contains
 
         character(64) :: subroutine_name = 'def_load_settings'
 
-        if (setting%Debug%File%define_settings) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%define_settings) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call json%initialize()
         call json%load(filename = trim(setting%paths%setting))
@@ -1171,7 +1172,8 @@ contains
         call json%destroy()
         if (json%failed()) stop "JSON failed to destroy"
 
-        if (setting%Debug%File%define_settings) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%define_settings) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine def_load_settings
 
     subroutine def_update_debug_options()

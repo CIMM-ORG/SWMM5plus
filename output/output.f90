@@ -35,7 +35,8 @@ contains
 
         !%--------------------------------------------------------------------------
 
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (trim(setting%Output%links_file) == "") no_file = .true.
         link_output_idx = nullvalueI
@@ -106,7 +107,8 @@ contains
                 link%I(link_idx,li_num_phantom_links) = phantom_counter
             end do
         end if
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine output_read_csv_link_names
 
     subroutine output_read_csv_node_names()
@@ -115,7 +117,8 @@ contains
         character(64) :: subroutine_name = 'output_read_csv_node_names'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (trim(setting%Output%nodes_file) == "") then
             !% Output all nodes if user does not specify CSV file
@@ -142,7 +145,8 @@ contains
             end do
         end if
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine output_read_csv_node_names
 
@@ -158,7 +162,8 @@ contains
         character(64) :: subroutine_name = 'output_create_link_files'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
         write(str_image, '(i5.5)') this_image()
@@ -191,7 +196,8 @@ contains
             close(fu)
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine output_create_link_files
 
     subroutine output_create_node_files
@@ -201,7 +207,8 @@ contains
         character(len = 5)   :: str_image
         character(64) :: subroutine_name = 'output_create_node_files'
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Get current image as a string
         write(str_image, '(i5.5)') this_image()
@@ -225,7 +232,8 @@ contains
             close(fu)
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine output_create_node_files
 
 
@@ -242,7 +250,8 @@ contains
         character(64) :: subroutine_name = 'output_write_link_files'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         write(str_image, '(i5.5)') this_image()
         time_secs = setting%Time%Now
@@ -294,7 +303,8 @@ contains
 
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine output_write_link_files
 
     subroutine output_write_node_files
@@ -308,7 +318,8 @@ contains
         character(64) :: subroutine_name = 'output_write_node_files'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% converter image ID to string, as well as get current time
         write(str_image, '(i5.5)') this_image()
@@ -366,7 +377,8 @@ contains
             close(fu)
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine output_write_node_files
 
@@ -534,7 +546,8 @@ contains
         character(len = 5)   :: str_image
         character(64) :: subroutine_name = 'output_move_node_files'
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Get current image as a string
         write(str_image, '(i5.5)') this_image()
@@ -549,7 +562,8 @@ contains
 
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine output_move_node_files
 end module output

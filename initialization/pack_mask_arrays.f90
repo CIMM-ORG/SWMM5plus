@@ -40,7 +40,8 @@ contains
         character(64) :: subroutine_name = 'pack_mask_arrays_all'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call mask_faces_whole_array_static()
         call pack_geometry_alltm_elements()
@@ -75,7 +76,8 @@ contains
             end if
         end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_mask_arrays_all
     !
     !==========================================================================
@@ -91,7 +93,8 @@ contains
         character(64) :: subroutine_name = 'pack_dynamic_arrays'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call pack_geometry_etm_elements()
         call pack_geometry_ac_elements()
@@ -99,7 +102,8 @@ contains
         call pack_dynamic_interior_faces()
         call pack_dynamic_shared_faces()
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_arrays
     !
     !==========================================================================
@@ -118,7 +122,8 @@ contains
         character(64) :: subroutine_name = 'mask_faces_whole_array_static'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         mcol => col_faceM(fm_all)
 
@@ -130,7 +135,8 @@ contains
             (.not. faceYN(:,fYN_isSharedFace)) &
             )
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine mask_faces_whole_array_static
     !
     !==========================================================================
@@ -148,7 +154,8 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -230,7 +237,8 @@ contains
                 ))
         end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_alltm_elements
     !
     !==========================================================================
@@ -248,7 +256,8 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -318,7 +327,8 @@ contains
                 )
         end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_ac_elements
     !
     !==========================================================================
@@ -336,7 +346,8 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_etm_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -406,7 +417,8 @@ contains
                 )
         end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_etm_elements
     !
     !==========================================================================
@@ -431,7 +443,8 @@ contains
         character(64) :: subroutine_name = 'pack_nongeometry_static_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -615,7 +628,8 @@ contains
                 ))
         endif
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_static_elements
     !
     !==========================================================================
@@ -636,7 +650,8 @@ contains
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -1331,7 +1346,8 @@ contains
         if (allocated(fup)) deallocate(fup)
         if (allocated(fdn)) deallocate(fdn)
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_dynamic_elements
     !
     !==========================================================================
@@ -1350,7 +1366,8 @@ contains
         character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1403,7 +1420,8 @@ contains
                     (elemI(eup,ei_QeqType) == diagnostic))
         end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_static_interior_faces
     !
     !==========================================================================
@@ -1426,7 +1444,8 @@ contains
         character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1491,7 +1510,8 @@ contains
                 faceI(1:Nfaces,fi_jump_type) == jump_from_downstream )
         end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_interior_faces
     !
     !==========================================================================
@@ -1511,7 +1531,8 @@ contains
         character(64) :: subroutine_name = 'pack_static_shared_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1580,7 +1601,8 @@ contains
             end do
         end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_static_shared_faces
     !
     !==========================================================================
@@ -1604,7 +1626,8 @@ contains
         character(64)    :: subroutine_name = 'pack_dynamic_shared_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         sync all
 
@@ -1686,7 +1709,8 @@ contains
                 (faceI(1:Nfaces,fi_jump_type) == jump_from_downstream))
         end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_shared_faces
     !
     !==========================================================================
@@ -1700,7 +1724,8 @@ contains
         !--------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'pack_nodes'
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
                         (node%I(:,ni_P_image) == this_image()))
@@ -1721,13 +1746,15 @@ contains
             (node%I(:, ni_node_type) == nBCdn) .and. &
             (node%I(:,ni_P_image) == this_image()))
         end if
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_nodes
 
     subroutine pack_bc
         integer :: psize
         character(64) :: subroutine_name = 'pack_bc'
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% BC packs
         if (N_flowBC > 0) then
@@ -1760,14 +1787,16 @@ contains
                 faceP(1:N_nBCdn,fp_BCdn) = BC%headI(BC%P%BCdn, bi_face_idx)
             end if
         end if
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_bc
 
     subroutine pack_output
         integer :: ii, jj, link_output_idx_length, node_output_idx_length
         character(64)    :: subroutine_name = 'pack_output'
         !% --------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% count the amount of valid output links
         link_output_idx_length = count(link_output_idx(:) /= nullvalueI)
@@ -1783,6 +1812,7 @@ contains
         node%P%have_output = pack(node%I(node_output_idx(1:node_output_idx_length), ni_idx), &
             node%I(node_output_idx(1:node_output_idx_length), ni_P_image) == this_image())
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_output
 end module pack_mask_arrays

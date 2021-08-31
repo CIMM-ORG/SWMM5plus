@@ -269,7 +269,8 @@ contains
         character(64) :: subroutine_name = 'interface_init'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Initialize C API
 
@@ -330,7 +331,7 @@ contains
             print *, "SWMM end time", setting%Time%EndEpoch
             print *, "setting%time%start", setting%Time%Start
             print *, "setting%time%end", setting%Time%End
-            print *, '*** leave ', this_image(), subroutine_name
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end if
     end subroutine interface_init
 
@@ -342,7 +343,8 @@ contains
         character(64) :: subroutine_name = 'interface_finalize'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_finalize"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -352,7 +354,8 @@ contains
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
         call ptr_api_finalize(api)
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine interface_finalize
 
@@ -366,7 +369,8 @@ contains
     !     character(64)    :: subroutine_name = 'interface_run_step'
     ! !%-----------------------------------------------------------------------------
 
-    !     if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+    !     if (setting%Debug%File%interface)  &
+    !     write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
     !     timeNow => setting%Time%Now
 
@@ -379,7 +383,8 @@ contains
     !     call c_f_procpointer(c_lib%procaddr, ptr_api_run_step)
 
     !     timeNow = ptr_api_run_step(api)
-    !     if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+    !     if (setting%Debug%File%interface)  &
+    !     write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     ! end subroutine interface_run_step
 
@@ -400,7 +405,8 @@ contains
         character(64) :: subroutine_name = "interface_update_linknode_names"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_get_object_name"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -438,7 +444,7 @@ contains
                 print *, "- ", node%Names(ii)%str
             end do
             print *, new_line("")
-            print *, '*** leave ', this_image(), subroutine_name
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end if
 
     end subroutine interface_update_linknode_names
@@ -456,7 +462,8 @@ contains
         character(64) :: subroutine_name = "interface_get_obj_name_len"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_get_object_name_len"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -471,7 +478,8 @@ contains
             print *, obj_idx, obj_type, obj_name_len
         end if
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function interface_get_obj_name_len
 
     function interface_get_node_attribute(node_idx, attr)
@@ -493,7 +501,8 @@ contains
 
         cptr_value = c_loc(node_value)
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if ((attr > N_api_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
@@ -524,7 +533,7 @@ contains
         end if
 
         if (setting%Debug%File%interface)  then
-            print *, '*** leave ', this_image(), subroutine_name
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end if
     end function interface_get_node_attribute
 
@@ -547,7 +556,8 @@ contains
 
         cptr_value = c_loc(link_value)
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if ((attr > N_api_total_link_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
@@ -641,7 +651,7 @@ contains
             end if
         end if
         if (setting%Debug%File%interface)  then
-            print *, '*** leave ', this_image(), subroutine_name
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
             ! print *, "LINK", link_value, attr
         end if
     end function interface_get_link_attribute
@@ -725,7 +735,8 @@ contains
 
         subroutine_name = 'interface_get_next_inflow_time'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         nidx = BC%flowI(bc_idx, bi_node_idx)
         if (.not. node%YN(nidx, nYN_has_inflow)) then
@@ -757,7 +768,8 @@ contains
             tnext = setting%Time%End
         end if
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function interface_get_next_inflow_time
 
     function interface_get_next_head_time(bc_idx, tnow) result(tnext)
@@ -769,7 +781,8 @@ contains
 
         subroutine_name = 'interface_get_next_head_time'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         nidx = BC%headI(bc_idx, bi_node_idx)
         if (BC%headI(bc_idx, bi_subcategory) == BCH_fixed) then
@@ -779,7 +792,8 @@ contains
             stop "in " // subroutine_name
         end if
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end function interface_get_next_head_time
 
@@ -792,7 +806,8 @@ contains
 
         subroutine_name = 'interface_get_flowBC'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_get_flowBC"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -805,7 +820,8 @@ contains
         epochNow = util_datetime_secs_to_epoch(tnow)
         bc_value = ptr_api_get_flowBC(api, nidx-1, epochNow)
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end function interface_get_flowBC
 
@@ -818,7 +834,8 @@ contains
 
         subroutine_name = 'interface_get_headBC'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_get_headBC"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -831,7 +848,8 @@ contains
         epochNow = util_datetime_secs_to_epoch(tnow)
         bc_value = ptr_api_get_headBC(api, nidx-1, epochNow)
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end function interface_get_headBC
 
@@ -846,7 +864,8 @@ contains
         integer :: error
         character(64) :: subroutine_name = 'interface_export_link_results'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_export_link_results"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -858,7 +877,8 @@ contains
         error = ptr_api_export_link_results(api, link_idx-1)
         call print_api_error(error, subroutine_name)
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine interface_export_link_results
 
     subroutine inteface_update_nodeResult(node_idx, result_type, node_result)
@@ -869,7 +889,8 @@ contains
         character(64)       :: subroutine_name = "inteface_update_nodeResult"
         !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_update_nodeResult"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -881,7 +902,8 @@ contains
         error = ptr_api_update_nodeResult(api, node_idx-1, result_type, node_result)
         call print_api_error(error, subroutine_name)
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine inteface_update_nodeResult
 
     subroutine inteface_update_linkResult(link_idx, result_type, link_result)
@@ -892,7 +914,8 @@ contains
         character(64)       :: subroutine_name = "inteface_update_linkResult"
         !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_update_linkResult"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -904,7 +927,8 @@ contains
         error = ptr_api_update_linkResult(api, link_idx-1, result_type, link_result)
         call print_api_error(error, subroutine_name)
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine inteface_update_linkResult
 
     subroutine interface_write_output_line(reportTime)
@@ -917,7 +941,8 @@ contains
         character(64)             :: subroutine_name = "interface_write_output_line"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_write_output_line"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -928,7 +953,8 @@ contains
         call c_f_procpointer(c_lib%procaddr, ptr_api_write_output_line)
         error = ptr_api_write_output_line(api, reportTime)
         call print_api_error(error, subroutine_name)
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine interface_write_output_line
 
     subroutine interface_get_report_times()
@@ -938,7 +964,8 @@ contains
         type(c_ptr)            :: cptr_reportStart, cptr_reportStep, cptr_hydroStep
         character(64)          :: subroutine_name = 'interface_get_report_times'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         cptr_reportStart = c_loc(reportStart)
         cptr_reportStep = c_loc(reportStep)
@@ -963,7 +990,8 @@ contains
         setting%Output%reportDt = reportStep
         setting%Time%Hydrology%Dt = hydroStep
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine interface_get_report_times
 
     function interface_find_object(object_type, object_name) result(object_idx)
@@ -975,7 +1003,8 @@ contains
 
         subroutine_name = 'interface_find_object'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_find_object"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -987,7 +1016,8 @@ contains
         print *, object_name
         object_idx = ptr_api_find_object(object_type, trim(object_name)//c_null_char) + 1
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end function interface_find_object
 
@@ -1002,7 +1032,8 @@ contains
 
         subroutine_name = 'get_next_entry_tseries'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_get_next_entry_tseries"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -1013,7 +1044,8 @@ contains
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
         success = ptr_api_get_next_entry_tseries(k-1) ! Fortran to C convention
 
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function get_next_entry_tseries
 
     function get_num_objects(obj_type)
@@ -1024,7 +1056,8 @@ contains
 
         subroutine_name = 'get_num_objects'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_get_num_objects"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -1034,7 +1067,8 @@ contains
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_objects)
         get_num_objects = ptr_api_get_num_objects(api, obj_type)
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end function get_num_objects
 
@@ -1042,7 +1076,8 @@ contains
         real(8) :: get_start_datetime
         character(64) :: subroutine_name = 'get_start_datetime'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_get_start_datetime"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -1052,7 +1087,8 @@ contains
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_start_datetime)
         get_start_datetime = ptr_api_get_start_datetime()
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function get_start_datetime
 
     function get_end_datetime()
@@ -1061,7 +1097,8 @@ contains
 
         subroutine_name = 'get_end_datetime'
 
-        if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         c_lib%procname = "api_get_end_datetime"
         call c_lib_load(c_lib, errstat, errmsg)
@@ -1071,7 +1108,8 @@ contains
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_end_datetime)
         get_end_datetime = ptr_api_get_end_datetime()
-        if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function get_end_datetime
 
     subroutine print_api_error(error, subroutine_name)

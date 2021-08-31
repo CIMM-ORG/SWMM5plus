@@ -69,8 +69,6 @@ subroutine init_partitioning_method()
     end if
 
     if (setting%Debug%File%partitioning) then
-        print *, '*** leave ', this_image(), subroutine_name
-
         print *, "Node Partitioning"
         print *, new_line("")
         do ii = 1, size(node%I, 1)
@@ -90,9 +88,11 @@ subroutine init_partitioning_method()
         ! partition_correct = default_performance_check()
         connectivity = init_partitioning_metric_connectivity()
         ! part_size_balance = init_partitioning_metric_partsizebalance()
-
-        print*, "*** partitioning is complete", connectivity ! part_size_balance
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(2(A,i5),A)") &
+        "completed partitioning (", connectivity, ") | [Processor ", this_image(), "]" ! part_size_balance
     end if
+
 
     call util_deallocate_partitioning_arrays()
 end subroutine init_partitioning_method
@@ -328,7 +328,8 @@ subroutine init_partitioning_linkbalance()
     character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
-    if (setting%Debug%File%partitioning) print *, '*** enter ', this_image(), subroutine_name
+    if (setting%Debug%File%partitioning) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
     if (SWMM_N_link < num_images()) then
         call init_partitioning_default()
@@ -374,7 +375,8 @@ subroutine init_partitioning_linkbalance()
         print *, node%I(:, ni_P_is_boundary), "node%I(:, ni_P_is_boundary)"
     end if
 
-    if (setting%Debug%File%partitioning)  print *, '*** leave ', this_image(), subroutine_name
+    if (setting%Debug%File%partitioning)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 end subroutine init_partitioning_linkbalance
 !
 !==========================================================================

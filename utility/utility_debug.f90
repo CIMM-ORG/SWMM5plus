@@ -28,7 +28,8 @@ contains
     character(len = 5) :: str_image
     integer :: ii, jj, fu, rc, image
 
-    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
     !% fu stands for file unit which will be tied to the image and tells the system what file to open
@@ -92,7 +93,8 @@ contains
     close(fu)
 
 
-    if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
   end subroutine debug_2D_array_csv
 
@@ -104,7 +106,8 @@ contains
     integer :: ii, total_faces
 
     character(64) :: subroutine_name = 'debug_Nface_check'
-    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
     total_faces = 0
@@ -139,7 +142,8 @@ contains
        print *, "N_face(this_image()) =", N_face(this_image())
     end if
 
-    if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
   end subroutine debug_Nface_check
 

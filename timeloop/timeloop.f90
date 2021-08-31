@@ -39,7 +39,8 @@ contains
         logical          :: doHydraulics, doHydrology
         character(64)    :: subroutine_name = 'timeloop_toplevel'
     !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         doHydraulics = setting%simulation%useHydraulics
         doHydrology = setting%simulation%useHydrology
@@ -69,7 +70,8 @@ contains
         ! end if
         !% >>> END HACK
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine timeloop_toplevel
 
     !%==========================================================================
@@ -83,10 +85,12 @@ contains
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_hydrology'
     !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_hydrology
     !%
     !%==========================================================================
@@ -99,7 +103,8 @@ contains
     !%-----------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'tl_hydraulics'
     !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
@@ -131,7 +136,8 @@ contains
                 STOP 1001 !% need error statement
         end select
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_hydraulics
     !%
     !%==========================================================================
@@ -153,7 +159,8 @@ contains
 
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         maxCFL             = setting%VariableDT%CFL_hi_max
         targetCFL          = setting%VariableDT%CFL_target
@@ -225,7 +232,8 @@ contains
             stop 1123
         end if
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_update_hydraulic_step
     !%
     !%==========================================================================
@@ -244,7 +252,8 @@ contains
         character(64)          :: subroutine_name = 'tl_increment_counters'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         hydraulicStep => setting%Time%Hydraulics%Step
         hydrologyStep => setting%Time%Hydrology%Step
@@ -291,8 +300,9 @@ contains
 
         call tl_command_line_step_output()
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
-    end subroutine tl_increment_counters
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        end subroutine tl_increment_counters
     !%
     !%==========================================================================
     !%==========================================================================
@@ -310,7 +320,8 @@ contains
         real(8), pointer :: volume(:), FullVolume(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_solver_select'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
 
         thiscol = ep_ALLtm
@@ -336,7 +347,8 @@ contains
             tmType(thisP) = ETM
         endwhere
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_solver_select
     !%
     !%==========================================================================
@@ -353,7 +365,8 @@ contains
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_save_previous_values'
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%  push the old values down the stack
         !%  N values is the present, N0 is the last time step, and N1
         !%  is the timestep before (needed only for backwards 3rd in velocity and volume)
@@ -364,7 +377,8 @@ contains
         elemR(:,er_Volume_N1)    = elemR(:,er_Volume_N0)
         elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_save_previous_values
     !%
     !%==========================================================================
@@ -383,7 +397,8 @@ contains
         real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
         character(3) :: timeunit
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         dt            => setting%Time%Dt
         timeNow       => setting%Time%Now
         timeEnd       => setting%Time%End
@@ -440,7 +455,8 @@ contains
             endif
         endif
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name   
+        if (setting%Debug%File%timeloop) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"   
     end subroutine tl_command_line_step_output
     !%==========================================================================
     !% END OF MODULE

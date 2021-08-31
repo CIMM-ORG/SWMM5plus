@@ -44,7 +44,8 @@ contains
 
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
@@ -99,7 +100,8 @@ contains
             call execute_command_line('')
         end if
         
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_define_toplevel
     !
     !==========================================================================
@@ -111,7 +113,8 @@ contains
         integer              :: N_nJ2_nodes
         character(64) :: subroutine_name = 'init_network_update_nj2_elem'
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         N_nJ2_nodes = count((node%I(:, ni_node_type) == nJ2) .and. (node%I(:, ni_P_image) == this_image()))
 
@@ -124,7 +127,8 @@ contains
 
         end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_update_nj2_elem
     !
     !==========================================================================
@@ -145,7 +149,8 @@ contains
 
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         do mm = 1, N_link
             !% Inputs
@@ -174,7 +179,8 @@ contains
             end do
         end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_network_linkslope
     !
@@ -198,7 +204,8 @@ contains
         character(64) :: subroutine_name = 'init_network_datacreate'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% initializing global element and face id
         ElemGlobalIdx = first_elem_index
@@ -236,7 +243,8 @@ contains
         !% set the same global face idx for shared faces across images
         call init_network_map_shared_faces (image)
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_datacreate
     !
     !==========================================================================
@@ -262,7 +270,8 @@ contains
         character(64) :: subroutine_name = 'init_network_set_global_indexes'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (image /= 1) then
            do ii=1, image-1
@@ -271,7 +280,8 @@ contains
            end do
         end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_set_global_indexes
     !
     !==========================================================================
@@ -290,7 +300,8 @@ contains
         character(64) :: subroutine_name = 'init_network_set_dummy_elem'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% index for the dummy element
         dummyIdx = max_caf_elem_N + N_dummy_elem
@@ -301,7 +312,8 @@ contains
 
         elemYN(dummyIdx,eYN_isDummy)    = .true.
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_set_dummy_elem
     !
     !==========================================================================
@@ -329,7 +341,8 @@ contains
         character(64) :: subroutine_name = 'init_network_handle_partition'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% pack all the link indexes in a partition
         packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == image))
@@ -363,7 +376,8 @@ contains
         !% deallocate temporary array
         deallocate(packed_link_idx)
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_partition
     !
     !==========================================================================
@@ -386,7 +400,8 @@ contains
         character(64) :: subroutine_name = 'init_network_map_nodes'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
         !% pack all the interior node indexes in a partition to find face maps
@@ -424,7 +439,8 @@ contains
         !% deallocate temporary array
         deallocate(packed_node_idx)
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_map_nodes
     !
     !==========================================================================
@@ -448,7 +464,8 @@ contains
         character(64) :: subroutine_name = 'init_network_map_shared_faces'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% pack the shared faces in an image
         sharedFaces = pack(faceI(:,fi_Lidx), faceYN(:,fYN_isSharedFace))
@@ -475,7 +492,8 @@ contains
         !% deallocate temporary array
         deallocate(sharedFaces)
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_map_shared_faces
     !
     !==========================================================================
@@ -500,7 +518,8 @@ contains
 
         character(64) :: subroutine_name = 'init_network_handle_upstreamnode'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Check 1: If the node is in the partition
         if (node%I(thisNode,ni_P_image) == image) then
@@ -683,7 +702,8 @@ contains
             end if
         end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_upstreamnode
     !
     !==========================================================================
@@ -711,7 +731,8 @@ contains
 
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         lAssignStatus => link%I(thisLink,li_assigned)
@@ -779,7 +800,8 @@ contains
             ! FaceGlobalCounter = FaceGlobalCounter - oneI
         end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_link
     !
     !==========================================================================
@@ -803,7 +825,8 @@ contains
         character(64) :: subroutine_name = 'init_network_handle_downstreamnode'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Check 1: Is the node is in the partition
         if (node%I(thisNode,ni_P_image) == image) then
@@ -958,7 +981,8 @@ contains
             end if
         end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_downstreamnode
     !
     !==========================================================================
@@ -986,7 +1010,8 @@ contains
 
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !%................................................................
         !% Junction main
@@ -1188,7 +1213,8 @@ contains
         !% set status to assigned
         nAssignStatus = nAssigned
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_nJm
     !
     !==========================================================================
@@ -1212,7 +1238,8 @@ contains
         character(64) :: subroutine_name = 'init_network_map_nJm_branches'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
         !% initialize selecteros for upstream and downstream branches
@@ -1310,7 +1337,8 @@ contains
             end if
         end do
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_network_map_nJm_branches
         !
@@ -1333,7 +1361,8 @@ contains
         character(64) :: subroutine_name = 'init_network_map_shared_nJm_nodes'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         fGidx       => faceI(fLidx,fi_Gidx)
@@ -1363,7 +1392,8 @@ contains
             end if
         end do
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_map_shared_nJm_nodes
     !
     !==========================================================================
@@ -1389,7 +1419,8 @@ contains
         character(64) :: subroutine_name = 'init_network_map_nJ2'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
         !% initialize selecteros for upstream and downstream branches
@@ -1446,7 +1477,8 @@ contains
             end if
         end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_network_map_nJ2
     !
@@ -1470,7 +1502,8 @@ contains
         character(64) :: subroutine_name = 'init_network_map_shared_nJ2_nodes'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         fGidx       => faceI(fLidx,fi_Gidx)
@@ -1498,7 +1531,8 @@ contains
             end if
         end do
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_map_shared_nJ2_nodes
     !
     !==========================================================================
@@ -1516,7 +1550,8 @@ contains
 
         character(64) :: subroutine_name = 'init_network_nJm_branch_length'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% find the length of the junction branch
         if (link%I(LinkIdx,li_length_adjusted) == OneSideAdjust) then
@@ -1525,7 +1560,8 @@ contains
             BranchLength = (link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength))/twoR
         end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function init_network_nJm_branch_length
     !
     !==========================================================================
@@ -1542,7 +1578,8 @@ contains
 
         character(64) :: subroutine_name = 'init_network_nullify_nJm_branch'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% set everything to zero for a non existant branch
         elemR(ElemIdx,:)                            = zeroR
@@ -1552,7 +1589,8 @@ contains
         faceR(FaceIdx,:)                            = zeroR
         faceYN(FaceIdx,fYN_isnull)                  = .true.
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_nullify_nJm_branch
     !
     !==========================================================================
@@ -1568,7 +1606,8 @@ contains
         character(64) :: subroutine_name = 'init_network_set_interior_faceYN'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         where ( (faceI(:,fi_BCtype)         ==  doesnotexist) &
                 .and. &
@@ -1579,7 +1618,8 @@ contains
             faceYN(:,fYN_isInteriorFace) = .true.
         endwhere
 
-        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_set_interior_faceYN
     !
     !==========================================================================

@@ -32,7 +32,8 @@ module weir_elements
         logical, pointer :: isSurcharged
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'weir_toplevel'
-        if (setting%Debug%File%weir_elements) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%weir_elements) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         isSurcharged => elemYN(eIdx,eYN_isSurcharged)
         !%  
@@ -56,7 +57,8 @@ module weir_elements
         !% update velocity from flowrate and area
         call common_velocity_from_flowrate_singular (eIdx)
         
-        if (setting%Debug%File%weir_elements)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%weir_elements)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine weir_toplevel    
     !%
     !%==========================================================================

@@ -424,7 +424,8 @@ contains
     subroutine util_output_report
         character(64) :: subroutine_name = "util_output_report"
 
-        if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%utility_output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (setting%Debug%Output) call util_output_report_summary()
 
@@ -434,7 +435,8 @@ contains
             call output_write_node_files()
         end if
 
-        if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%utility_output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_output_report
 
     subroutine util_output_report_summary()
@@ -445,7 +447,8 @@ contains
         character(512)    :: file_name
         character(64)    :: subroutine_name = "util_output_report_summary"
 
-        if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%utility_output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         if (util_output_must_report() .and. setting%output%report) then
 
             write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
@@ -480,7 +483,8 @@ contains
             end if
         end if
 
-        if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%utility_output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_output_report_summary
 
     function util_output_must_report() result(report)
