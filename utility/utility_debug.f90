@@ -42,7 +42,8 @@ contains
     open (action='write', file=file_name, status='replace', iostat=rc, newunit=fu)
     if (rc .ne. 0) then
        write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
-    end if
+       stop "in " // subroutine_name
+   end if
 
     write(fu,'(A)', advance = "no") header
     write(Fu, *)

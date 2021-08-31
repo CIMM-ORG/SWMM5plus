@@ -180,6 +180,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
             else if (elemI(ii,ei_elementType) == JM) then
@@ -195,6 +196,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
             else if (elemI(ii,ei_elementType) == JB) then
@@ -211,6 +213,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
             end if
@@ -262,6 +265,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
 
@@ -316,6 +320,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
 
@@ -333,6 +338,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
 
@@ -350,6 +356,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
             end if
@@ -364,11 +371,7 @@ contains
             close(fu)
         end do
 
-
-
         do ii = 1, N_face(this_image())
-
-
             write(str_elem_face_idx,'(I10)') faceI(ii,fi_Gidx)
 
             file_name = "debug_output/faceR/"//trim(str_image)//"_face_" &
@@ -379,6 +382,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
             !write the data to the file

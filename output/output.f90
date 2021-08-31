@@ -52,7 +52,7 @@ contains
             open(action='read', file=trim(setting%Output%links_file), iostat=rc, newunit=fu)
             if (rc /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(setting%Output%links_file), '" failed: ', rc
-                stop
+                stop "in " // subroutine_name
             end if
         end if
 
@@ -143,7 +143,7 @@ contains
             open(action='read', file=trim(setting%Output%nodes_file), iostat=rc, newunit=fu)
             if (rc /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(setting%Output%nodes_file), '" failed: ', rc
-                stop
+                stop "in " // subroutine_name
             end if
         end if
 
@@ -215,6 +215,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
             !% Write the header of the file, set end for next write and then close file
@@ -249,6 +250,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
             !% Write the header, this endfile and close the file
@@ -361,6 +363,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
             !% temp value for easier to read code
@@ -458,6 +461,7 @@ contains
                     open(newunit=file_idx(ii), action='read', file=parent_file_name, iostat=rc)
                     if (rc /= 0) then
                         write (error_unit, '(3a, i0)') 'Opening file "', trim(parent_file_name), '" failed: ', rc
+                        stop "in " // subroutine_name
                     end if
                     read (file_idx(ii), *, iostat=rc) str_time ! advance one line (skip header)
 
@@ -471,6 +475,7 @@ contains
                         form = 'formatted', action = 'write', iostat = open_status)
                     if (open_status /= 0) then
                         write (error_unit, '(3a, i0)') 'Opening file "', trim(Final_File_NAME), '" failed: ', open_status
+                        stop "in " // subroutine_name
                     end if
                     write(file_idx(link_output_idx_length+pp), *) "Timestamp,Time_In_Secs,flowrate"
 
@@ -490,7 +495,7 @@ contains
                             open(newunit=file_idx(ii+jj), action='read', file=phantom_file_name, iostat=rc)
                             if (rc /= 0) then
                                 write (error_unit, '(3a, i0)') 'Opening file "', trim(phantom_file_name), '" failed: ', rc
-                                cycle
+                                stop "in " // subroutine_name
                             end if
                             read (file_idx(ii+jj), *, iostat=rc) str_time ! advance one line (skip header)
                         end do
