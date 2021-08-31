@@ -262,6 +262,18 @@ module update
             where (w_uQ(thisP) > setting%Limiter%InterpWeight%Maximum)    
                 w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
             endwhere    
+
+            !BRHbugfix 20210829
+            where (w_dQ(thisP) < zeroR)
+                w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
+            endwhere
+            where (w_dQ(thisP) < setting%Limiter%InterpWeight%Minimum)    
+                w_dQ(thisP) = setting%Limiter%InterpWeight%Minimum
+            endwhere
+            where (w_dQ(thisP) > setting%Limiter%InterpWeight%Maximum)    
+                w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
+            endwhere  
+            !BRHbugfix 20210829
             
             !% timescale interpolation for geometry are identical to flowrate
             !% but may be modified elsewhere
@@ -277,13 +289,9 @@ module update
         end if
 
         if (setting%FaceInterp%DownJBFaceInterp == dynamic) then
-            if (num_images() > oneI) then
-                print*, 'error: dynamic face interpolation for ds JB does not support multiple processors yet'
-            else
-                !% testin a new branch interp technique
-                call update_interpolation_weights_ds_JB ()
-            end if
-        end if
+            !% testin a new branch interp technique
+            call update_interpolation_weights_ds_JB ()
+        endif
 
         !print *
         !print *,'--- in ',trim(subroutine_name),' ----------------------------------------- end'
@@ -311,10 +319,9 @@ module update
         !% conneceted link element
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'update_interpolation_weights_ds_JB'
-        integer, pointer :: thisColP_JM, fUp(:), fDn(:), eUp(:), eDn(:), tM
-        integer, pointer :: Npack, Npack2, thisCol_AC,  thisP(:), thisP2(:), BranchExists(:)
+        integer, pointer :: thisColP_dsJB, thisColP_ds_of_JB
+        integer, pointer :: Npack1, Npack2,  thisP1(:), thisP2(:)
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
-        integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%update)  print *, '*** enter ', subroutine_name
         w_uQ      => elemR(:,er_InterpWeight_uQ)
@@ -323,69 +330,28 @@ module update
         w_dG      => elemR(:,er_InterpWeight_dG)
         w_uH      => elemR(:,er_InterpWeight_uH)
         w_dH      => elemR(:,er_InterpWeight_dH)
-        fUp       => elemI(:,ei_Mface_uL)    
-        fDn       => elemI(:,ei_Mface_dL) 
-        eUp       => faceI(:,fi_Melem_uL) 
-        eDn       => faceI(:,fi_Melem_dL)
-        BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
         !%-----------------------------------------------------------------------------
 
-        thisColP_JM  => col_elemP(ep_JM_ALLtm)
-        Npack        => npack_elemP(thisColP_JM)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_JM)
-            do ii=1,Npack
-                tM => thisP(ii) !% junction main ID
-                !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
-                !% setting the interp weight of ds JB same as its ds link element
-                !% handle the downstram branches
-                do kk=2,max_branch_per_node,2
-                    tB = tM + kk
-                    if (BranchExists(tB)==1) then
-                        !% Baseline is all commented
-                        !% case 1  Q of downstream JB equal with Q upstream of next element down
-                        w_dQ(tB) = w_uQ(eDn(fDn(tB)))
-                        ! w_uQ(tB) = w_dQ(eUp(fUp(tB)))
+        !% replace the interpolation weights for downstream JB
+        thisColP_dsJB  => col_elemP(ep_JB_DownStreamJB)
+        Npack1         => npack_elemP(thisColP_dsJB)
 
-                        !% case 2  G of downstream JB equal with G upstream of next element down
-                        w_dG(tB) = w_uG(eDn(fDn(tB)))
-                        ! w_uG(tB) = w_dG(eUp(fUp(tB)))
+        if (Npack1 > 0) then
+            thisP1 => elemP(1:Npack1,thisColP_dsJB)
+            w_dQ(thisP1) = oneR
+            w_dG(thisP1) = oneR
+            w_dH(thisP1) = oneR
+        end if
 
-                        !% case 3 H of downstream JB equal with H of upstream of next element down  
-                        w_dH(tB) = w_uH(eDn(fDn(tB)))
-                        ! w_uH(tB) = w_dH(eUp(fUp(tB)))
+        thisColP_ds_of_JB => col_elemP(ep_CC_DownstreamJbAdjacent)
+        Npack2            => npack_elemP(ep_CC_DownstreamJbAdjacent)
 
-
-                        !% case 4 Q,G,H all changed 
-                         !w_dQ(tB) = w_uQ(eDn(fDn(tB)))
-                         !w_dG(tB) = w_uG(eDn(fDn(tB)))
-                         !w_dH(tB) = w_uH(eDn(fDn(tB)))
-
-                        !  print *,'---'
-                        !  print *, tM,'tM'
-                        !  print *, fUp(tB) ,'fUp(tB)'
-                        !  print *, tb ,'tB'
-                        !  print *, fDn(tB) ,'fDn(tB)'
-                        !  print *, eDn(fDn(tB)), 'eDn(fDn(tB))'
-                        !  print *, fDn(eDn(fDn(tB))), 'fDn(eDn(fDn(tB)))'
-                        !  print *, eUp(fDn(tB)), 'eUp(fDn(tB))'
-                        !  print *, w_uQ(eDn(fDn(tB))), 'w_uQ(eDn(fDn(tB)))'
-                        !  print *, w_dQ(tB), 'w_dQ(tB)'
-                        !  print *, w_uG(eDn(fDn(tB))), 'w_uG(eDn(fDn(tB)))'
-                        !  print *, w_dG(tB), 'w_dG(tB)'
-                        !  print *, w_uH(eDn(fDn(tB))), 'w_uH(eDn(fDn(tB)))'
-                        !  print *, w_dH(tB), 'w_dH(tB)'                        
-                        !  print *,'-----'
-
-                        !w_uQ(tB) = w_uQ(eDn(fDn(tB)))
-                        !w_dQ(tB) = w_dQ(eDn(fDn(tB)))
-                        !w_uG(tB) = w_uG(eDn(fDn(tB)))
-                        !w_dG(tB) = w_dG(eDn(fDn(tB)))
-                        !w_uH(tB) = w_uH(eDn(fDn(tB)))
-                        !w_dH(tB) = w_dH(eDn(fDn(tB)))
-                    end if
-                end do
-            end do
+        !% replace the interpolation weights for elements downstream of dn JB
+        if (Npack2 > 0) then
+            thisP2 => elemP(1:Npack2,thisColP_ds_of_JB)
+            w_uQ(thisP2) = oneR
+            w_uG(thisP2) = oneR
+            w_uH(thisP2) = oneR
         end if
 
         if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
@@ -393,5 +359,5 @@ module update
     !% 
     !%==========================================================================
     !% END OF MODULE
-    !%+=========================================================================
+    !%==========================================================================
 end module update

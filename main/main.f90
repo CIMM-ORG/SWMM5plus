@@ -10,24 +10,32 @@ program main
 
     implicit none
 
-    real :: start_time, end_time
+    !real :: start_time, end_time
 
-    ! --- Clock the simulation time
-    call cpu_time(start_time)
+    ! --- store CPU clock start time
+    call cpu_time(setting%Time%CPU%EpochStartSeconds)
+    ! --- store Real time
+    setting%Time%Real%EpochStartSeconds = time()
 
+    if (setting%Verbose) print *, 'begin initialization...'
     ! --- Initialization
     call initialize_all()
 
+    if (setting%Verbose) print *, 'begin timeloop'
+    setting%Time%Real%EpochTimeLoopStartSeconds = time()
     ! --- Time Loop
     call timeloop_toplevel()
 
+    if (setting%Verbose) print *, 'finalize'
+    ! --- Finalization
     call finalize_all()
 
     sync all
 
-    call cpu_time(end_time)
+    call cpu_time(setting%Time%CPU%EpochFinishSeconds)
 
     print *, new_line("")
-    write(*, "(A,i2,A,G0.6,A)") 'Processor ', this_image(), " | Simulation Time = ", (end_time - start_time), " [s]"
+    write(*, "(A,i2,A,G0.6,A)") 'Processor ', this_image(), " | Simulation Time = ", &
+        (setting%Time%CPU%EpochFinishSeconds - setting%Time%CPU%EpochStartSeconds), " [s]"
 
 end program main

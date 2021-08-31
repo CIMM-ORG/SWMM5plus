@@ -47,42 +47,66 @@ contains
 
         solver => setting%Solver%SolverSelect
 
+        !if (setting%Verbose) print *,'begin init_IC_from_linkdata'
+
         !% get data that can be extracted from links
         call init_IC_from_linkdata ()
+
+        !if (setting%Verbose) print *,'begin init_IC_from_nodedata'
 
         !% get data that can be extracted from nodes
         call init_IC_from_nodedata ()
 
+        !if (setting%Verbose) print *,'begin init_set_zero_lateral_inflow'
+
         !% zero out the lateral inflow column
         call init_IC_set_zero_lateral_inflow ()
+
+        !if (setting%Verbose) print *, 'begin init_IC_solver_select '
 
         !% update time marching type
         call init_IC_solver_select (solver)
 
+        !if (setting%Verbose) print *, 'begin pack_mask arrays_all'
+
         !% set up all the static packs and masks
         call pack_mask_arrays_all ()
+
+        !if (setting%Verbose) print *, 'begin init_IC_set_SmallVolumes'
 
         !% set small volume values in elements 
         call init_IC_set_SmallVolumes ()
 
+        !if (setting%Verbose) print *, 'begin update_auxiliary_variables'
+
         !% update all the auxiliary variables
         call update_auxiliary_variables (solver)
      
+        !if (setting%Verbose) print *,  'begin init_IC_diagnostic_interpolation_weights'
+
         !% update diagnostic interpolation weights
         !% (the interpolation weights of diagnostic elements
         !% stays the same throughout the simulation. Thus, they
         !% are only needed to be set at the top of the simulation)
         call init_IC_diagnostic_interpolation_weights()
  
+        !if (setting%Verbose) print *, 'begin  init_IC_small_values_diagnostic_elements'
+
         !% set small values to diagnostic element interpolation sets
         !% so that junk values does not mess up the first interpolation
         call init_IC_small_values_diagnostic_elements
 
+        !if (setting%Verbose) print *, 'begin face_interpolation '
+
         !% update faces
         call face_interpolation (fp_all)
 
+        !if (setting%Verbose) print *, 'begin diagnostic_toplevel'
+
         !% update the initial condition in all diagnostic elements
         call diagnostic_toplevel ()
+
+        !if (setting%Verbose) print *, 'begin init_IC_oneVectors'
 
         !% populate er_ones columns with ones
         call init_IC_oneVectors ()
@@ -165,7 +189,7 @@ contains
 
             call init_IC_get_geometry_from_linkdata (thisLink)
 
-            !% we need to add a small/zero volume adjustment here
+            !% HACK we need to add a small/zero volume adjustment here
 
             call init_IC_get_channel_pipe_velocity (thisLink)
 

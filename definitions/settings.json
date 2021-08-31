@@ -53,13 +53,14 @@
         }
     },
     "BC" : {
-        "slots" : 10
+        "slots" : 10,
+        "disableInterpolation": false
     },
     "Constant" : {
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 200.00,
+        "NominalElemLength" : 50.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -113,7 +114,11 @@
         "reportStep" : 0,
         "slots" : 20,
         "links_file" : "",
-        "nodes_file" : ""
+        "nodes_file" : "",
+        "CommandLine" : {
+            "quiet" : false,
+            "interval" : 100
+        },
     },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
@@ -159,7 +164,17 @@
             "Step" : 0
         },
         "DateTimeStamp" : 0.0,
-        "DtTol" : 1e-1
+        "DtTol" : 1e-1,
+        "Real" : {
+            "EpochStartSeconds" : 0,
+            "EpochTimeLoopStartSeconds" : 0,
+            "EpochNowSeconds" : 0
+        },
+        "CPU" : {
+            "EpochStartSeconds" : 0.0,
+            "EpochNowSeconds" : 0.0,
+            "EpochFinishSeconds" : 0.0
+        }
     },
     "Weir" : {
         "Transverse" : {

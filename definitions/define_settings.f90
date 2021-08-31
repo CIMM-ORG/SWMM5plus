@@ -115,6 +115,11 @@ module define_settings
         logical :: Apply = .true.
     end type AdjustWidthDepthType
 
+    type CommandLineType
+        logical :: quiet = .false.
+        integer :: interval = 10
+    end type CommandLineType
+
     ! setting%Limiter%BC
     type LimiterBCType
         logical :: UseInflowLimiter = .true.
@@ -226,6 +231,18 @@ module define_settings
         integer :: Step
     end type TimeStepType
 
+    type RealTimeType
+        integer :: EpochStartSeconds = 0
+        integer :: EpochTimeLoopStartSeconds = 0
+        integer :: EpochNowSeconds  = 0
+    end type RealTimeType
+
+    type CPUTimeType
+        real (8) :: EpochStartSeconds = 0.0
+        real (8) :: EpochNowSeconds  = 0.0
+        real (8) :: EpochFinishSeconds  = 0.0
+    end type CPUTimeType   
+
     ! -
     ! --
     ! ---
@@ -257,6 +274,7 @@ module define_settings
     ! setting%BC
     type BCPropertiesType
         integer :: slots = 10
+        logical :: disableInterpolation = .false.
     end type BCPropertiesType
 
     ! setting%Constant
@@ -366,6 +384,8 @@ module define_settings
         real(8)            :: End
         real(8)            :: StartEpoch
         real(8)            :: EndEpoch
+        type(RealTimeType) :: Real
+        type(CPUTimeType)  :: CPU
     end type TimeType
 
     type WeirType
@@ -422,8 +442,9 @@ module define_settings
         real(8) :: reportDt
         integer :: reportStep
         integer :: Slots = 20
-        character(len=256) :: nodes_file = ""
-        character(len=256) :: links_file = ""
+        character(len=256) :: nodes_file = "node_input.csv"
+        character(len=256) :: links_file = "link_input.csv"
+        type(CommandLineType) :: CommandLine
     end type OutputType
 
 
@@ -464,12 +485,11 @@ module define_settings
 
 contains
 
-    subroutine def_load_settings(fpath)
+    subroutine def_load_settings()
     !%-----------------------------------------------------------------------------
     !% Description:
     !%    Loads setting values from external JSON file.
     !%-----------------------------------------------------------------------------
-        character(len=254), intent(in) :: fpath
         character(kind=json_CK, len=:), allocatable :: c
         real(8) :: real_value
         integer :: integer_value
@@ -481,12 +501,8 @@ contains
 
         if (setting%Debug%File%define_settings) print *, '*** enter ', this_image(), subroutine_name
 
-        ! ---  Define paths
-        call getcwd(setting%Paths%project)
-        setting%Paths%setting = trim(setting%Paths%project) // '/definitions/settings.json'
-
         call json%initialize()
-        call json%load(filename = fpath)
+        call json%load(filename = trim(setting%paths%setting))
 
         ! Load ACmethod Settings
         call json%get('ACmethod.dtau', real_value, found)
@@ -601,6 +617,9 @@ contains
         call json%get('BC.slots', real_value, found)
         setting%BC%slots = real_value
         if (.not. found) stop "Error - setting " // 'BC.slots not found'
+        call json%get('BC.disableInterpolation', logical_value, found)
+        setting%BC%disableInterpolation = logical_value
+        if (.not. found) stop "Error - setting " // 'BC.disableInterpolation not found'
 
         ! Load Constant Settings
         call json%get('Constant.gravity', real_value, found)
@@ -849,6 +868,27 @@ contains
         call json%get('Time.DateTimeStamp', c, found)
         setting%Time%DateTimeStamp = c
         if (.not. found) stop "Error - setting " // 'Time.DateTimeStamp not found'
+
+        ! NOTE: these are NOT initialized because we set the times before the json file is read
+        !call json%get('Time.Real.EpochStartSeconds', integer_value, found)
+        !setting%Time%Real%EpochStartSeconds = integer_value
+        !if (.not. found) stop "Error - setting " // 'Time.Real.EpochStartSeconds not found'
+        !call json%get('Time.Real.EpochNowSeconds', integer_value, found)
+        !setting%Time%Real%EpochNowSeconds = integer_value
+        !if (.not. found) stop "Error - setting " // 'Time.Real.EpochNowSeconds not found'
+        !call json%get('Time.CPU.EpochStartSeconds', integer_value, found)
+
+        ! NOTE: these are NOT initialized because we set the times before the json file is read
+        !setting%Time%CPU%EpochStartSeconds = real_value
+        !if (.not. found) stop "Error - setting " // 'Time.CPU.EpochStartSeconds not found'
+        !call json%get('Time.CPU.EpochNowSeconds', real_value, found)
+        !setting%Time%CPU%EpochNowSeconds = real_value
+        !if (.not. found) stop "Error - setting " // 'Time.CPU.EpochNowSeconds not found'
+        !call json%get('Time.CPU.EpochFinishSeconds', real_value, found)
+        !setting%Time%CPU%EpochFinishSeconds = real_value
+        !if (.not. found) stop "Error - setting " // 'Time.CPU.EpochFinishSeconds not found'
+
+        ! Transverse Weir settings
         call json%get('Weir.Transverse.WeirExponent', real_value, found)
         setting%Weir%Transverse%WeirExponent = real_value
         if (.not. found) stop "Error - setting " // 'Weir.Transverse.WeirExponent not found'
@@ -862,6 +902,7 @@ contains
         setting%Weir%Transverse%VillemonteCorrectionExponent = real_value
         if (.not. found) stop "Error - setting " // 'Weir.Transverse.VillemonteCorrectionExponent not found'
 
+        ! Sideflow Weir settings
         call json%get('Weir.SideFlow.WeirExponent', real_value, found)
         setting%Weir%SideFlow%WeirExponent = real_value
         if (.not. found) stop "Error - setting " // 'Weir.SideFlow.WeirExponent not found'
@@ -942,6 +983,7 @@ contains
         setting%ZeroValue%Volume = real_value
         if (.not. found) stop "Error - setting " // 'ZeroValue.Volume not found'
 
+        ! Load Output settings
         call json%get('Output.report', logical_value, found)
         setting%Output%report = logical_value
         if (.not. found) stop "Error - setting " // 'Output.report not found'
@@ -963,6 +1005,12 @@ contains
         call json%get('Output.nodes_file', c, found)
         setting%Output%nodes_file = c
         if (.not. found) stop "Error - setting " // 'Output.nodes_file not found'
+        call json%get('Output.CommandLine.quiet', logical_value, found)
+        setting%Output%CommandLine%quiet = logical_value
+        if (.not. found) stop "Error - setting " // 'Output.CommandLine.quiet not found'
+        call json%get('Output.CommandLine.interval', integer_value, found)
+        setting%Output%CommandLine%interval = integer_value
+        if (.not. found) stop "Error - setting " // 'Output.CommandLine.interval not found'
 
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)

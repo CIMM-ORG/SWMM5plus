@@ -62,7 +62,7 @@ contains
             node%I(:, ni_P_image) = oneI
             node%I(:, ni_P_is_boundary) = zeroI
             link%I(:, li_P_image) = oneI
-            print*, "Triggered BIPquick Bypass"
+            print*, "Using one processor, bypassing partitioning"
             return
         end if
 

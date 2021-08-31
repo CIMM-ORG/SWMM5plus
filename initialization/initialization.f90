@@ -57,6 +57,14 @@ contains
         character(64) :: subroutine_name = 'initialize_all'
         if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
     !%-----------------------------------------------------------------------------
+
+        !% ---  Define project & settings paths
+        call getcwd(setting%Paths%project)
+        setting%paths%setting = trim(setting%Paths%project) // "/definitions/settings.json"
+
+        !% read and store the command-line options
+        call init_read_arguments ()
+
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
         !% HACK: for clarity and consistency, this probably should be moved into
@@ -67,7 +75,7 @@ contains
 
         !% load the settings.json file with the default setting% model control structure
         !% def_load_settings is one of the few subroutines in the Definition modules
-        call def_load_settings(setting%Paths%setting)
+        call def_load_settings()
 
         !% read and store the command-line options
         call init_read_arguments ()
@@ -77,26 +85,47 @@ contains
         !% initialize the API with the SWMM-C code
         call interface_init ()
 
+        !if (setting%Verbose) print *, "begin link-node processing"
+
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays ()
+
+        !if (setting%Verbose) print *, "begin partitioning"
 
         call init_partitioning()
 
         !% HACK: this sync call is probably not needed
         sync all
 
+        !if (setting%Verbose) print *, "begin network definition"
+
         call init_network_define_toplevel ()
+
+        !if (setting%Verbose) print *, "begin reading csv"
 
         !% read in link names for output
         call output_read_csv_link_names()
         call output_read_csv_node_names()
+
+        !if (setting%Verbose) print *, "begin initializing boundary conditions"
 
         !% initialize boundary conditions
         call init_bc()
 
         call init_time()
 
+        if (setting%Verbose) then
+            if (this_image() == 1) then
+            if ((N_link > 5000) .or. (N_node > 5000)) then
+                print *, "begin setting initial conditions (this takes several minutes for big systems)"
+                print *, "This system has ",N_link,"links and",N_node,"nodes"
+                print *, "The finite-volume system is ", sum(N_elem(:)), " elements"
+            endif
+        endif
+        endif
         call init_IC_setup ()
+
+        !if (setting%Verbose) print *, "begin setup of output files"
 
         !% creating output_folders and files
         call util_output_clean_folders()

@@ -667,8 +667,9 @@ module lowlevel_rk2
         integer, intent(in) :: whichTM
         integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
         integer, pointer :: Npack
-        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) ! BRHbugfix 20210811
-        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), vMax
+        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) ! BRHbugfix 20210811 
+        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), vMax ! BRHbugfix 20210829
+        real(8), pointer :: eVolume(:), dt  !BRHbugfix 20210829
         logical, pointer :: isAdhocFlowrate(:)
         integer :: ii, kk, tB
         !% BRHbugfix 20210812 start
@@ -682,6 +683,8 @@ module lowlevel_rk2
         eArea        => elemR(:,er_Area)
         eVelocity    => elemR(:,er_Velocity)
         eFlow        => elemR(:,er_Flowrate)
+        eVolume      => elemR(:,er_Volume)       ! BRHbugfix 20210829
+        
         fFlow        => faceR(:,fr_Flowrate)
         iFaceUp      => elemI(:,ei_Mface_uL) !% BRHbugfix 20210811
         iFaceDn      => elemI(:,ei_Mface_dL)!% BRHbugfix 20210811
@@ -694,6 +697,7 @@ module lowlevel_rk2
         vMax         => setting%Limiter%Velocity%Maximum
         isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
         !% BRHbugfix 20210811 end
+        dt           => setting%Time%Hydraulics%Dt  ! BRHbugfix 20210829
         !%-----------------------------------------------------------------------------
         !%
         select case (whichTM)
@@ -725,11 +729,14 @@ module lowlevel_rk2
                         dHead = fHead_u(tFup) - eHead(tB) !% using elem to face
                         if (dHead >= zeroR) then
                             ! downstream flow in an upstream branch use upstream values
-                            eFlow(tB) = fFlow(tFup) !% using face
+                            !BRH bugfix 20210829eFlow(tB) = fFlow(tFup) !% using face
                             !eFlow(tB) = eFlow(tEup)!%  using elem
+                            eFlow(tB) = eArea(tB) * sqrt(twoR * setting%Constant%gravity * dHead) !BRH bugfix 20210829
                         else
                             ! upstream flow in an upstream branch
                             eFlow(tB) = - eArea(tB) * sqrt(twoR * setting%Constant%gravity * (-dHead))
+                            ! if outflow, limit negative flowrate by 1/3 main volume
+                            eFlow(tB) = max(eFlow(tB), -eVolume(tM)/(threeR * dt) ) !BRHbugfix 20210829
                         end if
 
                         !% HACK: Fix for velocity blowup
@@ -756,11 +763,14 @@ module lowlevel_rk2
                         dHead = eHead(tB) - fHead_d(tFdn) !% using elem to face
                         if (dHead < zeroR) then
                             ! upstream flow in a downstream branch use downstream values
-                            eFlow(tB) = fFlow(tFdn) !% using face
+                            !BRH bugfix 20210829 eFlow(tB) = fFlow(tFdn) !% using face
                             !eFlow(tB) = eFlow(tEdn) !%  using elem
+                            eFlow(tB) =  - eArea(tB) * sqrt(twoR * setting%Constant%gravity * (-dHead) ) !BRH bugfix 20210829
                         else
                             ! downstream flow in an downstream branch
                             eFlow(tB) =  + eArea(tB) * sqrt(twoR * setting%Constant%gravity * dHead )
+                            ! if outflow, limit flowrate by 1/3 main volume
+                            eFlow(tB) = min(eFlow(tB), eVolume(tM)/(threeR * dt) )  !BRHbugfix 20210829
                         end if
 
                         !% HACK: Fix for velocity blowup
