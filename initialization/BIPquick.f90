@@ -84,7 +84,6 @@ contains
 
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
-            ! print*, "Partition", mp
 
             !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
             B_nodeR(:, totalweight) = 0.0
@@ -93,10 +92,6 @@ contains
 
             !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
             call calc_totalweight(max_weight)
-
-            ! do ii = 1, size(B_nodeR, 1)
-            !     print*, node%I(ii, ni_idx), B_nodeR(ii, :)
-            ! end do
 
             !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
             partition_threshold = max_weight/real(num_images() - mp + 1, 8)
@@ -128,28 +123,28 @@ contains
                 !% The outcomes of the Case 3 while loop are a Case 1
                 if ( ideal_exists .eqv. .true. ) then
 
-                !% In which case traverse the subnetwork from the effective_root
-                call trav_subnetwork(effective_root, image)
+                    !% In which case traverse the subnetwork from the effective_root
+                    call trav_subnetwork(effective_root, image)
 
                 !% Or Case 2
                 else if ( spanning_link /= nullValueI ) then
 
-                !% In which case the distance along the spanning_link to the phantom node is calculated
-                phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
+                    !% In which case the distance along the spanning_link to the phantom node is calculated
+                    phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
 
-                !% This subroutine creates a phantom node/link and adds it to node%I/link%I
-                call phantom_node_generator &
-                (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
+                    !% This subroutine creates a phantom node/link and adds it to node%I/link%I
+                    call phantom_node_generator &
+                    (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
 
-                !% This subroutine does the same thing as the previous call to trav_subnetwork()
-                call trav_subnetwork(phantom_node_idx, image)
+                    !% This subroutine does the same thing as the previous call to trav_subnetwork()
+                    call trav_subnetwork(phantom_node_idx, image)
 
-                phantom_node_idx = phantom_node_idx + 1
-                phantom_link_idx = phantom_link_idx + 1
+                    phantom_node_idx = phantom_node_idx + 1
+                    phantom_link_idx = phantom_link_idx + 1
 
                 else
-                print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
-                stop
+                    print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
+                    stop
 
                 end if
 
@@ -270,13 +265,13 @@ contains
         !% Sometimes the Interface gives garbage for these values so I need to adjust
         length = link%R(link_index, lr_Length)
         if ( (length < 0.0) .or. (length > nullValueI) ) then
-        length = 1.0
+            length = 1.0
         end if
 
         !% In particular sometimes the lr_ElementLength can be Infinity
         element_length = link%R(link_index, lr_ElementLength)
         if ( (element_length < 0.0) .or. (element_length > length) ) then
-        element_length = 1.0
+            element_length = 1.0
         end if
 
         !% The link weight is equal to the link length divided by the element length
@@ -309,21 +304,21 @@ contains
         !% Calculates directweight for each node
         do ii = 1, size(node%I,1)
 
-        if ( node%I(ii, ni_idx) == nullValueI ) then
-        cycle
-        end if
+            if ( node%I(ii, ni_idx) == nullValueI ) then
+                cycle
+            end if
 
-        !% Need a loop bc multiple links might have a given node as its downstream endpoint
-        do jj=1,size(link%I(:, li_Mnode_d))
+            !% Need a loop bc multiple links might have a given node as its downstream endpoint
+            do jj=1,size(link%I(:, li_Mnode_d))
 
-        !% If the link has the current node as a downstream endpoint
-        if (link%I(jj, li_Mnode_d) == node%I(ii, ni_idx)) then
+                !% If the link has the current node as a downstream endpoint
+                if (link%I(jj, li_Mnode_d) == node%I(ii, ni_idx)) then
 
-        !% The directweight for that node is the running total of link weights
-        B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
-        + calc_link_weights(link%I(jj, li_idx))
-        end if
-        end do
+                    !% The directweight for that node is the running total of link weights
+                    B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
+                    + calc_link_weights(link%I(jj, li_idx))
+                end if
+            end do
         end do
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
@@ -353,26 +348,26 @@ contains
         !% and the node has not already been partitioned
         if ( (totalweight_visited_nodes(root) .eqv. .false.) .and. (partitioned_nodes(root) .eqv. .false.) ) then
 
-        !% Mark the current root node as having been visited
-        totalweight_visited_nodes(root) = .true.
+            !% Mark the current root node as having been visited
+            totalweight_visited_nodes(root) = .true.
 
-        !% The totalweight of the weight_index node is increased by the root node's directweight
-        B_nodeR(weight_index, totalweight) = B_nodeR(weight_index, totalweight) + B_nodeR(root, directweight)
+            !% The totalweight of the weight_index node is increased by the root node's directweight
+            B_nodeR(weight_index, totalweight) = B_nodeR(weight_index, totalweight) + B_nodeR(root, directweight)
 
-        !% The adjacent upstream nodes are saved
-        upstream_node_list = B_nodeI(root,:)
+            !% The adjacent upstream nodes are saved
+            upstream_node_list = B_nodeI(root,:)
 
-        !% Iterate through the adjacent upstream nodes
-        do jj= 1, size(upstream_node_list)
+            !% Iterate through the adjacent upstream nodes
+            do jj= 1, size(upstream_node_list)
 
-        !% If the upstream node exists
-        if ( upstream_node_list(jj) /= nullValueI) then
+                !% If the upstream node exists
+                if ( upstream_node_list(jj) /= nullValueI) then
 
-        !% The call the recursive calc_upstream_weight on the weight_index node
-        !% and the adjacent upstream node as the new root
-        call calc_upstream_weight(weight_index, upstream_node_list(jj))
-        end if
-        end do
+                    !% The call the recursive calc_upstream_weight on the weight_index node
+                    !% and the adjacent upstream node as the new root
+                    call calc_upstream_weight(weight_index, upstream_node_list(jj))
+                end if
+            end do
         end if
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
@@ -401,23 +396,23 @@ contains
         !% Calculates the totalweight for all nodes
         do ii=1, size(node%I,1)
 
-        if ( node%I(ii, ni_idx) == nullValueI ) then
-        cycle
-        end if
+            if ( node%I(ii, ni_idx) == nullValueI ) then
+                cycle
+            end if
 
-        !% Provided that the node has not already been assigned to a partition
-        if ( node%I(ii, ni_P_image) == nullValueI ) then
+            !% Provided that the node has not already been assigned to a partition
+            if ( node%I(ii, ni_P_image) == nullValueI ) then
 
-        !% The boolean for visited nodes during the upstream traversal is reset
-        totalweight_visited_nodes(:) = .false.
+                !% The boolean for visited nodes during the upstream traversal is reset
+                totalweight_visited_nodes(:) = .false.
 
-        !% The weight_index is saved so that the recursive calc_upstream_weight knows where to add the totalweight updates
-        weight_index = ii
+                !% The weight_index is saved so that the recursive calc_upstream_weight knows where to add the totalweight updates
+                weight_index = ii
 
-        !% The weight_index (i.e. the current node) is passed to the first iteration
-        !% of calc_upstream_weight as both the node being updated and the root node for traversal
-        call calc_upstream_weight(weight_index, weight_index)
-        end if
+                !% The weight_index (i.e. the current node) is passed to the first iteration
+                !% of calc_upstream_weight as both the node being updated and the root node for traversal
+                call calc_upstream_weight(weight_index, weight_index)
+            end if
         end do
 
         !% The max_weight is the largest totalweight value for this partition
@@ -451,32 +446,32 @@ contains
         !% If the root node has not been added to a partition
         if  ( partitioned_nodes(root) .eqv. .false. ) then
 
-        !% Mark it as having been added to a partition
-        partitioned_nodes(root) = .true.
+            !% Mark it as having been added to a partition
+            partitioned_nodes(root) = .true.
 
-        !% Add that node to the current image
-        node%I(root, ni_P_image) = image
+            !% Add that node to the current image
+            node%I(root, ni_P_image) = image
 
-        !% Save the adjacent upstream nodes
-        upstream_node_list = B_nodeI(root, :)
+            !% Save the adjacent upstream nodes
+            upstream_node_list = B_nodeI(root, :)
 
-        !% Find the links that are in the subnetwork and mark them as being added to a partition
-        do jj = 1, size(link%I, 1)
-        if ( link%I(jj, li_Mnode_d) == root ) then
-        partitioned_links(jj) = .true.
-        end if
-        end do
+            !% Find the links that are in the subnetwork and mark them as being added to a partition
+            do jj = 1, size(link%I, 1)
+                if ( link%I(jj, li_Mnode_d) == root ) then
+                    partitioned_links(jj) = .true.
+                end if
+            end do
 
-        !% Iterate through the upstream nodes
-        do jj = 1, size(upstream_node_list)
+            !% Iterate through the upstream nodes
+            do jj = 1, size(upstream_node_list)
 
-        !% If the upstream node exists
-        if ( upstream_node_list(jj) /= nullValueI ) then
+                !% If the upstream node exists
+                if ( upstream_node_list(jj) /= nullValueI ) then
 
-        !% call the recursive subroutine on the new root node
-        call trav_subnetwork(upstream_node_list(jj), image)
-        end if
-        end do
+                    !% call the recursive subroutine on the new root node
+                    call trav_subnetwork(upstream_node_list(jj), image)
+                end if
+            end do
 
         end if
 
@@ -507,40 +502,38 @@ contains
         !% Save the system nodes as potential endpoints
         potential_endpoints(:) = node%I(:, ni_idx)
 
-        !% HACK - I'm not sure if this logic is air tight
-
         !% For each link, if the link is not nullValueI
         do jj=1, size(link%I,1)
-        if ( link%I(jj, li_idx) /= nullValueI ) then
+            if ( link%I(jj, li_idx) /= nullValueI ) then
 
-        !% Save the endpoints of that link
-        endpoint_up = link%I(jj, li_Mnode_u)
-        endpoint_dn = link%I(jj, li_Mnode_d)
+                !% Save the endpoints of that link
+                endpoint_up = link%I(jj, li_Mnode_u)
+                endpoint_dn = link%I(jj, li_Mnode_d)
 
-        !% If the endpoints are in the nodes array and the link has not been accounted for
-        if ( any(potential_endpoints(:) == endpoint_up) .and. &
-        any(potential_endpoints(:) == endpoint_dn) .and. &
-        ( accounted_for_links(jj) .eqv. .false.) ) then
+                !% If the endpoints are in the nodes array and the link has not been accounted for
+                if ( any(potential_endpoints(:) == endpoint_up) .and. &
+                any(potential_endpoints(:) == endpoint_dn) .and. &
+                ( accounted_for_links(jj) .eqv. .false.) ) then
 
-        !% Assign the link to the downstream node's image
-        dn_image = node%I(endpoint_dn, ni_P_image)
-        link%I(jj, li_P_image) = dn_image
+                    !% Assign the link to the downstream node's image
+                    dn_image = node%I(endpoint_dn, ni_P_image)
+                    link%I(jj, li_P_image) = dn_image
 
-        !% Set the accounted for boolean to true
-        accounted_for_links(jj) = .true.
-        end if
-        end if
+                    !% Set the accounted for boolean to true
+                    accounted_for_links(jj) = .true.
+                end if
+            end if
         end do
 
         !% This do loop just checks any links that somehow slipped through
         do jj=1, size(accounted_for_links, 1)
-        if ( ( accounted_for_links(jj) .eqv. .false. ) &
-        .and. ( link%I(jj, li_idx) /= nullValueI ) ) then
-        endpoint_dn = link%I(jj, li_Mnode_d)
-        dn_image = node%I(endpoint_dn, ni_P_image)
-        link%I(jj, li_P_image) = dn_image
-        accounted_for_links(jj) = .true.
-        end if
+            if ( ( accounted_for_links(jj) .eqv. .false. ) &
+            .and. ( link%I(jj, li_idx) /= nullValueI ) ) then
+                endpoint_dn = link%I(jj, li_Mnode_d)
+                dn_image = node%I(endpoint_dn, ni_P_image)
+                link%I(jj, li_P_image) = dn_image
+                accounted_for_links(jj) = .true.
+            end if
         end do
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
@@ -605,52 +598,10 @@ contains
                 effective_root = node%I(ii, ni_idx)
             end if
 
-            ! effective_root = ideal_junction_test(ii, partition_threshold, ideal_exists)
-
         end do
-
-        !% The effective root is the one that most nearly overestimates the partition threshold
-        !% reverse The Price Is Right style
-        ! print*, "Effective root:", effective_root
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end function calc_effective_root
-    !
-    !============================================================================
-    !============================================================================
-    !
-    function ideal_junction_test(node_index, partition_threshold, ideal_exists) result (ideal_junction)
-        !-----------------------------------------------------------------------------
-        !
-        ! Description: This subroutine is used to check for an ideal junction, meaning a junction
-        ! that has the partition_threshold if only some of the upstream links are considered
-        !
-        !-----------------------------------------------------------------------------
-
-        character(64) :: subroutine_name = 'ideal_junction_test'
-        integer :: ideal_junction
-
-        real(8), intent(in) :: partition_threshold
-        logical, intent(in out) :: ideal_exists
-        integer, intent(in) :: node_index
-
-        integer             :: upstream_nodes
-        real(8)             :: remainder
-        !--------------------------------------------------------------------------
-        
-        upstream_nodes = count((B_nodeI(node_index, :) .ne. nullValueI))
-        
-        remainder = mod(B_nodeR(node_index, totalweight), partition_threshold)
-
-        print*, remainder, partition_threshold, B_nodeR(node_index, totalweight)
-
-        if ( remainder == zeroR ) then
-            print*, "Found an ideal junction", node_index
-        end if
-
-
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
-    end function ideal_junction_test
     !
     !============================================================================
     !============================================================================
@@ -678,38 +629,34 @@ contains
         !% Check each link for spanning the partition threshold
         do jj=1, size(link%I,1)
 
-        if ( link%I(jj, li_idx) == nullValueI ) then
-        cycle
-        end if
+            if ( link%I(jj, li_idx) == nullValueI ) then
+                cycle
+            end if
 
-        !% Save the upstream node of the current link
-        upstream_node = link%I(jj, li_Mnode_u)
+            !% Save the upstream node of the current link
+            upstream_node = link%I(jj, li_Mnode_u)
 
-        !% The first entry of the weight_range is the upstream node's totalweight
-        weight_range(oneI) = B_nodeR(upstream_node, totalweight)
+            !% The first entry of the weight_range is the upstream node's totalweight
+            weight_range(oneI) = B_nodeR(upstream_node, totalweight)
 
-        !% The second entry is the first entry + the weight of the link
-        weight_range(twoI) = weight_range(oneI) + calc_link_weights(link%I(jj, li_idx))
+            !% The second entry is the first entry + the weight of the link
+            weight_range(twoI) = weight_range(oneI) + calc_link_weights(link%I(jj, li_idx))
 
-        ! print*, "Link", jj, "Weight Range", weight_range(:), "Partition Threshold", partition_threshold, &
-        !   "Partitioned Links", partitioned_links(jj)
+            !% If the partition threshold is between the weight_range entries
+            !% and that link has not yet been partitioned
+            if ( (weight_range(oneI) < partition_threshold) .and. &
+            (partition_threshold < weight_range(twoI)) .and. &
+            (partitioned_links(jj) .eqv. .false.) ) then
 
-        !% If the partition threshold is between the weight_range entries
-        !% and that link has not yet been partitioned
-        if ( (weight_range(oneI) < partition_threshold) .and. &
-        (partition_threshold < weight_range(twoI)) .and. &
-        (partitioned_links(jj) .eqv. .false.) ) then
+                !% The current link is the spanning link
+                spanning_link = link%I(jj, li_idx)
 
-        !% The current link is the spanning link
-        spanning_link = link%I(jj, li_idx)
-        ! print*, "The new spanning link is:  ", spanning_link
+                !% Mark this link as being partitioned
+                partitioned_links(jj) = .true.
 
-        !% Mark this link as being partitioned
-        partitioned_links(jj) = .true.
-
-        !% Only need one spanning link - if found, exit
-        exit
-        end if
+                !% Only need one spanning link - if found, exit
+                exit
+            end if
         end do
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
@@ -905,8 +852,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
-        print*, "Case 3 Found, effective_root is: ", effective_root
-
         !% The upstream node list is used to chose a branch for removal
         !% The effective root is guaranteed to have at least one upstream node
         upstream_node_list(:) = B_nodeI(effective_root, :)
@@ -915,25 +860,24 @@ contains
         !% Find the link who's upstream node is the upstream_node
         do jj=1,size(link%I,1)
 
-        !% If the link index is nullValue then cycle
-        if ( link%I(jj, li_idx) == nullValueI ) then
-        cycle
-        end if
+            !% If the link index is nullValue then cycle
+            if ( link%I(jj, li_idx) == nullValueI ) then
+                cycle
+            end if
 
-        !% If the link has upstream_node as its upstream node
-        if (link%I(jj, li_Mnode_u) == upstream_node) then
+            !% If the link has upstream_node as its upstream node
+            if (link%I(jj, li_Mnode_u) == upstream_node) then
 
-        !% The clipped weight is the upstream totalweight + the link weight
-        total_clipped_weight = B_nodeR(upstream_node, totalweight) &
-        + calc_link_weights(jj)
-        ! print*, "The weight being clipped from the effective node is", total_clipped_weight
+                !% The clipped weight is the upstream totalweight + the link weight
+                total_clipped_weight = B_nodeR(upstream_node, totalweight) &
+                + calc_link_weights(jj)
 
-        !% Tags the link as being partitioned (removes it from the spanning link potential)
-        partitioned_links(jj) = .true.
+                !% Tags the link as being partitioned (removes it from the spanning link potential)
+                partitioned_links(jj) = .true.
 
-        !% Exit saves time and records jj for later use
-        exit
-        end if
+                !% Exit saves time and records jj for later use
+                exit
+            end if
         end do
 
         !% Reduce the effective_root directweight by the link length
@@ -951,8 +895,6 @@ contains
 
         !% Reduce the partition_threshold by the total_clipped_weight too
         partition_threshold = partition_threshold - total_clipped_weight
-
-        print*, "Calling subnetwork carving on ", upstream_node
 
         !% Assigns the link to the current image and removes it from future assignment
         link%I(jj, li_P_image) = image
@@ -997,25 +939,25 @@ contains
         !% Check each node in the network
         do ii = 1, size(node%I, 1)
 
-        !% Create a list of links that are adjacent to the node
-        adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
+            !% Create a list of links that are adjacent to the node
+            adjacent_links = node%I(ii, ni_Mlink_u1:ni_Mlink_d3)
 
-        !% Iterate through that list
-        do kk = 1, size(adjacent_links)
+            !% Iterate through that list
+            do kk = 1, size(adjacent_links)
 
-        !% If the adjacent link doesn't exist, skip it
-        if ( adjacent_links(kk) == nullValueI ) then
-        cycle
-        end if
+                !% If the adjacent link doesn't exist, skip it
+                if ( adjacent_links(kk) == nullValueI ) then
+                    cycle
+                end if
 
-        !% Check the image that the link has been assigned to (from trav_assign_link)
-        link_image = link%I(adjacent_links(kk), li_P_image)
+                !% Check the image that the link has been assigned to (from trav_assign_link)
+                link_image = link%I(adjacent_links(kk), li_P_image)
 
-        !% If the link and the image are on separate images, increment the ni_P_is_boundary
-        if ( link_image /= node%I(ii, ni_P_image) ) then
-        node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
-        end if
-        end do
+                !% If the link and the image are on separate images, increment the ni_P_is_boundary
+                if ( link_image /= node%I(ii, ni_P_image) ) then
+                    node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
+                end if
+            end do
         end do
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
@@ -1045,7 +987,7 @@ contains
 
         !% The sum of the ni_P_is_boundary column is the connectivity value
         do ii = 1, size(node%I, 1)
-        connectivity = connectivity + node%I(ii, ni_P_is_boundary)
+            connectivity = connectivity + node%I(ii, ni_P_is_boundary)
         end do
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
