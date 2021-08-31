@@ -35,7 +35,7 @@ contains
     fu = this_image()
 
     !& here we create the file name that will be opened by the code
-    write(str_image, '(i5)') fu
+    write(str_image, '(i5.5)') fu
     file_name = 'debug/'//trim(file_name_input)//'_'//trim(str_image)//'.csv'
 
     !% opening the file, as well as error handing if the open fails

@@ -158,17 +158,17 @@ contains
         character(64) :: subroutine_name = 'output_create_link_files'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) print *, '*** enter ', this_image(), subroutine_name
 
 
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
 
         do ii=1, size(link%P%have_output)
 
             !% check if the link is a phantom link and if so find original link name and open correct file for the correct processor
             !% otherwise open file in the usual format of "link name_imageID.csv"
             if (link%P%have_output(ii) > size(link%names(:))) then
-                write(str_idx, '(i5)') link%P%have_output(ii)
+                write(str_idx, '(i5.5)') link%P%have_output(ii)
                 temp_link_idx = link%P%have_output(ii)
                 file_name = "debug_output/link/"//trim(link%names(link%I(temp_link_idx,li_parent_link))%str) &
                     //"_"//trim(str_image)//"_"//trim(str_idx)//".csv"
@@ -204,7 +204,7 @@ contains
         if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
 
         !% Get current image as a string
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
 
         do ii=1, size(node%P%have_output)
 
@@ -244,7 +244,7 @@ contains
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
 
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
         time_secs = setting%Time%Now
         time_epoch = util_datetime_secs_to_epoch(time_secs)
         call util_datetime_decodedate(time_epoch, yr, mnth, dy)
@@ -265,7 +265,7 @@ contains
             !% check if the link is a phantom link and if so find original link name and open correct file for the correct processor
             !% otherwise open file in the usual format of "link name_imageID.csv"
             if (link%P%have_output(ii) > size(link%names(:))) then
-                write(str_idx, '(i5)') link%P%have_output(ii)
+                write(str_idx, '(i5.5)') link%P%have_output(ii)
                 temp_link_idx = link%P%have_output(ii)
                 file_name = "debug_output/link/"//trim(link%names(link%I(temp_link_idx,li_parent_link))%str) &
                     //"_"//trim(str_image)//"_"//trim(str_idx)//".csv"
@@ -311,7 +311,7 @@ contains
         if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
 
         !% converter image ID to string, as well as get current time
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
         time_secs = setting%Time%Now
         time_epoch = util_datetime_secs_to_epoch(time_secs)
         call util_datetime_decodedate(time_epoch, yr, mnth, dy)
@@ -417,7 +417,7 @@ contains
 
                 if (first_iteration(pp)) then
                     !% define parent filename
-                    write(str_image, '(i5)') link%I(temp_link_idx,li_P_image)
+                    write(str_image, '(i5.5)') link%I(temp_link_idx,li_P_image)
                     parent_file_name = "debug_output/link/"// &
                         trim(link%names(link%I(temp_link_idx,li_parent_link))%str) &
                             //"_"//trim(str_image)//".csv"
@@ -450,8 +450,8 @@ contains
                     if (link%I(temp_link_idx, li_num_phantom_links) > 0) then
                         do jj = 1, link%I(temp_link_idx, li_num_phantom_links)
                             temp_phantom_link = link_output_idx(ii+jj)
-                            write(str_image, '(i5)') link%I(temp_phantom_link,li_P_image)
-                            write(str_idx, '(i5)')   temp_phantom_link
+                            write(str_image, '(i5.5)') link%I(temp_phantom_link,li_P_image)
+                            write(str_idx, '(i5.5)')   temp_phantom_link
                             phantom_file_name = "debug_output/link/"// &
                                 trim(link%names(link%I(temp_phantom_link,li_parent_link))%str) &
                                 //"_"//trim(str_image)//"_"//trim(str_idx)//".csv"
@@ -537,7 +537,7 @@ contains
         if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
 
         !% Get current image as a string
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
 
         do ii=1, size(node%P%have_output)
 
