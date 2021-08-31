@@ -58,15 +58,15 @@ contains
 
         !% >>> BEGIN HACK
         !%     Temporary for debugging (can be deleted for deployment)
-            if (setting%Debug%Output) then
-                !% Write .out in readable .csv
-                if (this_image() == 1) then
-                    additional_rows = num_images() - 1
-                    do ii = 1, size(Link%Names) - additional_rows
-                        call interface_export_link_results(ii)
-                    end do
-                end if
-            end if
+        ! if (setting%Debug%Output) then
+        !     !% Write .out in readable .csv
+        !     if (this_image() == 1) then
+        !         additional_rows = num_images() - 1
+        !         do ii = 1, size(Link%I,1) - additional_rows
+        !             call interface_export_link_results(ii)
+        !         end do
+        !     end if
+        ! end if
         !% >>> END HACK
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name

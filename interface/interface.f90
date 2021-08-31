@@ -36,6 +36,8 @@ module interface
     public :: interface_get_flowBC
     public :: interface_get_headBC
     public :: interface_find_object
+    public :: inteface_update_nodeResult
+    public :: inteface_update_linkResult
     public :: interface_write_output_line
     public :: interface_export_link_results
 
@@ -174,7 +176,7 @@ module interface
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in) :: object_type
-            character(c_char), dimension(*) :: object_name
+            character(c_char), dimension(*)   :: object_name
             integer(c_int) :: api_find_object
         end function api_find_object
 
@@ -183,9 +185,9 @@ module interface
         function api_export_link_results(api, link_idx)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
-            integer(c_int), value, intent(in) :: link_idx
-            integer(c_int) :: api_export_link_results
+            type(c_ptr),    value, intent(in) :: api
+            integer(c_int), value             :: link_idx
+            integer(c_int)                    :: api_export_link_results
         end function api_export_link_results
 
         function api_write_output_line(api, t)
@@ -196,23 +198,23 @@ module interface
             integer(c_int)                    :: api_write_output_line
         end function api_write_output_line
 
-        function api_update_nodeResult(api, node_idx, newNodeResult, resultType)
+        function api_update_nodeResult(api, node_idx, resultType, newNodeResult)
             use, intrinsic :: iso_c_binding
             implicit none
             type(c_ptr),    value, intent(in) :: api
-            integer(c_int), value, intent(in) :: node_idx
-            real(c_double),        intent(in) :: newNodeResult
-            integer(c_int), value, intent(in) :: resultType
+            integer(c_int), value             :: node_idx
+            integer(c_int), value             :: resultType
+            real(c_double), intent(in)        :: newNodeResult
             integer(c_int)                    :: api_update_nodeResult
         end function api_update_nodeResult
 
-        function api_update_linkResult(api, link_idx, newLinkResult, resultType)
+        function api_update_linkResult(api, link_idx, resultType, newLinkResult)
             use, intrinsic :: iso_c_binding
             implicit none
             type(c_ptr),    value, intent(in) :: api
-            integer(c_int), value, intent(in) :: link_idx
-            real(c_double),        intent(in) :: newLinkResult
-            integer(c_int), value, intent(in) :: resultType
+            integer(c_int), value             :: link_idx
+            integer(c_int), value             :: resultType
+            real(c_double), value, intent(in) :: newLinkResult
             integer(c_int)                    :: api_update_linkResult
         end function api_update_linkResult
 
@@ -838,9 +840,8 @@ contains
 
     subroutine interface_export_link_results(link_idx)
         integer, intent(in) :: link_idx
-        character(64) :: subroutine_name
-
-        subroutine_name = 'interface_export_link_results'
+        integer :: error
+        character(64) :: subroutine_name = 'interface_export_link_results'
 
         if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
@@ -851,17 +852,18 @@ contains
             stop
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_export_link_results)
-        call ptr_api_export_link_results(api, link_idx-1)
+        error = ptr_api_export_link_results(api, link_idx-1)
+        call print_api_error(error, subroutine_name)
 
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
-
     end subroutine interface_export_link_results
 
-    subroutine inteface_update_nodeResult(node_idx, node_result, result_type)
+    subroutine inteface_update_nodeResult(node_idx, result_type, node_result)
         !%-----------------------------------------------------------------------------
-        integer :: node_idx, result_type, error
-        real(8) :: node_result
-        character(64) :: subroutine_name = "inteface_update_nodeResult"
+        integer, intent(in) :: node_idx, result_type
+        real(8), intent(in) :: node_result
+        integer             :: error
+        character(64)       :: subroutine_name = "inteface_update_nodeResult"
         !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
@@ -873,17 +875,18 @@ contains
             stop
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
-        error = ptr_api_update_nodeResult(api, node_idx-1, node_result, result_type)
+        error = ptr_api_update_nodeResult(api, node_idx-1, result_type, node_result)
         call print_api_error(error, subroutine_name)
 
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine inteface_update_nodeResult
 
-    subroutine inteface_update_linkResult(link_idx, link_result, result_type)
+    subroutine inteface_update_linkResult(link_idx, result_type, link_result)
         !%-----------------------------------------------------------------------------
-        integer :: link_idx, result_type, error
-        real(8) :: link_result
-        character(64) :: subroutine_name = "inteface_update_linkResult"
+        integer, intent(in) :: link_idx, result_type
+        real(8), intent(in) :: link_result
+        integer             :: error
+        character(64)       :: subroutine_name = "inteface_update_linkResult"
         !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
@@ -895,7 +898,7 @@ contains
             stop
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
-        error = ptr_api_update_linkResult(api, link_idx-1, link_result, result_type)
+        error = ptr_api_update_linkResult(api, link_idx-1, result_type, link_result)
         call print_api_error(error, subroutine_name)
 
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
@@ -906,14 +909,14 @@ contains
     !% Description:
     !%    Writes .out file with SWMM5+ data
     !%-----------------------------------------------------------------------------
-        real(8),       intent(in) :: reportTime ! time in seconds
+        real(c_double),intent(in) :: reportTime ! time in seconds
         integer                   :: error
         character(64)             :: subroutine_name = "interface_write_output_line"
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  print *, '*** enter ', this_image(), subroutine_name
 
-        c_lib%procname = "api_write_output"
+        c_lib%procname = "api_write_output_line"
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
@@ -1071,7 +1074,7 @@ contains
         character(64), intent(in) :: subroutine_name
 
         if (error /= 0) then
-            write(*, "(A,i2,A)") "EPA-SWMM Error Code: ", error, "in ", subroutine_name
+            write(*, "(A,i2,A)") "EPA-SWMM Error Code: ", error, " in "// subroutine_name
             stop
         end if
     end subroutine print_api_error

@@ -407,8 +407,9 @@ contains
         integer :: temp_link_idx, temp_phantom_link ,link_output_idx_length
         integer :: start_elem, end_elem,num_elems
         integer, allocatable :: file_idx(:)
-        real(8) :: time_secs, time_epoch, flowrate
-        real(8), allocatable :: full_length(:), avg_flowrate(:), tt(:)
+        real(8)              :: time_secs, time_epoch, flowrate
+        real(8), pointer     :: avg_flowrate(:)
+        real(8), allocatable :: full_length(:), tt(:)
         logical, allocatable :: first_iteration(:)
         logical, allocatable :: its_over(:)
         character(len = 250) :: parent_file_name, phantom_file_name
@@ -422,12 +423,13 @@ contains
         link_output_idx_length = count(link_output_idx(:) /= nullvalueI)
         N_phantoms = sum(link%I(:, li_num_phantom_links))
         N_parents = link_output_idx_length - N_phantoms
+
         allocate(first_iteration(N_parents))
         allocate(full_length(N_parents))
-        allocate(avg_flowrate(N_parents))
         allocate(its_over(N_parents))
         allocate(tt(N_parents))
         allocate(file_idx(link_output_idx_length+N_parents))
+        avg_flowrate => link%R(:, lr_flowrate)
 
         first_iteration(:) = .true.
         full_length(:) = 0
@@ -529,6 +531,9 @@ contains
                         write(file_idx(link_output_idx_length+pp), '(F0.16)', advance = 'no') time_secs
                         write(file_idx(link_output_idx_length+pp), '(A)',     advance = 'no') ','
                         write(file_idx(link_output_idx_length+pp), '(*(G0.6 : ","))') avg_flowrate(pp)
+
+                        !% Stage entry for .out
+                        call inteface_update_linkResult(pp, api_output_link_flow, real(avg_flowrate(pp),8))
                         avg_flowrate(pp) = 0
                         tt(pp) = tt(pp) + 1
                     end if
@@ -537,6 +542,8 @@ contains
                 ii = ii + link%I(temp_link_idx, li_num_phantom_links) + 1
                 pp = pp + 1
             end do
+            !% Write line of .out
+            call interface_write_output_line(time_secs)
         end do
 
         do ii = 1, size(file_idx)
@@ -545,7 +552,6 @@ contains
 
         deallocate(first_iteration)
         deallocate(full_length)
-        deallocate(avg_flowrate)
         deallocate(its_over)
         deallocate(file_idx)
     end subroutine output_combine_links

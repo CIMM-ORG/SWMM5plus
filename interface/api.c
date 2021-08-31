@@ -661,7 +661,7 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
     return 0;
 }
 
-int DLLEXPORT api_export_link_results(void* f_api, int j)
+int DLLEXPORT api_export_link_results(void* f_api, int link_idx)
 {
 	FILE* tmp;
     DateTime days;
@@ -669,24 +669,25 @@ int DLLEXPORT api_export_link_results(void* f_api, int j)
     char theTime[20];
     char theDate[20];
 	char path[50];
-
     int error;
     Interface * api = (Interface*) f_api;
+
     error = check_api_is_initialized(api);
     if (error != 0) return error;
 
     /* File path writing */
     strcpy(path, "debug_output/swmm5/link/");
-    strcat(path, Link[j].ID); strcat(path, ".csv");
+    strcat(path, Link[link_idx].ID); strcat(path, ".csv");
     tmp = fopen(path, "w");
     fprintf(tmp, "date,time,flow,velocity,depth,volume,capacity\n");
 
     for ( period = 1; period <= Nperiods; period++ )
     {
+        printf("printing period %d link %d\n", period, link_idx);
         output_readDateTime(period, &days);
         datetime_dateToStr(days, theDate);
         datetime_timeToStr(days, theTime);
-        output_readLinkResults(period, j);
+        output_readLinkResults(period, link_idx);
         fprintf(tmp, "%10s,%8s,%.3f,%.3f,%.3f,%.3f,%.3f\n",
             theDate,
             theTime,
@@ -701,11 +702,11 @@ int DLLEXPORT api_export_link_results(void* f_api, int j)
     return 0;
 }
 
-int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
+int DLLEXPORT api_export_node_results(void* f_api, int node_idx)
 {
 	FILE* tmp;
     DateTime days;
-    int period, j;
+    int period;
     char theTime[20];
     char theDate[20];
 	char path[50];
@@ -715,15 +716,13 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
     error = check_api_is_initialized(api);
     if (error != 0) return error;
 
-    j = project_findObject(NODE, node_name);
-
     if (stat("NodeResults", &st) == -1) {
         mkdir("NodeResults", 0700);
     }
 
     /* File path writing */
     strcpy(path, "NodeResults/");
-    strcat(path, Node[j].ID);
+    strcat(path, Node[node_idx].ID);
     strcat(path, ".csv");
     tmp = fopen(path, "w");
     fprintf(tmp, "date,time,inflow,overflow,depth,volume\n");
@@ -732,7 +731,7 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
         output_readDateTime(period, &days);
         datetime_dateToStr(days, theDate);
         datetime_timeToStr(days, theTime);
-        output_readNodeResults(period, j);
+        output_readNodeResults(period, node_idx);
         fprintf(tmp, "%10s,%8s,%.4f,%.4f,%.4f,%.4f\n",
             theDate,
             theTime,
@@ -773,7 +772,7 @@ int DLLEXPORT api_write_output_line(void* f_api, double t)
     return 0;
 }
 
-int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, double newNodeResult, int resultType)
+int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, int resultType, double newNodeResult)
 {
     Interface * api = (Interface *) f_api;
 
@@ -798,7 +797,7 @@ int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, double newNodeRes
     return 0;
 }
 
-int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, double newLinkResult, int resultType)
+int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, int resultType, double newLinkResult)
 {
     Interface * api = (Interface *) f_api;
 

@@ -256,7 +256,7 @@
             "utility" : false
         },
         "Input"  : true,
-        "Output" : false,
+        "Output" : true,
         "Tests" : true
     },
     "Warning"  : true,
