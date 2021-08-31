@@ -138,6 +138,7 @@ contains
             allocate(partitioned_links(size(link%I, oneI)))
             allocate(weight_range(size(link%I, oneI), twoI))
             allocate(accounted_for_links(size(link%I, oneI)))
+            allocate(phantom_link_tracker(size(link%I, oneI)))
         end if
     end subroutine util_allocate_partitioning_arrays
     !
@@ -159,6 +160,7 @@ contains
             deallocate(partitioned_links)
             deallocate(weight_range)
             deallocate(accounted_for_links)
+            deallocate(phantom_link_tracker)
         end if
 
     end subroutine util_deallocate_partitioning_arrays
@@ -344,8 +346,8 @@ contains
         !     do jj = 1, num_images()
         !         print*, jj, 'image no'
         !         print*, col_elemI(:)[jj], 'col_elemI(:)[jj]'
-        !     enddo
-        ! endif
+        !     end do
+        ! end if
         ! print*, 'press return to continue'
         ! read(*,*)
         !%--------------------------------------------------------------
@@ -1015,7 +1017,7 @@ contains
         if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         if (setting%BC%slots < 2) then
-            print *, "Error: the number of BCSlots has to be greater than 2"
+            print *, "Error: the number of slots has to be greater than 2"
             stop
         end if
 

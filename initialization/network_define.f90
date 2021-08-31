@@ -264,7 +264,7 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
-        if(image /= 1) then
+        if (image /= 1) then
            do ii=1, image-1
               ElemGlobalCounter = ElemGlobalCounter + N_elem(ii)
               FaceGlobalCounter = FaceGlobalCounter + N_unique_face(ii) + oneI
@@ -1357,7 +1357,7 @@ contains
                 end if
 
                 !% find the global index and set to target image
-                if(faceI(ii,fi_Gidx)[targetImage] == nullvalueI) then
+                if (faceI(ii,fi_Gidx)[targetImage] == nullvalueI) then
                     faceI(ii,fi_Gidx)[targetImage] = fGidx
                 end if
             end if
@@ -1492,7 +1492,7 @@ contains
                 end if
 
                 !% find the global index and set to target image
-                if(faceI(ii,fi_Gidx)[targetImage] == nullvalueI) then
+                if (faceI(ii,fi_Gidx)[targetImage] == nullvalueI) then
                     faceI(ii,fi_Gidx)[targetImage] = fGidx
                 end if
             end if

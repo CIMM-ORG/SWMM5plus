@@ -50,8 +50,8 @@ module common_elements
                 isAdHocFlowrate = .true.
             else
                 isAdHocFlowrate = .false.
-            endif
-        endif
+            end if
+        end if
         
     end subroutine common_velocity_from_flowrate_singular
     !%      

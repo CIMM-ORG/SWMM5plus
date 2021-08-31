@@ -616,8 +616,8 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
         ni_node_type[i] = Node[i].type;
     }
 
-    f_nodes = fopen("debug/nodes_info.csv", "w");
-    f_links = fopen("debug/links_info.csv", "w");
+    f_nodes = fopen("debug_input/node/nodes_info.csv", "w");
+    f_links = fopen("debug_input/link/links_info.csv", "w");
 
     fprintf(f_nodes,
         "n_left,node_id,ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3\n");
@@ -661,38 +661,33 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
     return 0;
 }
 
-int DLLEXPORT api_export_link_results(void* f_api, char* link_name)
+int DLLEXPORT api_export_link_results(void* f_api, int link_idx)
 {
 	FILE* tmp;
     DateTime days;
-    int period, j;
+    int period;
     char theTime[20];
     char theDate[20];
 	char path[50];
-
     int error;
     Interface * api = (Interface*) f_api;
+
     error = check_api_is_initialized(api);
     if (error != 0) return error;
 
-    j = project_findObject(LINK, link_name);
-
-    if (stat("LinkResults", &st) == -1) {
-        mkdir("LinkResults", 0700);
-    }
-
     /* File path writing */
-    strcpy(path, "LinkResults/");
-    strcat(path, Link[j].ID); strcat(path, ".csv");
+    strcpy(path, "debug_output/swmm5/link/");
+    strcat(path, Link[link_idx].ID); strcat(path, ".csv");
     tmp = fopen(path, "w");
     fprintf(tmp, "date,time,flow,velocity,depth,volume,capacity\n");
 
     for ( period = 1; period <= Nperiods; period++ )
     {
+        printf("printing period %d link %d\n", period, link_idx);
         output_readDateTime(period, &days);
         datetime_dateToStr(days, theDate);
         datetime_timeToStr(days, theTime);
-        output_readLinkResults(period, j);
+        output_readLinkResults(period, link_idx);
         fprintf(tmp, "%10s,%8s,%.3f,%.3f,%.3f,%.3f,%.3f\n",
             theDate,
             theTime,
@@ -707,11 +702,11 @@ int DLLEXPORT api_export_link_results(void* f_api, char* link_name)
     return 0;
 }
 
-int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
+int DLLEXPORT api_export_node_results(void* f_api, int node_idx)
 {
 	FILE* tmp;
     DateTime days;
-    int period, j;
+    int period;
     char theTime[20];
     char theDate[20];
 	char path[50];
@@ -721,15 +716,13 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
     error = check_api_is_initialized(api);
     if (error != 0) return error;
 
-    j = project_findObject(NODE, node_name);
-
     if (stat("NodeResults", &st) == -1) {
         mkdir("NodeResults", 0700);
     }
 
     /* File path writing */
     strcpy(path, "NodeResults/");
-    strcat(path, Node[j].ID);
+    strcat(path, Node[node_idx].ID);
     strcat(path, ".csv");
     tmp = fopen(path, "w");
     fprintf(tmp, "date,time,inflow,overflow,depth,volume\n");
@@ -738,7 +731,7 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
         output_readDateTime(period, &days);
         datetime_dateToStr(days, theDate);
         datetime_timeToStr(days, theTime);
-        output_readNodeResults(period, j);
+        output_readNodeResults(period, node_idx);
         fprintf(tmp, "%10s,%8s,%.4f,%.4f,%.4f,%.4f\n",
             theDate,
             theTime,
@@ -748,6 +741,84 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
             NodeResults[NODE_VOLUME]);
     }
     fclose(tmp);
+    return 0;
+}
+
+// --- Output Writing (Post Processing)
+// * The follwing functions should only be executed after finishing
+//   and writing SWMM5+ report files. The following functions are
+//   meant to be called from Fortran in order to export .rpt and
+//   .out files according to the SWMM 5.13 standard. Fortran-generated
+//   report files are not manipulated here, the manipulation of
+//   SWMM5+ report files is kept within the Fortran code to ensure
+//   compatibility with future updates of the SWMM5+ standard
+
+int DLLEXPORT api_write_output_line(void* f_api, double t)
+// t: elapsed time in seconds
+{
+    Interface * api = (Interface *) f_api;
+
+    // --- check that simulation can proceed
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    // Update routing times to skip interpolation when saving results.
+    OldRoutingTime = 0; NewRoutingTime = t*1000; // times in msec
+    output_saveResults(t*1000);
+    return 0;
+}
+
+int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, int resultType, double newNodeResult)
+{
+    Interface * api = (Interface *) f_api;
+
+    // --- check that simulation can proceed
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    if (resultType == output_node_depth)
+        Node[node_idx].newDepth = newNodeResult;
+    else if (resultType == output_node_volume)
+        Node[node_idx].newVolume = newNodeResult;
+    else if (resultType == output_node_latflow)
+        Node[node_idx].newLatFlow = newNodeResult;
+    else if (resultType == output_node_inflow)
+        Node[node_idx].inflow = newNodeResult;
+    else
+        return -1;
+    return 0;
+}
+
+int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, int resultType, double newLinkResult)
+{
+    Interface * api = (Interface *) f_api;
+
+    // --- check that simulation can proceed
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    if (resultType == output_link_depth)
+        Link[link_idx].newDepth = newLinkResult;
+    else if (resultType == output_link_flow)
+        Link[link_idx].newFlow = newLinkResult;
+    else if (resultType == output_link_volume)
+        Link[link_idx].newVolume = newLinkResult;
+    else if (resultType == output_link_direction)
+        Link[link_idx].direction = newLinkResult;
+    else
+        return -1;
     return 0;
 }
 

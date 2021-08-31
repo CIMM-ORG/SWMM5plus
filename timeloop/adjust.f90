@@ -52,7 +52,7 @@ module adjust
                     print *, 'ad hoc flowrate adjust is .true., but approach is not supported'
                     stop 4973
                 end select
-        endif
+        end if
         
         !% ad hoc adjustments to head
         if (setting%Adjust%Head%Apply) then          
@@ -64,7 +64,7 @@ module adjust
                     print *, 'ad hoc head adjust is .true. but approach is not supported'
                     stop 9073
             end select
-        endif
+        end if
         
         if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_values
@@ -107,8 +107,8 @@ module adjust
                     geovalue(thisP) = zeroR
                     NearZeroVolume(thisP) = .true.
                 endwhere  
-            endif
-        endif    
+            end if
+        end if    
 
         if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_limit_by_zerovalues
@@ -134,12 +134,12 @@ module adjust
         if (setting%ZeroValue%UseZeroValues) then
             if (geovalue(eIdx) < geozero) then
                 geovalue(eIdx) = geozero
-            endif
+            end if
         else
             if (geovalue(eIdx) < zeroR) then
                 geovalue(eIdx) = zeroR
-            endif 
-        endif 
+            end if 
+        end if 
 
         if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_limit_by_zerovalues_singular
@@ -197,8 +197,8 @@ module adjust
                 call adjust_smallvolumes_reset_old (Npack,thisCol_all)  
                 call adjust_smallvolumes_identify (Npack, thisCol_all, volumeCol)        
                 call adjust_smallvolumes_pack (Npack, thisCol_all, thisSmallVolumeCol)        
-            endif
-        endif
+            end if
+        end if
         
         !% apply ad-hoc velocity limiter
         if (setting%Limiter%Velocity%UseLimitMax) then
@@ -206,8 +206,8 @@ module adjust
             if (Npack > 0) then 
                 call adjust_velocity_limiter_reset_old (Npack, thiscol_all) 
                 call adjust_velocity_limiter (Npack, thiscol_all, velocityCol) 
-            endif
-        endif
+            end if
+        end if
         
         !% For small volumes, compute a velocity that is blended from
         !% the update value and a Chezy-Manning computed using the 
@@ -217,14 +217,14 @@ module adjust
             if (Npack > 0) then
                 call adjust_velocity_smallvolume_blended    &
                     (Npack, thisSmallVolumeCol, velocityCol)
-            endif
-        endif
+            end if
+        end if
         
         !% for extremely small volumes set velocity to zero
         if (setting%ZeroValue%UseZeroValues) then
              call adjust_zero_velocity_at_zero_volume    &
                 (Npack, thiscol_all, velocityCol, volumeCol)
-        endif
+        end if
         
         if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_velocity
@@ -262,7 +262,7 @@ module adjust
             !% face velocity calculation at the shared faces
             Npack => npack_facePS(facePackCol)
             thisP => facePS(1:Npack,facePackCol)
-        endif
+        end if
 
         if (Npack > 0) then
             if (setting%ZeroValue%UseZeroValues) then
@@ -298,7 +298,7 @@ module adjust
                 where (f_area_d(thisP) >= zeroR)
                     f_velocity_d(thisP) = f_flowrate(thisP)/f_area_d(thisP)
                 endwhere
-            endif
+            end if
 
             !%  limit high velocities
             if (setting%Limiter%Velocity%UseLimitMax) then
@@ -309,8 +309,8 @@ module adjust
                 where(abs(f_velocity_d(thisP))  > vMax)
                     f_velocity_d(thisP) = sign(0.99 * vMax, f_velocity_d(thisP))
                 endwhere
-            endif
-        endif
+            end if
+        end if
         
         if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_face_dynamic_limit
@@ -405,8 +405,8 @@ module adjust
                     elemVel(thisP) = sign( 0.99 * vMax, elemVel(thisP) )
                     isAdhocFlowrate(thisP) = .true.
                 endwhere 
-            endif
-        endif
+            end if
+        end if
         
         if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_Vshaped_flowrate
@@ -484,8 +484,8 @@ module adjust
                         / ( w_uH(thisP) + w_dH(thisP) )
                         
                 endwhere                       
-            endif
-        endif
+            end if
+        end if
         
         if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name 
     end subroutine
@@ -576,7 +576,7 @@ module adjust
         if (newpack > 0) then
             !% extract the set of small volumes.
             elemP(1:newpack,thisNewPackCol) = pack(eIdx(thisP), isSmallVol(thisP) )
-        endif
+        end if
 
         if (setting%Debug%File%adjust) print *, '*** leave ', this_image(), subroutine_name
     end subroutine adjust_smallvolumes_pack

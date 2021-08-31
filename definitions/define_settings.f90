@@ -422,6 +422,8 @@ module define_settings
         logical :: Tests = .false.
         type(DebugFileYNType) :: File
         type(DebugFileGroupYNType) :: FileGroup
+        logical :: Input
+        logical :: Output
     end type DebugType
 
     !% setting%Paths
@@ -433,12 +435,15 @@ module define_settings
         character(len=256) :: out ! path to SWMM output (.out) file
     end type PathType
 
-        !% setting%Output
+    !% setting%Output
     type OutputType
         logical :: report
         real(8) :: reportStartTime
         real(8) :: reportDt
         integer :: reportStep
+        integer :: Slots = 20
+        character(len=256) :: nodes_file = "node_input.csv"
+        character(len=256) :: links_file = "link_input.csv"
         type(CommandLineType) :: CommandLine
     end type OutputType
 
@@ -611,6 +616,7 @@ contains
         ! Load BC Settings
         call json%get('BC.slots', real_value, found)
         setting%BC%slots = real_value
+        if (.not. found) stop "Error - setting " // 'BC.slots not found'
         call json%get('BC.disableInterpolation', logical_value, found)
         setting%BC%disableInterpolation = logical_value
         if (.not. found) stop "Error - setting " // 'BC.disableInterpolation not found'
@@ -990,6 +996,15 @@ contains
         call json%get('Output.reportStep', integer_value, found)
         setting%Output%reportStep = integer_value
         if (.not. found) stop "Error - setting " // 'Output.reportStep not found'
+        call json%get('Output.slots', integer_value, found)
+        setting%Output%slots = integer_value
+        if (.not. found) stop "Error - setting " // 'Output.slots not found'
+        call json%get('Output.links_file', c, found)
+        setting%Output%links_file = c
+        if (.not. found) stop "Error - setting " // 'Output.links_file not found'
+        call json%get('Output.nodes_file', c, found)
+        setting%Output%nodes_file = c
+        if (.not. found) stop "Error - setting " // 'Output.nodes_file not found'
         call json%get('Output.CommandLine.quiet', logical_value, found)
         setting%Output%CommandLine%quiet = logical_value
         if (.not. found) stop "Error - setting " // 'Output.CommandLine.quiet not found'
@@ -1141,6 +1156,12 @@ contains
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%utility = logical_value
         if (.not. found) stop "Error - setting " // 'Debug.FileGroup.utility not found'
+        call json%get('Debug.Input', logical_value, found)
+        setting%Debug%Input = logical_value
+        if (.not. found) stop "Error - setting " // 'Debug.Input not found'
+        call json%get('Debug.Output', logical_value, found)
+        setting%Debug%Output = logical_value
+        if (.not. found) stop "Error - setting " // 'Debug.Output not found'
 
         call def_update_debug_options()
 
@@ -1201,7 +1222,7 @@ contains
             setting%Debug%File%timeloop = .true.
             setting%Debug%File%update = .true.
             setting%Debug%File%weir_elements = .true.
-        endif
+        end if
         if (setting%Debug%FileGroup%utility) then
             setting%Debug%File%utility_allocate = .true.
             setting%Debug%File%utility_deallocate = .true.

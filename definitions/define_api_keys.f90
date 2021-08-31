@@ -133,6 +133,22 @@ module define_api_keys
         enumerator :: api_link_xsect_yBot
     end enum
 
+    !% API Link Output attributes
+    enum, bind(c)
+        enumerator :: api_output_link_depth = 0
+        enumerator :: api_output_link_flow
+        enumerator :: api_output_link_volume
+        enumerator :: api_output_link_direction
+    end enum
+
+    !% API Node Output attributes
+    enum, bind(c)
+        enumerator :: api_output_node_depth = 0
+        enumerator :: api_output_node_volume
+        enumerator :: api_output_node_latflow
+        enumerator :: api_output_node_inflow
+    end enum
+
     ! Datetime resolution types
     enum, bind(c)
         enumerator :: api_monthly = 1

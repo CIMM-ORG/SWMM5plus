@@ -43,7 +43,7 @@ module face
         Npack => npack_faceP(faceCol)
         if (Npack > 0) then
             call face_interpolation_interior_byPack (faceCol, Npack)
-        endif
+        end if
 
         sync all
 
@@ -51,7 +51,7 @@ module face
         Npack => npack_facePS(faceCol)
         if (Npack > 0) then
             call face_interpolation_shared_byPack (faceCol, Npack)
-        endif
+        end if
 
         !% wait for all the processors to finish face interpolation across images
         sync all
@@ -163,7 +163,7 @@ module face
                 faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
                 faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
             endwhere
-        endif
+        end if
 
         !%  limit high velocities
         if (setting%Limiter%Velocity%UseLimitMax) then
@@ -173,7 +173,7 @@ module face
 
                 faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
             endwhere
-        endif
+        end if
 
         if (setting%Debug%File%boundary_conditions) print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_interpolation_upBC_byPack
@@ -295,7 +295,7 @@ module face
                 faceR(face_P,fr_Velocity_d) = faceR(face_P,fr_Flowrate)/faceR(face_P,fr_Area_d)
                 faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
             endwhere
-        endif
+        end if
 
         !%  limit high velocities
         if (setting%Limiter%Velocity%UseLimitMax) then
@@ -305,7 +305,7 @@ module face
 
                 faceR(face_P,fr_Velocity_u) = faceR(face_P,fr_Velocity_d)
             endwhere
-        endif
+        end if
 
         if (setting%Debug%File%boundary_conditions) print *, '*** leave ', this_image(), subroutine_name
     end subroutine face_interpolation_dnBC_byPack
@@ -491,7 +491,7 @@ module face
                     ) / &
                     ( elemR(edn(:),eWup) + elemR(eup(:),eWdn))
             endwhere
-        enddo
+        end do
 
         print *, 'in face_interp_set_byMask -- may be obsolete'
         stop 87098
@@ -590,7 +590,7 @@ module face
                          +elemR(ghostDn,eset(jj))[connected_image] * elemR(eup,eWdn) &
                         ) / &
                         ( elemR(ghostDn,eWup)[connected_image] + elemR(eup,eWdn) )
-                endif
+                end if
             end do
         end do
 

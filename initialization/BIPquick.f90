@@ -155,7 +155,7 @@ contains
 
                 end if
 
-            endif
+            end if
 
         end do
 
@@ -191,7 +191,8 @@ contains
         partitioned_nodes(:) = .false.
         partitioned_links(:) = .false.
         weight_range(:,:) = zeroR
-        accounted_for_links = .false.
+        accounted_for_links(:) = .false.
+        phantom_link_tracker(:) = nullValueI
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine bip_initialize_arrays
@@ -241,9 +242,9 @@ contains
 
                     !% Add the adjacent upstream node to B_nodeI
                     B_nodeI(ii, uplinks) = upstream_node
-                endif
-            enddo
-        enddo
+                end if
+            end do
+        end do
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine bip_network_processing
@@ -312,7 +313,7 @@ contains
 
         if ( node%I(ii, ni_idx) == nullValueI ) then
         cycle
-        endif
+        end if
 
         !% Need a loop bc multiple links might have a given node as its downstream endpoint
         do jj=1,size(link%I(:, li_Mnode_d))
@@ -323,9 +324,9 @@ contains
         !% The directweight for that node is the running total of link weights
         B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
         + calc_link_weights(link%I(jj, li_idx))
-        endif
-        enddo
-        enddo
+        end if
+        end do
+        end do
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine calc_directweight
@@ -367,14 +368,14 @@ contains
         do jj= 1, size(upstream_node_list)
 
         !% If the upstream node exists
-        if( upstream_node_list(jj) /= nullValueI) then
+        if ( upstream_node_list(jj) /= nullValueI) then
 
         !% The call the recursive calc_upstream_weight on the weight_index node
         !% and the adjacent upstream node as the new root
         call calc_upstream_weight(weight_index, upstream_node_list(jj))
-        endif
-        enddo
-        endif
+        end if
+        end do
+        end if
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine calc_upstream_weight
@@ -418,8 +419,8 @@ contains
         !% The weight_index (i.e. the current node) is passed to the first iteration
         !% of calc_upstream_weight as both the node being updated and the root node for traversal
         call calc_upstream_weight(weight_index, weight_index)
-        endif
-        enddo
+        end if
+        end do
 
         !% The max_weight is the largest totalweight value for this partition
         max_weight = (maxval(B_nodeR(:, totalweight)))
@@ -476,10 +477,10 @@ contains
 
         !% call the recursive subroutine on the new root node
         call trav_subnetwork(upstream_node_list(jj), image)
-        endif
-        enddo
+        end if
+        end do
 
-        endif
+        end if
 
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
@@ -529,9 +530,9 @@ contains
 
         !% Set the accounted for boolean to true
         accounted_for_links(jj) = .true.
-        endif
-        endif
-        enddo
+        end if
+        end if
+        end do
 
         !% This do loop just checks any links that somehow slipped through
         do jj=1, size(accounted_for_links, 1)
@@ -592,7 +593,7 @@ contains
                 effective_root = node%I(ii, ni_idx)
                 ideal_exists = .true.
                 exit
-            endif
+            end if
 
             !% Alternatively, if the totalweight is greater than the partition threshold and
             !% less than the nearest overestimate
@@ -604,11 +605,11 @@ contains
                 !% Then update the nearest overestimate and set the effective root
                 nearest_overestimate = B_nodeR(ii, totalweight)
                 effective_root = node%I(ii, ni_idx)
-            endif
+            end if
 
             ! effective_root = ideal_junction_test(ii, partition_threshold, ideal_exists)
 
-        enddo
+        end do
 
         !% The effective root is the one that most nearly overestimates the partition threshold
         !% reverse The Price Is Right style
@@ -697,7 +698,7 @@ contains
 
         !% If the partition threshold is between the weight_range entries
         !% and that link has not yet been partitioned
-        if( (weight_range(oneI) < partition_threshold) .and. &
+        if ( (weight_range(oneI) < partition_threshold) .and. &
         (partition_threshold < weight_range(twoI)) .and. &
         (partitioned_links(jj) .eqv. .false.) ) then
 
@@ -710,8 +711,8 @@ contains
 
         !% Only need one spanning link - if found, exit
         exit
-        endif
-        enddo
+        end if
+        end do
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine calc_spanning_link
@@ -785,6 +786,8 @@ contains
         !--------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
 
+        phantom_link_tracker(phantom_link_idx) = phantom_link_idx
+
         !% The phantom node index is given
         node%I(phantom_node_idx, ni_idx) = phantom_node_idx
 
@@ -833,7 +836,11 @@ contains
         link%I(spanning_link, li_Mnode_d) = phantom_node_idx
 
         !% Maps the created phantom link back to the SWMM parent link
-        link%I(phantom_link_idx, li_parent_link) = spanning_link
+        if ( ANY( phantom_link_tracker == spanning_link) ) then
+            link%I(phantom_link_idx, li_parent_link) = link%I(spanning_link, li_parent_link)
+        else
+            link%I(phantom_link_idx, li_parent_link) = spanning_link
+        end if
 
         !% Reduce the downstream node directweight by the spanning link's new length
         B_nodeR(downstream_node, directweight) = B_nodeR(downstream_node, directweight) &
@@ -928,8 +935,8 @@ contains
 
         !% Exit saves time and records jj for later use
         exit
-        endif
-        enddo
+        end if
+        end do
 
         !% Reduce the effective_root directweight by the link length
         B_nodeR(effective_root, directweight) = &

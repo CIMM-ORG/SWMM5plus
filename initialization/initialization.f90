@@ -12,7 +12,6 @@ module initialization
     use pack_mask_arrays, only: pack_nodes
     use utility_allocate
     use utility_array
-    use utility, only: util_export_linknode_csv
     use utility_output
     use utility_array
     use pack_mask_arrays
@@ -78,12 +77,10 @@ contains
         !% def_load_settings is one of the few subroutines in the Definition modules
         call def_load_settings()
 
-        !% execute the command line options provided when the code is run
-        if (this_image() == 1) then
-            call execute_command_line ("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
-        end if
+        !% read and store the command-line options
+        call init_read_arguments ()
 
-        !if (setting%Verbose) print *, "Simulation Starts"
+        if (setting%Verbose) print *, "Simulation Starts"
 
         !% initialize the API with the SWMM-C code
         call interface_init ()
@@ -107,10 +104,10 @@ contains
         !if (setting%Verbose) print *, "begin reading csv"
 
         !% read in link names for output
-        if (setting%Output%report) call output_read_csv_link_names('link_input.csv')
-        if (setting%Output%report) call output_read_csv_node_names('node_input.csv')
+        call output_read_csv_link_names()
+        call output_read_csv_node_names()
 
-        !if (setting%Verbose) print *, "begin initializing boundary conditions" 
+        !if (setting%Verbose) print *, "begin initializing boundary conditions"
 
         !% initialize boundary conditions
         call init_bc()
@@ -122,23 +119,27 @@ contains
             if ((N_link > 5000) .or. (N_node > 5000)) then
                 print *, "begin setting initial conditions (this takes several minutes for big systems)"
                 print *, "This system has ",N_link,"links and",N_node,"nodes"
+                print *, "The finite-volume system is ", sum(N_elem(:)), " elements"
             endif
         endif
-        endif    
+        endif
         call init_IC_setup ()
 
         !if (setting%Verbose) print *, "begin setup of output files"
 
         !% creating output_folders and files
         call util_output_clean_folders()
-        if (this_image() == 1) call util_export_linknode_csv()
-        if (setting%Output%report) then
-            call util_output_create_folder()
+        call util_output_create_folders()
+
+        if ((this_image() == 1) .and. setting%Debug%Input) call util_output_export_linknode_input()
+        if (setting%Debug%Output) then
             call util_output_create_elemR_files()
             call util_output_create_faceR_files()
+            call util_output_create_summary_files()
+        end if
+        if (setting%Debug%Output .or. setting%Output%report) then
             call output_create_link_files()
             call output_create_node_files()
-            call util_output_create_summary_files()
         end if
 
         !% wait for all the processors to reach this stage before starting the time loop
@@ -180,6 +181,7 @@ contains
         !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
+        link%I(:,li_num_phantom_links) = 0
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
 
@@ -465,7 +467,7 @@ contains
                 idx = link_index(jj)
                 face_counter = face_counter + link%I(idx, li_N_element) - 1 !% internal faces between elems, e.g. 5 elements have 4 internal faces
                 elem_counter = elem_counter + link%I(idx, li_N_element) ! number of elements
-            enddo
+            end do
 
             !% now we loop through the nodes and count the node faces
             do jj = 1, size(node_index,1)
@@ -476,8 +478,8 @@ contains
                     face_counter = face_counter +1 !% add the upstream faces
                 elseif (node%I(idx, ni_node_type) == nBCdn) then
                     face_counter = face_counter +1 !% add the downstream faces
-                endif !% multiple junction faces already counted
-            enddo
+                end if !% multiple junction faces already counted
+            end do
 
             !% Now we count the space for duplicated faces
             do jj = 1, size(link_index,1)
@@ -487,14 +489,14 @@ contains
                     ( node%I(link%I(idx, li_Mnode_u), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
-                endif
+                end if
                 !% then downstream node
                 if ( ( node%I(link%I(idx, li_Mnode_d), ni_P_is_boundary) == 1) .and. &
                     ( node%I(link%I(idx, li_Mnode_d), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
-                endif
-            enddo
+                end if
+            end do
 
             N_elem(ii) = elem_counter
             N_face(ii) = face_counter
@@ -505,7 +507,7 @@ contains
             junction_counter = zeroI
             duplicated_face_counter = zeroI
 
-        enddo
+        end do
 
         max_caf_elem_N = maxval(N_elem)
         max_caf_face_N = maxval(N_face) ! assign the max value
@@ -516,7 +518,7 @@ contains
                 print*, 'Elements expected ', N_elem(ii)
                 print*, 'Faces expected    ', N_face(ii)
             end do
-        endif
+        end if
 
         if (setting%Debug%File%utility_array)  print *, '*** leave ', this_image(),subroutine_name
 

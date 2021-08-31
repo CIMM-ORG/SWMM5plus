@@ -73,13 +73,13 @@ module define_types
     type NodePack
         integer,      allocatable :: have_flowBC(:)
         integer,      allocatable :: have_headBC(:)
-        integer,      allocatable :: have_output(:) 
+        integer,      allocatable :: have_output(:)
     end type NodePack
 
     type LinkPack
         integer, allocatable :: have_output(:)
     end type LinkPack
-    
+
     type NodeArray
         integer,      allocatable :: I(:,:)   !% integer data for nodes
         real(8),      allocatable :: R(:,:)   !% real data for nodes
@@ -114,4 +114,5 @@ module define_types
         real(8),     allocatable :: headRI(:)               !% values of interpolated heads at current time
         type(BCPack)             :: P                       !% packs of boundary conditions
     end type BCArray
+
 end module define_types

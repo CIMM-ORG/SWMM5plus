@@ -29,7 +29,7 @@ contains
         if (N_flowBC > 0 .or. N_headBC > 0) then
             call bc_interpolate() ! computes interpolation
             call face_interpolate_bc() ! broadcast interpolation to face & elem arrays
-        endif
+        end if
 
         if (setting%Debug%File%boundary_conditions) then
             print *, "INFLOW BC"
@@ -232,7 +232,7 @@ contains
                 !% no need to do the interpolation, directly take the existing BC data
                 BC%flowRI(ii) = BC%flowR_timeseries(ii, lower_idx, br_value)
             else if (lower_idx > 0) then
-                if ( BC%flowR_timeseries(ii, lower_idx, br_value) .eq. BC%flowR_timeseries(ii, upper_idx, br_value)) then
+                if ( BC%flowR_timeseries(ii, lower_idx, br_value) == BC%flowR_timeseries(ii, upper_idx, br_value)) then
                     BC%flowRI(ii) = BC%flowR_timeseries(ii, lower_idx, br_value)
                     !% constant value, no need to do the interpolation
                 else
@@ -260,7 +260,7 @@ contains
                 !% no need to do the interpolation, directly take the existing BC data
                 BC%headRI(ii) = BC%headR_timeseries(ii, lower_idx, br_value)
             else if (lower_idx .ne. 0) then
-                if ( BC%headR_timeseries(ii, lower_idx, br_value) .eq. BC%headR_timeseries(ii, upper_idx, br_value)) then
+                if ( BC%headR_timeseries(ii, lower_idx, br_value) == BC%headR_timeseries(ii, upper_idx, br_value)) then
                     BC%headRI(ii) = BC%headR_timeseries(ii, lower_idx, br_value)
                     !% constant value, no need to do the interpolation
                 else

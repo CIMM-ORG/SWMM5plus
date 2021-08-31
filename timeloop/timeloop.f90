@@ -8,6 +8,7 @@ module timeloop
     use runge_kutta2
     use utility_output
     use boundary_conditions
+    use interface, only: interface_export_link_results
 
     implicit none
 
@@ -33,6 +34,7 @@ contains
     !% Description:
     !%     Loops over all the major time-stepping routines
     !%-----------------------------------------------------------------------------
+        integer          :: ii, additional_rows
         logical          :: isTLfinished
         logical          :: doHydraulics, doHydrology
         character(64)    :: subroutine_name = 'timeloop_toplevel'
@@ -54,7 +56,20 @@ contains
             call tl_increment_counters(doHydraulics, doHydrology)
         end do
 
-        if (setting%Debug%File%timeloop)  print *, '*** leave ', this_image(), subroutine_name
+        !% >>> BEGIN HACK
+        !%     Temporary for debugging (can be deleted for deployment)
+        ! if (setting%Debug%Output) then
+        !     !% Write .out in readable .csv
+        !     if (this_image() == 1) then
+        !         additional_rows = num_images() - 1
+        !         do ii = 1, size(Link%I,1) - additional_rows
+        !             call interface_export_link_results(ii)
+        !         end do
+        !     end if
+        ! end if
+        !% >>> END HACK
+
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine timeloop_toplevel
 
     !%==========================================================================
@@ -84,7 +99,6 @@ contains
     !%-----------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'tl_hydraulics'
     !%-----------------------------------------------------------------------------
-
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
         !% check for where solver needs to switch in dual-solver model
@@ -180,8 +194,8 @@ contains
                 if ((dt > fiveR) .and. (neededSteps > 2)) then
                     !% round larger dt to integer values
                     dt = real(floor(dt),8)
-                endif
-            endif
+                end if
+            end if
         else
             !% For hydraulics only, keep the timestep stable unless it
             !% exceeds CFL limits (both high and low limits).
@@ -363,9 +377,11 @@ contains
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_command_line_step_output'
         real (8), pointer :: dt, timeNow, timeEnd
+        real (8) :: thistime
         integer, pointer :: step, interval
         integer :: execution_realtime
-        real(8) :: simulation_fraction, seconds_to_completion
+        real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
+        character(3) :: timeunit
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
         dt            => setting%Time%Dt
@@ -376,24 +392,49 @@ contains
 
         setting%Time%Real%EpochNowSeconds = time() ! Fortran function returns real epoch time
 
+        ! estimate the remaining time
         execution_realtime = setting%Time%Real%EpochNowSeconds - setting%Time%Real%EpochTimeLoopStartSeconds
-        simulation_fraction =  (setting%Time%Now - setting%Time%Start) / (setting%Time%End - setting%Time%Start)
-        seconds_to_completion = execution_realtime * (setting%Time%End - setting%Time%Start) &
-                                                   / (setting%Time%Now - setting%Time%Start)
+        seconds_to_completion = execution_realtime * (setting%Time%End - setting%Time%Now) &
+                                                   / (setting%Time%Now - setting%Time%Start)                                
 
         if (setting%Verbose) then
             if (this_image() == 1) then
                 if (mod(step,interval) == 0) then
-                    print *, 'time step = ',step, '; at ', timeNow, 's; with hydraulic dt =',dt
-                    if (seconds_to_completion < sixtyR) then
-                        print *, 'estimated ',seconds_to_completion,'seconds to completion'
-                    elseif (seconds_to_completion >=sixtyR .and. seconds_to_completion < seconds_per_hour ) then
-                        print *, 'estimated ',seconds_to_completion / sixtyR ,'minutes to completion'
-                    elseif (seconds_to_completion >=seconds_per_hour .and. seconds_to_completion < seconds_per_day) then
-                        print *, 'estimated ',seconds_to_completion / seconds_per_hour ,'hours to completion'
-                    else
-                        print *, 'estimated ',seconds_to_completion / seconds_per_day ,'days to completion'
+                    ! translate time in seconds into something more useful
+                    if (timeNow  < sixtyR) then
+                        thistime = timeNow
+                        timeunit = 's  '
+                    elseif (timeNow >= sixtyR .and. timeNow < seconds_per_hour) then
+                        thistime = timeNow / sixtyR
+                        timeunit = 'min'    
+                    elseif (timeNow >= seconds_per_hour .and. timeNow < 3.0*seconds_per_day) then
+                        thistime = timeNow / seconds_per_hour
+                        timeunit = 'hr '
+                    elseif (timeNow >= 3.0 * seconds_per_day) then
+                        thistime = timeNow / seconds_per_day    
+                        timeunit = 'day'
                     endif
+
+                    ! write a time counter
+                    write(*,"(A12,i8,a17,F9.2,a1,a3,a6,f5.2)") &
+                        'time step = ',step,'; model time = ',thistime, &
+                        ' ',timeunit,'; dt = ',dt
+
+                    ! write estimate of time remaining    
+                    if (seconds_to_completion < sixtyR) then
+                        timeunit = 's  '
+                        time_to_completion = seconds_to_completion
+                    elseif (seconds_to_completion >=sixtyR .and. seconds_to_completion < seconds_per_hour ) then
+                        timeunit = 'min'
+                        time_to_completion = seconds_to_completion / sixtyR
+                    elseif (seconds_to_completion >=seconds_per_hour .and. seconds_to_completion < seconds_per_day) then
+                        timeunit = 'hr '
+                        time_to_completion = seconds_to_completion / seconds_per_hour
+                    else
+                        timeunit = 'day'
+                        time_to_completion = seconds_to_completion / seconds_per_day
+                    endif
+                    write(*,"(A9,F6.2,A1,A3,A28)") 'estimate ',time_to_completion,' ',timeunit,' clock time until completion'
                     print *
                 endif
             endif

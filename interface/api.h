@@ -36,6 +36,22 @@
 // Interface error codes:
 #define ERROR_FEATURE_NOT_COMPATIBLE 100001
 
+#define MAX_API_OUTPUT_NODE_ATTR 4
+enum api_output_node_attribute {
+  output_node_depth = 0,
+  output_node_volume,
+  output_node_latflow,
+  output_node_inflow
+};
+
+#define MAX_API_OUTPUT_LINK_ATTR 4
+enum api_output_link_attribute {
+  output_link_depth = 0,
+  output_link_flow,
+  output_link_volume,
+  output_link_direction
+};
+
 enum api_node_attributes {
   node_ID = 1,
   node_type,
@@ -151,12 +167,17 @@ int DLLEXPORT api_get_next_entry_tseries(int k);
 int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
 
+// Output fcns
+int DLLEXPORT api_write_output_line(void* f_api, double t);
+int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, int resultType, double newNodeResult);
+int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, int resultType, double newLinkResult);
+
 // --- Print-out
 void DLLEXPORT api_print_object_name(int k, int object_type);
 int add_link(int li_idx, int ni_idx, int direction, int* ni_N_link_u, int* ni_Mlink_u1, int* ni_Mlink_u2, int* ni_Mlink_u3, int* ni_N_link_d, int* ni_Mlink_d1, int* ni_Mlink_d2, int* ni_Mlink_d3);
-int DLLEXPORT interface_export_linknode_properties(void* f_api, int units);
-int DLLEXPORT interface_export_link_results(void* f_api, char* link_name);
-int DLLEXPORT interface_export_node_results(void* f_api, char* node_name);
+int DLLEXPORT api_export_linknode_properties(void* f_api, int units);
+int DLLEXPORT api_export_link_results(void* f_api, int link_idx);
+int DLLEXPORT api_export_node_results(void* f_api, int node_idx);
 
 // --- Utils
 int DLLEXPORT api_find_object(int type, char *id);

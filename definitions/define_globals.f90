@@ -100,6 +100,7 @@ module define_globals
     logical, allocatable :: partitioned_nodes(:)
     logical, allocatable :: partitioned_links(:)
     logical, allocatable :: accounted_for_links(:)
+    integer, allocatable :: phantom_link_tracker(:)
  
     !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable :: adjacent_links(:)

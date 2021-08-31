@@ -80,7 +80,7 @@ contains
 
         if (.not. c_lib%loaded) then
             c_lib%fileaddrx = dlopen(trim(c_lib%filename) // c_null_char, 1) ! load DLL
-            if( .not. c_associated(c_lib%fileaddrx) ) then
+            if ( .not. c_associated(c_lib%fileaddrx) ) then
                 errstat = -1
                 write(errmsg, "(A, I2, A)") &
                         'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
@@ -92,7 +92,7 @@ contains
         end if
 
         c_lib%procaddr = dlsym(c_lib%fileaddrx, trim(c_lib%procname) // c_null_char)
-        if(.not. c_associated(c_lib%procaddr)) then
+        if (.not. c_associated(c_lib%procaddr)) then
             errstat = -1
             errmsg = 'The procedure ' // trim(c_lib%procname) // ' in file ' &
                      // trim(c_lib%filename) // ' could not be loaded.'

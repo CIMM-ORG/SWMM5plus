@@ -44,14 +44,14 @@ module jump
         Npack       => npack_faceP(fp_JumpDn)
         if (Npack > 0) then
             call jump_enforce (facePackCol, Npack, jump_from_downstream)
-        endif
+        end if
         
         !% enforce hydraulic jump on upstream jumps
         facePackCol => col_faceP(fp_JumpUp)
         Npack       => npack_faceP(fp_JumpUp)
         if (Npack > 0) then
             call jump_enforce (facePackCol, Npack, jump_from_upstream)
-        endif
+        end if
 
         if (setting%Debug%File%jump)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine jump_compute   
@@ -143,7 +143,7 @@ module jump
 
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_upstream
-        endif
+        end if
 
         !% count the number of faces with reverse flow and a jump from 
         !% downstream (supercritical) to upstream (subcritical)
@@ -184,7 +184,7 @@ module jump
 
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_downstream
-        endif
+        end if
 
     end subroutine jump_face_identify
     !%

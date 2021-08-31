@@ -85,8 +85,9 @@ echo
 echo Clean Object files ...
 echo
 rm -rf *.o *.mod *.out
-if [[ -d debug ]]; then rm -r debug; fi
-mkdir debug
+if [[ -d debug_input ]]; then rm -r debug_input; fi
+if [[ -d debug_output ]]; then rm -r debug_output; fi
+if [[ -d swmm5_output ]]; then rm -r swmm5_output; fi
 
 echo
 echo Complete!
