@@ -967,6 +967,7 @@ contains
     end subroutine interface_get_report_times
 
     function interface_find_object(object_type, object_name) result(object_idx)
+        !% Returns the index of the object, or 0 if the object couldn't be found
         character(*), intent(in) :: object_name
         integer, intent(in) :: object_type
         integer :: object_idx

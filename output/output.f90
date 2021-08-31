@@ -81,7 +81,7 @@ contains
 
                 !% converting link name to link idx using the interface
                 link_idx = interface_find_object(object_type=API_LINK, object_name = link_name)
-                if (link_idx == -1) then
+                if (link_idx == 0) then
                     write(error_unit, "(A)") "Link " // trim(link_name) // " in " // &
                         trim(setting%Output%links_file) // " couldn't be found"
                     exit
@@ -132,7 +132,7 @@ contains
                 end if
 
                 node_idx = interface_find_object(object_type=API_NODE, object_name = node_name)
-                if (node_idx == -1) then
+                if (node_idx == 0) then
                     write(error_unit, "(A)") "Node " // trim(node_name) // " in " // &
                     trim(setting%Output%nodes_file) // " couldn't be found"
                     stop
@@ -142,6 +142,8 @@ contains
             end do
         end if
 
+        print *, node_output_idx, "node_output_idx"
+        stop
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine output_read_csv_node_names
