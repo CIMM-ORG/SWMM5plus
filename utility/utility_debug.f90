@@ -28,7 +28,7 @@ contains
     character(len = 4) :: str_image
     integer :: ii, jj, fu, rc, image
 
-    if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
     
     !% fu stands for file unit which will be tied to the image and tells the system what file to open
@@ -60,7 +60,7 @@ contains
           write (fu, *) 
        end do
 
-    else if(type == 'I' .or. type == 'i') then
+    else if (type == 'I' .or. type == 'i') then
 
        do ii = 1, size(arr_int(1,:))
           do jj = 1, size(arr_int(:,1))
@@ -71,7 +71,7 @@ contains
        end do
 
 
-    else if(type == 'L' .or. type == 'l') then
+    else if (type == 'L' .or. type == 'l') then
 
        do ii = 1, size(arr_log(1,:))
           do jj = 1, size(arr_log(:,1))
@@ -91,7 +91,7 @@ contains
     close(fu) 
     
 
-    if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+    if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
     
   end subroutine debug_2D_array_csv
 
@@ -103,7 +103,7 @@ contains
     integer :: ii, total_faces
 
     character(64) :: subroutine_name = 'debug_Nface_check'
-    if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
 
     total_faces = 0
@@ -111,13 +111,13 @@ contains
     !% Looping through elemI, and finding the last local index
     do ii=1, size(elemI(:,ei_Lidx))
 
-       if(elemI(ii,ei_Mface_uL) /= nullvalueI .and.  total_faces < elemI(ii,ei_Mface_uL) ) then
+       if (elemI(ii,ei_Mface_uL) /= nullvalueI .and.  total_faces < elemI(ii,ei_Mface_uL) ) then
 
           total_faces = elemI(ii, ei_Mface_uL)
 
        end if
 
-       if(elemI(ii,ei_Mface_dL) /= nullvalueI .and. total_faces < elemI(ii,ei_Mface_dL)) then
+       if (elemI(ii,ei_Mface_dL) /= nullvalueI .and. total_faces < elemI(ii,ei_Mface_dL)) then
 
           total_faces = elemI(ii, ei_Mface_dL)
 
@@ -127,7 +127,7 @@ contains
 
     !% Then we compare it to N_Face and print if it is the same or not.
 
-    if(total_faces == N_face(this_image())) then
+    if (total_faces == N_face(this_image())) then
 
        print *, "CORRECT NUMBER OF FACES ON IMAGE ::", this_image()
 
@@ -138,7 +138,7 @@ contains
        print *, "N_face(this_image()) =", N_face(this_image())
     end if
 
-    if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+    if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
 
   end subroutine debug_Nface_check
   

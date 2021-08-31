@@ -19,13 +19,17 @@ module define_globals
     ! rm gr24269 - there is an elementh_length defined in setting%Discretization%NominalElemLength
     ! real(8), parameter :: element_length = 10.0 ! This is a temporary element length
 
+    !% HACK brh -- element indexes for junction test
+    integer :: ietmp(7) = (/99,100,102,101,103,208,209/)
+    integer :: iftmp(6) = (/100,101,1,1,102,207/)
+
     !% ===================================================================================
     !% ARRAYS
     !% ===================================================================================
 
     !% Number of maximum branches for a junction
-    !integer, parameter :: max_us_branch_per_node = 3
-    !integer, parameter :: max_ds_branch_per_node = 3
+    integer, parameter :: max_us_branch_per_node = 3
+    integer, parameter :: max_ds_branch_per_node = 3
     integer, parameter :: max_branch_per_node = 6
     real(8) :: branchsign(max_branch_per_node)
 
@@ -88,14 +92,24 @@ module define_globals
     integer, allocatable, target :: facePS(:,:)[:]      !% coarray for shared faces pack array
     logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array
 
-    !% BIPquick Arrays
+    !% BIPquick Arrays - (De)Allocated in BIPquick.f08
     integer, allocatable :: B_nodeI(:,:)
     real(8), allocatable :: B_nodeR(:,:)
-
+    real(8), allocatable :: weight_range(:,:)
+    logical, allocatable :: totalweight_visited_nodes(:)
+    logical, allocatable :: partitioned_nodes(:)
+    logical, allocatable :: partitioned_links(:)
+    logical, allocatable :: accounted_for_links(:)
+    integer, allocatable :: phantom_link_tracker(:)
+ 
     !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable :: adjacent_links(:)
     integer, allocatable :: elem_per_image(:)
     logical, allocatable :: image_full(:)
+
+    !%link and node output_idx
+    integer, allocatable :: link_output_idx(:)
+    integer, allocatable :: node_output_idx(:)
 
     !% ===================================================================================
     !% CONSTANTS
@@ -115,6 +129,8 @@ module define_globals
     real(8), parameter :: sixR = 6.0
     real(8), parameter :: eightR = 8.0
     real(8), parameter :: tenR = 10.0
+    real(8), parameter :: twentyfourR = 24.0
+    real(8), parameter :: sixtyR = 60.0
     real(8), parameter :: pi = 4.d0*datan(1.d0)
 
     real(8), parameter :: oneeighthR = oneR / eightR
@@ -126,6 +142,9 @@ module define_globals
     real(8), parameter :: threefourthR = threeR / fourR
     real(8), parameter :: threehalfR = threeR / twoR
     real(8), parameter :: fourthirdsR = fourR / threeR
+
+    real(8), parameter :: seconds_per_hour = 3600.0
+    real(8), parameter :: seconds_per_day  = 86400.0
 
     integer, parameter :: zeroI = 0
     integer, parameter :: oneI = 1
@@ -149,6 +168,8 @@ module define_globals
     integer :: N_diag
     integer :: N_ac
     integer :: N_etm
+    integer :: N_link_output
+    integer :: N_node_output
 
     !% Number of API parameters
     integer, parameter :: N_api_node_attributes = api_node_overflow
@@ -191,9 +212,9 @@ module define_globals
     !real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
     !real(8), pointer :: elem_shorten_cof => setting%Discretization%LinkShortingFactor
 
-    integer, parameter :: NoAdjust       = 1   !% no link length adjustment has done
-    integer, parameter :: OneSideAdjust  = 2   !% one sided link length adjustment has done
-    integer, parameter :: BothSideAdjust = 3   !% both sided link length adjustment has done
+    integer, parameter   :: NoAdjust       = 1   !% no link length adjustment has done
+    integer, parameter   :: OneSideAdjust  = 2   !% one sided link length adjustment has done
+    integer, parameter   :: BothSideAdjust = 3   !% both sided link length adjustment has done
 
     ! default for edge and non-edge node
     integer, parameter :: nonEdgeNode = 0 ! Upstream BC nodes are assigned to 1 element

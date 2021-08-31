@@ -36,6 +36,22 @@
 // Interface error codes:
 #define ERROR_FEATURE_NOT_COMPATIBLE 100001
 
+#define MAX_API_OUTPUT_NODE_ATTR 4
+enum api_output_node_attribute {
+  output_node_depth = 0,
+  output_node_volume,
+  output_node_latflow,
+  output_node_inflow
+};
+
+#define MAX_API_OUTPUT_LINK_ATTR 4
+enum api_output_link_attribute {
+  output_link_depth = 0,
+  output_link_flow,
+  output_link_volume,
+  output_link_direction
+};
+
 enum api_node_attributes {
   node_ID = 1,
   node_type,
@@ -43,6 +59,7 @@ enum api_node_attributes {
   node_invertElev,
   node_initDepth,
   node_extInflow_tSeries,
+  node_extInflow_tSeries_x1,
   node_extInflow_tSeries_x2,
   node_extInflow_basePat,
   node_extInflow_basePat_type,
@@ -126,7 +143,7 @@ extern "C" {
 
 // --- Simulation
 
-void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3);
+void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing);
 void DLLEXPORT api_finalize(void* f_api);
 
 // --- Property-extraction
@@ -137,23 +154,30 @@ int DLLEXPORT api_get_node_results(void* f_api, char* node_name, float* inflow, 
 int DLLEXPORT api_get_link_results(void* f_api, char* link_name, float* flow, float* depth, float* volume);
 
 // * After Initialization
-
+double DLLEXPORT api_get_start_datetime();
+double DLLEXPORT api_get_end_datetime();
+double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime);
+double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime);
+int DLLEXPORT api_get_report_times(void * f_api, double * report_start_datetime, int * report_step, int * hydrology_step);
 int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value);
 int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value);
 int DLLEXPORT api_get_num_objects(void* f_api, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
-double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime);
-double DLLEXPORT api_get_start_datetime();
-double DLLEXPORT api_get_end_datetime();
+int DLLEXPORT api_get_next_entry_tseries(int k);
 int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
+
+// Output fcns
+int DLLEXPORT api_write_output_line(void* f_api, double t);
+int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, int resultType, double newNodeResult);
+int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, int resultType, double newLinkResult);
 
 // --- Print-out
 void DLLEXPORT api_print_object_name(int k, int object_type);
 int add_link(int li_idx, int ni_idx, int direction, int* ni_N_link_u, int* ni_Mlink_u1, int* ni_Mlink_u2, int* ni_Mlink_u3, int* ni_N_link_d, int* ni_Mlink_d1, int* ni_Mlink_d2, int* ni_Mlink_d3);
-int DLLEXPORT interface_export_linknode_properties(void* f_api, int units);
-int DLLEXPORT interface_export_link_results(void* f_api, char* link_name);
-int DLLEXPORT interface_export_node_results(void* f_api, char* node_name);
+int DLLEXPORT api_export_linknode_properties(void* f_api, int units);
+int DLLEXPORT api_export_link_results(void* f_api, int link_idx);
+int DLLEXPORT api_export_node_results(void* f_api, int node_idx);
 
 // --- Utils
 int DLLEXPORT api_find_object(int type, char *id);

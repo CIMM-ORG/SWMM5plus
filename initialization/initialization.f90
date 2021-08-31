@@ -4,19 +4,18 @@ module initialization
     use define_globals
     use define_settings
     use define_indexes
+    use discretization
+    use initial_condition
     use interface
+    use network_define
     use partitioning
     use pack_mask_arrays, only: pack_nodes
-    use discretization
     use utility_allocate
     use utility_array
-    use initial_condition
-    use network_define
-    use utility, only: util_export_linknode_csv
     use utility_output
     use utility_array
     use pack_mask_arrays
-
+    use output
 
     implicit none
 
@@ -56,8 +55,16 @@ contains
     !%
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
     !%-----------------------------------------------------------------------------
+
+        !% ---  Define project & settings paths
+        call getcwd(setting%Paths%project)
+        setting%paths%setting = trim(setting%Paths%project) // "/definitions/settings.json"
+
+        !% read and store the command-line options
+        call init_read_arguments ()
+
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
         !% HACK: for clarity and consistency, this probably should be moved into
@@ -68,12 +75,7 @@ contains
 
         !% load the settings.json file with the default setting% model control structure
         !% def_load_settings is one of the few subroutines in the Definition modules
-        call def_load_settings(setting%Paths%setting)
-
-        !% execute the command line options provided when the code is run
-        if (this_image() == 1) then
-            call execute_command_line ("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
-        end if
+        call def_load_settings()
 
         !% read and store the command-line options
         call init_read_arguments ()
@@ -83,30 +85,68 @@ contains
         !% initialize the API with the SWMM-C code
         call interface_init ()
 
+        !if (setting%Verbose) print *, "begin link-node processing"
+
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays ()
 
-        !% partition the network for multi-processor parallel computation
-        call init_partitioning ()
+        !if (setting%Verbose) print *, "begin partitioning"
+
+        call init_partitioning()
+
+        !% HACK: this sync call is probably not needed
+        sync all
+
+        !if (setting%Verbose) print *, "begin network definition"
 
         call init_network_define_toplevel ()
+
+        !if (setting%Verbose) print *, "begin reading csv"
+
+        !% read in link names for output
+        call output_read_csv_link_names()
+        call output_read_csv_node_names()
+
+        !if (setting%Verbose) print *, "begin initializing boundary conditions"
 
         !% initialize boundary conditions
         call init_bc()
 
+        call init_time()
+
+        if (setting%Verbose) then
+            if (this_image() == 1) then
+            if ((N_link > 5000) .or. (N_node > 5000)) then
+                print *, "begin setting initial conditions (this takes several minutes for big systems)"
+                print *, "This system has ",N_link,"links and",N_node,"nodes"
+                print *, "The finite-volume system is ", sum(N_elem(:)), " elements"
+            endif
+        endif
+        endif
         call init_IC_setup ()
 
+        !if (setting%Verbose) print *, "begin setup of output files"
+
         !% creating output_folders and files
-        !call util_output_create_folder()
-        !call util_output_create_elemR_files()
-        !call util_output_create_faceR_files()
-        !call util_output_create_summary_files()
-        
+        call util_output_clean_folders()
+        call util_output_create_folders()
+
+        if ((this_image() == 1) .and. setting%Debug%Input) call util_output_export_linknode_input()
+        if (setting%Debug%Output) then
+            call util_output_create_elemR_files()
+            call util_output_create_faceR_files()
+            call util_output_create_summary_files()
+        end if
+        if (setting%Debug%Output .or. setting%Output%report) then
+            call output_create_link_files()
+            call output_create_node_files()
+        end if
+
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
         !% wait for all the processors to reach this stage before starting the time loop
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine initialize_all
     !%
     !%==========================================================================
@@ -131,7 +171,7 @@ contains
 
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
@@ -141,6 +181,7 @@ contains
         !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
+        link%I(:,li_num_phantom_links) = 0
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
 
@@ -150,6 +191,7 @@ contains
             link%I(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
             link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
             link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
+            link%I(ii,li_parent_link) = ii
 
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
             node%I(link%I(ii,li_Mnode_d), ni_idx_base1 + node%I(link%I(ii,li_Mnode_d), ni_N_link_u)) = ii
@@ -187,8 +229,10 @@ contains
             else if (total_n_links >= twoI) then
                 node%I(ii, ni_node_type) = nJm
             end if
+
             node%YN(ii, nYN_has_extInflow) = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
             node%YN(ii, nYN_has_dwfInflow) = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
+
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
                 if ((node%I(ii,ni_N_link_u) == zeroI) .and. (total_n_links == oneI)) then
@@ -204,7 +248,6 @@ contains
         !% Update Link/Node names
         call interface_update_linknode_names()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
     end subroutine init_linknode_arrays
     !%
     !%==========================================================================
@@ -236,7 +279,7 @@ contains
         character(64) :: subroutine_name = "init_bc"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** enter ', this_image(), subroutine_name
 
         call pack_nodes()
         call util_allocate_bc()
@@ -334,7 +377,7 @@ contains
         call bc_step()
         call pack_bc()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine init_bc
     !%
     !%==========================================================================
@@ -350,13 +393,16 @@ contains
     !%   must be.
     !%
     !%-----------------------------------------------------------------------------
+        integer       :: ii
         character(64) :: subroutine_name = 'init_partitioning'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
         !% find the number of elements in a link based on nominal element length
-        call init_discretization_nominal()
+        do ii = 1, N_link
+            call init_discretization_nominal(ii)
+        end do
 
         !% Set the network partitioning method used for multi-processor parallel computation
         call init_partitioning_method()
@@ -376,7 +422,7 @@ contains
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
 
     end subroutine init_partitioning
     !%
@@ -393,15 +439,16 @@ contains
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
 
-        if (setting%Debug%File%utility_array) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_array) print *, '*** enter ', this_image(),subroutine_name
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
-        allocate(N_elem(size(unique_imagenum,1)))
-        allocate(N_face(size(unique_imagenum,1)))
-        allocate(N_unique_face(size(unique_imagenum,1)))
+        allocate(N_elem(num_images()))
+        allocate(N_face(num_images()))
+        allocate(N_unique_face(num_images()))
 
-        do ii=1, size(unique_imagenum,1)
+        do ii=1, num_images()
+
             node_index = PACK([(counter, counter=1,size(node%I,1))], node%I(:, ni_P_image) == unique_imagenum(ii))
             link_index = PACK([(counter, counter=1,size(link%I,1))], link%I(:, li_P_image) == unique_imagenum(ii))
             !% create corresponding indices for node and link in this image
@@ -420,7 +467,7 @@ contains
                 idx = link_index(jj)
                 face_counter = face_counter + link%I(idx, li_N_element) - 1 !% internal faces between elems, e.g. 5 elements have 4 internal faces
                 elem_counter = elem_counter + link%I(idx, li_N_element) ! number of elements
-            enddo
+            end do
 
             !% now we loop through the nodes and count the node faces
             do jj = 1, size(node_index,1)
@@ -431,8 +478,8 @@ contains
                     face_counter = face_counter +1 !% add the upstream faces
                 elseif (node%I(idx, ni_node_type) == nBCdn) then
                     face_counter = face_counter +1 !% add the downstream faces
-                endif !% multiple junction faces already counted
-            enddo
+                end if !% multiple junction faces already counted
+            end do
 
             !% Now we count the space for duplicated faces
             do jj = 1, size(link_index,1)
@@ -442,15 +489,14 @@ contains
                     ( node%I(link%I(idx, li_Mnode_u), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
-                endif
+                end if
                 !% then downstream node
                 if ( ( node%I(link%I(idx, li_Mnode_d), ni_P_is_boundary) == 1) .and. &
                     ( node%I(link%I(idx, li_Mnode_d), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
-                endif
-
-            enddo
+                end if
+            end do
 
             N_elem(ii) = elem_counter
             N_face(ii) = face_counter
@@ -460,7 +506,8 @@ contains
             face_counter = zeroI
             junction_counter = zeroI
             duplicated_face_counter = zeroI
-        enddo
+
+        end do
 
         max_caf_elem_N = maxval(N_elem)
         max_caf_face_N = maxval(N_face) ! assign the max value
@@ -471,9 +518,9 @@ contains
                 print*, 'Elements expected ', N_elem(ii)
                 print*, 'Faces expected    ', N_face(ii)
             end do
-        endif
+        end if
 
-        if (setting%Debug%File%utility_array)  print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_array)  print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine init_coarray_length
     !%
@@ -529,6 +576,25 @@ contains
             end if
         end do
     end subroutine init_read_arguments
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine init_time()
+        logical :: doHydraulics
+
+        setting%Time%Dt = setting%Time%Hydraulics%Dt
+        setting%Time%Now = 0
+        setting%Time%Step = 0
+        setting%Time%Hydraulics%Step = 0
+        setting%Time%Hydrology%Step = 0
+        if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
+        !% Initialize report step
+        setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
+        if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
+            stop "Error: Hydrology time step can't be smaller than hydraulics time step"
+        end if
+    end subroutine init_time
     !%
     !%==========================================================================
     !% END OF MODULE

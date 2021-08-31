@@ -8,6 +8,7 @@ module timeloop
     use runge_kutta2
     use utility_output
     use boundary_conditions
+    use interface, only: interface_export_link_results
 
     implicit none
 
@@ -20,388 +21,90 @@ module timeloop
     !%
 
     private
+    public  :: timeloop_toplevel
 
-    public :: timeloop_toplevel
+contains
 
-    contains
     !%==========================================================================
     !% PUBLIC
     !%==========================================================================
-    !%
+
     subroutine timeloop_toplevel()
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Loops over all the major time-stepping routines
-        !%-----------------------------------------------------------------------------
-        logical :: isTLfinished
-        logical, pointer :: useHydrology, useHydraulics
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'timeloop_toplevel'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
-        !%-----------------------------------------------------------------------------
-        useHydrology  => setting%Simulation%useHydrology
-        useHydraulics => setting%simulation%useHydraulics
-        !%-----------------------------------------------------------------------------
-        !% logical to detect end of time loop computations
-        isTLfinished = .false.
-        !%
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%     Loops over all the major time-stepping routines
+    !%-----------------------------------------------------------------------------
+        integer          :: ii, additional_rows
+        logical          :: isTLfinished
+        logical          :: doHydraulics, doHydrology
+        character(64)    :: subroutine_name = 'timeloop_toplevel'
+    !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+
+        doHydraulics = setting%simulation%useHydraulics
+        doHydrology = setting%simulation%useHydrology
+
         !% Combined hydrology (SWMM-C) and hydraulics simulation
-        !%
-        if (useHydrology .and. useHydraulics) then
-            !% set the counters used for outer loop iteration
-            call tl_setup_counters(hydrology)
-            call bc_update()
-            !% outer loop (Hydrology) time stepping
-            do while (.not. isTLfinished)
-                !% Perform one time step of hydrology
-                call tl_hydrology()
-                !% Call inner loop (multiple subtime steps) of hydraulics
-                call tl_hydraulics()
-                call tl_increment_counters(hydrology)
+        !% The loop starts at t = setting%Time%Start
+        do while (setting%Time%Now <= setting%Time%End)
+            if (doHydrology) call tl_hydrology()
+            if (doHydraulics) then
                 call bc_update()
-                call tl_check_finish_status(isTLfinished)
-            !% HACK to prevent infinite loop in testing
-            ! print *, "HACK hard-code stopping time loop  39872"
-            ! isTLfinished = .true.
+                call tl_hydraulics()
+            end if
+            call util_output_report() !% Results must be reported before counter increment
+            call tl_increment_counters(doHydraulics, doHydrology)
+        end do
 
-            end do !% (while not isTLfinished)
-        !%
-        !% Hydrology only simulation
-        !%
-        elseif (useHydrology .and. .not. useHydraulics) then
-            call tl_setup_counters(hydrology)
-            do while (.not. isTLfinished)
-                !% Perform 1 time step of hydrology
-                call tl_hydrology()
-                call tl_increment_counters(hydrology)
-                call tl_check_finish_status(isTLfinished)
+        !% >>> BEGIN HACK
+        !%     Temporary for debugging (can be deleted for deployment)
+        ! if (setting%Debug%Output) then
+        !     !% Write .out in readable .csv
+        !     if (this_image() == 1) then
+        !         additional_rows = num_images() - 1
+        !         do ii = 1, size(Link%I,1) - additional_rows
+        !             call interface_export_link_results(ii)
+        !         end do
+        !     end if
+        ! end if
+        !% >>> END HACK
 
-            !% HACK to prevent infinite loop in testing
-            print *, "HACK hard-code stopping time loop  93785"
-            isTLfinished = .true.
-
-            end do !% (while not isTLfinished)
-        !%
-        !% Hydraulics only simulation
-        !%
-        elseif (useHydraulics .and. .not. useHydrology) then
-            !% time-loop for hydraulics only is self-contained and doesn't
-            !% require an external loop
-            call tl_hydraulics()
-        else
-            print *, 'error, condition that should not occur.'
-            stop 76408
-        endif
-
-        if (setting%Debug%File%timeloop)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine timeloop_toplevel
-    !%
+
     !%==========================================================================
     !% PRIVATE
     !%==========================================================================
-    !%
-    subroutine tl_setup_counters(timeloop_type)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Sets up the counters that are used to handle time loops
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: timeloop_type
-        integer, pointer :: stepNow, stepNext
-        real(8), pointer :: timeNow, timeNext, timeStart, timeEnd, loopTimeFinal, dt
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'tl_setup_counters'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
-        !%-----------------------------------------------------------------------------
-        select case (timeloop_type)
-        case (hydrology)
-            stepNow       => setting%Time%Hydrology%stepNow
-            stepNext      => setting%Time%Hydrology%stepNext
-            timeNow       => setting%Time%Hydrology%timeNow
-            timeNext      => setting%Time%Hydrology%timeNext
-            dt            => setting%Time%Hydrology%Dt
-            loopTimeFinal => setting%Time%Hydrology%timeFinal
-            !% Note the timeStart for hydrology (outer loop) is simulation start time
-            timeStart => setting%Time%StartTime
-            !% Note the timeEnd for hydrology (outer loop) is simulation end time
-            timeEnd => setting%Time%EndTime
-        case (hydraulics)
-            stepNow       => setting%Time%Hydraulics%stepNow
-            stepNext      => setting%Time%Hydraulics%stepNext
-            timeNow       => setting%Time%Hydraulics%timeNow
-            timeNext      => setting%Time%Hydraulics%timeNext
-            dt            => setting%Time%Hydraulics%Dt
-            loopTimeFinal => setting%Time%Hydraulics%timeFinal
-            if (setting%Simulation%useHydrology) then
-                !% Combined hydraulics and hydrology
-                !% The time start and end for hydraulics are the present hydrology step
-                timeStart   => setting%Time%Hydrology%timeNow
-                timeEnd     => setting%Time%Hydrology%timeNext
-            else
-                !% For hydraulics only simulation
-                !% The time start and end are the entire simulation
-                timeStart   => setting%Time%StartTime
-                timeEnd     => setting%Time%EndTime
-            endif
 
-        case default
-            print *, 'error -- should be unreachable'
-            stop 1001
-        end select
-       !%-----------------------------------------------------------------------------
-        stepNow  = 0
-        stepNext = 1
-
-        timeNow = timeStart
-        timeNext = timeNow + dt
-
-        loopTimeFinal = timeEnd
-
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
-    end subroutine tl_setup_counters
-    !
-    !%==========================================================================
-    !%==========================================================================
-    !%
     subroutine tl_hydrology()
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Performs a single hydrology step
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !% Performs a single hydrology step
+    !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_hydrology'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
-        !%-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
-        !% need to execute a hydrology step and extract boundary conditions for
-        !% upstream, downstream, and lateral inflows.
-        ! print *, "Hydrology calls to SWMM-C are needed 8473"
-        !% stop 8473
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_hydrology
-
+    !%
     !%==========================================================================
     !%==========================================================================
-    !
+    !%
     subroutine tl_hydraulics()
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Performs inner loop of hydraulics for a single hydrology step
-        !%-----------------------------------------------------------------------------
-        integer :: ii
-        integer, pointer :: stepnext, stepfinal
-        real(8), pointer :: timeNext, timeFinal
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'tl_hydraulics'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
-        !%-----------------------------------------------------------------------------
-        timeNext  => setting%Time%Hydraulics%timeNext
-        timeFinal => setting%Time%Hydraulics%timeFinal
-        !%-----------------------------------------------------------------------------
-        !% set the counters used for inner loop iteration
-        call tl_setup_counters(hydraulics)
-
-        !% set the expected number of substeps for hydraulics given the present CFL
-        call tl_set_hydraulic_substep()   
-
-        !% setup for checking volume conservation during the hydraulic steps.
-        ! FUTURE 20210609 brh need to decide where to place this and pull code from old version
-        ! call diagnostic_volume_conservation
-
-        !% these are hydraulics substeps within a single hydrology step
-        do while (timeNext <= timeFinal)
-            call tl_update_hydraulic_BC()
-            call tl_hydraulic_solver()
-            call tl_increment_counters(hydraulics)
-            call tl_set_hydraulic_substep()
-
-        !% HACK to prevent infinite loop in testing
-        ! print *, "Hard-code hydrualic subtime-step loop exit for testing 7647"
-        ! timeNext = timeFinal+1.0
-        end do
-
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
-    end subroutine tl_hydraulics
-
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine tl_set_hydraulic_substep()
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% For combined hydrology and hydraulics simulations, this sets the size of the
-        !% hydraulic substep (dt) and the total number of hydraulic substeps in the
-        !% inner loop for the present CFL conditions.
-        !% For a hydraulics-only simulation, this adjust the time steps up or down from
-        !% its present value depending on the brackets of setting.VariableDT.CFL_hi_max and
-        !% setting.VariableDT.CFL_lo_max. Note that the increase of dt for low CFL will
-        !% only occur every N time steps, as set by setting.VariableDT.NstepsForCheck
-        !%-----------------------------------------------------------------------------
-        real(8) :: timeleft, thisCFL
-        integer :: neededSteps, ii
-
-        real(8), pointer :: dt, maxCFL, maxCFLlow, targetCFL
-        real(8), pointer :: timeNow, timeFinal, decreaseFactor, increaseFactor
-        real(8), pointer :: velocity(:), wavespeed(:), length(:)
-        integer, pointer :: stepNow, stepNext, stepfinal, checkStepInterval, lastCheckStep
-        integer, pointer :: thisCol, Npack, thisP(:)
-        logical, pointer :: useHydrology, useHydraulics
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'tl_set_hydraulic_substep'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
-        !%-----------------------------------------------------------------------------
-        useHydrology  => setting%Simulation%useHydrology
-        useHydraulics => setting%Simulation%useHydraulics
-        dt        => setting%Time%Hydraulics%Dt
-        timeNow   => setting%Time%Hydraulics%timeNow
-        timeFinal => setting%Time%Hydraulics%timeFinal
-        stepNow   => setting%Time%Hydraulics%stepNow
-        stepNext  => setting%Time%Hydraulics%stepNext
-        stepFinal => setting%Time%Hydraulics%stepFinal
-        !% Note that the timeFinal above assumes that this correctly stores either the
-        !% total simulation time (for a hydraulics-only simulation) or the next hydrology
-        !% step time (for a combined hydrology-hydraulics simulation)
-        maxCFL            => setting%VariableDT%CFL_hi_max
-        targetCFL         => setting%VariableDT%CFL_target
-        maxCFLlow         => setting%VariableDT%CFL_lo_max
-        decreaseFactor    => setting%VariableDT%decreaseFactor
-        increaseFactor    => setting%VariableDT%increaseFactor
-        checkStepInterval => setting%VariableDT%NstepsForCheck
-        lastCheckStep     => setting%VariableDT%LastCheckStep
-
-        thisCol => col_elemP(ep_CC_ALLtm)
-        Npack   => npack_elemP(thisCol)
-        thisP   => elemP(1:Npack,thisCol)
-
-        velocity  => elemR(:,er_Velocity)
-        wavespeed => elemR(:,er_WaveSpeed)
-        length    => elemR(:,er_Length)
-        !%-----------------------------------------------------------------------------
-        !% how much time is remaining in the inner loop (or entire simulation)
-        timeleft = timeFinal - timeNow
-        if (timeleft > zeroR) then
-            !% compute the maximum CFL if a single step is taken
-
-            if (useHydrology) then
-                !% For combined hydrology and hydraulics use the hydrology time step
-                !% as the target CFL.
-                thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * timeleft / length(thisP) )
-                !% check to see if max CFL is exceeded
-                if (thisCFL < maxCFL) then
-                    !% use a single hydraulics step for the remaining hydrology time
-                    dt = timeleft
-                    stepFinal = stepNext
-                else
-                    !% compute the needed steps and time step size
-                    neededSteps = ceiling(thisCFL / targetCFL)
-                    stepFinal = stepNow + neededSteps
-                    dt = timeleft / real(neededSteps,8)
-                    if ((dt > fiveR) .and. (neededSteps > 2)) then
-                        !% round larger dt to integer values
-                        dt = real(floor(dt),8)
-                    endif
-                endif
-                
-            else
-                !% For hydraulics only, keep the timestep stable unless it
-                !% exceeds CFL limits (both high and low limits).
-                thisCFL = maxval( (velocity(thisP) + wavespeed(thisP)) * dt / length(thisP) )
-                
-                if (thisCFL > maxCFL) then
-                    !% decrease the time step and reset the checkStep counter
-                    dt = dt * decreaseFactor * maxCFL /thisCFL
-                    lastCheckStep = stepNow
-                else
-                    if (stepNow > lastCheckStep + checkStepInterval) then
-                        !% check for low CFL only on prescribed intervals and increase time step
-                        if (thisCFL < maxCFLlow) then
-                            !% increase the time step and reset the checkStep Counter
-                            dt = dt * increaseFactor
-                            lastCheckStep = stepNow
-                        endif
-                    endif
-                endif
-            endif
-        else
-            !% for timeleft <= 0 there is no change as the hydraulics loop should exit
-        endif
-
-        sync all
-        call co_min(dt)
-
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
-    end subroutine tl_set_hydraulic_substep
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine tl_update_hydraulic_BC()
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Updates (if needed) BC to hydraulic solver, including upstream, downstream
-        !% and lateral inflows.
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'tl_update_hydraulic_BC'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
-        !%-----------------------------------------------------------------------------
-        !% This needs to take the BC from the hydrology step (obtained in tl_hydrology)
-        !% and subdivide for the subtime stepping of the hydraulics. For flow rates this
-        !% is a simple task -- take the flow over the hydrology timestep and subdivide
-        !% by the hydraulics time step (however ,this gets a little tricky if the hydraulic
-        !% timestep is allowed to change during the overarching hydrology timestep, which
-        !% may be necessary for stability). For the elevation BC we will need to think
-        !% more carefully. Let's imagine that we have a hydrology time step of 15 minutes.
-        !% Does the hydrology elevation BC represent the average water surface elevation
-        !% during those 15 minutes? or does it represent the instantaneous water surface
-        !% elevation at the start of the 15 minute step? Let us assume that it represents
-        !% average elevation over the hydrology time step "m".  In which case, we can make
-        !% an estimate of the  surface elevation at the start of the time step as
-        !% H^{m-1/2} = (H^{m} + H^{m-1}) / 2
-        !% Furthermore, the rate of change of the water surface elevation can be estimated
-        !% for the 15 minute time step as a simple difference
-        !% dH/dt = ( H^{m} - H^{m-1} ) / (15 * 60)
-        !% Let us assume that we use a 3 minute subtime step for hydraulics, in which case
-        !% for the n subtime step we have
-        !% H^{n} = H^{m-1/2} + n(3 * 60) dH/dt
-        !% The above should be written out more clearly in the SWMM5+ Code Narration.
-
-        ! print *, "Need tl_updated_hydraulic_BC to be written 38972"
-
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
-    end subroutine tl_update_hydraulic_BC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine tl_hydraulic_solver()
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Top level hydraulic solver for a single time step
-        !%-----------------------------------------------------------------------------
-        real(8) :: thisCFL
-
-        real(8), pointer :: dt, timeNow
-        real(8), pointer :: velocity(:), wavespeed(:), length(:)
-        integer, pointer :: thisCol, Npack, thisP(:)
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'tl_hydraulic_solver'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
-        !%-----------------------------------------------------------------------------
-        dt        => setting%Time%Hydraulics%Dt
-        timeNow   => setting%Time%Hydraulics%timeNow
-        thisCol   => col_elemP(ep_CC_ALLtm)
-        Npack     => npack_elemP(thisCol)
-        thisP     => elemP(1:Npack,thisCol)
-
-        velocity  => elemR(:,er_Velocity)
-        wavespeed => elemR(:,er_WaveSpeed)
-        length    => elemR(:,er_Length)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !% Top level hydraulic solver for a single time step
+    !%-----------------------------------------------------------------------------
+        character(64)    :: subroutine_name = 'tl_hydraulics'
+    !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
             call tl_solver_select()
-        endif
+        end if
 
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
@@ -411,13 +114,11 @@ module timeloop
         !%  push the old values down the stack for AC solver
         call tl_save_previous_values()
 
-        !% print the cfl to check for model blowout
-        !call util_output_report_summary()
-
         !%  Reset the flowrate adhoc detection before flowrates are updated.
         !%  Note that we do not reset the small volume detection here -- that should
         !%  be in geometry routines.
         elemYN(:,eYN_IsAdhocFlowrate) = .false.
+
         select case (setting%Solver%SolverSelect)
             case (ETM_AC)
                 call rk2_toplevel_ETMAC()
@@ -430,55 +131,165 @@ module timeloop
                 STOP 1001 !% need error statement
         end select
 
-        !% report timestep
-        !call util_output_report()
-
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
-    end subroutine tl_hydraulic_solver
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+    end subroutine tl_hydraulics
     !%
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine tl_increment_counters(timeloop_type)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Increments the counters that are used to monitor hydrology (outerloop)
-        !%-----------------------------------------------------------------------------
+    subroutine tl_update_hydraulic_step()
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%-----------------------------------------------------------------------------
 
-        integer, intent(in) :: timeloop_type
+        logical          :: matchHydrologyStep
+        real(8)          :: timeleft, timeNow, thisCFL, targetCFL, maxCFL, maxCFLlow
+        real(8)          :: decreaseFactor, increaseFactor, nextTimeHydrology
+        real(8), pointer :: dt, velocity(:), wavespeed(:), length(:)
+        integer          :: ii, neededSteps, checkStepInterval
+        integer, pointer :: stepNow, stepNext, stepfinal, lastCheckStep
+        integer, pointer :: thisCol, Npack, thisP(:)
+        character(64)    :: subroutine_name = 'tl_update_hydraulic_step'
 
-        integer, pointer :: thisstep, nextstep
-        real(8), pointer :: thistime, nexttime, dt
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'tl_increment_counters'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
-        !%-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
 
-        select case (timeloop_type)
-        case (hydrology)
-            thistime => setting%Time%Hydrology%timeNow
-            nexttime => setting%Time%Hydrology%timeNext
-            dt       => setting%Time%Hydrology%Dt
-            thisstep => setting%Time%Hydrology%stepNow
-            nextstep => setting%Time%Hydrology%stepNext
-        case (hydraulics)
-            thistime => setting%Time%Hydraulics%timeNow
-            nexttime => setting%Time%Hydraulics%timeNext
-            dt       => setting%Time%Hydraulics%Dt
-            thisstep => setting%Time%Hydraulics%stepNow
-            nextstep => setting%Time%Hydraulics%stepNext
-        case default
-            print *, 'error should be unreachable'
-            stop 1001
-        end select
-        !%-----------------------------------------------------------------------------
-        !% increment time
-        thistime = nexttime
-        nexttime = nexttime + dt
+        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
 
-        !% increment step
-        thisstep = nextstep
-        nextstep = nextstep + 1
+        maxCFL             = setting%VariableDT%CFL_hi_max
+        targetCFL          = setting%VariableDT%CFL_target
+        maxCFLlow          = setting%VariableDT%CFL_lo_max
+        decreaseFactor     = setting%VariableDT%decreaseFactor
+        increaseFactor     = setting%VariableDT%increaseFactor
+        checkStepInterval  = setting%VariableDT%NstepsForCheck
+        matchHydrologyStep = setting%Time%matchHydrologyStep
+        timeNow            = setting%Time%Now
+
+        dt                => setting%Time%Hydraulics%Dt
+        stepNow           => setting%Time%Step
+        lastCheckStep     => setting%VariableDT%LastCheckStep
+
+        thisCol           => col_elemP(ep_CC_ALLtm)
+        Npack             => npack_elemP(thisCol)
+        thisP             => elemP(1:Npack,thisCol)
+
+        velocity          => elemR(:,er_Velocity)
+        wavespeed         => elemR(:,er_WaveSpeed)
+        length            => elemR(:,er_Length)
+
+        if (matchHydrologyStep) then
+            !% For combined hydrology and hydraulics use the hydrology time step
+            !% as the target CFL.
+            nextTimeHydrology = (setting%Time%Hydrology%Step + 1) * setting%Time%Hydrology%Dt
+            timeLeft = nextTimeHydrology - timeNow
+            thisCFL = maxval( (abs(velocity(thisP)) + abs(wavespeed(thisP))) * timeleft / length(thisP) )
+
+            !% check to see if max CFL is exceeded
+            if (thisCFL < maxCFL) then
+                !% use a single hydraulics step for the remaining hydrology time
+                dt = timeleft
+            else
+                !% compute the needed steps and time step size
+                neededSteps = ceiling( thisCFL / targetCFL )
+                dt = timeleft / real(neededSteps,8)
+                if ((dt > fiveR) .and. (neededSteps > 2)) then
+                    !% round larger dt to integer values
+                    dt = real(floor(dt),8)
+                end if
+            end if
+        else
+            !% For hydraulics only, keep the timestep stable unless it
+            !% exceeds CFL limits (both high and low limits).
+            thisCFL = maxval( (abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP) )
+
+            if (thisCFL > maxCFL) then
+                !% decrease the time step and reset the checkStep counter
+                dt = dt * decreaseFactor * maxCFL / thisCFL
+                lastCheckStep = stepNow
+            else
+                if (stepNow > lastCheckStep + checkStepInterval) then
+                    !% check for low CFL only on prescribed intervals and increase time step
+                    if (thisCFL < maxCFLlow) then
+                        !% increase the time step and reset the checkStep Counter
+                        dt = dt * increaseFactor
+                        lastCheckStep = stepNow
+                    end if
+                end if
+            end if
+        end if
+
+        if ((setting%Limiter%Dt%UseLimitMin) .and. (dt <= setting%Limiter%Dt%Minimum)) then
+            print*, 'timeNow = ', timeNow
+            print*, 'dt = ', dt, 'minDt = ',  setting%Limiter%Dt%Minimum
+            print*, 'max velocity', maxval(velocity(thisP)), 'max wavespeed', maxval(wavespeed(thisP))
+            print*, 'warning: the dt value is smaller than the user supplied min dt value'
+            stop 1123
+        end if
+
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
+    end subroutine tl_update_hydraulic_step
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine tl_increment_counters(doHydraulics, doHydrology)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%-----------------------------------------------------------------------------
+        logical, intent(inout) :: doHydraulics, doHydrology
+        logical                :: useHydrology, useHydraulics
+        real(8)                :: nextTimeHydraulics, nextTimeHydrology, nextTime, dtTol
+        real(8), pointer       :: timeNow, dt
+        integer                :: minImg
+        integer, pointer       :: hydraulicStep, hydrologyStep, step, reportStep
+        character(64)          :: subroutine_name = 'tl_increment_counters'
+    !%-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+
+        hydraulicStep => setting%Time%Hydraulics%Step
+        hydrologyStep => setting%Time%Hydrology%Step
+        dt            => setting%Time%Dt
+        timeNow       => setting%Time%Now
+        step          => setting%Time%Step
+        reportStep    => setting%Output%reportStep
+
+        dtTol         = setting%Time%DtTol
+        useHydrology  = setting%Simulation%useHydrology
+        useHydraulics = setting%Simulation%useHydraulics
+
+        !% Check if CFL > CFLmax condition
+        if (useHydraulics) call tl_update_hydraulic_step()
+
+        nextTimeHydraulics = timeNow + setting%Time%Hydraulics%Dt
+        nextTimeHydrology = (hydrologyStep + 1) * setting%Time%Hydrology%Dt
+
+        !% Check what needs to be computed next (Hydrology | Hydraulics)
+
+        !% 1. Update simulation time step
+        nextTime = min(nextTimeHydraulics, nextTimeHydrology)
+        doHydrology  = (abs(nextTime - nextTimeHydrology) <= dtTol) .and. useHydrology
+        doHydraulics = (abs(nextTime - nextTimeHydraulics) <= dtTol) .and. useHydraulics
+        dt = nextTime - timeNow
+
+        !% 2. Communicate new Dt (ALL the processors compute the same step)
+        call co_min(dt)
+        if (dt == (nextTime - timeNow)) then
+            minImg = this_image()
+        else
+            minImg = -1
+        end if
+        call co_max(minImg)
+        call co_broadcast(doHydraulics, minImg)
+        call co_broadcast(doHydrology, minImg)
+
+        if (util_output_must_report()) reportStep = reportStep + 1
+        if (doHydraulics) hydraulicStep = hydraulicStep + 1
+        if (doHydrology) hydrologyStep = hydrologyStep + 1
+
+        step    = step + 1
+        timeNow = timeNow + dt
+
+        call tl_command_line_step_output()
 
         if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
     end subroutine tl_increment_counters
@@ -499,7 +310,7 @@ module timeloop
         real(8), pointer :: volume(:), FullVolume(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_solver_select'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
         !%-----------------------------------------------------------------------------
 
         thiscol = ep_ALLtm
@@ -525,7 +336,7 @@ module timeloop
             tmType(thisP) = ETM
         endwhere
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_solver_select
     !%
     !%==========================================================================
@@ -541,8 +352,8 @@ module timeloop
         !% debugged.
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_save_previous_values'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
         !%  push the old values down the stack
         !%  N values is the present, N0 is the last time step, and N1
         !%  is the timestep before (needed only for backwards 3rd in velocity and volume)
@@ -553,41 +364,84 @@ module timeloop
         elemR(:,er_Volume_N1)    = elemR(:,er_Volume_N0)
         elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
 
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name
     end subroutine tl_save_previous_values
     !%
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine tl_check_finish_status(isTLfinished)
+    subroutine tl_command_line_step_output ()
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Signasl the timeloop is finished when next time step would be beyond the
-        !% end time.
+        !%
         !%-----------------------------------------------------------------------------
-        logical, intent(inout) :: isTLfinished
+        character(64) :: subroutine_name = 'tl_command_line_step_output'
+        real (8), pointer :: dt, timeNow, timeEnd
+        real (8) :: thistime
+        integer, pointer :: step, interval
+        integer :: execution_realtime
+        real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
+        character(3) :: timeunit
+        !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        dt            => setting%Time%Dt
+        timeNow       => setting%Time%Now
+        timeEnd       => setting%Time%End
+        step          => setting%Time%Step
+        interval      => setting%Output%CommandLine%interval
 
-        real(8), pointer :: endtime, thistime
-        integer, pointer :: thisstep, finalstep
-        !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'tl_check_finish_status'
-        if (setting%Debug%File%timeloop) print *, '*** enter ', subroutine_name
-        !%-----------------------------------------------------------------------------
+        setting%Time%Real%EpochNowSeconds = time() ! Fortran function returns real epoch time
 
-        endtime   => setting%Time%EndTime
-        thistime  => setting%Time%Hydrology%timeNow
-        thisstep  => setting%Time%Hydrology%stepNow
-        finalstep => setting%Time%Hydrology%stepFinal
-        !%-----------------------------------------------------------------------------
+        ! estimate the remaining time
+        execution_realtime = setting%Time%Real%EpochNowSeconds - setting%Time%Real%EpochTimeLoopStartSeconds
+        seconds_to_completion = execution_realtime * (setting%Time%End - setting%Time%Now) &
+                                                   / (setting%Time%Now - setting%Time%Start)                                
 
-        if ((thistime > endtime) .or. (thisstep > finalstep)) then
-            isTLfinished = .true.
+        if (setting%Verbose) then
+            if (this_image() == 1) then
+                if (mod(step,interval) == 0) then
+                    ! translate time in seconds into something more useful
+                    if (timeNow  < sixtyR) then
+                        thistime = timeNow
+                        timeunit = 's  '
+                    elseif (timeNow >= sixtyR .and. timeNow < seconds_per_hour) then
+                        thistime = timeNow / sixtyR
+                        timeunit = 'min'    
+                    elseif (timeNow >= seconds_per_hour .and. timeNow < 3.0*seconds_per_day) then
+                        thistime = timeNow / seconds_per_hour
+                        timeunit = 'hr '
+                    elseif (timeNow >= 3.0 * seconds_per_day) then
+                        thistime = timeNow / seconds_per_day    
+                        timeunit = 'day'
+                    endif
+
+                    ! write a time counter
+                    write(*,"(A12,i8,a17,F9.2,a1,a3,a6,f5.2)") &
+                        'time step = ',step,'; model time = ',thistime, &
+                        ' ',timeunit,'; dt = ',dt
+
+                    ! write estimate of time remaining    
+                    if (seconds_to_completion < sixtyR) then
+                        timeunit = 's  '
+                        time_to_completion = seconds_to_completion
+                    elseif (seconds_to_completion >=sixtyR .and. seconds_to_completion < seconds_per_hour ) then
+                        timeunit = 'min'
+                        time_to_completion = seconds_to_completion / sixtyR
+                    elseif (seconds_to_completion >=seconds_per_hour .and. seconds_to_completion < seconds_per_day) then
+                        timeunit = 'hr '
+                        time_to_completion = seconds_to_completion / seconds_per_hour
+                    else
+                        timeunit = 'day'
+                        time_to_completion = seconds_to_completion / seconds_per_day
+                    endif
+                    write(*,"(A9,F6.2,A1,A3,A28)") 'estimate ',time_to_completion,' ',timeunit,' clock time until completion'
+                    print *
+                endif
+            endif
         endif
 
-        !% FUTURE brh 20210607 Need a control to exit on error
-        if (setting%Debug%File%timeloop) print *, '*** leave ', subroutine_name
-    end subroutine tl_check_finish_status
-    !%
+        if (setting%Debug%File%timeloop) print *, '*** leave ', this_image(), subroutine_name   
+    end subroutine tl_command_line_step_output
     !%==========================================================================
     !% END OF MODULE
     !%+=========================================================================

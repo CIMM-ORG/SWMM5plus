@@ -58,7 +58,7 @@ contains
 
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% If BIPquick is being used for Partitioning, include additional rows to the link-node arrays
         if (setting%Partitioning%PartitioningMethod == BQuick) then
@@ -111,7 +111,14 @@ contains
             call util_allocate_check(allocation_status, emsg)
         end do
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        !% allocate link_node_output_idx
+        allocate(node_output_idx(N_node + additional_rows),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+        
+        allocate(link_output_idx(N_link + additional_rows),stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg)
+
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
     end subroutine util_allocate_linknode
     !
     !==========================================================================
@@ -121,7 +128,42 @@ contains
         allocate(adjacent_links(max_branch_per_node))
         allocate(elem_per_image(num_images()))
         allocate(image_full(num_images()))
+
+        !% If BIPquick is being used for Partitioning, allocate additional arrays
+        if (setting%Partitioning%PartitioningMethod == BQuick) then
+            allocate(B_nodeI(size(node%I,1), max_us_branch_per_node))
+            allocate(B_nodeR(size(node%R,1), twoI))
+            allocate(totalweight_visited_nodes(size(node%I, oneI)))
+            allocate(partitioned_nodes(size(node%I, oneI)))
+            allocate(partitioned_links(size(link%I, oneI)))
+            allocate(weight_range(size(link%I, oneI), twoI))
+            allocate(accounted_for_links(size(link%I, oneI)))
+            allocate(phantom_link_tracker(size(link%I, oneI)))
+        end if
     end subroutine util_allocate_partitioning_arrays
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine util_deallocate_partitioning_arrays()
+
+        if (allocated(adjacent_links)) deallocate(adjacent_links)
+        if (allocated(elem_per_image)) deallocate(elem_per_image)
+        if (allocated(image_full)) deallocate(image_full)
+
+        !% If BIPquick is being used for Partitioning, allocate additional arrays
+        if (setting%Partitioning%PartitioningMethod == BQuick) then
+            deallocate(B_nodeI)
+            deallocate(B_nodeR)
+            deallocate(totalweight_visited_nodes)
+            deallocate(partitioned_nodes)
+            deallocate(partitioned_links)
+            deallocate(weight_range)
+            deallocate(accounted_for_links)
+            deallocate(phantom_link_tracker)
+        end if
+
+    end subroutine util_deallocate_partitioning_arrays
     !
     !==========================================================================
     !==========================================================================
@@ -138,7 +180,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !==== elem allocation ====
         ncol => Ncol_elemR ! the maxmiumu number of columns
@@ -221,7 +263,7 @@ contains
         call util_allocate_check(allocation_status, emsg)
         faceM(:,:) = nullvalueL
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
 
     end subroutine util_allocate_elemX_faceX
@@ -242,7 +284,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% allocation of the col_elemX and npack_elemX
         call util_allocate_col_elemI
@@ -264,7 +306,7 @@ contains
         call util_allocate_col_faceR
         call util_allocate_col_faceYN
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_columns
     !
@@ -286,7 +328,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         ncol => Ncol_elemI
 
@@ -304,13 +346,13 @@ contains
         !     do jj = 1, num_images()
         !         print*, jj, 'image no'
         !         print*, col_elemI(:)[jj], 'col_elemI(:)[jj]'
-        !     enddo
-        ! endif
+        !     end do
+        ! end if
         ! print*, 'press return to continue'
         ! read(*,*)
         !%--------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemI
     !
@@ -335,7 +377,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemP
@@ -354,7 +396,7 @@ contains
         !% zero the number of packed items (to be defined in the packing)
         npack_elemP(:) = 0
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemP
     !
@@ -379,7 +421,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemPGalltm !% whatever the last item in the enumerator
@@ -398,7 +440,7 @@ contains
         !% zero the number of packed items (to be defined in the packing)
         npack_elemPGalltm(:) = 0
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemPGalltm
     !
@@ -423,7 +465,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemPGac!% whatever the last item in the enumerator
@@ -442,7 +484,7 @@ contains
         !% zero the number of packed items (to be defined in the packing)
         npack_elemPGac(:) = 0
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemPGac
     !
@@ -467,7 +509,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemPGetm   !% whatever the last item in the enumerator
@@ -486,7 +528,7 @@ contains
         !% zero the number of packed items (to be defined in the packing)
         npack_elemPGetm(:) = 0
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemPGetm
     !
@@ -508,7 +550,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemR
@@ -520,7 +562,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_elemR(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemR
     !
@@ -542,7 +584,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSI
@@ -554,7 +596,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_elemSI(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemSI
     !
@@ -576,7 +618,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSR
@@ -588,7 +630,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_elemSR(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemSR
     !
@@ -610,7 +652,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSGR
@@ -622,7 +664,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_elemSGR(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemSGR
     !
@@ -644,7 +686,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemWDI
@@ -656,7 +698,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_elemWDI(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemWDI
     !
@@ -678,7 +720,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemWDR
@@ -690,7 +732,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_elemWDR(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemWDR
     !
@@ -712,7 +754,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_elemYN
@@ -724,7 +766,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_elemYN(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_elemYN
     !
@@ -746,7 +788,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceI
@@ -758,7 +800,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_faceI(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_faceI
     !
@@ -780,7 +822,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceM
@@ -792,7 +834,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_faceM(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_faceM
     !
@@ -818,7 +860,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceP
@@ -837,7 +879,7 @@ contains
         !% zero the number of packed items (to be defined in the packing)
         npack_faceP(:) = 0
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_faceP
     !
@@ -866,7 +908,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceP
@@ -885,7 +927,7 @@ contains
         !% zero the number of packed items (to be defined in the packing)
         npack_facePS(:) = 0
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_facePS
     !
@@ -907,7 +949,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceR  !global
@@ -919,7 +961,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_faceR(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_faceR
     !
@@ -941,7 +983,7 @@ contains
 
         !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
         !% define the maximum number of columns as
         ncol => Ncol_faceYN  !global
@@ -953,7 +995,7 @@ contains
         !% this array can be used as a pointer target in defining masks
         col_faceYN(:) = [(ii,ii=1,ncol)]
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_col_faceYN
     !
@@ -972,10 +1014,10 @@ contains
 
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%utility_allocate) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** enter ', this_image(),subroutine_name
 
-        if (setting%BC%BCSlots < 2) then
-            print *, "Error: the number of BCSlots has to be greater than 2"
+        if (setting%BC%slots < 2) then
+            print *, "Error: the number of slots has to be greater than 2"
             stop
         end if
 
@@ -983,7 +1025,7 @@ contains
             allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
 
-            allocate(BC%headR_timeseries(N_headBC, setting%BC%BCSlots, N_headR), stat=allocation_status, errmsg=emsg)
+            allocate(BC%headR_timeseries(N_headBC, setting%BC%slots, N_headR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
 
             allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
@@ -997,7 +1039,7 @@ contains
             allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
 
-            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%BCSlots, N_flowR), stat=allocation_status, errmsg=emsg)
+            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%slots, N_flowR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg)
 
             allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
@@ -1007,7 +1049,7 @@ contains
             call util_allocate_check (allocation_status, emsg)
         end if
 
-        if (setting%Debug%File%utility_allocate) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name
     end subroutine util_allocate_bc
     !
     !==========================================================================
@@ -1028,14 +1070,14 @@ contains
 
         !-----------------------------------------------------------------------------
 
-            if (setting%Debug%File%utility) print *, '*** enter ',subroutine_name
+            if (setting%Debug%File%utility) print *, '*** enter ', this_image(),subroutine_name
 
             if (allocation_status > 0) then
                 print *, trim(emsg)
                 stop
             end if
 
-            if (setting%Debug%File%utility) print *, '*** leave ',subroutine_name
+            if (setting%Debug%File%utility) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine util_allocate_check
 

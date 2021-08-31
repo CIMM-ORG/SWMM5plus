@@ -90,6 +90,7 @@ module define_api_keys
         enumerator :: api_node_invertElev
         enumerator :: api_node_initDepth
         enumerator :: api_node_extInflow_tSeries
+        enumerator :: api_node_extInflow_tSeries_x1
         enumerator :: api_node_extInflow_tSeries_x2
         enumerator :: api_node_extInflow_basePat
         enumerator :: api_node_extInflow_baseline
@@ -130,6 +131,22 @@ module define_api_keys
         enumerator :: api_link_geometry
         enumerator :: api_link_xsect_wMax
         enumerator :: api_link_xsect_yBot
+    end enum
+
+    !% API Link Output attributes
+    enum, bind(c)
+        enumerator :: api_output_link_depth = 0
+        enumerator :: api_output_link_flow
+        enumerator :: api_output_link_volume
+        enumerator :: api_output_link_direction
+    end enum
+
+    !% API Node Output attributes
+    enum, bind(c)
+        enumerator :: api_output_node_depth = 0
+        enumerator :: api_output_node_volume
+        enumerator :: api_output_node_latflow
+        enumerator :: api_output_node_inflow
     end enum
 
     ! Datetime resolution types

@@ -47,7 +47,7 @@ module define_indexes
     integer, target :: Nelem_in_Junction = Junction_branch_6_out
 
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for node%I(:,:) arrays
+    !% Define the column indexes for link%I(:,:) arrays
     !% These are the for the full arrays of integer data
     !%-------------------------------------------------------------------------
     enum, bind(c)
@@ -65,6 +65,8 @@ module define_indexes
         enumerator :: li_InitialDepthType    ! Uniform, LinearlyVarying, ExponentialDecay
         enumerator :: li_length_adjusted     ! 1 = length was not adjusted, 2 = one side was adjusted, 3 = both side was adjusted
         enumerator :: li_P_image             ! image number assigned from BIPquick
+        enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
+        enumerator :: li_num_phantom_links   ! Number of phantom links associated 
         enumerator :: li_weir_EndContrations
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
@@ -125,6 +127,7 @@ module define_indexes
         enumerator :: nr_MaxInflow
         enumerator :: nr_Eta
         enumerator :: nr_Depth
+        enumerator :: nr_head
         enumerator :: nr_Volume
         enumerator :: nr_Flooding
         enumerator :: nr_JunctionBranch_Kfactor
@@ -371,9 +374,11 @@ module define_indexes
         enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
         enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
         enumerator :: ep_BClat                      !% all elements with lateral BC
+        enumerator :: ep_JB_DownStreamJB            !% all the downstream JB elements 
+        enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB         
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemP = ep_BClat
+    integer, target :: Ncol_elemP = ep_CC_DownstreamJbAdjacent
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemPGalltm(:,:), elemPGetm(:,:),
@@ -403,6 +408,8 @@ module define_indexes
         enumerator :: eYN_isSmallVolume                 !% TRUE is use small volume algorithm
         enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged conduit, FALSE is open channel flow
         enumerator :: eYN_isNearZeroVolume              !% TRUE if volume qualifies as "near zero"
+        enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
+        enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isDummy
     end enum
     !% note, this must be changed to whatever the last enum element is!
@@ -660,6 +667,7 @@ module define_indexes
         enumerator :: fYN_isUpGhost
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull
+        enumerator :: fYN_isDownstreamJbFace
 
         !% HACK: The following might not be needed
         ! enumerator :: fYN_isDiag_adjacent
@@ -667,7 +675,7 @@ module define_indexes
         ! enumerator :: fYN_isBCface
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceYN =  fYN_isnull
+    integer, target :: Ncol_faceYN =  fYN_isDownstreamJbFace
 
     !
     !==========================================================================

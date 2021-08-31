@@ -44,7 +44,7 @@ contains
 
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
@@ -60,49 +60,44 @@ contains
 
         !% print result
         if (setting%Debug%File%network_define) then
-            !% only using the first processor to print results
-            if (this_image() == 1) then
-                do ii = 1,num_images()
-                    print*
-                    print*, '===================================================================' //&
-                    '==================================================================='
-                    print*, 'image = ', ii
-                    print*, '.......................Elements...............................'
-                    print*
-                    print*, '     ei_Lidx     ei_Gidx     ei_link    ei_node    Mface_uL    Mface_dL'
-                    do jj = 1,N_elem(ii)
-                        print*, elemI(jj,ei_Lidx)[ii], elemI(jj,ei_Gidx)[ii], elemI(jj,ei_link_Gidx_SWMM)[ii], &
-                        elemI(jj,ei_node_Gidx_SWMM)[ii], elemI(jj,ei_Mface_uL)[ii], elemI(jj,ei_Mface_dL)[ii]
-                    enddo 
-                    print*
-                    print*, '.......................Faces.............................'
-                    print*, 'a)  fi_Lidx     fi_Gidx     elem_uL     elem_dL     C_image' //&
-                    '    GElem_up    GElem_dn     node_id     link_id'
-                    do jj = 1,N_face(ii)
-                        print*, faceI(jj,fi_Lidx)[ii],faceI(jj,fi_Gidx)[ii],faceI(jj,fi_Melem_uL)[ii], &
-                        faceI(jj,fi_Melem_dL)[ii],faceI(jj,fi_Connected_image)[ii], faceI(jj,fi_GhostElem_uL)[ii],&
-                        faceI(jj,fi_GhostElem_dL)[ii],faceI(jj,fi_node_idx)[ii],faceI(jj, fi_link_idx)[ii] 
-                    enddo
+            print*
+            print*, '===================================================================' //&
+            '==================================================================='
+            print*, 'image = ', this_image()
+            print*, '.......................Elements...............................'
+            print*
+            print*, '     ei_Lidx     ei_Gidx     ei_link    ei_node    Mface_uL    Mface_dL'
+            do jj = 1,N_elem(this_image())
+                print*, elemI(jj,ei_Lidx), elemI(jj,ei_Gidx), elemI(jj,ei_link_Gidx_SWMM), &
+                elemI(jj,ei_node_Gidx_SWMM), elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL)
+            end do
+            print*
+            print*, '.......................Faces.............................'
+            print*, 'a)  fi_Lidx     fi_Gidx     elem_uL     elem_dL     C_image' //&
+            '    GElem_up    GElem_dn     node_id     link_id      zbottom'
+            do jj = 1,N_face(this_image())
+                print*, faceI(jj,fi_Lidx),faceI(jj,fi_Gidx),faceI(jj,fi_Melem_uL), &
+                faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image), faceI(jj,fi_GhostElem_uL),&
+                faceI(jj,fi_GhostElem_dL),faceI(jj,fi_node_idx),faceI(jj, fi_link_idx), faceR(jj,fr_Zbottom)
+            end do
 
-                    ! print*
-                    ! print*, '.......................Faces..................................'
-                    ! print*, 'b)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
-                    ! '    fYN_isnull    fYN_isUpGhost    fYN_isDnGhost'
-                    ! do jj = 1,N_face(ii)
-                    !     print*, faceI(jj,fi_Lidx)[ii],' ',faceI(jj,fi_BCtype)[ii],&
-                    !     '           ',faceYN(jj,fYN_isInteriorFace)[ii], &
-                    !     '                    ',faceYN(jj,fYN_isSharedFace)[ii], &
-                    !     '              ',faceYN(jj,fYN_isnull)[ii], &
-                    !     '            ',faceYN(jj,fYN_isUpGhost)[ii], &
-                    !     '              ',faceYN(jj,fYN_isDnGhost)[ii]
-                    ! enddo
-                    print*, '===================================================================' //&
-                    '==================================================================='
-                    print*
-                    call execute_command_line('')
-                enddo
-            endif
-        endif
+            ! print*
+            ! print*, '.......................Faces..................................'
+            ! print*, 'b)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
+            ! '    fYN_isnull    fYN_isUpGhost    fYN_isDnGhost'
+            ! do jj = 1,N_face(ii)
+            !     print*, faceI(jj,fi_Lidx)[ii],' ',faceI(jj,fi_BCtype)[ii],&
+            !     '           ',faceYN(jj,fYN_isInteriorFace)[ii], &
+            !     '                    ',faceYN(jj,fYN_isSharedFace)[ii], &
+            !     '              ',faceYN(jj,fYN_isnull)[ii], &
+            !     '            ',faceYN(jj,fYN_isUpGhost)[ii], &
+            !     '              ',faceYN(jj,fYN_isDnGhost)[ii]
+            ! end do
+            print*, '===================================================================' //&
+            '==================================================================='
+            print*
+            call execute_command_line('')
+        end if
         
         if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
     end subroutine init_network_define_toplevel
@@ -116,7 +111,7 @@ contains
         integer              :: N_nJ2_nodes
         character(64) :: subroutine_name = 'init_network_update_nj2_elem'
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         N_nJ2_nodes = count((node%I(:, ni_node_type) == nJ2) .and. (node%I(:, ni_P_image) == this_image()))
 
@@ -127,9 +122,9 @@ contains
 
             node%I(nJ2_nodes, ni_elemface_idx) = faceI(node%I(nJ2_nodes, ni_elemface_idx), fi_Melem_uL)
 
-        endif
+        end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_update_nj2_elem
     !
     !==========================================================================
@@ -150,7 +145,7 @@ contains
 
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         do mm = 1,N_link
             !% Inputs
@@ -177,9 +172,9 @@ contains
             do mm=1,N_link
                 print *, mm, link%R(mm,lr_Slope), link%R(mm,lr_Length)
             end do
-        endif
+        end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine init_network_linkslope
     !
@@ -203,7 +198,7 @@ contains
         character(64) :: subroutine_name = 'init_network_datacreate'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% initializing global element and face id
         ElemGlobalIdx = first_elem_index
@@ -241,7 +236,7 @@ contains
         !% set the same global face idx for shared faces across images
         call init_network_map_shared_faces (image)
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_datacreate
     !
     !==========================================================================
@@ -267,16 +262,16 @@ contains
         character(64) :: subroutine_name = 'init_network_set_global_indexes'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
-        if(image /= 1) then
+        if (image /= 1) then
            do ii=1, image-1
               ElemGlobalCounter = ElemGlobalCounter + N_elem(ii)
               FaceGlobalCounter = FaceGlobalCounter + N_unique_face(ii) + oneI
            end do
         end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_set_global_indexes
     !
     !==========================================================================
@@ -295,7 +290,7 @@ contains
         character(64) :: subroutine_name = 'init_network_set_dummy_elem'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% index for the dummy element
         dummyIdx = max_caf_elem_N + N_dummy_elem
@@ -306,7 +301,7 @@ contains
 
         elemYN(dummyIdx,eYN_isDummy)    = .true.
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_set_dummy_elem
     !
     !==========================================================================
@@ -334,7 +329,7 @@ contains
         character(64) :: subroutine_name = 'init_network_handle_partition'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% pack all the link indexes in a partition
         packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == image))
@@ -368,7 +363,7 @@ contains
         !% deallocate temporary array
         deallocate(packed_link_idx)
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_handle_partition
     !
     !==========================================================================
@@ -391,7 +386,7 @@ contains
         character(64) :: subroutine_name = 'init_network_map_nodes'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
 
         !% pack all the interior node indexes in a partition to find face maps
@@ -429,7 +424,7 @@ contains
         !% deallocate temporary array
         deallocate(packed_node_idx)
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_map_nodes
     !
     !==========================================================================
@@ -453,7 +448,7 @@ contains
         character(64) :: subroutine_name = 'init_network_map_shared_faces'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% pack the shared faces in an image
         sharedFaces = pack(faceI(:,fi_Lidx), faceYN(:,fYN_isSharedFace))
@@ -475,12 +470,12 @@ contains
                     call init_network_map_shared_nJm_nodes (image, fLidx, nIdx)
 
             end select
-        enddo
+        end do
 
         !% deallocate temporary array
         deallocate(sharedFaces)
-        
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_map_shared_faces
     !
     !==========================================================================
@@ -505,7 +500,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_handle_upstreamnode'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% Check 1: If the node is in the partition
         if (node%I(thisNode,ni_P_image) == image) then
@@ -540,7 +535,7 @@ contains
                         faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
-                    endif
+                    end if
 
                 !% Handle 2 branch junction nodes
                 case (nJ2)
@@ -589,19 +584,19 @@ contains
                                 !% (for example if current image = 1 and connection is 2,
                                 !% we set the global counter. But when the current image = 2 but
                                 !% the connection is 1, we set it from init_network_map_shared_faces
-                                !% subroutine) 
+                                !% subroutine)
                                 faceI(FaceLocalCounter,fi_Gidx) = FaceGlobalCounter
                             else
                                 !% set global index as nullvalue for shared faces.
                                 !% these global indexes will be set later
                                 faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
-                            endif
+                            end if
 
-                        endif
+                        end if
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
-                    endif
+                    end if
 
                 !% Handle junction nodes with more than 2 branches (multi branch junction node).
                 case (nJm)
@@ -614,7 +609,7 @@ contains
                         call init_network_handle_nJm &
                             (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                             FaceGlobalCounter, nAssignStatus)
-                    endif
+                    end if
 
                 !% Handle storage nodes
                 case (nStorage)
@@ -645,6 +640,9 @@ contains
             faceI(FacelocalCounter,fi_link_idx) = thisLink
             faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
 
+            !% real data
+            faceR(FaceLocalCounter,fr_Zbottom) = node%R(thisNode,nr_Zbottom)
+
             !% if the upstream node is not in the partiton,
             !% the face map to upstream is mapped to
             !% the dummy element
@@ -652,6 +650,11 @@ contains
             !% since no upstream node indicates start of a partiton,
             !% the downstream element will be initialized elem idx
             faceI(FacelocalCounter,fi_Melem_dL) = ElemLocalCounter
+
+            !% special condition if a element will be immediate downsteam of a JB
+            if (node%I(thisNode,ni_node_type) == nJm) then
+                elemYN(ElemLocalCounter,eYN_isElementDownstreamOfJB) = .true.
+            endif
 
             !% since this is a shared face, it will have a copy in other image and they will
             !% both share same global index. so, the face immediately after this shared face
@@ -671,16 +674,16 @@ contains
                 !% (for example if current image = 1 and connection is 2,
                 !% we set the global counter. But when the current image = 2 but
                 !% the connection is 1, we set it from init_network_map_shared_faces
-                !% subroutine) 
+                !% subroutine)
                 faceI(FaceLocalCounter,fi_Gidx) = FaceGlobalCounter
             else
                 !% set global index as nullvalue for shared faces.
                 !% these global indexes will be set later
                 faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
-            endif
-        endif
+            end if
+        end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_handle_upstreamnode
     !
     !==========================================================================
@@ -708,7 +711,7 @@ contains
 
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% necessary pointers
         lAssignStatus => link%I(thisLink,li_assigned)
@@ -737,7 +740,7 @@ contains
                 elemI(ElemLocalCounter,ei_link_pos)         = ii
 
                 !% real data
-                elemR(ElemLocalCounter,er_Length)           = link%R(thisLink,lr_ElementLength)
+                elemR(ElemLocalCounter,er_Length)           = link%R(thisLink,lr_AdjustedLength)/link%I(thisLink,li_N_element)
                 elemR(ElemLocalCounter,er_Zbottom)          = zCenter
 
                 !%................................................................
@@ -757,7 +760,7 @@ contains
                     faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                     faceI(FaceLocalCounter,fi_link_idx) = thisLink
                     faceR(FaceLocalCounter,fr_Zbottom)  = zDownstream
-                endif
+                end if
 
                 !% counter for element z bottom calculation
                 zCenter     = zCenter - link%R(thisLink,lr_ElementLength) * link%R(thisLink,lr_Slope)
@@ -774,9 +777,9 @@ contains
             !% re initialize the face local and global counters for the next expected node
             ! FaceLocalCounter  = FaceLocalCounter  - oneI
             ! FaceGlobalCounter = FaceGlobalCounter - oneI
-        endif
+        end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_handle_link
     !
     !==========================================================================
@@ -800,7 +803,7 @@ contains
         character(64) :: subroutine_name = 'init_network_handle_downstreamnode'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% Check 1: Is the node is in the partition
         if (node%I(thisNode,ni_P_image) == image) then
@@ -834,7 +837,7 @@ contains
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
-                    endif
+                    end if
 
                 case (nJ2)
                     !% Check 2: If the node has already been assigned
@@ -849,8 +852,8 @@ contains
                         faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
                         faceI(FacelocalCounter,fi_node_idx) = thisNode
                         faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
-                        faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI 
-                        faceI(FacelocalCounter,fi_Melem_dL) = ElemLocalCounter 
+                        faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
+                        faceI(FacelocalCounter,fi_Melem_dL) = ElemLocalCounter
                         !% set zbottom
                         faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                         !% First assign the face index to the nJ2 node, then will
@@ -879,18 +882,18 @@ contains
                                 !% (for example if current image = 1 and connection is 2,
                                 !% we set the global counter. But when the current image = 2 but
                                 !% the connection is 1, we set it from init_network_map_shared_faces
-                                !% subroutine) 
+                                !% subroutine)
                                 faceI(FaceLocalCounter,fi_Gidx) = FaceGlobalCounter
                             else
                                 !% set global index as nullvalue for shared faces.
                                 !% these global indexes will be set later
                                 faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
-                            endif
-                        endif
+                            end if
+                        end if
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
-                    endif
+                    end if
 
                 case (nJm)
                     !% Check 2: If the node has already been assigned
@@ -900,7 +903,7 @@ contains
                             (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
                             FaceGlobalCounter, nAssignStatus)
 
-                    endif
+                    end if
 
                 case (nStorage)
                     print*
@@ -933,6 +936,9 @@ contains
             faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
             faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
 
+            !% real data
+            faceR(FaceLocalCounter,fr_Zbottom) = node%R(thisNode,nr_Zbottom)
+
             !% logical data
             faceYN(FacelocalCounter,fYN_isSharedFace) = .true.
             faceYN(FaceLocalCounter,fYN_isDnGhost)    = .true.
@@ -943,16 +949,16 @@ contains
                 !% (for example if current image = 1 and connection is 2,
                 !% we set the global counter. But when the current image = 2 but
                 !% the connection is 1, we set it from init_network_map_shared_faces
-                !% subroutine) 
+                !% subroutine)
                 faceI(FaceLocalCounter,fi_Gidx) = FaceGlobalCounter
             else
                 !% set global index as nullvalue for shared faces.
                 !% these global indexes will be set later
                 faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
-            endif
-        endif
+            end if
+        end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_handle_downstreamnode
     !
     !==========================================================================
@@ -980,7 +986,7 @@ contains
 
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !%................................................................
         !% Junction main
@@ -1080,14 +1086,14 @@ contains
                             !% (for example if current image = 1 and connection is 2,
                             !% we set the global counter. But when the current image = 2 but
                             !% the connection is 1, we set it from init_network_map_shared_faces
-                            !% subroutine) 
+                            !% subroutine)
                             faceI(FaceLocalCounter,fi_Gidx) = FaceGlobalCounter
                         else
                             !% set global index as nullvalue for shared faces.
                             !% these global indexes will be set later
                             faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
-                        endif
-                    endif
+                        end if
+                    end if
                 else
 
                     !% since this is a null face in the upstream direction,
@@ -1096,7 +1102,7 @@ contains
 
                     call init_network_nullify_nJm_branch &
                         (ElemLocalCounter, FaceLocalCounter)
-                endif
+                end if
             !%......................................................
             !% Downstream Branches
             !%......................................................
@@ -1127,9 +1133,12 @@ contains
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)          = oneI
                     elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection) = dnBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(dnBranchIdx)
+                    elemYN(ElemLocalCounter,eYN_isDownstreamJB) = .true.
                     faceI(FacelocalCounter,fi_link_idx) = dnBranchIdx
                     !% set zbottom
                     faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
+                    !% identifier for downstream junction branch faces
+                    faceYN(FaceLocalCounter,fYN_isDownstreamJbFace) = .true.
                     !% Check 4: if the link connecting this branch is a part of this partition and
                     !% the node is not an edge node (meaning this node is the connecting node
                     !% across partitions)
@@ -1138,7 +1147,7 @@ contains
 
                         !% since this is a shared face in the downstream direction,
                         !% the dn_map is set to dummy element
-                        faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem    
+                        faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_Connected_image) = link%I(dnBranchIdx,li_P_image)
 
                         !% logical data
@@ -1151,14 +1160,14 @@ contains
                             !% (for example if current image = 1 and connection is 2,
                             !% we set the global counter. But when the current image = 2 but
                             !% the connection is 1, we set it from init_network_map_shared_faces
-                            !% subroutine) 
+                            !% subroutine)
                             faceI(FaceLocalCounter,fi_Gidx) = FaceGlobalCounter
                         else
                             !% set global index as nullvalue for shared faces.
                             !% these global indexes will be set later
                             faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
-                        endif
-                    endif
+                        end if
+                    end if
 
                 else
 
@@ -1168,8 +1177,8 @@ contains
 
                     call init_network_nullify_nJm_branch &
                         (ElemLocalCounter, FaceLocalCounter)
-                endif
-            end select 
+                end if
+            end select
 
             !% Advance the element counter for next branch
             ElemLocalCounter  = ElemLocalCounter  + oneI
@@ -1179,7 +1188,7 @@ contains
         !% set status to assigned
         nAssignStatus = nAssigned
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_handle_nJm
     !
     !==========================================================================
@@ -1200,11 +1209,10 @@ contains
         integer          :: LinkFirstElem, LinkLastElem
         integer, pointer :: upBranchIdx, dnBranchIdx
         integer, pointer :: eIdx, fLidx
-
         character(64) :: subroutine_name = 'init_network_map_nJm_branches'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
 
         !% initialize selecteros for upstream and downstream branches
@@ -1226,35 +1234,36 @@ contains
 
                 !% condition for a link connecting this branch is valid and
                 !% included in this partition.
-                if ( (upBranchIdx /= nullvalueI)   .and.       &
-                     (link%I(upBranchIdx,li_P_image) == image) ) then
 
-                    !% find the last element index of the link
-                    LinkLastElem = link%I(upBranchIdx,li_last_elem_idx)
+                if (upBranchIdx /= nullvalueI) then
+                    if (link%I(upBranchIdx,li_P_image) == image) then
+                        !% find the last element index of the link
+                        LinkLastElem = link%I(upBranchIdx,li_last_elem_idx)
 
-                    !% pointer to the specific branch element
-                    eIdx => JelemIdx(ii)
+                        !% pointer to the specific branch element
+                        eIdx => JelemIdx(ii)
 
-                    !% find the downstream face index of that last element
-                    fLidx => elemI(eIdx,ei_Mface_uL)
+                        !% find the downstream face index of that last element
+                        fLidx => elemI(eIdx,ei_Mface_uL)
 
-                    !% if the face is a shared face across images,
-                    !% it will not have any upstream local element
-                    if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
+                        !% if the face is a shared face across images,
+                        !% it will not have any upstream local element
+                        if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
 
-                        !% the upstream face of the upstream branch will be the
-                        !% last downstream face of the connected link
-                        !% here, one important thing to remember is that
-                        !% the upstrem branch elements does not have any
-                        !% downstream faces.
+                            !% the upstream face of the upstream branch will be the
+                            !% last downstream face of the connected link
+                            !% here, one important thing to remember is that
+                            !% the upstrem branch elements does not have any
+                            !% downstream faces.
 
-                        !% local d/s face map to element u/s of the branch
-                        elemI(LinkLastElem,ei_Mface_dL) = fLidx
+                            !% local d/s face map to element u/s of the branch
+                            elemI(LinkLastElem,ei_Mface_dL) = fLidx
 
-                        !% local u/s element of the face
-                        faceI(fLidx,fi_Melem_uL) = LinkLastElem
-                    endif
-                endif
+                            !% local u/s element of the face
+                            faceI(fLidx,fi_Melem_uL) = LinkLastElem
+                        end if
+                    end if
+                end if
 
             !% all odd numbers starting from 3 are downstream branch elements
             elseif ((ii == 3) .or. (ii == 5) .or. (ii == 7)) then
@@ -1265,40 +1274,43 @@ contains
 
                 !% condition for a link connecting this branch is valid and
                 !% included in this partition.
-                if ( (dnBranchIdx /= nullvalueI)   .and.       &
-                     (link%I(dnBranchIdx,li_P_image) == image) ) then
+                if (dnBranchIdx /= nullvalueI)  then
+                    if (link%I(dnBranchIdx,li_P_image) == image) then
 
-                    !% find the first element index of the link
-                    LinkFirstElem = link%I(dnBranchIdx,li_first_elem_idx)
+                        !% find the first element index of the link
+                        LinkFirstElem = link%I(dnBranchIdx,li_first_elem_idx)
 
-                    !% pointer to the specific branch element
-                    eIdx => JelemIdx(ii)
+                        !% pointer to the specific branch element
+                        eIdx => JelemIdx(ii)
 
-                    !% find the downstream face index of that last element
-                    fLidx => elemI(eIdx,ei_Mface_dL)
+                        !% find the downstream face index of that last element
+                        fLidx => elemI(eIdx,ei_Mface_dL)
 
-                    !% if the face is a shared face across images,
-                    !% it will not have any upstream local element
-                    !% (not sure if we need this condition)
-                    if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
+                        !% if the face is a shared face across images,
+                        !% it will not have any upstream local element
+                        !% (not sure if we need this condition)
+                        if ( .not. faceYN(fLidx,fYN_isSharedFace)) then
 
-                        !% the downstream face of the downstream branch will be the
-                        !% first upstream face of the connected link
-                        !% here, one important thing to remember is that
-                        !% the downstream branch elements does not have any
-                        !% upstream faces.
+                            !% the downstream face of the downstream branch will be the
+                            !% first upstream face of the connected link
+                            !% here, one important thing to remember is that
+                            !% the downstream branch elements does not have any
+                            !% upstream faces.
 
-                        !% local map to upstream face for elemI
-                        elemI(LinkFirstElem,ei_Mface_uL) = fLidx
+                            !% local map to upstream face for elemI
+                            elemI(LinkFirstElem,ei_Mface_uL) = fLidx
+                            !% set the first element as the immediate downstream element of a JB
+                            elemYN(LinkFirstElem,eYN_isElementDownstreamOfJB) = .true.
 
-                        !% local downstream element of the face
-                        faceI(fLidx,fi_Melem_dL) = LinkFirstElem
-                    endif
-                endif
-            endif
-        enddo
+                            !% local downstream element of the face
+                            faceI(fLidx,fi_Melem_dL) = LinkFirstElem
+                        end if
+                    end if
+                end if
+            end if
+        end do
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine init_network_map_nJm_branches
         !
@@ -1321,7 +1333,7 @@ contains
         character(64) :: subroutine_name = 'init_network_map_shared_nJm_nodes'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% necessary pointers
         fGidx       => faceI(fLidx,fi_Gidx)
@@ -1333,7 +1345,7 @@ contains
         do ii = 1,N_face(targetImage)
 
             if ((faceI(ii,fi_Connected_image)[targetImage] == image) .and. &
-                (faceI(ii,fi_node_idx)[targetImage] == nIdx        ) .and. &   
+                (faceI(ii,fi_node_idx)[targetImage] == nIdx        ) .and. &
                 (faceI(ii,fi_link_idx)[targetImage] == branchIdx   ))   then
 
                 !% find the local ghost element index of the connected image
@@ -1342,16 +1354,16 @@ contains
 
                 elseif (faceYN(ii,fYN_isDnGhost)[targetImage]) then
                     faceI(ii,fi_GhostElem_dL)[targetImage] = eDn
-                endif
+                end if
 
                 !% find the global index and set to target image
-                if(faceI(ii,fi_Gidx)[targetImage] == nullvalueI) then
+                if (faceI(ii,fi_Gidx)[targetImage] == nullvalueI) then
                     faceI(ii,fi_Gidx)[targetImage] = fGidx
-                endif
-            endif
-        enddo
-        
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+                end if
+            end if
+        end do
+
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_map_shared_nJm_nodes
     !
     !==========================================================================
@@ -1377,7 +1389,7 @@ contains
         character(64) :: subroutine_name = 'init_network_map_nJ2'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
 
         !% initialize selecteros for upstream and downstream branches
@@ -1405,8 +1417,8 @@ contains
 
                 !% local u/s element of the face
                 faceI(fLidx,fi_Melem_uL) = LinkLastElem
-            endif
-        endif
+            end if
+        end if
 
         dnBranchSelector = dnBranchSelector + oneI
         !% pointer to upstream branch
@@ -1431,10 +1443,10 @@ contains
 
                 !% local downstream element of the face
                 faceI(fLidx,fi_Melem_dL) = LinkFirstElem
-            endif
-        endif
+            end if
+        end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine init_network_map_nJ2
     !
@@ -1458,7 +1470,7 @@ contains
         character(64) :: subroutine_name = 'init_network_map_shared_nJ2_nodes'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% necessary pointers
         fGidx       => faceI(fLidx,fi_Gidx)
@@ -1477,16 +1489,16 @@ contains
 
                 elseif (faceYN(ii,fYN_isDnGhost)[targetImage]) then
                     faceI(ii,fi_GhostElem_dL)[targetImage] = eDn
-                endif
+                end if
 
                 !% find the global index and set to target image
-                if(faceI(ii,fi_Gidx)[targetImage] == nullvalueI) then
+                if (faceI(ii,fi_Gidx)[targetImage] == nullvalueI) then
                     faceI(ii,fi_Gidx)[targetImage] = fGidx
-                endif
-            endif
-        enddo
-        
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+                end if
+            end if
+        end do
+
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_map_shared_nJ2_nodes
     !
     !==========================================================================
@@ -1504,16 +1516,16 @@ contains
 
         character(64) :: subroutine_name = 'init_network_nJm_branch_length'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         !% find the length of the junction branch
         if (link%I(LinkIdx,li_length_adjusted) == OneSideAdjust) then
             BranchLength = link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength)
         elseif (link%I(LinkIdx,li_length_adjusted) == BothSideAdjust) then
             BranchLength = (link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength))/twoR
-        endif
+        end if
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end function init_network_nJm_branch_length
     !
     !==========================================================================
@@ -1530,7 +1542,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_nullify_nJm_branch'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
 
         !% set everything to zero for a non existant branch
         elemR(ElemIdx,:)                            = zeroR
@@ -1540,7 +1552,7 @@ contains
         faceR(FaceIdx,:)                            = zeroR
         faceYN(FaceIdx,fYN_isnull)                  = .true.
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_nullify_nJm_branch
     !
     !==========================================================================
@@ -1553,11 +1565,10 @@ contains
     !% set the logicals of fYN_isInteriorFace
     !
     !--------------------------------------------------------------------------
-    !
         character(64) :: subroutine_name = 'init_network_set_interior_faceYN'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%network_define) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
         where ( (faceI(:,fi_BCtype)         ==  doesnotexist) &
                 .and. &
@@ -1568,7 +1579,7 @@ contains
             faceYN(:,fYN_isInteriorFace) = .true.
         endwhere
 
-        if (setting%Debug%File%network_define) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%network_define) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_network_set_interior_faceYN
     !
     !==========================================================================

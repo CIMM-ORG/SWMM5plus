@@ -1,31 +1,48 @@
 #!/bin/bash
 
 # --------------------------------------------------------------------------------------
-# Shell script for installing dependencies
+#  Alpha Release:
+#  Shell script for installing dependencies
+#
+#  [README]
+#  This shell script is for downloading the dependencies of SWMM 5+. The dependencies
+#  include:
+#  (1) json-fortran, from: https://github.com/jacobwilliams/json-fortran.git
+#  (2) SWMM 5 libraries, from: https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz
+#  (3) OpenCoarray and its dependencies, from: https://github.com/sourceryinstitute/OpenCoarrays
+#
+#  OpenCoarray is a Fortran Coarray libaray designed for GNC compiler (e.g. gfortran series).
+#  Before we start the installation/compile of SWMM5+, we strongly recommand users to check the
+#  of compiler version. If user is using Intel Compiler, then the OpenCoarray dependencies
+#  installation can be skipped by simply adding a "-t" flag after the command "./build.sh". If
+#  user is using gcc compiler, please make sure the compiler version is higher than 6.1.0.
+#  The dependencies of OpenCoarray include:
+#
+#  opencoarrays
+#  ├── cmake-3.4.0
+#  └── mpich-3.2
+#      └── gcc-6.1.0
+#          ├── flex-2.6.0
+#          │   └── bison-3.0.4
+#          │       └── m4-1.4.17
+#          ├── gmp
+#          ├── mpc
+#          └── mpfr
+#
+#  This script will first check if the above-mentioned pakcages exist in the local directory,
+#  If not found -> then download and install.
+#  For the OpenCoarray dependencies, script will check the existencce of local copy of cmake and mpich,
+#  For the user first time download/compile SWMM5+, all these packages will be downloaded and installed.
+#  This is an one-time installation work if user keeps working in the same SWMM5+ directory. However,
+#  the dependencies installation process is required everytime after cloning a new version of SWMM 5+.
+#
+#  More information for the packages can refer to :
+#  json fortran : https://github.com/jacobwilliams/json-fortran#brief-description
+#  SWMM 5 library: https://www.epa.gov/water-research/storm-water-management-model-swmm
+#  OpenCoarray: http://www.opencoarrays.org/
 # --------------------------------------------------------------------------------------
 
-# Default version for packages
-# cmake (default version 3.10.0)        https://www.cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh
-# gcc (default version 10.1.0)          https://ftp.gnu.org/gnu/gcc/gcc-10.1.0/gcc-10.1.0.tar.gz
-# mpich (default version 3.2)           https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz
-# wget (default version 1.16.3)         https://ftpmirror.gnu.org/gnu/wget/wget-1.16.3.tar.gz
-# flex (default version 2.6.0)          https://sourceforge.net/projects/flex/files/flex-2.6.0.tar.bz2
-# bison (default version 3.0.4)         https://ftpmirror.gnu.org/gnu/bison/bison-3.0.4.tar.gz
-# pkg-config (default version 0.28)     https://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz
-# make (default version 4.1)            https://ftpmirror.gnu.org/gnu/make/make-4.1.tar.bz2
-# m4 (default version 1.4.17)           https://ftpmirror.gnu.org/gnu/m4/m4-1.4.17.tar.bz2
-# subversion (default version 1.9.4)    https://www.eu.apache.org/dist/subversion/subversion-1.9.4.tar.gz
-# ofp (default version sdf) - this is only needed for OSX
-# opencoarrays (version 2.9.2)
-
 shopt -s extglob
-
-# handle flags
-while getopts 't' flag; do
-  case "${flag}" in
-    t) tacc="true" ;;
-  esac
-done
 
 # Create directory for dependencies
 if [[ ! -d $DDIR ]]
@@ -82,36 +99,55 @@ fi
 # --------------------------------------------------------------------------------------
 install_mpich()
 {
-    echo "Installing the prerequisite (mpich) for opencoarray fortran ..."
-    mkdir -p $MPICH_SOURCE
-    cd $MPICH_SOURCE
-    mkdir -p $MPICH_INSTALL
-    if [[ $machine = "linux" ]]
+    if [ ! -e $MPICH_INSTALL/bin/mpifort ] # local mpich not found
     then
-        wget "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz"
-    elif [[ $machine = "mac" ]]
-    then
-        curl -L "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz" > mpich-3.2.tar.gz
+        if [ -d $MPICH_SOURCE ]
+        then
+            rm -r -f $MPICH_SOURCE # clean and remake
+        fi
+        echo "Local mpich installation does not exist, creating folder: $MPICH_SOURCE "
+        echo "Installing the prerequisite (mpich) for opencoarray fortran ..."
+        mkdir -p $MPICH_SOURCE
+        cd $MPICH_SOURCE
+        mkdir -p $MPICH_INSTALL
+        if [[ $machine = "linux" ]]
+        then
+            wget "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz"
+        elif [[ $machine = "mac" ]]
+        then
+            curl -L "https://www.mpich.org/static/downloads/3.2/mpich-3.2.tar.gz" > mpich-3.2.tar.gz
+        else
+            echo
+            echo "OS is not supported (only mac, linux)"
+            echo
+            exit
+        fi
+        tar -xvf *.tar.gz
+        rm *.tar.gz
+        if [ -d "/tmp/mpich-build" ]
+        then
+            rm -r -f /tmp/mpich-build
+        fi
+        mkdir /tmp/mpich-build
+        cd /tmp/mpich-build
+        $MPICH_SOURCE/mpich-3.2/configure -prefix=$MPICH_INSTALL
+        make
+        make install
+        cd $SWMM5PLUS_DIR
+        if [ ! -e $MPICH_INSTALL/bin/mpifort ] # if the installation fail
+        then
+            echo "[ERROR] MPICH installation failed."
+            exit
+        else
+            echo "MPICH installed in $MPICH_INSTALL"
+            export MPICH_PATH=$MPICH_INSTALL
+            echo "mpich path: ${MPICH_PATH}" >> $INSTALLATION_LOG
+        fi
     else
-        echo
-        echo "OS is not supported (only mac, linux)"
-        echo
-        exit
+        echo "MPICH found in local directory: $MPICH_INSTALL/bin/mpifort"
+        export MPICH_PATH=$MPICH_INSTALL
     fi
-    tar -xvf *.tar.gz
-    rm *.tar.gz
-    if [ -d "/tmp/mpich-build" ]
-    then
-        rm -r -f /tmp/mpich-build
-    fi
-    mkdir /tmp/mpich-build
-    cd /tmp/mpich-build
-    $MPICH_SOURCE/mpich-3.2/configure -prefix=$MPICH_INSTALL
-    make
-    make install
-    cd $SWMM5PLUS_DIR
-    export MPICH_PATH=$MPICH_INSTALL
-    echo "mpich path: ${MPICH_PATH}" >> $INSTALLATION_LOG
+
 }
 # --------------------------------------------------------------------------------------
 
@@ -119,219 +155,61 @@ install_mpich()
 # --------------------------------------------------------------------------------------
 install_cmake()
 {
-    cd $SWMM5PLUS_DIR # make sure we are at the right level
-    mkdir -p $CMAKE_SOURCE
-    cd $CMAKE_SOURCE
-    mkdir -p $CMAKE_INSTALL
-    if [[ $machine = "linux" ]]
+    if [ ! -e $CMAKE_INSTALL/bin/cmake ] # if local cmake not found
     then
-        wget "https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz"  # Versions: https://cmake.org/files/
-    elif [[ $machine = "mac" ]]
-    then
-        curl -L "https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz" > cmake-3.11.0.tar.gz
+        cd $SWMM5PLUS_DIR # make sure we are at the right level
+        if [ -d $CMAKE_SOURCE ]
+        then
+            rm -r -f $CMAKE_SOURCE # clean and remake
+        fi
+        mkdir -p $CMAKE_SOURCE
+        cd $CMAKE_SOURCE
+        mkdir -p $CMAKE_INSTALL
+        if [[ $machine = "linux" ]]
+        then
+            wget "https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz"  # Versions: https://cmake.org/files/
+        elif [[ $machine = "mac" ]]
+        then
+            curl -L "https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz" > cmake-3.11.0.tar.gz
+        else
+            echo
+            echo "OS is not supported (only mac, linux)"
+            echo
+            exit
+        fi
+        tar -xvf *.tar.gz
+        rm *.tar.gz
+        cd cmake-3.11.0
+        ./configure --prefix=$CMAKE_INSTALL
+        make
+        make install
+        if [ ! -e $CMAKE_INSTALL/bin/cmake ] # local cmake not found -> install fail
+        then
+            echo "[ERROR] CMAKE installation failed"
+            exit
+        else
+            echo "CMAKE installed in $CMAKE_INSTALL"
+            export CMAKE_EXEC=$CMAKE_INSTALL/bin/cmake
+            echo "cmake path: $CMAKE_EXEC" >> $INSTALLATION_LOG
+        fi
+        cd $SWMM5PLUS_DIR # back to the SWMM directory
     else
-        echo
-        echo "OS is not supported (only mac, linux)"
-        echo
-        exit
+        echo "CMAKE found in local directory: $CMAKE_INSTALL/bin/cmake"
+        export CMAKE_EXEC=$CMAKE_INSTALL/bin/cmake
     fi
-    tar -xvf *.tar.gz
-    rm *.tar.gz
-    cd cmake-3.11.0
-    ./configure --prefix=$CMAKE_INSTALL
-    make
-    make install
-    cd $SWMM5PLUS_DIR # back to the SWMM directory
-    export CMAKE_EXEC=$CMAKE_INSTALL/bin/cmake
-    echo "cmake path: $CMAKE_EXEC" >> $INSTALLATION_LOG
 }
 # --------------------------------------------------------------------------------------
 
 # Install OpenCAF
 # --------------------------------------------------------------------------------------
-opencoarray_prerequisite()
-{
-    for element in "${package_executable_array[@]}" ; do
-        KEY="${element%%:*}"
-        VALUE="${element##*:}"
-
-        if ! command -v $VALUE &> /dev/null; # if cannot find the command in root (usually usr/bin or usr/local/bin)
-        then
-            case $KEY in
-                "cmake")
-                    echo "${KEY} is not installed in root. Searching in ${CMAKE_SOURCE} ..."
-                    if [ -d $CMAKE_SOURCE ] && [ -f $CMAKE_INSTALL/bin/cmake ] # if cmake already in local
-                    then
-                        echo "Found cmake in $CMAKE_INSTALL ..."
-
-                        CMAKE_VERSION=$(echo $(${CMAKE_INSTALL}/bin/cmake --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                        vercomp $CMAKE_REQUIRE_VERSION $CMAKE_VERSION
-                        result=$?
-                        if [[ $result = 0 ]] || [[ $result = 2 ]]
-                        then
-                            echo "Current cmake version is ${CMAKE_VERSION}, higher than required version (${CMAKE_REQUIRE_VERSION})."
-                            export CMAKE_EXEC=$(which cmake)
-                            echo "cmake path: $CMAKE_EXEC" >> $INSTALLATION_LOG
-                        else # version is outdated
-                            echo "Local cmake is outdated. Installing a newer version of cmake ..."
-                            sudo rm -rf $CMAKE_SOURCE
-                            install_cmake
-                        fi
-
-                    else
-                        echo "No local cmake found ... Installing cmake in ${CMAKE_SOURCE}"
-                        if [ -d $CMAKE_SOURCE ]; then
-                            sudo rm -rf $CMAKE_SOURCE
-                        fi
-                        install_cmake
-                    fi
-                    ;;
-
-                "mpich")
-                    echo "${KEY} is not installed in root. Searching in ${MPICH_SOURCE} ..."
-                    if [ -d $MPICH_SOURCE ] && [ -x $MPICH_INSTALL/bin/mpifort ]
-                    then
-                        echo "Found mpich in $MPICH_INSTALL ..."
-                        MPICH_VERSION=$(echo $(${MPICH_INSTALL}/bin/mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                        vercomp $MPICH_REQUIRE_VERSION $MPICH_VERSION
-                        result=$?
-                        if [[ $result = 0 ]] || [[ $result = 2 ]]
-                        then
-                            echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
-                            export MPICH_PATH=$MPICH_INSTALL # use the mpich in root
-                            echo "mpich path: $MPICH_PATH" >> $INSTALLATION_LOG
-                        else
-                            echo "Local ${KEY} is outdated, install the updated version (mpich 3.2.0) ..."
-                            read -p "Delete the local ${KEY} directory and start the re-installation? [Y/N]:" -n 1 -r
-                            echo    # (optional) move to a new line
-                            if [[ $REPLY =~ ^[Yy]$ ]]
-                            then
-                                sudo rm -rf $MPICH_SOURCE
-                            else
-                                echo "Did not delete the existing ${MPICH_SOURCE}, ${KEY} reinstallation suspended."
-                                echo "[WARNING] mpich is not installed [WARNING]"
-                                exit 0
-                            fi
-                            install_mpich
-                        fi
-                    else
-                        echo "No local ${KEY} found .... Installing ${KEY} in ${MPICH_SOURCE}"
-                        if [ -d $MPICH_SOURCE ]
-                        then
-                            sudo rm -rf $MPICH_SOURCE
-                        fi
-                        install_mpich
-                    fi
-                    ;;
-            esac
-
-        elif command -v $VALUE &> /dev/null; # command exists
-        then
-            case $KEY in
-                "cmake")
-                    CMAKE_VERSION=$(echo $($VALUE --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                    vercomp $CMAKE_REQUIRE_VERSION $CMAKE_VERSION
-                    result=$?
-                    if [[ $result = 0 ]] || [[ $result = 2 ]]
-                    then
-                        echo "Current ${KEY} version is ${CMAKE_VERSION}, higher than required version (${CMAKE_REQUIRE_VERSION})."
-                        export CMAKE_EXEC=$(which $VALUE)
-                        echo "${KEY} path: $CMAKE_EXEC" >> $INSTALLATION_LOG
-                    else
-                        echo "Current ${KEY} version is: ${CMAKE_VERSION}, lower than the required version: ${CMAKE_REQUIRE_VERSION}."
-                        echo "Install local ${KEY} under ${CMAKE_SOURCE} ...."
-                        if [ -d $CMAKE_SOURCE ] && [ -f $CMAKE_INSTALL/bin/cmake ] # if cmake already in local
-                        then
-                            CMAKE_VERSION=$(echo $(${CMAKE_INSTALL}/bin/cmake --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                            vercomp $CMAKE_REQUIRE_VERSION $CMAKE_VERSION
-                            result=$?
-                            if [[ $result = 0 ]] || [[ $result = 2 ]]
-                            then
-                                export CMAKE_EXEC=$CMAKE_INSTALL/bin/cmake
-                            else #the local cmake is also outdated, make install
-                                echo "Local ${KEY} is outdated, install the updated version (cmake 3.11.0) ..."
-                                read -p "Delete the local ${KEY} directory and start the re-installation? [Y/N]:" -n 1 -r
-                                echo    # (optional) move to a new line
-                                if [[ $REPLY =~ ^[Yy]$ ]]
-                                then
-                                    sudo rm -rf $CMAKE_SOURCE
-                                else
-                                    echo "Did not delete the existing ${CMAKE_SOURCE}, ${KEY} reinstallation suspended."
-                                    echo "[WARNING] cmake is not installed [WARNING]"
-                                    exit 0
-                                fi
-                                ### cmake installation body
-                                install_cmake
-                            fi
-                        else # no cmake in local -> make the install
-                            if [ -d $CMAKE_SOURCE ]
-                            then
-                                sudo rm -rf $CMAKE_SOURCE
-                            fi
-                            install_cmake
-                        fi
-                    fi
-                ;;
-
-                "mpich")
-                    MPICH_VERSION=$(echo $(mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                    vercomp $MPICH_REQUIRE_VERSION $MPICH_VERSION
-                    result=$?
-                    if [[ $result = 0 ]] || [[ $result = 2 ]]
-                    then
-                        echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
-                        export MPICH_PATH="/usr/" # return the mpich path in root
-                        echo "${KEY} path : $MPICH_PATH" >> $INSTALLATION_LOG
-                    else
-                        echo "Current ${KEY} version in root is: ${MPICH_VERSION}, lower than the required version: ${MPICH_REQUIRE_VERSION}."
-                        echo "Install local ${KEY} under ${MPICH_SOURCE} ...."
-                        if [ -d $MPICH_SOURCE ] && [ -x $MPICH_INSTALL/bin/mpifort ] # if we have mpich in local
-                        then
-                            echo "Found existing ${KEY} in local directory."
-                            MPICH_VERSION=$(echo $(${MPICH_INSTALL}/bin/mpichversion --version) | head -1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-                            vercomp $MPICH_REQUIRE_VERSION $MPICH_VERSION
-                            result=$?
-                            if [[ $result = 0 ]] || [[ $result = 2 ]]
-                            then
-                                echo "Current ${KEY} version is ${MPICH_VERSION}, higher than required version (${MPICH_REQUIRE_VERSION})."
-                                export MPICH_PATH=$MPICH_INSTALL # use the mpich in root
-                                echo "${KEY} path: $MPICH_PATH" >> $INSTALLATION_LOG
-                            else
-                                echo "Local ${KEY} is outdated, install the updated version (mpich 3.2.0) ..."
-                                read -p "Delete the local ${KEY} directory and start the re-installation? [Y/N]:" -n 1 -r
-                                echo    # (optional) move to a new line
-                                if [[ $REPLY =~ ^[Yy]$ ]]
-                                then
-                                    sudo rm -rf $MPICH_SOURCE
-                                else
-                                    echo "Did not delete the existing ${MPICH_SOURCE}, ${KEY} reinstallation suspended."
-                                    echo "[WARNING] mpich is not installed [WARNING]"
-                                    exit 0
-                                fi
-                                install_mpich
-                            fi
-                        else # no mpich in root and local -> make install
-                            if [ -d $MPICH_SOURCE ]
-                            then
-                                sudo rm -rf $MPICH_SOURCE
-                            fi
-                            install_mpich
-                        fi
-                    fi
-                ;;
-
-            esac
-        fi
-
-    done
-}
 
 install_opencoarray_linux()
 {
     # Download Opencoarray
-    if [ ! -d $COARRAY_SOURCE ]
+    if [ ! -e $COARRAY_INSTALL/bin/caf ] || [ ! -e $COARRAY_INSTALL/bin/cafrun ]
     then
-        echo "opencoarray is not found in $COARRAY_SOURCE"
+        echo "opencoarray not found in local directory ... "
+        rm -r -f $COARRAY_SOURCE # clean it and remake
         mkdir -p $COARRAY_INSTALL
         cd $COARRAY_SOURCE
         echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
@@ -339,21 +217,39 @@ install_opencoarray_linux()
         cd OpenCoarrays
         mkdir opencoarrays-build
         cd opencoarrays-build
+        echo ${CMAKE_EXEC}
         CC=gcc FC=gfortran ${CMAKE_EXEC} .. -DCMAKE_INSTALL_PREFIX=$COARRAY_INSTALL -DMPI_HOME=$MPICH_PATH
-            make
+        make
         echo "Installing Opencoarrays ... "
         sudo make install
         cd $SWMM5PLUS_DIR
     fi
-    echo "opencoarray path: $COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
+    if [ -e $COARRAY_INSTALL/bin/caf ]
+    then
+        echo "opencoarray installed in $COARRAY_INSTALL/bin/caf"
+        export CAFRUN=$COARRAY_INSTALL/bin/cafrun # export variable
+        echo "opencoarray path: $COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
+    else
+        echo "[ERROR] opencoarray local installation failed."
+        echo "Now trying default installation process in OpenCoarray."
+        cd $COARRAY_SOURCE
+        ./install.sh --install-prefix $COARRAY_INSTALL
+        if [ ! -e $COARRAY_INSTALL/bin/caf ]
+        then
+            echo "OpenCoarray Installation Failed."
+            echo "Please check https://github.com/sourceryinstitute/OpenCoarrays/blob/master/INSTALL.md#linux for library compatibility."
+            exit
+        fi
+    fi
 }
+
 
 install_opencoarray_mac()
 {
-    # Download Opencoarray
-    if [ ! -d $COARRAY_SOURCE ]
+    if [ ! -e $COARRAY_INSTALL/bin/caf ] || [ ! -e $COARRAY_INSTALL/bin/cafrun ]
     then
-        echo "opencoarray is not found in $COARRAY_SOURCE"
+        echo "opencoarray not found in local directory ... "
+        rm -r -f $COARRAY_SOURCE # clean it and remake
         mkdir -p $COARRAY_INSTALL
         cd $COARRAY_SOURCE
         echo Installing Opencoarray from https://github.com/sourceryinstitute/OpenCoarrays
@@ -362,8 +258,20 @@ install_opencoarray_mac()
         ./install.sh --install-prefix $COARRAY_INSTALL
         cd $SWMM5PLUS_DIR
     fi
-    echo "opencoarray path: $COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 }
+
+
+
+opencoarray_prerequisite()
+{   # For simplicity, install everything in local directory.
+    echo "Installing cmake in $CMAKE_INSTALL ..."
+    install_cmake
+    echo "Cmake installation complete. "
+    echo "Installing mpich in $MPICH_INSTALL ..."
+    install_mpich
+    echo "MPICH installation complete. "
+}
+
 
 # --------------------------------------------------------------------------------------
 
@@ -380,9 +288,8 @@ then
         fi
     elif [[ $machine = "mac" ]]
     then
-        install_opencoarray_mac
-        FC=$COARRAY_INSTALL/bin/caf
-        echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
+        install_opencoarray_mac # If user want to use Homebrew to install OpenCoarrays, please comment out this line
+        CAF="$COARRAY_INSTALL/bin/caf" #If user want to use Homebrew to install OpenCoarrays, please change the CAF path 
     fi
 fi
 # --------------------------------------------------------------------------------------

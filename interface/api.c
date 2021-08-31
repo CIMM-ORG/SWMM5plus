@@ -42,7 +42,7 @@ static int  Ntokens;                   // Number of tokens in line of input
 // is also used by the Fortran engine. Treating Interface as void*
 // facilitates interoperability
 
-void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3)
+void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing)
 {
     int error;
     Interface* api = (Interface*) malloc(sizeof(Interface));
@@ -58,6 +58,7 @@ void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3)
     }
     api->IsInitialized = TRUE;
     error = api_load_vars((void*) api);
+    if (!run_routing) IgnoreRouting = TRUE;
     return (void*) api;
 }
 
@@ -91,6 +92,13 @@ void DLLEXPORT api_finalize(void* f_api)
     free((Interface*) f_api);
 }
 
+double DLLEXPORT api_run_step(void* f_api)
+{
+    Interface * api = (Interface*) f_api;
+    swmm_step(&(api->elapsedTime));
+    return api->elapsedTime;
+}
+
 // --- Property-extraction
 
 // * After Initialization
@@ -103,6 +111,114 @@ double DLLEXPORT api_get_start_datetime()
 double DLLEXPORT api_get_end_datetime()
 {
     return EndDateTime;
+}
+
+double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime) {
+
+    int ptype, pcount, i, j, p;
+    int yy, mm, dd;
+    int h, m, s, dow;
+    double val;
+    double x, y, next_datetime;
+    double bline, sfactor;
+    double total_factor = 1;
+    double total_extinflow = 0;
+    double total_inflow = 0;
+
+    datetime_decodeDate(current_datetime, &yy, &mm, &dd);
+    datetime_decodeTime(current_datetime, &h, &m, &s);
+    dow = datetime_dayOfWeek(current_datetime);
+
+    api_get_node_attribute(f_api, node_idx, node_has_dwfInflow, &val);
+    if (val == 1) { // node_has_dwfInflow
+        for(i=0; i<4; i++)
+        {
+            j = Node[node_idx].dwfInflow->patterns[i];
+            if (j > 0)
+            {
+                ptype = Pattern[j].type;
+                if (ptype == MONTHLY_PATTERN)
+                    total_factor *= Pattern[j].factor[mm-1];
+                else if (ptype == DAILY_PATTERN)
+                    total_factor *= Pattern[j].factor[dow-1];
+                else if (ptype == HOURLY_PATTERN)
+                    total_factor *= Pattern[j].factor[h];
+                else if (ptype == WEEKEND_PATTERN)
+                {
+                    if ((dow == 1) || (dow == 7))
+                        total_factor *= Pattern[j].factor[h];
+                }
+            }
+        }
+        total_inflow += total_factor * CFTOCM(Node[node_idx].dwfInflow->avgValue);
+    }
+
+    api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
+    if (val == 1) { // node_has_extInflow
+        p = Node[node_idx].extInflow->basePat; // pattern
+        bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
+        if (p >= 0)
+        {
+            ptype = Pattern[p].type;
+            if (ptype == MONTHLY_PATTERN)
+                total_extinflow += Pattern[j].factor[mm-1] * bline;
+            else if (ptype == DAILY_PATTERN)
+                total_extinflow += Pattern[j].factor[dow-1] * bline;
+            else if (ptype == HOURLY_PATTERN)
+                total_extinflow += Pattern[j].factor[h] * bline;
+            else if (ptype == WEEKEND_PATTERN)
+            {
+                if ((dow == 1) || (dow == 7))
+                    total_extinflow += Pattern[j].factor[h] * bline;
+            }
+        }
+        else if (bline > 0)
+        {
+            total_extinflow += bline;
+        }
+
+        j = Node[node_idx].extInflow->tSeries; // tseries
+        sfactor = Node[node_idx].extInflow->sFactor; // scale factor
+        if (j >= 0)
+        {
+            total_extinflow += table_tseriesLookup(&Tseries[j], current_datetime, FALSE) * sfactor;
+        }
+        total_inflow += total_extinflow;
+    }
+    return total_inflow;
+}
+
+double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime)
+{
+    int i = Node[node_idx].subIndex;
+    double yNew;
+
+    switch (Outfall[i].type)
+    {
+    case FIXED_OUTFALL:
+        yNew = Outfall[i].fixedStage;
+        break;
+
+    default:
+        yNew = -1;
+        break;
+    }
+
+    return FTTOM(yNew);
+}
+
+int DLLEXPORT api_get_report_times(
+    void * f_api,
+    double * report_start_datetime,
+    int * report_step,
+    int * hydrology_step) // WET_STEP in SWMM 5.13
+{
+    Interface * api = (Interface*) f_api;
+    if (!api->IsInitialized) return -1;
+    *report_start_datetime = ReportStart;
+    *report_step = ReportStep;
+    *hydrology_step = WetStep;
+    return 0;
 }
 
 int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value)
@@ -127,11 +243,24 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     else if (attr == node_invertElev)
         *value = FTTOM(Node[k].invertElev);
     else if (attr == node_initDepth)
-        *value = FTTOM(Node[k].initDepth);
+    {
+        if (Node[k].type == OUTFALL)
+            *value = api_get_headBC(f_api, k, StartDateTime) - FTTOM(Node[k].invertElev);
+        else
+            *value = FTTOM(Node[k].initDepth);
+    }
     else if (attr == node_extInflow_tSeries)
     {
         if (Node[k].extInflow)
             *value = Node[k].extInflow->tSeries;
+        else
+            *value = -1;
+    }
+    else if (attr == node_extInflow_tSeries_x1)
+    {
+        tseries_idx = Node[k].extInflow->tSeries;
+        if (tseries_idx >= 0)
+            *value = Tseries[tseries_idx].x1;
         else
             *value = -1;
     }
@@ -358,98 +487,20 @@ int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int obj
     return 0;
 }
 
-double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime) {
-
-    int ptype, pcount, i, j, p;
-    int yy, mm, dd;
-    int h, m, s, dow;
-    double val;
-    double x, y, next_datetime;
-    double bline, sfactor;
-    double total_factor = 1;
-    double total_extinflow = 0;
-    double total_inflow = 0;
-
-    datetime_decodeDate(current_datetime, &yy, &mm, &dd);
-    datetime_decodeTime(current_datetime, &h, &m, &s);
-    dow = datetime_dayOfWeek(current_datetime);
-
-    api_get_node_attribute(f_api, node_idx, node_has_dwfInflow, &val);
-    if (val == 1) { // node_has_dwfInflow
-        for(i=0; i<4; i++)
-        {
-            j = Node[node_idx].dwfInflow->patterns[i];
-            if (j > 0)
-            {
-                ptype = Pattern[j].type;
-                if (ptype == MONTHLY_PATTERN)
-                    total_factor *= Pattern[j].factor[mm-1];
-                else if (ptype == DAILY_PATTERN)
-                    total_factor *= Pattern[j].factor[dow-1];
-                else if (ptype == HOURLY_PATTERN)
-                    total_factor *= Pattern[j].factor[h];
-                else if (ptype == WEEKEND_PATTERN)
-                {
-                    if ((dow == 1) || (dow == 7))
-                        total_factor *= Pattern[j].factor[h];
-                }
-            }
-        }
-        total_inflow += total_factor * CFTOCM(Node[node_idx].dwfInflow->avgValue);
-    }
-
-    api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
-    if (val == 1) { // node_has_extInflow
-        p = Node[node_idx].extInflow->basePat; // pattern
-        bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
-        if (p >= 0)
-        {
-            ptype = Pattern[p].type;
-            if (ptype == MONTHLY_PATTERN)
-                total_extinflow += Pattern[j].factor[mm-1] * bline;
-            else if (ptype == DAILY_PATTERN)
-                total_extinflow += Pattern[j].factor[dow-1] * bline;
-            else if (ptype == HOURLY_PATTERN)
-                total_extinflow += Pattern[j].factor[h] * bline;
-            else if (ptype == WEEKEND_PATTERN)
-            {
-                if ((dow == 1) || (dow == 7))
-                    total_extinflow += Pattern[j].factor[h] * bline;
-            }
-        }
-        else if (bline > 0)
-        {
-            total_extinflow += bline;
-        }
-
-        j = Node[node_idx].extInflow->tSeries; // tseries
-        sfactor = Node[node_idx].extInflow->sFactor; // scale factor
-        if (j >= 0)
-        {
-            total_extinflow += table_tseriesLookup(&Tseries[j], current_datetime, FALSE) * sfactor;
-        }
-        total_inflow += total_extinflow;
-    }
-    return total_inflow;
-}
-
-double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime)
+int DLLEXPORT api_get_next_entry_tseries(int k)
 {
-    int i = Node[node_idx].subIndex;
-    double yNew;
+    int success;
+    double x2, y2;
 
-    switch (Outfall[i].type)
+    x2 = Tseries[k].x2;
+    y2 = Tseries[k].y2;
+    success = table_getNextEntry(&(Tseries[k]), &(Tseries[k].x2), &(Tseries[k].y2));
+    if (success == TRUE)
     {
-    case FIXED_OUTFALL:
-        yNew = Outfall[i].fixedStage;
-        break;
-
-    default:
-        yNew = -1;
-        break;
+        Tseries[k].x1 = x2;
+        Tseries[k].y1 = y2;
     }
-
-    return FTTOM(yNew);
+    return success;
 }
 
 int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
@@ -565,8 +616,8 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
         ni_node_type[i] = Node[i].type;
     }
 
-    f_nodes = fopen("debug/nodes_info.csv", "w");
-    f_links = fopen("debug/links_info.csv", "w");
+    f_nodes = fopen("debug_input/node/nodes_info.csv", "w");
+    f_links = fopen("debug_input/link/links_info.csv", "w");
 
     fprintf(f_nodes,
         "n_left,node_id,ni_idx,ni_node_type,ni_N_link_u,ni_N_link_d,ni_Mlink_u1,ni_Mlink_u2,ni_Mlink_u3,ni_Mlink_d1,ni_Mlink_d2,ni_Mlink_d3\n");
@@ -610,38 +661,33 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
     return 0;
 }
 
-int DLLEXPORT api_export_link_results(void* f_api, char* link_name)
+int DLLEXPORT api_export_link_results(void* f_api, int link_idx)
 {
 	FILE* tmp;
     DateTime days;
-    int period, j;
+    int period;
     char theTime[20];
     char theDate[20];
 	char path[50];
-
     int error;
     Interface * api = (Interface*) f_api;
+
     error = check_api_is_initialized(api);
     if (error != 0) return error;
 
-    j = project_findObject(LINK, link_name);
-
-    if (stat("LinkResults", &st) == -1) {
-        mkdir("LinkResults", 0700);
-    }
-
     /* File path writing */
-    strcpy(path, "LinkResults/");
-    strcat(path, Link[j].ID); strcat(path, ".csv");
+    strcpy(path, "debug_output/swmm5/link/");
+    strcat(path, Link[link_idx].ID); strcat(path, ".csv");
     tmp = fopen(path, "w");
     fprintf(tmp, "date,time,flow,velocity,depth,volume,capacity\n");
 
     for ( period = 1; period <= Nperiods; period++ )
     {
+        printf("printing period %d link %d\n", period, link_idx);
         output_readDateTime(period, &days);
         datetime_dateToStr(days, theDate);
         datetime_timeToStr(days, theTime);
-        output_readLinkResults(period, j);
+        output_readLinkResults(period, link_idx);
         fprintf(tmp, "%10s,%8s,%.3f,%.3f,%.3f,%.3f,%.3f\n",
             theDate,
             theTime,
@@ -656,11 +702,11 @@ int DLLEXPORT api_export_link_results(void* f_api, char* link_name)
     return 0;
 }
 
-int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
+int DLLEXPORT api_export_node_results(void* f_api, int node_idx)
 {
 	FILE* tmp;
     DateTime days;
-    int period, j;
+    int period;
     char theTime[20];
     char theDate[20];
 	char path[50];
@@ -670,15 +716,13 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
     error = check_api_is_initialized(api);
     if (error != 0) return error;
 
-    j = project_findObject(NODE, node_name);
-
     if (stat("NodeResults", &st) == -1) {
         mkdir("NodeResults", 0700);
     }
 
     /* File path writing */
     strcpy(path, "NodeResults/");
-    strcat(path, Node[j].ID);
+    strcat(path, Node[node_idx].ID);
     strcat(path, ".csv");
     tmp = fopen(path, "w");
     fprintf(tmp, "date,time,inflow,overflow,depth,volume\n");
@@ -687,7 +731,7 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
         output_readDateTime(period, &days);
         datetime_dateToStr(days, theDate);
         datetime_timeToStr(days, theTime);
-        output_readNodeResults(period, j);
+        output_readNodeResults(period, node_idx);
         fprintf(tmp, "%10s,%8s,%.4f,%.4f,%.4f,%.4f\n",
             theDate,
             theTime,
@@ -700,6 +744,84 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
     return 0;
 }
 
+// --- Output Writing (Post Processing)
+// * The follwing functions should only be executed after finishing
+//   and writing SWMM5+ report files. The following functions are
+//   meant to be called from Fortran in order to export .rpt and
+//   .out files according to the SWMM 5.13 standard. Fortran-generated
+//   report files are not manipulated here, the manipulation of
+//   SWMM5+ report files is kept within the Fortran code to ensure
+//   compatibility with future updates of the SWMM5+ standard
+
+int DLLEXPORT api_write_output_line(void* f_api, double t)
+// t: elapsed time in seconds
+{
+    Interface * api = (Interface *) f_api;
+
+    // --- check that simulation can proceed
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    // Update routing times to skip interpolation when saving results.
+    OldRoutingTime = 0; NewRoutingTime = t*1000; // times in msec
+    output_saveResults(t*1000);
+    return 0;
+}
+
+int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, int resultType, double newNodeResult)
+{
+    Interface * api = (Interface *) f_api;
+
+    // --- check that simulation can proceed
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    if (resultType == output_node_depth)
+        Node[node_idx].newDepth = newNodeResult;
+    else if (resultType == output_node_volume)
+        Node[node_idx].newVolume = newNodeResult;
+    else if (resultType == output_node_latflow)
+        Node[node_idx].newLatFlow = newNodeResult;
+    else if (resultType == output_node_inflow)
+        Node[node_idx].inflow = newNodeResult;
+    else
+        return -1;
+    return 0;
+}
+
+int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, int resultType, double newLinkResult)
+{
+    Interface * api = (Interface *) f_api;
+
+    // --- check that simulation can proceed
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    if (resultType == output_link_depth)
+        Link[link_idx].newDepth = newLinkResult;
+    else if (resultType == output_link_flow)
+        Link[link_idx].newFlow = newLinkResult;
+    else if (resultType == output_link_volume)
+        Link[link_idx].newVolume = newLinkResult;
+    else if (resultType == output_link_direction)
+        Link[link_idx].direction = newLinkResult;
+    else
+        return -1;
+    return 0;
+}
+
 // -------------------------------------------------------------------------
 // |
 // |  Private functionalities
@@ -709,78 +831,6 @@ int DLLEXPORT api_export_node_results(void* f_api, char* node_name)
 int DLLEXPORT api_find_object(int type, char *id)
 {
     return project_findObject(type, id);
-}
-
-double api_get_outfall_depth(int node_idx, int link_idx, double currentDate, double z, double q)
-{
-    // double   x, y;                         // x,y values in table
-    // double   yNew, yNorm, yCrit;           // new depth above invert elev. (ft)
-    // double   stage;                        // water elevation at outfall (ft)
-    // int      k;                            // table index
-    // int      i = Node[node_idx].subIndex;  // outfall index
-
-    // // Compute normal and critical depths
-
-    // yNorm = link_getYnorm(link_idx, q);
-    // yCrit = link_getYcrit(link_idx, q);
-
-    // switch ( Outfall[i].type )
-    // {
-    //   case NORMAL_OUTFALL:
-    //     if ( z > 0.0 ) yNew = 0.0;
-    //     else yNew = yNorm;
-    //     return yNew;
-
-    //   case FIXED_OUTFALL:
-    //     stage = Outfall[i].fixedStage;
-    //     break;
-
-    //   case TIDAL_OUTFALL:
-    //     k = Outfall[i].tideCurve;
-    //     table_getFirstEntry(&Curve[k], &x, &y);
-    //     x += ( currentDate - floor(currentDate) ) * 24.0;
-    //     stage = table_lookup(&Curve[k], x) / UCF(LENGTH);
-    //     break;
-
-    //   case TIMESERIES_OUTFALL:
-    //     k = Outfall[i].stageSeries;
-    //     currentDate = StartDateTime + NewRoutingTime / MSECperDAY;
-    //     stage = table_tseriesLookup(&Tseries[k], currentDate, TRUE) /
-    //             UCF(LENGTH);
-    //     break;
-    //   default: stage = Node[node_idx].invertElev;
-    // }
-
-    // // --- now determine depth at node given outfall stage elev.
-
-    // // --- let critical flow depth be min. of critical & normal depth
-    // yCrit = MIN(yCrit, yNorm);
-
-    // // --- if elev. of critical depth is below outfall stage elev. then
-    // //     the outfall stage determines node depth
-    // if ( yCrit + z + Node[node_idx].invertElev < stage )
-    // {
-    //     yNew = stage - Node[node_idx].invertElev;
-    // }
-
-    // // --- otherwise if the outfall conduit lies above the outfall invert
-    // else if ( z > 0.0 )
-    // {
-    //     // --- if the outfall stage lies below the bottom of the outfall
-    //     //     conduit then the result is distance from node invert to stage
-    //     if ( stage < Node[node_idx].invertElev + z )
-    //         yNew = MAX(0.0, (stage - Node[node_idx].invertElev));
-
-    //     // --- otherwise stage lies between bottom of conduit and critical
-    //     //     depth in conduit so result is elev. of critical depth
-    //     else yNew = z + yCrit;
-    // }
-
-    // // --- and for case where there is no conduit offset and outfall stage
-    // //     lies below critical depth, then node depth = critical depth
-    // else yNew = yCrit;
-
-    // return yNew;
 }
 
 int api_load_vars(void * f_api)

@@ -29,10 +29,12 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $UTIL_DIR/utility_deallocate.f90\
               $UTIL_DIR/utility_array.f90\
               $UTIL_DIR/utility_debug.f90\
+	          $OUT_DIR/output.f90\
               $UTIL_DIR/utility_output.f90\
               $UTIL_DIR/utility_interpolate.f90\
               $INIT_DIR/pack_mask_arrays.f90\
               $INIT_DIR/discretization.f90\
+              $INIT_DIR/BIPquick.f90\
               $INIT_DIR/partitioning.f90\
               $INIT_DIR/network_define.f90\
               $UTIL_DIR/utility_unit_testing.f90\
@@ -73,7 +75,9 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
+#$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o $PROGRAM
 $CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o $PROGRAM
+# /Users/chengweiyu/Desktop/SWMM5_mac_version/development/dependencies/opencoarray/OpenCoarrays/prerequisites/installations/opencoarrays/2.9.2/bin/caf
 # --------------------------------------------------------------------------------------
 
 $clean:
@@ -81,8 +85,9 @@ echo
 echo Clean Object files ...
 echo
 rm -rf *.o *.mod *.out
-if [[ -d debug ]]; then rm -r debug; fi
-mkdir debug
+if [[ -d debug_input ]]; then rm -r debug_input; fi
+if [[ -d debug_output ]]; then rm -r debug_output; fi
+if [[ -d swmm5_output ]]; then rm -r swmm5_output; fi
 
 echo
 echo Complete!

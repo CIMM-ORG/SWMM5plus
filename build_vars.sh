@@ -29,6 +29,7 @@ GEO_DIR='geometry'
 TL_DIR='timeloop'
 FIN_DIR='finalization'
 TEST_DIR='tests'
+OUT_DIR='output'
 
 if [[ -f $TEST_DIR/main.f08 ]]
 then
@@ -65,7 +66,7 @@ then
     echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 elif [[ $machine = "mac" ]]
 then
-    CAF="$COARRAY_INSTALL/bin/caf" #"caf"
+    CAF= "$COARRAY_INSTALL/bin/caf" #"caf"
     echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 fi
 

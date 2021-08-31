@@ -53,21 +53,25 @@
         }
     },
     "BC" : {
-        "BCSlots" : 10
+        "slots" : 10,
+        "disableInterpolation": false
     },
     "Constant" : {
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 1,
+        "NominalElemLength" : 50.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
         "FroudeJump" : 0.1,
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
+    "FaceInterp" : {
+        "DownJBFaceInterp" : "static"
+    },
     "Junction" : {
-        "kFactor" : 0.7
+        "kFactor" : 0.0
     },
     "Limiter" : {
         "BC" : {
@@ -87,24 +91,42 @@
             "Minimum" : 1e-6
         },
         "Velocity" : {
-            "Maximum" : 10.0,
+            "Maximum" : 20.0,
             "UseLimitMax" : true
         },
         "ArraySize" : {
             "TemporalInflows" : 10,
             "TotalInflows" : 50
+        },
+        "Dt" : {
+            "Minimum"     : 1e-4,
+            "UseLimitMin" : true
         }
     },
     "Link" : {
         "DefaultInitDepthType" : "Linear", // uniform, linear, exponential
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
+    "Output" : {
+        "report" : true,
+        "reportStartTime" : 0.0,
+        "reportDt" : 100.0,
+        "reportStep" : 0,
+        "slots" : 20,
+        "links_file" : "",
+        "nodes_file" : "node_input.csv",
+        "CommandLine" : {
+            "quiet" : false,
+            "interval" : 100
+        }
+    },
     "Partitioning" : {
-        "PartitioningMethod" : "BLink"
+        "PartitioningMethod" : "bquick"
     },
     "Simulation" : {
         "useHydrology" : true,
-        "useHydraulics" : true
+        "useHydraulics" : true,
+        "useSWMMC" : false
     },
     "SmallVolume" : {
         "DepthCutoff" : 0.01,
@@ -127,26 +149,31 @@
         "TestName" : "testcase"
     },
     "Time" : {
-        "DateTimeStamp" : 0.0,
-        "EndTime" : 0.0,
-        "StartTime" : 0.0,
-        "Hydrology" : {
-            "Dt" : 100.0,
-            "timeNow" : 0.0,
-            "timeNext" : 1.0,
-            "timeFinal" : 1.0,
-            "stepNow"  : 0,
-            "stepNext"  : 1,
-            "stepFinal" : 1000
-        },
+        "Start" : 0.0,
+        "Now" : 0.0,
+        "End" : 0.0,
+        "Dt" : 10.0,
+        "Step" : 0,
+        "matchHydrologyStep" : true,
         "Hydraulics" : {
-            "Dt" : 100.0,
-            "timeNow" : 0.0,
-            "timeNext" : 1.0,
-            "timeFinal" : 1.0,
-            "stepNow"  : 0,
-            "stepNext"  : 1,
-            "stepFinal" : 1
+            "Dt" : 10.0,
+            "Step" : 0
+        },
+        "Hydrology" : {
+            "Dt" : 10.0,
+            "Step" : 0
+        },
+        "DateTimeStamp" : 0.0,
+        "DtTol" : 1e-1,
+        "Real" : {
+            "EpochStartSeconds" : 0,
+            "EpochTimeLoopStartSeconds" : 0,
+            "EpochNowSeconds" : 0
+        },
+        "CPU" : {
+            "EpochStartSeconds" : 0.0,
+            "EpochNowSeconds" : 0.0,
+            "EpochFinishSeconds" : 0.0
         }
     },
     "Weir" : {
@@ -193,7 +220,6 @@
         "Volume" : 1e-6
     },
     "Debug" : {
-        "Tests" : true,
         "File" : {
             "adjust" : false,
             "boundary_conditions" : false,
@@ -215,6 +241,7 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
+	        "output" : false,
             "pack_mask_arrays" : false,
             "partitioning" : false,
             "pump_elements" : false,
@@ -242,12 +269,11 @@
             "interface" : false,
             "timeloop" : false,
             "utility" : false
-        }
+        },
+        "Input"  : true,
+        "Output" : true,
+        "Tests" : true
     },
-    "Output" : {
-        "report_time" : 1272.123123,
-        "report_tol"  : 10
-    },
-    "Warning"  : false,
-    "Verbose" : false
+    "Warning"  : true,
+    "Verbose" : true
 }

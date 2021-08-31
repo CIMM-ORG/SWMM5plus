@@ -40,7 +40,7 @@ contains
         character(64) :: subroutine_name = 'pack_mask_arrays_all'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         call mask_faces_whole_array_static()
         call pack_geometry_alltm_elements()
@@ -52,6 +52,7 @@ contains
         call pack_static_shared_faces()
         call pack_dynamic_interior_faces()
         call pack_dynamic_shared_faces()
+        call pack_output()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -69,12 +70,12 @@ contains
                    print*, faceP(:,fp_all)[ii], 'all the interior faces'
                    print*, facePS(:,fp_all)[ii], 'all the shared faces'
                    call execute_command_line('')
-                enddo
+                end do
 
-            endif
-        endif
+            end if
+        end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_mask_arrays_all
     !
     !==========================================================================
@@ -90,7 +91,7 @@ contains
         character(64) :: subroutine_name = 'pack_dynamic_arrays'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         call pack_geometry_etm_elements()
         call pack_geometry_ac_elements()
@@ -98,7 +99,7 @@ contains
         call pack_dynamic_interior_faces()
         call pack_dynamic_shared_faces()
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_dynamic_arrays
     !
     !==========================================================================
@@ -117,7 +118,7 @@ contains
         character(64) :: subroutine_name = 'mask_faces_whole_array_static'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         mcol => col_faceM(fm_all)
 
@@ -129,7 +130,7 @@ contains
             (.not. faceYN(:,fYN_isSharedFace)) &
             )
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine mask_faces_whole_array_static
     !
     !==========================================================================
@@ -147,7 +148,7 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -188,7 +189,7 @@ contains
                     .or. &
                     (elemI(:,ei_QeqType) == time_march) &
                 ))
-        endif
+        end if
 
         !% trapezoidal channels, conduits and junction main
         ptype => col_elemPGalltm(epg_CCJM_trapezoidal_nonsurcharged)
@@ -227,9 +228,9 @@ contains
                     .or. &
                     (elemI(:,ei_QeqType) == time_march) &
                 ))
-        endif
+        end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_geometry_alltm_elements
     !
     !==========================================================================
@@ -247,7 +248,7 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -282,7 +283,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
-        endif
+        end if
 
         !% trapezoidal channels, conduits and junction main
         ptype => col_elemPGac(epg_CCJM_trapezoidal_nonsurcharged)
@@ -315,9 +316,9 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
-        endif
+        end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_geometry_ac_elements
     !
     !==========================================================================
@@ -335,7 +336,7 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_etm_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -370,7 +371,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
-        endif
+        end if
 
         !% trapezoidal channels, conduits and junction main
         ptype => col_elemPGetm(epg_CCJM_trapezoidal_nonsurcharged)
@@ -403,9 +404,9 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
-        endif
+        end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_geometry_etm_elements
     !
     !==========================================================================
@@ -430,7 +431,7 @@ contains
         character(64) :: subroutine_name = 'pack_nongeometry_static_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -450,7 +451,7 @@ contains
                 .or. &
                 (elemI(:,ei_HeqType) == time_march ) &
                 )
-        endif
+        end if
 
         !% ep_CC_ALLtm
         !% - all time march elements that are CC
@@ -475,7 +476,7 @@ contains
                 .and. &
                 (elemI(:,ei_elementType) == CC) &
                 )
-        endif
+        end if
 
         !% ep_CCJB_ALLtm
         !% - all time march elements that are CC or JB
@@ -506,7 +507,7 @@ contains
                     .or. &
                     (elemI(:,ei_elementType) == JB) &
                 ))
-        endif
+        end if
 
         !% ep_Diag
         !% - all elements that are diagnostic
@@ -524,7 +525,7 @@ contains
                 .or. &
                 (elemI(:,ei_HeqType) == diagnostic ) &
                 )
-        endif
+        end if
 
         !% ep_JM_ALLtm
         !% - all junction main elements that are time march
@@ -549,7 +550,7 @@ contains
                 .and. &
                 (elemI(:,ei_elementType) == JM) &
                 )
-        endif
+        end if
 
         !% ep_JB_ALLtm
         !% - all junction main elements that are time march
@@ -574,9 +575,47 @@ contains
                 .and. &
                 (elemI(:,ei_elementType) == JB) &
                 )
+        end if
+
+        !% ep_JB_DownStreamJB
+        !% - all downstream JB elements
+        ptype => col_elemP(ep_JB_DownStreamJB)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemI(:,ei_elementType) == JB) &
+                .and. &
+                (elemYN(:,eYN_isDownstreamJB)) &
+                )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack( eIdx, &
+                ( &
+                (elemI(:,ei_elementType) == JB) &
+                .and. &
+                (elemYN(:,eYN_isDownstreamJB)) &
+                ))
         endif
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        !% ep_CC_DownstreamJbAdjacent
+        !% - all CC element downstream of a JB 
+        ptype => col_elemP(ep_CC_DownstreamJbAdjacent)
+        npack => npack_elemP(ptype)
+
+        npack = count( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemYN(:,eYN_isElementDownstreamOfJB)) &
+                )
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack( eIdx, &
+                ( &
+                (elemI(:,ei_elementType) == CC) &
+                .and. &
+                (elemYN(:,eYN_isElementDownstreamOfJB)) &
+                ))
+        endif
+            
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_nongeometry_static_elements
     !
     !==========================================================================
@@ -597,7 +636,7 @@ contains
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -613,7 +652,7 @@ contains
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_tmType) == AC))
-        endif
+        end if
 
         !% ep_CC_AC
         !% - all channel conduit elements that use AC
@@ -628,7 +667,7 @@ contains
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
                 (elemI(:,ei_tmType) == AC)     )
-        endif
+        end if
 
         !% ep_CC_ETM
         !% - all channel conduit elements that use ETM
@@ -644,7 +683,7 @@ contains
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM)     )
-        endif
+        end if
 
         !% ep_CC_H_ETM
         !% - all channel conduit elements that have head time march using ETM
@@ -663,7 +702,7 @@ contains
                 (elemI(:,ei_HeqType) == time_march) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM)     )
-        endif
+        end if
 
         !% ep_CC_Q_AC
         !% - all channel conduit elements that have flow time march using AC
@@ -682,7 +721,7 @@ contains
                 (elemI(:,ei_QeqType) == time_march) &
                 .and. &
                 (elemI(:,ei_tmType) == AC)     )
-        endif
+        end if
 
         !% ep_CC_Q_ETM
         !% - all channel conduit elements elements that have flow time march using ETM
@@ -701,7 +740,7 @@ contains
                 (elemI(:,ei_QeqType) == time_march) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM)     )
-        endif
+        end if
 
         !% ep_CCJB_AC
         !% - all channel conduit or junction branch elements elements that are AC
@@ -725,7 +764,7 @@ contains
                 ) &
                 .and. &
                 (elemI(:,ei_tmType) == AC)     )
-        endif
+        end if
 
 
         !% ep_CC_AC_surcharged
@@ -750,7 +789,7 @@ contains
                 (elemI(:,ei_tmType) == AC)        &
                 .and. &
                 (elemYN(:,eYN_isSurcharged)))
-        endif
+        end if
 
         !% ep_CCJB_AC_surcharged
         !% - all channel conduit or junction branch elements elements that are AC and surcharged
@@ -778,7 +817,7 @@ contains
                 (elemI(:,ei_tmType) == AC)        &
                 .and. &
                 (elemYN(:,eYN_isSurcharged)))
-        endif
+        end if
 
         !% ep_CC_ALLtm_surcharged
         !% - all channel conduit elements with any time march and surcharged
@@ -810,7 +849,7 @@ contains
                 ) &
                 .and. &
                 (elemYN(:,eYN_isSurcharged)))
-        endif
+        end if
 
         !% ep_CCJB_ALLtm_surcharged
         !% - all channel conduit or junction branch elements with any time march and surcharged
@@ -846,7 +885,7 @@ contains
                 ) &
                 .and. &
                 (elemYN(:,eYN_isSurcharged)))
-        endif
+        end if
 
         !% ep_CCJB_eETM_i_fAC
         !% conduits, channels, and junction branches that are ETM and have
@@ -884,7 +923,7 @@ contains
                     .or. &
                     (faceYN(fdn,fYN_isAC_adjacent)) &
                 ))
-        endif
+        end if
 
         !% ep_CCJB_ETM
         !% - all channel conduit or junction branch that are ETM
@@ -910,7 +949,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
-        endif
+        end if
 
         !% ep_CC_ETM_surcharged
         !% - all channel conduit or junction branch that are ETM and surcharged
@@ -936,7 +975,7 @@ contains
                 .and. &
                 (elemYN(:,eYN_isSurcharged)) &
                 )
-        endif
+        end if
 
         !% ep_CCJB_ETM_surcharged
         !% - all channel conduit or junction branch that are ETM and surcharged
@@ -966,7 +1005,7 @@ contains
                 .and. &
                 (elemYN(:,eYN_isSurcharged)) &
                 )
-        endif
+        end if
 
         !% ep_CCJM_H_AC_open
         !% - all channel conduit or junction main elements solving head with AC and are non-surcharged
@@ -1000,7 +1039,7 @@ contains
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 )
-        endif
+        end if
 
         !% ep_CCJM_H_ETM
         !% - all channel conduit or junction main that use head solution with ETM
@@ -1030,7 +1069,7 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
-        endif
+        end if
 
         !% ep_ETM
         !% - all elements that use ETM
@@ -1042,7 +1081,7 @@ contains
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx, &
                 (elemI(:,ei_tmType) == ETM))
-        endif
+        end if
 
         !% ep_JM_AC
         !% - all elements that are junction mains and use AC
@@ -1058,7 +1097,7 @@ contains
                 (elemI(:,ei_elementType) == JM ) &
                 .and. &
                 (elemI(:,ei_tmType) == AC))
-        endif
+        end if
 
         !% ep_JB_AC
         !% - all elements that are junction mains and use AC
@@ -1074,7 +1113,7 @@ contains
                 (elemI(:,ei_elementType) == JB ) &
                 .and. &
                 (elemI(:,ei_tmType) == AC))
-        endif
+        end if
 
         !% ep_JM_ETM
         !% - all elements that are junction mains and ETM
@@ -1091,7 +1130,7 @@ contains
                 (elemI(:,ei_elementType) == JM ) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
-        endif
+        end if
 
         !% ep_JB_ETM
         !% - all elements that are junction mains and ETM
@@ -1108,7 +1147,7 @@ contains
                 (elemI(:,ei_elementType) == JB ) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
-        endif
+        end if
 
         !% ep_NonSurcharged_AC
         !% - all AC elements that are not surcharged
@@ -1124,7 +1163,7 @@ contains
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC))
-        endif
+        end if
 
         !% ep_NonSurcharged_ALLtm
         !% -- elements with any time march that are not surcharged
@@ -1149,7 +1188,7 @@ contains
                     .or.&
                     (elemI(:,ei_tmType) == ETM) &
                 ))
-        endif
+        end if
 
         !% ep_NonSurcharged_ETM
         !% -- elements with ETM time march that are not surcharged
@@ -1166,7 +1205,7 @@ contains
                 (.not. elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
-        endif
+        end if
 
         !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
         !% ep_smallvolume_AC
@@ -1184,7 +1223,7 @@ contains
                 (elemYN(:,eYN_isSmallVolume)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC))
-        endif
+        end if
 
         !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
         !% ep_smallvolume_ALLtm
@@ -1210,7 +1249,7 @@ contains
                     .or. &
                     (elemI(:,ei_tmType) == ETM) &
                 ))
-        endif
+        end if
 
         !NOT SURE IF THIS SHOULD BE DONE HERE OR WHERE SMALL VOLUMES ARE DECLARED
         !% ep_smallvolume_ETM
@@ -1228,7 +1267,7 @@ contains
                 (elemYN(:,eYN_isSmallVolume)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
-        endif
+        end if
 
         !% ep_Surcharged_AC
         !% - all AC elements that are surcharged
@@ -1245,7 +1284,7 @@ contains
                 (elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == AC))
-        endif
+        end if
 
         !% ep_Surcharged_ALLtm
         !% - all elements of any time march that are surcharged
@@ -1270,7 +1309,7 @@ contains
                     .or. &
                     (elemI(:,ei_tmType) == ETM) &
                 ))
-        endif
+        end if
 
         !% ep_Surcharged_ETM
         !% - all ETM elements that are surcharged
@@ -1287,7 +1326,7 @@ contains
                 (elemYN(:,eYN_isSurcharged)) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
-        endif
+        end if
 
         if (allocated(fup)) deallocate(fup)
         if (allocated(fdn)) deallocate(fdn)
@@ -1311,7 +1350,7 @@ contains
         character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1332,7 +1371,7 @@ contains
             faceP(1:npack,ptype) = pack(fIdx, &
                 faceYN(1:Nfaces,fYN_isInteriorFace) &
                 )
-        endif
+        end if
 
 
         !% fp_Diag
@@ -1362,9 +1401,9 @@ contains
                     (elemI(eup,ei_HeqType) == diagnostic) &
                     .or.  &
                     (elemI(eup,ei_QeqType) == diagnostic))
-        endif
+        end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_static_interior_faces
     !
     !==========================================================================
@@ -1387,7 +1426,7 @@ contains
         character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1416,7 +1455,7 @@ contains
                 (elemI(edn,ei_tmType) == AC)    &
                 .or. &
                 (elemI(eup,ei_tmType) == AC)    )
-        endif
+        end if
 
         !% fp_JumpUp
         !% -Hydraulic jump from nominal upstream to downstream
@@ -1433,7 +1472,7 @@ contains
                 faceYN(1:Nfaces,fYN_isInteriorFace) &
                 .and.&
                 faceI(1:Nfaces,fi_jump_type) == jump_from_upstream )
-        endif
+        end if
 
         !% fp_JumpDn
         !% --Hydraulic jump from nominal downstream to upstream
@@ -1450,9 +1489,9 @@ contains
                 faceYN(1:Nfaces,fYN_isInteriorFace) &
                 .and. &
                 faceI(1:Nfaces,fi_jump_type) == jump_from_downstream )
-        endif
+        end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_dynamic_interior_faces
     !
     !==========================================================================
@@ -1472,7 +1511,7 @@ contains
         character(64) :: subroutine_name = 'pack_static_shared_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1491,7 +1530,7 @@ contains
         if (npack > 0) then
             facePS(1:npack, ptype) = pack( fIdx, &
                 faceYN(1:Nfaces,fYN_isSharedFace))
-        endif
+        end if
 
         sync all
 
@@ -1524,7 +1563,7 @@ contains
                         npack = npack + oneI
                         !% save the face index
                         facePS(npack,ptype) = thisP
-                    endif
+                    end if
 
                 elseif (isDnGhost) then
                     if ((elemI(gdn,ei_HeqType)[c_image] == diagnostic) .or.  &
@@ -1536,12 +1575,12 @@ contains
                         npack = npack + oneI
                         !% save the face index
                         facePS(npack,ptype) = thisP
-                    endif
-                endif
+                    end if
+                end if
             end do
-        endif
+        end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_static_shared_faces
     !
     !==========================================================================
@@ -1565,7 +1604,7 @@ contains
         character(64)    :: subroutine_name = 'pack_dynamic_shared_faces'
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         sync all
 
@@ -1602,7 +1641,7 @@ contains
                         npack = npack + oneI
                         !% save the face index
                         facePS(npack,ptype) = thisP
-                    endif
+                    end if
 
                 elseif (isDnGhost) then
                     if ((elemI(gdn,ei_tmType)[c_image] == AC) .or.  &
@@ -1612,10 +1651,10 @@ contains
                         npack = npack + oneI
                         !% save the face index
                         facePS(npack,ptype) = thisP
-                    endif
-                endif
+                    end if
+                end if
             end do
-        endif
+        end if
 
         !% fp_JumpUp (shared faces)
         !% -Hydraulic jump from nominal upstream to downstream
@@ -1630,7 +1669,7 @@ contains
             facePS(1:npack, ptype) = pack( fIdx, &
                 faceYN(1:Nfaces,fYN_isSharedFace)              .and. &
                 (faceI(1:Nfaces,fi_jump_type) == jump_from_upstream))
-        endif
+        end if
 
         !% fp_JumpDn
         !% --Hydraulic jump from nominal downstream to upstream
@@ -1645,9 +1684,9 @@ contains
             facePS(1:npack, ptype) = pack( fIdx, &
                 faceYN(1:Nfaces,fYN_isSharedFace)                .and. &
                 (faceI(1:Nfaces,fi_jump_type) == jump_from_downstream))
-        endif
+        end if
 
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_dynamic_shared_faces
     !
     !==========================================================================
@@ -1661,7 +1700,7 @@ contains
         !--------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'pack_nodes'
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
                         (node%I(:,ni_P_image) == this_image()))
@@ -1682,13 +1721,13 @@ contains
             (node%I(:, ni_node_type) == nBCdn) .and. &
             (node%I(:,ni_P_image) == this_image()))
         end if
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_nodes
 
     subroutine pack_bc
         integer :: psize
         character(64) :: subroutine_name = 'pack_bc'
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
 
         !% BC packs
         if (N_flowBC > 0) then
@@ -1721,6 +1760,29 @@ contains
                 faceP(1:N_nBCdn,fp_BCdn) = BC%headI(BC%P%BCdn, bi_face_idx)
             end if
         end if
-        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ',subroutine_name
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_bc
+
+    subroutine pack_output
+        integer :: ii, jj, link_output_idx_length, node_output_idx_length
+        character(64)    :: subroutine_name = 'pack_output'
+        !% --------------------------------------------------------------------------
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** enter ', this_image(),subroutine_name
+
+        !% count the amount of valid output links
+        link_output_idx_length = count(link_output_idx(:) /= nullvalueI)
+        node_output_idx_length = count(node_output_idx(:) /= nullvalueI)
+
+        !% allocate the pack
+        allocate(link%P%have_output(link_output_idx_length))
+        allocate(node%P%have_output(node_output_idx_length))
+
+        !% fill the pack
+        link%P%have_output = pack(link%I(link_output_idx(1:link_output_idx_length), li_idx), &
+            link%I(link_output_idx(1:link_output_idx_length), li_P_image) == this_image())
+        node%P%have_output = pack(node%I(node_output_idx(1:node_output_idx_length), ni_idx), &
+            node%I(node_output_idx(1:node_output_idx_length), ni_P_image) == this_image())
+        
+        if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
+    end subroutine pack_output
 end module pack_mask_arrays
