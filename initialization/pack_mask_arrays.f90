@@ -1744,7 +1744,7 @@ contains
             link%I(link_output_idx(1:link_output_idx_length), li_P_image) == this_image())
         node%P%have_output = pack(node%I(node_output_idx(1:node_output_idx_length), ni_idx), &
             node%I(node_output_idx(1:node_output_idx_length), ni_P_image) == this_image())
-
+        
         if (setting%Debug%File%pack_mask_arrays) print *, '*** leave ', this_image(),subroutine_name
     end subroutine pack_output
 end module pack_mask_arrays
