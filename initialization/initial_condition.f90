@@ -305,7 +305,7 @@ contains
             case default
                 print*, 'In ', subroutine_name
                 print*, 'error: unexpected initial depth type, ', LdepthType,'  in link, ', thisLink
-                stop
+                stop "in " // subroutine_name
 
         end select
 
@@ -400,13 +400,13 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'pumps are not handeled yet'
-                stop
+                stop "in " // subroutine_name
 
             case default
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unexpected link, ', linkType,'  in the network'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
@@ -456,13 +456,13 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'pumps are not handeled yet'
-                stop
+                stop "in " // subroutine_name
 
             case default
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unexpected link, ', linkType,'  in the network'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
@@ -563,7 +563,7 @@ contains
 
                 print*, 'In, ', subroutine_name
                 print*, 'Only rectangular channel geometry is handeled at this moment'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
@@ -655,7 +655,7 @@ contains
 
             print*, 'In, ', subroutine_name
             print*, 'Only rectangular pipe geometry is handeled at this moment'
-            stop
+            stop "in " // subroutine_name
 
         end select
 
@@ -725,7 +725,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'roadway weir is not handeled yet'
-                stop
+                stop "in " // subroutine_name
 
             case (lVnotchWeir)
 
@@ -764,7 +764,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown weir type, ', specificWeirType,'  in network'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
@@ -815,7 +815,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown orifice type, ', specificOrificeType,'  in network'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
@@ -840,12 +840,12 @@ contains
             case (lCircular)
                 print*, 'In ', subroutine_name
                 print *, 'error, the circular orifice is not yet implemented'
-                stop
+                stop "in " // subroutine_name
 
             case default
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
-                stop
+                stop "in " // subroutine_name
             end select
 
 
@@ -1155,7 +1155,7 @@ contains
 
                         print*, 'In, ', subroutine_name
                         print*, 'Only rectangular geometry is handeled at this moment'
-                        stop
+                        stop "in " // subroutine_name
 
                 end select
 

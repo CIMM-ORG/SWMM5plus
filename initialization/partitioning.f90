@@ -65,7 +65,7 @@ subroutine init_partitioning_method()
         N_link = count(link%I(:,li_idx) /= nullvalueI)
     else
         print *, "Error, partitioning method not supported"
-        stop
+        stop "in " // subroutine_name
     end if
 
     if (setting%Debug%File%partitioning) then

@@ -135,7 +135,7 @@ contains
                 if (node_idx == 0) then
                     write(error_unit, "(A)") "Node " // trim(node_name) // " in " // &
                     trim(setting%Output%nodes_file) // " couldn't be found"
-                    stop
+                    stop "in " // subroutine_name
                 end if
                 node_output_idx(ii) = node_idx
                 ii = ii + 1
@@ -143,7 +143,7 @@ contains
         end if
 
         print *, node_output_idx, "node_output_idx"
-        stop
+        stop "in " // subroutine_name
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine output_read_csv_node_names

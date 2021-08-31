@@ -276,7 +276,7 @@ contains
         api = c_null_ptr
         if (setting%Paths%inp == "") then
             print *, "ERROR: it is necessary to define the path to the .inp file"
-            stop
+            stop "in " // subroutine_name
         end if
         ppos = scan(trim(setting%Paths%inp), '.', back = .true.)
         if (ppos > 0) then
@@ -291,7 +291,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
         api = ptr_api_initialize( &
@@ -348,7 +348,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
         call ptr_api_finalize(api)
@@ -374,7 +374,7 @@ contains
     !     call c_lib_load(c_lib, errstat, errmsg)
     !     if (errstat /= 0) then
     !         print *, "ERROR: " // trim(errmsg)
-    !         stop
+    !         stop "in " // subroutine_name
     !     end if
     !     call c_f_procpointer(c_lib%procaddr, ptr_api_run_step)
 
@@ -406,7 +406,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
 
@@ -414,7 +414,7 @@ contains
             errstat = ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
-                stop
+                stop "in " // subroutine_name
             end if
         end do
 
@@ -422,7 +422,7 @@ contains
             errstat = ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
-                stop
+                stop "in " // subroutine_name
             end if
         end do
 
@@ -462,7 +462,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name_len)
         obj_name_len = ptr_api_get_object_name_len(api, obj_idx-1, obj_type)
@@ -497,19 +497,19 @@ contains
 
         if ((attr > N_api_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
-            stop
+            stop "in " // subroutine_name
         end if
 
         if ((node_idx > N_node) .or. (node_idx < 1)) then
             print *, "error: unexpected node index value", node_idx
-            stop
+            stop "in " // subroutine_name
         end if
 
         c_lib%procname = "api_get_node_attribute"
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_node_attribute)
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -551,19 +551,19 @@ contains
 
         if ((attr > N_api_total_link_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
-            stop
+            stop "in " // subroutine_name
         end if
 
         if ((link_idx > SWMM_N_link) .or. (link_idx < 1)) then
             print *, "error: unexpected link index value", link_idx
-            stop
+            stop "in " // subroutine_name
         end if
 
         c_lib%procname = "api_get_link_attribute"
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_link_attribute)
 
@@ -776,7 +776,7 @@ contains
             tnext = setting%Time%End
         else
             print *, "Error, unsupported head boundary condition for node " // node%Names(nidx)%str
-            stop
+            stop "in " // subroutine_name
         end if
 
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name
@@ -798,7 +798,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
         nidx = BC%flowI(bc_idx, bi_node_idx)
@@ -824,7 +824,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
         nidx = BC%headI(bc_idx, bi_node_idx)
@@ -852,7 +852,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_export_link_results)
         error = ptr_api_export_link_results(api, link_idx-1)
@@ -875,7 +875,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
         error = ptr_api_update_nodeResult(api, node_idx-1, result_type, node_result)
@@ -898,7 +898,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
         error = ptr_api_update_linkResult(api, link_idx-1, result_type, link_result)
@@ -923,7 +923,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_write_output_line)
         error = ptr_api_write_output_line(api, reportTime)
@@ -948,7 +948,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_report_times)
 
@@ -981,7 +981,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
         print *, object_name
@@ -1008,7 +1008,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
         success = ptr_api_get_next_entry_tseries(k-1) ! Fortran to C convention
@@ -1030,7 +1030,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_objects)
         get_num_objects = ptr_api_get_num_objects(api, obj_type)
@@ -1048,7 +1048,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_start_datetime)
         get_start_datetime = ptr_api_get_start_datetime()
@@ -1067,7 +1067,7 @@ contains
         call c_lib_load(c_lib, errstat, errmsg)
         if (errstat /= 0) then
             print *, "ERROR: " // trim(errmsg)
-            stop
+            stop "in " // subroutine_name
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_end_datetime)
         get_end_datetime = ptr_api_get_end_datetime()
@@ -1080,7 +1080,7 @@ contains
 
         if (error /= 0) then
             write(*, "(A,i2,A)") new_line("") // "EPA-SWMM Error Code: ", error, " in "// subroutine_name
-            stop
+            stop "in " // subroutine_name
         end if
     end subroutine print_api_error
 end module interface

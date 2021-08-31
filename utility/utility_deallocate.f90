@@ -397,7 +397,7 @@ contains
 
             if (deallocation_status > 0) then
                 print *, trim(emsg)
-                stop
+                stop "in " // subroutine_name
             end if
 
             if (setting%Debug%File%utility) print *, '*** leave ', this_image(),subroutine_name

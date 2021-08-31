@@ -622,7 +622,7 @@ contains
                     print*, 'In ', subroutine_name
                     print*, 'error: node ' // node%Names(thisNode)%str // &
                             ' has an unexpected nodeType', nodeType
-                    stop
+                    stop "in " // subroutine_name
             end select
 
         !% handle the node if it is not in the partition
@@ -916,7 +916,7 @@ contains
                     print*, 'In ', subroutine_name
                     print*, 'error: node ' // node%Names(thisNode)%str // &
                             ' has an unexpected nodeType', nodeType
-                    stop
+                    stop "in " // subroutine_name
             end select
         else
             !% Advance face local and global counters for nodes outside of the partition

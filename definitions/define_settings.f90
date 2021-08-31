@@ -651,7 +651,7 @@ contains
             setting%FaceInterp%DownJBFaceInterp = dynamic
         else
             print *, "Error, the setting '" // trim(c) // "' is not supported for DownJBFaceInterp"
-            stop
+            stop "in " // subroutine_name
         end if
 
         ! Load Junction Settings
@@ -718,7 +718,7 @@ contains
             setting%Link%DefaultInitDepthType = ExponentialDecay
         else
             print *, "Error, the setting '" // trim(c) // "' is not supported for Link.DefaultInitDepthType"
-            stop
+            stop "in " // subroutine_name
         end if
         if (.not. found) stop "Error - setting " // 'Link.DefaultInitDepthType not found'
 

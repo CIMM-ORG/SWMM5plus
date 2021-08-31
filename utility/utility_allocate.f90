@@ -1018,7 +1018,7 @@ contains
 
         if (setting%BC%slots < 2) then
             print *, "Error: the number of slots has to be greater than 2"
-            stop
+            stop "in " // subroutine_name
         end if
 
         if (N_headBC > 0) then
@@ -1074,7 +1074,7 @@ contains
 
             if (allocation_status > 0) then
                 print *, trim(emsg)
-                stop
+                stop "in " // subroutine_name
             end if
 
             if (setting%Debug%File%utility) print *, '*** leave ', this_image(),subroutine_name

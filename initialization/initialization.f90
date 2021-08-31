@@ -175,7 +175,7 @@ contains
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
-            stop
+            stop "in " // subroutine_name
         end if
 
         !% Allocate storage for link & node tables
@@ -318,7 +318,7 @@ contains
                         BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                     else
                         print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
-                        stop
+                        stop "in " // subroutine_name
                     end if
 
                     BC%flowI(ii, bi_node_idx) = nidx
@@ -338,7 +338,7 @@ contains
                     end if
                 else
                     print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
-                    stop
+                    stop "in " // subroutine_name
                 end if
             end do
         end if
@@ -354,7 +354,7 @@ contains
                     BC%headI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                 else
                     print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
-                    stop
+                    stop "in " // subroutine_name
                 end if
 
                 BC%headI(ii, bi_idx) = ii
@@ -532,6 +532,9 @@ contains
         logical :: arg_param = .false.
         character(len=8) :: param
         character(len=256) :: arg
+        character(64) :: subroutine_name = "init_read_arguments"
+
+        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
         do ii = 1, iargc()
             call getarg(ii, arg)
@@ -540,7 +543,7 @@ contains
                 if (ii == 1) then
                     if (arg(:1) == '-') then
                         print *, "ERROR: it is necessary to define the path to the .inp file"
-                        stop
+                        stop "in " // subroutine_name
                     end if
                     setting%Paths%inp = arg
                 elseif ((trim(arg) == "-s") .or. & ! user provides settings file
@@ -552,7 +555,7 @@ contains
                     setting%Warning = .false.
                 else
                     write(*, *) 'The argument ' // trim(arg) // ' is unsupported'
-                    stop
+                    stop "in " // subroutine_name
                 end if
             else
                 arg_param = .false.
@@ -569,12 +572,14 @@ contains
                         print *, "simple_channel, simple_orifice, simple_pipe"
                         print *, "simple_weir, swashes, waller_creek"
                         print *, "y_channel, y_storage_channel"
-                        stop
+                        stop "in " // subroutine_name
                     end if
                 elseif (trim(param) == '--run-tests') then
                 end if
             end if
         end do
+
+        if (setting%Debug%File%initialization) print *, '*** leave ', this_image(), subroutine_name
     end subroutine init_read_arguments
     !%
     !%==========================================================================

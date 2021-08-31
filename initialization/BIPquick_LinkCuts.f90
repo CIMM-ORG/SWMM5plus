@@ -179,7 +179,7 @@ contains
 
             else
                 print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
-                stop
+                stop "in " // subroutine_name
 
             end if
 
@@ -994,7 +994,7 @@ contains
 
         if ( total_clipped_weight .le. zeroR ) then
             print*, "BIPquick Case 3: Haven't removed any weight"
-            stop
+            stop "in " // subroutine_name
         end if
 
         !% Reduce the partition_threshold by the total_clipped_weight too
