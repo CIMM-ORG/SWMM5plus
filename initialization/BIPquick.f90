@@ -128,28 +128,30 @@ contains
                 !% The outcomes of the Case 3 while loop are a Case 1
                 if ( ideal_exists .eqv. .true. ) then
 
-                !% In which case traverse the subnetwork from the effective_root
-                call trav_subnetwork(effective_root, image)
+                    print*, "A case 1 has emerged from a case 3 at", effective_root
+
+                    !% In which case traverse the subnetwork from the effective_root
+                    call trav_subnetwork(effective_root, image)
 
                 !% Or Case 2
                 else if ( spanning_link /= nullValueI ) then
 
-                !% In which case the distance along the spanning_link to the phantom node is calculated
-                phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
+                    !% In which case the distance along the spanning_link to the phantom node is calculated
+                    phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
 
-                !% This subroutine creates a phantom node/link and adds it to node%I/link%I
-                call phantom_node_generator &
-                (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
+                    !% This subroutine creates a phantom node/link and adds it to node%I/link%I
+                    call phantom_node_generator &
+                    (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
 
-                !% This subroutine does the same thing as the previous call to trav_subnetwork()
-                call trav_subnetwork(phantom_node_idx, image)
+                    !% This subroutine does the same thing as the previous call to trav_subnetwork()
+                    call trav_subnetwork(phantom_node_idx, image)
 
-                phantom_node_idx = phantom_node_idx + 1
-                phantom_link_idx = phantom_link_idx + 1
+                    phantom_node_idx = phantom_node_idx + 1
+                    phantom_link_idx = phantom_link_idx + 1
 
                 else
-                print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
-                stop
+                    print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
+                    stop
 
                 end if
 
