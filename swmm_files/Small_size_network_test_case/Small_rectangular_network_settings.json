@@ -113,11 +113,11 @@
         "reportDt" : 100.0,
         "reportStep" : 0,
         "slots" : 20,
-        "links_file" : "link_input.csv",
-        "nodes_file" : "node_input.csv",
+        "links_file" : "",
+        "nodes_file" : "",
         "CommandLine" : {
             "quiet" : false,
-            "interval" : 10000
+            "interval" : 1000
         }
     },
     "Partitioning" : {
