@@ -117,6 +117,7 @@ contains
         if (.not. no_file) close(fu)
         link_output_idx(ii:N_link) = nullvalueI
 
+
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
     end subroutine output_read_csv_link_names
 
@@ -144,7 +145,6 @@ contains
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(setting%Output%nodes_file), '" failed: ', rc
                 stop
             end if
-            read(fu, *, iostat = rc) node_name
         end if
 
         if (rc /= 0) then
@@ -174,7 +174,7 @@ contains
         if (.not. no_file) close(fu)
         !% N_node_output holds the number of node idx stored
         node_output_idx(ii:N_node) = nullvalueI
-
+        
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
 
     end subroutine output_read_csv_node_names
@@ -250,7 +250,8 @@ contains
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
             end if
-
+            print *, "inside of creating node_files"
+            
             !% Write the header, this endfile and close the file
             write(fu, *) "Timestamp,Time_In_Secs,Head"
             endfile(fu)

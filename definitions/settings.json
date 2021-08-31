@@ -114,7 +114,7 @@
         "reportStep" : 0,
         "slots" : 20,
         "links_file" : "",
-        "nodes_file" : "",
+        "nodes_file" : "node_input.csv",
         "CommandLine" : {
             "quiet" : false,
             "interval" : 100
