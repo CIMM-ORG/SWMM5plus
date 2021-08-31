@@ -85,6 +85,8 @@ contains
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
 
+            print*, "BIPquick Sweep:", image
+
             !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
             B_nodeR(:, totalweight) = 0.0
             ideal_exists = .false.
@@ -115,8 +117,6 @@ contains
 
                     !% This subroutine houses the litany of steps that are required for a Case 3 partition
                     call trav_casethree(effective_root, spanning_link, image, partition_threshold, max_weight, ideal_exists)
-
-                    !% HACK - I'm fairly sure that this do-loop will work for repeated instances of Case 3
 
                 end do
 
