@@ -1075,7 +1075,7 @@ contains
         character(64), intent(in) :: subroutine_name
 
         if (error /= 0) then
-            write(*, "(A,i2,A)") "EPA-SWMM Error Code: ", error, " in "// subroutine_name
+            write(*, "(A,i2,A)") new_line("") // "EPA-SWMM Error Code: ", error, " in "// subroutine_name
             stop
         end if
     end subroutine print_api_error
