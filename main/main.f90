@@ -17,16 +17,19 @@ program main
     ! --- store Real time
     setting%Time%Real%EpochStartSeconds = time()
 
-    if (setting%Verbose) print *, 'begin initialization...'
     ! --- Initialization
+    if (setting%Verbose) &
+        write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Image ', this_image(), "] ..."
     call initialize_all()
 
-    if (setting%Verbose) print *, 'begin timeloop'
-    setting%Time%Real%EpochTimeLoopStartSeconds = time()
     ! --- Time Loop
+    if (setting%Verbose) &
+        write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Image ', this_image(), "]"
+    setting%Time%Real%EpochTimeLoopStartSeconds = time()
     call timeloop_toplevel()
 
-    if (setting%Verbose) print *, 'finalize'
+    if (setting%Verbose) &
+        write(*,"(2A,i5,A)") new_line(" "), 'finalize [Image ', this_image(), "]"
     ! --- Finalization
     call finalize_all()
 

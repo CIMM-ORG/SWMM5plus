@@ -303,8 +303,10 @@ contains
 
         !% Get number of objects
 
-        N_link = get_num_objects(API_LINK)
-        N_node = get_num_objects(API_NODE)
+        SWMM_N_link = get_num_objects(API_LINK)
+        N_link = SWMM_N_link
+        SWMM_N_node = get_num_objects(API_NODE)
+        N_node = SWMM_N_node
 
         !% Defines start and end simulation times
         !% SWMM defines start and end dates as epoch times in days
@@ -321,8 +323,8 @@ contains
 
         if (setting%Debug%File%interface) then
             print *, new_line("")
-            print *, "N_link", N_link
-            print *, "N_node", N_node
+            print *, "SWMM_N_link", SWMM_N_link
+            print *, "SWMM_N_node", SWMM_N_node
             print *, new_line("")
             print *, "SWMM start time", setting%Time%StartEpoch
             print *, "SWMM end time", setting%Time%EndEpoch
@@ -408,16 +410,16 @@ contains
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
 
-        do ii = 1, N_node
-            errstat = ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
+        do ii = 1, SWMM_N_link
+            errstat = ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 stop
             end if
         end do
 
-        do ii = 1, N_link
-            errstat = ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
+        do ii = 1, SWMM_N_node
+            errstat = ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 stop
@@ -427,12 +429,12 @@ contains
         if (setting%Debug%File%interface) then
             print *, new_line("")
             print *, "List of Links"
-            do ii = 1, N_link
+            do ii = 1, SWMM_N_link
                 print *, "- ", link%Names(ii)%str
             end do
             print *, new_line("")
             print *, "List of Nodes"
-            do ii = 1, N_node
+            do ii = 1, SWMM_N_node
                 print *, "- ", node%Names(ii)%str
             end do
             print *, new_line("")
@@ -552,7 +554,7 @@ contains
             stop
         end if
 
-        if ((link_idx > N_link) .or. (link_idx < 1)) then
+        if ((link_idx > SWMM_N_link) .or. (link_idx < 1)) then
             print *, "error: unexpected link index value", link_idx
             stop
         end if
@@ -981,6 +983,7 @@ contains
             stop
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
+        print *, object_name
         object_idx = ptr_api_find_object(object_type, trim(object_name)//c_null_char) + 1
 
         if (setting%Debug%File%interface)  print *, '*** leave ', this_image(), subroutine_name

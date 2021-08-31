@@ -118,7 +118,7 @@ contains
             if (this_image() == 1) then
             if ((N_link > 5000) .or. (N_node > 5000)) then
                 print *, "begin setting initial conditions (this takes several minutes for big systems)"
-                print *, "This system has ",N_link,"links and",N_node,"nodes"
+                print *, "This system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
                 print *, "The finite-volume system is ", sum(N_elem(:)), " elements"
             endif
         endif
@@ -185,7 +185,7 @@ contains
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
 
-        do ii = 1, N_link
+        do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
             link%I(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
@@ -400,7 +400,7 @@ contains
         if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
 
         !% find the number of elements in a link based on nominal element length
-        do ii = 1, N_link
+        do ii = 1, SWMM_N_link
             call init_discretization_nominal(ii)
         end do
 

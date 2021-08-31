@@ -1,4 +1,4 @@
-Module utility_unit_testing
+module utility_unit_testing
   use interface
   use utility_allocate
   use discretization
@@ -1639,4 +1639,4 @@ contains
 
 
 
-  end Module utility_unit_testing
+  end module utility_unit_testing

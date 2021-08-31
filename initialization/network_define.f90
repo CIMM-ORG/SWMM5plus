@@ -147,7 +147,7 @@ contains
 
         if (setting%Debug%File%network_define) print *, '*** enter ', this_image(),subroutine_name
 
-        do mm = 1,N_link
+        do mm = 1, N_link
             !% Inputs
             NodeUp      => link%I(mm,li_Mnode_u)
             NodeDn      => link%I(mm,li_Mnode_d)
@@ -169,7 +169,7 @@ contains
             !% provide output for debugging
             print *, subroutine_name,'--------------------------------'
             print *, 'link ID,               Slope,             length'
-            do mm=1,N_link
+            do mm=1, N_link
                 print *, mm, link%R(mm,lr_Slope), link%R(mm,lr_Length)
             end do
         end if

@@ -69,7 +69,7 @@ contains
         call util_allocate_check(allocation_status, emsg)
         node%I(:,:) = nullvalueI
 
-        allocate(link%I(N_link + additional_rows, Ncol_linkI), stat=allocation_status, errmsg=emsg)
+        allocate(link%I(SWMM_N_link + additional_rows, Ncol_linkI), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         link%I(:,:) = nullvalueI
 
@@ -77,7 +77,7 @@ contains
         call util_allocate_check(allocation_status, emsg)
         node%R(:,:) = nullvalueR
 
-        allocate(link%R(N_link + additional_rows, Ncol_linkR), stat=allocation_status, errmsg=emsg)
+        allocate(link%R(SWMM_N_link + additional_rows, Ncol_linkR), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         link%R(:,:) = nullvalueR
 
@@ -85,7 +85,7 @@ contains
         call util_allocate_check(allocation_status, emsg)
         node%YN(:,:) = nullvalueL
 
-        allocate(link%YN(N_link + additional_rows, Ncol_linkYN), stat=allocation_status, errmsg=emsg)
+        allocate(link%YN(SWMM_N_link + additional_rows, Ncol_linkYN), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
         link%YN(:,:) = nullvalueL
 
@@ -114,8 +114,8 @@ contains
         !% allocate link_node_output_idx
         allocate(node_output_idx(N_node + additional_rows),stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
-        
-        allocate(link_output_idx(N_link + additional_rows),stat=allocation_status,errmsg=emsg)
+
+        allocate(link_output_idx(SWMM_N_link + additional_rows), stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg)
 
         if (setting%Debug%File%utility_allocate) print *, '*** leave ', this_image(),subroutine_name

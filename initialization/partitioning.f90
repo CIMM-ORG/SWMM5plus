@@ -330,12 +330,12 @@ subroutine init_partitioning_linkbalance()
 !-----------------------------------------------------------------------------
     if (setting%Debug%File%partitioning) print *, '*** enter ', this_image(), subroutine_name
 
-    if (N_link < num_images()) then
+    if (SWMM_N_link < num_images()) then
         call init_partitioning_default()
     else
         do rank = 0, num_images()-1
-            count = N_link / num_images()
-            remainder = mod(N_link, num_images())
+            count = SWMM_N_link / num_images()
+            remainder = mod(SWMM_N_link, num_images())
 
             if (rank < remainder) then
                 ! The first 'remainder' ranks get 'count + 1' tasks each
@@ -458,7 +458,7 @@ function init_partitioning_metric_connectivity() result(connectivity)
 end function init_partitioning_metric_connectivity
 !
 !==========================================================================
-!   End Module
+!   End module
 !==========================================================================
 !
 end module partitioning

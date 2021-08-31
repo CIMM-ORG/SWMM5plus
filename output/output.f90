@@ -1,4 +1,4 @@
-Module output
+module output
 
     use define_indexes
     use define_keys
@@ -28,24 +28,18 @@ contains
 
     subroutine output_read_csv_link_names()
 
+        integer              :: rc, fu, pp, jj, kk, link_idx, phantom_counter
+        logical              :: no_file = .false.
         character(len = 250) :: link_name
-        integer :: rc, fu, ii, jj, kk, link_temp_idx, temp_node_idx
-        integer :: additional_rows, phantom_counter
-        logical :: no_file = .false.
-        character(64) :: subroutine_name = 'output_read_csv_link_names'
+        character(64)        :: subroutine_name = 'output_read_csv_link_names'
 
         !%--------------------------------------------------------------------------
+
         if (setting%Debug%File%output) print *, '*** enter ', this_image(), subroutine_name
 
-
-        if (setting%Partitioning%PartitioningMethod == BQuick) then
-            additional_rows = num_images() - 1
-        end if
-
         if (trim(setting%Output%links_file) == "") no_file = .true.
+        link_output_idx = nullvalueI
         rc = -1
-        ii = 1
-        kk = 1
 
         if (.not. no_file) then
             !% open csv file of link names
@@ -56,124 +50,98 @@ contains
             end if
         end if
 
-        !% if links_file is empty or no file is not specified we output all the nodes which
-        !% are written here in the specific format which is handled below
         if (no_file) then
-            if (rc /= 0) then
-                do while(ii <= N_link)
-                    phantom_counter = 0
-                    link_temp_idx = kk
-                    link_output_idx(ii) = link_temp_idx
-                    ii = ii + 1
-                    kk = kk + 1
-
-                    do jj = N_link - additional_rows+1, N_link
-                        if (link_temp_idx == link%I(jj, li_parent_link)) then
-                            link_output_idx(ii) = jj
-                            ii = ii + 1
+            !% if links_file is empty or no file is specified
+            !% we output all the links
+            pp = 1 !% parent link
+            do link_idx = 1, SWMM_N_link
+                phantom_counter = 0
+                link_output_idx(pp) = link_idx
+                !% only parent links have associated phantoms
+                if (link%I(link_idx, li_parent_link) == link_idx) then
+                    do jj = SWMM_N_link+1, N_link
+                        if (link%I(jj, li_parent_link) == link_idx) then
+                            link_output_idx(pp+phantom_counter+1) = jj
                             phantom_counter = phantom_counter + 1
                         end if
                     end do
-                    link%I(link_temp_idx,li_num_phantom_links) = phantom_counter
-                end do
-            end if
-        end if
-
-        !% loop through till the end of the file and save the valid links
-        do
-            !% read in the link name from the csv
-            if (.not. no_file) read(fu, *, iostat = rc) link_name
-            if (rc /= 0) exit
-
-            !% converting link name to link idx using the interface
-            link_temp_idx = interface_find_object(object_type=3, object_name = link_name)
-            phantom_counter = 0
-
-            !% if it is an invalid link found while reading skip the loop and read the next line
-            if (link_temp_idx == 0) then
-                cycle
-            end if
-
-            !% store index of link for output and increase index
-            link_output_idx(ii) = link_temp_idx
-            ii = ii + 1
-
-            !% checking if the link is spit across processors if so then store the id of the phantom link for output
-
-            do jj = N_link - additional_rows+1, N_link
-
-                if (link_temp_idx == link%I(jj, li_parent_link)) then
-                    link_output_idx(ii) = jj
-                    ii = ii + 1
-                    phantom_counter = phantom_counter + 1
+                end if
+                pp = pp + phantom_counter + 1
+                link%I(link_idx,li_num_phantom_links) = phantom_counter
+            end do
+        else
+            pp = 1 ! parent link
+            !% loop through till the end of the file and save the valid links
+            do
+                !% read in the link name from the csv
+                read(fu, *, iostat = rc) link_name
+                if (rc /= 0) then
+                    close(fu)
+                    exit
                 end if
 
+                !% converting link name to link idx using the interface
+                link_idx = interface_find_object(object_type=API_LINK, object_name = link_name)
+                if (link_idx == -1) then
+                    write(error_unit, "(A)") "Link " // trim(link_name) // " in " // &
+                        trim(setting%Output%links_file) // " couldn't be found"
+                    exit
+                end if
+
+                !% store index of link for output and increase index
+                link_output_idx(pp) = link_idx
+                pp = pp + 1
+
+                !% checking if the link is spit across processors if
+                !% so then store the id of the phantom link for output
+                phantom_counter = 0
+                if (link%I(link_idx, li_parent_link) == link_idx) then
+                    do jj = SWMM_N_link+1, N_link
+                        if (link%I(jj, li_parent_link) == link_idx) then
+                            link_output_idx(pp+phantom_counter+1) = jj
+                            phantom_counter = phantom_counter + 1
+                        end if
+                    end do
+                end if
+                pp = pp + phantom_counter + 1
+                link%I(link_idx,li_num_phantom_links) = phantom_counter
             end do
-
-            link%I(link_temp_idx,li_num_phantom_links) = phantom_counter
-
-        end do
-
-        if (.not. no_file) close(fu)
-        link_output_idx(ii:N_link) = nullvalueI
-
-
+        end if
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
     end subroutine output_read_csv_link_names
 
     subroutine output_read_csv_node_names()
         character(len = 250) :: node_name
-        integer :: rc, fu, ii, node_temp_idx, additional_rows
-        logical :: no_file = .false.
+        integer :: rc, fu, ii, node_idx
         character(64) :: subroutine_name = 'output_read_csv_node_names'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
-
-        if (setting%Partitioning%PartitioningMethod == BQuick) then
-            additional_rows = num_images() - 1
-        end if
+        if (setting%Debug%File%output) print *, '*** enter ', this_image(), subroutine_name
 
         !% Output all nodes if user does not specify CSV file
-        if (trim(setting%Output%nodes_file) == "") no_file = .true.
-        rc = -1
-        ii = 1
-
-        if (.not. no_file) then
+        if (trim(setting%Output%nodes_file) == "") then
+            node_output_idx = (/ (ii, ii =1, SWMM_N_node)/)
+        else
+            ii = 1
             open(action='read', file=trim(setting%Output%nodes_file), iostat=rc, newunit=fu)
-            if (rc /= 0) then
-                write (error_unit, '(3a, i0)') 'Opening file "', trim(setting%Output%nodes_file), '" failed: ', rc
-                stop "in " // subroutine_name
-            end if
+            do
+                read(fu, *, iostat = rc) node_name
+                if (rc /= 0) then
+                    node_output_idx(ii:) = nullvalueI
+                    close(fu)
+                    exit
+                end if
+
+                node_idx = interface_find_object(object_type=API_NODE, object_name = node_name)
+                if (node_idx == -1) then
+                    write(error_unit, "(A)") "Node " // trim(node_name) // " in " // &
+                    trim(setting%Output%nodes_file) // " couldn't be found"
+                    stop
+                end if
+                node_output_idx(ii) = node_idx
+                ii = ii + 1
+            end do
         end if
-
-        if (rc /= 0) then
-            !% Output all nodes if nodes_file is empty
-            node_output_idx = (/ (ii, ii =1, N_node - additional_rows)/)
-            ii = N_node+1
-        end if
-
-        do
-            !% read in the node name from the csv
-            if (.not. no_file) read(fu, *, iostat = rc) node_name
-            if (rc /= 0) exit
-
-            !% find the idx from the interface
-            node_temp_idx = interface_find_object(object_type=2, object_name = node_name)
-
-            !% if not found node_temp_idx will equal 0 so we cycle and don't store the incorrect name
-            if (node_temp_idx == 0) then
-                cycle
-            end if
-
-            !% store in node_output_idx and increment ii
-            node_output_idx(ii) = node_temp_idx
-            ii = ii + 1
-        end do
-
-        if (.not. no_file) close(fu)
-        !% N_node_output holds the number of node idx stored
-        node_output_idx(ii:N_node) = nullvalueI
 
         if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
 
