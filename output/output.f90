@@ -54,8 +54,6 @@ contains
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(setting%Output%links_file), '" failed: ', rc
                 stop
             end if
-            !% read the first line which is just the titles of the columns
-            read(fu, *, iostat = rc) link_name
         end if
 
         !% if links_file is empty or no file is not specified we output all the nodes which
