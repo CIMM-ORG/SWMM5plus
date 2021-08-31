@@ -60,7 +60,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 10.00,
+        "NominalElemLength" : 50.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -68,7 +68,7 @@
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
     "FaceInterp" : {
-        "DownJBFaceInterp" : "dynamic",
+        "DownJBFaceInterp" : "dynamic"
     },
     "Junction" : {
         "kFactor" : 0.0
@@ -98,9 +98,9 @@
             "TemporalInflows" : 10,
             "TotalInflows" : 50
         },
-        "Dt"     : {
-            "Minimum"       :  1e-4,
-            "UseLimitMin"   :  true
+        "Dt" : {
+            "Minimum"     : 1e-4,
+            "UseLimitMin" : true
         }
     },
     "Link" : {
@@ -112,10 +112,13 @@
         "reportStartTime" : 0.0,
         "reportDt" : 100.0,
         "reportStep" : 0,
+        "slots" : 20,
+        "links_file" : "",
+        "nodes_file" : "node_input.csv",
         "CommandLine" : {
             "quiet" : false,
             "interval" : 10000
-        },
+        }
     },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
@@ -217,7 +220,6 @@
         "Volume" : 1e-6
     },
     "Debug" : {
-        "Tests" : true,
         "File" : {
             "adjust" : false,
             "boundary_conditions" : false,
@@ -239,7 +241,7 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
-            "output" : false,
+	        "output" : false,
             "pack_mask_arrays" : false,
             "partitioning" : false,
             "pump_elements" : false,
@@ -267,8 +269,11 @@
             "interface" : false,
             "timeloop" : false,
             "utility" : false
-        }
+        },
+        "Input"  : true,
+        "Output" : true,
+        "Tests" : true
     },
-    "Warning"  : false,
+    "Warning"  : true,
     "Verbose" : true
 }
