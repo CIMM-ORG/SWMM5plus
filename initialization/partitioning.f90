@@ -75,7 +75,7 @@ subroutine init_partitioning_method()
         print *, new_line("")
         do ii = 1, size(node%I, 1)
             if ( node%I(ii, ni_P_is_boundary) /= zeroI ) then
-                print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
+                print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
             endif
         end do
 
