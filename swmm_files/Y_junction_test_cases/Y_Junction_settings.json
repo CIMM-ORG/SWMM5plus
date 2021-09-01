@@ -276,5 +276,5 @@
         "Tests" : true
     },
     "Warning"  : true,
-    "Verbose" : false
+    "Verbose" : true
 }
