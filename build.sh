@@ -75,9 +75,11 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-#$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o $PROGRAM
-$CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o $PROGRAM
-# /Users/chengweiyu/Desktop/SWMM5_mac_version/development/dependencies/opencoarray/OpenCoarrays/prerequisites/installations/opencoarrays/2.9.2/bin/caf
+if [[ ! $skip_fortran = "true" ]]
+then
+    $CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o $PROGRAM
+fi
+
 # --------------------------------------------------------------------------------------
 
 $clean:
