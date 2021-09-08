@@ -46,6 +46,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/pump_elements.f90\
               $GEO_DIR/rectangular_channel.f90\
               $GEO_DIR/trapezoidal_channel.f90\
+              $GEO_DIR/xsect_tables.f90\
               $GEO_DIR/geometry.f90\
               $TL_DIR/lowlevel_rk2.f90\
               $TL_DIR/update.f90\

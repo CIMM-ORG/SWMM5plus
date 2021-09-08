@@ -142,7 +142,7 @@ contains
             call output_create_link_files()
             call output_create_node_files()
         end if
-
+        stop
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 

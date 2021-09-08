@@ -645,6 +645,18 @@ contains
                 else
                     interface_get_link_attribute = nullvalueR
                 end if
+            else if (link_value == API_CIRCULAR) then
+                if (attr == api_link_geometry) then
+                    interface_get_link_attribute = lCircular
+                else if (attr == api_link_type) then
+                    interface_get_link_attribute = lPipe
+                else if (attr == api_link_xsect_wMax) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
+                else
+                    interface_get_link_attribute = nullvalueR
+                end if
             else
                 interface_get_link_attribute = nullvalueR
             end if

@@ -52,11 +52,14 @@ module define_api_keys
 
     !% SWMM XSECT_TYPES ($API_DIR/src/enums.h -> XsectType)
     enum, bind(c)
-        enumerator :: API_RECT_CLOSED = 3
+        enumerator :: API_CIRCULAR = 1
+        enumerator :: API_FILLED_CIRCULAR
+        enumerator :: API_RECT_CLOSED
         enumerator :: API_RECT_OPEN
         enumerator :: API_TRAPEZOIDAL
         enumerator :: API_TRIANGULAR
         enumerator :: API_PARABOLIC
+
     end enum
 
     !% SWMM PATTERN TYPES ($API_DIR/src/enums.h -> PatternType)

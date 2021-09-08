@@ -388,7 +388,6 @@ contains
                     elemYN(:,eYN_canSurcharge)  =  .true.
                 endwhere
 
-
             case (lweir)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
@@ -631,45 +630,20 @@ contains
                 elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
             endwhere
 
-        case (lTrapezoidal)
+        case (lCircular)
 
-            where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+            elemI(:,ei_geometryType)    = circular
 
-                elemI(:,ei_geometryType) = trapezoidal
+            !% store geometry specific data
+            elemSGR(:,eSGR_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
+            elemSGR(:,eSGR_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
 
-                !% store geometry specific data
-                elemSGR(:,eSGR_Trapezoidal_Breadth)    = link%R(thisLink,lr_BreadthScale)
-                elemSGR(:,eSGR_Trapezoidal_LeftSlope)  = link%R(thisLink,lr_LeftSlope)
-                elemSGR(:,eSGR_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
-
-                ! (Bottom width + averageSlope * Depth)*Depth
-                elemR(:,er_Area)         = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                            (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
-                            elemR(:,er_Depth)) * elemR(:,er_Depth)
-
-                elemR(:,er_Area_N0)      = elemR(:,er_Area)
-                elemR(:,er_Area_N1)      = elemR(:,er_Area)
-                elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                ! Bottom width + (lslope + rslope) * FullDepth
-
-                !% HACK: not sure if it is the correct breadth max for trapezoidal conduits
-                elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Trapezoidal_Breadth) + (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + &
-                            elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
-                elemR(:,er_FullDepth)   = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_FullArea)    = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                            (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
-                            elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
-                elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
-            endwhere
+            elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
 
         case default
 
             print*, 'In, ', subroutine_name
-            print*, 'Only rectangular pipe geometry is handeled at this moment'
+            print*, 'Only rectangular, and circular pipe geometry is handeled at this moment'
             stop "in " // subroutine_name
 
         end select

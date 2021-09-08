@@ -518,6 +518,15 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Trapezoidal =  eSGR_Trapezoidal_RightSlope
 
+    !% Define the column indexes for elemGSR(:,:) for circular pipe or channel
+    enum, bind(c)
+         enumerator ::  eSGR_Circular_Diameter = 1    !% diameter for circular geometry
+         enumerator ::  eSGR_Circular_Radius          !% radius for circular geometry
+         enumerator ::  eSGR_Circular_AoverAfull
+    end enum
+    !% note, this must be changed to whatever the last enum element is!
+    integer, parameter :: Ncol_elemSGR_Circular =  eSGR_Circular_AoverAfull
+
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
     !% NEED OTHER GEOMETRY HERE
@@ -525,7 +534,8 @@ module define_indexes
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSGR = max(&
                             Ncol_elemSGR_Rectangular, &
-                            Ncol_elemSGR_Trapezoidal)
+                            Ncol_elemSGR_Trapezoidal, &
+                            Ncol_elemSGR_Circular)
 
     !% HACK: Ncol_elemSR must be updated when other geometry types
     !% (i.e. triangular, circular etc.) are added for channel or
