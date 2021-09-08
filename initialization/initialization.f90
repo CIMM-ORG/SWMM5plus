@@ -218,6 +218,9 @@ contains
             link%R(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_u), api_node_initDepth)
             link%R(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_d), api_node_initDepth)
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
+            link%R(ii,lr_FullDepth) = interface_get_link_attribute(ii, api_link_xsect_yFull)
+            link%R(ii,lr_InletOffset) = interface_get_link_attribute(ii,api_link_offset1)
+            link%R(ii,lr_OutletOffset) = interface_get_link_attribute(ii,api_link_offset2)
         end do
 
         do ii = 1, N_node

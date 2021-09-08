@@ -594,6 +594,10 @@ contains
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
+                else if (attr == api_link_xsect_yFull) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
                 end if
@@ -604,6 +608,10 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
+                else if (attr == api_link_xsect_yFull) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
                     call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
                 else
@@ -618,6 +626,10 @@ contains
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yBot, cptr_value)
                     call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
+                else if (attr == api_link_xsect_yFull) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
                 end if
@@ -628,6 +640,10 @@ contains
                     interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
+                else if (attr == api_link_xsect_yFull) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
                     call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
                 else
@@ -642,6 +658,10 @@ contains
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
+                else if (attr == api_link_xsect_yFull) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
                 end if
@@ -652,6 +672,10 @@ contains
                     interface_get_link_attribute = lPipe
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
+                else if (attr == api_link_xsect_yFull) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
                     call print_api_error(error, subroutine_name)
                     interface_get_link_attribute = link_value
                 else

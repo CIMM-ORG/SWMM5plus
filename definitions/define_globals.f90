@@ -176,7 +176,7 @@ module define_globals
     !% Number of API parameters
     integer, parameter :: N_api_node_attributes = api_node_overflow
     integer, parameter :: N_api_link_attributes = api_conduit_length
-    integer, parameter :: N_api_link_xsect_attributes = api_link_xsect_yBot - N_api_link_attributes
+    integer, parameter :: N_api_link_xsect_attributes = api_link_xsect_yFull - N_api_link_attributes
     integer, parameter :: N_api_total_link_attributes = N_api_link_attributes + N_api_link_xsect_attributes
 
     !% Coarray variables

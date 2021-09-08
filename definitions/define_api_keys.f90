@@ -118,6 +118,8 @@ module define_api_keys
         enumerator :: api_link_subIndex
         enumerator :: api_link_node1
         enumerator :: api_link_node2
+        enumerator :: api_link_offset1
+        enumerator :: api_link_offset2
         enumerator :: api_link_q0
         enumerator :: api_link_flow
         enumerator :: api_link_depth
@@ -134,6 +136,7 @@ module define_api_keys
         enumerator :: api_link_geometry
         enumerator :: api_link_xsect_wMax
         enumerator :: api_link_xsect_yBot
+        enumerator :: api_link_xsect_yFull
     end enum
 
     !% API Link Output attributes
