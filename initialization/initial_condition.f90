@@ -593,7 +593,7 @@ contains
     !% and calculate element volumes
     !
     !--------------------------------------------------------------------------
-
+        integer :: ii
         integer, intent(in) :: thisLink
         integer, pointer    :: geometryType
 
@@ -607,39 +607,47 @@ contains
 
         select case (geometryType)
 
-        case (lRectangular)
+        ! case (lRectangular)
 
-            where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+        !     where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
 
-                elemI(:,ei_geometryType)    = rectangular
+        !         elemI(:,ei_geometryType)    = rectangular_closed
 
-                !% store geometry specific data
-                elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+        !         !% store geometry specific data
+        !         elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
 
-                elemR(:,er_BreadthMax)      = elemSGR(:,eSGR_Rectangular_Breadth)
-                elemR(:,er_Area)            = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_Depth)
-                elemR(:,er_Area_N0)         = elemR(:,er_Area)
-                elemR(:,er_Area_N1)         = elemR(:,er_Area)
-                elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
-                elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_FullArea)        = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
-                elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
-            endwhere
+        !         elemR(:,er_BreadthMax)      = elemSGR(:,eSGR_Rectangular_Breadth)
+        !         elemR(:,er_Area)            = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_Depth)
+        !         elemR(:,er_Area_N0)         = elemR(:,er_Area)
+        !         elemR(:,er_Area_N1)         = elemR(:,er_Area)
+        !         elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
+        !         elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
+        !         elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
+        !         elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
+        !         elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+        !         elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+        !         elemR(:,er_FullArea)        = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
+        !         elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
+        !     endwhere
 
         case (lCircular)
 
-            elemI(:,ei_geometryType)    = circular
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_SWMM) == thisLink) then
+                    elemI(ii,ei_geometryType)    = circular
 
-            !% store geometry specific data
-            elemSGR(:,eSGR_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
-            elemSGR(:,eSGR_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
+                    !% store geometry specific data
+                    elemSGR(ii,eSGR_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(ii,eSGR_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
 
-            elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
-
+                    elemR(ii,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_Zcrown)                = elemR(ii,er_Zbottom) + elemR(ii,er_FullDepth)
+                    elemR(ii,er_ZbreadthMax)           = elemR(ii,er_FullDepth)/twoR + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullArea)              = pi * elemSGR(ii,eSGR_Circular_Radius) ** twoR
+                    elemR(ii,er_FullVolume)            = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                end if
+            end do
+            
         case default
 
             print*, 'In, ', subroutine_name

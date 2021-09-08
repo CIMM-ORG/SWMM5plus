@@ -522,7 +522,8 @@ module define_indexes
     enum, bind(c)
          enumerator ::  eSGR_Circular_Diameter = 1    !% diameter for circular geometry
          enumerator ::  eSGR_Circular_Radius          !% radius for circular geometry
-         enumerator ::  eSGR_Circular_AoverAfull
+         enumerator ::  eSGR_Circular_YoverYfull      !% Y/Yfull for circular geometry
+         enumerator ::  eSGR_Circular_AoverAfull      !% A/Afull for circular geometry
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, parameter :: Ncol_elemSGR_Circular =  eSGR_Circular_AoverAfull
