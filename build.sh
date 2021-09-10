@@ -15,8 +15,6 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $JSON_DIR/json_file_module.F90\
               $JSON_DIR/json_module.F90\
               $UTIL_DIR/utility_string.f90\
-              $UTIL_DIR/utility_profiler_array.f90\
-              $UTIL_DIR/utility_profiler.f90\
               $DEF_DIR/define_types.f90\
               $DEF_DIR/define_api_keys.f90\
               $DEF_DIR/define_globals.f90\
@@ -29,6 +27,9 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $API_DIR/interface.f90\
               $UTIL_DIR/utility_allocate.f90\
               $UTIL_DIR/utility_deallocate.f90\
+              $UTIL_DIR/utility_profiler_array.f90\
+              $UTIL_DIR/utility_prof_jobcount.f90\
+              $UTIL_DIR/utility_profiler.f90\
               $UTIL_DIR/utility_array.f90\
               $UTIL_DIR/utility_debug.f90\
 	          $OUT_DIR/output.f90\

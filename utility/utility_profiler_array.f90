@@ -1,20 +1,27 @@
-module util_prof_array
+module utility_prof_array
+
+    !use define_types
+    !use define_globals
+    !use utility_allocate
+    !use utility_deallocate
     type f_array
         integer :: max_size = 0
         integer :: len = 0
         real, allocatable :: arr(:)
     end type f_array
 contains
-    subroutine free_arr(this)
+    subroutine util_free_arr(this)
+        !move to utility_deallocate
         type(f_array), intent(inout) :: this
         deallocate(this%arr)
     end subroutine
 
-    subroutine append(this, x)
+    subroutine util_prof_append(this, x)
         type(f_array), intent(inout) :: this
         real, intent(in) :: x
         real, allocatable :: resized_arr(:)
 
+        !call util_allocate_profiler(this)
         if (this%max_size == 0) then
             allocate(this%arr(100))
             this%max_size = 100
@@ -22,25 +29,12 @@ contains
             allocate(resized_arr(this%max_size * 2))
             resized_arr(1:this%max_size) = this%arr(1:this%max_size)
             this%max_size = this%max_size * 2
-            call free_arr(this)
+            call util_free_arr(this)
             this%arr = resized_arr
         end if
 
         this%len = this%len + 1
         this%arr(this%len) = x
-    end subroutine append
-end module util_prof_array
+    end subroutine util_prof_append
+end module utility_prof_array
 
-! program main
-!     use Array
-!     implicit none
-!     type(f_array) :: x
-!     integer i
-
-!     do i = 1 , 25
-!         call append(x, 2.0*i)
-!         print *, x%arr(x%len), x%len, x%max_size
-!     end do
-
-!     call free_arr(x)
-! end program main

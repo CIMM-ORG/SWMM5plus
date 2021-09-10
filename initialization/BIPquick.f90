@@ -13,8 +13,8 @@ module BIPquick
     use define_globals
     use define_settings
     use discretization, only: init_discretization_nominal
-    use util_profiler
-    use job_count
+    use utility_profiler
+    use utility_prof_jobcount
     implicit none
 
     private
@@ -63,7 +63,7 @@ contains
         ! -----------------------------------------------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
         
-        call tic(timer, 1)
+        if (setting%Debug%File%BIPquick) call util_tic(timer, 1)
 
         !% Initialize the temporary arrays needed for BIPquick
         call bip_initialize_arrays()
@@ -164,7 +164,11 @@ contains
 
         connectivity = connectivity_metric()
 
-        call toc(timer, 1)
+        if (setting%Debug%File%BIPquick) then
+            call util_toc(timer, 1) 
+            print *, this_image(),subroutine_name, 'time', duration(timer%jobs(1))
+            call util_free_jobs(timer)
+        end if
         print *, this_image(),subroutine_name, 'time', duration(timer%jobs(1))
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_partitioning_BIPquick
