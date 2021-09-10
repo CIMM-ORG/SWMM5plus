@@ -645,6 +645,15 @@ contains
                     elemR(ii,er_ZbreadthMax)           = elemR(ii,er_FullDepth)/twoR + elemR(ii,er_Zbottom)
                     elemR(ii,er_FullArea)              = pi * elemSGR(ii,eSGR_Circular_Radius) ** twoR
                     elemR(ii,er_FullVolume)            = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+
+
+                    !% HACK: hard coded untill the circular geometry computations are figured out
+                    elemR(ii,er_Area)                  = 0.5 * elemR(ii,er_FullArea)
+                    elemR(ii,er_Area_N0)               = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)               = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)                = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)             = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)             = elemR(ii,er_Volume) 
                 end if
             end do
             
