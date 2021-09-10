@@ -276,6 +276,97 @@ contains
                 ))
         end if
 
+        !% all the closed time-marching elements
+        ptype => col_elemPGalltm(epg_closed_geometry)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == filled_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horiz_ellipse) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == arch) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == eggshaped) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horseshoe) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == gothic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == catenary) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_elliptical) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == basket_handle) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == custom) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == force_main) &
+                ) )
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == filled_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horiz_ellipse) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == arch) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == eggshaped) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horseshoe) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == gothic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == catenary) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_elliptical) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == basket_handle) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == custom) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == force_main) &
+                ) )
+        end if
+
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_alltm_elements

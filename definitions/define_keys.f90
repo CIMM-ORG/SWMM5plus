@@ -88,9 +88,9 @@ module define_keys
         enumerator :: gothic                !% gothic closed conduit
         enumerator :: catenary              !% catenary closed conduit
         enumerator :: semi_elliptical       !% semi-elliptical closed conduit
-        enumerator :: basket_handle         !% basket_handle closed conduit
+        enumerator :: basket_handle         !% basket handle closed conduit
         enumerator :: semi_circular         !% semi-circular closed conduit
-        enumerator :: custon                !% custom closed conduit
+        enumerator :: custom                !% custom closed conduit
         enumerator :: force_main            !% force main closed conduit
         !% SWMM5+ CC roughness type
         enumerator :: ManningsN             !% ID for mannings n for roughness_type
