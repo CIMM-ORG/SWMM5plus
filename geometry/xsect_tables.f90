@@ -6,6 +6,7 @@
 !==========================================================================
 module xsect_tables
 
+    use define_indexes
     use define_globals
     use define_settings
 
@@ -153,36 +154,25 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    ! subroutine table_lookup_mask &
-    !     (elemI, elemR, inoutarray, normalizedInput, table, nItems, maskarray, &
-    !     ei_Temp, next_ei_temparray, ei_n_temp)
-        !
-        ! gets vaule from the lookup table. this subroutine is array operation
-        !
-        ! character(64) :: subroutine_name = 'table_lookup_mask'
+    subroutine xsect_table_lookup &
+        (normalizedInoutArray, normalizedInput, table, nItems, thisP)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% interpolates the normalized vaule from the lookup table. 
+        !% this subroutine is vectorized array operation.
+        !%-----------------------------------------------------------------------------
+        real(8), intent(inout)    :: normalizedInoutArray(:)
+        real(8), intent(in)       :: normalizedInput(:), table(:)
+        integer, intent(in)       :: nItems, thisP(:)
+        integer, pointer          :: position(:)
+        real(8)                   :: delta
+        !%-----------------------------------------------------------------------------
 
-        ! real(8),      target,  intent(inout)    :: elemR(:,:)
-        ! integer,   target,  intent(in)       :: elemI(:,:)
+        !% pointer towards the position in the lookup table
+        !% this is pointed towards temporary column
+        position => elemI(:,ei_Temp01)
 
-        ! integer,   intent(in)       :: ei_n_temp, nItems
-        ! integer,   intent(in)       :: ei_Temp(:)
-        ! real(8),      intent(in)       :: table(:), normalizedInput(:)
-        ! logical,   intent(in)       :: maskarray(:)
-        ! real(8),      intent(inout)    :: inoutarray(:)
-        ! integer,   intent(inout)    :: next_ei_temparray 
-        
-        
-        ! real(8)                        :: delta
-        ! integer,   pointer          :: position(:)
-
-        ! !--------------------------------------------------------------------------
-        ! if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
-
-        ! !% temporary array for finding the location in the lookout table
-        ! position          => elemI(:,ei_Temp(next_ei_temparray))
-        ! next_ei_temparray = utility_advance_temp_array (next_ei_temparray,ei_n_temp)
-
-        ! delta = oneR / (nItems - oneR)
+        delta = oneR / (nItems - oneR)
 
         ! ! this finds the position in the table for interpolation
         ! where (maskarray)
@@ -198,7 +188,7 @@ contains
 
 
         ! if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    ! end subroutine table_lookup_mask
+    end subroutine xsect_table_lookup
     !
     !==========================================================================
     !==========================================================================

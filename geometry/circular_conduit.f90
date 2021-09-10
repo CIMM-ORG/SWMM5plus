@@ -43,16 +43,18 @@ module circular_conduit
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
         real(8), pointer :: depth(:), volume(:), length(:), AoverAfull(:), YoverYfull(:)
+        real(8), pointer :: fullArea(:)
         !%-----------------------------------------------------------------------------
-        thisP   => elemPGx(1:Npack,thisCol) 
-        depth   => elemR(:,er_Depth)
-        volume  => elemR(:,er_Volume)
-        length  => elemR(:,er_Length)
+        thisP      => elemPGx(1:Npack,thisCol) 
+        depth      => elemR(:,er_Depth)
+        volume     => elemR(:,er_Volume)
+        length     => elemR(:,er_Length)
+        fullArea   => elemR(:,er_FullArea)
         AoverAfull => elemSGR(:,eSGR_Circular_AoverAfull)
         YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------  
 
-        depth(thisP) = volume(thisP) / (length(thisP))
+        AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP)) 
 
     end subroutine circular_depth_from_volume
     !%  

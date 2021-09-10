@@ -393,6 +393,7 @@ module define_indexes
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
         enumerator :: epg_JB_circular                        !% all circular junction branches
+        enumerator :: epg_closed_geometry                    !% all closed geometries
         end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_elemPGalltm =  epg_JB_circular
