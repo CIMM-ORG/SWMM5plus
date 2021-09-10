@@ -333,7 +333,7 @@ contains
                 )
         end if
 
-        !% trapezoidal channels, conduits and junction main
+        !% trapezoidal channels and junction main
         ptype => col_elemPGac(epg_CCJM_trapezoidal_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
@@ -359,6 +359,39 @@ contains
                 ) &
                 .and. &
                 (elemI(:,ei_geometryType) == trapezoidal) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+        end if
+
+        !% circular conduits and junction main
+        ptype => col_elemPGac(epg_CCJM_circular_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged))&
                 .and. &
@@ -451,6 +484,39 @@ contains
                 (elemI(:,ei_geometryType) == trapezoidal) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+        end if
+
+        !% circular conduits and junction main
+        ptype => col_elemPGac(epg_CCJM_circular_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
