@@ -112,7 +112,7 @@ contains
         !% populate er_ones columns with ones
         call init_IC_oneVectors ()
 
-        if (setting%Debug%File%initial_condition) then
+        ! if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
             if (this_image() == 1) then
                 do ii = 1,num_images()
@@ -144,7 +144,7 @@ contains
                    call execute_command_line('')
                 end do
             end if
-        end if
+        ! end if
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -194,7 +194,7 @@ contains
 
             !% HACK we need to add a small/zero volume adjustment here
 
-            call init_IC_get_channel_pipe_velocity (thisLink)
+            call init_IC_get_channel_conduit_velocity (thisLink)
 
         end do
 
@@ -451,8 +451,8 @@ contains
                 call init_IC_get_channel_geometry (thisLink)
 
             case (lpipe)
-                !% get geomety data for pipes
-                call init_IC_get_pipe_geometry (thisLink)
+                !% get geomety data for conduits
+                call init_IC_get_conduit_geometry (thisLink)
 
             case (lweir)
                 !% get geomety data for weirs
@@ -524,13 +524,12 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
+                    elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
                                                 link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)    = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
-                    elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
-
+                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)     = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
+                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                 endwhere
 
             case (lTrapezoidal)
@@ -561,14 +560,14 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
+                    elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
                                                 link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)    = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)     = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
                                 (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
                                 elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
-                    elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                 endwhere
 
             case default
@@ -586,10 +585,10 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine init_IC_get_pipe_geometry (thisLink)
+    subroutine init_IC_get_conduit_geometry (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the geometry data for pipe links
+    !% get the geometry data for conduit links
     !% and calculate element volumes
     !
     !--------------------------------------------------------------------------
@@ -597,7 +596,7 @@ contains
         integer, intent(in) :: thisLink
         integer, pointer    :: geometryType
 
-        character(64) :: subroutine_name = 'init_IC_get_pipe_geometry'
+        character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -634,6 +633,7 @@ contains
 
             do ii = 1,N_elem(this_image())
                 if (elemI(ii,ei_link_Gidx_SWMM) == thisLink) then
+
                     elemI(ii,ei_geometryType)    = circular
 
                     !% store geometry specific data
@@ -645,7 +645,8 @@ contains
                     elemR(ii,er_ZbreadthMax)           = elemR(ii,er_FullDepth)/twoR + elemR(ii,er_Zbottom)
                     elemR(ii,er_FullArea)              = pi * elemSGR(ii,eSGR_Circular_Radius) ** twoR
                     elemR(ii,er_FullVolume)            = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-
+                    elemR(ii,er_FullHydDepth)          = elemR(ii,er_FullDepth) 
+                    elemR(ii,er_FullPerimeter)         = elemR(ii,er_FullArea) / (onefourthR * elemR(ii,er_FullDepth))
 
                     !% HACK: hard coded untill the circular geometry computations are figured out
                     elemR(ii,er_Area)                  = 0.5 * elemR(ii,er_FullArea)
@@ -653,21 +654,23 @@ contains
                     elemR(ii,er_Area_N1)               = elemR(ii,er_Area)
                     elemR(ii,er_Volume)                = elemR(ii,er_Area) * elemR(ii,er_Length)
                     elemR(ii,er_Volume_N0)             = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)             = elemR(ii,er_Volume) 
+                    elemR(ii,er_Volume_N1)             = elemR(ii,er_Volume)
+
+
                 end if
             end do
             
         case default
 
             print*, 'In, ', subroutine_name
-            print*, 'Only rectangular, and circular pipe geometry is handeled at this moment'
+            print*, 'Only rectangular, and circular conduit geometry is handeled at this moment'
             stop "in " // subroutine_name
 
         end select
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine init_IC_get_pipe_geometry
+    end subroutine init_IC_get_conduit_geometry
     !
     !==========================================================================
     !==========================================================================
@@ -866,10 +869,10 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine init_IC_get_channel_pipe_velocity (thisLink)
+    subroutine init_IC_get_channel_conduit_velocity (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the velocity of channel and pipes
+    !% get the velocity of channel and conduits
     !% and sell all other velocity to zero
     !
     !--------------------------------------------------------------------------
@@ -877,7 +880,7 @@ contains
         integer, intent(in) :: thisLink
         integer, pointer    :: specificWeirType
 
-        character(64) :: subroutine_name = 'init_IC_get_channel_pipe_velocity'
+        character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%initial_condition) &
@@ -905,7 +908,7 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-    end subroutine init_IC_get_channel_pipe_velocity
+    end subroutine init_IC_get_channel_conduit_velocity
     !
     !==========================================================================
     !==========================================================================
@@ -1044,7 +1047,7 @@ contains
                 ! BRHbugfix end
 
                 !% BRHbugfix 20210813 start: moved these from inside select
-                ! set the common geometry for pipes and non-pipes that are independent of cross-section shape
+                ! set the common geometry for conduits and non-conduits that are independent of cross-section shape
                 if (link%I(BranchIdx,li_link_type) == lPipe) then
                     elemYN(JBidx,eYN_canSurcharge)  = .true.
                     elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
@@ -1082,7 +1085,7 @@ contains
                         elemR(JBidx,er_ZbreadthMax) = zeroR
 
                         !% HACK: not sure if we need surcharge condition for junction branches
-                        !% ANSWER -- yes, we do need surcharge on JB for pipes, but should be more general
+                        !% ANSWER -- yes, we do need surcharge on JB for conduits, but should be more general
                         !% That is, does not need to be in rectangular sectoin
                         ! BRHbugfix 20210813 if (link%I(BranchIdx,li_link_type) == lPipe) then
                             ! BRHbugfix 20210813 elemYN(JBidx,eYN_canSurcharge)  = .true.

@@ -155,13 +155,13 @@ contains
     !==========================================================================
     !
     subroutine xsect_table_lookup &
-        (normalizedInoutArray, normalizedInput, table, nItems, thisP)
+        (inoutArray, normalizedInput, table, nItems, thisP)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% interpolates the normalized vaule from the lookup table. 
         !% this subroutine is vectorized array operation.
         !%-----------------------------------------------------------------------------
-        real(8), intent(inout)    :: normalizedInoutArray(:)
+        real(8), intent(inout)    :: inoutArray(:)
         real(8), intent(in)       :: normalizedInput(:), table(:)
         integer, intent(in)       :: nItems, thisP(:)
         integer, pointer          :: position(:)
@@ -174,69 +174,84 @@ contains
 
         delta = oneR / (nItems - oneR)
 
-        ! ! this finds the position in the table for interpolation
-        ! where (maskarray)
-        !     position = int(normalizedInput / delta)
-        ! endwhere
+        !% this finds the position in the table for interpolation
+        position(thisP) = int(normalizedInput(thisP) / delta)
 
-        ! call table_interpolation &
-        !     (inoutarray, normalizedInput, table, nItems, maskarray, delta, position)
+        !% find the normalized output from the lookup table
+        where (position(thisP) .LE. zeroI)
+            inoutArray(thisP) = zeroR
 
-        ! position = nullvalueI
-        ! nullify(position)
-        ! next_ei_temparray = next_ei_temparray-1
+        elsewhere ( (position(thisP) .GT. zeroI          ) .and. &
+                    (position(thisP) .LT. (nItems - oneI)) )
 
+            inoutArray(thisP) = table(position(thisP)) + &
+                                          (normalizedInput(thisP) - position(thisP) * delta) * &
+                                          (table(position(thisP) + oneI) - table(position(thisP))) / delta       
 
-        ! if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
+        elsewhere (position(thisP) .GE. (nItems - oneI))
+            inoutArray(thisP) = table(nItems)
+        endwhere
+
+        !% quadratic interpolation for low value of normalizedInput
+        where (position(thisP) .LT. twoI)
+            inoutArray(thisP) = max(zeroR, &
+                    (inoutArray(thisP) + (inoutArray(thisP) - delta) * &
+                    (inoutArray(thisP) - twoI * delta) / (delta*delta) *         &
+                    (table(oneI)/twoR - table(twoI)  +  table(threeI) / twoR)) )
+        endwhere
+
+        !% reset the temporary values to nullvalue
+        position(thisP) = nullvalueI
+
     end subroutine xsect_table_lookup
     !
     !==========================================================================
     !==========================================================================
     !
-    ! subroutine table_interpolation &
-    !     (inoutarray, normalizedInput, table, nItems, maskarray, delta, position)
-        !
-        ! find the positions of the input in the table
-        !
-        ! character(64) :: subroutine_name = 'table_interpolation'
-        
-        ! real(8),      intent(inout)    :: inoutarray(:)
-        ! real(8),      intent(in)       :: normalizedInput(:)
-        ! real(8),      intent(in)       :: table(:)
-        ! real(8),      intent(in)       :: delta
-        ! logical,   intent(in)       :: maskarray(:)
-        ! integer,   intent(in)       :: nItems        
-        ! integer,   intent(in)       :: position(:)
+    real(8) function xsect_table_lookup_singular &
+        (normalizedInput, table, nItems) result (normalizedOutput)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% interpolates the normalized vaule from the lookup table. 
+        !% this function is singular operation.
+        !%-----------------------------------------------------------------------------
+        real(8), intent(in)       :: normalizedInput, table(:)
+        integer, intent(in)       :: nItems
+        integer                   :: position
+        real(8)                   :: delta
+        !%-----------------------------------------------------------------------------
 
-        ! !--------------------------------------------------------------------------
-        ! if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** enter ',subroutine_name
+        delta = oneR / (nItems - oneR)
 
-        ! where ( (maskarray) .and. (position .LE. zeroI) )
-        !     inoutarray = zeroR
+        !% this finds the position in the table for interpolation
+        position = int(normalizedInput / delta)
 
-        ! elsewhere ( (maskarray) .and. (position .GT. zeroI) .and. &
-        !             (position .LT. (nItems - oneI)) )
+        !% find the normalized output from the lookup table
+        if (position .LE. zeroI) then
+            normalizedOutput = zeroR
 
-        !     inoutarray = table(position) + (normalizedInput - position * delta) * &
-        !             (table(position + oneI) - table(position)) / delta       
+        else if ( (position .GT. zeroI          ) .and. &
+                  (position .LT. (nItems - oneI)) ) then
 
-        ! elsewhere ( (maskarray) .and. (position .GE. (nItems - oneI)) )
-        !     inoutarray = table(nItems)
-        ! endwhere
+            normalizedOutput = table(position) + (normalizedInput - position * delta) * &
+                                (table(position + oneI) - table(position)) / delta       
 
-        ! ! quadratic interpolation for low value
-        ! where ( (maskarray) .and. (position .LT. twoI) )
-        !     inoutarray = max(zeroR, (inoutarray + (inoutarray - delta)  * &
-        !                     (inoutarray - twoI * delta) / (delta*delta) * &
-        !                     (table(oneI)/twoR - table(twoI)  +            &
-        !                     table(threeI) / twoR)) )
-        ! endwhere
-    
+        else if (position .GE. (nItems - oneI)) then
+            normalizedOutput = table(nItems)
+        end if
 
-        ! if ((debuglevel > 0) .or. (debuglevelall > 0)) print *, '*** leave ',subroutine_name
-    ! end subroutine table_interpolation
-    !
-    !==========================================================================
+        !% quadratic interpolation for low value of normalizedInput
+        if (position .LT. twoI) then
+            normalizedOutput = max(zeroR, &
+                    (normalizedOutput + (normalizedOutput - delta) * &
+                    (normalizedOutput - twoI * delta) / (delta*delta) *         &
+                    (table(oneI)/twoR - table(twoI)  +  table(threeI) / twoR)) )
+        end if
+
+    end function xsect_table_lookup_singular
+    !%
+    !%==========================================================================
     ! END OF MODULE xsect_tables
-    !==========================================================================
+    !%==========================================================================
+    !%
 end module xsect_tables

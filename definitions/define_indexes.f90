@@ -396,9 +396,9 @@ module define_indexes
         enumerator :: epg_closed_geometry                    !% all closed geometries
         end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemPGalltm =  epg_JB_circular
-    integer, target :: Ncol_elemPGetm   =  epg_JB_circular
-    integer, target :: Ncol_elemPGac    =  epg_JB_circular
+    integer, target :: Ncol_elemPGalltm =  epg_closed_geometry
+    integer, target :: Ncol_elemPGetm   =  epg_closed_geometry
+    integer, target :: Ncol_elemPGac    =  epg_closed_geometry
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemYN(:,:) arrays

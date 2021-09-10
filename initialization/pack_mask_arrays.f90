@@ -581,8 +581,8 @@ contains
         end if
 
         !% circular conduits and junction main
-        ptype => col_elemPGac(epg_CCJM_circular_nonsurcharged)
-        npack => npack_elemPGac(ptype)
+        ptype => col_elemPGetm(epg_CCJM_circular_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
         npack = count( &
                 ( &
                     (elemI(:,ei_elementType) == CC) &
@@ -598,7 +598,7 @@ contains
                 )
 
         if (npack > 0) then
-            elemPGac(1:npack, ptype) = pack(eIdx, &
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
                 ( &
                     (elemI(:,ei_elementType) == CC) &
                     .or. &
