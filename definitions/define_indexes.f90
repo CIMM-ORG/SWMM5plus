@@ -388,14 +388,16 @@ module define_indexes
 
     enum, bind(c)
         enumerator :: epg_CCJM_rectangular_nonsurcharged = 1 !% CC and JM rectangular channels that are not surcharged
-        enumerator :: epg_CCJM_trapezoidal_nonsurcharged
-        enumerator :: epg_JB_rectangular                     !% all JB rectangular channels
-        enumerator :: epg_JB_trapezoidal
+        enumerator :: epg_CCJM_trapezoidal_nonsurcharged     !% CC and JM trapezoidal channels that are not surcharged
+        enumerator :: epg_CCJM_circular_nonsurcharged        !% CC and JM circular conduits that are not surcharged
+        enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
+        enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
+        enumerator :: epg_JB_circular                        !% all circular junction branches
         end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemPGalltm =  epg_JB_trapezoidal
-    integer, target :: Ncol_elemPGetm   =  epg_JB_trapezoidal
-    integer, target :: Ncol_elemPGac    =  epg_JB_trapezoidal
+    integer, target :: Ncol_elemPGalltm =  epg_JB_circular
+    integer, target :: Ncol_elemPGetm   =  epg_JB_circular
+    integer, target :: Ncol_elemPGac    =  epg_JB_circular
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemYN(:,:) arrays
