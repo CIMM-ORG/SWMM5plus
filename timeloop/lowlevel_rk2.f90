@@ -860,13 +860,6 @@ module lowlevel_rk2
                 SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
                 SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
                 SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-                print*, thisP, 'thisP'
-                print*, volume(thisP), 'volume(thisP)'
-                print*, fullvolume(thisP), 'fullvolume(thisP)'
-                print*, SlotVolume(thisP), 'SlotVolume(thisP)'
-                print*, SlotWidth(thisP), 'SlotWidth(thisP)'
-                print*, SlotArea(thisP), 'SlotArea(thisP)'
-                print*, SlotDepth(thisP), 'SlotDepth(thisP)'
 
             case (StaticSlot)
 
