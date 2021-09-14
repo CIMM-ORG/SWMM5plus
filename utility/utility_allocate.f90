@@ -5,6 +5,7 @@ module utility_allocate
     use define_indexes
     use define_settings, only: setting
     use interface
+    use utility
 
     ! use utility, only: utility_check_allocation
 
@@ -133,8 +134,11 @@ contains
 
         !% If BIPquick is being used for Partitioning, allocate additional arrays
         if (setting%Partitioning%PartitioningMethod == BQuick) then
+            call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+
             allocate(B_nodeI(size(node%I,1), max_us_branch_per_node))
             allocate(B_nodeR(size(node%R,1), twoI))
+            allocate(B_roots(N_nBCdn))
             allocate(totalweight_visited_nodes(size(node%I, oneI)))
             allocate(partitioned_nodes(size(node%I, oneI)))
             allocate(partitioned_links(size(link%I, oneI)))

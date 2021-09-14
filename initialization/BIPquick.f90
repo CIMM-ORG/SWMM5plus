@@ -13,6 +13,8 @@ module BIPquick
     use define_globals
     use define_settings
     use discretization, only: init_discretization_nominal
+    use utility
+
     implicit none
 
     private
@@ -67,8 +69,15 @@ contains
             return
         end if
 
+        call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+
+        print*, "Number of root nodes (downstream BC)", N_nBCdn
+
         !% Initialize the temporary arrays needed for BIPquick
         call bip_initialize_arrays()
+
+        !% Find the system roots
+        call bip_find_roots()
 
         !% This subroutine populates B_nodeI with the upstream neighbors for a given node
         call bip_network_processing()
@@ -83,18 +92,68 @@ contains
         !% BIPquick sweeps through the network a finite number of times
         do mp = 1, num_images()
 
+            if ( mp == 5 ) then 
+
+                print*, "Node Partitioning"
+                print*, new_line("")
+                do ii = 1, size(node%I, 1)
+                    if ( ii <= N_node ) then
+                        print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
+                    else
+                        print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
+                    endif
+                end do
+        
+                print *, "Link Partitioning"
+                print *, new_line("")
+                do ii = 1, size(link%I, 1)
+                    if ( ii <= N_link ) then
+                        print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
+                            link%I(ii, li_Mnode_u:li_Mnode_d)
+                    else
+                        print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
+                            link%I(ii, li_Mnode_u:li_Mnode_d)
+                    endif
+
+                end do
+
+                stop
+            endif
+
+
+            !% Last sweep bypass
+            if ( mp == num_images() ) then
+                do ii = 1, size(node%I, 1)
+                    if ( node%I(ii, ni_P_image) == nullValueI ) then
+                        node%I(ii, ni_P_image) = mp
+                    endif
+                enddo
+
+                do ii = 1, size(link%I, 1)
+                    if ( link%I(ii, li_P_image) == nullValueI ) then
+                        link%I(ii, li_P_image) = mp
+                    endif
+                enddo
+                exit
+            endif    
+
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
 
-            if (setting%verbose) write(*,"(A,i5,A)") "BIPquick Sweep [Processor ", image, "]"
+            if (setting%verbose) write(*,"(A,i5,A)") "BIPquick Sweep", image
 
             !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
             B_nodeR(:, totalweight) = 0.0
             ideal_exists = .false.
             spanning_link = nullValueI
 
+            max_weight = 0.0
+
             !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
             call calc_totalweight(max_weight)
+
+            ! print*, B_nodeR(:,totalweight), max_weight
+            ! stop
 
             !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
             partition_threshold = max_weight/real(num_images() - mp + 1, 8)
@@ -145,6 +204,7 @@ contains
 
                 else
                     print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
+                    print*, "Suggestion: Use a different number of processors"
                     stop "in " // subroutine_name
 
                 end if
@@ -183,6 +243,7 @@ contains
 
         B_nodeI(:,:) = nullValueI
         B_nodeR(:,:) = zeroR
+        B_roots(:) = nullValueI
         totalweight_visited_nodes(:) = .false.
         partitioned_nodes(:) = .false.
         partitioned_links(:) = .false.
@@ -197,6 +258,40 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine bip_find_roots()
+        ! ----------------------------------------------------------------------------------------------------------------
+        !
+        ! Description:
+        !   This subroutine allocates the temporary arrays that are needed for the BIPquick algorithm
+        !   These temporary arrays are initialized in Globals, so they're not needed as arguments to BIPquick subroutines
+        !
+        ! -----------------------------------------------------------------------------------------------------------------
+            character(64) :: subroutine_name = 'bip_allocate_arrays'
+            integer       :: ii, counter
+        ! -----------------------------------------------------------------------------------------------------------------
+            if (setting%Debug%File%BIPquick) &
+                write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+            counter = 1
+            do ii = 1, size(node%I, oneI)
+                if ( node%I(ii, ni_node_type) == nBCdn ) then
+                    ! print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_node_type)
+                    B_roots(counter) = node%I(ii, ni_idx)
+                    counter = counter + 1
+                endif
+            enddo
+    
+            ! where ( node%I(:, ni_node_type) == nBCdn )
+            !     B_roots(:) = node%I(:, ni_idx)
+            ! endwhere
+                
+            if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        end subroutine bip_find_roots
+        !
+        !==========================================================================
+        !==========================================================================
+        !
     subroutine bip_network_processing()
     ! ----------------------------------------------------------------------------------------------------------------
     !
@@ -427,7 +522,12 @@ contains
         end do
 
         !% The max_weight is the largest totalweight value for this partition
-        max_weight = (maxval(B_nodeR(:, totalweight)))
+        ! max_weight = (maxval(B_nodeR(:, totalweight)))
+
+        !% The max_weight is the sum of the weights at the downstream BC
+        do ii = 1, size(B_roots,1)
+            max_weight = max_weight + B_nodeR(B_roots(ii), totalweight)
+        enddo
 
         if (setting%Debug%File%BIPquick) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"

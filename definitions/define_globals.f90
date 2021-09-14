@@ -95,6 +95,7 @@ module define_globals
     !% BIPquick Arrays - (De)Allocated in BIPquick.f08
     integer, allocatable :: B_nodeI(:,:)
     real(8), allocatable :: B_nodeR(:,:)
+    integer, allocatable :: B_roots(:)
     real(8), allocatable :: weight_range(:,:)
     logical, allocatable :: totalweight_visited_nodes(:)
     logical, allocatable :: partitioned_nodes(:)
