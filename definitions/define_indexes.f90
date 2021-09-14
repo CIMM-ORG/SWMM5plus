@@ -379,7 +379,7 @@ module define_indexes
         enumerator :: ep_Closed_Elements            !% all closed elements        
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemP = ep_CC_DownstreamJbAdjacent
+    integer, target :: Ncol_elemP = ep_Closed_Elements
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemPGalltm(:,:), elemPGetm(:,:),

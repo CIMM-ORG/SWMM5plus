@@ -137,6 +137,11 @@ module geometry
         !% compute hydradius
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
 
+        !% make adjustments for slots on closed elements only for ETM
+        if (whichTM .eq. ETM) then
+            call geo_slot_adjustments (thisColP_ClosedElems)
+        end if
+
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
         call geo_ell (thisColP_all)

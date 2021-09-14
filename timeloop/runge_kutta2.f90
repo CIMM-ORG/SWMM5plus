@@ -292,7 +292,7 @@ module runge_kutta2
         if (Npack > 0) then
             call ll_continuity_volume_CCJM_ETM (er_Volume, thisPackCol, Npack, istep)
         end if
-
+        print*, elemR(:,er_Volume), 'er_Volume'
         !% compute slot for conduits only if ETM solver is used
         if (setting%Solver%SolverSelect == ETM) then
             !% all the closed conduit elements

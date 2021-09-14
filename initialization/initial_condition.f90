@@ -646,6 +646,8 @@ contains
                     elemR(ii,er_FullVolume)            = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)          = elemR(ii,er_FullDepth) 
                     elemR(ii,er_FullPerimeter)         = elemR(ii,er_FullArea) / (onefourthR * elemR(ii,er_FullDepth))
+                    elemR(ii,er_BreadthMax)            = elemSGR(ii,eSGR_Circular_Diameter)
+                    elemR(ii,er_AreaBelowBreadthMax)   = elemR(ii,er_FullArea)  / twoR
 
                     elemR(ii,er_Area)                  = circular_area_from_depth_singular(ii)
                     elemR(ii,er_Area_N0)               = elemR(ii,er_Area)
