@@ -169,7 +169,7 @@ contains
             print *, this_image(),subroutine_name, 'time', duration(timer%jobs(1))
             call util_free_jobs(timer)
         end if
-        print *, this_image(),subroutine_name, 'time', duration(timer%jobs(1))
+       
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
     end subroutine init_partitioning_BIPquick
     !
