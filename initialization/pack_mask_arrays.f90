@@ -733,7 +733,8 @@ contains
                 ))
         endif
 
-        !% all the closed time-marching elements
+        !% ep_Closed_Elements
+        !% - all the closed time-marching elements
         ptype => col_elemP(ep_Closed_Elements)
         npack => npack_elemP(ptype)
         npack = count( &

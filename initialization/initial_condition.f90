@@ -655,6 +655,11 @@ contains
                     elemR(ii,er_Volume)                = elemR(ii,er_Area) * elemR(ii,er_Length)
                     elemR(ii,er_Volume_N0)             = elemR(ii,er_Volume)
                     elemR(ii,er_Volume_N1)             = elemR(ii,er_Volume)
+
+                    elemSR(ii,eSr_conduit_SlotWidth)   = zeroR
+                    elemSR(ii,eSr_conduit_SlotVolume)  = zeroR
+                    elemSR(ii,eSr_conduit_SlotDepth)   = zeroR
+                    elemSR(ii,eSr_conduit_SlotArea)    = zeroR
                 end if
             end do
             
