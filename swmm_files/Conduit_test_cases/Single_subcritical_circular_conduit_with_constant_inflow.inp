@@ -15,8 +15,8 @@ START_DATE           06/14/2021
 START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
 REPORT_START_TIME    00:00:00
-END_DATE             06/16/2021
-END_TIME             23:00:00
+END_DATE             06/14/2021
+END_TIME             06:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -47,12 +47,12 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-1                43.762     0          1          0          0         
+1                43.762     0          0.5          0          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-2                0          FIXED      1                NO                       
+2                0          FIXED      0.5                NO                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
