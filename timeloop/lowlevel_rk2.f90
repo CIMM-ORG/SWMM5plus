@@ -831,9 +831,12 @@ module lowlevel_rk2
         !% Compute preissmann slot for conduits in ETM methods
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisCol, Npack
-        integer, pointer    :: thisP(:)
+        integer, pointer    :: thisP(:), SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
+        real(8), pointer    :: CelerityFactor
+
+        character(64) :: subroutine_name = 'll_slot_computation_ETM'
         !%-----------------------------------------------------------------------------
         thisP => elemP(1:Npack,thisCol)
         volume     => elemR(:,er_Volume)
@@ -846,6 +849,31 @@ module lowlevel_rk2
         SlotDepth  => elemSR(:,eSr_conduit_SlotDepth)
         SlotArea   => elemSR(:,eSr_conduit_SlotArea)
 
+        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
+        CelerityFactor => setting%PreissmannSlot%CelerityFactor
+
+        select case (SlotMethod)
+
+            case (VariableSlot)
+
+                SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+                SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
+                SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+                SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+
+            case (StaticSlot)
+
+                print*, 'In ', subroutine_name
+                print*, 'Static Preissmann Slot is not handeled yet'
+                stop "in " // subroutine_name
+
+            case default
+                !% should not reach this stage
+                print*, 'In ', subroutine_name
+                print*, 'error: unexpected Preissmann Slot Method, ', SlotMethod
+                stop "in " // subroutine_name
+
+        end select
 
     end subroutine ll_slot_computation_ETM
     !%

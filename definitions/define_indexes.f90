@@ -375,7 +375,8 @@ module define_indexes
         enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
         enumerator :: ep_BClat                      !% all elements with lateral BC
         enumerator :: ep_JB_DownStreamJB            !% all the downstream JB elements 
-        enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB         
+        enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
+        enumerator :: ep_Closed_Elements            !% all closed elements        
     end enum
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_elemP = ep_CC_DownstreamJbAdjacent
@@ -393,12 +394,11 @@ module define_indexes
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
         enumerator :: epg_JB_circular                        !% all circular junction branches
-        enumerator :: epg_closed_geometry                    !% all closed geometries
         end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemPGalltm =  epg_closed_geometry
-    integer, target :: Ncol_elemPGetm   =  epg_closed_geometry
-    integer, target :: Ncol_elemPGac    =  epg_closed_geometry
+    integer, target :: Ncol_elemPGalltm =  epg_JB_circular
+    integer, target :: Ncol_elemPGetm   =  epg_JB_circular
+    integer, target :: Ncol_elemPGac    =  epg_JB_circular
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemYN(:,:) arrays
