@@ -128,8 +128,8 @@ module geometry
         !% compute perimeter from maximum depth for all CC, JM nonsurcharged
         call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
 
-        !% compute hyddepth from depth
-        call geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
+        !% compute hyddepth
+        call geo_hyddepth (elemPGx, npack_elemPGx, col_elemPGx)
 
         !% compute hydradius
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
@@ -597,7 +597,7 @@ module geometry
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine geo_hyddepth_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
+    subroutine geo_hyddepth (elemPGx, npack_elemPGx, col_elemPGx)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Note that hyddepth is the average depth, which is only area/topwidth
@@ -637,7 +637,7 @@ module geometry
         !% HACK need other geometries
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine geo_hyddepth_from_depth
+    end subroutine geo_hyddepth
     !%
     !%==========================================================================
     !%==========================================================================

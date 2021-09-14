@@ -18,6 +18,7 @@ module initial_condition
     use face
     use diagnostic_elements
     use geometry !BRHbugfix 20210813
+    use circular_conduit
 
     implicit none
 
@@ -113,37 +114,35 @@ contains
         call init_IC_oneVectors ()
 
         ! if (setting%Debug%File%initial_condition) then
-            !% only using the first processor to print results
-            if (this_image() == 1) then
-                do ii = 1,num_images()
-                   print*, '----------------------------------------------------'
-                   print*, 'image = ', ii
-                   print*, '.....................elements.......................'
-                   print*, elemI(:,ei_elementType)[ii], 'element type'
-                   print*, elemI(:,ei_geometryType)[ii],'element geometry'
-                   print*, '-------------------Geometry Data--------------------'
-                   print*, elemR(:,er_Depth)[ii], 'depth'
-                   print*, elemR(:,er_Area)[ii], 'area'
-                   print*, elemR(:,er_Head)[ii], 'head'
-                   print*, elemR(:,er_Topwidth)[ii], 'topwidth'
-                   print*, elemR(:,er_Volume)[ii],'volume'
-                   print*, '-------------------Dynamics Data--------------------'
-                   print*, elemR(:,er_Flowrate)[ii], 'flowrate'
-                   print*, elemR(:,er_Velocity)[ii], 'velocity'
-                   print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
-                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'timescale Q up'
-                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'timescale Q dn'
-                   print*, '..................faces..........................'
-                   print*, faceR(:,fr_Area_u)[ii], 'face area up'
-                   print*, faceR(:,fr_Area_d)[ii], 'face area dn'
-                   print*, faceR(:,fr_Head_u)[ii], 'face head up'
-                   print*, faceR(:,fr_Head_d)[ii], 'face head dn'
-                   print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
-                   print*, faceR(:,fr_Topwidth_u)[ii], 'face topwidth up'
-                   print*, faceR(:,fr_Topwidth_d)[ii], 'face topwidth dn'
-                   call execute_command_line('')
-                end do
-            end if
+           print*, '----------------------------------------------------'
+           print*, 'image = ', this_image()
+           print*, '.....................elements.......................'
+           print*, elemI(:,ei_elementType), 'element type'
+           print*, elemI(:,ei_geometryType),'element geometry'
+           print*, '-------------------Geometry Data--------------------'
+           print*, elemR(:,er_Depth), 'depth'
+           print*, elemR(:,er_Area), 'area'
+           print*, elemR(:,er_Head), 'head'
+           print*, elemR(:,er_Topwidth), 'topwidth'
+           print*, elemR(:,er_HydDepth), 'hydraulic depth'
+           print*, elemR(:,er_HydRadius), 'hydraulic radius'
+           print*, elemR(:,er_Perimeter), 'wetted perimeter'
+           print*, elemR(:,er_Volume),'volume'
+           print*, '-------------------Dynamics Data--------------------'
+           print*, elemR(:,er_Flowrate), 'flowrate'
+           print*, elemR(:,er_Velocity), 'velocity'
+           print*, elemR(:,er_FroudeNumber), 'froude Number'
+           print*, elemR(:,er_InterpWeight_uQ), 'timescale Q up'
+           print*, elemR(:,er_InterpWeight_dQ), 'timescale Q dn'
+           print*, '..................faces..........................'
+           print*, faceR(:,fr_Area_u), 'face area up'
+           print*, faceR(:,fr_Area_d), 'face area dn'
+           print*, faceR(:,fr_Head_u), 'face head up'
+           print*, faceR(:,fr_Head_d), 'face head dn'
+           print*, faceR(:,fr_Flowrate), 'face flowrate'
+           print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
+           print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
+           call execute_command_line('')
         ! end if
 
         if (setting%Debug%File%initial_condition) &
@@ -648,15 +647,12 @@ contains
                     elemR(ii,er_FullHydDepth)          = elemR(ii,er_FullDepth) 
                     elemR(ii,er_FullPerimeter)         = elemR(ii,er_FullArea) / (onefourthR * elemR(ii,er_FullDepth))
 
-                    !% HACK: hard coded untill the circular geometry computations are figured out
-                    elemR(ii,er_Area)                  = 0.5 * elemR(ii,er_FullArea)
+                    elemR(ii,er_Area)                  = circular_area_from_depth_singular(ii)
                     elemR(ii,er_Area_N0)               = elemR(ii,er_Area)
                     elemR(ii,er_Area_N1)               = elemR(ii,er_Area)
                     elemR(ii,er_Volume)                = elemR(ii,er_Area) * elemR(ii,er_Length)
                     elemR(ii,er_Volume_N0)             = elemR(ii,er_Volume)
                     elemR(ii,er_Volume_N1)             = elemR(ii,er_Volume)
-
-
                 end if
             end do
             

@@ -129,7 +129,7 @@ module circular_conduit
         !% retrive the normalized T/Tmax from the lookup table
         !% T/Tmax value is temporarily saved in the topwidth column
         call xsect_table_lookup &
-            (topwidth, YoverYfull, YCirc, NYCirc, thisP)
+            (topwidth, YoverYfull, TCirc, NTCirc, thisP)
 
         !% finally get the topwidth by multiplying the T/Tmax with full depth
         topwidth(thisP) = max (topwidth(thisP) * fulldepth(thisP), setting%ZeroValue%Topwidth)
@@ -196,12 +196,12 @@ module circular_conduit
         call xsect_table_lookup &
             (hydRadius, YoverYfull, RCirc, NRCirc, thisP)
 
-        hydRadius(thisP) = max(onefourthR * fulldepth(thisP) * hydRadius(thisP), &
-                    setting%ZeroValue%Topwidth) 
+        hydRadius(thisP) = onefourthR * fulldepth(thisP) * hydRadius(thisP)
 
-        !% finally get the topwidth by multiplying the T/Tmax with full depth
+        !% finally get the perimeter by dividing area by hydRadius
         perimeter(thisP) = min (area(thisP) / hydRadius(thisP), fullperimeter(thisP))
 
+        !% HACK: perimeter correction is needed when the pipe is empty.
     end subroutine circular_perimeter_from_depth
     ! !%    
     ! !%==========================================================================    
@@ -223,9 +223,8 @@ module circular_conduit
         fullperimeter => elemR(:,er_FullPerimeter)
         !%-----------------------------------------------------------------------------
         
-        outvalue = max(min(area(indx) / hydRadius(indx), fullperimeter(indx)), &
-                    setting%ZeroValue%Topwidth)
-
+        outvalue = min(area(indx) / hydRadius(indx), fullperimeter(indx))
+        !% HACK: perimeter correction is needed when the pipe is empt
     end function circular_perimeter_from_hydradius_singular
     !%    
     !%==========================================================================
@@ -240,15 +239,30 @@ module circular_conduit
         integer, target, intent(in) :: elemPGx(:,:)
         integer, intent(in) ::  Npack, thisCol
         integer, pointer    :: thisP(:)
-        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:), hyddepth(:)
+        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
+        real(8), pointer    :: depth(:), hyddepth(:)
         !%-----------------------------------------------------------------------------
-        area      => elemR(:,er_Area)
-        topwidth  => elemR(:,er_Topwidth)
-        hyddepth  => elemR(:,er_HydDepth)
+        thisP        => elemPGx(1:Npack,thisCol) 
+        area         => elemR(:,er_Area)
+        topwidth     => elemR(:,er_Topwidth)
+        depth        => elemR(:,er_Depth)
+        hyddepth     => elemR(:,er_HydDepth)
         fullHydDepth => elemR(:,er_FullHydDepth)
         !%--------------------------------------------------
 
-        hyddepth(thisP) = min(area(thisP) / topwidth (thisP), fullHydDepth(thisP))
+        !% calculating hydraulic depth needs conditional since,
+        !% topwidth can be zero in circular cross section for both
+        !% full and empty condition.
+
+        !% when conduit is empty
+        where (depth(thisP) <= setting%ZeroValue%Depth)
+            hyddepth(thisP) = setting%ZeroValue%Depth
+
+        !% when conduit is not empty
+        elsewhere (depth(thisP) > setting%ZeroValue%Depth)
+            !% limiter for when the conduit is full
+            hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
+        endwhere
 
     end subroutine circular_hyddepth_from_topwidth
     !%    
@@ -263,14 +277,25 @@ module circular_conduit
         !% a single element
         !%-----------------------------------------------------------------------------   
         integer, intent(in) :: indx   
-        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
+        real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:), depth(:)
         !%-----------------------------------------------------------------------------
+        depth        => elemR(:,er_Depth)
         area         => elemR(:,er_Area)
         topwidth     => elemR(:,er_Topwidth)
         fullHydDepth => elemR(:,er_FullHydDepth)
         !%--------------------------------------------------  
 
-        outvalue = min(area(indx) / topwidth(indx), fullHydDepth(indx))
+        !% calculating hydraulic depth needs conditional since,
+        !% topwidth can be zero in circular cross section for both
+        !% full and empty condition.
+
+        !% when conduit is empty
+        if (depth(indx) <= setting%ZeroValue%Depth) then
+            outvalue = setting%ZeroValue%Depth
+        else
+            !% limiter for when the conduit is full
+            outvalue = min(area(indx) / topwidth(indx), fullHydDepth(indx))
+        endif
 
     end function circular_hyddepth_from_topwidth_singular
     ! !% 
@@ -300,9 +325,6 @@ module circular_conduit
         !% and then myltiplying it with Rmax (fullDepth/4)
         outvalue = onefourthR * fulldepth(indx) * &
                 xsect_table_lookup_singular (YoverYfull(indx), RCirc, NRCirc)
-
-        !% if hydRadius <= zero, set it to zerovalue
-        outvalue = max(outvalue, setting%ZeroValue%Topwidth)
 
     end function circular_hydradius_from_depth_singular
     ! !%    
