@@ -489,13 +489,23 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is
     integer, parameter :: Ncol_elemSR_JunctionBranch = eSr_JunctionBranch_Kfactor
 
+    enum, bind(c)
+        enumerator ::  eSr_conduit_SlotVolume = 1         !% slot volume
+        enumerator ::  eSr_conduit_SlotWidth              !% slot width
+        enumerator ::  eSr_conduit_SlotDepth              !% slot depth
+        enumerator ::  eSr_conduit_SlotArea               !% slot area
+    end enum
+    !% note, this must be changed to whatever the last enum element is
+    integer, parameter :: Ncol_elemSR_Conduit = eSr_conduit_SlotArea
+
     !% NEED OTHER SPECIAL ELEMENTS HERE
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSR = max(&
                             Ncol_elemSR_JunctionBranch, &
                             Ncol_elemSR_Weir, &
-                            Ncol_elemSR_Orifice)
+                            Ncol_elemSR_Orifice, &
+                            Ncol_elemSR_Conduit)
 
     !% HACK: Ncol_elemSR must be updated when other special elements
     !% (i.e. orifice, pump, storage etc.) are added

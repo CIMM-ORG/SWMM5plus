@@ -123,6 +123,10 @@
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
     },
+    "PreissmannSlot" : {
+        "PreissmannSlotMethod" : "VariableSlot",
+        "CelerityFactor" : 1.0
+    },
     "Simulation" : {
         "useHydrology" : true,
         "useHydraulics" : true,

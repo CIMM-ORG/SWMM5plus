@@ -39,6 +39,7 @@ module lowlevel_rk2
     public :: ll_extrapolate_values
     public :: ll_interpolate_values
     public :: ll_junction_branch_flowrate_and_velocity
+    public :: ll_slot_computation_ETM
 
     contains
     !%==========================================================================
@@ -820,6 +821,33 @@ module lowlevel_rk2
         end if
 
     end subroutine ll_junction_branch_flowrate_and_velocity
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine ll_slot_computation_ETM (thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Compute preissmann slot for conduits in ETM methods
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer    :: thisP(:)
+        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
+        real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
+        !%-----------------------------------------------------------------------------
+        thisP => elemP(1:Npack,thisCol)
+        volume     => elemR(:,er_Volume)
+        fullvolume => elemR(:,er_FullVolume)
+        fullarea   => elemR(:,er_FullArea)
+        ell        => elemR(:,er_ell)
+        length     => elemR(:,er_Length)
+        SlotWidth  => elemSR(:,eSr_conduit_SlotWidth)
+        SlotVolume => elemSR(:,eSr_conduit_SlotVolume)
+        SlotDepth  => elemSR(:,eSr_conduit_SlotDepth)
+        SlotArea   => elemSR(:,eSr_conduit_SlotArea)
+
+
+    end subroutine ll_slot_computation_ETM
     !%
     !%==========================================================================
     !%==========================================================================

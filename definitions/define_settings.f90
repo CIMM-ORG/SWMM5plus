@@ -336,6 +336,12 @@ module define_settings
         integer :: PartitioningMethod = BLink
     endtype PartitioningType
 
+    !% setting%PreissmannSlot
+    type PreissmannSlotType
+        integer :: PreissmannSlotMethod = VariableSlot
+        real(8) :: CelerityFactor = 1.0
+    end type PreissmannSlotType
+
     !% setting%Simulation
     type SimulationType
         logical :: useHydrology = .true.
@@ -466,6 +472,7 @@ module define_settings
         type(LinkType)           :: Link
         type(OrificeType)        :: Orifice
         type(PartitioningType)   :: Partitioning
+        type(PreissmannSlotType) :: PreissmannSlot
         type(SimulationType)     :: Simulation
         type(SmallVolumeType)    :: SmallVolume ! controls for small volumes
         type(SolverType)         :: Solver ! switch for solver
@@ -743,6 +750,22 @@ contains
             stop 420
         end if
         if (.not. found) stop "Error - setting " // 'Partitioning.PartitioningMethod not found'
+
+        ! Load PreissmanSlot settings
+        call json%get('PreissmannSlot.PreissmannSlotMethod', c, found)
+        call util_lower_case(c)
+        if (c == 'staticslot') then
+            setting%PreissmannSlot%PreissmannSlotMethod = StaticSlot
+        else if (c == 'variableslot') then
+            setting%PreissmannSlot%PreissmannSlotMethod = VariableSlot
+        else
+            print *, "Error, the setting '" // trim(c) // "' is not supported for PreissmannSlot.PreissmannSlotMethod"
+            stop 470
+        end if
+        if (.not. found) stop "Error - setting " // 'PreissmannSlot.PreissmannSlotMethod not found'
+        call json%get('PreissmannSlot.CelerityFactor', real_value, found)
+        setting%PreissmannSlot%CelerityFactor = real_value
+        if (.not. found) stop "Error - setting " // 'PreissmannSlot.CelerityFactor not found'
 
         call json%get('Simulation.useHydrology', logical_value, found)
         setting%Simulation%useHydrology = logical_value
