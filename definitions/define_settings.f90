@@ -241,6 +241,61 @@ module define_settings
     ! -
     ! --
 
+    ! setting%Profile%File
+    type ProfileFileYNType
+        logical :: adjust              = .false.
+        logical :: boundary_conditions = .false.
+        logical :: c_library           = .false.
+        logical :: define_globals      = .false.
+        logical :: define_indexes      = .false.
+        logical :: define_keys         = .false.
+        logical :: define_settings     = .false.
+        logical :: define_types        = .false.
+        logical :: diagnostic_elements = .false.
+        logical :: BIPquick            = .false.
+        logical :: discretization      = .false.
+        logical :: face                = .false.
+        logical :: finalization        = .false.
+        logical :: geometry            = .false.
+        logical :: initial_condition   = .false.
+        logical :: initialization      = .false.
+        logical :: jump                = .false.
+        logical :: lowlevel_rk2        = .false.
+        logical :: network_define      = .false.
+        logical :: orifice_elements    = .false.
+        logical :: rectangular_channel = .false.
+        logical :: trapezoidal_channel = .false.
+        logical :: runge_kutta2        = .false.
+        logical :: pack_mask_arrays    = .false.
+        logical :: partitioning        = .false.
+        logical :: pump_elements       = .false.
+        logical :: interface           = .false.
+        logical :: timeloop            = .false.
+        logical :: update              = .false.
+        logical :: utility             = .false.
+        logical :: utility_allocate    = .false.
+        logical :: utility_deallocate  = .false.
+        logical :: utility_array       = .false.
+        logical :: utility_datetime    = .false.
+        logical :: utility_interpolate = .false.
+        logical :: utility_output      = .false.
+        logical :: utility_string      = .false.
+        logical :: weir_elements       = .false.
+        logical :: output              = .false.
+    end type ProfileFileYNType
+    
+    ! setting%Profile%FileGroup
+    type ProfileFileGroupYNType
+        logical :: all              = .false.
+        logical :: definitions      = .false.
+        logical :: finalization     = .false.
+        logical :: geometry         = .false.
+        logical :: initialization   = .false.
+        logical :: interface        = .false.
+        logical :: timeloop         = .false.
+        logical :: utility          = .false.
+    end type ProfileFileGroupYNType
+
     ! setting%ACmethodType
     type ACmethodType
         real(8) :: dtau = 1.0
@@ -416,6 +471,13 @@ module define_settings
         type(DebugFileGroupYNType) :: FileGroup
     end type DebugType
 
+    !% setting%Profile
+    type ProfileType
+        logical :: Tests = .false.
+        type(ProfileFileYNType) :: File
+        type(ProfileFileGroupYNType) :: FileGroup
+    end type ProfileType
+
     !% setting%Paths
     type PathType
         character(len=256) :: project ! project path
@@ -461,6 +523,7 @@ module define_settings
         type(TestCaseType)       :: TestCase
         type(PathType)           :: Paths
         type(DebugType)          :: Debug
+        type(ProfileType)        :: Profile
         type(OutputType)         :: Output
         logical                  :: Verbose
         logical                  :: Warning = .true.
@@ -976,6 +1039,9 @@ contains
         call json%get('Debug.File.boundary_conditions', logical_value, found)
         setting%Debug%File%boundary_conditions = logical_value
         if (.not. found) stop 114
+        call json%get('Debug.File.BIPquick', logical_value, found)
+        setting%Debug%File%BIPquick = logical_value
+        if(.not. found) stop 1141
         call json%get('Debug.File.c_library', logical_value, found)
         setting%Debug%File%c_library = logical_value
         if (.not. found) stop 115
@@ -1115,13 +1181,156 @@ contains
         setting%Output%report_tol = real_value
         if (.not. found) stop 158
 
+        ! Load Profile settings
+        call json%get('Profile.Tests', logical_value, found)
+        setting%Profile%Tests = logical_value
+        if (.not. found) stop 159
+        call json%get('Profile.File.adjust', logical_value, found)
+        setting%Profile%File%adjust = logical_value
+        if (.not. found) stop 160
+        call json%get('Profile.File.boundary_conditions', logical_value, found)
+        setting%Profile%File%boundary_conditions = logical_value
+        if (.not. found) stop 161
+        call json%get('Profile.File.BIPquick', logical_value, found)
+        setting%Profile%File%BIPquick = logical_value
+        if(.not. found) stop 1611
+        call json%get('Profile.File.c_library', logical_value, found)
+        setting%Profile%File%c_library = logical_value
+        if (.not. found) stop 162
+        call json%get('Profile.File.define_globals', logical_value, found)
+        setting%Profile%File%define_globals = logical_value
+        if (.not. found) stop 163
+        call json%get('Profile.File.define_indexes', logical_value, found)
+        setting%Profile%File%define_indexes = logical_value
+        if (.not. found) stop 164
+        call json%get('Profile.File.define_keys', logical_value, found)
+        setting%Profile%File%define_keys = logical_value
+        if (.not. found) stop 165
+        call json%get('Profile.File.define_settings', logical_value, found)
+        setting%Profile%File%define_settings = logical_value
+        if (.not. found) stop 167
+        call json%get('Profile.File.define_types', logical_value, found)
+        setting%Profile%File%define_types = logical_value
+        if (.not. found) stop 168
+        call json%get('Profile.File.diagnostic_elements', logical_value, found)
+        setting%Profile%File%diagnostic_elements = logical_value
+        if (.not. found) stop 169
+        call json%get('Profile.File.discretization', logical_value, found)
+        setting%Profile%File%discretization = logical_value
+        if (.not. found) stop 170
+        call json%get('Profile.File.face', logical_value, found)
+        setting%Profile%File%face = logical_value
+        if (.not. found) stop 171
+        call json%get('Profile.File.geometry', logical_value, found)
+        setting%Profile%File%geometry = logical_value
+        if (.not. found) stop 172
+        call json%get('Profile.File.interface', logical_value, found)
+        setting%Profile%File%interface = logical_value
+        if (.not. found) stop 173
+        call json%get('Profile.File.initial_condition', logical_value, found)
+        setting%Profile%File%initial_condition = logical_value
+        if (.not. found) stop 174
+        call json%get('Profile.File.initialization', logical_value, found)
+        setting%Profile%File%initialization = logical_value
+        if (.not. found) stop 175
+        call json%get('Profile.File.jump', logical_value, found)
+        setting%Profile%File%jump = logical_value
+        if (.not. found) stop 176
+        call json%get('Profile.File.lowlevel_rk2', logical_value, found)
+        setting%Profile%File%lowlevel_rk2 = logical_value
+        if (.not. found) stop 177
+        call json%get('Profile.File.network_define', logical_value, found)
+        setting%Profile%File%network_define = logical_value
+        if (.not. found) stop 178
+        call json%get('Profile.File.orifice_elements', logical_value, found)
+        setting%Profile%File%orifice_elements = logical_value
+        if (.not. found) stop 179
+        call json%get('Profile.File.pack_mask_arrays', logical_value, found)
+        setting%Profile%File%pack_mask_arrays = logical_value
+        if (.not. found) stop 180
+        call json%get('Profile.File.partitioning', logical_value, found)
+        setting%Profile%File%partitioning = logical_value
+        if (.not. found) stop 181
+        call json%get('Profile.File.pump_elements', logical_value, found)
+        setting%Profile%File%pump_elements = logical_value
+        if (.not. found) stop 182
+        call json%get('Profile.File.rectangular_channel', logical_value, found)
+        setting%Profile%File%rectangular_channel = logical_value
+        if (.not. found) stop 183
+        call json%get('Profile.File.trapezoidal_channel', logical_value, found)
+        setting%Profile%File%trapezoidal_channel = logical_value
+        if (.not. found) stop 184
+        call json%get('Profile.File.runge_kutta2', logical_value, found)
+        setting%Profile%File%runge_kutta2 = logical_value
+        if (.not. found) stop 185
+        call json%get('Profile.File.timeloop', logical_value, found)
+        setting%Profile%File%timeloop = logical_value
+        if (.not. found) stop 186
+        call json%get('Profile.File.update', logical_value, found)
+        setting%Profile%File%update = logical_value
+        if (.not. found) stop 187
+        call json%get('Profile.File.utility_allocate', logical_value, found)
+        setting%Profile%File%utility_allocate = logical_value
+        if (.not. found) stop 188
+        call json%get('Profile.File.utility_deallocate', logical_value, found)
+        setting%Profile%File%utility_deallocate = logical_value
+        if (.not. found) stop 189
+        call json%get('Profile.File.utility_array', logical_value, found)
+        setting%Profile%File%utility_array = logical_value
+        if (.not. found) stop 190
+        call json%get('Profile.File.utility_datetime', logical_value, found)
+        setting%Profile%File%utility_datetime = logical_value
+        if (.not. found) stop 191
+        call json%get('Profile.File.utility_interpolate', logical_value, found)
+        setting%Profile%File%utility_interpolate = logical_value
+        if (.not. found) stop 192
+        call json%get('Profile.File.utility_output', logical_value, found)
+        setting%Profile%File%utility_output = logical_value
+        if (.not. found) stop 193
+        call json%get('Profile.File.utility_string', logical_value, found)
+        setting%Profile%File%utility_string = logical_value
+        if (.not. found) stop 194
+        call json%get('Profile.File.utility', logical_value, found)
+        setting%Profile%File%utility = logical_value
+        call json%get('Profile.File.weir_elements', logical_value, found)
+        setting%Profile%File%weir_elements = logical_value
+        if (.not. found) stop 195
+        call json%get('Profile.File.output', logical_value, found)
+        setting%Profile%File%output = logical_value
+        if (.not. found) stop 196
+        call json%get('Profile.FileGroup.all', logical_value, found)
+        setting%Profile%FileGroup%all = logical_value
+        if (.not. found) stop 197
+        call json%get('Profile.FileGroup.definitions', logical_value, found)
+        setting%Profile%FileGroup%definitions = logical_value
+        if (.not. found) stop 198
+        call json%get('Profile.FileGroup.finalization', logical_value, found)
+        setting%Profile%FileGroup%finalization = logical_value
+        if (.not. found) stop 199
+        call json%get('Profile.FileGroup.geometry', logical_value, found)
+        setting%Profile%FileGroup%geometry = logical_value
+        if (.not. found) stop 200
+        call json%get('Profile.FileGroup.initialization', logical_value, found)
+        setting%Profile%FileGroup%initialization = logical_value
+        if (.not. found) stop 201
+        call json%get('Profile.FileGroup.interface', logical_value, found)
+        setting%Profile%FileGroup%interface = logical_value
+        if (.not. found) stop 202
+        call json%get('Profile.FileGroup.timeloop', logical_value, found)
+        setting%Profile%FileGroup%timeloop = logical_value
+        if (.not. found) stop 203
+        call json%get('Profile.FileGroup.utility', logical_value, found)
+        setting%Profile%FileGroup%utility = logical_value
+        if (.not. found) stop 204
+        call def_update_profile_options()
+
         ! Load verbose or non-verbose run
         call json%get('Verbose', logical_value, found)
         setting%Verbose = logical_value
-        if (.not. found) stop 159
+        if (.not. found) stop 205
 
         call json%destroy()
-        if (json%failed()) stop 161
+        if (json%failed()) stop 206
 
         if (setting%Debug%File%define_settings) print *, '*** leave ', this_image(), subroutine_name
     end subroutine def_load_settings
@@ -1189,4 +1398,68 @@ contains
             setting%Debug%File%utility = .true.
         end if
     end subroutine def_update_debug_options
+
+    subroutine def_update_profile_options()
+        if (setting%Profile%FileGroup%all) then
+            setting%Profile%FileGroup%definitions = .true.
+            setting%Profile%FileGroup%finalization = .true.
+            setting%Profile%FileGroup%geometry = .true.
+            setting%Profile%FileGroup%initialization = .true.
+            setting%Profile%FileGroup%interface = .true.
+            setting%Profile%FileGroup%timeloop  = .true.
+            setting%Profile%FileGroup%utility = .true.
+        end if
+        if (setting%Profile%FileGroup%definitions) then
+            setting%Profile%File%define_globals = .true.
+            setting%Profile%File%define_indexes = .true.
+            setting%Profile%File%define_keys = .true.
+            setting%Profile%File%define_settings = .true.
+            setting%Profile%File%define_types = .true.
+        end if
+        if (setting%Profile%FileGroup%finalization) then
+            setting%Profile%File%finalization = .true.
+        end if
+        if (setting%Profile%FileGroup%geometry) then
+            setting%Profile%File%geometry = .true.
+            setting%Profile%File%rectangular_channel = .true.
+            setting%Profile%File%trapezoidal_channel = .true.
+        end if
+        if (setting%Profile%FileGroup%initialization) then
+            setting%Profile%File%discretization = .true.
+            setting%Profile%File%initial_condition = .true.
+            setting%Profile%File%initialization = .true.
+            setting%Profile%File%network_define = .true.
+            setting%Profile%File%partitioning = .true.
+            setting%Profile%File%BIPquick = .true.
+            setting%Profile%File%pack_mask_arrays = .true.
+        end if
+        if (setting%Profile%FileGroup%interface) then
+            setting%Profile%File%c_library = .true.
+            setting%Profile%File%interface = .true.
+        end if
+        if (setting%Profile%FileGroup%timeloop) then
+            setting%Profile%File%adjust = .true.
+            setting%Profile%File%boundary_conditions = .true.
+            setting%Profile%File%diagnostic_elements = .true.
+            setting%Profile%File%face = .true.
+            setting%Profile%File%jump = .true.
+            setting%Profile%File%lowlevel_rk2 = .true.
+            setting%Profile%File%orifice_elements = .true.
+            setting%Profile%File%pump_elements = .true.
+            setting%Profile%File%runge_kutta2 = .true.
+            setting%Profile%File%timeloop = .true.
+            setting%Profile%File%update = .true.
+            setting%Profile%File%weir_elements = .true.
+        endif
+        if (setting%Profile%FileGroup%utility) then
+            setting%Profile%File%utility_allocate = .true.
+            setting%Profile%File%utility_deallocate = .true.
+            setting%Profile%File%utility_array = .true.
+            setting%Profile%File%utility_datetime = .true.
+            setting%Profile%File%utility_interpolate = .true.
+            setting%Profile%File%utility_output = .true.
+            setting%Profile%File%utility_string = .true.
+            setting%Profile%File%utility = .true.
+        end if
+    end subroutine def_update_profile_options
 end module define_settings

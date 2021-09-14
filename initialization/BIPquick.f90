@@ -63,7 +63,7 @@ contains
         ! -----------------------------------------------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
         
-        if (setting%Debug%File%BIPquick) call util_tic(timer, 1)
+        if (setting%Profile%File%BIPquick) call util_tic(timer, 1)
 
         !% Initialize the temporary arrays needed for BIPquick
         call bip_initialize_arrays()
@@ -164,9 +164,9 @@ contains
 
         connectivity = connectivity_metric()
 
-        if (setting%Debug%File%BIPquick) then
+        if (setting%Profile%File%BIPquick) then
             call util_toc(timer, 1) 
-            print *, this_image(),subroutine_name, 'time', duration(timer%jobs(1))
+            print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(1))
             call util_free_jobs(timer)
         end if
        
