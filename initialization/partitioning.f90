@@ -61,8 +61,6 @@ subroutine init_partitioning_method()
     else if (setting%Partitioning%PartitioningMethod == BQuick) then
         if (setting%Verbose) print*, new_line(""), "Using BIPquick Partitioning"
         call init_partitioning_BIPquick()
-        ! N_node = count(node%I(:,ni_idx) /= nullvalueI)
-        ! N_link = count(link%I(:,li_idx) /= nullvalueI)
     else
         print *, "Error, partitioning method not supported"
         stop "in " // subroutine_name
@@ -101,6 +99,9 @@ subroutine init_partitioning_method()
         write(*,"(2(A,i5),A)") &
         "completed partitioning (", connectivity, ") | [Processor ", this_image(), "]" ! part_size_balance
     end if
+
+    N_node = count(node%I(:,ni_idx) /= nullvalueI)
+    N_link = count(link%I(:,li_idx) /= nullvalueI)
 
     stop
 
