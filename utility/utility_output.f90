@@ -223,13 +223,13 @@ contains
                 "FullArea,FullDepth,FullHydDepth,FullPerimeter,FullVolume,GammaC,GammaM,Head," // &
                 "Head_N0,HeadLastAC,HeadStore,HydDepth,HydRadius,InterpWeight_uG,InterpWeight_dG," // &
                 "InterpWeight_uH,InterpWeight_dH,InterpWeight_uQ,InterpWeight_dQ,Ksource,Length,ones," // &
-                "Perimeter,Roughness,SmallVolume,SmallVolume_CMvelocity,SmallVolume_HeadSlope," // &
-                "SmallVolume_ManningsN,SmallVolumeRatio,SourceContinuity,SourceMomentum,Temp01," // &
-                "Topwidth,Velocity,Velocity_N0,Velocity_N1,VelocityLastAC,Volume,Volume_N0," // &
-                "Volume_N1,VolumeLastAC,VolumeStore,WaveSpeed,Zbottom,ZbreadthMax,Zcrown"
+                "Perimeter,PreissmannCelerity,Roughness,SlotVolume,SlotWidth,SlotDepth,SlotArea,SlotHydRadius,SmallVolume,"//&
+                "SmallVolume_CMvelocity,SmallVolume_HeadSlope,SmallVolume_ManningsN,SmallVolumeRatio,"//&
+                "SourceContinuity,SourceMomentum,Temp01,Topwidth,Velocity,Velocity_N0,Velocity_N1,"//&
+                "VelocityLastAC,Volume,Volume_N0,Volume_N1,VolumeLastAC,VolumeStore,WaveSpeed,Zbottom,"//&
+                "ZbreadthMax,Zcrown"
             endfile(fu)
             close(fu)
-
         end do
         if (setting%Debug%File%utility_output) print *, "*** leave ", this_image(), subroutine_name
 
@@ -442,8 +442,8 @@ contains
     subroutine util_output_report_summary()
         integer          :: fu, open_status, thisCol, Npack
         integer, pointer :: thisP(:)
-        real(8)          :: thisCFL, max_velocity, max_wavespeed
-        real(8), pointer :: dt, timeNow, velocity(:), wavespeed(:), length(:)
+        real(8)          :: thisCFL, max_velocity, max_wavespeed, max_PCelerity
+        real(8), pointer :: dt, timeNow, velocity(:), wavespeed(:), length(:), PCelerity(:)
         character(512)    :: file_name
         character(64)    :: subroutine_name = "util_output_report_summary"
 
@@ -460,12 +460,16 @@ contains
             dt        => setting%Time%Dt
             velocity  => elemR(:,er_Velocity)
             wavespeed => elemR(:,er_WaveSpeed)
+            PCelerity => elemR(:,er_Preissmann_Celerity)
             length    => elemR(:,er_Length)
             thisP     => elemP(1:Npack,thisCol)
 
-            thisCFL       = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
+            ! thisCFL       = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
+            thisCFL =  max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP)), &
+                            maxval (abs(PCelerity(thisP)) * dt / length(thisP)))
             max_velocity  = maxval(abs(velocity(thisP)))
             max_wavespeed = maxval(abs(wavespeed(thisP)))
+            max_PCelerity = maxval(abs(PCelerity(thisP))) 
 
             open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
                 form = 'formatted', action = 'write', iostat = open_status)
@@ -479,7 +483,7 @@ contains
                 !% also print the summary in the terminal
                 print('(*(G0.6))'), 'image = ', this_image(), ',  timeNow = ', timeNow, ',  dt = ', dt
                 print('(*(G0.6))'), 'thisCFL = ',thisCFL, ',  max velocity = ', max_velocity, &
-                ',  max wavespeed = ', max_wavespeed
+                ',  max wavespeed = ', max_wavespeed, ',  max preissmann celerity = ', max_PCelerity
             end if
         end if
 

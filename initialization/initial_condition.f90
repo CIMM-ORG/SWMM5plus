@@ -81,6 +81,9 @@ contains
 
         !if (setting%Verbose) print *, 'begin update_auxiliary_variables'
 
+        !% initialize slots
+        call init_IC_slot ()
+
         !% update all the auxiliary variables
         call update_auxiliary_variables (solver)
      
@@ -655,11 +658,6 @@ contains
                     elemR(ii,er_Volume)                = elemR(ii,er_Area) * elemR(ii,er_Length)
                     elemR(ii,er_Volume_N0)             = elemR(ii,er_Volume)
                     elemR(ii,er_Volume_N1)             = elemR(ii,er_Volume)
-
-                    elemSR(ii,eSr_conduit_SlotWidth)   = zeroR
-                    elemSR(ii,eSr_conduit_SlotVolume)  = zeroR
-                    elemSR(ii,eSr_conduit_SlotDepth)   = zeroR
-                    elemSR(ii,eSr_conduit_SlotArea)    = zeroR
                 end if
             end do
             
@@ -1474,6 +1472,32 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_oneVectors
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_IC_slot ()
+    !--------------------------------------------------------------------------
+    !
+    !% set all the slot values to zero before start of a simulation
+    !
+    !--------------------------------------------------------------------------
+
+        character(64)       :: subroutine_name = 'init_IC_slot'
+
+    !--------------------------------------------------------------------------
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
+        elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
+        elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
+        elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
+        elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
+  
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+    end subroutine init_IC_slot
     !
     !==========================================================================
     !==========================================================================

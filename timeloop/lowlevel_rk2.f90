@@ -834,6 +834,7 @@ module lowlevel_rk2
         integer, pointer    :: thisP(:), SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
+        real(8), pointer    :: SlotHydRadius(:)
         real(8), pointer    :: CelerityFactor
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
@@ -844,10 +845,11 @@ module lowlevel_rk2
         fullarea   => elemR(:,er_FullArea)
         ell        => elemR(:,er_ell)
         length     => elemR(:,er_Length)
-        SlotWidth  => elemSR(:,eSr_conduit_SlotWidth)
-        SlotVolume => elemSR(:,eSr_conduit_SlotVolume)
-        SlotDepth  => elemSR(:,eSr_conduit_SlotDepth)
-        SlotArea   => elemSR(:,eSr_conduit_SlotArea)
+        SlotWidth  => elemR(:,er_SlotWidth)
+        SlotVolume => elemR(:,er_SlotVolume)
+        SlotDepth  => elemR(:,er_SlotDepth)
+        SlotArea   => elemR(:,er_SlotArea)
+        SlotHydRadius => elemR(:,er_SlotHydRadius)
 
         SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         CelerityFactor => setting%PreissmannSlot%CelerityFactor
@@ -857,10 +859,12 @@ module lowlevel_rk2
             case (VariableSlot)
 
                 SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-                SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
+                SlotWidth(thisP) = 0.02
+                ! SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
                 SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
                 SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-
+                SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
+                    ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
             case (StaticSlot)
 
                 print*, 'In ', subroutine_name

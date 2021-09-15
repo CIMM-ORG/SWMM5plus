@@ -151,7 +151,7 @@ contains
         logical          :: matchHydrologyStep
         real(8)          :: timeleft, timeNow, thisCFL, targetCFL, maxCFL, maxCFLlow
         real(8)          :: decreaseFactor, increaseFactor, nextTimeHydrology
-        real(8), pointer :: dt, velocity(:), wavespeed(:), length(:)
+        real(8), pointer :: dt, velocity(:), wavespeed(:), length(:), PCelerity(:)
         integer          :: ii, neededSteps, checkStepInterval
         integer, pointer :: stepNow, stepNext, stepfinal, lastCheckStep
         integer, pointer :: thisCol, Npack, thisP(:)
@@ -182,13 +182,15 @@ contains
         velocity          => elemR(:,er_Velocity)
         wavespeed         => elemR(:,er_WaveSpeed)
         length            => elemR(:,er_Length)
+        PCelerity         => elemR(:,er_Preissmann_Celerity)
 
         if (matchHydrologyStep) then
             !% For combined hydrology and hydraulics use the hydrology time step
             !% as the target CFL.
             nextTimeHydrology = (setting%Time%Hydrology%Step + 1) * setting%Time%Hydrology%Dt
             timeLeft = nextTimeHydrology - timeNow
-            thisCFL = maxval( (abs(velocity(thisP)) + abs(wavespeed(thisP))) * timeleft / length(thisP) )
+            thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * timeleft / length(thisP)), &
+                           maxval (abs(PCelerity(thisP)) * timeleft / length(thisP)))
 
             !% check to see if max CFL is exceeded
             if (thisCFL < maxCFL) then
@@ -206,7 +208,8 @@ contains
         else
             !% For hydraulics only, keep the timestep stable unless it
             !% exceeds CFL limits (both high and low limits).
-            thisCFL = maxval( (abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP) )
+            thisCFL =  max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP)), &
+                            maxval (abs(PCelerity(thisP)) * dt / length(thisP)))
 
             if (thisCFL > maxCFL) then
                 !% decrease the time step and reset the checkStep counter

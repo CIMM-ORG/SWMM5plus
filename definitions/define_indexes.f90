@@ -301,7 +301,13 @@ module define_indexes
         enumerator :: er_Length                     !% length of element (static)
         enumerator :: er_ones                       !% vector of ones (useful with sign function)
         enumerator :: er_Perimeter                  !% Wetted perimeter of flow
+        enumerator :: er_Preissmann_Celerity        !% celerity due to Preissmann Slot
         enumerator :: er_Roughness                  !% baseline roughness value for friction model
+        enumerator :: er_SlotVolume                 !% slot volume
+        enumerator :: er_SlotWidth                  !% slot width
+        enumerator :: er_SlotDepth                  !% slot depth
+        enumerator :: er_SlotArea                   !% slot area
+        enumerator :: er_SlotHydRadius              !% slot hydraulic radius        
         enumerator :: er_SmallVolume                !% the value of a "small volume" for this element
         enumerator :: er_SmallVolume_CMvelocity     !% velocity by Chezy-Manning for a small volume
         enumerator :: er_SmallVolume_HeadSlope      !% head slope between faces for computing Chezy-Manning on small volume
@@ -489,14 +495,15 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is
     integer, parameter :: Ncol_elemSR_JunctionBranch = eSr_JunctionBranch_Kfactor
 
-    enum, bind(c)
-        enumerator ::  eSr_conduit_SlotVolume = 1         !% slot volume
-        enumerator ::  eSr_conduit_SlotWidth              !% slot width
-        enumerator ::  eSr_conduit_SlotDepth              !% slot depth
-        enumerator ::  eSr_conduit_SlotArea               !% slot area
-    end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, parameter :: Ncol_elemSR_Conduit = eSr_conduit_SlotArea
+    ! enum, bind(c)
+    !     enumerator ::  eSr_conduit_SlotVolume = 1         !% slot volume
+    !     enumerator ::  eSr_conduit_SlotWidth              !% slot width
+    !     enumerator ::  eSr_conduit_SlotDepth              !% slot depth
+    !     enumerator ::  eSr_conduit_SlotArea               !% slot area
+    !     enumerator ::  eSr_conduit_SlotHydRadius          !% slot hydraulic radius
+    ! end enum
+    ! !% note, this must be changed to whatever the last enum element is
+    ! integer, parameter :: Ncol_elemSR_Conduit = eSr_conduit_SlotHydRadius
 
     !% NEED OTHER SPECIAL ELEMENTS HERE
 
@@ -504,8 +511,8 @@ module define_indexes
     integer, target :: Ncol_elemSR = max(&
                             Ncol_elemSR_JunctionBranch, &
                             Ncol_elemSR_Weir, &
-                            Ncol_elemSR_Orifice, &
-                            Ncol_elemSR_Conduit)
+                            Ncol_elemSR_Orifice) !, &
+                            ! Ncol_elemSR_Conduit)
 
     !% HACK: Ncol_elemSR must be updated when other special elements
     !% (i.e. orifice, pump, storage etc.) are added

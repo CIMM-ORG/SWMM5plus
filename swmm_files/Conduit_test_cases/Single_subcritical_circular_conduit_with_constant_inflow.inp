@@ -16,22 +16,24 @@ START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
 REPORT_START_TIME    00:00:00
 END_DATE             06/14/2021
-END_TIME             06:00:00
+END_TIME             00:30:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:01:00
+REPORT_STEP          00:00:01
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
-ROUTING_STEP         0:00:30 
+ROUTING_STEP         00:00:01 
+RULE_STEP            00:00:00
 
 INERTIAL_DAMPING     PARTIAL
 NORMAL_FLOW_LIMITED  BOTH
 FORCE_MAIN_EQUATION  H-W
+SURCHARGE_METHOD     SLOT
 VARIABLE_STEP        0.75
 LENGTHENING_STEP     0
 MIN_SURFAREA         1.167
-MAX_TRIALS           8
+MAX_TRIALS           20
 HEAD_TOLERANCE       0.0015
 SYS_FLOW_TOL         5
 LAT_FLOW_TOL         5
@@ -47,17 +49,17 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-1                43.762     0          2.0          0          0         
+1                4.3762     0          2.0        2.0        0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-2                0          FIXED      2.0                NO                       
+2                0          FIXED      2.0              NO                       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-1                1                2                10000      0.015      0          0          4.6981     0         
+1                1                2                1000       0.015      0          0          10.6981    0         
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -67,7 +69,7 @@ DRY_ONLY         NO
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
 ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-1                FLOW             ""               FLOW     1.0      1.0      10.6981  
+1                FLOW             ""               FLOW     1.0      1.0      10.6981 
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     
@@ -124,8 +126,6 @@ DRY_ONLY         NO
 
 [REPORT]
 ;;Reporting Options
-INPUT      NO
-CONTROLS   NO
 SUBCATCHMENTS ALL
 NODES ALL
 LINKS ALL

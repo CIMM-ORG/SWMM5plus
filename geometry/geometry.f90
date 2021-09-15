@@ -802,7 +802,8 @@ module geometry
         integer, intent(in) :: thisColP
         integer, pointer    :: thisP(:), Npack
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
-        real(8), pointer    :: volume(:), depth(:), area(:), head(:)
+        real(8), pointer    :: volume(:), depth(:), area(:), head(:), SlotHydRadius(:)
+        real(8), pointer    :: hydRadius(:), ell(:), breadthMax(:)
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
@@ -814,10 +815,14 @@ module geometry
         depth      => elemR(:,er_Depth)
         area       => elemR(:,er_Area)
         head       => elemR(:,er_Head)
-        SlotWidth  => elemSR(:,eSr_conduit_SlotWidth)
-        SlotVolume => elemSR(:,eSr_conduit_SlotVolume)
-        SlotDepth  => elemSR(:,eSr_conduit_SlotDepth)
-        SlotArea   => elemSR(:,eSr_conduit_SlotArea)
+        ell        => elemR(:,er_ell)
+        breadthMax => elemR(:,er_BreadthMax)
+        hydRadius  => elemR(:,er_HydRadius)
+        SlotWidth  => elemR(:,er_SlotWidth)
+        SlotVolume => elemR(:,er_SlotVolume)
+        SlotDepth  => elemR(:,er_SlotDepth)
+        SlotArea   => elemR(:,er_SlotArea)
+        SlotHydRadius => elemR(:,er_SlotHydRadius)
         !%-----------------------------------------------------------------------------
 
         if (Npack > 0) then
@@ -826,6 +831,8 @@ module geometry
             area(thisP)   = area(thisP)   + SlotArea(thisP)
             depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
             head(thisP)   = head(thisP)   + SlotDepth(thisP)
+            ! ell(thisP)    = ell(thisP) + SlotArea(thisP) / breadthMax(thisP)
+            hydRadius(thisP) = hydRadius(thisP) + SlotHydRadius(thisP)    
         end if
 
         if (setting%Debug%File%geometry) &
