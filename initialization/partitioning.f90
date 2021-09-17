@@ -103,8 +103,6 @@ subroutine init_partitioning_method()
     N_node = count(node%I(:,ni_idx) /= nullvalueI)
     N_link = count(link%I(:,li_idx) /= nullvalueI)
 
-    stop
-
     call util_deallocate_partitioning_arrays()
 end subroutine init_partitioning_method
 !
