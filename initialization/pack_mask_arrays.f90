@@ -198,7 +198,7 @@ contains
                 ))
         end if
 
-        !% trapezoidal channels, conduits and junction main
+        !% trapezoidal channels and junction main
         ptype => col_elemPGalltm(epg_CCJM_trapezoidal_nonsurcharged)
         npack => npack_elemPGalltm(ptype)
         npack = count( &
@@ -235,6 +235,136 @@ contains
                     .or. &
                     (elemI(:,ei_QeqType) == time_march) &
                 ))
+        end if
+
+        !% circular conduits and junction main
+        ptype => col_elemPGalltm(epg_CCJM_circular_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
+        !% all the closed time-marching elements
+        ptype => col_elemPGalltm(epg_closed_geometry)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == filled_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horiz_ellipse) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == arch) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == eggshaped) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horseshoe) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == gothic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == catenary) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_elliptical) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == basket_handle) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == custom) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == force_main) &
+                ) )
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ) &
+                .and. &
+                ( &
+                    (elemI(:,ei_geometryType) == circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == filled_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == rectangular_closed) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horiz_ellipse) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == arch) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == eggshaped) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == horseshoe) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == gothic) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == catenary) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_elliptical) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == basket_handle) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == semi_circular) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == custom) &
+                    .or. &
+                    (elemI(:,ei_geometryType) == force_main) &
+                ) )
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
@@ -294,7 +424,7 @@ contains
                 )
         end if
 
-        !% trapezoidal channels, conduits and junction main
+        !% trapezoidal channels and junction main
         ptype => col_elemPGac(epg_CCJM_trapezoidal_nonsurcharged)
         npack => npack_elemPGac(ptype)
         npack = count( &
@@ -320,6 +450,39 @@ contains
                 ) &
                 .and. &
                 (elemI(:,ei_geometryType) == trapezoidal) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+        end if
+
+        !% circular conduits and junction main
+        ptype => col_elemPGac(epg_CCJM_circular_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == AC) &
+                )
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged))&
                 .and. &
@@ -412,6 +575,39 @@ contains
                 (elemI(:,ei_geometryType) == trapezoidal) &
                 .and. &
                 (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+        end if
+
+        !% circular conduits and junction main
+        ptype => col_elemPGetm(epg_CCJM_circular_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                (elemI(:,ei_tmType) == ETM) &
+                )
+
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .or. &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemI(:,ei_geometryType) == circular) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged))&
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )

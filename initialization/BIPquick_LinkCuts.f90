@@ -56,8 +56,8 @@ contains
         integer       :: phantom_node_idx, phantom_link_idx
         integer       :: connectivity
 
-        real(8) :: start, intermediate, finish
-        call cpu_time(start)
+        
+        
         ! -----------------------------------------------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"

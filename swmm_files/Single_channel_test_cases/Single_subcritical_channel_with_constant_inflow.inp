@@ -63,7 +63,7 @@ DRY_ONLY         NO
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-1                RECT_OPEN    2                3          0          0          1                                      
+1                RECT_OPEN    20                3          0          0          1                                      
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

@@ -575,6 +575,10 @@ contains
         real(8) :: node_head, node_result
         real(8) :: link_flowrate, link_result
         real(8) :: timesecs
+        character(64) :: subroutine_name = 'output_update_swmm_out'
+        !%--------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (this_image() == 1) then
             allocate(fus_nodes(size(node%P%have_output)))
@@ -635,6 +639,10 @@ contains
             !     call interface_export_link_results(link_idx)
             ! end do
         end if
+
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        
     end subroutine output_update_swmm_out
 end module output
 

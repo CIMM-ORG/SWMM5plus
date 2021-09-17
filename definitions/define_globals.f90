@@ -177,7 +177,7 @@ module define_globals
     !% Number of API parameters
     integer, parameter :: N_api_node_attributes = api_node_overflow
     integer, parameter :: N_api_link_attributes = api_conduit_length
-    integer, parameter :: N_api_link_xsect_attributes = api_link_xsect_yBot - N_api_link_attributes
+    integer, parameter :: N_api_link_xsect_attributes = api_link_xsect_yFull - N_api_link_attributes
     integer, parameter :: N_api_total_link_attributes = N_api_link_attributes + N_api_link_xsect_attributes
 
     !% Coarray variables
@@ -235,4 +235,6 @@ module define_globals
         reshape((/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, & ! normal years
         31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/), (/12,2/)) ! leap years
 
+    !% Profiling Timer
+    type(wall_clk) :: timer
 end module define_globals

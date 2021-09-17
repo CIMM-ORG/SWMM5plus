@@ -83,6 +83,8 @@ enum api_link_attributes {
   link_subIndex,
   link_node1,
   link_node2,
+  link_offset1,
+  link_offset2,
   link_q0,
   link_flow,
   link_depth,
@@ -99,6 +101,7 @@ enum api_link_attributes {
   link_geometry,
   link_xsect_wMax,
   link_xsect_yBot,
+  link_xsect_yFull,
 };
 
 // API vars are those necessary for external applications

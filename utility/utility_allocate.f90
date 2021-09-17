@@ -1103,6 +1103,24 @@ contains
     !==========================================================================
     !==========================================================================
     !
+    subroutine util_allocate_profiler
+        !-----------------------------------------------------------------------------
+        
+            character(64)      :: subroutine_name = 'util_allocate_profiler'
+            integer            :: ii, allocation_status, bc_node
+            character(len=99)  :: emsg
+
+        !-----------------------------------------------------------------------------
+        if (setting%Debug%File%utility) print *, '*** enter', this_image(),subroutine_name
+
+        
+
+        if (setting%Debug%File%utility) print *, '*** leave ', this_image(),subroutine_name
+    end subroutine util_allocate_profiler
+    !
+    !==========================================================================
+    !==========================================================================
+    !
     subroutine util_allocate_check(allocation_status, emsg)
         !-----------------------------------------------------------------------------
         !
