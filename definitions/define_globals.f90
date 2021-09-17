@@ -102,7 +102,7 @@ module define_globals
     logical, allocatable :: accounted_for_links(:)
     integer, allocatable :: phantom_link_tracker(:)
  
-    !% Partitioning Module Allocatables - Allocated and Deallocated in execute_partitioning.f08
+    !% Partitioning module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable :: adjacent_links(:)
     integer, allocatable :: elem_per_image(:)
     logical, allocatable :: image_full(:)
@@ -155,7 +155,9 @@ module define_globals
     integer, parameter :: sixI = 6
 
     !% Number of objects
+    integer :: SWMM_N_link
     integer :: N_link
+    integer :: SWMM_N_node
     integer :: N_node
     integer :: N_headBC
     integer :: N_flowBC
@@ -174,7 +176,7 @@ module define_globals
     !% Number of API parameters
     integer, parameter :: N_api_node_attributes = api_node_overflow
     integer, parameter :: N_api_link_attributes = api_conduit_length
-    integer, parameter :: N_api_link_xsect_attributes = api_link_xsect_yBot - N_api_link_attributes
+    integer, parameter :: N_api_link_xsect_attributes = api_link_xsect_yFull - N_api_link_attributes
     integer, parameter :: N_api_total_link_attributes = N_api_link_attributes + N_api_link_xsect_attributes
 
     !% Coarray variables

@@ -65,17 +65,15 @@ subroutine init_partitioning_method()
         N_link = count(link%I(:,li_idx) /= nullvalueI)
     else
         print *, "Error, partitioning method not supported"
-        stop
+        stop "in " // subroutine_name
     end if
 
     if (setting%Debug%File%partitioning) then
-        print *, '*** leave ', this_image(), subroutine_name
-
         print *, "Node Partitioning"
         print *, new_line("")
         do ii = 1, size(node%I, 1)
             if ( node%I(ii, ni_P_is_boundary) /= zeroI ) then
-                print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
+                print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
             endif
         end do
 
@@ -90,9 +88,11 @@ subroutine init_partitioning_method()
         ! partition_correct = default_performance_check()
         connectivity = init_partitioning_metric_connectivity()
         ! part_size_balance = init_partitioning_metric_partsizebalance()
-
-        print*, "*** partitioning is complete", connectivity ! part_size_balance
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(2(A,i5),A)") &
+        "completed partitioning (", connectivity, ") | [Processor ", this_image(), "]" ! part_size_balance
     end if
+
 
     call util_deallocate_partitioning_arrays()
 end subroutine init_partitioning_method
@@ -328,14 +328,15 @@ subroutine init_partitioning_linkbalance()
     character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
-    if (setting%Debug%File%partitioning) print *, '*** enter ', this_image(), subroutine_name
+    if (setting%Debug%File%partitioning) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-    if (N_link < num_images()) then
+    if (SWMM_N_link < num_images()) then
         call init_partitioning_default()
     else
         do rank = 0, num_images()-1
-            count = N_link / num_images()
-            remainder = mod(N_link, num_images())
+            count = SWMM_N_link / num_images()
+            remainder = mod(SWMM_N_link, num_images())
 
             if (rank < remainder) then
                 ! The first 'remainder' ranks get 'count + 1' tasks each
@@ -374,7 +375,8 @@ subroutine init_partitioning_linkbalance()
         print *, node%I(:, ni_P_is_boundary), "node%I(:, ni_P_is_boundary)"
     end if
 
-    if (setting%Debug%File%partitioning)  print *, '*** leave ', this_image(), subroutine_name
+    if (setting%Debug%File%partitioning)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 end subroutine init_partitioning_linkbalance
 !
 !==========================================================================
@@ -458,7 +460,7 @@ function init_partitioning_metric_connectivity() result(connectivity)
 end function init_partitioning_metric_connectivity
 !
 !==========================================================================
-!   End Module
+!   End module
 !==========================================================================
 !
 end module partitioning

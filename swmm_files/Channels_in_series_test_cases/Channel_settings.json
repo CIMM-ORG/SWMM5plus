@@ -91,7 +91,7 @@
             "Minimum" : 1e-6
         },
         "Velocity" : {
-            "Maximum" : 20.0,
+            "Maximum" : 10.0,
             "UseLimitMax" : true
         },
         "ArraySize" : {
@@ -113,8 +113,8 @@
         "reportDt" : 100.0,
         "reportStep" : 0,
         "slots" : 20,
-        "links_file" : "link_input.csv",
-        "nodes_file" : "node_input.csv",
+        "links_file" : "",
+        "nodes_file" : "",
         "CommandLine" : {
             "quiet" : false,
             "interval" : 1000
@@ -267,6 +267,7 @@
             "geometry" : false,
             "initialization" : false,
             "interface" : false,
+            "output" : false,
             "timeloop" : false,
             "utility" : false
         },

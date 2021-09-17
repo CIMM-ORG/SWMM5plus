@@ -21,7 +21,8 @@ contains
         character(64) :: subroutine_name = "bc_update"
         !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%boundary_conditions)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call bc_step()
 
@@ -41,7 +42,7 @@ contains
             do ii = 1, setting%BC%slots
                 print *, BC%flowR_timeseries(:, ii, br_value)
             end do
-            print *, '*** leave ', this_image(), subroutine_name
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
             print *, "HEAD BC"
             print *, "BC times"
@@ -52,7 +53,7 @@ contains
             do ii = 1, setting%BC%slots
                 print *, BC%headR_timeseries(:, ii, br_value)
             end do
-            print *, '*** leave ', this_image(), subroutine_name
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end if
     end subroutine bc_update
 
@@ -64,7 +65,8 @@ contains
         character(64) :: subroutine_name = "bc_step"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%boundary_conditions)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         tnow = setting%Time%Now
         tend = setting%Time%End
@@ -144,7 +146,8 @@ contains
         character(64)       :: subroutine_name = "bc_fetch_flow"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%boundary_conditions)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         NN = setting%BC%slots
 
@@ -169,7 +172,7 @@ contains
             do ii = 1, NN
                 write(*, "(*(G0.4 : ','))") BC%flowR_timeseries(bc_idx, ii, :)
             end do
-            print *, '*** leave ', this_image(), subroutine_name
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end if
 
     end subroutine bc_fetch_flow
@@ -183,7 +186,8 @@ contains
         character(64)       :: subroutine_name = "bc_fetch_head"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%boundary_conditions)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         NN = setting%BC%slots
 
@@ -203,7 +207,8 @@ contains
         end do
         BC%headIdx(bc_idx) = 2
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%boundary_conditions) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine bc_fetch_head
 
 
@@ -219,7 +224,8 @@ contains
         character(64) :: subroutine_name = 'bc_interpolate'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%boundary_conditions)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%boundary_conditions)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         tnow = setting%Time%Now
 
@@ -274,7 +280,8 @@ contains
             end if
         end do
 
-        if (setting%Debug%File%boundary_conditions) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%boundary_conditions) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine bc_interpolate
 end module boundary_conditions

@@ -1,4 +1,4 @@
-Module utility_unit_testing
+module utility_unit_testing
   use interface
   use utility_allocate
   use discretization
@@ -27,7 +27,8 @@ contains
     integer ii, jj, kk, min_val, max_val
     logical dup_found
     character(64) :: subroutine_name = 'local_global_unique'
-    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
     !% Looping through the array and finding all of the unqiue values
     min_val = minval(link%I(:,li_idx)) - 1
@@ -118,7 +119,7 @@ contains
 
 
 
-    if (ii /= n_face(this_Image())) then
+    if (ii /= n_face(this_image())) then
        print *, "ERROR:::: faceI(:,fi_Gidx) is not unique. This_image ::", this_image()
     else
        print *, "faceI(:,fi_Gidx) is unique. This_image ::", this_image()
@@ -144,7 +145,8 @@ contains
     end if
 
 
-    if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
   end subroutine util_utest_local_global
 
@@ -154,7 +156,8 @@ contains
       integer ii, jj, kk, min_val, max_val
       logical dup_found
       character(64) :: subroutine_name = 'pack_arrays_unique'
-      if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+      if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
 
@@ -1467,7 +1470,8 @@ contains
       end if
 
 
-      if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+      if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_pack_arrays
 
@@ -1476,7 +1480,8 @@ contains
       !% In this subroutine we are checking whether the every image has atleast one node and link assigned to it.
       integer :: ii, jj, kk, counter
       character(64) :: subroutine_name = 'init_face_check'
-      if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+      if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
       kk = 1
       counter = 0
@@ -1533,7 +1538,8 @@ contains
       else
          print *, "correct number in link%I images.  This_image :: ", this_image()
       end if
-      if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+      if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_node_link_image
 
@@ -1544,7 +1550,8 @@ contains
       integer :: ii, jj
       logical :: invalid_slope
       character(64) :: subroutine_name = 'slope_checking'
-      if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+      if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
       invalid_slope = .false.
       do ii = 1, size(link%R(:,lr_Slope))
@@ -1561,7 +1568,8 @@ contains
          print *, "all slopes are postive.  This_image :: ", this_image()
       end if
 
-      if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+      if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_slope_checking
 
@@ -1572,7 +1580,8 @@ contains
       integer :: ii, current_length, counter
       character(64) :: subroutine_name = 'global_index_checking'
 
-      if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+      if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
       !% here we find the current length of the global index by looking at the first value of elemI on that image and subtracting one.
 
@@ -1582,7 +1591,7 @@ contains
       do ii = 1, size(elemI(:,ei_Gidx))
 
          if (elemI(ii,ei_Gidx) /= current_length+elemI(ii,ei_Lidx) .and. elemI(ii,ei_Gidx)/= nullvalueI) then
-            print *, "error in elem global indexes. Image :: ", this_Image()
+            print *, "error in elem global indexes. Processor :: ", this_image()
             !%print *, "elemI(ii,ei_Gidx)", elemI(ii,ei_Gidx)
             !%print *, "elemI(ii,ei_Lidx)", elemI(ii,ei_Lidx)
             exit
@@ -1612,14 +1621,15 @@ contains
             cycle
 
          else if (faceI(ii,ei_Gidx) /= current_length+faceI(ii,ei_Lidx) .and. faceI(ii,ei_Gidx)/= nullvalueI) then
-            print *, "error in face global indexes. Image :: ", this_Image()
+            print *, "error in face global indexes. Processor :: ", this_image()
             !% print *, "faceI(ii,ei_Gidx)", faceI(ii,ei_Gidx)
             !% print *, "faceI(ii,ei_Lidx)", faceI(ii,ei_Lidx)
             exit
          end if
       end do
 
-      if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+      if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_global_index_check
 
@@ -1639,4 +1649,4 @@ contains
 
 
 
-  end Module utility_unit_testing
+  end module utility_unit_testing

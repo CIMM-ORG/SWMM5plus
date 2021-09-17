@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# Check flags
+while getopts 'tmf' flag; do
+  case "${flag}" in
+    t) tacc="true" ;;
+    m) skip_swmm="true" ;;
+    f) skip_fortran="true" ;;
+  esac
+done
+
 # Check OS
 unameOut="$(uname -s)"
 case "${unameOut}" in

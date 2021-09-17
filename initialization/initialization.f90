@@ -55,7 +55,8 @@ contains
     !%
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
     !%-----------------------------------------------------------------------------
 
         !% ---  Define project & settings paths
@@ -118,7 +119,7 @@ contains
             if (this_image() == 1) then
             if ((N_link > 5000) .or. (N_node > 5000)) then
                 print *, "begin setting initial conditions (this takes several minutes for big systems)"
-                print *, "This system has ",N_link,"links and",N_node,"nodes"
+                print *, "This system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
                 print *, "The finite-volume system is ", sum(N_elem(:)), " elements"
             endif
         endif
@@ -141,12 +142,13 @@ contains
             call output_create_link_files()
             call output_create_node_files()
         end if
-
+        
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
         !% wait for all the processors to reach this stage before starting the time loop
-        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine initialize_all
     !%
     !%==========================================================================
@@ -171,11 +173,12 @@ contains
 
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
-            stop
+            stop "in " // subroutine_name
         end if
 
         !% Allocate storage for link & node tables
@@ -185,7 +188,7 @@ contains
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
 
-        do ii = 1, N_link
+        do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
             link%I(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
@@ -215,6 +218,9 @@ contains
             link%R(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_u), api_node_initDepth)
             link%R(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_d), api_node_initDepth)
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
+            link%R(ii,lr_FullDepth) = interface_get_link_attribute(ii, api_link_xsect_yFull)
+            link%R(ii,lr_InletOffset) = interface_get_link_attribute(ii,api_link_offset1)
+            link%R(ii,lr_OutletOffset) = interface_get_link_attribute(ii,api_link_offset2)
         end do
 
         do ii = 1, N_node
@@ -279,7 +285,8 @@ contains
         character(64) :: subroutine_name = "init_bc"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call pack_nodes()
         call util_allocate_bc()
@@ -318,7 +325,7 @@ contains
                         BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                     else
                         print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
-                        stop
+                        stop "in " // subroutine_name
                     end if
 
                     BC%flowI(ii, bi_node_idx) = nidx
@@ -338,7 +345,7 @@ contains
                     end if
                 else
                     print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
-                    stop
+                    stop "in " // subroutine_name
                 end if
             end do
         end if
@@ -354,7 +361,7 @@ contains
                     BC%headI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                 else
                     print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
-                    stop
+                    stop "in " // subroutine_name
                 end if
 
                 BC%headI(ii, bi_idx) = ii
@@ -377,7 +384,8 @@ contains
         call bc_step()
         call pack_bc()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_bc
     !%
     !%==========================================================================
@@ -397,10 +405,11 @@ contains
         character(64) :: subroutine_name = 'init_partitioning'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% find the number of elements in a link based on nominal element length
-        do ii = 1, N_link
+        do ii = 1, SWMM_N_link
             call init_discretization_nominal(ii)
         end do
 
@@ -422,7 +431,8 @@ contains
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_partitioning
     !%
@@ -439,7 +449,8 @@ contains
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
 
-        if (setting%Debug%File%utility_array) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%utility_array) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
@@ -514,13 +525,14 @@ contains
 
         if (setting%Debug%File%utility_array) then
             do ii = 1, size(unique_imagenum,1)
-                print*, 'Image => ', ii
+                print*, 'Processor => ', ii
                 print*, 'Elements expected ', N_elem(ii)
                 print*, 'Faces expected    ', N_face(ii)
             end do
         end if
 
-        if (setting%Debug%File%utility_array)  print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%utility_array)  &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_coarray_length
     !%
@@ -532,6 +544,10 @@ contains
         logical :: arg_param = .false.
         character(len=8) :: param
         character(len=256) :: arg
+        character(64) :: subroutine_name = "init_read_arguments"
+
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         do ii = 1, iargc()
             call getarg(ii, arg)
@@ -540,7 +556,7 @@ contains
                 if (ii == 1) then
                     if (arg(:1) == '-') then
                         print *, "ERROR: it is necessary to define the path to the .inp file"
-                        stop
+                        stop "in " // subroutine_name
                     end if
                     setting%Paths%inp = arg
                 elseif ((trim(arg) == "-s") .or. & ! user provides settings file
@@ -552,7 +568,7 @@ contains
                     setting%Warning = .false.
                 else
                     write(*, *) 'The argument ' // trim(arg) // ' is unsupported'
-                    stop
+                    stop "in " // subroutine_name
                 end if
             else
                 arg_param = .false.
@@ -569,12 +585,15 @@ contains
                         print *, "simple_channel, simple_orifice, simple_pipe"
                         print *, "simple_weir, swashes, waller_creek"
                         print *, "y_channel, y_storage_channel"
-                        stop
+                        stop "in " // subroutine_name
                     end if
                 elseif (trim(param) == '--run-tests') then
                 end if
             end if
         end do
+
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_read_arguments
     !%
     !%==========================================================================

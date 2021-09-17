@@ -34,7 +34,8 @@ contains
         character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%discretization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%discretization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         do ii =1, N_link
             temp_length = link%R(ii,lr_Length) ! lenght of link ii
@@ -56,7 +57,8 @@ contains
             link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)
         end do
 
-        if (setting%Debug%File%discretization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%discretization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_discretization_adjustlinklength
     !
     !==========================================================================
@@ -76,7 +78,8 @@ contains
 
     !-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%discretization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%discretization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Adjusts the number of elements in a link based on the length
         remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
@@ -103,7 +106,8 @@ contains
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
         end if
 
-        if (setting%Debug%File%discretization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%discretization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_discretization_nominal
     !

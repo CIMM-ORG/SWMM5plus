@@ -18,6 +18,7 @@ module initial_condition
     use face
     use diagnostic_elements
     use geometry !BRHbugfix 20210813
+    use circular_conduit
 
     implicit none
 
@@ -43,7 +44,8 @@ contains
         character(64)    :: subroutine_name = 'init_IC_setup'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         solver => setting%Solver%SolverSelect
 
@@ -112,40 +114,39 @@ contains
         call init_IC_oneVectors ()
 
         if (setting%Debug%File%initial_condition) then
-            !% only using the first processor to print results
-            if (this_image() == 1) then
-                do ii = 1,num_images()
-                   print*, '----------------------------------------------------'
-                   print*, 'image = ', ii
-                   print*, '.....................elements.......................'
-                   print*, elemI(:,ei_elementType)[ii], 'element type'
-                   print*, elemI(:,ei_geometryType)[ii],'element geometry'
-                   print*, '-------------------Geometry Data--------------------'
-                   print*, elemR(:,er_Depth)[ii], 'depth'
-                   print*, elemR(:,er_Area)[ii], 'area'
-                   print*, elemR(:,er_Head)[ii], 'head'
-                   print*, elemR(:,er_Topwidth)[ii], 'topwidth'
-                   print*, elemR(:,er_Volume)[ii],'volume'
-                   print*, '-------------------Dynamics Data--------------------'
-                   print*, elemR(:,er_Flowrate)[ii], 'flowrate'
-                   print*, elemR(:,er_Velocity)[ii], 'velocity'
-                   print*, elemR(:,er_FroudeNumber)[ii], 'froude Number'
-                   print*, elemR(:,er_InterpWeight_uQ)[ii], 'timescale Q up'
-                   print*, elemR(:,er_InterpWeight_dQ)[ii], 'timescale Q dn'
-                   print*, '..................faces..........................'
-                   print*, faceR(:,fr_Area_u)[ii], 'face area up'
-                   print*, faceR(:,fr_Area_d)[ii], 'face area dn'
-                   print*, faceR(:,fr_Head_u)[ii], 'face head up'
-                   print*, faceR(:,fr_Head_d)[ii], 'face head dn'
-                   print*, faceR(:,fr_Flowrate)[ii], 'face flowrate'
-                   print*, faceR(:,fr_Topwidth_u)[ii], 'face topwidth up'
-                   print*, faceR(:,fr_Topwidth_d)[ii], 'face topwidth dn'
-                   call execute_command_line('')
-                end do
-            end if
+           print*, '----------------------------------------------------'
+           print*, 'image = ', this_image()
+           print*, '.....................elements.......................'
+           print*, elemI(:,ei_elementType), 'element type'
+           print*, elemI(:,ei_geometryType),'element geometry'
+           print*, '-------------------Geometry Data--------------------'
+           print*, elemR(:,er_Depth), 'depth'
+           print*, elemR(:,er_Area), 'area'
+           print*, elemR(:,er_Head), 'head'
+           print*, elemR(:,er_Topwidth), 'topwidth'
+           print*, elemR(:,er_HydDepth), 'hydraulic depth'
+           print*, elemR(:,er_HydRadius), 'hydraulic radius'
+           print*, elemR(:,er_Perimeter), 'wetted perimeter'
+           print*, elemR(:,er_Volume),'volume'
+           print*, '-------------------Dynamics Data--------------------'
+           print*, elemR(:,er_Flowrate), 'flowrate'
+           print*, elemR(:,er_Velocity), 'velocity'
+           print*, elemR(:,er_FroudeNumber), 'froude Number'
+           print*, elemR(:,er_InterpWeight_uQ), 'timescale Q up'
+           print*, elemR(:,er_InterpWeight_dQ), 'timescale Q dn'
+           print*, '..................faces..........................'
+           print*, faceR(:,fr_Area_u), 'face area up'
+           print*, faceR(:,fr_Area_d), 'face area dn'
+           print*, faceR(:,fr_Head_u), 'face head up'
+           print*, faceR(:,fr_Head_d), 'face head dn'
+           print*, faceR(:,fr_Flowrate), 'face flowrate'
+           print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
+           print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
+           call execute_command_line('')
         end if
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_setup
     !
     !==========================================================================
@@ -165,7 +166,8 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_from_linkdata'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Setting the local image value
         image = this_image()
@@ -191,14 +193,15 @@ contains
 
             !% HACK we need to add a small/zero volume adjustment here
 
-            call init_IC_get_channel_pipe_velocity (thisLink)
+            call init_IC_get_channel_conduit_velocity (thisLink)
 
         end do
 
         !% deallocate the temporary array
         deallocate(packed_link_idx)
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_linkdata
     !
     !==========================================================================
@@ -220,7 +223,8 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% type of initial depth type
         LdepthType  => link%I(thisLink,li_InitialDepthType)
@@ -305,11 +309,12 @@ contains
             case default
                 print*, 'In ', subroutine_name
                 print*, 'error: unexpected initial depth type, ', LdepthType,'  in link, ', thisLink
-                stop
+                stop "in " // subroutine_name
 
         end select
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_depth_from_linkdata
     !
     !==========================================================================
@@ -326,7 +331,8 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !%  handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
@@ -336,7 +342,8 @@ contains
             elemR(:,er_Roughness)      = link%R(thisLink,lr_Roughness)
         endwhere
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_flow_roughness_from_linkdata
     !
     !==========================================================================
@@ -354,7 +361,8 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -379,7 +387,6 @@ contains
                     elemYN(:,eYN_canSurcharge)  =  .true.
                 endwhere
 
-
             case (lweir)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
@@ -400,18 +407,19 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'pumps are not handeled yet'
-                stop
+                stop "in " // subroutine_name
 
             case default
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unexpected link, ', linkType,'  in the network'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_elemtype_from_linkdata
     !
     !==========================================================================
@@ -429,7 +437,8 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -441,8 +450,8 @@ contains
                 call init_IC_get_channel_geometry (thisLink)
 
             case (lpipe)
-                !% get geomety data for pipes
-                call init_IC_get_pipe_geometry (thisLink)
+                !% get geomety data for conduits
+                call init_IC_get_conduit_geometry (thisLink)
 
             case (lweir)
                 !% get geomety data for weirs
@@ -456,18 +465,19 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'pumps are not handeled yet'
-                stop
+                stop "in " // subroutine_name
 
             case default
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unexpected link, ', linkType,'  in the network'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_geometry_from_linkdata
     !
     !==========================================================================
@@ -486,7 +496,8 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_channel_geometry'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -512,13 +523,12 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
+                    elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
                                                 link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)    = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
-                    elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
-
+                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)     = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
+                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                 endwhere
 
             case (lTrapezoidal)
@@ -549,118 +559,114 @@ contains
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
-                    elemR(:,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
+                    elemR(:,er_FullDepth)    = setting%Limiter%Channel%LargeDepthFactor * &
                                                 link%R(thisLink,lr_BreadthScale)
-                    elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                    elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)    = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
+                    elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+                    elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)     = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
                                 (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
                                 elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
-                    elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
+                    elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                 endwhere
 
             case default
 
                 print*, 'In, ', subroutine_name
                 print*, 'Only rectangular channel geometry is handeled at this moment'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_channel_geometry
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine init_IC_get_pipe_geometry (thisLink)
+    subroutine init_IC_get_conduit_geometry (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the geometry data for pipe links
+    !% get the geometry data for conduit links
     !% and calculate element volumes
     !
     !--------------------------------------------------------------------------
-
+        integer :: ii
         integer, intent(in) :: thisLink
         integer, pointer    :: geometryType
 
-        character(64) :: subroutine_name = 'init_IC_get_pipe_geometry'
+        character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
 
         select case (geometryType)
 
-        case (lRectangular)
+        ! case (lRectangular)
 
-            where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+        !     where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
 
-                elemI(:,ei_geometryType)    = rectangular
+        !         elemI(:,ei_geometryType)    = rectangular_closed
 
-                !% store geometry specific data
-                elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+        !         !% store geometry specific data
+        !         elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
 
-                elemR(:,er_BreadthMax)      = elemSGR(:,eSGR_Rectangular_Breadth)
-                elemR(:,er_Area)            = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_Depth)
-                elemR(:,er_Area_N0)         = elemR(:,er_Area)
-                elemR(:,er_Area_N1)         = elemR(:,er_Area)
-                elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
-                elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_FullArea)        = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
-                elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
-            endwhere
+        !         elemR(:,er_BreadthMax)      = elemSGR(:,eSGR_Rectangular_Breadth)
+        !         elemR(:,er_Area)            = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_Depth)
+        !         elemR(:,er_Area_N0)         = elemR(:,er_Area)
+        !         elemR(:,er_Area_N1)         = elemR(:,er_Area)
+        !         elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
+        !         elemR(:,er_Volume_N0)       = elemR(:,er_Volume)
+        !         elemR(:,er_Volume_N1)       = elemR(:,er_Volume)
+        !         elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
+        !         elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
+        !         elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+        !         elemR(:,er_FullArea)        = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
+        !         elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
+        !     endwhere
 
-        case (lTrapezoidal)
+        case (lCircular)
 
-            where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+            do ii = 1,N_elem(this_image())
+                if (elemI(ii,ei_link_Gidx_SWMM) == thisLink) then
 
-                elemI(:,ei_geometryType) = trapezoidal
+                    elemI(ii,ei_geometryType)    = circular
 
-                !% store geometry specific data
-                elemSGR(:,eSGR_Trapezoidal_Breadth)    = link%R(thisLink,lr_BreadthScale)
-                elemSGR(:,eSGR_Trapezoidal_LeftSlope)  = link%R(thisLink,lr_LeftSlope)
-                elemSGR(:,eSGR_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
+                    !% store geometry specific data
+                    elemSGR(ii,eSGR_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(ii,eSGR_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
 
-                ! (Bottom width + averageSlope * Depth)*Depth
-                elemR(:,er_Area)         = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                            (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
-                            elemR(:,er_Depth)) * elemR(:,er_Depth)
+                    elemR(ii,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
+                    elemR(ii,er_Zcrown)                = elemR(ii,er_Zbottom) + elemR(ii,er_FullDepth)
+                    elemR(ii,er_ZbreadthMax)           = elemR(ii,er_FullDepth)/twoR + elemR(ii,er_Zbottom)
+                    elemR(ii,er_FullArea)              = pi * elemSGR(ii,eSGR_Circular_Radius) ** twoR
+                    elemR(ii,er_FullVolume)            = elemR(ii,er_FullArea) * elemR(ii,er_Length)
+                    elemR(ii,er_FullHydDepth)          = elemR(ii,er_FullDepth) 
+                    elemR(ii,er_FullPerimeter)         = elemR(ii,er_FullArea) / (onefourthR * elemR(ii,er_FullDepth))
 
-                elemR(:,er_Area_N0)      = elemR(:,er_Area)
-                elemR(:,er_Area_N1)      = elemR(:,er_Area)
-                elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
-                elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
-                elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
-                ! Bottom width + (lslope + rslope) * FullDepth
-
-                !% HACK: not sure if it is the correct breadth max for trapezoidal conduits
-                elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Trapezoidal_Breadth) + (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + &
-                            elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
-                elemR(:,er_FullDepth)   = link%R(thisLink,lr_FullDepth)
-                elemR(:,er_ZbreadthMax) = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
-                elemR(:,er_Zcrown)      = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                elemR(:,er_FullArea)    = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                            (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
-                            elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
-                elemR(:,er_FullVolume)  = elemR(:,er_FullArea) * elemR(:,er_Length)
-            endwhere
-
+                    elemR(ii,er_Area)                  = circular_area_from_depth_singular(ii)
+                    elemR(ii,er_Area_N0)               = elemR(ii,er_Area)
+                    elemR(ii,er_Area_N1)               = elemR(ii,er_Area)
+                    elemR(ii,er_Volume)                = elemR(ii,er_Area) * elemR(ii,er_Length)
+                    elemR(ii,er_Volume_N0)             = elemR(ii,er_Volume)
+                    elemR(ii,er_Volume_N1)             = elemR(ii,er_Volume)
+                end if
+            end do
+            
         case default
 
             print*, 'In, ', subroutine_name
-            print*, 'Only rectangular pipe geometry is handeled at this moment'
-            stop
+            print*, 'Only rectangular, and circular conduit geometry is handeled at this moment'
+            stop "in " // subroutine_name
 
         end select
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
-    end subroutine init_IC_get_pipe_geometry
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+    end subroutine init_IC_get_conduit_geometry
     !
     !==========================================================================
     !==========================================================================
@@ -678,7 +684,8 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_weir_geometry'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% pointer to specific weir type
         specificWeirType => link%I(thisLink,li_weir_type)
@@ -725,7 +732,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'roadway weir is not handeled yet'
-                stop
+                stop "in " // subroutine_name
 
             case (lVnotchWeir)
 
@@ -764,11 +771,12 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown weir type, ', specificWeirType,'  in network'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_IC_get_weir_geometry
     !
@@ -788,7 +796,8 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% pointer to specific orifice type
         specificOrificeType => link%I(thisLink,li_orif_type)
@@ -815,7 +824,7 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown orifice type, ', specificOrificeType,'  in network'
-                stop
+                stop "in " // subroutine_name
 
         end select
 
@@ -840,25 +849,26 @@ contains
             case (lCircular)
                 print*, 'In ', subroutine_name
                 print *, 'error, the circular orifice is not yet implemented'
-                stop
+                stop "in " // subroutine_name
 
             case default
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
-                stop
+                stop "in " // subroutine_name
             end select
 
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_orifice_geometry
     !
     !==========================================================================
     !==========================================================================
     !
-    subroutine init_IC_get_channel_pipe_velocity (thisLink)
+    subroutine init_IC_get_channel_conduit_velocity (thisLink)
     !--------------------------------------------------------------------------
     !
-    !% get the velocity of channel and pipes
+    !% get the velocity of channel and conduits
     !% and sell all other velocity to zero
     !
     !--------------------------------------------------------------------------
@@ -866,10 +876,11 @@ contains
         integer, intent(in) :: thisLink
         integer, pointer    :: specificWeirType
 
-        character(64) :: subroutine_name = 'init_IC_get_channel_pipe_velocity'
+        character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% HACK: this might not be right
         where ( (elemI(:,ei_link_Gidx_SWMM) == thisLink) .and. &
@@ -890,9 +901,10 @@ contains
 
         endwhere
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-    end subroutine init_IC_get_channel_pipe_velocity
+    end subroutine init_IC_get_channel_conduit_velocity
     !
     !==========================================================================
     !==========================================================================
@@ -910,7 +922,8 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_from_nodedata'
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Setting the local image value
         image = this_image()
@@ -933,7 +946,8 @@ contains
         !% deallocate the temporary array
         deallocate(packed_nJm_idx)
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_nodedata
     !
     !==========================================================================
@@ -955,7 +969,8 @@ contains
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
     !--------------------------------------------------------------------------
 
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !%................................................................
         !% Junction main
@@ -1028,7 +1043,7 @@ contains
                 ! BRHbugfix end
 
                 !% BRHbugfix 20210813 start: moved these from inside select
-                ! set the common geometry for pipes and non-pipes that are independent of cross-section shape
+                ! set the common geometry for conduits and non-conduits that are independent of cross-section shape
                 if (link%I(BranchIdx,li_link_type) == lPipe) then
                     elemYN(JBidx,eYN_canSurcharge)  = .true.
                     elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
@@ -1066,7 +1081,7 @@ contains
                         elemR(JBidx,er_ZbreadthMax) = zeroR
 
                         !% HACK: not sure if we need surcharge condition for junction branches
-                        !% ANSWER -- yes, we do need surcharge on JB for pipes, but should be more general
+                        !% ANSWER -- yes, we do need surcharge on JB for conduits, but should be more general
                         !% That is, does not need to be in rectangular sectoin
                         ! BRHbugfix 20210813 if (link%I(BranchIdx,li_link_type) == lPipe) then
                             ! BRHbugfix 20210813 elemYN(JBidx,eYN_canSurcharge)  = .true.
@@ -1155,7 +1170,7 @@ contains
 
                         print*, 'In, ', subroutine_name
                         print*, 'Only rectangular geometry is handeled at this moment'
-                        stop
+                        stop "in " // subroutine_name
 
                 end select
 
@@ -1216,7 +1231,8 @@ contains
         ! call the standard geometry update for junction branches
         call geo_assign_JB (ALLtm, ep_JM_ALLtm) !BRHbugfix 20210813    
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_junction_data
     !
     !==========================================================================
@@ -1233,7 +1249,8 @@ contains
         character(64)       :: subroutine_name = 'init_IC_solver_select'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
         select case (solver)
@@ -1268,7 +1285,8 @@ contains
 
 
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_solver_select
     !
     !==========================================================================
@@ -1286,7 +1304,8 @@ contains
         character(64)       :: subroutine_name = 'init_IC_small_values_diagnostic_elements'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         where ( (elemI(:,ei_QeqType) == diagnostic) .or. (elemI(:,ei_HeqType) == diagnostic))
             !% HACK: settings%ZeroValues should be used here
@@ -1298,7 +1317,8 @@ contains
             elemR(:,er_Head)     = 1.0e-6
         endwhere
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_small_values_diagnostic_elements
     !
     !==========================================================================
@@ -1316,7 +1336,8 @@ contains
         integer, pointer ::  Npack, thisP(:), tM
         integer :: ii, kk, tB
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
         !% Q-diagnostic elements will have minimum interp weights for Q
@@ -1365,7 +1386,8 @@ contains
             end do
         end if
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_diagnostic_interpolation_weights
     !
     !==========================================================================
@@ -1381,7 +1403,8 @@ contains
         character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (setting%SmallVolume%UseSmallVolumes) then
             where (elemI(:,ei_geometryType) == rectangular)
@@ -1397,7 +1420,8 @@ contains
             elemR(:,er_SmallVolume) = zeroR
         end if
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_set_SmallVolumes
     !
     !==========================================================================
@@ -1413,11 +1437,13 @@ contains
         character(64)       :: subroutine_name = 'init_IC_set_zero_lateral_inflow'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         elemR(1:size(elemR,1)-1,er_FlowrateLateral) = zeroR
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_set_zero_lateral_inflow
     !
     !==========================================================================
@@ -1433,11 +1459,13 @@ contains
         character(64)       :: subroutine_name = 'init_IC_oneVectors'
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%initial_condition) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         elemR(1:size(elemR,1)-1,er_ones) = oneR
 
-        if (setting%Debug%File%initial_condition) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_oneVectors
     !
     !==========================================================================

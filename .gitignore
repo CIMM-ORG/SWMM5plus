@@ -11,6 +11,7 @@
 *.mod0
 *log*
 *.[0-9]*
+*.txt
 
 # Dependencies
 cmake*

@@ -1,4 +1,4 @@
-Module output
+module output
 
     use define_indexes
     use define_keys
@@ -21,6 +21,7 @@ Module output
     public output_write_node_files
     public output_combine_links
     public output_move_node_files
+    public output_update_swmm_out
 
 contains
 
@@ -28,154 +29,125 @@ contains
 
     subroutine output_read_csv_link_names()
 
+        integer              :: rc, fu, pp, jj, kk, link_idx, phantom_counter
+        logical              :: no_file = .false.
         character(len = 250) :: link_name
-        integer :: rc, fu, ii, jj, kk, link_temp_idx, temp_node_idx
-        integer :: additional_rows, phantom_counter
-        logical :: no_file = .false.
-        character(64) :: subroutine_name = 'output_read_csv_link_names'
+        character(64)        :: subroutine_name = 'output_read_csv_link_names'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(), subroutine_name
 
-
-        if (setting%Partitioning%PartitioningMethod == BQuick) then
-            additional_rows = num_images() - 1
-        end if
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (trim(setting%Output%links_file) == "") no_file = .true.
+        link_output_idx = nullvalueI
         rc = -1
-        ii = 1
-        kk = 1
 
         if (.not. no_file) then
             !% open csv file of link names
             open(action='read', file=trim(setting%Output%links_file), iostat=rc, newunit=fu)
             if (rc /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(setting%Output%links_file), '" failed: ', rc
-                stop
+                stop "in " // subroutine_name
             end if
         end if
 
-        !% if links_file is empty or no file is not specified we output all the nodes which
-        !% are written here in the specific format which is handled below
         if (no_file) then
-            if (rc /= 0) then
-                do while(ii <= N_link)
-                    phantom_counter = 0
-                    link_temp_idx = kk
-                    link_output_idx(ii) = link_temp_idx
-                    ii = ii + 1
-                    kk = kk + 1
-
-                    do jj = N_link - additional_rows+1, N_link
-                        if (link_temp_idx == link%I(jj, li_parent_link)) then
-                            link_output_idx(ii) = jj
-                            ii = ii + 1
+            !% if links_file is not specified we output all the links
+            pp = 1 !% parent link
+            do link_idx = 1, SWMM_N_link
+                phantom_counter = 0
+                link_output_idx(pp) = link_idx
+                !% only parent links have associated phantoms
+                if (link%I(link_idx, li_parent_link) == link_idx) then
+                    do jj = SWMM_N_link+1, N_link
+                        if (link%I(jj, li_parent_link) == link_idx) then
+                            link_output_idx(pp+phantom_counter+1) = jj
                             phantom_counter = phantom_counter + 1
                         end if
                     end do
-                    link%I(link_temp_idx,li_num_phantom_links) = phantom_counter
-                end do
-            end if
-        end if
-
-        !% loop through till the end of the file and save the valid links
-        do
-            !% read in the link name from the csv
-            if (.not. no_file) read(fu, *, iostat = rc) link_name
-            if (rc /= 0) exit
-
-            !% converting link name to link idx using the interface
-            link_temp_idx = interface_find_object(object_type=3, object_name = link_name)
-            phantom_counter = 0
-
-            !% if it is an invalid link found while reading skip the loop and read the next line
-            if (link_temp_idx == 0) then
-                cycle
-            end if
-
-            !% store index of link for output and increase index
-            link_output_idx(ii) = link_temp_idx
-            ii = ii + 1
-
-            !% checking if the link is spit across processors if so then store the id of the phantom link for output
-
-            do jj = N_link - additional_rows+1, N_link
-
-                if (link_temp_idx == link%I(jj, li_parent_link)) then
-                    link_output_idx(ii) = jj
-                    ii = ii + 1
-                    phantom_counter = phantom_counter + 1
+                end if
+                pp = pp + phantom_counter + 1
+                link%I(link_idx,li_num_phantom_links) = phantom_counter
+            end do
+        else
+            pp = 1 ! parent link
+            !% loop through till the end of the file and save the valid links
+            do
+                !% read in the link name from the csv
+                read(fu, *, iostat = rc) link_name
+                if (rc /= 0) then
+                    close(fu)
+                    exit
                 end if
 
+                !% converting link name to link idx using the interface
+                link_idx = interface_find_object(object_type=API_LINK, object_name = link_name)
+                if (link_idx == 0) then
+                    write(error_unit, "(A)") "Link " // trim(link_name) // " in " // &
+                        trim(setting%Output%links_file) // " couldn't be found"
+                    exit
+                end if
+
+                !% store index of link for output and increase index
+                link_output_idx(pp) = link_idx
+                pp = pp + 1
+
+                !% checking if the link is split across processors if
+                !% so then store the id of the phantom link for output
+                phantom_counter = 0
+                if (link%I(link_idx, li_parent_link) == link_idx) then
+                    do jj = SWMM_N_link+1, N_link
+                        if (link%I(jj, li_parent_link) == link_idx) then
+                            link_output_idx(pp+phantom_counter+1) = jj
+                            phantom_counter = phantom_counter + 1
+                        end if
+                    end do
+                end if
+                pp = pp + phantom_counter + 1
+                link%I(link_idx,li_num_phantom_links) = phantom_counter
             end do
-
-            link%I(link_temp_idx,li_num_phantom_links) = phantom_counter
-
-        end do
-
-        if (.not. no_file) close(fu)
-        link_output_idx(ii:N_link) = nullvalueI
-
-
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        end if
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine output_read_csv_link_names
 
     subroutine output_read_csv_node_names()
         character(len = 250) :: node_name
-        integer :: rc, fu, ii, node_temp_idx, additional_rows
-        logical :: no_file = .false.
+        integer :: rc, fu, ii, node_idx
         character(64) :: subroutine_name = 'output_read_csv_node_names'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Partitioning%PartitioningMethod == BQuick) then
-            additional_rows = num_images() - 1
-        end if
-
-        !% Output all nodes if user does not specify CSV file
-        if (trim(setting%Output%nodes_file) == "") no_file = .true.
-        rc = -1
-        ii = 1
-
-        if (.not. no_file) then
+        if (trim(setting%Output%nodes_file) == "") then
+            !% Output all nodes if user does not specify CSV file
+            node_output_idx = (/ (ii, ii =1, SWMM_N_node)/)
+        else
+            ii = 1
             open(action='read', file=trim(setting%Output%nodes_file), iostat=rc, newunit=fu)
-            if (rc /= 0) then
-                write (error_unit, '(3a, i0)') 'Opening file "', trim(setting%Output%nodes_file), '" failed: ', rc
-                stop
-            end if
+            do
+                read(fu, *, iostat = rc) node_name
+                if (rc /= 0) then
+                    node_output_idx(ii:) = nullvalueI
+                    close(fu)
+                    exit
+                end if
+
+                node_idx = interface_find_object(object_type=API_NODE, object_name = node_name)
+                if (node_idx == 0) then
+                    write(error_unit, "(A)") "Node " // trim(node_name) // " in " // &
+                    trim(setting%Output%nodes_file) // " couldn't be found"
+                    stop "in " // subroutine_name
+                end if
+                node_output_idx(ii) = node_idx
+                ii = ii + 1
+            end do
         end if
 
-        if (rc /= 0) then
-            !% Output all nodes if nodes_file is empty
-            node_output_idx = (/ (ii, ii =1, N_node - additional_rows)/)
-            ii = N_node+1
-        end if
-
-        do
-            !% read in the node name from the csv
-            if (.not. no_file) read(fu, *, iostat = rc) node_name
-            if (rc /= 0) exit
-
-            !% find the idx from the interface
-            node_temp_idx = interface_find_object(object_type=2, object_name = node_name)
-
-            !% if not found node_temp_idx will equal 0 so we cycle and don't store the incorrect name
-            if (node_temp_idx == 0) then
-                cycle
-            end if
-
-            !% store in node_output_idx and increment ii
-            node_output_idx(ii) = node_temp_idx
-            ii = ii + 1
-        end do
-
-        if (.not. no_file) close(fu)
-        !% N_node_output holds the number of node idx stored
-        node_output_idx(ii:N_node) = nullvalueI
-
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine output_read_csv_node_names
 
@@ -191,17 +163,18 @@ contains
         character(64) :: subroutine_name = 'output_create_link_files'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
 
         do ii=1, size(link%P%have_output)
 
             !% check if the link is a phantom link and if so find original link name and open correct file for the correct processor
             !% otherwise open file in the usual format of "link name_imageID.csv"
             if (link%P%have_output(ii) > size(link%names(:))) then
-                write(str_idx, '(i5)') link%P%have_output(ii)
+                write(str_idx, '(i5.5)') link%P%have_output(ii)
                 temp_link_idx = link%P%have_output(ii)
                 file_name = "debug_output/link/"//trim(link%names(link%I(temp_link_idx,li_parent_link))%str) &
                     //"_"//trim(str_image)//"_"//trim(str_idx)//".csv"
@@ -215,6 +188,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
             !% Write the header of the file, set end for next write and then close file
@@ -223,9 +197,9 @@ contains
             close(fu)
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine output_create_link_files
-
 
     subroutine output_create_node_files
         integer :: ii,fu, open_status
@@ -234,10 +208,11 @@ contains
         character(len = 5)   :: str_image
         character(64) :: subroutine_name = 'output_create_node_files'
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Get current image as a string
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
 
         do ii=1, size(node%P%have_output)
 
@@ -249,6 +224,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
             !% Write the header, this endfile and close the file
@@ -257,7 +233,8 @@ contains
             close(fu)
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine output_create_node_files
 
 
@@ -274,9 +251,10 @@ contains
         character(64) :: subroutine_name = 'output_write_link_files'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
         time_secs = setting%Time%Now
         time_epoch = util_datetime_secs_to_epoch(time_secs)
         call util_datetime_decodedate(time_epoch, yr, mnth, dy)
@@ -297,7 +275,7 @@ contains
             !% check if the link is a phantom link and if so find original link name and open correct file for the correct processor
             !% otherwise open file in the usual format of "link name_imageID.csv"
             if (link%P%have_output(ii) > size(link%names(:))) then
-                write(str_idx, '(i5)') link%P%have_output(ii)
+                write(str_idx, '(i5.5)') link%P%have_output(ii)
                 temp_link_idx = link%P%have_output(ii)
                 file_name = "debug_output/link/"//trim(link%names(link%I(temp_link_idx,li_parent_link))%str) &
                     //"_"//trim(str_image)//"_"//trim(str_idx)//".csv"
@@ -326,7 +304,8 @@ contains
 
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine output_write_link_files
 
     subroutine output_write_node_files
@@ -340,10 +319,11 @@ contains
         character(64) :: subroutine_name = 'output_write_node_files'
 
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% converter image ID to string, as well as get current time
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
         time_secs = setting%Time%Now
         time_epoch = util_datetime_secs_to_epoch(time_secs)
         call util_datetime_decodedate(time_epoch, yr, mnth, dy)
@@ -361,6 +341,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
             !% temp value for easier to read code
@@ -397,7 +378,8 @@ contains
             close(fu)
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine output_write_node_files
 
@@ -448,7 +430,7 @@ contains
 
                 if (first_iteration(pp)) then
                     !% define parent filename
-                    write(str_image, '(i5)') link%I(temp_link_idx,li_P_image)
+                    write(str_image, '(i5.5)') link%I(temp_link_idx,li_P_image)
                     parent_file_name = "debug_output/link/"// &
                         trim(link%names(link%I(temp_link_idx,li_parent_link))%str) &
                             //"_"//trim(str_image)//".csv"
@@ -458,6 +440,7 @@ contains
                     open(newunit=file_idx(ii), action='read', file=parent_file_name, iostat=rc)
                     if (rc /= 0) then
                         write (error_unit, '(3a, i0)') 'Opening file "', trim(parent_file_name), '" failed: ', rc
+                        stop "in " // subroutine_name
                     end if
                     read (file_idx(ii), *, iostat=rc) str_time ! advance one line (skip header)
 
@@ -471,6 +454,7 @@ contains
                         form = 'formatted', action = 'write', iostat = open_status)
                     if (open_status /= 0) then
                         write (error_unit, '(3a, i0)') 'Opening file "', trim(Final_File_NAME), '" failed: ', open_status
+                        stop "in " // subroutine_name
                     end if
                     write(file_idx(link_output_idx_length+pp), *) "Timestamp,Time_In_Secs,flowrate"
 
@@ -479,8 +463,8 @@ contains
                     if (link%I(temp_link_idx, li_num_phantom_links) > 0) then
                         do jj = 1, link%I(temp_link_idx, li_num_phantom_links)
                             temp_phantom_link = link_output_idx(ii+jj)
-                            write(str_image, '(i5)') link%I(temp_phantom_link,li_P_image)
-                            write(str_idx, '(i5)')   temp_phantom_link
+                            write(str_image, '(i5.5)') link%I(temp_phantom_link,li_P_image)
+                            write(str_idx, '(i5.5)')   temp_phantom_link
                             phantom_file_name = "debug_output/link/"// &
                                 trim(link%names(link%I(temp_phantom_link,li_parent_link))%str) &
                                 //"_"//trim(str_image)//"_"//trim(str_idx)//".csv"
@@ -490,7 +474,7 @@ contains
                             open(newunit=file_idx(ii+jj), action='read', file=phantom_file_name, iostat=rc)
                             if (rc /= 0) then
                                 write (error_unit, '(3a, i0)') 'Opening file "', trim(phantom_file_name), '" failed: ', rc
-                                cycle
+                                stop "in " // subroutine_name
                             end if
                             read (file_idx(ii+jj), *, iostat=rc) str_time ! advance one line (skip header)
                         end do
@@ -532,8 +516,6 @@ contains
                         write(file_idx(link_output_idx_length+pp), '(A)',     advance = 'no') ','
                         write(file_idx(link_output_idx_length+pp), '(*(G0.6 : ","))') avg_flowrate(pp)
 
-                        !% Stage entry for .out
-                        call inteface_update_linkResult(pp, api_output_link_flow, real(avg_flowrate(pp),8))
                         avg_flowrate(pp) = 0
                         tt(pp) = tt(pp) + 1
                     end if
@@ -542,8 +524,6 @@ contains
                 ii = ii + link%I(temp_link_idx, li_num_phantom_links) + 1
                 pp = pp + 1
             end do
-            !% Write line of .out
-            call interface_write_output_line(time_secs)
         end do
 
         do ii = 1, size(file_idx)
@@ -557,16 +537,18 @@ contains
     end subroutine output_combine_links
 
     subroutine output_move_node_files
-        integer :: ii,fu, open_status
+        integer :: ii, fu, open_status
         character(len = 250) :: file_name, file_name_new
         character(len = 100) :: node_name
         character(len = 5)   :: str_image
+        character(24) :: timestamp
         character(64) :: subroutine_name = 'output_move_node_files'
         !%--------------------------------------------------------------------------
-        if (setting%Debug%File%output) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Get current image as a string
-        write(str_image, '(i5)') this_image()
+        write(str_image, '(i5.5)') this_image()
 
         do ii=1, size(node%P%have_output)
 
@@ -578,8 +560,89 @@ contains
 
         end do
 
-        if (setting%Debug%File%output) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine output_move_node_files
+
+    subroutine output_update_swmm_out()
+        character(len = 250) :: fname
+        character(len = 24) :: timestamp
+        logical :: wrote_all_links = .false.
+        logical :: wrote_all_nodes = .false.
+        integer :: ii, rc, node_idx, link_idx
+        integer, allocatable :: fus_nodes(:), fus_links(:)
+        real(8) :: node_head, node_result
+        real(8) :: link_flowrate, link_result
+        real(8) :: timesecs
+        character(64) :: subroutine_name = 'output_update_swmm_out'
+        !%--------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if (this_image() == 1) then
+            allocate(fus_nodes(size(node%P%have_output)))
+            allocate(fus_links(size(link%P%have_output)))
+            fus_links = nullvalueI
+            fus_nodes = nullvalueI
+
+            do while(.not. (wrote_all_links .and. wrote_all_nodes))
+                do ii=1, size(node%P%have_output)
+                    node_idx = node%P%have_output(ii)
+                    if (fus_nodes(ii) == nullvalueI) then
+                        !% open files to process .out
+                        fname = "swmm5_output/node/"//trim(node%names(node_idx)%str)//".csv"
+                        open(action='read', file=trim(fname), iostat=rc, newunit=fus_nodes(ii))
+                        read(fus_nodes(ii), *, iostat = rc) timestamp
+                    end if
+
+                    read(fus_nodes(ii), "(A,2F10.8)", iostat = rc) timestamp, timesecs, node_head
+                    if (rc /= 0) then
+                        wrote_all_nodes = .true.
+                        close(fus_nodes(ii))
+                        !% Write line of .out
+                        exit
+                    end if
+                    node_result = node_head - node%R(node_idx,nr_Zbottom)
+                    !% stage values in .out
+                    call interface_update_nodeResult(node_idx, api_output_node_depth, node_result)
+                end do
+
+                do ii=1, size(link%P%have_output)
+                    link_idx = link%P%have_output(ii)
+                    if (fus_links(ii) == nullvalueI) then
+                        !% open files to process .out
+                        fname = "swmm5_output/link/"//trim(link%names(link_idx)%str)//".csv"
+                        open(action='read', file=trim(fname), iostat=rc, newunit=fus_links(ii))
+                        read(fus_links(ii), *, iostat = rc) timestamp
+                    end if
+
+                    read(fus_links(ii), "(A,2F10.8)", iostat = rc) timestamp, timesecs, link_flowrate
+                    if (rc /= 0) then
+                        wrote_all_links = .true.
+                        close(fus_links(ii))
+                        !% Write line of .out
+                        exit
+                    end if
+                    link_result = link_flowrate
+                    !% stage values in .out
+                    call interface_update_linkResult(link_idx, api_output_link_flow, link_result)
+                end do
+                call interface_write_output_line(timesecs)
+            end do
+
+            deallocate(fus_links)
+            deallocate(fus_nodes)
+
+            ! do ii = 1, size(link%P%have_output)
+            !     link_idx = link%P%have_output(ii)
+            !     call interface_export_link_results(link_idx)
+            ! end do
+        end if
+
+        if (setting%Debug%File%output) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        
+    end subroutine output_update_swmm_out
 end module output
 

@@ -353,7 +353,11 @@ module lowlevel_rk2
         real(8), pointer :: fQ(:), fUdn(:), fUup(:), fAdn(:), fAup(:)
         real(8), pointer :: fHdn(:), fHup(:), eKsource(:)
         integer, pointer :: iup(:), idn(:), thisP(:)
+        character(64)    :: subroutine_name = "ll_momentum_source_CC"
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%lowlevel_rk2) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
         thisP    => elemP(1:Npack,thisCol)
         fQ       => faceR(:,fr_Flowrate)
         fUdn     => faceR(:,fr_Velocity_d)
@@ -375,7 +379,7 @@ module lowlevel_rk2
             case (T20)
                 delta = onesixthR
             case default
-                stop
+                stop "in " // subroutine_name
             !% Error
         end select
 
@@ -387,6 +391,9 @@ module lowlevel_rk2
                     - fAup(idn(thisP)) * fHup(idn(thisP))  &
                     ) &
                 + eKsource(thisP)
+
+        if (setting%Debug%File%lowlevel_rk2) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine ll_momentum_source_CC
     !%
     !%==========================================================================
@@ -667,7 +674,7 @@ module lowlevel_rk2
         integer, intent(in) :: whichTM
         integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
         integer, pointer :: Npack
-        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) ! BRHbugfix 20210811 
+        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) ! BRHbugfix 20210811
         real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), vMax ! BRHbugfix 20210829
         real(8), pointer :: eVolume(:), dt  !BRHbugfix 20210829
         logical, pointer :: isAdhocFlowrate(:)
@@ -684,7 +691,7 @@ module lowlevel_rk2
         eVelocity    => elemR(:,er_Velocity)
         eFlow        => elemR(:,er_Flowrate)
         eVolume      => elemR(:,er_Volume)       ! BRHbugfix 20210829
-        
+
         fFlow        => faceR(:,fr_Flowrate)
         iFaceUp      => elemI(:,ei_Mface_uL) !% BRHbugfix 20210811
         iFaceDn      => elemI(:,ei_Mface_dL)!% BRHbugfix 20210811

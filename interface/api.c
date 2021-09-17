@@ -385,12 +385,18 @@ int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value
         *value = Link[k].node1;
     else if (attr == link_node2)
         *value = Link[k].node2;
+    else if (attr == link_offset1)
+        *value = FTTOM(Link[k].offset1);
+    else if (attr == link_offset2)
+        *value = FTTOM(Link[k].offset2);
     else if (attr == link_xsect_type)
         *value = Link[k].xsect.type;
     else if (attr == link_xsect_wMax)
         *value = FTTOM(Link[k].xsect.wMax);
     else if (attr == link_xsect_yBot)
         *value = FTTOM(Link[k].xsect.yBot);
+    else if (attr == link_xsect_yFull)
+        *value = FTTOM(Link[k].xsect.yFull);
     else if (attr == link_q0)
         *value = CFTOCM(Link[k].q0);
     else if (attr == conduit_roughness)
@@ -683,7 +689,6 @@ int DLLEXPORT api_export_link_results(void* f_api, int link_idx)
 
     for ( period = 1; period <= Nperiods; period++ )
     {
-        printf("printing period %d link %d\n", period, link_idx);
         output_readDateTime(period, &days);
         datetime_dateToStr(days, theDate);
         datetime_timeToStr(days, theTime);

@@ -36,7 +36,8 @@ module diagnostic_elements
         integer, pointer :: thisCol, Npack, facePackCol
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'diagnostic_toplevel'
-        if (setting%Debug%File%diagnostic_elements) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%diagnostic_elements) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         !%
         thisCol => col_elemP(ep_Diag)
@@ -47,7 +48,8 @@ module diagnostic_elements
             call face_interpolation (fp_Diag)
         end if
 
-        if (setting%Debug%File%diagnostic_elements)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%diagnostic_elements)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine diagnostic_toplevel
     ! %
     !%==========================================================================

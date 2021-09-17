@@ -9,13 +9,13 @@ module update
 
     implicit none
 
-    !%----------------------------------------------------------------------------- 
+    !%-----------------------------------------------------------------------------
     !% Description:
     !% Updates values during timeloop of hydraulics.
     !%
 
     private
-    
+
     public :: update_auxiliary_variables
     public :: update_Froude_number_junction_branch
 
@@ -28,16 +28,17 @@ module update
     !%
     subroutine update_auxiliary_variables (whichTM)
         !%-----------------------------------------------------------------------------
-        !% Description: 
-        !% 
+        !% Description:
+        !%
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: whichTM  !% indicates which Time marching method
         integer, pointer :: thisCol_all
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'update_auxiliary_variables'
-        if (setting%Debug%File%update) print *, '*** enter ', this_image(), subroutine_name     
+        if (setting%Debug%File%update) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
-        !%  
+        !%
         !% update the head (non-surcharged) and geometry
 
         !print *, '---- in ',subroutine_name,'   y01'
@@ -89,28 +90,29 @@ module update
 
         !print *, '---- in ',subroutine_name,'   y06'
         !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
-   
-        if (setting%Debug%File%update)  print *, '*** leave ', this_image(), subroutine_name
+
+        if (setting%Debug%File%update)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine update_auxiliary_variables
     !%
     !%==========================================================================
     !% PRIVATE
-    !%==========================================================================   
-    !%  
+    !%==========================================================================
+    !%
     subroutine update_CC_element_flowrate (thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% 
+        !%
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisCol
         !%-----------------------------------------------------------------------------
         integer, pointer ::  Npack, thisP(:)
         real(8), pointer :: flowrate(:), velocity(:), area(:)
-        !%-----------------------------------------------------------------------------   
+        !%-----------------------------------------------------------------------------
         flowrate => elemR(:,er_Flowrate)
         velocity => elemR(:,er_Velocity)
-        area     => elemR(:,er_Area)   
-        !%-----------------------------------------------------------------------------    
+        area     => elemR(:,er_Area)
+        !%-----------------------------------------------------------------------------
         Npack => npack_elemP(thisCol)
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisCol)
@@ -119,9 +121,9 @@ module update
 
     end subroutine update_CC_element_flowrate
     !%
-    !%==========================================================================   
-    !%==========================================================================   
-    !%  
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine update_Froude_number_element (thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -135,18 +137,18 @@ module update
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
         !%-----------------------------------------------------------------------------
-    
+
         Npack => npack_elemP(thisCol)
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisCol)
             Froude(thisP) = velocity(thisP) / sqrt(grav * depth(thisP))
         end if
-    
+
     end subroutine update_Froude_number_element
-    !%   
-    !%==========================================================================   
-    !%==========================================================================   
-    !%  
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine update_Froude_number_junction_branch (thisCol_JM)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -164,8 +166,9 @@ module update
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
         BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%update) print *, '*** enter ', this_image(), subroutine_name
-    
+        if (setting%Debug%File%update) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
         Npack => npack_elemP(thisCol_JM)
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisCol_JM)
@@ -181,12 +184,13 @@ module update
             end do
         end if
 
-        if (setting%Debug%File%update)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%update)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine update_Froude_number_junction_branch
-    !%   
-    !%==========================================================================   
-    !%==========================================================================   
-    !%  
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine update_interpolation_weights_element (thisCol, whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -199,7 +203,8 @@ module update
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
         real(8), pointer :: Fr(:) !BRHbugfix20210811 test
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%update) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%update) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         velocity  => elemR(:,er_Velocity)
         wavespeed => elemR(:,er_WaveSpeed)
@@ -210,8 +215,8 @@ module update
         w_uG      => elemR(:,er_InterpWeight_uG)
         w_dG      => elemR(:,er_InterpWeight_dG)
         w_uH      => elemR(:,er_InterpWeight_uH)
-        w_dH      => elemR(:,er_InterpWeight_dH)   
-        
+        w_dH      => elemR(:,er_InterpWeight_dH)
+
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
         !%-----------------------------------------------------------------------------
         !% 2nd cases needed for handling surcharged AC elements and using the celerity
@@ -226,24 +231,24 @@ module update
             case default
                 print *, 'error, case default should not be reached.'
                 stop 3987
-        end select    
-    
+        end select
+
         Npack => npack_elemP(thisCol)
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisCol)
 
-            !% wavespeed at modified hydraulic depth (ell)    
+            !% wavespeed at modified hydraulic depth (ell)
             wavespeed(thisP) = sqrt(grav * depth(thisP))
-        
+
             !% modify wavespeed for surcharged AC cells
             if (whichTM .ne. ETM) then
                 Npack2 => npack_elemP(thisCol_AC)
                 if (Npack2 > 0) then
                     thisP2 => elemP(1:Npack2,thisCol_AC)
                     wavespeed(thisP2) = wavespeed(thisP2) * setting%ACmethod%Celerity%RC
-                end if    
+                end if
             end if
-    
+
 
             !% timescale interpolation weights for flowrate
             !% Modified from original approach by Froude number weighting
@@ -251,41 +256,41 @@ module update
             !% it needs to have an abs() e.g, abs(Fr(thisp)**3) *
             w_uQ(thisP) = - onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) - wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
             w_dQ(thisP) = + onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) + wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
-            
+
             !% apply limiters to timescales
             where (w_uQ(thisP) < zeroR)
                 w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
             endwhere
-            where (w_uQ(thisP) < setting%Limiter%InterpWeight%Minimum)    
+            where (w_uQ(thisP) < setting%Limiter%InterpWeight%Minimum)
                 w_uQ(thisP) = setting%Limiter%InterpWeight%Minimum
             endwhere
-            where (w_uQ(thisP) > setting%Limiter%InterpWeight%Maximum)    
+            where (w_uQ(thisP) > setting%Limiter%InterpWeight%Maximum)
                 w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
-            endwhere    
+            endwhere
 
             !BRHbugfix 20210829
             where (w_dQ(thisP) < zeroR)
                 w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
             endwhere
-            where (w_dQ(thisP) < setting%Limiter%InterpWeight%Minimum)    
+            where (w_dQ(thisP) < setting%Limiter%InterpWeight%Minimum)
                 w_dQ(thisP) = setting%Limiter%InterpWeight%Minimum
             endwhere
-            where (w_dQ(thisP) > setting%Limiter%InterpWeight%Maximum)    
+            where (w_dQ(thisP) > setting%Limiter%InterpWeight%Maximum)
                 w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
-            endwhere  
+            endwhere
             !BRHbugfix 20210829
-            
+
             !% timescale interpolation for geometry are identical to flowrate
             !% but may be modified elsewhere
             w_uG(thisP) = w_uQ(thisP)
             w_dG(thisP) = w_dQ(thisP)
-            
+
             !% head uses length scale interpolation
             !% This shouldn't need limiters.
-            
+
             w_uH(thisP) = onehalfR * length(thisP)
             w_dH(thisP) = onehalfR * length(thisP)
-         
+
         end if
 
         if (setting%FaceInterp%DownJBFaceInterp == dynamic) then
@@ -305,17 +310,18 @@ module update
         ! print *, elemR(ietmp(6), er_InterpWeight_dQ)
         ! print *, elemR(ietmp(7), er_InterpWeight_dQ)
 
-        if (setting%Debug%File%update)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%update)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine update_interpolation_weights_element
-    !%   
-    !%==========================================================================   
-    !%==========================================================================   
-    !%  
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
     subroutine update_interpolation_weights_ds_JB ()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% This is a test subroutine that violates no neighbour algorithm
-        !% This subroutine sets the interpolation wights in ds JB to its 
+        !% This subroutine sets the interpolation wights in ds JB to its
         !% conneceted link element
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'update_interpolation_weights_ds_JB'
@@ -323,7 +329,8 @@ module update
         integer, pointer :: Npack1, Npack2,  thisP1(:), thisP2(:)
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%update)  print *, '*** enter ', subroutine_name
+        if (setting%Debug%File%update)  &
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         w_uQ      => elemR(:,er_InterpWeight_uQ)
         w_dQ      => elemR(:,er_InterpWeight_dQ)
         w_uG      => elemR(:,er_InterpWeight_uG)
@@ -354,9 +361,10 @@ module update
             w_uH(thisP2) = oneR
         end if
 
-        if (setting%Debug%File%update)  print *, '*** leave ', subroutine_name
+        if (setting%Debug%File%update) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine update_interpolation_weights_ds_JB
-    !% 
+    !%
     !%==========================================================================
     !% END OF MODULE
     !%==========================================================================

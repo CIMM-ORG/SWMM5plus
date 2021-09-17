@@ -50,6 +50,7 @@ then
     mkdir $DDIR
 fi
 
+# --------------------------------------------------------------------------------------
 # Download json-fortran
 # --------------------------------------------------------------------------------------
 
@@ -67,10 +68,22 @@ then
     rm -r src
     cd $SWMM5PLUS_DIR
 fi
-# --------------------------------------------------------------------------------------
 
+# --------------------------------------------------------------------------------------
 # Download EPA-SWMM
 # --------------------------------------------------------------------------------------
+
+if [[ ! $skip_swmm = "true" ]]
+then
+    if [[ ! $skip_fortran = "true" ]]
+    then
+        if [[ -d interface/src ]]
+        then
+            rm -r interface/src
+        fi
+    fi
+fi
+
 if [ ! -d "$API_DIR/src" ]
 then
     echo
@@ -93,10 +106,11 @@ then
     mv Stormwater*/src "$API_DIR/src"
     rm -r Stormwater*
 fi
-# --------------------------------------------------------------------------------------
 
+# --------------------------------------------------------------------------------------
 # Install MPICH (required for OpenCAF)
 # --------------------------------------------------------------------------------------
+
 install_mpich()
 {
     if [ ! -e $MPICH_INSTALL/bin/mpifort ] # local mpich not found
@@ -149,10 +163,11 @@ install_mpich()
     fi
 
 }
-# --------------------------------------------------------------------------------------
 
+# --------------------------------------------------------------------------------------
 # Install CMAKE (required for OpenCAF)
 # --------------------------------------------------------------------------------------
+
 install_cmake()
 {
     if [ ! -e $CMAKE_INSTALL/bin/cmake ] # if local cmake not found
@@ -198,8 +213,8 @@ install_cmake()
         export CMAKE_EXEC=$CMAKE_INSTALL/bin/cmake
     fi
 }
-# --------------------------------------------------------------------------------------
 
+# --------------------------------------------------------------------------------------
 # Install OpenCAF
 # --------------------------------------------------------------------------------------
 
@@ -243,7 +258,6 @@ install_opencoarray_linux()
     fi
 }
 
-
 install_opencoarray_mac()
 {
     if [ ! -e $COARRAY_INSTALL/bin/caf ] || [ ! -e $COARRAY_INSTALL/bin/cafrun ]
@@ -259,8 +273,6 @@ install_opencoarray_mac()
         cd $SWMM5PLUS_DIR
     fi
 }
-
-
 
 opencoarray_prerequisite()
 {   # For simplicity, install everything in local directory.
@@ -289,7 +301,7 @@ then
     elif [[ $machine = "mac" ]]
     then
         install_opencoarray_mac # If user want to use Homebrew to install OpenCoarrays, please comment out this line
-        CAF="$COARRAY_INSTALL/bin/caf" #If user want to use Homebrew to install OpenCoarrays, please change the CAF path 
+        CAF="$COARRAY_INSTALL/bin/caf" #If user want to use Homebrew to install OpenCoarrays, please change the CAF path
     fi
 fi
 # --------------------------------------------------------------------------------------

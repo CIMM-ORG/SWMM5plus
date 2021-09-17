@@ -159,7 +159,7 @@ contains
 
         fu = this_image()
 
-        write(str_image, '(i5)') fu
+        write(str_image, '(i5.5)') fu
 
         call system("mkdir -p debug_output")
 
@@ -180,6 +180,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
             else if (elemI(ii,ei_elementType) == JM) then
@@ -195,6 +196,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
             else if (elemI(ii,ei_elementType) == JB) then
@@ -211,6 +213,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
             end if
@@ -248,7 +251,7 @@ contains
 
         fu = this_image()
 
-        write(str_image, '(i5)') fu
+        write(str_image, '(i5.5)') fu
 
         do ii = 1, N_face(this_image())
 
@@ -262,6 +265,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
 
@@ -297,7 +301,7 @@ contains
         call util_datetime_decodedate(time_epoch, yr, mnth, dy)
         call util_datetime_decodetime(time_epoch, hr, min, sec)
 
-        write(str_image, '(i5)') fu
+        write(str_image, '(i5.5)') fu
 
         do ii = 1, N_elem(this_image())
 
@@ -316,6 +320,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
 
@@ -333,6 +338,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
 
@@ -350,6 +356,7 @@ contains
 
                 if (open_status /= 0) then
                     write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
                 end if
 
             end if
@@ -364,11 +371,7 @@ contains
             close(fu)
         end do
 
-
-
         do ii = 1, N_face(this_image())
-
-
             write(str_elem_face_idx,'(I10)') faceI(ii,fi_Gidx)
 
             file_name = "debug_output/faceR/"//trim(str_image)//"_face_" &
@@ -379,6 +382,7 @@ contains
 
             if (open_status /= 0) then
                 write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                stop "in " // subroutine_name
             end if
 
             !write the data to the file
@@ -405,12 +409,12 @@ contains
 
         if (setting%Debug%File%utility_output) print *, "*** enter ", this_image(), subroutine_name
 
-        write(file_name, "(A,i5,A)") "debug_output/summary/summary_", this_image(), ".csv"
+        write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
 
         open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
             form = 'formatted', action = 'write', iostat = open_status)
 
-        write(fu, *) "In_Image,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
+        write(fu, *) "In_Processor,This_Time,CFL_max,dt,Velocity_Max,Wavespeed_Max"
         endfile(fu)
         close(fu)
 
@@ -420,7 +424,8 @@ contains
     subroutine util_output_report
         character(64) :: subroutine_name = "util_output_report"
 
-        if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%utility_output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (setting%Debug%Output) call util_output_report_summary()
 
@@ -430,7 +435,8 @@ contains
             call output_write_node_files()
         end if
 
-        if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%utility_output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_output_report
 
     subroutine util_output_report_summary()
@@ -441,10 +447,11 @@ contains
         character(512)    :: file_name
         character(64)    :: subroutine_name = "util_output_report_summary"
 
-        if (setting%Debug%File%utility_output) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%utility_output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         if (util_output_must_report() .and. setting%output%report) then
 
-            write(file_name, "(A,i5,A)") "debug_output/summary/summary_", this_image(), ".csv"
+            write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
 
             thisCol   = col_elemP(ep_CC_ALLtm)
             Npack     = npack_elemP(thisCol)
@@ -476,7 +483,8 @@ contains
             end if
         end if
 
-        if (setting%Debug%File%utility_output) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%utility_output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_output_report_summary
 
     function util_output_must_report() result(report)

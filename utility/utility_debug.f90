@@ -1,4 +1,4 @@
-Module utility_debug
+module utility_debug
 
   use define_indexes
   use define_keys
@@ -28,21 +28,23 @@ contains
     character(len = 5) :: str_image
     integer :: ii, jj, fu, rc, image
 
-    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
     !% fu stands for file unit which will be tied to the image and tells the system what file to open
     fu = this_image()
 
     !& here we create the file name that will be opened by the code
-    write(str_image, '(i5)') fu
+    write(str_image, '(i5.5)') fu
     file_name = 'debug/'//trim(file_name_input)//'_'//trim(str_image)//'.csv'
 
     !% opening the file, as well as error handing if the open fails
     open (action='write', file=file_name, status='replace', iostat=rc, newunit=fu)
     if (rc .ne. 0) then
        write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', rc
-    end if
+       stop "in " // subroutine_name
+   end if
 
     write(fu,'(A)', advance = "no") header
     write(Fu, *)
@@ -91,7 +93,8 @@ contains
     close(fu)
 
 
-    if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
   end subroutine debug_2D_array_csv
 
@@ -103,7 +106,8 @@ contains
     integer :: ii, total_faces
 
     character(64) :: subroutine_name = 'debug_Nface_check'
-    if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
     total_faces = 0
@@ -138,7 +142,8 @@ contains
        print *, "N_face(this_image()) =", N_face(this_image())
     end if
 
-    if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+    if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
   end subroutine debug_Nface_check
 
