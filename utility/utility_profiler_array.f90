@@ -21,10 +21,11 @@ contains
         real, intent(in) :: x
         real, allocatable :: resized_arr(:)
 
-        !call util_allocate_profiler(this)
+
+        ! call util_allocate_profiler(this)
         if (this%max_size == 0) then
             allocate(this%arr(100))
-            this%max_size = 100
+            this%max_size = 100    
         else if (this%len == this%max_size) then
             allocate(resized_arr(this%max_size * 2))
             resized_arr(1:this%max_size) = this%arr(1:this%max_size)
@@ -32,7 +33,6 @@ contains
             call util_free_arr(this)
             this%arr = resized_arr
         end if
-
         this%len = this%len + 1
         this%arr(this%len) = x
     end subroutine util_prof_append

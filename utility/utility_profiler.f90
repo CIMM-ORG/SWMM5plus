@@ -39,7 +39,6 @@ contains
             this%jobs(id)%id = id
             this%num_jobs = this%num_jobs + 1
         end if
-
         call util_restart(this%jobs(id))
     end subroutine util_tic
 

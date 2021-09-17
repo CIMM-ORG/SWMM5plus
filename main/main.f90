@@ -15,7 +15,10 @@ program main
     ! --- Clock the simulation time
     call cpu_time(start_time)
     ! --- Initialization
+
     call initialize_all()
+
+    stop
 
     ! --- Time Loop
     call timeloop_toplevel()

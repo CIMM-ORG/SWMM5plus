@@ -15,6 +15,8 @@ module initialization
     use utility, only: util_export_linknode_csv
     use utility_output
     use utility_array
+    use utility_profiler
+    use utility_prof_jobcount
     use pack_mask_arrays
     use output
 
@@ -57,7 +59,15 @@ contains
     !%
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
+        type(wall_clk) :: timer
+
+        real(8) :: start, intermediate, finish
+        call cpu_time(start)
+
         if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+
+        if (setting%Profile%File%initialization) call util_tic(timer, 1)
+
     !%-----------------------------------------------------------------------------
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
@@ -118,6 +128,12 @@ contains
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
+
+        if (setting%Profile%File%initialization) then
+            call util_toc(timer, 1)
+            print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(1))
+            call util_free_jobs(timer)
+        end if
 
         !% wait for all the processors to reach this stage before starting the time loop
         if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name

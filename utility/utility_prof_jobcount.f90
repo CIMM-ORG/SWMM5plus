@@ -25,7 +25,7 @@ contains
 
     subroutine util_finish(this)
         type(job), intent(inout) :: this
-        if (mod(this%time_stamps%len, 2) /= 0) then
+        if (mod(this%time_stamps%len, 2) /= 0) then     
             call cpu_time(this%end_time)
             call util_prof_append(this%time_stamps, this%end_time)
         end if

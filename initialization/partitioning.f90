@@ -85,9 +85,9 @@ subroutine init_partitioning_method()
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
         ! partition_correct = default_performance_check()
         connectivity = init_partitioning_metric_connectivity()
-        part_size_balance = init_partitioning_metric_partsizebalance()
+        ! part_size_balance = init_partitioning_metric_partsizebalance()
 
-        print*, "*** partitioning is complete", connectivity, part_size_balance
+        print*, "*** partitioning is complete", connectivity ! part_size_balance
     end if
 
     call util_deallocate_partitioning_arrays()

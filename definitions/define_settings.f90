@@ -194,7 +194,7 @@ module define_settings
         logical :: finalization        = .false.
         logical :: geometry            = .false.
         logical :: initial_condition   = .false.
-        logical :: initialization      = .false.
+        logical :: initialization      = .true.
         logical :: jump                = .false.
         logical :: lowlevel_rk2        = .false.
         logical :: network_define      = .false.
@@ -244,6 +244,7 @@ module define_settings
     ! setting%Profile%File
     type ProfileFileYNType
         logical :: adjust              = .false.
+        logical :: BIPquick            = .false.
         logical :: boundary_conditions = .false.
         logical :: c_library           = .false.
         logical :: define_globals      = .false.
@@ -252,13 +253,12 @@ module define_settings
         logical :: define_settings     = .false.
         logical :: define_types        = .false.
         logical :: diagnostic_elements = .false.
-        logical :: BIPquick            = .false.
         logical :: discretization      = .false.
         logical :: face                = .false.
         logical :: finalization        = .false.
         logical :: geometry            = .false.
         logical :: initial_condition   = .false.
-        logical :: initialization      = .false.
+        logical :: initialization      = .true.
         logical :: jump                = .false.
         logical :: lowlevel_rk2        = .false.
         logical :: network_define      = .false.
