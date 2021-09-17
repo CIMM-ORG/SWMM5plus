@@ -20,7 +20,7 @@ contains
             Y = Y1
             return
         end if
-        Y = Y1 + (X2 - X) * (Y2 - Y1) / (X2 - X1)
+        Y = Y1 + (X - X1) * (Y2 - Y1) / (X2 - X1)
     end function util_interpolate_linear
 
 end module utility_interpolate

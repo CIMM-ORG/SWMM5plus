@@ -52,11 +52,14 @@ module define_api_keys
 
     !% SWMM XSECT_TYPES ($API_DIR/src/enums.h -> XsectType)
     enum, bind(c)
-        enumerator :: API_RECT_CLOSED = 3
+        enumerator :: API_CIRCULAR = 1
+        enumerator :: API_FILLED_CIRCULAR
+        enumerator :: API_RECT_CLOSED
         enumerator :: API_RECT_OPEN
         enumerator :: API_TRAPEZOIDAL
         enumerator :: API_TRIANGULAR
         enumerator :: API_PARABOLIC
+
     end enum
 
     !% SWMM PATTERN TYPES ($API_DIR/src/enums.h -> PatternType)
@@ -115,6 +118,8 @@ module define_api_keys
         enumerator :: api_link_subIndex
         enumerator :: api_link_node1
         enumerator :: api_link_node2
+        enumerator :: api_link_offset1
+        enumerator :: api_link_offset2
         enumerator :: api_link_q0
         enumerator :: api_link_flow
         enumerator :: api_link_depth
@@ -131,6 +136,23 @@ module define_api_keys
         enumerator :: api_link_geometry
         enumerator :: api_link_xsect_wMax
         enumerator :: api_link_xsect_yBot
+        enumerator :: api_link_xsect_yFull
+    end enum
+
+    !% API Link Output attributes
+    enum, bind(c)
+        enumerator :: api_output_link_depth = 0
+        enumerator :: api_output_link_flow
+        enumerator :: api_output_link_volume
+        enumerator :: api_output_link_direction
+    end enum
+
+    !% API Node Output attributes
+    enum, bind(c)
+        enumerator :: api_output_node_depth = 0
+        enumerator :: api_output_node_volume
+        enumerator :: api_output_node_latflow
+        enumerator :: api_output_node_inflow
     end enum
 
     ! Datetime resolution types

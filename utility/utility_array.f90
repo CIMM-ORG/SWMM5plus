@@ -31,7 +31,8 @@ module utility_array
         integer :: ii=0, min_val, max_val
         character(64) :: subroutine_name = 'util_image_number_calculation'
 
-        if (setting%Debug%File%utility_array) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%utility_array) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         allocate(img_arr(size(link%I,1)))
         allocate(unique(size(link%I,1)))
@@ -45,7 +46,7 @@ module utility_array
             ii = ii+1
             min_val = minval(img_arr, mask=img_arr>min_val)
             unique(ii) = min_val
-        enddo
+        end do
 
         allocate(unique_imagenum(ii), source = unique(1:ii)) ! The list of image number from BIPquick
 
@@ -53,10 +54,11 @@ module utility_array
 
         if ( nimgs_assign /= num_images() ) then
             print*, "There is a mismatch between the assigned images and num_images", nimgs_assign, num_images()
-            stop
+            stop "in " // subroutine_name
         end if
 
-        if (setting%Debug%File%utility_array)  print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%utility_array)  &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_image_number_calculation
     !
     !==========================================================================

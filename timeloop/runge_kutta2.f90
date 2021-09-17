@@ -35,11 +35,13 @@ module runge_kutta2
         integer :: istep, ii
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'rk2_toplevel_ETM'
-        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%runge_kutta2) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1
-  
+        ! print*, '-------------------------------------------------------------------------'
+        ! print*, '1st RK step'
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 3 -- all aux variables for non-diagnostic
@@ -64,7 +66,7 @@ module runge_kutta2
         !% RK2 solution step 5 -- update diagnostic elements and faces
         if (N_diag > 0) then
             call diagnostic_toplevel()
-        endif
+        end if
         
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
@@ -72,6 +74,8 @@ module runge_kutta2
         !% RK2 solution step 8 -- RK2 second step for ETM
         !% RK2 solution step 8(a)
         istep=2
+        ! print*, '-------------------------------------------------------------------------'
+        ! print*, '2nd RK step'
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 8(c)
@@ -90,12 +94,13 @@ module runge_kutta2
         !% RK2 solution step 9 -- update diagnostic elements and faces
         if (N_diag > 0) then
             call diagnostic_toplevel()
-        endif
+        end if
 
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
-
-        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', this_image(), subroutine_name
+        ! stop 11
+        if (setting%Debug%File%runge_kutta2)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine rk2_toplevel_ETM
     !%
     !%==========================================================================
@@ -107,9 +112,11 @@ module runge_kutta2
         !%
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'rk2_toplevel_AC'
-        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%runge_kutta2) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
-        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%runge_kutta2)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
 
         print *, "need rk2_toplevel_AC to be written"
@@ -128,14 +135,15 @@ module runge_kutta2
         integer :: istep, faceMaskCol, thisCol
         integer, pointer :: Npack
         character(64) :: subroutine_name = 'rk2_toplevel_ETMAC'
-        if (setting%Debug%File%runge_kutta2) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%runge_kutta2) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         !% step 1 -- RK2 step 1 for ETM
 
         istep=1
         if (N_etm > 0) then
             call rk2_step_ETM (istep)
-        endif
+        end if
 
         !% step 2 -- RK2 step 1 for AC
         if (N_ac > 0) then
@@ -144,8 +152,8 @@ module runge_kutta2
             if (N_etm > 0) then
                 !% step 2(b,c) create time n+1(1*) consistency for AC
                 call rk2_extrapolate_to_fullstep_ETM()
-            endif
-        endif
+            end if
+        end if
 
         !% step 3 -- all aux variables for non-diagnostic
         call update_auxiliary_variables(ALLtm)
@@ -156,7 +164,7 @@ module runge_kutta2
         !% step 5 -- update diagnostic elements and faces
         if (N_diag > 0) then
             call diagnostic_toplevel ()
-        endif
+        end if
 
         !% step X -- make ad hoc adjustments
         call adjust_values (ALLtm)
@@ -171,19 +179,19 @@ module runge_kutta2
                 call rk2_restore_to_midstep_ETM()
                 !% step 6(c,d)
                 call rk2_interpolate_to_halfstep_AC()
-            endif
+            end if
             !% step 6(e)
             call update_auxiliary_variables (AC)
 
             !% step 6(f,g) -- update faces for AC elements
             call face_interpolation (fp_AC)
 
-        endif
+        end if
 
         !% step 7 -- update diagnostic elements and faces
         if (N_diag > 0) then
             call diagnostic_toplevel()
-        endif
+        end if
 
         !% step 8 -- RK2 step 2 for ETM
         if (N_etm > 0) then
@@ -193,24 +201,25 @@ module runge_kutta2
             if (N_ac > 0) then
                 !% step 8(b)
                 call rk2_restore_to_fullstep_AC ()
-            endif
+            end if
 
             !% step 8(c)
             call update_auxiliary_variables(ETM)
 
             !% step 8(d,e) -- update all faces
             call face_interpolation (fp_all)
-        endif
+        end if
 
         !% step 9 -- update diagnostic elements and faces
         if (N_diag > 0) then
             call diagnostic_toplevel
-        endif
+        end if
 
         !% step X -- make ad hoc adjustments
         call adjust_values (ALLtm)
 
-        if (setting%Debug%File%runge_kutta2)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%runge_kutta2)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine rk2_toplevel_ETMAC
     !%
     !%==========================================================================
@@ -268,21 +277,21 @@ module runge_kutta2
         Npack => npack_elemP(thisPackCol)
         if (Npack > 0) then
             call ll_continuity_netflowrate_CC (er_SourceContinuity, thisPackCol, Npack)
-        endif
+        end if
 
         !% compute net flowrates for junction mains
         thisPackCol => col_elemP(ep_JM_ETM)
         Npack => npack_elemP(thisPackCol)
         if (Npack > 0) then
             call ll_continuity_netflowrate_JM (er_SourceContinuity, thisPackCol, Npack)
-        endif
+        end if
 
         !% Solve for volume in ETM step
         thisPackCol => col_elemP(ep_CCJM_H_ETM)
         Npack => npack_elemP(thisPackCol)
         if (Npack > 0) then
             call ll_continuity_volume_CCJM_ETM (er_Volume, thisPackCol, Npack, istep)
-        endif
+        end if
 
         !% adjust elements with near-zero volume
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_ETM))
@@ -306,14 +315,14 @@ module runge_kutta2
         Npack => npack_elemP(thisPackCol)
         if (Npack > 0) then
             call ll_continuity_netflowrate_CC (er_SourceContinuity, thisPackCol, Npack)
-        endif
+        end if
 
         !% compute net flowrates for junction mains
         thisPackCol => col_elemP(ep_JM_AC)
         Npack => npack_elemP(thisPackCol)
         if (Npack > 0) then
             call ll_continuity_netflowrate_JM (er_SourceContinuity, thisPackCol, Npack)
-        endif
+        end if
 
         thisPackCol => col_elemP(ep_CCJM_H_AC_open)
         Npack => npack_elemP(thisPackCol)
@@ -324,7 +333,7 @@ module runge_kutta2
             call ll_continuity_add_gamma_CCJM_AC_open (er_GammaC, thisPackCol, Npack)
             !% solve for volume in AC open step
             call ll_continuity_volume_CCJM_AC_open (er_Volume, thisPackCol, Npack, istep)
-        endif
+        end if
 
         thisPackCol => col_elemP(ep_CCJM_H_AC_surcharged)
         Npack => npack_elemP(thisPackCol)
@@ -333,7 +342,7 @@ module runge_kutta2
             call ll_continuity_add_source_CCJM_AC_surcharged (er_SourceContinuity, thisPackCol, Npack)
             !% solve for head in AC surcharged step
             call ll_continuity_head_CCJM_AC_surcharged (er_Head, thisPackCol, Npack, istep)
-        endif
+        end if
 
         !% adjust near-zero elements
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_AC))
@@ -366,7 +375,7 @@ module runge_kutta2
             call ll_momentum_solve_CC (er_Velocity, thisPackCol, Npack, thisMethod, istep)
             !% velocity for ETM time march
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
-        endif
+        end if
 
     end subroutine rk2_momentum_step_ETM
     !%
@@ -398,14 +407,14 @@ module runge_kutta2
             call ll_momentum_add_source_CC_AC (er_SourceMomentum, thisCol, Npack)
             !% AC elements advance flowrate to n+1(*) for conduits and channels
             call ll_momentum_solve_CC (er_Velocity, thisCol, Npack, thisMethod, istep)
-        endif
+        end if
 
         thisCol => col_elemP(ep_CC_Q_AC)
         Npack => npack_elemP(thisCol)
         if (Npack > 0) then
             !% velocity for AC time march
             call ll_momentum_velocity_CC (er_Velocity, thisCol,Npack)
-        endif
+        end if
 
     end subroutine rk2_momentum_step_AC
     !%
@@ -433,7 +442,7 @@ module runge_kutta2
 
             !% update aux for extrapolated variables
     !        call update_auxiliary_variables_byPack (thisCol, Npack)
-        endif
+        end if
 
     end subroutine rk2_extrapolate_to_fullstep_ETM
     !%
@@ -459,7 +468,7 @@ module runge_kutta2
 
             !% update aux for restored variables
     !        call update_auxiliary_variables_byPack (thisPackCol, Npack)
-        endif
+        end if
 
     end subroutine rk2_restore_to_midstep_ETM
     !%
@@ -488,7 +497,7 @@ module runge_kutta2
 
             !% update aux for interpolated variables
       !     call update_auxiliary_variables_byPack (thisPackCol, Npack)
-        endif
+        end if
 
     end subroutine rk2_interpolate_to_halfstep_AC
     !%
@@ -513,7 +522,7 @@ module runge_kutta2
 
             !% update aux for restored data
      !       call update_auxiliary_variables_byPack (thisPackCol, Npack)
-        endif
+        end if
 
     end subroutine rk2_restore_to_fullstep_AC
     !%

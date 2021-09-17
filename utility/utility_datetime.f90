@@ -25,6 +25,10 @@ module utility_datetime
         integer, intent(in) :: resolution_type
         real(8)             :: epochTime
         real(8)             :: nextSecsTime
+        character(64)       :: subroutine_name = "util_datetime_get_next_time"
+
+        if (setting%Debug%File%utility_datetime) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         epochTime = util_datetime_secs_to_epoch(secsTime)
         if (resolution_type == api_daily) then
@@ -40,11 +44,13 @@ module utility_datetime
         else
             print *, "Resolution type not supported, use"
             print *, "(1) monthly, (2) daily, (3) hourly, (4) weekend"
-            stop
-        endif
+            stop "in " // subroutine_name
+        end if
 
         nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
 
+        if (setting%Debug%File%utility_datetime) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function util_datetime_get_next_time
 
     function util_datetime_epoch_to_secs(epochTime) result(secsTime)
@@ -80,11 +86,11 @@ module utility_datetime
             .and. (month <= 12) .and. (day >= 1) .and. (day <= dayspermonth(month,i))) then
             do j = 1, month-1
                 dday = dday + dayspermonth(j,i)
-            enddo
+            end do
             i = year-1
             util_datetime_encodedate = i*365 + i/4 - i/100 + i/400 + dday - datedelta
             return
-        endif
+        end if
         util_datetime_encodedate = -datedelta
     end function util_datetime_encodedate
 
@@ -95,7 +101,7 @@ module utility_datetime
             s = (hour * 3600 + minute * 60 + second)
             util_datetime_encodetime = s/real(secsperday)
             return
-        endif
+        end if
         util_datetime_encodetime = 0
     end function util_datetime_encodetime
 
@@ -128,12 +134,12 @@ module utility_datetime
             do while (t >= d400)
                 t = t - d400
                 y = y + 400
-            enddo
+            end do
             call util_datetime_divmod(t, d100, i, d)
             if (i == 4) then
                 i = i - 1
                 d = d + d100
-            endif
+            end if
             y = y + i*100
             call util_datetime_divmod(d, d4, i, d)
             y = y + i*4
@@ -141,7 +147,7 @@ module utility_datetime
             if (i == 4) then
                 i = i - 1
                 d = d + d1
-            endif
+            end if
             y = y + i
             k = util_datetime_isleapyear(y)
             m = 1
@@ -150,11 +156,11 @@ module utility_datetime
                 if (d < i) exit
                 d = d - i
                 m = m + 1
-            enddo
+            end do
             year = y
             month = m
             day = d + 1
-        endif
+        end if
     end subroutine util_datetime_decodedate
 
     subroutine util_datetime_decodetime(epochTime, h, m, s)
@@ -205,7 +211,7 @@ module utility_datetime
             util_datetime_get_next_day = real(ceiling(epochTime))
         else
             util_datetime_get_next_day = epochTime + real(1.0)
-        endif
+        end if
     end function util_datetime_get_next_day
 
     function util_datetime_get_next_hour(epochTime)
@@ -234,8 +240,8 @@ module utility_datetime
             if ((dayofweek .ne. 1) .and. (dayofweek .ne. 7)) then
                 if ((h == 0) .and. (m == 0) .and. (s == 0) .and. (dayofweek == 2)) return
                 next = util_datetime_get_next_weekendday_hour(next)
-            endif
-        endif
+            end if
+        end if
     end function util_datetime_get_next_weekendday_hour
 
     subroutine util_datetime_divmod(n, d, result, remainder)
@@ -255,7 +261,7 @@ module utility_datetime
         else
             result = n/d
             remainder = n - d*result
-        endif
+        end if
     end subroutine util_datetime_divmod
 
 end module utility_datetime

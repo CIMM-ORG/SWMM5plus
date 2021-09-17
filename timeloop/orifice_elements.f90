@@ -84,7 +84,7 @@ module orifice_elements
                     EffectiveHeadDelta = Head - NominalDownstreamHead
                 else
                     EffectiveHeadDelta = Head - Zcrest
-                endif
+                end if
             case (SIDE_ORIFICE)
                 if (Head <= Zcrest) then
                     EffectiveHeadDelta = zeroR
@@ -96,8 +96,8 @@ module orifice_elements
                         EffectiveHeadDelta = Head - Zmidpt
                     else
                         EffectiveHeadDelta = Head - NominalDownstreamHead
-                    endif
-                endif
+                    end if
+                end if
         end select
                     
     end subroutine orifice_effective_head_delta
@@ -179,13 +179,13 @@ module orifice_elements
             !% standard orifice flow condition 
             Coef      = DischargeCoeff * FullArea * sqrt(twoR * grav)
             Flowrate  = FlowDirection * Coef * sqrt(EffectiveHeadDelta)       
-        endif    
+        end if    
         
         !% applying Villemonte submergence correction for orifice having submerged weir flow
         if ((FractionCritDepth < oneR) .and. (NominalDownstreamHead > Zcrest)) then
             ratio = (NominalDownstreamHead - Zcrest) / (Head - Zcrest)
             Flowrate = Flowrate * ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent) 
-        endif
+        end if
             
     end subroutine orifice_flow
     !%
@@ -229,7 +229,7 @@ module orifice_elements
             Depth =  Head - Zcrest
         else
             Depth = Zcrown - Zcrest
-        endif
+        end if
     
         !% set geometry
         select case (GeometryType)

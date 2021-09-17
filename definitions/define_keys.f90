@@ -66,11 +66,32 @@ module define_keys
         enumerator :: manhole               !% manhole elemen (HACK: not sure if we need this)
         enumerator :: dummy                 !% dummy element type
         !% SWMM5+ CC geometry types
-        enumerator :: rectangular           !% rectangular channel or conduit
-        enumerator :: circular              !% circular channel or conduit
-        enumerator :: triangular            !% triangular channel or conduit
-        enumerator :: trapezoidal           !% trapezoidal channel or conduit
-        enumerator :: parabolic             !% parabolic channel or conduit
+        !% open channel cross-sectional geometry types
+        enumerator :: rectangular           !% rectangular open channel
+        enumerator :: trapezoidal           !% trapezoidal open channel
+        enumerator :: triangular            !% triangular open channel
+        enumerator :: parabolic             !% parabolic open channel
+        enumerator :: power_function        !% power function open channel
+        enumerator :: rect_triang           !% rectangular-triangular open channel
+        enumerator :: rect_round            !% rectangular-round open channel
+        enumerator :: mod_basket            !% modified basket handle open channel
+        enumerator :: irregular             !% irregular open channel
+        !% closed conduit cross-sectional geometry types
+        enumerator :: circular              !% circular closed conduit
+        enumerator :: filled_circular       !% filled circular closed conduit
+        enumerator :: rectangular_closed    !% rectangular closed conduit
+        enumerator :: horiz_ellipse         !% horizontal ellipse closed conduit
+        enumerator :: vert_ellipse          !% vertical ellipse closed conduit
+        enumerator :: arch                  !% arch closed conduit
+        enumerator :: eggshaped             !% eggshaped closed conduit
+        enumerator :: horseshoe             !% horseshoe closed conduit
+        enumerator :: gothic                !% gothic closed conduit
+        enumerator :: catenary              !% catenary closed conduit
+        enumerator :: semi_elliptical       !% semi-elliptical closed conduit
+        enumerator :: basket_handle         !% basket handle closed conduit
+        enumerator :: semi_circular         !% semi-circular closed conduit
+        enumerator :: custom                !% custom closed conduit
+        enumerator :: force_main            !% force main closed conduit
         !% SWMM5+ CC roughness type
         enumerator :: ManningsN             !% ID for mannings n for roughness_type
         enumerator :: CD                    !% ID for using drag coefficient for roughness_type

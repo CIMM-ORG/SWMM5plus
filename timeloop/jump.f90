@@ -33,7 +33,8 @@ module jump
         integer, pointer :: facePackCol, Npack
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'jump_compute'
-        if (setting%Debug%File%jump) print *, '*** enter ', this_image(), subroutine_name 
+        if (setting%Debug%File%jump) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
         !%-----------------------------------------------------------------------------
         !%  
         !% identify hydraulic jump (create pack facemap in global)
@@ -44,16 +45,17 @@ module jump
         Npack       => npack_faceP(fp_JumpDn)
         if (Npack > 0) then
             call jump_enforce (facePackCol, Npack, jump_from_downstream)
-        endif
+        end if
         
         !% enforce hydraulic jump on upstream jumps
         facePackCol => col_faceP(fp_JumpUp)
         Npack       => npack_faceP(fp_JumpUp)
         if (Npack > 0) then
             call jump_enforce (facePackCol, Npack, jump_from_upstream)
-        endif
+        end if
 
-        if (setting%Debug%File%jump)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%jump)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine jump_compute   
     !%
     !%==========================================================================
@@ -111,9 +113,11 @@ module jump
         npack_faceP(fp_JumpUp) = count( &
             isInterior &
             .and. &
-            (Fr(eup) > oneR + feps)  &
+            (Fr(eup) > oneR + feps)  &  ! supercritical downstream flow in upstream
             .and. &
-            (Fr(edn) < oneR - feps)   &
+            (Fr(edn) < oneR - feps)   &  ! subcritical in downstream
+            .and. &
+            (Fr(edn) >= zeroR)        &  ! not a reverse flow downstream
             .and. &
             (.not. isSurcharged(eup)) &
             .and. &
@@ -126,9 +130,11 @@ module jump
             faceP(1:Npack_JumpUp, fp_JumpUp) = pack(faceIdx, &
                 isInterior &
                 .and. &
-                (Fr(eup) > oneR + feps)  &
+                (Fr(eup) > oneR + feps)  & ! supercritical downstream flow in upstream
                 .and. &
-                (Fr(edn) < oneR - feps)   &
+                (Fr(edn) < oneR - feps)   & ! subcritical in downstream
+                .and. &
+                (Fr(edn) >= zeroR)        &  ! not a reverse flow downstream
                 .and. &
                 (.not. isSurcharged(eup)) &
                 .and. &
@@ -139,7 +145,7 @@ module jump
 
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_upstream
-        endif
+        end if
 
         !% count the number of faces with reverse flow and a jump from 
         !% downstream (supercritical) to upstream (subcritical)
@@ -147,9 +153,11 @@ module jump
         npack_faceP(fp_JumpDn)  = count( &
             isInterior &
             .and. &
-            (Fr(eup) < -oneR + feps) &
+            (Fr(eup) > -oneR + feps) &  ! subcritical reverse flow in upstream
             .and. &
-            (Fr(edn) > -oneR - feps) &
+            (Fr(eup) <= zeroR) &        ! not a downstream flow in upstream
+            .and. &
+            (Fr(edn) < -oneR - feps) &   ! supercritical reverse flow in downstream
             .and. &
             (.not. isSurcharged(eup)) &
             .and. &
@@ -163,9 +171,11 @@ module jump
             faceP(1:Npack_JumpDn, fp_JumpDn) = pack(faceIdx, &
                 isInterior &
                 .and. &
-                (Fr(eup) < -oneR + feps) &
+                (Fr(eup) > -oneR + feps) & ! subcritical reverse flow in upstream
                 .and. &
-                (Fr(edn) > -oneR - feps) &
+                (Fr(eup) <= zeroR) &        ! not a downstream flow in upstream
+                .and. &
+                (Fr(edn) < -oneR - feps) & ! supercritical reverse flow in downstream
                 .and. &
                 (.not. isSurcharged(eup)) &
                 .and. &
@@ -176,7 +186,7 @@ module jump
 
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_downstream
-        endif
+        end if
 
     end subroutine jump_face_identify
     !%

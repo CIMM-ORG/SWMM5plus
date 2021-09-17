@@ -54,14 +54,20 @@ contains
         integer       :: phantom_node_idx, phantom_link_idx
         integer       :: connectivity
 
-        type(wall_clk) :: timer
-
-        real(8) :: start, intermediate, finish
-        call cpu_time(start)
         ! -----------------------------------------------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
-        
+
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
         if (setting%Profile%File%BIPquick) call util_tic(timer, 2)
+        !% One processor bypass for BIPquick
+        if ( num_images() == 1 ) then
+            node%I(:, ni_P_image) = oneI
+            node%I(:, ni_P_is_boundary) = zeroI
+            link%I(:, li_P_image) = oneI
+            print*, "Using one processor, bypassing partitioning"
+            return
+        end if
 
         !% Initialize the temporary arrays needed for BIPquick
         call bip_initialize_arrays()
@@ -81,7 +87,8 @@ contains
 
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
-            ! print*, "Partition", mp
+
+            if (setting%verbose) write(*,"(A,i5,A)") "BIPquick Sweep [Processor ", image, "]"
 
             !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
             B_nodeR(:, totalweight) = 0.0
@@ -90,10 +97,6 @@ contains
 
             !% This subroutine populates the totalweight column of B_nodeR and calculates max_weight
             call calc_totalweight(max_weight)
-
-            ! do ii = 1, size(B_nodeR, 1)
-            !     print*, node%I(ii, ni_idx), B_nodeR(ii, :)
-            ! end do
 
             !% The partition_threshold is the current max_weight divided by the number of processors remaining (including current mp)
             partition_threshold = max_weight/real(num_images() - mp + 1, 8)
@@ -118,39 +121,37 @@ contains
                     !% This subroutine houses the litany of steps that are required for a Case 3 partition
                     call trav_casethree(effective_root, spanning_link, image, partition_threshold, max_weight, ideal_exists)
 
-                    !% HACK - I'm fairly sure that this do-loop will work for repeated instances of Case 3
-
                 end do
 
                 !% The outcomes of the Case 3 while loop are a Case 1
                 if ( ideal_exists .eqv. .true. ) then
 
-                !% In which case traverse the subnetwork from the effective_root
-                call trav_subnetwork(effective_root, image)
+                    !% In which case traverse the subnetwork from the effective_root
+                    call trav_subnetwork(effective_root, image)
 
                 !% Or Case 2
                 else if ( spanning_link /= nullValueI ) then
 
-                !% In which case the distance along the spanning_link to the phantom node is calculated
-                phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
+                    !% In which case the distance along the spanning_link to the phantom node is calculated
+                    phantom_node_start = calc_phantom_node_loc(spanning_link, partition_threshold)
 
-                !% This subroutine creates a phantom node/link and adds it to node%I/link%I
-                call phantom_node_generator&
-                (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
+                    !% This subroutine creates a phantom node/link and adds it to node%I/link%I
+                    call phantom_node_generator &
+                    (spanning_link, partition_threshold, phantom_node_start, phantom_node_idx, phantom_link_idx)
 
-                !% This subroutine does the same thing as the previous call to trav_subnetwork()
-                call trav_subnetwork(phantom_node_idx, image)
+                    !% This subroutine does the same thing as the previous call to trav_subnetwork()
+                    call trav_subnetwork(phantom_node_idx, image)
 
-                phantom_node_idx = phantom_node_idx + 1
-                phantom_link_idx = phantom_link_idx + 1
+                    phantom_node_idx = phantom_node_idx + 1
+                    phantom_link_idx = phantom_link_idx + 1
 
                 else
-                print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
-                stop
+                    print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
+                    stop "in " // subroutine_name
 
                 end if
 
-            endif
+            end if
 
         end do
 
@@ -163,12 +164,12 @@ contains
         connectivity = connectivity_metric()
 
         if (setting%Profile%File%BIPquick) then
-            call util_toc(timer, 2) 
+            call util_toc(timer, 2)
             print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(2))
-            ! call util_free_jobs(BQ_timer)
         end if
-       
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_partitioning_BIPquick
     !
     !==========================================================================
@@ -184,7 +185,8 @@ contains
     ! -----------------------------------------------------------------------------------------------------------------
         character(64) :: subroutine_name = 'bip_allocate_arrays'
     ! -----------------------------------------------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         B_nodeI(:,:) = nullValueI
         B_nodeR(:,:) = zeroR
@@ -192,9 +194,11 @@ contains
         partitioned_nodes(:) = .false.
         partitioned_links(:) = .false.
         weight_range(:,:) = zeroR
-        accounted_for_links = .false.
+        accounted_for_links(:) = .false.
+        phantom_link_tracker(:) = nullValueI
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine bip_initialize_arrays
     !
     !==========================================================================
@@ -215,7 +219,8 @@ contains
         integer :: upstream_link, upstream_node, uplink_counter
         integer ii, jj, uplinks
     ! ----------------------------------------------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Iterate through the nodes array
         do ii= 1,size(node%I,1)
@@ -242,11 +247,12 @@ contains
 
                     !% Add the adjacent upstream node to B_nodeI
                     B_nodeI(ii, uplinks) = upstream_node
-                endif
-            enddo
-        enddo
+                end if
+            end do
+        end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine bip_network_processing
     !
     !============================================================================
@@ -306,14 +312,15 @@ contains
         integer :: ii, jj
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Calculates directweight for each node
         do ii = 1, size(node%I,1)
 
             if ( node%I(ii, ni_idx) == nullValueI ) then
                 cycle
-            endif
+            end if
 
             !% Need a loop bc multiple links might have a given node as its downstream endpoint
             do jj=1,size(link%I(:, li_Mnode_d))
@@ -324,11 +331,12 @@ contains
                     !% The directweight for that node is the running total of link weights
                     B_nodeR(ii, directweight) = B_nodeR(ii, directweight) &
                     + calc_link_weights(link%I(jj, li_idx))
-                endif
-            enddo
-        enddo
+                end if
+            end do
+        end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine calc_directweight
     !
     !============================================================================
@@ -349,7 +357,8 @@ contains
         integer, intent(in out) :: weight_index, root
         integer :: jj
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% If the node has not been visited this traversal (protective against cross connection bugs)
         !% and the node has not already been partitioned
@@ -368,16 +377,17 @@ contains
             do jj= 1, size(upstream_node_list)
 
                 !% If the upstream node exists
-                if( upstream_node_list(jj) /= nullValueI) then
+                if ( upstream_node_list(jj) /= nullValueI) then
 
                     !% The call the recursive calc_upstream_weight on the weight_index node
                     !% and the adjacent upstream node as the new root
                     call calc_upstream_weight(weight_index, upstream_node_list(jj))
-                endif
-            enddo
-        endif
+                end if
+            end do
+        end if
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine calc_upstream_weight
     !
     !============================================================================
@@ -398,7 +408,8 @@ contains
         integer :: ii, weight_index
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Calculates the totalweight for all nodes
         do ii=1, size(node%I,1)
@@ -419,13 +430,14 @@ contains
                 !% The weight_index (i.e. the current node) is passed to the first iteration
                 !% of calc_upstream_weight as both the node being updated and the root node for traversal
                 call calc_upstream_weight(weight_index, weight_index)
-            endif
-        enddo
+            end if
+        end do
 
         !% The max_weight is the largest totalweight value for this partition
         max_weight = (maxval(B_nodeR(:, totalweight)))
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine calc_totalweight
     !
@@ -448,7 +460,8 @@ contains
         integer :: upstream_node_list(3)
         integer :: ii, jj, kk
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% If the root node has not been added to a partition
         if  ( partitioned_nodes(root) .eqv. .false. ) then
@@ -477,12 +490,14 @@ contains
 
                     !% call the recursive subroutine on the new root node
                     call trav_subnetwork(upstream_node_list(jj), image)
-                endif
-            enddo
-        endif
+                end if
+            end do
+
+        end if
 
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine trav_subnetwork
     !
     !============================================================================
@@ -503,12 +518,11 @@ contains
         integer :: jj
 
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Save the system nodes as potential endpoints
         potential_endpoints(:) = node%I(:, ni_idx)
-
-        !% HACK - I'm not sure if this logic is air tight
 
         !% For each link, if the link is not nullValueI
         do jj=1, size(link%I,1)
@@ -529,9 +543,9 @@ contains
 
                     !% Set the accounted for boolean to true
                     accounted_for_links(jj) = .true.
-                endif
-            endif
-        enddo
+                end if
+            end if
+        end do
 
         !% This do loop just checks any links that somehow slipped through
         do jj=1, size(accounted_for_links, 1)
@@ -544,7 +558,8 @@ contains
             end if
         end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine trav_assign_link
     !
     !============================================================================
@@ -568,7 +583,8 @@ contains
         real(8) :: nearest_overestimate
         integer :: ii
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% The nearest overestimate is set above the max_weight as a buffer
         nearest_overestimate = max_weight*1.1
@@ -592,7 +608,7 @@ contains
                 effective_root = node%I(ii, ni_idx)
                 ideal_exists = .true.
                 exit
-            endif
+            end if
 
             !% Alternatively, if the totalweight is greater than the partition threshold and
             !% less than the nearest overestimate
@@ -604,14 +620,12 @@ contains
                 !% Then update the nearest overestimate and set the effective root
                 nearest_overestimate = B_nodeR(ii, totalweight)
                 effective_root = node%I(ii, ni_idx)
-            endif
-        enddo
+            end if
 
-        !% The effective root is the one that most nearly overestimates the partition threshold
-        !% reverse The Price Is Right style
-        ! print*, "Effective root:", effective_root
+        end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function calc_effective_root
     !
     !============================================================================
@@ -635,7 +649,8 @@ contains
         integer :: upstream_node
         integer :: ii, jj
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Check each link for spanning the partition threshold
         do jj=1, size(link%I,1)
@@ -653,28 +668,25 @@ contains
             !% The second entry is the first entry + the weight of the link
             weight_range(twoI) = weight_range(oneI) + calc_link_weights(link%I(jj, li_idx))
 
-            ! print*, "Link", jj, "Weight Range", weight_range(:), "Partition Threshold", partition_threshold, &
-            !   "Partitioned Links", partitioned_links(jj)
-
             !% If the partition threshold is between the weight_range entries
             !% and that link has not yet been partitioned
-            if( (weight_range(oneI) < partition_threshold) .and. &
+            if ( (weight_range(oneI) < partition_threshold) .and. &
             (partition_threshold < weight_range(twoI)) .and. &
             (partitioned_links(jj) .eqv. .false.) ) then
 
                 !% The current link is the spanning link
                 spanning_link = link%I(jj, li_idx)
-                ! print*, "The new spanning link is:  ", spanning_link
 
                 !% Mark this link as being partitioned
                 partitioned_links(jj) = .true.
 
                 !% Only need one spanning link - if found, exit
                 exit
-            endif
-        enddo
+            end if
+        end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine calc_spanning_link
     !
     !==========================================================================
@@ -744,7 +756,10 @@ contains
         integer :: kk
         real    :: l1, l2, y1, y2
         !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        phantom_link_tracker(phantom_link_idx) = phantom_link_idx
 
         !% The phantom node index is given
         node%I(phantom_node_idx, ni_idx) = phantom_node_idx
@@ -793,6 +808,13 @@ contains
         !% The downstream node for the spanning link is set as the phantom node
         link%I(spanning_link, li_Mnode_d) = phantom_node_idx
 
+        !% Maps the created phantom link back to the SWMM parent link
+        if ( ANY( phantom_link_tracker == spanning_link) ) then
+            link%I(phantom_link_idx, li_parent_link) = link%I(spanning_link, li_parent_link)
+        else
+            link%I(phantom_link_idx, li_parent_link) = spanning_link
+        end if
+
         !% Reduce the downstream node directweight by the spanning link's new length
         B_nodeR(downstream_node, directweight) = B_nodeR(downstream_node, directweight) &
         - calc_link_weights(spanning_link)
@@ -803,6 +825,7 @@ contains
         l2 = link%R(phantom_link_idx, lr_Length)
         !% Interpolate zBottom
         node%R(phantom_node_idx, nr_Zbottom) = y2 + l2*(y1 - y2)/(l1 + l2)
+
         !% Interpolate InitialDepth
         y1 = node%R(upstream_node, nr_InitialDepth)
         y2 = node%R(downstream_node, nr_InitialDepth)
@@ -828,9 +851,8 @@ contains
         link%I(phantom_link_idx, li_idx) = phantom_link_idx
         link%I(phantom_link_idx, li_Mnode_u) = phantom_node_idx
 
-        !% HACK - need to check with Saz/Gerardo in Network_Define to see if I missed anything here
-
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine phantom_node_generator
     !
     !==========================================================================
@@ -857,9 +879,8 @@ contains
         integer   :: jj
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
-
-        print*, "Case 3 Found, effective_root is: ", effective_root
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% The upstream node list is used to chose a branch for removal
         !% The effective root is guaranteed to have at least one upstream node
@@ -880,15 +901,14 @@ contains
                 !% The clipped weight is the upstream totalweight + the link weight
                 total_clipped_weight = B_nodeR(upstream_node, totalweight) &
                 + calc_link_weights(jj)
-                ! print*, "The weight being clipped from the effective node is", total_clipped_weight
 
                 !% Tags the link as being partitioned (removes it from the spanning link potential)
                 partitioned_links(jj) = .true.
 
                 !% Exit saves time and records jj for later use
                 exit
-            endif
-        enddo
+            end if
+        end do
 
         !% Reduce the effective_root directweight by the link length
         B_nodeR(effective_root, directweight) = &
@@ -900,13 +920,11 @@ contains
 
         if ( total_clipped_weight <= zeroR ) then
             print*, "BIPquick Case 3: Haven't removed any weight"
-            stop
+            stop "in " // subroutine_name
         end if
 
         !% Reduce the partition_threshold by the total_clipped_weight too
         partition_threshold = partition_threshold - total_clipped_weight
-
-        print*, "Calling subnetwork carving on ", upstream_node
 
         !% Assigns the link to the current image and removes it from future assignment
         link%I(jj, li_P_image) = image
@@ -921,7 +939,8 @@ contains
         !% Resets the effective root to reflect updated system
         effective_root = calc_effective_root(ideal_exists, max_weight, partition_threshold)
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine trav_casethree
     !
     !==========================================================================
@@ -943,7 +962,8 @@ contains
         integer    :: ii, kk
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Initialize the ni_P_is_boundary column to 0
         node%I(:, ni_P_is_boundary) = zeroI
@@ -972,7 +992,8 @@ contains
             end do
         end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine calc_is_boundary
     !
@@ -993,16 +1014,18 @@ contains
         integer  :: connectivity, ii
 
     !--------------------------------------------------------------------------
-        if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         connectivity = 0
 
         !% The sum of the ni_P_is_boundary column is the connectivity value
         do ii = 1, size(node%I, 1)
-        connectivity = connectivity + node%I(ii, ni_P_is_boundary)
+            connectivity = connectivity + node%I(ii, ni_P_is_boundary)
         end do
 
-        if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%BIPquick) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end function connectivity_metric
     !

@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# Check flags
+while getopts 'tmf' flag; do
+  case "${flag}" in
+    t) tacc="true" ;;
+    m) skip_swmm="true" ;;
+    f) skip_fortran="true" ;;
+  esac
+done
+
 # Check OS
 unameOut="$(uname -s)"
 case "${unameOut}" in
@@ -66,7 +75,7 @@ then
     echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 elif [[ $machine = "mac" ]]
 then
-    CAF="$COARRAY_INSTALL/bin/caf" #"caf"
+    CAF= "$COARRAY_INSTALL/bin/caf" #"caf"
     echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
 fi
 

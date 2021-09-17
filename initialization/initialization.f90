@@ -4,22 +4,20 @@ module initialization
     use define_globals
     use define_settings
     use define_indexes
+    use discretization
+    use initial_condition
     use interface
+    use network_define
     use partitioning
     use pack_mask_arrays, only: pack_nodes
-    use discretization
     use utility_allocate
     use utility_array
-    use initial_condition
-    use network_define
-    use utility, only: util_export_linknode_csv
     use utility_output
     use utility_array
     use utility_profiler
     use utility_prof_jobcount
     use pack_mask_arrays
     use output
-
 
     implicit none
 
@@ -59,16 +57,19 @@ contains
     !%
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
-        type(wall_clk) :: timer
-
-        real(8) :: start, intermediate, finish
-        call cpu_time(start)
-
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+    !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (setting%Profile%File%initialization) call util_tic(timer, 1)
 
-    !%-----------------------------------------------------------------------------
+        !% ---  Define project & settings paths
+        call getcwd(setting%Paths%project)
+        setting%paths%setting = trim(setting%Paths%project) // "/definitions/settings.json"
+
+        !% read and store the command-line options
+        call init_read_arguments ()
+
         !% set the branchsign global -- this is used for junction branches (JB)
         !% for upstream (+1) and downstream (-1)
         !% HACK: for clarity and consistency, this probably should be moved into
@@ -79,12 +80,7 @@ contains
 
         !% load the settings.json file with the default setting% model control structure
         !% def_load_settings is one of the few subroutines in the Definition modules
-        call def_load_settings(setting%Paths%setting)
-
-        !% execute the command line options provided when the code is run
-        if (this_image() == 1) then
-            call execute_command_line ("if [ -d debug ]; then rm -r debug; fi && mkdir debug")
-        end if
+        call def_load_settings()
 
         !% read and store the command-line options
         call init_read_arguments ()
@@ -94,37 +90,62 @@ contains
         !% initialize the API with the SWMM-C code
         call interface_init ()
 
+        !if (setting%Verbose) print *, "begin link-node processing"
+
         !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
         call init_linknode_arrays ()
+
+        !if (setting%Verbose) print *, "begin partitioning"
 
         call init_partitioning()
 
         !% HACK: this sync call is probably not needed
         sync all
 
+        !if (setting%Verbose) print *, "begin network definition"
+
         call init_network_define_toplevel ()
 
-        !% set up time Dr. Hodges bug fix
-        call init_time()
+        !if (setting%Verbose) print *, "begin reading csv"
 
-        !% read in link names for output 
-        if (setting%Output%report) call output_read_csv_link_names('link_input.csv')
-        if (setting%Output%report) call output_read_csv_node_names('node_input.csv')
-        
+        !% read in link names for output
+        call output_read_csv_link_names()
+        call output_read_csv_node_names()
+
+        !if (setting%Verbose) print *, "begin initializing boundary conditions"
+
         !% initialize boundary conditions
         call init_bc()
 
-        if (this_image() == 1) call util_export_linknode_csv()
+        call init_time()
 
+        if (setting%Verbose) then
+            if (this_image() == 1) then
+            if ((N_link > 5000) .or. (N_node > 5000)) then
+                print *, "begin setting initial conditions (this takes several minutes for big systems)"
+                print *, "This system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
+                print *, "The finite-volume system is ", sum(N_elem(:)), " elements"
+            endif
+        endif
+        endif
         call init_IC_setup ()
 
+        !if (setting%Verbose) print *, "begin setup of output files"
+
         !% creating output_folders and files
-        if (setting%Output%report) call util_output_create_folder()
-        if (setting%Output%report) call util_output_create_elemR_files()
-        if (setting%Output%report) call util_output_create_faceR_files()
-        if (setting%Output%report) call output_create_link_files()
-        if (setting%Output%report) call output_create_node_files()
-        call util_output_create_summary_files()
+        call util_output_clean_folders()
+        call util_output_create_folders()
+
+        if ((this_image() == 1) .and. setting%Debug%Input) call util_output_export_linknode_input()
+        if (setting%Debug%Output) then
+            call util_output_create_elemR_files()
+            call util_output_create_faceR_files()
+            call util_output_create_summary_files()
+        end if
+        if (setting%Debug%Output .or. setting%Output%report) then
+            call output_create_link_files()
+            call output_create_node_files()
+        end if
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
@@ -132,11 +153,11 @@ contains
         if (setting%Profile%File%initialization) then
             call util_toc(timer, 1)
             print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(1))
-            call util_free_jobs(timer)
         end if
 
         !% wait for all the processors to reach this stage before starting the time loop
-        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine initialize_all
     !%
     !%==========================================================================
@@ -161,25 +182,28 @@ contains
 
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
-            stop
+            stop "in " // subroutine_name
         end if
 
         !% Allocate storage for link & node tables
         call util_allocate_linknode()
 
+        link%I(:,li_num_phantom_links) = 0
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
 
-        do ii = 1, N_link
+        do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
             link%I(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
             link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
             link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
+            link%I(ii,li_parent_link) = ii
 
             node%I(link%I(ii,li_Mnode_d), ni_N_link_u) = node%I(link%I(ii,li_Mnode_d), ni_N_link_u) + 1
             node%I(link%I(ii,li_Mnode_d), ni_idx_base1 + node%I(link%I(ii,li_Mnode_d), ni_N_link_u)) = ii
@@ -203,6 +227,9 @@ contains
             link%R(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_u), api_node_initDepth)
             link%R(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_d), api_node_initDepth)
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
+            link%R(ii,lr_FullDepth) = interface_get_link_attribute(ii, api_link_xsect_yFull)
+            link%R(ii,lr_InletOffset) = interface_get_link_attribute(ii,api_link_offset1)
+            link%R(ii,lr_OutletOffset) = interface_get_link_attribute(ii,api_link_offset2)
         end do
 
         do ii = 1, N_node
@@ -267,7 +294,8 @@ contains
         character(64) :: subroutine_name = "init_bc"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization)  print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call pack_nodes()
         call util_allocate_bc()
@@ -306,7 +334,7 @@ contains
                         BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                     else
                         print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
-                        stop
+                        stop "in " // subroutine_name
                     end if
 
                     BC%flowI(ii, bi_node_idx) = nidx
@@ -326,7 +354,7 @@ contains
                     end if
                 else
                     print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
-                    stop
+                    stop "in " // subroutine_name
                 end if
             end do
         end if
@@ -342,7 +370,7 @@ contains
                     BC%headI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                 else
                     print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
-                    stop
+                    stop "in " // subroutine_name
                 end if
 
                 BC%headI(ii, bi_idx) = ii
@@ -365,7 +393,8 @@ contains
         call bc_step()
         call pack_bc()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_bc
     !%
     !%==========================================================================
@@ -385,10 +414,11 @@ contains
         character(64) :: subroutine_name = 'init_partitioning'
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%initialization) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% find the number of elements in a link based on nominal element length
-        do ii = 1, N_link
+        do ii = 1, SWMM_N_link
             call init_discretization_nominal(ii)
         end do
 
@@ -410,7 +440,8 @@ contains
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
 
-        if (setting%Debug%File%initialization)  print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_partitioning
     !%
@@ -427,7 +458,8 @@ contains
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
 
-        if (setting%Debug%File%utility_array) print *, '*** enter ', this_image(),subroutine_name
+        if (setting%Debug%File%utility_array) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
@@ -455,7 +487,7 @@ contains
                 idx = link_index(jj)
                 face_counter = face_counter + link%I(idx, li_N_element) - 1 !% internal faces between elems, e.g. 5 elements have 4 internal faces
                 elem_counter = elem_counter + link%I(idx, li_N_element) ! number of elements
-            enddo
+            end do
 
             !% now we loop through the nodes and count the node faces
             do jj = 1, size(node_index,1)
@@ -466,8 +498,8 @@ contains
                     face_counter = face_counter +1 !% add the upstream faces
                 elseif (node%I(idx, ni_node_type) == nBCdn) then
                     face_counter = face_counter +1 !% add the downstream faces
-                endif !% multiple junction faces already counted
-            enddo
+                end if !% multiple junction faces already counted
+            end do
 
             !% Now we count the space for duplicated faces
             do jj = 1, size(link_index,1)
@@ -477,14 +509,14 @@ contains
                     ( node%I(link%I(idx, li_Mnode_u), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
-                endif
+                end if
                 !% then downstream node
                 if ( ( node%I(link%I(idx, li_Mnode_d), ni_P_is_boundary) == 1) .and. &
                     ( node%I(link%I(idx, li_Mnode_d), ni_P_image) .ne. ii) ) then
                     face_counter = face_counter +1
                     duplicated_face_counter = duplicated_face_counter + 1
-                endif
-            enddo
+                end if
+            end do
 
             N_elem(ii) = elem_counter
             N_face(ii) = face_counter
@@ -495,20 +527,21 @@ contains
             junction_counter = zeroI
             duplicated_face_counter = zeroI
 
-        enddo
+        end do
 
         max_caf_elem_N = maxval(N_elem)
         max_caf_face_N = maxval(N_face) ! assign the max value
 
         if (setting%Debug%File%utility_array) then
             do ii = 1, size(unique_imagenum,1)
-                print*, 'Image => ', ii
+                print*, 'Processor => ', ii
                 print*, 'Elements expected ', N_elem(ii)
                 print*, 'Faces expected    ', N_face(ii)
             end do
-        endif
+        end if
 
-        if (setting%Debug%File%utility_array)  print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%utility_array)  &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_coarray_length
     !%
@@ -520,6 +553,10 @@ contains
         logical :: arg_param = .false.
         character(len=8) :: param
         character(len=256) :: arg
+        character(64) :: subroutine_name = "init_read_arguments"
+
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         do ii = 1, iargc()
             call getarg(ii, arg)
@@ -528,7 +565,7 @@ contains
                 if (ii == 1) then
                     if (arg(:1) == '-') then
                         print *, "ERROR: it is necessary to define the path to the .inp file"
-                        stop
+                        stop "in " // subroutine_name
                     end if
                     setting%Paths%inp = arg
                 elseif ((trim(arg) == "-s") .or. & ! user provides settings file
@@ -540,7 +577,7 @@ contains
                     setting%Warning = .false.
                 else
                     write(*, *) 'The argument ' // trim(arg) // ' is unsupported'
-                    stop
+                    stop "in " // subroutine_name
                 end if
             else
                 arg_param = .false.
@@ -557,28 +594,34 @@ contains
                         print *, "simple_channel, simple_orifice, simple_pipe"
                         print *, "simple_weir, swashes, waller_creek"
                         print *, "y_channel, y_storage_channel"
-                        stop
+                        stop "in " // subroutine_name
                     end if
                 elseif (trim(param) == '--run-tests') then
                 end if
             end if
         end do
+
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_read_arguments
     !%
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine init_time ()
-        !% BRHbugfix20210811  Entire subroutine is new
-        !% adjust for inconsistent time settings
+    subroutine init_time()
+        logical :: doHydraulics
 
-        if (setting%Time%Hydrology%timeFinal > setting%Time%EndTime) then
-            setting%Time%Hydrology%timeFinal = setting%Time%EndTime
-        endif
-        if (setting%Time%Hydrology%Dt > setting%Time%EndTime - setting%Time%StartTime) then
-            setting%Time%Hydrology%Dt = setting%Time%EndTime - setting%Time%StartTime
-        endif
-
+        setting%Time%Dt = setting%Time%Hydraulics%Dt
+        setting%Time%Now = 0
+        setting%Time%Step = 0
+        setting%Time%Hydraulics%Step = 0
+        setting%Time%Hydrology%Step = 0
+        if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
+        !% Initialize report step
+        setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
+        if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
+            stop "Error: Hydrology time step can't be smaller than hydraulics time step"
+        end if
     end subroutine init_time
     !%
     !%==========================================================================

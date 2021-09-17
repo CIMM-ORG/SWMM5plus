@@ -53,7 +53,8 @@
         }
     },
     "BC" : {
-        "BCSlots" : 10
+        "slots" : 10,
+        "disableInterpolation": false
     },
     "Constant" : {
         "gravity" : 9.81
@@ -67,10 +68,10 @@
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
     "FaceInterp" : {
-        "DownJBFaceInterp" : "static",
+        "DownJBFaceInterp" : "static"
     },
     "Junction" : {
-        "kFactor" : 0.7
+        "kFactor" : 0.0
     },
     "Limiter" : {
         "BC" : {
@@ -90,28 +91,42 @@
             "Minimum" : 1e-6
         },
         "Velocity" : {
-            "Maximum" : 10.0,
+            "Maximum" : 20.0,
             "UseLimitMax" : true
         },
         "ArraySize" : {
             "TemporalInflows" : 10,
             "TotalInflows" : 50
         },
-        "Dt"     : {
-            "Minimum"       :  1e-6,
-            "UseLimitMin"   :  true,
-        } 
+        "Dt" : {
+            "Minimum"     : 1e-4,
+            "UseLimitMin" : true
+        }
     },
     "Link" : {
         "DefaultInitDepthType" : "Linear", // uniform, linear, exponential
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
+    "Output" : {
+        "report" : true,
+        "reportStartTime" : 0.0,
+        "reportDt" : 100.0,
+        "reportStep" : 0,
+        "slots" : 20,
+        "links_file" : "link_input.csv",
+        "nodes_file" : "node_input.csv",
+        "CommandLine" : {
+            "quiet" : false,
+            "interval" : 100
+        }
+    },
     "Partitioning" : {
-        "PartitioningMethod" : "BQuick"
+        "PartitioningMethod" : "bquick"
     },
     "Simulation" : {
         "useHydrology" : true,
-        "useHydraulics" : true
+        "useHydraulics" : true,
+        "useSWMMC" : false
     },
     "SmallVolume" : {
         "DepthCutoff" : 0.01,
@@ -134,26 +149,31 @@
         "TestName" : "testcase"
     },
     "Time" : {
-        "DateTimeStamp" : 0.0,
-        "EndTime" : 0.0,
-        "StartTime" : 0.0,
+        "Start" : 0.0,
+        "Now" : 0.0,
+        "End" : 0.0,
+        "Dt" : 10.0,
+        "Step" : 0,
+        "matchHydrologyStep" : true,
+        "Hydraulics" : {
+            "Dt" : 10.0,
+            "Step" : 0
+        },
         "Hydrology" : {
             "Dt" : 10.0,
-            "timeNow" : 0.0,
-            "timeNext" : 1.0,
-            "timeFinal" : 1.0,
-            "stepNow"  : 0,
-            "stepNext"  : 1,
-            "stepFinal" : 10000
+            "Step" : 0
         },
-        "Hydraulics" : {
-            "Dt" : 100.0,
-            "timeNow" : 0.0,
-            "timeNext" : 1.0,
-            "timeFinal" : 1.0,
-            "stepNow"  : 0,
-            "stepNext"  : 1,
-            "stepFinal" : 1
+        "DateTimeStamp" : 0.0,
+        "DtTol" : 1e-1,
+        "Real" : {
+            "EpochStartSeconds" : 0,
+            "EpochTimeLoopStartSeconds" : 0,
+            "EpochNowSeconds" : 0
+        },
+        "CPU" : {
+            "EpochStartSeconds" : 0.0,
+            "EpochNowSeconds" : 0.0,
+            "EpochFinishSeconds" : 0.0
         }
     },
     "Weir" : {
@@ -200,7 +220,6 @@
         "Volume" : 1e-6
     },
     "Debug" : {
-        "Tests" : true,
         "File" : {
             "adjust" : false,
             "boundary_conditions" : false,
@@ -223,8 +242,9 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
+            "output" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : false,
+            "partitioning" : true,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
@@ -239,8 +259,7 @@
             "utility_interpolate" : false,
             "utility_output" : false,
             "utility_string" : false,
-            "weir_elements" : false,
-	    "output" : false
+            "weir_elements" : false
         },
         "FileGroup" : {
             "all" : false,
@@ -249,69 +268,14 @@
             "geometry" : false,
             "initialization" : false,
             "interface" : false,
+            "output" : false,
             "timeloop" : false,
             "utility" : false
-        }
-    },
-    "Profile" : {
-        "Tests" : false,
-        "File" : {
-            "adjust" : false,
-            "boundary_conditions" : false,
-            "BIPquick" : false,
-            "c_library" : false,
-            "define_globals" : false,
-            "define_indexes" : false,
-            "define_keys" : false,
-            "define_settings" : false,
-            "define_types" : false,
-            "diagnostic_elements" : false,
-            "face" : false,
-            "finalization" : false,
-            "geometry" : false,
-            "discretization"  : false,
-            "initial_condition" : false,
-            "initialization" : true,
-            "interface" : false,
-            "jump" : false,
-            "lowlevel_rk2" : false,
-            "network_define" : false,
-            "orifice_elements" : false,
-            "pack_mask_arrays" : false,
-            "partitioning" : false,
-            "pump_elements" : false,
-            "rectangular_channel" : false,
-            "trapezoidal_channel" : false,
-            "runge_kutta2" : false,
-            "timeloop" : false,
-            "update" : false,
-            "utility" : false,
-            "utility_allocate" : false,
-            "utility_deallocate" : false,
-            "utility_array" : false,
-            "utility_datetime" : false,
-            "utility_interpolate" : false,
-            "utility_output" : false,
-            "utility_string" : false,
-            "weir_elements" : false,
-	        "output" : false
         },
-        "FileGroup" : {
-            "all" : false,
-            "definitions" : false,
-            "finalization" : true,
-            "geometry" : false,
-            "initialization" : true,
-            "interface" : false,
-            "timeloop" : true,
-            "utility" : false
-        }
+        "Input"  : true,
+        "Output" : true,
+        "Tests" : true
     },
-    "Output" : {
-        "report" : true,
-        "report_time" : 600,
-        "report_tol"  : 2
-    },
-    "Warning"  : false,
+    "Warning"  : true,
     "Verbose" : true
 }

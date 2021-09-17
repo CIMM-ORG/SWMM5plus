@@ -74,13 +74,14 @@ contains
         character(64) :: subroutine_name = "c_lib_load"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%c_library) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%c_library) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         errmsg = ''
 
         if (.not. c_lib%loaded) then
             c_lib%fileaddrx = dlopen(trim(c_lib%filename) // c_null_char, 1) ! load DLL
-            if( .not. c_associated(c_lib%fileaddrx) ) then
+            if ( .not. c_associated(c_lib%fileaddrx) ) then
                 errstat = -1
                 write(errmsg, "(A, I2, A)") &
                         'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
@@ -92,7 +93,7 @@ contains
         end if
 
         c_lib%procaddr = dlsym(c_lib%fileaddrx, trim(c_lib%procname) // c_null_char)
-        if(.not. c_associated(c_lib%procaddr)) then
+        if (.not. c_associated(c_lib%procaddr)) then
             errstat = -1
             errmsg = 'The procedure ' // trim(c_lib%procname) // ' in file ' &
                      // trim(c_lib%filename) // ' could not be loaded.'
@@ -101,7 +102,8 @@ contains
 
         errstat = 0
 
-        if (setting%Debug%File%c_library) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%c_library) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine c_lib_load
 
     subroutine c_lib_close (c_lib, errstat, errmsg)
@@ -115,7 +117,8 @@ contains
         character(64) :: subroutine_name = "c_lib_close"
     !%-----------------------------------------------------------------------------
 
-        if (setting%Debug%File%c_library) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Debug%File%c_library) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         errmsg = ''
         errstat = dlclose( c_lib%fileaddrx )
@@ -125,6 +128,7 @@ contains
             return
         end if
 
-        if (setting%Debug%File%c_library) print *, '*** leave ', this_image(), subroutine_name
+        if (setting%Debug%File%c_library) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine c_lib_close
 end module c_library
