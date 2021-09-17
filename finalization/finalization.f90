@@ -1,12 +1,12 @@
 module finalization
 
     use define_settings, only: setting
+    use define_globals, only: timer
     use interface
     use utility_deallocate
     use utility_profiler
     use utility_prof_jobcount
     use output
-    use define_settings, only: setting
 
     implicit none
 
@@ -34,7 +34,7 @@ contains
         if (setting%Profile%File%finalization) then
             call util_toc(timer, 4)
             print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(4))
-            ! call util_free_jobs(timer)
+            call util_free_jobs(timer)
         end if
 
         if ((this_image() == 1) .and. (.not. setting%Debug%Output)) then

@@ -2,13 +2,8 @@
 module utility_profiler
     use utility_prof_jobcount
     use define_types
-    implicit none
 
-    type wall_clk
-       type(job), allocatable :: jobs(:)
-       integer :: max_num_jobs = 0
-       integer :: num_jobs = 0
-    end type wall_clk
+    implicit none
 
 contains
 

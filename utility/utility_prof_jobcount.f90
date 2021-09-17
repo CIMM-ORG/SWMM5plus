@@ -1,12 +1,7 @@
 module utility_prof_jobcount
 
     use utility_prof_array
-    use define_types
-    type job
-       type(f_array) :: time_stamps
-       real :: end_time
-       integer :: id = -1
-    end type job
+    use define_types, only: f_array
 
 contains
 

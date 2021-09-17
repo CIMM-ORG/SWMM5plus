@@ -1,14 +1,9 @@
 module utility_prof_array
 
-    !use define_types
+    use define_types
     !use define_globals
     !use utility_allocate
     !use utility_deallocate
-    type f_array
-        integer :: max_size = 0
-        integer :: len = 0
-        real, allocatable :: arr(:)
-    end type f_array
 contains
     subroutine util_free_arr(this)
         !move to utility_deallocate
@@ -25,7 +20,7 @@ contains
         ! call util_allocate_profiler(this)
         if (this%max_size == 0) then
             allocate(this%arr(100))
-            this%max_size = 100    
+            this%max_size = 100
         else if (this%len == this%max_size) then
             allocate(resized_arr(this%max_size * 2))
             resized_arr(1:this%max_size) = this%arr(1:this%max_size)

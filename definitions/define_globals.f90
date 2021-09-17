@@ -234,4 +234,6 @@ module define_globals
         reshape((/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, & ! normal years
         31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/), (/12,2/)) ! leap years
 
+    !% Profiling Timer
+    type(wall_clk) :: timer
 end module define_globals
