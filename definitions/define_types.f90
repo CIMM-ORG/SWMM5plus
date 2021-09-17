@@ -122,6 +122,12 @@ module define_types
         real, allocatable :: arr(:)
     end type f_array
 
+    type job
+        type(f_array) :: time_stamps
+        real :: end_time
+        integer :: id = -1
+    end type job
+    
     !% Profiling types
     type wall_clk
        type(job), allocatable :: jobs(:)
@@ -129,10 +135,5 @@ module define_types
        integer :: num_jobs = 0
     end type wall_clk
 
-    type job
-       type(f_array) :: time_stamps
-       real :: end_time
-       integer :: id = -1
-    end type job
-
+    
 end module define_types
