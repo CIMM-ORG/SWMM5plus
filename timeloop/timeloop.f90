@@ -8,6 +8,8 @@ module timeloop
     use runge_kutta2
     use utility_output
     use boundary_conditions
+    use utility_profiler
+    use utility_prof_jobcount
 
     implicit none
 
@@ -39,7 +41,14 @@ module timeloop
         logical, pointer :: useHydrology, useHydraulics
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'timeloop_toplevel'
+        type(wall_clk) :: timer
+
+        real(8) :: start, intermediate, finish
+        call cpu_time(start)
+
         if (setting%Debug%File%timeloop) print *, '*** enter ', this_image(), subroutine_name
+        if (setting%Profile%File%timeloop) call util_tic(timer, 3)
+
         !%-----------------------------------------------------------------------------
         useHydrology  => setting%Simulation%useHydrology
         useHydraulics => setting%simulation%useHydraulics
@@ -113,6 +122,12 @@ module timeloop
             print *, 'error, condition that should not occur.'
             stop 76408
         endif
+
+        if (setting%Profile%File%timeloop) then
+            call util_toc(timer, 3)
+            print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(3))
+            ! call util_free_jobs(timer)
+        end if
 
         if (setting%Debug%File%timeloop)  print *, '*** leave ', this_image(), subroutine_name
     end subroutine timeloop_toplevel

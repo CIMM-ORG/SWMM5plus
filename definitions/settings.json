@@ -299,11 +299,11 @@
         "FileGroup" : {
             "all" : false,
             "definitions" : false,
-            "finalization" : false,
+            "finalization" : true,
             "geometry" : false,
             "initialization" : true,
             "interface" : false,
-            "timeloop" : false,
+            "timeloop" : true,
             "utility" : false
         }
     },
