@@ -223,6 +223,7 @@
         "File" : {
             "adjust" : false,
             "boundary_conditions" : false,
+            "BIPquick" : false,
             "c_library" : false,
             "define_globals" : false,
             "define_indexes" : false,
@@ -235,7 +236,7 @@
             "geometry" : false,
             "discretization"  : false,
             "initial_condition" : false,
-            "initialization" : false,
+            "initialization" : true,
             "interface" : false,
             "jump" : false,
             "lowlevel_rk2" : false,

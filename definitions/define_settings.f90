@@ -188,7 +188,7 @@ module define_settings
         logical :: finalization        = .false.
         logical :: geometry            = .false.
         logical :: initial_condition   = .false.
-        logical :: initialization      = .false.
+        logical :: initialization      = .true.
         logical :: jump                = .false.
         logical :: lowlevel_rk2        = .false.
         logical :: network_define      = .false.
@@ -252,6 +252,61 @@ module define_settings
 
     ! -
     ! --
+
+    ! setting%Profile%File
+    type ProfileFileYNType
+        logical :: adjust              = .false.
+        logical :: BIPquick            = .false.
+        logical :: boundary_conditions = .false.
+        logical :: c_library           = .false.
+        logical :: define_globals      = .false.
+        logical :: define_indexes      = .false.
+        logical :: define_keys         = .false.
+        logical :: define_settings     = .false.
+        logical :: define_types        = .false.
+        logical :: diagnostic_elements = .false.
+        logical :: discretization      = .false.
+        logical :: face                = .false.
+        logical :: finalization        = .false.
+        logical :: geometry            = .false.
+        logical :: initial_condition   = .false.
+        logical :: initialization      = .true.
+        logical :: jump                = .false.
+        logical :: lowlevel_rk2        = .false.
+        logical :: network_define      = .false.
+        logical :: orifice_elements    = .false.
+        logical :: rectangular_channel = .false.
+        logical :: trapezoidal_channel = .false.
+        logical :: runge_kutta2        = .false.
+        logical :: pack_mask_arrays    = .false.
+        logical :: partitioning        = .false.
+        logical :: pump_elements       = .false.
+        logical :: interface           = .false.
+        logical :: timeloop            = .false.
+        logical :: update              = .false.
+        logical :: utility             = .false.
+        logical :: utility_allocate    = .false.
+        logical :: utility_deallocate  = .false.
+        logical :: utility_array       = .false.
+        logical :: utility_datetime    = .false.
+        logical :: utility_interpolate = .false.
+        logical :: utility_output      = .false.
+        logical :: utility_string      = .false.
+        logical :: weir_elements       = .false.
+        logical :: output              = .false.
+    end type ProfileFileYNType
+    
+    ! setting%Profile%FileGroup
+    type ProfileFileGroupYNType
+        logical :: all              = .false.
+        logical :: definitions      = .false.
+        logical :: finalization     = .false.
+        logical :: geometry         = .false.
+        logical :: initialization   = .false.
+        logical :: interface        = .false.
+        logical :: timeloop         = .false.
+        logical :: utility          = .false.
+    end type ProfileFileGroupYNType
 
     ! setting%ACmethodType
     type ACmethodType
@@ -427,6 +482,13 @@ module define_settings
         logical :: Output
     end type DebugType
 
+    !% setting%Profile
+    type ProfileType
+        logical :: Tests = .false.
+        type(ProfileFileYNType) :: File
+        type(ProfileFileGroupYNType) :: FileGroup
+    end type ProfileType
+
     !% setting%Paths
     type PathType
         character(len=256) :: project ! project path
@@ -476,6 +538,7 @@ module define_settings
         type(TestCaseType)       :: TestCase
         type(PathType)           :: Paths
         type(DebugType)          :: Debug
+        type(ProfileType)        :: Profile
         type(OutputType)         :: Output
         logical                  :: Verbose
         logical                  :: Warning = .true.
@@ -1243,4 +1306,68 @@ contains
             setting%Debug%File%utility = .true.
         end if
     end subroutine def_update_debug_options
+
+    subroutine def_update_profile_options()
+        if (setting%Profile%FileGroup%all) then
+            setting%Profile%FileGroup%definitions = .true.
+            setting%Profile%FileGroup%finalization = .true.
+            setting%Profile%FileGroup%geometry = .true.
+            setting%Profile%FileGroup%initialization = .true.
+            setting%Profile%FileGroup%interface = .true.
+            setting%Profile%FileGroup%timeloop  = .true.
+            setting%Profile%FileGroup%utility = .true.
+        end if
+        if (setting%Profile%FileGroup%definitions) then
+            setting%Profile%File%define_globals = .true.
+            setting%Profile%File%define_indexes = .true.
+            setting%Profile%File%define_keys = .true.
+            setting%Profile%File%define_settings = .true.
+            setting%Profile%File%define_types = .true.
+        end if
+        if (setting%Profile%FileGroup%finalization) then
+            setting%Profile%File%finalization = .true.
+        end if
+        if (setting%Profile%FileGroup%geometry) then
+            setting%Profile%File%geometry = .true.
+            setting%Profile%File%rectangular_channel = .true.
+            setting%Profile%File%trapezoidal_channel = .true.
+        end if
+        if (setting%Profile%FileGroup%initialization) then
+            setting%Profile%File%discretization = .true.
+            setting%Profile%File%initial_condition = .true.
+            setting%Profile%File%initialization = .true.
+            setting%Profile%File%network_define = .true.
+            setting%Profile%File%partitioning = .true.
+            setting%Profile%File%BIPquick = .true.
+            setting%Profile%File%pack_mask_arrays = .true.
+        end if
+        if (setting%Profile%FileGroup%interface) then
+            setting%Profile%File%c_library = .true.
+            setting%Profile%File%interface = .true.
+        end if
+        if (setting%Profile%FileGroup%timeloop) then
+            setting%Profile%File%adjust = .true.
+            setting%Profile%File%boundary_conditions = .true.
+            setting%Profile%File%diagnostic_elements = .true.
+            setting%Profile%File%face = .true.
+            setting%Profile%File%jump = .true.
+            setting%Profile%File%lowlevel_rk2 = .true.
+            setting%Profile%File%orifice_elements = .true.
+            setting%Profile%File%pump_elements = .true.
+            setting%Profile%File%runge_kutta2 = .true.
+            setting%Profile%File%timeloop = .true.
+            setting%Profile%File%update = .true.
+            setting%Profile%File%weir_elements = .true.
+        endif
+        if (setting%Profile%FileGroup%utility) then
+            setting%Profile%File%utility_allocate = .true.
+            setting%Profile%File%utility_deallocate = .true.
+            setting%Profile%File%utility_array = .true.
+            setting%Profile%File%utility_datetime = .true.
+            setting%Profile%File%utility_interpolate = .true.
+            setting%Profile%File%utility_output = .true.
+            setting%Profile%File%utility_string = .true.
+            setting%Profile%File%utility = .true.
+        end if
+    end subroutine def_update_profile_options
 end module define_settings

@@ -95,6 +95,7 @@ module define_globals
     !% BIPquick Arrays - (De)Allocated in BIPquick.f08
     integer, allocatable :: B_nodeI(:,:)
     real(8), allocatable :: B_nodeR(:,:)
+    integer, allocatable :: B_roots(:)
     real(8), allocatable :: weight_range(:,:)
     logical, allocatable :: totalweight_visited_nodes(:)
     logical, allocatable :: partitioned_nodes(:)
@@ -234,4 +235,6 @@ module define_globals
         reshape((/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, & ! normal years
         31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/), (/12,2/)) ! leap years
 
+    !% Profiling Timer
+    type(wall_clk) :: timer
 end module define_globals

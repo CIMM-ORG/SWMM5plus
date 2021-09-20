@@ -5,6 +5,7 @@ module utility_allocate
     use define_indexes
     use define_settings, only: setting
     use interface
+    use utility
 
     ! use utility, only: utility_check_allocation
 
@@ -133,8 +134,11 @@ contains
 
         !% If BIPquick is being used for Partitioning, allocate additional arrays
         if (setting%Partitioning%PartitioningMethod == BQuick) then
+            call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
+
             allocate(B_nodeI(size(node%I,1), max_us_branch_per_node))
             allocate(B_nodeR(size(node%R,1), twoI))
+            allocate(B_roots(N_nBCdn))
             allocate(totalweight_visited_nodes(size(node%I, oneI)))
             allocate(partitioned_nodes(size(node%I, oneI)))
             allocate(partitioned_links(size(link%I, oneI)))
@@ -1095,6 +1099,24 @@ contains
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_allocate_bc
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine util_allocate_profiler
+        !-----------------------------------------------------------------------------
+        
+            character(64)      :: subroutine_name = 'util_allocate_profiler'
+            integer            :: ii, allocation_status, bc_node
+            character(len=99)  :: emsg
+
+        !-----------------------------------------------------------------------------
+        if (setting%Debug%File%utility) print *, '*** enter', this_image(),subroutine_name
+
+        
+
+        if (setting%Debug%File%utility) print *, '*** leave ', this_image(),subroutine_name
+    end subroutine util_allocate_profiler
     !
     !==========================================================================
     !==========================================================================
