@@ -859,8 +859,8 @@ module lowlevel_rk2
             case (VariableSlot)
 
                 SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-                SlotWidth(thisP) = 0.02
-                ! SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
+                ! SlotWidth(thisP) = 0.02
+                SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
                 SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
                 SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                 SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &

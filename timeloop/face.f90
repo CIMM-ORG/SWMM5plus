@@ -103,7 +103,7 @@ module face
         integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
         character(64) :: subroutine_name = 'face_interpolation_upBC_byPack'
         integer :: ii
-        integer, pointer :: face_P(:), edn(:), idx_P(:)
+        integer, pointer :: face_P(:), edn(:), idx_P(:), fdn(:)
 
         !%-----------------------------------------------------------------------------
 
@@ -113,6 +113,7 @@ module face
         !% For the head/geometry at the upstream faces, we directly take the dnwnstream element
         !% So there is no eup for upstream BCs
         edn => faceI(:,fi_Melem_dL)
+        fdn => elemI(:,ei_Mface_dL)
 
         face_P => faceP(1:npack_faceP(fp_BCup),fp_BCup)
         idx_P  => BC%P%BCup(:)
@@ -138,7 +139,12 @@ module face
             faceR(face_P,fGeoSetU(ii)) = faceR(face_P,fGeoSetD(ii))
         end do
 
-        faceR(face_P,fr_Head_d) = elemR(edn(face_P),er_HydDepth) + faceR(face_P,fr_Zbottom)!Copying the Head
+        ! faceR(face_P,fr_Head_d) = elemR(edn(face_P),er_HydDepth) + faceR(face_P,fr_Zbottom) !%OLD CODE
+
+        !% gradient extrapolation for head from PipeAC20
+        faceR(face_P,fr_Head_d) = elemR(edn(face_P),er_Head) + elemR(edn(face_P),er_Head) - &
+                    faceR(fdn(edn(face_P)),fr_Head_d) !% Bugfix SAZ 09212021
+
         faceR(face_P,fr_Head_u) = faceR(face_P,fr_Head_d)
         
         !% HACK: This is needed to be revisited later
