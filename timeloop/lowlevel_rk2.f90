@@ -39,6 +39,7 @@ module lowlevel_rk2
     public :: ll_extrapolate_values
     public :: ll_interpolate_values
     public :: ll_junction_branch_flowrate_and_velocity
+    public :: ll_slot_computation_ETM
 
     contains
     !%==========================================================================
@@ -820,6 +821,65 @@ module lowlevel_rk2
         end if
 
     end subroutine ll_junction_branch_flowrate_and_velocity
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine ll_slot_computation_ETM (thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Compute preissmann slot for conduits in ETM methods
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisCol, Npack
+        integer, pointer    :: thisP(:), SlotMethod
+        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
+        real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
+        real(8), pointer    :: SlotHydRadius(:)
+        real(8), pointer    :: CelerityFactor
+
+        character(64) :: subroutine_name = 'll_slot_computation_ETM'
+        !%-----------------------------------------------------------------------------
+        thisP => elemP(1:Npack,thisCol)
+        volume     => elemR(:,er_Volume)
+        fullvolume => elemR(:,er_FullVolume)
+        fullarea   => elemR(:,er_FullArea)
+        ell        => elemR(:,er_ell)
+        length     => elemR(:,er_Length)
+        SlotWidth  => elemR(:,er_SlotWidth)
+        SlotVolume => elemR(:,er_SlotVolume)
+        SlotDepth  => elemR(:,er_SlotDepth)
+        SlotArea   => elemR(:,er_SlotArea)
+        SlotHydRadius => elemR(:,er_SlotHydRadius)
+
+        SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
+        CelerityFactor => setting%PreissmannSlot%CelerityFactor
+
+        select case (SlotMethod)
+
+            case (VariableSlot)
+
+                SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+                ! SlotWidth(thisP) = 0.02
+                SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
+                SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+                SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+                SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
+                    ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
+            case (StaticSlot)
+
+                print*, 'In ', subroutine_name
+                print*, 'Static Preissmann Slot is not handeled yet'
+                stop "in " // subroutine_name
+
+            case default
+                !% should not reach this stage
+                print*, 'In ', subroutine_name
+                print*, 'error: unexpected Preissmann Slot Method, ', SlotMethod
+                stop "in " // subroutine_name
+
+        end select
+
+    end subroutine ll_slot_computation_ETM
     !%
     !%==========================================================================
     !%==========================================================================

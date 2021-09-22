@@ -148,6 +148,8 @@ module define_keys
         enumerator :: BQuick
         enumerator :: Random
         enumerator :: BLink
+        enumerator :: StaticSlot
+        enumerator :: VariableSlot
     end enum
 
     !% rm 20210610 brh because of issues with ALLtm key

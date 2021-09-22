@@ -40,7 +40,7 @@ module geometry
         integer, intent(in) :: whichTM
         integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
         integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, thisColP_all
-        integer, pointer :: thisColP_JM, thisColP_JB
+        integer, pointer :: thisColP_JM, thisColP_JB, thisColP_ClosedElems
 
         character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
@@ -59,6 +59,7 @@ module geometry
                 thisColP_surcharged    => col_elemP(ep_Surcharged_ALLtm)
                 thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ALLtm)
                 thisColP_all           => col_elemP(ep_ALLtm)
+                thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
              case (ETM)
                 elemPGx                => elemPGetm(:,:)
                 npack_elemPGx          => npack_elemPGetm(:)
@@ -68,6 +69,7 @@ module geometry
                 thisColP_surcharged    => col_elemP(ep_Surcharged_ETM)
                 thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_ETM)
                 thisColP_all           => col_elemP(ep_ETM)
+                thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
             case (AC)
                 elemPGx                => elemPGac(:,:)
                 npack_elemPGx          => npack_elemPGac(:)
@@ -77,6 +79,7 @@ module geometry
                 thisColP_surcharged    => col_elemP(ep_Surcharged_AC)
                 thisColP_NonSurcharged => col_elemP(ep_NonSurcharged_AC)
                 thisColP_all           => col_elemP(ep_AC)
+                thisColP_ClosedElems   => col_elemP(ep_Closed_Elements)
             case default
                 print *, 'error, case default should never be reached.'
                 stop 7389
@@ -133,6 +136,11 @@ module geometry
 
         !% compute hydradius
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
+
+        !% make adjustments for slots on closed elements only for ETM
+        if (whichTM .eq. ETM) then
+            call geo_slot_adjustments (thisColP_ClosedElems)
+        end if
 
         !% the modified hydraulic depth "ell" is used for AC computations and
         !% for Froude number computations on all elements, whether ETM or AC.
@@ -782,6 +790,54 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_dHdA
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine geo_slot_adjustments (thisColP)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% This subroutine adds back the slot geometry in all the closed elements
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisColP
+        integer, pointer    :: thisP(:), Npack
+        real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
+        real(8), pointer    :: volume(:), depth(:), area(:), head(:), SlotHydRadius(:)
+        real(8), pointer    :: hydRadius(:), ell(:), breadthMax(:)
+
+        character(64) :: subroutine_name = 'geo_slot_adjustments'
+        !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%geometry) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        Npack      => npack_elemP(thisColP)
+        volume     => elemR(:,er_Volume)
+        depth      => elemR(:,er_Depth)
+        area       => elemR(:,er_Area)
+        head       => elemR(:,er_Head)
+        ell        => elemR(:,er_ell)
+        breadthMax => elemR(:,er_BreadthMax)
+        hydRadius  => elemR(:,er_HydRadius)
+        SlotWidth  => elemR(:,er_SlotWidth)
+        SlotVolume => elemR(:,er_SlotVolume)
+        SlotDepth  => elemR(:,er_SlotDepth)
+        SlotArea   => elemR(:,er_SlotArea)
+        SlotHydRadius => elemR(:,er_SlotHydRadius)
+        !%-----------------------------------------------------------------------------
+
+        if (Npack > 0) then
+            thisP    => elemP(1:Npack,thisColP)
+            volume(thisP) = volume(thisP) + SlotVolume(thisP)
+            area(thisP)   = area(thisP)   + SlotArea(thisP)
+            depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
+            head(thisP)   = head(thisP)   + SlotDepth(thisP)
+            ! ell(thisP)    = ell(thisP) + SlotArea(thisP) / breadthMax(thisP)
+            hydRadius(thisP) = hydRadius(thisP) + SlotHydRadius(thisP)    
+        end if
+
+        if (setting%Debug%File%geometry) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+    end subroutine geo_slot_adjustments
     !%
     !%==========================================================================
     !%==========================================================================

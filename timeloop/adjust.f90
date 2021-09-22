@@ -219,13 +219,13 @@ module adjust
         !% For small volumes, compute a velocity that is blended from
         !% the update value and a Chezy-Manning computed using the 
         !% free surface slope of the element
-        if (setting%SmallVolume%UseSmallVolumes) then
-            Npack => npack_elemP(thisSmallVolumeCol)
-            if (Npack > 0) then
-                call adjust_velocity_smallvolume_blended    &
-                    (Npack, thisSmallVolumeCol, velocityCol)
-            end if
-        end if
+        ! if (setting%SmallVolume%UseSmallVolumes) then
+        !     Npack => npack_elemP(thisSmallVolumeCol)
+        !     if (Npack > 0) then
+        !         call adjust_velocity_smallvolume_blended    &
+        !             (Npack, thisSmallVolumeCol, velocityCol)
+        !     end if
+        ! end if
         
         !% for extremely small volumes set velocity to zero
         if (setting%ZeroValue%UseZeroValues) then

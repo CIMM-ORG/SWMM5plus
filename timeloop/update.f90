@@ -198,8 +198,9 @@ module update
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'update_interpolation_weights_element'
         integer, intent(in) :: thisCol, whichTM
-        integer, pointer :: Npack, Npack2, thisCol_AC,  thisP(:), thisP2(:)
+        integer, pointer :: Npack, Npack2, thisCol_AC,  thisCol_ClosedElems, thisP(:), thisP2(:)
         real(8), pointer :: velocity(:), wavespeed(:), depth(:), length(:)
+        real(8), pointer :: PCelerity(:), SlotVolume(:),SlotWidth(:), fullArea(:)
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
         real(8), pointer :: Fr(:) !BRHbugfix20210811 test
         !%-----------------------------------------------------------------------------
@@ -216,8 +217,12 @@ module update
         w_dG      => elemR(:,er_InterpWeight_dG)
         w_uH      => elemR(:,er_InterpWeight_uH)
         w_dH      => elemR(:,er_InterpWeight_dH)
-
         Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
+
+        PCelerity  => elemR(:,er_Preissmann_Celerity)
+        SlotVolume => elemR(:,er_SlotVolume)
+        SlotWidth  => elemR(:,er_SlotWidth)
+        fullArea   => elemR(:,er_FullArea)
         !%-----------------------------------------------------------------------------
         !% 2nd cases needed for handling surcharged AC elements and using the celerity
         !% multiplier of the AC method for the wavespeed
@@ -225,7 +230,7 @@ module update
             case (ALLtm)
                 thisCol_AC =>  col_elemP(ep_Surcharged_AC)
             case (ETM)
-                !% no effect
+                thisCol_ClosedElems => col_elemP(ep_Closed_Elements)
             case (AC)
                 thisCol_AC =>  col_elemP(ep_Surcharged_AC)
             case default
@@ -247,6 +252,14 @@ module update
                     thisP2 => elemP(1:Npack2,thisCol_AC)
                     wavespeed(thisP2) = wavespeed(thisP2) * setting%ACmethod%Celerity%RC
                 end if
+            else if (whichTM .eq. ETM) then
+                Npack2 => npack_elemP(thisCol_ClosedElems)
+                if (Npack2 > 0) then
+                    thisP2 => elemP(1:Npack2,thisCol_ClosedElems)
+                    where(SlotVolume(thisP2) .gt. zeroR) 
+                        PCelerity(thisP2) = sqrt(grav * fullArea(thisP2)/SlotWidth(thisP2))
+                    end where
+                end if
             end if
 
 
@@ -254,8 +267,11 @@ module update
             !% Modified from original approach by Froude number weighting
             !% Note that Fr is +/- depending on flow direction, so if the Fr is an odd power
             !% it needs to have an abs() e.g, abs(Fr(thisp)**3) *
-            w_uQ(thisP) = - onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) - wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
-            w_dQ(thisP) = + onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) + wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
+            ! w_uQ(thisP) = - onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) - wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
+            ! w_dQ(thisP) = + onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) + wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
+
+            w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
+            w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
 
             !% apply limiters to timescales
             where (w_uQ(thisP) < zeroR)
