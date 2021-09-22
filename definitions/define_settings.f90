@@ -304,6 +304,7 @@ module define_settings
         logical :: geometry         = .false.
         logical :: initialization   = .false.
         logical :: interface        = .false.
+        logical :: output           = .false.
         logical :: timeloop         = .false.
         logical :: utility          = .false.
     end type ProfileFileGroupYNType
@@ -493,6 +494,8 @@ module define_settings
         logical :: Tests = .false.
         type(ProfileFileYNType) :: File
         type(ProfileFileGroupYNType) :: FileGroup
+        logical :: Input
+        logical :: Output
     end type ProfileType
 
     !% setting%Paths
@@ -1254,6 +1257,157 @@ contains
         if (.not. found) stop "Error - setting " // 'Debug.Output not found'
 
         call def_update_debug_options()
+
+        ! Load Profile Settings
+        call json%get('Profile.Tests', logical_value, found)
+        setting%Profile%Tests = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.Tests not found'
+        call json%get('Profile.File.adjust', logical_value, found)
+        setting%Profile%File%adjust = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.adjust not found'
+        call json%get('Profile.File.boundary_conditions', logical_value, found)
+        setting%Profile%File%boundary_conditions = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.boundary_conditions not found'
+        call json%get('Profile.File.c_library', logical_value, found)
+        setting%Profile%File%c_library = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.c_library not found'
+        call json%get('Profile.File.define_globals', logical_value, found)
+        setting%Profile%File%define_globals = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.define_globals not found'
+        call json%get('Profile.File.define_indexes', logical_value, found)
+        setting%Profile%File%define_indexes = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.define_indexes not found'
+        call json%get('Profile.File.define_keys', logical_value, found)
+        setting%Profile%File%define_keys = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.define_keys not found'
+        call json%get('Profile.File.define_settings', logical_value, found)
+        setting%Profile%File%define_settings = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.define_settings not found'
+        call json%get('Profile.File.define_types', logical_value, found)
+        setting%Profile%File%define_types = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.define_types not found'
+        call json%get('Profile.File.diagnostic_elements', logical_value, found)
+        setting%Profile%File%diagnostic_elements = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.diagnostic_elements not found'
+        call json%get('Profile.File.discretization', logical_value, found)
+        setting%Profile%File%discretization = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.discretization not found'
+        call json%get('Profile.File.face', logical_value, found)
+        setting%Profile%File%face = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.face not found'
+        call json%get('Profile.File.geometry', logical_value, found)
+        setting%Profile%File%geometry = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.geometry not found'
+        call json%get('Profile.File.interface', logical_value, found)
+        setting%Profile%File%interface = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.interface not found'
+        call json%get('Profile.File.initial_condition', logical_value, found)
+        setting%Profile%File%initial_condition = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.initial_condition not found'
+        call json%get('Profile.File.initialization', logical_value, found)
+        setting%Profile%File%initialization = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.initialization not found'
+        call json%get('Profile.File.jump', logical_value, found)
+        setting%Profile%File%jump = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.jump not found'
+        call json%get('Profile.File.lowlevel_rk2', logical_value, found)
+        setting%Profile%File%lowlevel_rk2 = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.lowlevel_rk2 not found'
+        call json%get('Profile.File.network_define', logical_value, found)
+        setting%Profile%File%network_define = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.network_define not found'
+        call json%get('Profile.File.orifice_elements', logical_value, found)
+        setting%Profile%File%orifice_elements = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.orifice_elements not found'
+        call json%get('Profile.File.pack_mask_arrays', logical_value, found)
+        setting%Profile%File%pack_mask_arrays = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.pack_mask_arrays not found'
+        call json%get('Profile.File.partitioning', logical_value, found)
+        setting%Profile%File%partitioning = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.partitioning not found'
+        call json%get('Profile.File.pump_elements', logical_value, found)
+        setting%Profile%File%pump_elements = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.pump_elements not found'
+        call json%get('Profile.File.rectangular_channel', logical_value, found)
+        setting%Profile%File%rectangular_channel = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.rectangular_channel not found'
+        call json%get('Profile.File.trapezoidal_channel', logical_value, found)
+        setting%Profile%File%trapezoidal_channel = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.trapezoidal_channel not found'
+        call json%get('Profile.File.runge_kutta2', logical_value, found)
+        setting%Profile%File%runge_kutta2 = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.runge_kutta2 not found'
+        call json%get('Profile.File.timeloop', logical_value, found)
+        setting%Profile%File%timeloop = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.timeloop not found'
+        call json%get('Profile.File.update', logical_value, found)
+        setting%Profile%File%update = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.update not found'
+        call json%get('Profile.File.utility_allocate', logical_value, found)
+        setting%Profile%File%utility_allocate = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.utility_allocate not found'
+        call json%get('Profile.File.utility_deallocate', logical_value, found)
+        setting%Profile%File%utility_deallocate = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.utility_deallocate not found'
+        call json%get('Profile.File.utility_array', logical_value, found)
+        setting%Profile%File%utility_array = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.utility_array not found'
+        call json%get('Profile.File.utility_datetime', logical_value, found)
+        setting%Profile%File%utility_datetime = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.utility_datetime not found'
+        call json%get('Profile.File.utility_interpolate', logical_value, found)
+        setting%Profile%File%utility_interpolate = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.utility_interpolate not found'
+        call json%get('Profile.File.utility_output', logical_value, found)
+        setting%Profile%File%utility_output = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.utility_output not found'
+        call json%get('Profile.File.utility_string', logical_value, found)
+        setting%Profile%File%utility_string = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.utility_string not found'
+        call json%get('Profile.File.utility', logical_value, found)
+        setting%Profile%File%utility = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.utility not found'
+        call json%get('Profile.File.weir_elements', logical_value, found)
+        setting%Profile%File%weir_elements = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.weir_elements not found'
+        call json%get('Profile.File.output', logical_value, found)
+        setting%Profile%File%output = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.output not found'
+        call json%get('Profile.FileGroup.all', logical_value, found)
+        setting%Profile%FileGroup%all = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.FileGroup.all not found'
+        call json%get('Profile.FileGroup.definitions', logical_value, found)
+        setting%Profile%FileGroup%definitions = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.FileGroup.definitions not found'
+        call json%get('Profile.FileGroup.finalization', logical_value, found)
+        setting%Profile%FileGroup%finalization = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.FileGroup.finalization not found'
+        call json%get('Profile.FileGroup.geometry', logical_value, found)
+        setting%Profile%FileGroup%geometry = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.FileGroup.geometry not found'
+        call json%get('Profile.FileGroup.initialization', logical_value, found)
+        setting%Profile%FileGroup%initialization = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.FileGroup.initialization not found'
+        call json%get('Profile.FileGroup.interface', logical_value, found)
+        setting%Profile%FileGroup%interface = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.FileGroup.interface not found'
+        call json%get('Profile.FileGroup.output', logical_value, found)
+        setting%Profile%FileGroup%output = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.FileGroup.output not found'
+        call json%get('Profile.FileGroup.timeloop', logical_value, found)
+        setting%Profile%FileGroup%timeloop = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.FileGroup.timeloop not found'
+        call json%get('Profile.FileGroup.utility', logical_value, found)
+        setting%Profile%FileGroup%utility = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.FileGroup.utility not found'
+        call json%get('Profile.Input', logical_value, found)
+        setting%Profile%Input = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.Input not found'
+        call json%get('Profile.Output', logical_value, found)
+        setting%Profile%Output = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.Output not found'
+
+        call def_update_profile_options()
 
         call json%destroy()
         if (json%failed()) stop "JSON failed to destroy"
