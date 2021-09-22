@@ -61,7 +61,11 @@ contains
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        if (setting%Profile%File%BIPquick) print*, "BIPquick Profiler is on"
+
+
         if (setting%Profile%File%BIPquick) call util_tic(timer, 2)
+
         !% One processor bypass for BIPquick
         if ( num_images() == 1 ) then
             node%I(:, ni_P_image) = oneI

@@ -1265,6 +1265,9 @@ contains
         call json%get('Profile.File.adjust', logical_value, found)
         setting%Profile%File%adjust = logical_value
         if (.not. found) stop "Error - setting " // 'Profile.File.adjust not found'
+        call json%get('Profile.File.BIPquick', logical_value, found)
+        setting%Profile%File%BIPquick = logical_value
+        if (.not. found) stop "Error - setting " // 'Profile.File.BIPquick not found'
         call json%get('Profile.File.boundary_conditions', logical_value, found)
         setting%Profile%File%boundary_conditions = logical_value
         if (.not. found) stop "Error - setting " // 'Profile.File.boundary_conditions not found'

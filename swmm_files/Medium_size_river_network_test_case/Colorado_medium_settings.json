@@ -108,7 +108,7 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Output" : {
-        "report" : true,
+        "report" : false,
         "reportStartTime" : 0.0,
         "reportDt" : 100.0,
         "reportStep" : 0,
@@ -275,15 +275,15 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : true,
-        "Output" : true,
-        "Tests" : true
+        "Input"  : false,
+        "Output" : false,
+        "Tests" : false
     },
     "Profile" : {
         "File" : {
             "adjust" : false,
             "boundary_conditions" : false,
-            "BIPquick" : false,
+            "BIPquick" : true,
             "c_library" : false,
             "define_globals" : false,
             "define_indexes" : false,
@@ -332,9 +332,9 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : true,
-        "Output" : true,
-        "Tests" : true
+        "Input"  : false,
+        "Output" : false,
+        "Tests" : false
     },
     "Warning"  : true,
     "Verbose" : true
