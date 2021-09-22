@@ -14,6 +14,8 @@ module initialization
     use utility_array
     use utility_output
     use utility_array
+    use utility_profiler
+    use utility_prof_jobcount
     use pack_mask_arrays
     use output
 
@@ -55,9 +57,11 @@ contains
     !%
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_all'
+    !%-----------------------------------------------------------------------------
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-    !%-----------------------------------------------------------------------------
+
+        if (setting%Profile%File%initialization) call util_tic(timer, 1)
 
         !% ---  Define project & settings paths
         call getcwd(setting%Paths%project)
@@ -142,9 +146,14 @@ contains
             call output_create_link_files()
             call output_create_node_files()
         end if
-        
+
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
+
+        if (setting%Profile%File%initialization) then
+            call util_toc(timer, 1)
+            print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(1))
+        end if
 
         !% wait for all the processors to reach this stage before starting the time loop
         if (setting%Debug%File%initialization)  &

@@ -61,8 +61,6 @@ subroutine init_partitioning_method()
     else if (setting%Partitioning%PartitioningMethod == BQuick) then
         if (setting%Verbose) print*, new_line(""), "Using BIPquick Partitioning"
         call init_partitioning_BIPquick()
-        N_node = count(node%I(:,ni_idx) /= nullvalueI)
-        N_link = count(link%I(:,li_idx) /= nullvalueI)
     else
         print *, "Error, partitioning method not supported"
         stop "in " // subroutine_name
@@ -70,18 +68,27 @@ subroutine init_partitioning_method()
 
     if (setting%Debug%File%partitioning) then
         print *, "Node Partitioning"
-        print *, new_line("")
+        print*, new_line("")
         do ii = 1, size(node%I, 1)
-            if ( node%I(ii, ni_P_is_boundary) /= zeroI ) then
+            if ( ii <= N_node ) then
+                print*, node%Names(ii)%str, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
+            else
                 print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
             endif
         end do
 
-        ! print *, "Link Partitioning"
-        ! print *, new_line("")
-        ! do ii = 1, size(link%I, 1)
-        !     print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link)
-        ! end do
+        print *, "Link Partitioning"
+        print *, new_line("")
+        do ii = 1, size(link%I, 1)
+            if ( ii <= N_link ) then
+                print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), & 
+                    link%I(ii, li_Mnode_u:li_Mnode_d)
+            else
+                print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
+                    link%I(ii, li_Mnode_u:li_Mnode_d)
+            endif
+
+        end do
 
 
         !% This subroutine checks to see if the default partitioning is working correctly for the hard-coded case
@@ -93,6 +100,8 @@ subroutine init_partitioning_method()
         "completed partitioning (", connectivity, ") | [Processor ", this_image(), "]" ! part_size_balance
     end if
 
+    N_node = count(node%I(:,ni_idx) /= nullvalueI)
+    N_link = count(link%I(:,li_idx) /= nullvalueI)
 
     call util_deallocate_partitioning_arrays()
 end subroutine init_partitioning_method

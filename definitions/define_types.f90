@@ -115,4 +115,25 @@ module define_types
         type(BCPack)             :: P                       !% packs of boundary conditions
     end type BCArray
 
+    !% Dynamic Array
+    type f_array
+        integer :: max_size = 0
+        integer :: len = 0
+        real, allocatable :: arr(:)
+    end type f_array
+
+    type job
+        type(f_array) :: time_stamps
+        real :: end_time
+        integer :: id = -1
+    end type job
+    
+    !% Profiling types
+    type wall_clk
+       type(job), allocatable :: jobs(:)
+       integer :: max_num_jobs = 0
+       integer :: num_jobs = 0
+    end type wall_clk
+
+    
 end module define_types
