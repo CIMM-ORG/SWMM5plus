@@ -4,6 +4,7 @@ module utility_allocate
     use define_keys
     use define_indexes
     use define_settings, only: setting
+    use define_globals
     use interface
     use utility
 
@@ -32,6 +33,7 @@ module utility_allocate
     public :: util_allocate_elemX_faceX
     public :: util_allocate_columns
     public :: util_allocate_bc
+    public :: util_allocate_profiler
 
 contains
     !
@@ -1103,7 +1105,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine util_allocate_profiler
+    subroutine util_allocate_profiler ()
         !-----------------------------------------------------------------------------
         
             character(64)      :: subroutine_name = 'util_allocate_profiler'
@@ -1113,7 +1115,93 @@ contains
         !-----------------------------------------------------------------------------
         if (setting%Debug%File%utility) print *, '*** enter', this_image(),subroutine_name
 
-        
+        if (setting%Profile%YN) then
+            !% allocate profiler data
+            allocate(profiler_data(Nrow_pf,Ncol_pf), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
+            profiler_data(:,:) = zeroR
+
+            !% allocate storage of profiled procedure name
+            allocate(profiler_procedure_name(Ncol_pf), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
+
+            !% allocate storage of profiled procedure level (1 = upper, 2 = middle, 3 = lower)
+            allocate(profiler_procedure_level(Ncol_pf), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg)
+
+            !% assign profile procedure name and level
+            profiler_procedure_name(:) = 'name unassigned in code'
+            profiler_procedure_level(:) = 0
+
+            profiler_procedure_name(pfc_initialize_all) = 'initialize_all'
+            profiler_procedure_level(pfc_initialize_all) = 1
+
+            profiler_procedure_name(pfc_init_partitioning) = 'init_partitioning'
+            profiler_procedure_level(pfc_init_partitioning) = 1
+
+            profiler_procedure_name(pfc_init_network_define_toplevel) = 'init_network_define_toplevel'
+            profiler_procedure_level(pfc_init_network_define_toplevel) = 1
+
+            profiler_procedure_name(pfc_init_bc) = 'init_bc'
+            profiler_procedure_level(pfc_init_bc) = 3
+
+            profiler_procedure_name(pfc_init_IC_setup) = 'init_IC_setup'
+            profiler_procedure_level(pfc_init_IC_setup) = 1
+
+            profiler_procedure_name(pfc_init_IC_from_linkdata) = 'init_IC_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_from_linkdata) = 2
+
+            profiler_procedure_name(pfc_init_IC_get_depth_from_linkdata) = 'init_IC_get_depth_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_get_depth_from_linkdata) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_flow_roughness_from_linkdata) = 'init_IC_get_flow_roughness_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_get_flow_roughness_from_linkdata) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_elemtype_from_linkdata) = 'init_IC_get_elemtype_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_get_elemtype_from_linkdata) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_geometry_from_linkdata) = 'init_IC_get_geometry_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_get_geometry_from_linkdata) = 2
+
+            profiler_procedure_name(pfc_init_IC_get_channel_geometry) = 'init_IC_get_channel_geometry'
+            profiler_procedure_level(pfc_init_IC_get_channel_geometry) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_conduit_geometry) = 'init_IC_get_conduit_geometry'
+            profiler_procedure_level(pfc_init_IC_get_conduit_geometry) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_weir_geometry) = 'init_IC_get_weir_geometry'
+            profiler_procedure_level(pfc_init_IC_get_weir_geometry) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_orifice_geometry) = 'init_IC_get_orifice_geometry'
+            profiler_procedure_level(pfc_init_IC_get_orifice_geometry) = 3
+
+            profiler_procedure_name(pfc_geo_assign_JB) = 'geo_assign_JB'
+		    profiler_procedure_level(pfc_geo_assign_JB) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_channel_conduit_velocity) = 'init_IC_get_channel_conduit_velocity'
+		    profiler_procedure_level(pfc_init_IC_get_channel_conduit_velocity) = 3
+
+            profiler_procedure_name(pfc_init_IC_from_nodedata) = 'init_IC_from_nodedata'
+            profiler_procedure_level(pfc_init_IC_from_nodedata) = 2
+
+            profiler_procedure_name(pfc_init_IC_get_junction_data) = 'init_IC_get_junction_data'
+		    profiler_procedure_level(pfc_init_IC_get_junction_data) = 3
+
+            profiler_procedure_name(pfc_update_auxiliary_variables) = 'update_auxiliary_variables'
+            profiler_procedure_level(pfc_update_auxiliary_variables) = 2
+
+            profiler_procedure_name(pfc_init_IC_set_SmallVolumes) = 'init_IC_set_SmallVolumes'
+            profiler_procedure_level(pfc_init_IC_set_SmallVolumes) = 3
+
+            profiler_procedure_name(pfc_init_IC_diagnostic_interpolation_weights) = 'init_IC_diagnostic_interpolation_weights'
+            profiler_procedure_level(pfc_init_IC_diagnostic_interpolation_weights) = 3
+
+            profiler_procedure_name(pfc_face_interpolation) = 'face_interpolation'  
+            profiler_procedure_level(pfc_face_interpolation) =  2   
+
+            profiler_procedure_name(pfc_diagnostic_toplevel) = 'diagnostic_toplevel'
+		    profiler_procedure_level(pfc_diagnostic_toplevel) = 2
+        end if
 
         if (setting%Debug%File%utility) print *, '*** leave ', this_image(),subroutine_name
     end subroutine util_allocate_profiler

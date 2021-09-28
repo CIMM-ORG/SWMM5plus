@@ -6,6 +6,7 @@ module update
     use define_keys
     use geometry
     use adjust
+    use utility_profiler
 
     implicit none
 
@@ -37,6 +38,8 @@ module update
         character(64) :: subroutine_name = 'update_auxiliary_variables'
         if (setting%Debug%File%update) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if (setting%Profile%YN) call util_profiler_start (pfc_update_auxiliary_variables)    
         !%-----------------------------------------------------------------------------
         !%
         !% update the head (non-surcharged) and geometry
@@ -91,8 +94,10 @@ module update
         !print *, '---- in ',subroutine_name,'   y06'
         !write(*,'(7F9.4,A15)') elemR(ietmp,er_Head),' Head elem '
 
+        if (setting%Profile%YN) call util_profiler_stop (pfc_update_auxiliary_variables)
+
         if (setting%Debug%File%update)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine update_auxiliary_variables
     !%
     !%==========================================================================

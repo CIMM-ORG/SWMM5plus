@@ -15,8 +15,8 @@ module BIPquick
     use discretization, only: init_discretization_nominal
     use utility
 
-    use utility_profiler
-    use utility_prof_jobcount
+    !use utility_profiler
+    !use utility_prof_jobcount
     implicit none
 
     private
@@ -61,10 +61,10 @@ contains
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%File%BIPquick) print*, "BIPquick Profiler is on"
+        !if (setting%Profile%File%BIPquick) print*, "BIPquick Profiler is on"
 
 
-        if (setting%Profile%File%BIPquick) call util_tic(timer, 2)
+        !if (setting%Profile%File%BIPquick) call util_tic(timer, 2)
 
         !% One processor bypass for BIPquick
         if ( num_images() == 1 ) then
@@ -238,10 +238,10 @@ contains
 
         connectivity = connectivity_metric()
 
-        if (setting%Profile%File%BIPquick) then
-            call util_toc(timer, 2)
-            print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(2))
-        end if
+        ! if (setting%Profile%File%BIPquick) then
+        !     call util_toc(timer, 2)
+        !     print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(2))
+        ! end if
 
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"

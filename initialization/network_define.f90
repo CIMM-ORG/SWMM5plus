@@ -17,6 +17,7 @@ module network_define
     use define_keys
     use define_globals
     use define_settings
+    use utility_profiler
 
     implicit none
 
@@ -46,6 +47,8 @@ contains
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if (setting%Profile%YN) call util_profiler_start (pfc_init_network_define_toplevel)
 
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
@@ -100,6 +103,8 @@ contains
             call execute_command_line('')
         end if
         
+        if (setting%Profile%YN) call util_profiler_stop (pfc_init_network_define_toplevel)
+
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_define_toplevel
