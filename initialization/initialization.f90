@@ -243,6 +243,21 @@ contains
             link%I(ii,li_weir_EndContrations) = interface_get_link_attribute(ii, api_weir_end_contractions)
             link%R(ii,lr_DischargeCoeff1) = interface_get_link_attribute(ii, api_discharge_coeff1)
             link%R(ii,lr_DischargeCoeff2) = interface_get_link_attribute(ii, api_discharge_coeff2)
+
+            !% SWMM5 doesnot distinct between channel and conduit
+            !% however we need that distinction to set up the init condition
+            if ( (link%I(ii,li_link_type) == lPipe)          .and. &
+                 ( &
+                 (link%I(ii,li_geometry) == lRectangular)    .or. &
+                 (link%I(ii,li_geometry) == lTrapezoidal)    .or. &
+                 (link%I(ii,li_geometry) == lPower_function) .or. &
+                 (link%I(ii,li_geometry) == lRect_triang)    .or. &
+                 (link%I(ii,li_geometry) == lRect_round)     .or. &
+                 (link%I(ii,li_geometry) == lMod_basket)     .or. &   
+                 (link%I(ii,li_geometry) == lIrregular)) ) then
+
+                link%I(ii,li_link_type) = lChannel
+            end if
         end do
 
         do ii = 1, N_node

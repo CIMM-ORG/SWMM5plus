@@ -106,6 +106,16 @@ contains
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
         end if
 
+        !% treatment of for special links
+        if ((link%I(link_idx,li_link_type) == lWeir) .or. &
+            (link%I(link_idx,li_link_type) == lOrifice) .or. &
+            (link%I(link_idx,li_link_type) == lPump) ) then
+
+            link%I(link_idx, li_N_element) = oneI
+            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+
+        end if 
+
         if (setting%Debug%File%discretization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 

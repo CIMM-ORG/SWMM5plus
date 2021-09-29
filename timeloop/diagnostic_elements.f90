@@ -82,7 +82,7 @@ module diagnostic_elements
         !% cycle is entirely independent
         do ii=1,Npack
             !% replace with do concurrent if every procedure called in this loop can be PURE
-            thisType => elemI(thisP(ii),ei_specificType)
+            thisType => elemI(thisP(ii),ei_elementType)
 
             select case (thisType)
                 case (weir)

@@ -483,6 +483,7 @@ module define_indexes
         enumerator ::  eSr_Orifice_EffectiveHeadDelta       !% effective head delta across orifice
         enumerator ::  eSr_Orifice_NominalDownstreamHead    !% nominal downstream head for orifice
         enumerator ::  eSr_Orifice_RectangularBreadth       !% rectangular orifice breadth
+        enumerator ::  eSr_Orifice_CircularRadius           !% radius for circular orifice
         enumerator ::  eSr_Orifice_Zcrest                   !% orifice "crest" elevation - lowest edge of orifice.
     end enum
     !% note, this must be changed to whatever the last enum element is

@@ -858,9 +858,16 @@ contains
                 endwhere
 
             case (lCircular)
-                print*, 'In ', subroutine_name
-                print *, 'error, the circular orifice is not yet implemented'
-                stop "in " // subroutine_name
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                    !% integer data
+                    elemI(:,ei_geometryType)    = circular
+
+                    !% real data
+                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,eSr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,eSr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Orifice_CircularRadius)     = link%R(thisLink,lr_FullDepth)/twoR
+                end where
 
             case default
                 print*, 'In ', subroutine_name
