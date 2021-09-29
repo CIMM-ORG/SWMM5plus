@@ -633,33 +633,39 @@ contains
 
         case (lCircular)
 
-            do ii = 1,N_elem(this_image())
-                if (elemI(ii,ei_link_Gidx_SWMM) == thisLink) then
+            where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
 
-                    elemI(ii,ei_geometryType)    = circular
+                elemI(:,ei_geometryType)    = circular
 
-                    !% store geometry specific data
-                    elemSGR(ii,eSGR_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
-                    elemSGR(ii,eSGR_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
+                !% store geometry specific data
+                elemSGR(:,eSGR_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
+                elemSGR(:,eSGR_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
 
-                    elemR(ii,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
-                    elemR(ii,er_Zcrown)                = elemR(ii,er_Zbottom) + elemR(ii,er_FullDepth)
-                    elemR(ii,er_ZbreadthMax)           = elemR(ii,er_FullDepth)/twoR + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullArea)              = pi * elemSGR(ii,eSGR_Circular_Radius) ** twoR
-                    elemR(ii,er_FullVolume)            = elemR(ii,er_FullArea) * elemR(ii,er_Length)
-                    elemR(ii,er_FullHydDepth)          = elemR(ii,er_FullDepth) 
-                    elemR(ii,er_FullPerimeter)         = elemR(ii,er_FullArea) / (onefourthR * elemR(ii,er_FullDepth))
-                    elemR(ii,er_BreadthMax)            = elemSGR(ii,eSGR_Circular_Diameter)
-                    elemR(ii,er_AreaBelowBreadthMax)   = elemR(ii,er_FullArea)  / twoR
+                elemR(:,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
+                elemR(:,er_Zcrown)                = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
+                elemR(:,er_ZbreadthMax)           = elemR(:,er_FullDepth)/twoR + elemR(:,er_Zbottom)
+                elemR(:,er_FullArea)              = pi * elemSGR(:,eSGR_Circular_Radius) ** twoR
+                elemR(:,er_FullVolume)            = elemR(:,er_FullArea) * elemR(:,er_Length)
+                elemR(:,er_FullHydDepth)          = elemR(:,er_FullDepth) 
+                elemR(:,er_FullPerimeter)         = elemR(:,er_FullArea) / (onefourthR * elemR(:,er_FullDepth))
+                elemR(:,er_BreadthMax)            = elemSGR(:,eSGR_Circular_Diameter)
+                elemR(:,er_AreaBelowBreadthMax)   = elemR(:,er_FullArea)  / twoR
 
-                    elemR(ii,er_Area)                  = circular_area_from_depth_singular(ii)
-                    elemR(ii,er_Area_N0)               = elemR(ii,er_Area)
-                    elemR(ii,er_Area_N1)               = elemR(ii,er_Area)
-                    elemR(ii,er_Volume)                = elemR(ii,er_Area) * elemR(ii,er_Length)
-                    elemR(ii,er_Volume_N0)             = elemR(ii,er_Volume)
-                    elemR(ii,er_Volume_N1)             = elemR(ii,er_Volume)
-                end if
-            end do
+                ! elemR(ii,er_Area)                  = circular_area_from_depth_singular(ii)
+
+                !% HACK: for initial condition steup, use analytical functions which works with where
+                !% statement
+
+                elemR(:,er_Area)                  = (elemSGR(:,eSGR_Circular_Radius) **2) * &
+                                (acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,eSGR_Circular_Radius))) - &
+                                sin(2.0*acos(1.0 - (elemR(:,er_Depth)/elemSGR(:,eSGR_Circular_Radius))))/2.0 )
+
+                elemR(:,er_Area_N0)               = elemR(:,er_Area)
+                elemR(:,er_Area_N1)               = elemR(:,er_Area)
+                elemR(:,er_Volume)                = elemR(:,er_Area) * elemR(:,er_Length)
+                elemR(:,er_Volume_N0)             = elemR(:,er_Volume)
+                elemR(:,er_Volume_N1)             = elemR(:,er_Volume)
+            end where
             
         case default
 
@@ -1493,6 +1499,7 @@ contains
         elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
         elemR(1:size(elemR,1)-1,er_SlotDepth)             = zeroR
         elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
+        elemR(1:size(elemR,1)-1,er_SlotHydRadius)         = zeroR
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
   
         if (setting%Debug%File%initial_condition) &
