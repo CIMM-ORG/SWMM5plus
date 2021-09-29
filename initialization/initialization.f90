@@ -15,7 +15,7 @@ module initialization
     use utility_output
     use utility_array
     use utility_profiler
-    use utility_prof_jobcount
+    !use utility_prof_jobcount
     use pack_mask_arrays
     use output
 
@@ -61,8 +61,6 @@ contains
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%File%initialization) call util_tic(timer, 1)
-
         !% ---  Define project & settings paths
         call getcwd(setting%Paths%project)
         setting%paths%setting = trim(setting%Paths%project) // "/definitions/settings.json"
@@ -87,6 +85,12 @@ contains
 
         if (setting%Verbose) print *, "Simulation Starts"
 
+        !% set up the profiler
+        if (setting%Profile%YN) then
+            call util_allocate_profiler ()   
+            call util_profiler_start (pfc_initialize_all)
+        end if
+
         !% initialize the API with the SWMM-C code
         call interface_init ()
 
@@ -98,6 +102,11 @@ contains
         !if (setting%Verbose) print *, "begin partitioning"
 
         call init_partitioning()
+
+        !% HACK -- to this point the above could all be done on image(1) and then
+        !% distributed to the other images. This might create problems in ensuring
+        !% that all the data gets copied over when new stuff is added. Probably OK
+        !% to keep the above as computing on all images until the code is near complete
 
         !% HACK: this sync call is probably not needed
         sync all
@@ -126,7 +135,7 @@ contains
                 print *, "This system has ", SWMM_N_link, " links and ", SWMM_N_node, " nodes"
                 print *, "The finite-volume system is ", sum(N_elem(:)), " elements"
             endif
-        endif
+            endif
         endif
         call init_IC_setup ()
 
@@ -147,15 +156,11 @@ contains
             call output_create_node_files()
         end if
 
+        if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
+
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
-        if (setting%Profile%File%initialization) then
-            call util_toc(timer, 1)
-            print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(1))
-        end if
-
-        !% wait for all the processors to reach this stage before starting the time loop
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine initialize_all
@@ -297,6 +302,8 @@ contains
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        if (setting%Profile%YN) call util_profiler_start (pfc_init_bc)
+
         call pack_nodes()
         call util_allocate_bc()
 
@@ -393,6 +400,8 @@ contains
         call bc_step()
         call pack_bc()
 
+        if (setting%Profile%YN) call util_profiler_stop (pfc_init_bc)
+
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_bc
@@ -417,6 +426,8 @@ contains
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning) 
+
         !% find the number of elements in a link based on nominal element length
         do ii = 1, SWMM_N_link
             call init_discretization_nominal(ii)
@@ -439,6 +450,8 @@ contains
 
         !% allocate colum idxs of elem and face arrays for pointer operation
         call util_allocate_columns()
+
+        if (setting%Profile%YN) call util_profiler_stop (pfc_init_partitioning)
 
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -619,6 +632,7 @@ contains
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
         !% Initialize report step
         setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
+
         if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
             stop "Error: Hydrology time step can't be smaller than hydraulics time step"
         end if

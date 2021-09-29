@@ -69,6 +69,9 @@ program main
     if (setting%Verbose) &
         write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."
     call initialize_all()
+    
+    ! print *, N_elem(this_image()), "N_elem"
+    ! if (this_image() == 1) print *, link%I(:,li_P_image)
 
     ! --- Time Loop
     if (setting%Verbose) &

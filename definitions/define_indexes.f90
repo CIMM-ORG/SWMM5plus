@@ -708,6 +708,44 @@ module define_indexes
     !% note, this must be changed to whatever the last enum element is!
     integer, target :: Ncol_faceYN =  fYN_isDownstreamJbFace
 
+    !% row indexes for profiler data
+    enum, bind(c)
+        enumerator :: pfr_thisstart = 1
+        enumerator :: pfr_thisend
+        enumerator :: pfr_cumulative
+        enumerator :: pfr_lastplusone
+    end enum
+    integer, target :: Nrow_pf = pfr_lastplusone - 1
+
+    !% column indexes for profiler_data. Each is the name of a procedure preceded by pfc_
+    enum, bind(c)
+        enumerator :: pfc_initialize_all = 1
+        enumerator :: pfc_init_partitioning
+        enumerator :: pfc_init_network_define_toplevel
+        enumerator :: pfc_init_bc
+        enumerator :: pfc_init_IC_setup
+        enumerator :: pfc_init_IC_from_linkdata
+        enumerator :: pfc_init_IC_get_depth_from_linkdata
+        enumerator :: pfc_init_IC_get_flow_roughness_from_linkdata
+        enumerator :: pfc_init_IC_get_elemtype_from_linkdata
+        enumerator :: pfc_init_IC_get_geometry_from_linkdata
+        enumerator :: pfc_init_IC_get_channel_geometry
+        enumerator :: pfc_init_IC_get_conduit_geometry
+        enumerator :: pfc_init_IC_get_weir_geometry
+        enumerator :: pfc_init_IC_get_orifice_geometry
+        enumerator :: pfc_init_IC_get_channel_conduit_velocity
+        enumerator :: pfc_init_IC_from_nodedata
+        enumerator :: pfc_init_IC_get_junction_data
+        enumerator :: pfc_geo_assign_JB
+        enumerator :: pfc_update_auxiliary_variables
+        enumerator :: pfc_init_IC_set_SmallVolumes
+        enumerator :: pfc_init_IC_diagnostic_interpolation_weights
+        enumerator :: pfc_face_interpolation
+        enumerator :: pfc_diagnostic_toplevel
+        enumerator :: pfc_lastplusone
+    end enum
+    integer, target :: Ncol_pf = pfc_lastplusone - 1
+
     !
     !==========================================================================
     ! definitions

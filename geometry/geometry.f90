@@ -8,6 +8,7 @@ module geometry
     use trapezoidal_channel
     use circular_conduit
     use adjust
+    use utility_profiler
 
 
     implicit none
@@ -343,6 +344,8 @@ module geometry
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        if (setting%Profile%YN) call util_profiler_start (pfc_geo_assign_JB)
+
         Npack         => npack_elemP(thisColP_JM)
         area          => elemR(:,er_Area)
         depth         => elemR(:,er_Depth)
@@ -480,6 +483,8 @@ module geometry
         !% Note, the above can only be made a concurrent loop if we replace the tM
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
         !% difficult to read.
+
+        if (setting%Profile%YN) call util_profiler_stop (pfc_geo_assign_JB)
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"

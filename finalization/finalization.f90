@@ -5,7 +5,7 @@ module finalization
     use interface
     use utility_deallocate
     use utility_profiler
-    use utility_prof_jobcount
+    !use utility_prof_jobcount
     use output
 
     implicit none
@@ -18,7 +18,11 @@ contains
 
         if (setting%Debug%File%finalization) print *, '*** enter ', this_image(), subroutine_name
 
-        if (setting%Profile%File%finalization) call util_tic(timer, 4)
+        !if (setting%Profile%File%finalization) call util_tic(timer, 4)
+        if ((this_image() == 1) .and. (setting%Profile%YN)) then
+            call util_profiler_print_summary()
+        end if
+
         if ((this_image() == 1) .and. &
             (setting%Output%report .or. setting%Debug%Output)) then
             call output_combine_links()
@@ -31,11 +35,11 @@ contains
         call interface_finalize()
         call util_deallocate_network_data()
 
-        if (setting%Profile%File%finalization) then
-            call util_toc(timer, 4)
-            print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(4))
-            call util_free_jobs(timer)
-        end if
+        ! if (setting%Profile%File%finalization) then
+        !     call util_toc(timer, 4)
+        !     print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(4))
+        !     call util_free_jobs(timer)
+        ! end if
 
         if ((this_image() == 1) .and. (.not. setting%Debug%Output)) then
             call system('mkdir -p debug_output')

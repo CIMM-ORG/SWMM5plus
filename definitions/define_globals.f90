@@ -237,4 +237,10 @@ module define_globals
 
     !% Profiling Timer
     type(wall_clk) :: timer
+
+    !% profiling storage
+    real(8), allocatable :: profiler_data(:,:)
+    character (len=64), allocatable :: profiler_procedure_name(:)
+    integer, allocatable :: profiler_procedure_level(:)
+    
 end module define_globals

@@ -9,7 +9,7 @@ module timeloop
     use utility_output
     use boundary_conditions
     use utility_profiler
-    use utility_prof_jobcount
+    !use utility_prof_jobcount
     use interface, only: interface_export_link_results
 
     implicit none
@@ -59,10 +59,10 @@ contains
             call tl_increment_counters(doHydraulics, doHydrology)
         end do
 
-        if (setting%Profile%File%timeloop) then
-            call util_toc(timer, 3)
-            print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(3))
-        end if
+        ! if (setting%Profile%File%timeloop) then
+        !     call util_toc(timer, 3)
+        !     print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(3))
+        ! end if
 
         !% >>> BEGIN HACK
         !%     Temporary for debugging (can be deleted for deployment)

@@ -6,6 +6,8 @@ module face
     use define_settings, only: setting
     use adjust
     use jump
+    use utility_profiler
+
 
     implicit none
 
@@ -38,6 +40,8 @@ module face
         character(64) :: subroutine_name = 'face_interpolation'
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        
+        if (setting%Profile%YN) call util_profiler_start (pfc_face_interpolation)
         !%-----------------------------------------------------------------------------
 
         !% face reconstruction of all the interior faces
@@ -58,6 +62,8 @@ module face
         sync all
 
         call face_interpolate_bc ()
+
+        if (setting%Profile%YN) call util_profiler_stop (pfc_face_interpolation)
 
         if (setting%Debug%File%face)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
