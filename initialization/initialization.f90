@@ -160,7 +160,7 @@ contains
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
-
+        stop
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine initialize_all
@@ -205,6 +205,9 @@ contains
         do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
+            link%I(ii,li_weir_type) = interface_get_link_attribute(ii, api_weir_type)
+            link%I(ii,li_orif_type) = interface_get_link_attribute(ii, api_orifice_type)
+            link%I(ii,li_pump_type) = interface_get_link_attribute(ii, api_pump_type)
             link%I(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
             link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
             link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
@@ -235,6 +238,11 @@ contains
             link%R(ii,lr_FullDepth) = interface_get_link_attribute(ii, api_link_xsect_yFull)
             link%R(ii,lr_InletOffset) = interface_get_link_attribute(ii,api_link_offset1)
             link%R(ii,lr_OutletOffset) = interface_get_link_attribute(ii,api_link_offset2)
+
+            !% special element attributes
+            link%I(ii,li_weir_EndContrations) = interface_get_link_attribute(ii, api_weir_end_contractions)
+            link%R(ii,lr_DischargeCoeff1) = interface_get_link_attribute(ii, api_discharge_coeff1)
+            link%R(ii,lr_DischargeCoeff2) = interface_get_link_attribute(ii, api_discharge_coeff2)
         end do
 
         do ii = 1, N_node

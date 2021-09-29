@@ -19,7 +19,6 @@ module initial_condition
     use diagnostic_elements
     use geometry !BRHbugfix 20210813
     use circular_conduit
-    use utility_profiler
 
     implicit none
 
@@ -47,8 +46,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_setup)
 
         solver => setting%Solver%SolverSelect
 
@@ -119,8 +116,6 @@ contains
         !% populate er_ones columns with ones
         call init_IC_oneVectors ()
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_setup)
-
         if (setting%Debug%File%initial_condition) then
            print*, '----------------------------------------------------'
            print*, 'image = ', this_image()
@@ -177,8 +172,6 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_from_linkdata)
-
         !% Setting the local image value
         image = this_image()
 
@@ -210,8 +203,6 @@ contains
         !% deallocate the temporary array
         deallocate(packed_link_idx)
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_from_linkdata)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_linkdata
@@ -237,8 +228,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_depth_from_linkdata)
 
         !% type of initial depth type
         LdepthType  => link%I(thisLink,li_InitialDepthType)
@@ -327,8 +316,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_depth_from_linkdata)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_depth_from_linkdata
@@ -350,8 +337,6 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_flow_roughness_from_linkdata)
-
         !%  handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
             elemR(:,er_Flowrate)       = link%R(thisLink,lr_InitialFlowrate)
@@ -359,8 +344,6 @@ contains
             elemR(:,er_Flowrate_N1)    = link%R(thisLink,lr_InitialFlowrate)
             elemR(:,er_Roughness)      = link%R(thisLink,lr_Roughness)
         endwhere
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_flow_roughness_from_linkdata)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -383,8 +366,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_elemtype_from_linkdata)
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -439,7 +420,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_elemtype_from_linkdata)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -462,8 +442,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_geometry_from_linkdata)
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -500,7 +478,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_geometry_from_linkdata)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -524,8 +501,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_channel_geometry)
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -605,8 +580,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_channel_geometry)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_channel_geometry
@@ -629,8 +602,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_conduit_geometry)
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -704,8 +675,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_conduit_geometry)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_conduit_geometry
@@ -728,8 +697,6 @@ contains
 
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_weir_geometry)
 
         !% pointer to specific weir type
         specificWeirType => link%I(thisLink,li_weir_type)
@@ -819,8 +786,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_weir_geometry)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -844,8 +809,6 @@ contains
 
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_orifice_geometry)
 
         !% pointer to specific orifice type
         specificOrificeType => link%I(thisLink,li_orif_type)
@@ -903,9 +866,8 @@ contains
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
                 stop "in " // subroutine_name
-        end select
+            end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_orifice_geometry)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -931,8 +893,6 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_channel_conduit_velocity)
-
         !% HACK: this might not be right
         where ( (elemI(:,ei_link_Gidx_SWMM) == thisLink) .and. &
                 (elemR(:,er_area)           .gt. zeroR   ) .and. &
@@ -951,8 +911,6 @@ contains
             elemR(:,er_Velocity_N1) = zeroR
 
         endwhere
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_channel_conduit_velocity)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -978,8 +936,6 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_from_nodedata)
-
         !% Setting the local image value
         image = this_image()
 
@@ -1000,8 +956,6 @@ contains
 
         !% deallocate the temporary array
         deallocate(packed_nJm_idx)
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_from_nodedata)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1028,8 +982,6 @@ contains
 
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_junction_data)
 
         !%................................................................
         !% Junction main
@@ -1290,8 +1242,6 @@ contains
         ! call the standard geometry update for junction branches
         call geo_assign_JB (ALLtm, ep_JM_ALLtm) !BRHbugfix 20210813    
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_junction_data)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_junction_data
@@ -1400,7 +1350,6 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_diagnostic_interpolation_weights)
 
         !% Q-diagnostic elements will have minimum interp weights for Q
         !% and maximum interp values for G and H
@@ -1448,8 +1397,6 @@ contains
             end do
         end if
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_diagnostic_interpolation_weights)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_diagnostic_interpolation_weights
@@ -1470,8 +1417,6 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_set_SmallVolumes)
-
         if (setting%SmallVolume%UseSmallVolumes) then
             where (elemI(:,ei_geometryType) == rectangular)
                 elemR(:,er_SmallVolume) = setting%SmallVolume%DepthCutoff * elemSGR(:,eSGR_Rectangular_Breadth) * &
@@ -1485,8 +1430,6 @@ contains
         else
             elemR(:,er_SmallVolume) = zeroR
         end if
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_set_SmallVolumes)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"

@@ -23,9 +23,9 @@ module define_keys
         enumerator :: CCJM                  !% channel, conduit or junction main
         enumerator :: ALL                   !% all elements
         !% different link and their geometry types (HACK: probably could be consolidated to element types)
-        enumerator :: lchannel              !% channel link
-        enumerator :: lpipe                 !% pipe link
-        enumerator :: lweir                 !% weir link
+        enumerator :: lChannel              !% channel link
+        enumerator :: lPipe                 !% pipe link
+        enumerator :: lWeir                 !% weir link
         enumerator :: lTransverseWeir       !% transverse weir link
         enumerator :: lSideFlowWeir         !% sideflow weir link
         enumerator :: lRoadWayWeir          !% roadway weir link
@@ -39,12 +39,32 @@ module define_keys
         enumerator :: lType2Pump            !% type 2 pump link
         enumerator :: lType3Pump            !% type 3 pump link
         enumerator :: lType4Pump            !% type 4 pump link
-        enumerator :: lRectangular          !% rectangular link geometry
-        enumerator :: lParabolic            !% parabolic link geometry
-        enumerator :: lTrapezoidal          !% trapezoidal link geometry
-        enumerator :: lTriangular           !% triangular link geometry
-        enumerator :: lWidthDepth           !% widthdepth link geometry
-        enumerator :: lCircular             !% circular link geometry
+        enumerator :: lTypeIdealPump        !% ideal pump link
+        enumerator :: lRectangular           !% rectangular open channel
+        enumerator :: lTrapezoidal           !% trapezoidal open channel
+        enumerator :: lTriangular            !% triangular open channel
+        enumerator :: lParabolic             !% parabolic open channel
+        enumerator :: lPower_function        !% power function open channel
+        enumerator :: lRect_triang           !% rectangular-triangular open channel
+        enumerator :: lRect_round            !% rectangular-round open channel
+        enumerator :: lMod_basket            !% modified basket handle open channel
+        enumerator :: lIrregular             !% irregular open channel
+        !% closed conduit cross-sectional geometry types
+        enumerator :: lCircular              !% circular closed conduit
+        enumerator :: lFilled_circular       !% filled circular closed conduit
+        enumerator :: lRectangular_closed    !% rectangular closed conduit
+        enumerator :: lHoriz_ellipse         !% horizontal ellipse closed conduit
+        enumerator :: lVert_ellipse          !% vertical ellipse closed conduit
+        enumerator :: lArch                  !% arch closed conduit
+        enumerator :: lEggshaped             !% eggshaped closed conduit
+        enumerator :: lHorseshoe             !% horseshoe closed conduit
+        enumerator :: lGothic                !% gothic closed conduit
+        enumerator :: lCatenary              !% catenary closed conduit
+        enumerator :: lSemi_elliptical       !% semi-elliptical closed conduit
+        enumerator :: lBasket_handle         !% basket handle closed conduit
+        enumerator :: lSemi_circular         !% semi-circular closed conduit
+        enumerator :: lCustom                !% custom closed conduit
+        enumerator :: lForce_main            !% force main closed conduit
         !% different link roughness types
         enumerator :: lManningsN            !% ManningsN roughness type
         enumerator :: lCD                   !% drag coefficient roughness type
