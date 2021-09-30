@@ -581,15 +581,97 @@ contains
             error = ptr_api_get_link_attribute(api, link_idx-1, attr, cptr_value)
             call print_api_error(error, subroutine_name)
             interface_get_link_attribute = link_value
+        else if ( (attr > N_api_link_attributes) .and. &
+                  (attr <= (N_api_link_attributes + N_api_link_type_attributes)) )then
+            error = ptr_api_get_link_attribute(api, link_idx-1, api_link_type, cptr_value)
+            call print_api_error(error, subroutine_name)
+            interface_get_link_attribute = link_value
+            if (link_value == API_CONDUIT) then
+                if (attr == api_link_type) then
+                    interface_get_link_attribute = lPipe
+                else if (attr == api_weir_type) then
+                    interface_get_link_attribute = nullvalueI
+                else if (attr == api_orifice_type) then
+                    interface_get_link_attribute = nullvalueI
+                else if (attr == api_pump_type) then
+                    interface_get_link_attribute = nullvalueI
+                end if
+
+            else if (link_value == API_PUMP) then
+
+                if (attr == api_link_type) then
+                    interface_get_link_attribute = lPump
+                else if (attr == api_weir_type) then
+                    interface_get_link_attribute = nullvalueI
+                else if (attr == api_orifice_type) then
+                    interface_get_link_attribute = nullvalueI
+                else if (attr == api_pump_type) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_pump_type, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
+                    if (link_value == API_TYPE1_PUMP) then
+                        interface_get_link_attribute = lType1Pump
+                    else if (link_value == API_TYPE2_PUMP) then
+                        interface_get_link_attribute = lType2Pump
+                    else if (link_value == API_TYPE3_PUMP) then
+                        interface_get_link_attribute = lType3Pump
+                    else if (link_value == API_TYPE4_PUMP) then
+                        interface_get_link_attribute = lType4Pump
+                    else if (link_value == API_IDEAL_PUMP) then
+                        interface_get_link_attribute = lTypeIdealPump
+                    endif
+                end if
+
+            else if (link_value == API_ORIFICE) then
+                if (attr == api_link_type) then
+                    interface_get_link_attribute = lOrifice
+                else if (attr == api_weir_type) then
+                    interface_get_link_attribute = nullvalueI
+                else if (attr == api_orifice_type) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_orifice_type, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
+                    if (link_value == API_SIDE_ORIFICE) then
+                        interface_get_link_attribute = lSideOrifice
+                    else if (link_value == API_BOTTOM_ORIFICE) then
+                        interface_get_link_attribute = lBottomOrifice
+                    endif
+                else if (attr == api_pump_type) then
+                    interface_get_link_attribute = nullvalueI
+                end if
+
+            else if (link_value == API_WEIR) then
+                if (attr == api_link_type) then
+                    interface_get_link_attribute = lWeir
+                else if (attr == api_weir_type) then
+                    error = ptr_api_get_link_attribute(api, link_idx-1, api_weir_type, cptr_value)
+                    call print_api_error(error, subroutine_name)
+                    interface_get_link_attribute = link_value
+                    if (link_value == API_TRANSVERSE_WEIR) then
+                        interface_get_link_attribute = lType1Pump
+                    else if (link_value == API_SIDEFLOW_WEIR) then
+                        interface_get_link_attribute = lType2Pump
+                    else if (link_value == API_VNOTCH_WEIR) then
+                        interface_get_link_attribute = lType3Pump
+                    else if (link_value == API_TRAPEZOIDAL_WEIR) then
+                        interface_get_link_attribute = lType4Pump
+                    else if (link_value == API_ROADWAY_WEIR) then
+                        interface_get_link_attribute = lTypeIdealPump
+                    endif
+                else if (attr == api_orifice_type) then
+                    interface_get_link_attribute = nullvalueI
+                else if (attr == api_pump_type) then
+                    interface_get_link_attribute = nullvalueI
+                end if
+            endif
+
         else
             error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_type, cptr_value)
             call print_api_error(error, subroutine_name)
             interface_get_link_attribute = link_value
             if (link_value == API_RECT_CLOSED) then
                 if (attr == api_link_geometry) then
-                    interface_get_link_attribute = lRectangular
-                else if (attr == api_link_type) then
-                    interface_get_link_attribute = lpipe
+                    interface_get_link_attribute = lRectangular_closed
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_api_error(error, subroutine_name)
@@ -604,8 +686,6 @@ contains
             else if (link_value == API_RECT_OPEN) then
                 if (attr == api_link_geometry) then
                     interface_get_link_attribute = lRectangular
-                else if (attr == api_link_type) then
-                    interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_api_error(error, subroutine_name)
@@ -620,8 +700,6 @@ contains
             else if (link_value == API_TRAPEZOIDAL) then
                 if (attr == api_link_geometry) then
                     interface_get_link_attribute = lTrapezoidal
-                else if (attr == api_link_type) then
-                    interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yBot, cptr_value)
                     call print_api_error(error, subroutine_name)
@@ -636,8 +714,6 @@ contains
             else if (link_value == API_TRIANGULAR) then
                 if (attr == api_link_geometry) then
                     interface_get_link_attribute = lTriangular
-                else if (attr == api_link_type) then
-                    interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_api_error(error, subroutine_name)
@@ -652,8 +728,6 @@ contains
             else if (link_value == API_PARABOLIC) then
                 if (attr == api_link_geometry) then
                     interface_get_link_attribute = lParabolic
-                else if (attr == api_link_type) then
-                    interface_get_link_attribute = lchannel
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_api_error(error, subroutine_name)
@@ -668,8 +742,6 @@ contains
             else if (link_value == API_CIRCULAR) then
                 if (attr == api_link_geometry) then
                     interface_get_link_attribute = lCircular
-                else if (attr == api_link_type) then
-                    interface_get_link_attribute = lPipe
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
                     call print_api_error(error, subroutine_name)

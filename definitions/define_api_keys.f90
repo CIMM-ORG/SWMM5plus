@@ -43,6 +43,30 @@ module define_api_keys
         enumerator :: API_OUTLET
     end enum
 
+    !% SWMM Pump Curve types ($API_DIR/src/enums.h) -> PumpCurveType
+    enum, bind(c)
+        enumerator :: API_TYPE1_PUMP = 0
+        enumerator :: API_TYPE2_PUMP
+        enumerator :: API_TYPE3_PUMP
+        enumerator :: API_TYPE4_PUMP
+        enumerator :: API_IDEAL_PUMP
+    end enum
+
+    !% SWMM Orifice types ($API_DIR/src/enums.h) -> OrificeType
+    enum, bind(c)
+        enumerator :: API_SIDE_ORIFICE = 0
+        enumerator :: API_BOTTOM_ORIFICE
+    end enum
+
+    !% SWMM Pump Curve types ($API_DIR/src/enums.h) -> WeirType
+    enum, bind(c)
+        enumerator :: API_TRANSVERSE_WEIR = 0
+        enumerator :: API_SIDEFLOW_WEIR
+        enumerator :: API_VNOTCH_WEIR
+        enumerator :: API_TRAPEZOIDAL_WEIR
+        enumerator :: API_ROADWAY_WEIR
+    end enum
+
     !% SWMM Table types ($API_DIR/src/enums.h -> ObjectType)
     enum, bind(c)
         enumerator :: API_TIMEPATTERN = 6
@@ -128,10 +152,17 @@ module define_api_keys
         enumerator :: api_link_setting
         enumerator :: api_link_left_slope
         enumerator :: api_link_right_slope
+        enumerator :: api_weir_end_contractions
+        enumerator :: api_discharge_coeff1
+        enumerator :: api_discharge_coeff2
         enumerator :: api_conduit_roughness
         enumerator :: api_conduit_length
-        ! --- xsect attributes
+        ! --- special elements attributes
         enumerator :: api_link_type
+        enumerator :: api_weir_type
+        enumerator :: api_orifice_type
+        enumerator :: api_pump_type
+        ! --- xsect attributes
         enumerator :: api_link_xsect_type
         enumerator :: api_link_geometry
         enumerator :: api_link_xsect_wMax

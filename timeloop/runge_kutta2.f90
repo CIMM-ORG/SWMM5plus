@@ -129,18 +129,15 @@ module runge_kutta2
         call face_interpolation(fp_all)
 
         !% RK2 solution step 5 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel()
-        end if
-        
+        call diagnostic_toplevel()
+
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
 
         !% RK2 solution step 8 -- RK2 second step for ETM
         !% RK2 solution step 8(a)
         istep=2
-        ! print*, '-------------------------------------------------------------------------'
-        ! print*, '2nd RK step'
+        
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 8(c)
@@ -161,9 +158,8 @@ module runge_kutta2
         call face_interpolation(fp_all)
 
         !% RK2 solution step 9 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel()
-        end if
+        call diagnostic_toplevel()
+
 
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
@@ -231,9 +227,7 @@ module runge_kutta2
         call face_interpolation(fp_all)
 
         !% step 5 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel ()
-        end if
+        call diagnostic_toplevel ()
 
         !% step X -- make ad hoc adjustments
         call adjust_values (ALLtm)
@@ -258,9 +252,8 @@ module runge_kutta2
         end if
 
         !% step 7 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel()
-        end if
+        call diagnostic_toplevel()
+
 
         !% step 8 -- RK2 step 2 for ETM
         if (N_etm > 0) then
@@ -280,9 +273,7 @@ module runge_kutta2
         end if
 
         !% step 9 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel
-        end if
+        call diagnostic_toplevel
 
         !% step X -- make ad hoc adjustments
         call adjust_values (ALLtm)

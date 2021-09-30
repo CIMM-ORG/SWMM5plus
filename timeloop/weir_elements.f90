@@ -77,16 +77,16 @@ module weir_elements
         logical, pointer :: CanSurcharge, IsSurcharged
         real(8) :: Zmidpt
         !%-----------------------------------------------------------------------------
+
+        !% input
         Head   => elemR(eIdx,er_Head)
-        Zcrown => elemR(eIdx,er_Zcrown)
-        
         !% output
         EffectiveHeadDelta    => elemSR(eIdx,esr_Weir_EffectiveHeadDelta)
+        Zcrown                => elemSR(eIdx,esr_Weir_Zcrown)
         Zcrest                => elemSR(eIdx,esr_Weir_Zcrest)
         NominalDownstreamHead => elemSR(eIdx,esr_Weir_NominalDownstreamHead)
-        
-        CanSurcharge => elemYN(eIdx,eYN_canSurcharge)
-        IsSurcharged => elemYN(eIdx,eYN_isSurcharged)
+        CanSurcharge          => elemYN(eIdx,eYN_canSurcharge)
+        IsSurcharged          => elemYN(eIdx,eYN_isSurcharged)
         
         !% setting default surcharge condition as false
         IsSurcharged = .false.
@@ -324,7 +324,6 @@ module weir_elements
         Head        => elemR(eIdx,er_Head)
         Length      => elemR(eIdx,er_Length)
         Zbottom     => elemR(eIdx,er_Zbottom)
-        Zcrown      => elemR(eIdx,er_Zcrown)
         Depth       => elemR(eIdx,er_Depth)
         Area        => elemR(eIdx,er_Area)
         Volume      => elemR(eIdx,er_Volume)
@@ -332,8 +331,8 @@ module weir_elements
         Perimeter   => elemR(eIdx,er_Perimeter)
         HydDepth    => elemR(eIdx,er_HydDepth)
         HydRadius   => elemR(eIdx,er_HydRadius)
-            
         Zcrest                  => elemSR(eIdx,esr_Weir_Zcrest)
+        Zcrown                  => elemSR(eIdx,esr_Weir_Zcrown)
         RectangularBreadth      => elemSR(eIdx,esr_Weir_RectangularBreadth)
         TrapezoidalBreadth      => elemSR(eIdx,esr_Weir_TrapezoidalBreadth)
         TriangularSideSlope     => elemSR(eIdx,esr_Weir_TriangularSideSlope)

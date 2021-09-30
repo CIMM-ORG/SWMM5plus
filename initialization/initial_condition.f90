@@ -19,7 +19,6 @@ module initial_condition
     use diagnostic_elements
     use geometry !BRHbugfix 20210813
     use circular_conduit
-    use utility_profiler
 
     implicit none
 
@@ -47,8 +46,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_setup)
 
         solver => setting%Solver%SolverSelect
 
@@ -119,8 +116,6 @@ contains
         !% populate er_ones columns with ones
         call init_IC_oneVectors ()
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_setup)
-
         if (setting%Debug%File%initial_condition) then
            print*, '----------------------------------------------------'
            print*, 'image = ', this_image()
@@ -177,8 +172,6 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_from_linkdata)
-
         !% Setting the local image value
         image = this_image()
 
@@ -210,8 +203,6 @@ contains
         !% deallocate the temporary array
         deallocate(packed_link_idx)
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_from_linkdata)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_linkdata
@@ -237,8 +228,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_depth_from_linkdata)
 
         !% type of initial depth type
         LdepthType  => link%I(thisLink,li_InitialDepthType)
@@ -327,8 +316,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_depth_from_linkdata)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_depth_from_linkdata
@@ -350,8 +337,6 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_flow_roughness_from_linkdata)
-
         !%  handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
             elemR(:,er_Flowrate)       = link%R(thisLink,lr_InitialFlowrate)
@@ -359,8 +344,6 @@ contains
             elemR(:,er_Flowrate_N1)    = link%R(thisLink,lr_InitialFlowrate)
             elemR(:,er_Roughness)      = link%R(thisLink,lr_Roughness)
         endwhere
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_flow_roughness_from_linkdata)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -383,8 +366,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_elemtype_from_linkdata)
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -412,17 +393,17 @@ contains
             case (lweir)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
-                    elemI(:,ei_elementType)     = weir
-                    elemI(:,ei_QeqType)         = diagnostic
-                    elemYN(:,eYN_canSurcharge)  = link%YN(thisLink,lYN_CanSurcharge)
+                    elemI(:,ei_elementType)         = weir
+                    elemI(:,ei_QeqType)             = diagnostic
+                    elemYN(:,eYN_canSurcharge)      = link%YN(thisLink,lYN_CanSurcharge)
                 endwhere
 
             case (lOrifice)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
-                    elemI(:,ei_elementType)     = orifice
-                    elemI(:,ei_QeqType)         = diagnostic
-                    elemYN(:,eYN_canSurcharge)  = .true.
+                    elemI(:,ei_elementType)            = orifice
+                    elemI(:,ei_QeqType)                = diagnostic
+                    elemYN(:,eYN_canSurcharge)         = .true.
                 endwhere
 
             case (lPump)
@@ -439,7 +420,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_elemtype_from_linkdata)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -462,8 +442,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_geometry_from_linkdata)
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -500,7 +478,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_geometry_from_linkdata)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -524,8 +501,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_channel_geometry)
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -605,8 +580,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_channel_geometry)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_channel_geometry
@@ -629,8 +602,6 @@ contains
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_conduit_geometry)
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -704,8 +675,6 @@ contains
 
         end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_conduit_geometry)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_conduit_geometry
@@ -729,8 +698,6 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_weir_geometry)
-
         !% pointer to specific weir type
         specificWeirType => link%I(thisLink,li_weir_type)
 
@@ -750,9 +717,7 @@ contains
                     elemSR(:,esr_Weir_TrapezoidalLeftSlope)  = link%R(thisLink,lr_LeftSlope)
                     elemSR(:,esr_Weir_TrapezoidalRightSlope) = link%R(thisLink,lr_RightSlope)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
-
-                    !% HACK: I am not sure if we need to update the initial area or volume of an weir element
-                    !% since they will all be set to zero values at the start of the simulation
+                    elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
                 endwhere
 
             case (lSideFlowWeir)
@@ -767,9 +732,7 @@ contains
                     elemSR(:,esr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
-
-                    !% HACK: I am not sure if we need to update the initial area or volume of an weir element
-                    !% since they will all be set to zero values at the start of the simulation
+                    elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
                 endwhere
 
             case (lRoadWayWeir)
@@ -789,9 +752,7 @@ contains
                     elemSR(:,esr_Weir_DischargeCoeff1)       = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Weir_TriangularSideSlope)   = link%R(thisLink,lr_SideSlope)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
-
-                    !% HACK: I am not sure if we need to update the initial area or volume of an weir element
-                    !% since they will all be set to zero values at the start of the simulation
+                    elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
                 endwhere
 
             case (lTransverseWeir)
@@ -806,9 +767,7 @@ contains
                     elemSR(:,esr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)
-
-                    !% HACK: I am not sure if we need to update the initial area or volume of an weir element
-                    !% since they will all be set to zero values at the start of the simulation
+                    elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
                 endwhere
 
             case default
@@ -818,8 +777,6 @@ contains
                 stop "in " // subroutine_name
 
         end select
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_weir_geometry)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -845,29 +802,22 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_orifice_geometry)
-
         !% pointer to specific orifice type
         specificOrificeType => link%I(thisLink,li_orif_type)
 
         select case (specificOrificeType)
             !% copy orifice specific data
             case (lBottomOrifice)
-
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
                     elemSI(:,esi_Orifice_SpecificType)      = bottom_orifice
-
                 endwhere
 
             case (lSideOrifice)
-
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
                     elemSI(:,esi_Orifice_SpecificType)       = side_orifice
-
                 endwhere
-
             case default
 
                 print*, 'In ', subroutine_name
@@ -887,25 +837,32 @@ contains
                     elemSI(:,ei_geometryType)          = rectangular
 
                     !% real data
-                    elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemR(:,er_FullDepth)                    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,eSr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
-
-                endwhere
+                end where
 
             case (lCircular)
-                print*, 'In ', subroutine_name
-                print *, 'error, the circular orifice is not yet implemented'
-                stop "in " // subroutine_name
+                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                    !% integer data
+                    elemI(:,ei_geometryType)    = circular
+
+                    !% real data
+                    elemSR(:,esr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,esr_Orifice_Zcrown)             = elemSR(:,esr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
+                end where
 
             case default
                 print*, 'In ', subroutine_name
                 print*, 'error: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
                 stop "in " // subroutine_name
-        end select
+            end select
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_orifice_geometry)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -931,8 +888,6 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_channel_conduit_velocity)
-
         !% HACK: this might not be right
         where ( (elemI(:,ei_link_Gidx_SWMM) == thisLink) .and. &
                 (elemR(:,er_area)           .gt. zeroR   ) .and. &
@@ -951,8 +906,6 @@ contains
             elemR(:,er_Velocity_N1) = zeroR
 
         endwhere
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_channel_conduit_velocity)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -978,8 +931,6 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_from_nodedata)
-
         !% Setting the local image value
         image = this_image()
 
@@ -1000,8 +951,6 @@ contains
 
         !% deallocate the temporary array
         deallocate(packed_nJm_idx)
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_from_nodedata)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1028,8 +977,6 @@ contains
 
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_get_junction_data)
 
         !%................................................................
         !% Junction main
@@ -1317,8 +1264,6 @@ contains
         ! call the standard geometry update for junction branches
         call geo_assign_JB (ALLtm, ep_JM_ALLtm)     
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_junction_data)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_junction_data
@@ -1427,7 +1372,6 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_diagnostic_interpolation_weights)
 
         !% Q-diagnostic elements will have minimum interp weights for Q
         !% and maximum interp values for G and H
@@ -1475,8 +1419,6 @@ contains
             end do
         end if
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_diagnostic_interpolation_weights)
-
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_IC_diagnostic_interpolation_weights
@@ -1497,8 +1439,6 @@ contains
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_IC_set_SmallVolumes)
-
         if (setting%SmallVolume%UseSmallVolumes) then
             where (elemI(:,ei_geometryType) == rectangular)
                 elemR(:,er_SmallVolume) = setting%SmallVolume%DepthCutoff * elemSGR(:,esgr_Rectangular_Breadth) * &
@@ -1508,12 +1448,14 @@ contains
                 elemR(:,er_SmallVolume) = (elemSGR(:,esgr_Trapezoidal_Breadth) + onehalfR * &
                     (elemSGR(:,esgr_Trapezoidal_LeftSlope) + elemSGR(:,esgr_Trapezoidal_RightSlope)) * &
                     setting%SmallVolume%DepthCutoff) * setting%SmallVolume%DepthCutoff
+
+            elsewhere (elemI(:,ei_geometryType) == circular)
+                ! HACK: not the correct small volume according to geometry. But it will work for now
+                elemR(:,er_SmallVolume) = pi * (setting%SmallVolume%DepthCutoff / twoR) ** twoR
             endwhere
         else
             elemR(:,er_SmallVolume) = zeroR
         end if
-
-        if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_set_SmallVolumes)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
