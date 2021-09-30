@@ -539,10 +539,10 @@ contains
                     elemI(:,ei_geometryType) = rectangular
 
                     !% store geometry specific data
-                    elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
 
-                    elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Rectangular_Breadth)
-                    elemR(:,er_Area)         = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_Depth)
+                    elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Rectangular_Breadth)
+                    elemR(:,er_Area)         = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
                     elemR(:,er_Area_N0)      = elemR(:,er_Area)
                     elemR(:,er_Area_N1)      = elemR(:,er_Area)
                     elemR(:,er_Volume)       = elemR(:,er_Area) * elemR(:,er_Length)
@@ -555,7 +555,7 @@ contains
                                                 link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)     = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
+                    elemR(:,er_FullArea)     = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                 endwhere
 
@@ -566,13 +566,13 @@ contains
                     elemI(:,ei_geometryType) = trapezoidal
 
                     !% store geometry specific data
-                    elemSGR(:,eSGR_Trapezoidal_Breadth)    = link%R(thisLink,lr_BreadthScale)
-                    elemSGR(:,eSGR_Trapezoidal_LeftSlope)  = link%R(thisLink,lr_LeftSlope)
-                    elemSGR(:,eSGR_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
+                    elemSGR(:,esgr_Trapezoidal_Breadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(:,esgr_Trapezoidal_LeftSlope)  = link%R(thisLink,lr_LeftSlope)
+                    elemSGR(:,esgr_Trapezoidal_RightSlope) = link%R(thisLink,lr_RightSlope)
 
                     ! (Bottom width + averageSlope * Depth)*Depth
-                    elemR(:,er_Area)         = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                                (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
+                    elemR(:,er_Area)         = (elemSGR(:,esgr_Trapezoidal_Breadth) + onehalfR * &
+                                (elemSGR(:,esgr_Trapezoidal_LeftSlope) + elemSGR(:,esgr_Trapezoidal_RightSlope)) * &
                                 elemR(:,er_Depth)) * elemR(:,er_Depth)
 
                     elemR(:,er_Area_N0)      = elemR(:,er_Area)
@@ -582,8 +582,8 @@ contains
                     elemR(:,er_Volume_N1)    = elemR(:,er_Volume)
 
                     ! Bottom width + (lslope + rslope) * BankFullDepth
-                    elemR(:,er_BreadthMax)   = elemSGR(:,eSGR_Trapezoidal_Breadth) + (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + &
-                                elemSGR(:,eSGR_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
+                    elemR(:,er_BreadthMax)   = elemSGR(:,esgr_Trapezoidal_Breadth) + (elemSGR(:,esgr_Trapezoidal_LeftSlope) + &
+                                elemSGR(:,esgr_Trapezoidal_RightSlope)) * elemR(:,er_FullDepth)
                     !% the full depth of channel is set to a large depth so it
                     !% never surcharges. the large depth is set as, factor x width,
                     !% where the factor is an user controlled paratmeter.
@@ -591,8 +591,8 @@ contains
                                                 link%R(thisLink,lr_BreadthScale)
                     elemR(:,er_ZbreadthMax)  = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
                     elemR(:,er_Zcrown)       = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-                    elemR(:,er_FullArea)     = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                                (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
+                    elemR(:,er_FullArea)     = (elemSGR(:,esgr_Trapezoidal_Breadth) + onehalfR * &
+                                (elemSGR(:,esgr_Trapezoidal_LeftSlope) + elemSGR(:,esgr_Trapezoidal_RightSlope)) * &
                                 elemR(:,er_FullDepth)) * elemR(:,er_FullDepth)
                     elemR(:,er_FullVolume)   = elemR(:,er_FullArea) * elemR(:,er_Length)
                 endwhere
@@ -644,10 +644,10 @@ contains
         !         elemI(:,ei_geometryType)    = rectangular_closed
 
         !         !% store geometry specific data
-        !         elemSGR(:,eSGR_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
+        !         elemSGR(:,esgr_Rectangular_Breadth) = link%R(thisLink,lr_BreadthScale)
 
-        !         elemR(:,er_BreadthMax)      = elemSGR(:,eSGR_Rectangular_Breadth)
-        !         elemR(:,er_Area)            = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_Depth)
+        !         elemR(:,er_BreadthMax)      = elemSGR(:,esgr_Rectangular_Breadth)
+        !         elemR(:,er_Area)            = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_Depth)
         !         elemR(:,er_Area_N0)         = elemR(:,er_Area)
         !         elemR(:,er_Area_N1)         = elemR(:,er_Area)
         !         elemR(:,er_Volume)          = elemR(:,er_Area) * elemR(:,er_Length)
@@ -656,7 +656,7 @@ contains
         !         elemR(:,er_FullDepth)       = link%R(thisLink,lr_FullDepth)
         !         elemR(:,er_ZbreadthMax)     = elemR(:,er_FullDepth) + elemR(:,er_Zbottom)
         !         elemR(:,er_Zcrown)          = elemR(:,er_Zbottom) + elemR(:,er_FullDepth)
-        !         elemR(:,er_FullArea)        = elemSGR(:,eSGR_Rectangular_Breadth) * elemR(:,er_FullDepth)
+        !         elemR(:,er_FullArea)        = elemSGR(:,esgr_Rectangular_Breadth) * elemR(:,er_FullDepth)
         !         elemR(:,er_FullVolume)      = elemR(:,er_FullArea) * elemR(:,er_Length)
         !     endwhere
 
@@ -668,17 +668,17 @@ contains
                     elemI(ii,ei_geometryType)    = circular
 
                     !% store geometry specific data
-                    elemSGR(ii,eSGR_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
-                    elemSGR(ii,eSGR_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
+                    elemSGR(ii,esgr_Circular_Diameter) = link%R(thisLink,lr_BreadthScale)
+                    elemSGR(ii,esgr_Circular_Radius)   = link%R(thisLink,lr_BreadthScale) / twoR
 
                     elemR(ii,er_FullDepth)             = link%R(thisLink,lr_FullDepth)
                     elemR(ii,er_Zcrown)                = elemR(ii,er_Zbottom) + elemR(ii,er_FullDepth)
                     elemR(ii,er_ZbreadthMax)           = elemR(ii,er_FullDepth)/twoR + elemR(ii,er_Zbottom)
-                    elemR(ii,er_FullArea)              = pi * elemSGR(ii,eSGR_Circular_Radius) ** twoR
+                    elemR(ii,er_FullArea)              = pi * elemSGR(ii,esgr_Circular_Radius) ** twoR
                     elemR(ii,er_FullVolume)            = elemR(ii,er_FullArea) * elemR(ii,er_Length)
                     elemR(ii,er_FullHydDepth)          = elemR(ii,er_FullDepth) 
                     elemR(ii,er_FullPerimeter)         = elemR(ii,er_FullArea) / (onefourthR * elemR(ii,er_FullDepth))
-                    elemR(ii,er_BreadthMax)            = elemSGR(ii,eSGR_Circular_Diameter)
+                    elemR(ii,er_BreadthMax)            = elemSGR(ii,esgr_Circular_Diameter)
                     elemR(ii,er_AreaBelowBreadthMax)   = elemR(ii,er_FullArea)  / twoR
 
                     elemR(ii,er_Area)                  = circular_area_from_depth_singular(ii)
@@ -734,16 +734,16 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemSI(:,eSi_Weir_SpecificType)          = trapezoidal_weir
+                    elemSI(:,esi_Weir_SpecificType)          = trapezoidal_weir
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Weir_DischargeCoeff1)       = link%R(thisLink,lr_DischargeCoeff1)
-                    elemSR(:,eSr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
-                    elemSR(:,eSr_Weir_TrapezoidalBreadth)    = link%R(thisLink,lr_BreadthScale)
-                    elemSR(:,eSr_Weir_TrapezoidalLeftSlope)  = link%R(thisLink,lr_LeftSlope)
-                    elemSR(:,eSr_Weir_TrapezoidalRightSlope) = link%R(thisLink,lr_RightSlope)
-                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Weir_DischargeCoeff1)       = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,esr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
+                    elemSR(:,esr_Weir_TrapezoidalBreadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,esr_Weir_TrapezoidalLeftSlope)  = link%R(thisLink,lr_LeftSlope)
+                    elemSR(:,esr_Weir_TrapezoidalRightSlope) = link%R(thisLink,lr_RightSlope)
+                    elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -753,14 +753,14 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemSI(:,eSi_Weir_SpecificType)          = side_flow
-                    elemSI(:,eSi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
+                    elemSI(:,esi_Weir_SpecificType)          = side_flow
+                    elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
-                    elemSR(:,eSr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
-                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
+                    elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -776,13 +776,13 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemSI(:,eSi_Weir_SpecificType)          = vnotch_weir
+                    elemSI(:,esi_Weir_SpecificType)          = vnotch_weir
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Weir_DischargeCoeff1)       = link%R(thisLink,lr_DischargeCoeff1)
-                    elemSR(:,eSr_Weir_TriangularSideSlope)   = link%R(thisLink,lr_SideSlope)
-                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Weir_DischargeCoeff1)       = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,esr_Weir_TriangularSideSlope)   = link%R(thisLink,lr_SideSlope)
+                    elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -792,14 +792,14 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemSI(:,eSi_Weir_SpecificType)          = transverse_weir
-                    elemSI(:,eSi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
+                    elemSI(:,esi_Weir_SpecificType)          = transverse_weir
+                    elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
-                    elemSR(:,eSr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
-                    elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
+                    elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -850,7 +850,7 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemSI(:,eSi_specific_orifice_type)      = bottom_orifice
+                    elemSI(:,esi_Orifice_SpecificType)      = bottom_orifice
 
                 endwhere
 
@@ -858,7 +858,7 @@ contains
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemSI(:,eSi_specific_orifice_type)       = side_orifice
+                    elemSI(:,esi_Orifice_SpecificType)       = side_orifice
 
                 endwhere
 
@@ -881,10 +881,10 @@ contains
                     elemSI(:,ei_geometryType)          = rectangular
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
-                    elemSR(:,eSr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
-                    elemSR(:,eSr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
-                    elemSR(:,eSr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
+                    elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,esr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,esr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,esr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
 
                 endwhere
 
@@ -1035,17 +1035,21 @@ contains
         !% the first element index is a junction main
         elemI(JMidx,ei_elementType)  = JM
         elemI(JMidx,ei_HeqType)      = time_march
-        elemI(JMidx,ei_QeqType)      = none
+        elemI(JMidx,ei_QeqType)      = notused
         
         !%-----------------------------------------------------------------------
         !% HACK: Junction main are always rectangular
         elemI(JMidx,ei_geometryType) = rectangular
         !%-----------------------------------------------------------------------
 
-        elemR(JMidx,er_Depth)        = node%R(thisJunctionNode,nr_InitialDepth)
+        !% junction main depth and head from initial conditions
+        elemR(JMidx,er_Depth) = node%R(thisJunctionNode,nr_InitialDepth)
+        elemR(JMidx,er_Head)  = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
+
         !% JM elements are not solved for momentum. 
         elemR(JMidx,er_Flowrate)     = zeroR
         elemR(JMidx,er_Velocity)     = zeroR
+
         !% wave speed is the gravity wave speed for the depth
         elemR(JMidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JMidx,er_Depth))
         elemR(JMidx,er_FroudeNumber) = zeroR
@@ -1074,28 +1078,29 @@ contains
 
             !% set the geometry for existing branches
             !% Note that elemSI(,...Exists) is set in init_network_handle_nJm
-            if (elemSI(JBidx,eSI_JunctionBranch_Exists) == oneI) then
+            if (elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) then
 
-                BranchIdx    => elemSI(JBidx,eSI_JunctionBranch_Link_Connection)
+                BranchIdx    => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
                 geometryType => link%I(BranchIdx,li_geometry)
 
-                !% set the head equation as as JB for now for existing branches
-                !% only JM is time marched 
-                !% HACK -- might need to get a realistic depth -- this perhaps should be done
-                !% as an adjustment after all the other IC is done (e.g., we may want to compare
-                !% with the upstream element depth.)
-                elemI(JBidx,ei_HeqType) = JB
-                elemR(JBidx,er_Depth)   = elemR(JMidx,er_Depth)
-                elemR(JBidx,er_Head)    = elemR(JBidx,er_Depth) + elemR(JBidx,er_Zbottom) !% BRHbugfix 20210813
+                !% set the JB to time_march for use with splitting between AC
+                !% and ETM in rk2_extrapolate_to_fullstep_ETM, rk2_restore_to_midstep_ETM
+                !% rk2_interpolate_to_halfstep_AC, k2_restore_to_fullstep_AC
+                elemI(JBidx,ei_HeqType) = time_march
+                elemI(JBidx,ei_QeqType) = time_march
+
+                !% set the initial head to the same as the junction main
+                elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
+                elemR(JBidx,er_Depth)   = elemR(JBidx,er_Head) - elemR(JBidx,er_Zbottom) 
+                if (elemR(JBidx,er_Depth) < setting%ZeroValue%Depth) then
+                    elemR(JBidx,er_Depth) = setting%ZeroValue%depth
+                    elemR(JBidx,er_Head)  = setting%ZeroValue%depth + elemR(JBidx,er_Zbottom)
+                end if
                 
+                !% JB elements initialized for momentum
+                elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
+                elemR(JBidx,er_FroudeNumber) = zeroR
 
-                !% HACK: JB elements are not solved for momentum. 
-                !% set zero here and revise later if needed
-                ! BRHbugfix 20210813 elemR(JBidx,er_WaveSpeed)    = sqrt(setting%constant%gravity * elemR(JBidx,er_Depth))
-                ! BRHbugfix 20210813 elemR(JBidx,er_FroudeNumber) = zeroR
-                ! BRHbugfix end
-
-                !% BRHbugfix 20210813 start: moved these from inside select
                 ! set the common geometry for conduits and non-conduits that are independent of cross-section shape
                 if (link%I(BranchIdx,li_link_type) == lPipe) then
                     elemYN(JBidx,eYN_canSurcharge)  = .true.
@@ -1106,14 +1111,15 @@ contains
                                                     link%R(BranchIdx,lr_BreadthScale)
                 end if 
                 elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
+
                 !% Junction branch k-factor
-                !% If the user does not input the k-factor for junction branches usee default from setting
+                !% If the user does not input the K-factor for junction branches entrance/exit loses then
+                !% use default from setting
                 if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
-                    elemSR(JBidx,eSr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
+                    elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
                 else
-                    elemSR(JBidx,eSr_JunctionBranch_Kfactor) = setting%Junction%kFactor
+                    elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
                 end if                
-                !% BRHbugfix 20210813  end 
 
                 !% get the geometry data
                 select case (geometryType)
@@ -1129,7 +1135,7 @@ contains
                         ! BRHbugfix 20210813 elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
 
                         !% store geometry specific data
-                        elemSGR(JBidx,eSGR_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
+                        elemSGR(JBidx,esgr_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
                         elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
                         elemR(JBidx,er_ZbreadthMax) = zeroR
 
@@ -1164,13 +1170,13 @@ contains
                             elemI(JBidx,ei_geometryType) = trapezoidal
 
                             !% store geometry specific data
-                            elemSGR(JBidx,eSGR_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
-                            elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
-                            elemSGR(JBidx,eSGR_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
+                            elemSGR(JBidx,esgr_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
+                            elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
+                            elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
 
                             ! (Bottom width + averageSlope * Depth)*Depth
-                            ! BRHbugfix 20210813 elemR(JBidx,er_Area)         = (elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                            ! BRHbugfix 20210813             (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * &
+                            ! BRHbugfix 20210813 elemR(JBidx,er_Area)         = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
+                            ! BRHbugfix 20210813             (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
                             ! BRHbugfix 20210813             elemR(JBidx,er_Depth)) * elemR(JBidx,er_Depth)
 
                             ! BRHbugfix 20210813 elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
@@ -1183,9 +1189,9 @@ contains
                             !% HACK: if the user does not input the k-factor for junction brnaches,
                             !% get a default value from the setting
                             ! BRHbugfix 20210813 if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
-                            ! BRHbugfix 20210813     elemSR(JBidx,eSr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
+                            ! BRHbugfix 20210813     elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
                             ! BRHbugfix 20210813 else
-                            ! BRHbugfix 20210813     elemSR(JBidx,eSr_JunctionBranch_Kfactor) = setting%Junction%kFactor
+                            ! BRHbugfix 20210813     elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
                             ! BRHbugfix 20210813 end if
                             
                             elemR(JBidx,er_ZBreadthMax)  =elemR(JBidx,er_FullDepth)  ! BRHbugfix 20210813 !
@@ -1197,26 +1203,26 @@ contains
                                 ! BRHbugfix 20210813 elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
                                 ! BRHbugfix 20210813 elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
                                 ! BRHbugfix 20210813 elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
-                                !  BRHbugfix 20210813 elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                                !  BRHbugfix 20210813         (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * &
+                                !  BRHbugfix 20210813 elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
+                                !  BRHbugfix 20210813         (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
                                  !  BRHbugfix 20210813        elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth)
                                 ! ! BRHbugfix 20210813 elemR(JBidx,er_BreadthMax)  = zeroR
 
                             else
-                                elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + &
-                                            (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + &
-                                            elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * elemR(JBidx,er_ZbreadthMax)
+                                elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) + &
+                                            (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + &
+                                            elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * elemR(JBidx,er_ZbreadthMax)
                                 !  BRHbugfix 20210813 elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
                                 !    BRHbugfix 20210813                     link%R(BranchIdx,lr_BreadthScale)
                                 !  BRHbugfix 20210813 elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
                            
-                                !  BRHbugfix 20210813 elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                                !  BRHbugfix 20210813         (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * &
+                                !  BRHbugfix 20210813 elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
+                                !  BRHbugfix 20210813         (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
                                  !  BRHbugfix 20210813        elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth)
                                 !  BRHbugfix 20210813 elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
                             end if
-                            elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                                    (elemSGR(JBidx,eSGR_Trapezoidal_LeftSlope) + elemSGR(JBidx,eSGR_Trapezoidal_RightSlope)) * &
+                            elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
+                                    (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
                                     elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth) !  BRHbugfix 20210813 
 
                     case default
@@ -1231,24 +1237,48 @@ contains
                 !% this flowrate will always be lagged in junction branches
                 elemR(JBidx,er_Flowrate) = link%R(BranchIdx,lr_InitialFlowrate)
 
-                ! BRHbugfix 20210813  if (elemR(JBidx,er_Area) .gt. zeroR) then
                 if (elemR(JBidx,er_Area) .gt. setting%ZeroValue%Area) then ! BRHbugfix 20210813
                     elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
                 else
                     elemR(JBidx,er_Velocity) = zeroR
                 end if
 
-                ! BRHbugfix 20210813 start
                 !% Common geometry that do not depend on cross-section
                 elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
                 elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
                 elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
                 elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
                 elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
-                ! BRHbugfix 20210813 end
 
             end if
         end do
+
+        ! print *, 'depth'
+        !         print *, elemR(ietmp(1), er_Depth),&
+        !          elemR(ietmp(2), er_Depth),&
+        !          elemR(ietmp(3), er_Depth),&
+        !          elemR(ietmp(4), er_Depth),&
+        !          elemR(ietmp(5), er_Depth),&
+        !          elemR(ietmp(6), er_Depth),&
+        !          elemR(ietmp(7), er_Depth)        
+        ! print *, 'area'
+        !         print *, elemR(ietmp(1), er_Area),&
+        !          elemR(ietmp(2), er_Area),&
+        !          elemR(ietmp(3), er_Area),&
+        !          elemR(ietmp(4), er_Area),&
+        !          elemR(ietmp(5), er_Area),&
+        !          elemR(ietmp(6), er_Area),&
+        !          elemR(ietmp(7), er_Area)
+        ! print *, 'velocity'
+        ! write(*,"(16F8.3)")   &
+        ! elemR(ietmp(1), er_Velocity), faceR(iftmp(1), fr_Velocity_u), faceR(iftmp(1), fr_Velocity_d),&
+        ! elemR(ietmp(2), er_Velocity), faceR(iftmp(2), fr_Velocity_u), faceR(iftmp(2), fr_Velocity_d),&
+        ! elemR(ietmp(3), er_Velocity),&
+        ! elemR(ietmp(4), er_Velocity),&
+        ! elemR(ietmp(5), er_Velocity), faceR(iftmp(5), fr_Velocity_u), faceR(iftmp(5), fr_Velocity_d),&
+        ! elemR(ietmp(6), er_Velocity), faceR(iftmp(6), fr_Velocity_u), faceR(iftmp(6), fr_Velocity_d),&
+        ! elemR(ietmp(7), er_Velocity)   
+        ! stop 98703
 
         !% HACK: 
         !% set initial conditions for junction main from the junction branch data
@@ -1263,26 +1293,23 @@ contains
 
         !% HACK: finding the average breadth. This will not work for channels with other than rectangular geometry.
         !% we need to generalize this
-        elemSGR(JMidx,eSGR_Rectangular_Breadth) = (elemR(JMidx+1,er_Length)*elemSGR(JMidx+1,eSGR_Rectangular_Breadth) + &
-                                                   elemR(JMidx+2,er_Length)*elemSGR(JMidx+2,eSGR_Rectangular_Breadth) + &
-                                                   elemR(JMidx+3,er_Length)*elemSGR(JMidx+3,eSGR_Rectangular_Breadth) + &
-                                                   elemR(JMidx+4,er_Length)*elemSGR(JMidx+4,eSGR_Rectangular_Breadth) + &
-                                                   elemR(JMidx+5,er_Length)*elemSGR(JMidx+5,eSGR_Rectangular_Breadth) + &
-                                                   elemR(JMidx+6,er_Length)*elemSGR(JMidx+6,eSGR_Rectangular_Breadth))/ &   
+        elemSGR(JMidx,esgr_Rectangular_Breadth) = (elemR(JMidx+1,er_Length)*elemSGR(JMidx+1,esgr_Rectangular_Breadth) + &
+                                                   elemR(JMidx+2,er_Length)*elemSGR(JMidx+2,esgr_Rectangular_Breadth) + &
+                                                   elemR(JMidx+3,er_Length)*elemSGR(JMidx+3,esgr_Rectangular_Breadth) + &
+                                                   elemR(JMidx+4,er_Length)*elemSGR(JMidx+4,esgr_Rectangular_Breadth) + &
+                                                   elemR(JMidx+5,er_Length)*elemSGR(JMidx+5,esgr_Rectangular_Breadth) + &
+                                                   elemR(JMidx+6,er_Length)*elemSGR(JMidx+6,esgr_Rectangular_Breadth))/ &   
                                                    elemR(JMidx,er_Length)
 
         !% Volume
         !% rectangular volume depends on characteristic length and breadth.
-        elemR(JMidx,er_Volume) =   elemSGR(JMidx,eSGR_Rectangular_Breadth) * elemR(JMidx,er_Length) * elemR(JMidx,er_Depth)
+        elemR(JMidx,er_Volume) =   elemSGR(JMidx,esgr_Rectangular_Breadth) * elemR(JMidx,er_Length) * elemR(JMidx,er_Depth)
                                                                                     
-        !BRHbugfix 20210813 elemR(JBidx,er_Volume_N0) = elemR(JMidx,er_Volume)
-        !BRHbugfix 20210813 elemR(JBidx,er_Volume_N1) = elemR(JMidx,er_Volume)
-        elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume) !BRHbugfix 20210813 
-        elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume) !BRHbugfix 20210813 
+        elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume) 
+        elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume) 
 
-    
         ! call the standard geometry update for junction branches
-        call geo_assign_JB (ALLtm, ep_JM_ALLtm) !BRHbugfix 20210813    
+        call geo_assign_JB (ALLtm, ep_JM_ALLtm)     
 
         if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_get_junction_data)
 
@@ -1468,12 +1495,12 @@ contains
 
         if (setting%SmallVolume%UseSmallVolumes) then
             where (elemI(:,ei_geometryType) == rectangular)
-                elemR(:,er_SmallVolume) = setting%SmallVolume%DepthCutoff * elemSGR(:,eSGR_Rectangular_Breadth) * &
+                elemR(:,er_SmallVolume) = setting%SmallVolume%DepthCutoff * elemSGR(:,esgr_Rectangular_Breadth) * &
                     elemR(:,er_Length)
 
             elsewhere (elemI(:,ei_geometryType) == trapezoidal)
-                elemR(:,er_SmallVolume) = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
-                    (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
+                elemR(:,er_SmallVolume) = (elemSGR(:,esgr_Trapezoidal_Breadth) + onehalfR * &
+                    (elemSGR(:,esgr_Trapezoidal_LeftSlope) + elemSGR(:,esgr_Trapezoidal_RightSlope)) * &
                     setting%SmallVolume%DepthCutoff) * setting%SmallVolume%DepthCutoff
             endwhere
         else

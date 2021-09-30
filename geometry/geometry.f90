@@ -365,8 +365,8 @@ module geometry
         fulldepth     => elemR(:,er_FullDepth)
         fullhyddepth  => elemR(:,er_FullHydDepth)
         fullperimeter => elemR(:,er_FullPerimeter)
-        Kfac          => elemSR(:,eSr_JunctionBranch_Kfactor)
-        BranchExists  => elemSI(:,eSI_JunctionBranch_Exists)
+        Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
+        BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
         thisSolve     => elemI(:,ei_tmType)
         !%-----------------------------------------------------------------------------
         if (Npack > 0) then
@@ -418,7 +418,7 @@ module geometry
                                 area(tB)      = setting%ZeroValue%Area
                                 ! HACK fix
                                 if (elemI(tB,ei_geometryType) == rectangular)  then
-                                    topwidth(tB) = elemSGR(tB,eSGR_Rectangular_Breadth)
+                                    topwidth(tB) = elemSGR(tB,esgr_Rectangular_Breadth)
                                 else
                                     topwidth(tB)  = setting%ZeroValue%Topwidth
                                 end if

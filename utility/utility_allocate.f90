@@ -424,7 +424,7 @@ contains
         !
         ! Description:
         !   the col_elemPGalltm is a vector of the columns in the elemPGalltm array
-        !   that correspond to the enumerated ePG_... array_index parameters
+        !   that correspond to the enumerated epg_... array_index parameters
         !
         !   the npack_elemPGalltm(:) vector contains the number of packed elements
         !   for a given column.
@@ -598,7 +598,7 @@ contains
         !
         ! Description:
         !   the col_elemSI is a vector of the columns in the faceR arrays
-        !   that correspond to the enumerated eSI_... array_index parameter
+        !   that correspond to the enumerated esi_... array_index parameter
         !
         !-----------------------------------------------------------------------------
 
@@ -634,7 +634,7 @@ contains
         !
         ! Description:
         !   the col_elemSR is a vector of the columns in the faceR arrays
-        !   that correspond to the enumerated eSR_... array_index parameter
+        !   that correspond to the enumerated esr_... array_index parameter
         !
         !-----------------------------------------------------------------------------
 
@@ -670,7 +670,7 @@ contains
         !
         ! Description:
         !   the col_elemSGR is a vector of the columns in the faceR arrays
-        !   that correspond to the enumerated eSGR_... array_index parameter
+        !   that correspond to the enumerated esgr_... array_index parameter
         !
         !-----------------------------------------------------------------------------
 
@@ -706,7 +706,7 @@ contains
         !
         ! Description:
         !   the col_elemWDI is a vector of the columns in the faceR arrays
-        !   that correspond to the enumerated eWDI_... array_index parameter
+        !   that correspond to the enumerated ewdi_... array_index parameter
         !
         !-----------------------------------------------------------------------------
 
@@ -742,7 +742,7 @@ contains
         !
         ! Description:
         !   the col_elemWDR is a vector of the columns in the faceR arrays
-        !   that correspond to the enumerated eWDR_... array_index parameter
+        !   that correspond to the enumerated ewdr_... array_index parameter
         !
         !-----------------------------------------------------------------------------
 

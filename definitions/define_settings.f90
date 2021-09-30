@@ -115,6 +115,7 @@ module define_settings
         logical :: Apply = .true.
     end type AdjustWidthDepthType
 
+    ! setting%Output%CommandLine
     type CommandLineType
         logical :: quiet = .false.
         integer :: interval = 10
@@ -253,62 +254,6 @@ module define_settings
     ! -
     ! --
 
-    ! setting%Profile%File
-    ! type ProfileFileYNType
-    !     logical :: adjust              = .false.
-    !     logical :: BIPquick            = .false.
-    !     logical :: boundary_conditions = .false.
-    !     logical :: c_library           = .false.
-    !     logical :: define_globals      = .false.
-    !     logical :: define_indexes      = .false.
-    !     logical :: define_keys         = .false.
-    !     logical :: define_settings     = .false.
-    !     logical :: define_types        = .false.
-    !     logical :: diagnostic_elements = .false.
-    !     logical :: discretization      = .false.
-    !     logical :: face                = .false.
-    !     logical :: finalization        = .false.
-    !     logical :: geometry            = .false.
-    !     logical :: initial_condition   = .false.
-    !     logical :: initialization      = .true.
-    !     logical :: jump                = .false.
-    !     logical :: lowlevel_rk2        = .false.
-    !     logical :: network_define      = .false.
-    !     logical :: orifice_elements    = .false.
-    !     logical :: rectangular_channel = .false.
-    !     logical :: trapezoidal_channel = .false.
-    !     logical :: runge_kutta2        = .false.
-    !     logical :: pack_mask_arrays    = .false.
-    !     logical :: partitioning        = .false.
-    !     logical :: pump_elements       = .false.
-    !     logical :: interface           = .false.
-    !     logical :: timeloop            = .false.
-    !     logical :: update              = .false.
-    !     logical :: utility             = .false.
-    !     logical :: utility_allocate    = .false.
-    !     logical :: utility_deallocate  = .false.
-    !     logical :: utility_array       = .false.
-    !     logical :: utility_datetime    = .false.
-    !     logical :: utility_interpolate = .false.
-    !     logical :: utility_output      = .false.
-    !     logical :: utility_string      = .false.
-    !     logical :: weir_elements       = .false.
-    !     logical :: output              = .false.
-    ! end type ProfileFileYNType
-    
-    ! ! setting%Profile%FileGroup
-    ! type ProfileFileGroupYNType
-    !     logical :: all              = .false.
-    !     logical :: definitions      = .false.
-    !     logical :: finalization     = .false.
-    !     logical :: geometry         = .false.
-    !     logical :: initialization   = .false.
-    !     logical :: interface        = .false.
-    !     logical :: output           = .false.
-    !     logical :: timeloop         = .false.
-    !     logical :: utility          = .false.
-    ! end type ProfileFileGroupYNType
-
     ! setting%ACmethodType
     type ACmethodType
         real(8) :: dtau = 1.0
@@ -360,7 +305,10 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
-        real(8) :: kFactor = 0.7    !% junction branch k-factor for entrance or exit losses
+        real(8) :: kFactor  = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
+        real(8) :: HeadCoef = 1.0   !% junction branch head coef for diagnostic junction (must be > 0)
+        real(8) :: CFLlimit = 0.5   !% limiter on CFL to control dynamic junction
+        logical :: isDynamic = .true.
     end type JunctionType
 
     ! setting%Limiter
@@ -733,6 +681,18 @@ contains
         call json%get('Junction.kFactor', real_value, found)
         setting%Junction%kFactor = real_value
         if (.not. found) stop "Error - setting " // 'Junction.kFactor not found'
+
+        call json%get('Junction.HeadCoef', real_value, found)
+        setting%Junction%HeadCoef = real_value
+        if (.not. found) stop "Error - setting " // 'Junction.HeeadCoef not found'
+
+        call json%get('Junction.CFLlimit', real_value, found)
+        setting%Junction%CFLlimit = real_value
+        if (.not. found) stop "Error - setting " // 'Junction.CFLlimit not found'
+
+        call json%get('Junction.isDynamic', logical_value, found)
+        setting%Junction%isDynamic = logical_value
+        if (.not. found) stop "Error - setting " // 'Limiter.Junction.isDynamic not found'
 
         ! Load Limiter Settings
         call json%get('Limiter.BC.approach', c, found)

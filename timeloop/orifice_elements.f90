@@ -29,14 +29,14 @@ module orifice_elements
     subroutine orifice_toplevel (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% We need a subroutine to get the new full depth (eSr_EffectiveFullDepth) 
-        !% crown (eSr_Zcrown) and crest (eSr_Zcrest) elevation from control setting.
+        !% We need a subroutine to get the new full depth (esr_EffectiveFullDepth) 
+        !% crown (esr_Zcrown) and crest (esr_Zcrest) elevation from control setting.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx  !% must be a single element ID
         !%-----------------------------------------------------------------------------
         !%  
         call common_head_and_flowdirection_singular &
-            (eIdx, eSr_Orifice_Zcrest, eSr_Orifice_NominalDownstreamHead, eSi_Orifice_FlowDirection)
+            (eIdx, esr_Orifice_Zcrest, esr_Orifice_NominalDownstreamHead, esi_Orifice_FlowDirection)
         
         !% find effective head on orifice element
          call orifice_effective_head_delta (eIdx)
@@ -68,13 +68,13 @@ module orifice_elements
         real(8) :: Zmidpt
         !%-----------------------------------------------------------------------------
         !% inputs
-        SpecificOrificeType   => elemSI(eIdx,eSi_specific_orifice_type)
+        SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
         Head                  => elemR(eIdx,er_Head)
         Zcrown                => elemR(eIdx,er_Zcrown)
-        Zcrest                => elemSR(eIdx,eSr_Orifice_Zcrest)
-        NominalDownstreamHead => elemSR(eIdx,eSr_Orifice_NominalDownstreamHead)
+        Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
+        NominalDownstreamHead => elemSR(eIdx,esr_Orifice_NominalDownstreamHead)
         !% output
-        EffectiveHeadDelta         => elemSR(eIdx,eSr_Orifice_EffectiveHeadDelta)
+        EffectiveHeadDelta         => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
         !%-----------------------------------------------------------------------------
         select case (SpecificOrificeType)
             case (BOTTOM_ORIFICE)
@@ -120,16 +120,16 @@ module orifice_elements
         real(8) :: ratio
         !%-----------------------------------------------------------------------------
         GeometryType          => elemI(eIdx,ei_geometryType)
-        SpecificOrificeType   => elemSI(eIdx,eSi_specific_orifice_type)
-        FlowDirection         => elemSI(eIdx,eSi_Orifice_FlowDirection)
+        SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
+        FlowDirection         => elemSI(eIdx,esi_Orifice_FlowDirection)
         Flowrate              => elemR(eIdx,er_Flowrate)
         Head                  => elemR(eIdx,er_Head)
-        EffectiveHeadDelta    => elemSR(eIdx,eSr_Orifice_EffectiveHeadDelta)
-        Zcrest                => elemSR(eIdx,eSr_Orifice_Zcrest)
-        RectangularBreadth    => elemSR(eIdx,eSr_Orifice_RectangularBreadth)
-        DischargeCoeff        => elemSR(eIdx,eSr_Orifice_DischargeCoeff)
-        EffectiveFullDepth    => elemSR(eIdx,eSr_Orifice_EffectiveFullDepth)
-        NominalDownstreamHead => elemSR(eIdx,eSr_Orifice_NominalDownstreamHead)
+        EffectiveHeadDelta    => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
+        Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
+        RectangularBreadth    => elemSR(eIdx,esr_Orifice_RectangularBreadth)
+        DischargeCoeff        => elemSR(eIdx,esr_Orifice_DischargeCoeff)
+        EffectiveFullDepth    => elemSR(eIdx,esr_Orifice_EffectiveFullDepth)
+        NominalDownstreamHead => elemSR(eIdx,esr_Orifice_NominalDownstreamHead)
         
         SharpCrestedWeirCoeff => Setting%Orifice%SharpCrestedWeirCoefficient
         WeirExponent          => Setting%Orifice%TransverseWeirExponent
@@ -219,8 +219,8 @@ module orifice_elements
         Perimeter   => elemR(eIdx,er_Perimeter)
         HydDepth    => elemR(eIdx,er_HydDepth)
         HydRadius   => elemR(eIdx,er_HydRadius)
-        Zcrest                  => elemSR(eIdx,eSr_Orifice_Zcrest)
-        RectangularBreadth      => elemSR(eIdx,eSr_Orifice_RectangularBreadth)
+        Zcrest                  => elemSR(eIdx,esr_Orifice_Zcrest)
+        RectangularBreadth      => elemSR(eIdx,esr_Orifice_RectangularBreadth)
     
         !% find depth over bottom of orifice
         if (Head <= Zcrest) then

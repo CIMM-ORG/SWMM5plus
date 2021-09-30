@@ -18,33 +18,32 @@ contains
 
         if (setting%Debug%File%finalization) print *, '*** enter ', this_image(), subroutine_name
 
-        !if (setting%Profile%File%finalization) call util_tic(timer, 4)
-        if ((this_image() == 1) .and. (setting%Profile%YN)) then
-            call util_profiler_print_summary()
-        end if
+        call util_profiler_print_summary()
 
         if ((this_image() == 1) .and. &
             (setting%Output%report .or. setting%Debug%Output)) then
             call output_combine_links()
         end if
 
+        
         sync all
 
         if (setting%Output%report .or. setting%Debug%Output) call output_move_node_files
         if (setting%Output%report .or. setting%Debug%Output) call output_update_swmm_out
         call interface_finalize()
+        
         call util_deallocate_network_data()
 
-        ! if (setting%Profile%File%finalization) then
-        !     call util_toc(timer, 4)
-        !     print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(4))
-        !     call util_free_jobs(timer)
-        ! end if
-
+        !stop 9709
+        
+        !% we don't want an old debug_output directory to confuse things, so
+        !% here we first create the directory (if it doesn't exist) and
+        !% then remove the new directory or (recursively) remove the entire old directory
         if ((this_image() == 1) .and. (.not. setting%Debug%Output)) then
             call system('mkdir -p debug_output')
             call system('rm -r debug_output')
         end if
+        
     end subroutine finalize_all
 
 

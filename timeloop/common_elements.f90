@@ -66,7 +66,7 @@ module common_elements
         !% on element. Designed for Weirs and Orifices
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx  !% must be a single element ID
-        !% input is (e.g.) eSr_Weir_Zcrest, eSr_Weir_NominalDownstreamHead, eSi_Weir_FlowDirection
+        !% input is (e.g.) esr_Weir_Zcrest, esr_Weir_NominalDownstreamHead, esi_Weir_FlowDirection
         integer, intent(in) :: ZcrestCol, NominalDownstreamHeadCol, FlowDirectionCol
         real(8), pointer :: Head, NominalDSHead
         real(8), pointer :: UpstreamFaceHead, DownstreamFaceHead, Zcrest

@@ -169,7 +169,7 @@ module update
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
-        BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
+        BranchExists => elemSI(:,esi_JunctionBranch_Exists)
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%update) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"

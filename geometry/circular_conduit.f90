@@ -52,8 +52,8 @@ module circular_conduit
         length     => elemR(:,er_Length)
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,eSGR_Circular_AoverAfull)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------  
 
         AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP))
@@ -88,8 +88,8 @@ module circular_conduit
         depth      => elemR(:,er_Depth)
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,eSGR_Circular_AoverAfull)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%----------------------------------------------------------------------------- 
 
         !% find Y/Yfull
@@ -120,7 +120,7 @@ module circular_conduit
         depth      => elemR(:,er_Depth)
         topwidth   => elemR(:,er_Topwidth)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------  
 
         !% HACK: at this point, YoverYfull probably should be calculated already.
@@ -149,7 +149,7 @@ module circular_conduit
         !%-----------------------------------------------------------------------------
         depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%----------------------------------------------------------------------------- 
 
         !% find Y/Yfull
@@ -184,7 +184,7 @@ module circular_conduit
         hydRadius  => elemR(:,er_HydRadius)
         perimeter  => elemR(:,er_Perimeter)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         fullperimeter => elemR(:,er_FullPerimeter)
         !%-----------------------------------------------------------------------------  
 
@@ -315,7 +315,7 @@ module circular_conduit
         !%-----------------------------------------------------------------------------
         depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%----------------------------------------------------------------------------- 
 
         !% find Y/Yfull
@@ -400,7 +400,7 @@ module circular_conduit
     ! !     head    => elemR(:,er_Head)
     ! !     volume  => elemR(:,er_Volume)
     ! !     length  => elemR(:,er_Length)
-    ! !     breadth => elemSGR(:,eSGr_circular_Breadth)
+    ! !     breadth => elemSGR(:,esgr_circular_Breadth)
     ! !     zbottom => elemR(:,er_Zbottom)
     ! !     !%-----------------------------------------------------------------------------   
 
@@ -425,7 +425,7 @@ module circular_conduit
     ! !     thisP   => elemPGx(1:Npack,thisCol) 
     ! !     area    => elemR(:,er_Area)
     ! !     depth   => elemR(:,er_Depth)
-    ! !     breadth => elemSGR(:,eSGR_circular_Breadth)
+    ! !     breadth => elemSGR(:,esgr_circular_Breadth)
     ! !     !%-----------------------------------------------------------------------------
 
     ! !     area(thisP) = depth(thisP) * breadth(thisP)

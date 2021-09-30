@@ -43,8 +43,9 @@ module define_indexes
         enumerator :: Junction_branch_4_out
         enumerator :: Junction_branch_5_in
         enumerator :: Junction_branch_6_out
+        enumerator :: Junction_branch_lastplusone !% must be last enum item
     end enum
-    integer, target :: Nelem_in_Junction = Junction_branch_6_out
+    integer, target :: Nelem_in_Junction = Junction_branch_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for link%I(:,:) arrays
@@ -70,9 +71,9 @@ module define_indexes
         enumerator :: li_weir_EndContrations
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
+        enumerator :: li_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_linkI = li_last_elem_idx
+    integer, target :: Ncol_linkI = li_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for node%I(:,:) arrays
@@ -91,8 +92,9 @@ module define_indexes
         ! if node is nJm or nJ2, ni_elemface_idx is the index of the associated element
         enumerator :: ni_elemface_idx
         enumerator :: ni_pattern_resolution ! minimum resolution of patterns associated with node BC
+        enumerator :: ni_lastplusone !% must be last enum item
     end enum
-    integer, parameter :: ni_idx_base1 = ni_pattern_resolution
+    integer, parameter :: ni_idx_base1 = ni_lastplusone-1
 
     !% column indexes for multi-branch nodes
     integer, parameter :: ni_Mlink_u1   = ni_idx_base1+1 ! map to link of upstream branch 1
@@ -131,8 +133,9 @@ module define_indexes
         enumerator :: nr_Volume
         enumerator :: nr_Flooding
         enumerator :: nr_JunctionBranch_Kfactor
+        enumerator :: nr_lastplusone !% must be last enum item
     end enum
-    integer, parameter :: nr_idx_base1 = nr_JunctionBranch_Kfactor
+    integer, parameter :: nr_idx_base1 = nr_lastplusone-1
 
     !% column index for real data on multiple branches of a node
     integer, parameter :: nr_ElementLength_u1 = nr_idx_base1 + 1 ! used for subdividing junctions
@@ -158,9 +161,9 @@ module define_indexes
         enumerator :: nYN_has_inflow = 1
         enumerator :: nYN_has_extInflow
         enumerator :: nYN_has_dwfInflow
+        enumerator :: nYN_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_nodeYN  = nYN_has_dwfInflow
+    integer, target :: Ncol_nodeYN  = nYN_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for link%R(:,:) arrays
@@ -194,9 +197,10 @@ module define_indexes
         enumerator :: lr_Volume
         enumerator :: lr_Velocity
         enumerator :: lr_Capacity
+        enumerator :: lr_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_linkR = lr_Capacity
+    integer, target :: Ncol_linkR = lr_lastplusone-1
 
     !% Column indexes for BC%xI(:,:)
     enum, bind(c)
@@ -207,21 +211,23 @@ module define_indexes
         enumerator :: bi_category
         enumerator :: bi_subcategory
         enumerator :: bi_fetch       ! 1 if BC%xR_timeseries needs to be fetched, 0 otherwise
+        enumerator :: bi_lastplusone !% must be last enum item
     end enum
     !% HACK - we will probably want to create a different set of indexes for BC%flowI and BC%headI tables
     !% For instance, BC%flowI tables will probably need addititonal information to distribute flowrates
     !% over link elements.
-    integer, parameter :: N_flowI = bi_fetch
-    integer, parameter :: N_headI = bi_fetch
+    integer, parameter :: N_flowI = bi_lastplusone-1
+    integer, parameter :: N_headI = bi_lastplusone-1
 
     !% Column indexes for BC_xR_timeseries(:,:,:)
     enum, bind(c)
         enumerator :: br_time = 1
         enumerator :: br_value
+        enumerator :: br_lastplusone !% must be last enum item
     end enum
     ! HACK - we will probably want to change the dimensions of BC%flowR and BC%headR real tables
-    integer, parameter :: N_headR = br_value
-    integer, parameter :: N_flowR = br_value
+    integer, parameter :: N_headR = br_lastplusone-1
+    integer, parameter :: N_flowR = br_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for link%YN(:,:) arrays
@@ -230,9 +236,9 @@ module define_indexes
     enum, bind(c)
         enumerator :: lYN_CanSurcharge = 1
         enumerator :: lYN_temp1
+        enumerator :: lYN_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_linkYN  = lYN_temp1
+    integer, target :: Ncol_linkYN  = lYN_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemI(:,:) array
@@ -255,9 +261,9 @@ module define_indexes
          enumerator :: ei_specificType              !% specific element type (static)
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_tmType                    !% time march type (dynamic)
+         enumerator :: ei_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, target :: Ncol_elemI = ei_tmType
+    integer, target :: Ncol_elemI = ei_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemR(:,:) array
@@ -330,9 +336,9 @@ module define_indexes
         enumerator :: er_Zbottom                    !% bottom elevation of element (static)
         enumerator :: er_ZbreadthMax                !% elevation at maximum breadth
         enumerator :: er_Zcrown                     !% inside crown elevation of closed conduit (static)
+        enumerator :: er_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemR = er_Zcrown
+    integer, target :: Ncol_elemR = er_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemP(:,:) array
@@ -383,9 +389,9 @@ module define_indexes
         enumerator :: ep_JB_DownStreamJB            !% all the downstream JB elements 
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
         enumerator :: ep_Closed_Elements            !% all closed elements        
+        enumerator :: ep_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemP = ep_Closed_Elements
+    integer, target :: Ncol_elemP = ep_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemPGalltm(:,:), elemPGetm(:,:),
@@ -400,11 +406,11 @@ module define_indexes
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
         enumerator :: epg_JB_circular                        !% all circular junction branches
+        enumerator :: epg_lastplusone !% must be last enum item
         end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemPGalltm =  epg_JB_circular
-    integer, target :: Ncol_elemPGetm   =  epg_JB_circular
-    integer, target :: Ncol_elemPGac    =  epg_JB_circular
+    integer, target :: Ncol_elemPGalltm =  epg_lastplusone-1
+    integer, target :: Ncol_elemPGetm   =  epg_lastplusone-1
+    integer, target :: Ncol_elemPGac    =  epg_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemYN(:,:) arrays
@@ -420,9 +426,9 @@ module define_indexes
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isDummy
+        enumerator :: eYN_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemYN = eYN_isDummy
+    integer, target :: Ncol_elemYN = eYN_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSI(:,:) arrays
@@ -431,79 +437,85 @@ module define_indexes
 
     enum, bind(c)
         !% define the column indexes for elemSI(:,:) junction elements
-        enumerator ::  eSI_JunctionBranch_Exists            = 1    !% assigned 1 if branch exists
-        enumerator ::  eSI_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
+        enumerator ::  esi_JunctionBranch_Exists            = 1    !% assigned 1 if branch exists
+        enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
+        enumerator ::  esi_JunctionBranch_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is
-    integer, parameter :: Ncol_elemSI_junction = eSI_JunctionBranch_Link_Connection
+    integer, parameter :: Ncol_elemSI_junction = esi_JunctionBranch_lastplusone-1
 
     enum, bind(c)
-        !% define the column indexes for elemSI(:,:) weir elements
-        enumerator :: eSi_Weir_EndContractions = 1      !% number of endcontractions of the weir
-        enumerator :: eSi_Weir_FlowDirection            !% weir flow direction
-        enumerator :: eSi_Weir_SpecificType             !% specific weir type
-        enumerator :: eSi_Orifice_FlowDirection         !% orifice flow direction
-        enumerator :: eSi_specific_orifice_type         !% specifc weir type
+        !% define the column indexes for elemSi(:,:) weir elements
+        enumerator :: esi_Weir_EndContractions = 1      !% number of endcontractions of the weir
+        enumerator :: esi_Weir_FlowDirection            !% weir flow direction
+        enumerator :: esi_Weir_SpecificType             !% specific weir type
+        enumerator :: esi_Weir_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, parameter :: Ncol_elemSI_weir = eSi_Weir_SpecificType
+    integer, parameter :: Ncol_elemSI_weir = esi_Weir_lastplusone-1
+
+    enum, bind(c)
+        !% define the column indexes for elemSi(:,:) orifice elements
+        enumerator :: esi_Orifice_FlowDirection = 1     !% orifice flow direction
+        enumerator :: esi_Orifice_SpecificType          !% specifc weir type
+        enumerator :: esi_Orifice_lastplusone !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSI_orifice = esi_Orifice_lastplusone-1
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSI = max(&
                             Ncol_elemSI_junction, &
+                            Ncol_elemSI_orifice, &
                             Ncol_elemSI_weir)
-
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for elemSR(:,:) arrays
+    !% Define the column indexes for elemSr(:,:) arrays
     !% These are the full arrays if special real data
     !% Note that different types of special elements (diagnostic, branches)
     !% share the same columns since a row can only have one type of element.
     !%-------------------------------------------------------------------------
 
-    !% define the column indexes for elemSR(:,:) for geometry that has not yet been confirmed and assigned:
+    !% define the column indexes for elemSr(:,:) for geometry that has not yet been confirmed and assigned:
     enum, bind(c)
-        enumerator ::  eSr_Weir_DischargeCoeff1 = 1     !% discharge coefficient for triangular weir
-        enumerator ::  eSr_Weir_DischargeCoeff2         !% discharge coefficient for rectangular weir part
-        enumerator ::  eSr_Weir_EffectiveFullDepth      !% effective full depth after control intervention
-        enumerator ::  eSr_Weir_EffectiveHeadDelta      !% effective head delta across weir
-        enumerator ::  eSr_Weir_NominalDownstreamHead   !% nominal downstream head
-        enumerator ::  eSr_Weir_RectangularBreadth      !% rectangular weir breadth
-        enumerator ::  eSr_Weir_TrapezoidalBreadth      !% trapezoidal weir breadth
-        enumerator ::  eSr_Weir_TrapezoidalLeftSlope    !% trapezoidal weir left slope
-        enumerator ::  eSr_Weir_TrapezoidalRightSlope   !% trapezoidal weir right slope
-        enumerator ::  eSr_Weir_TriangularSideSlope     !% triangular weir side slope
-        enumerator ::  eSr_Weir_Zcrest                  !% weir crest elevation
+        enumerator ::  esr_JunctionBranch_Kfactor = 1
+        enumerator ::  esr_JunctionBranch_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, parameter :: Ncol_elemSR_Weir = eSr_Weir_Zcrest
+    integer, parameter :: Ncol_elemSR_JunctionBranch = esr_JunctionBranch_lastplusone-1
 
     enum, bind(c)
-        enumerator ::  eSr_Orifice_DischargeCoeff = 1       !% discharge coefficient orifice
-        enumerator ::  eSr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention
-        enumerator ::  eSr_Orifice_EffectiveHeadDelta       !% effective head delta across orifice
-        enumerator ::  eSr_Orifice_NominalDownstreamHead    !% nominal downstream head for orifice
-        enumerator ::  eSr_Orifice_RectangularBreadth       !% rectangular orifice breadth
-        enumerator ::  eSr_Orifice_Zcrest                   !% orifice "crest" elevation - lowest edge of orifice.
+        enumerator ::  esr_Weir_DischargeCoeff1 = 1     !% discharge coefficient for triangular weir
+        enumerator ::  esr_Weir_DischargeCoeff2         !% discharge coefficient for rectangular weir part
+        enumerator ::  esr_Weir_EffectiveFullDepth      !% effective full depth after control intervention
+        enumerator ::  esr_Weir_EffectiveHeadDelta      !% effective head delta across weir
+        enumerator ::  esr_Weir_NominalDownstreamHead   !% nominal downstream head
+        enumerator ::  esr_Weir_RectangularBreadth      !% rectangular weir breadth
+        enumerator ::  esr_Weir_TrapezoidalBreadth      !% trapezoidal weir breadth
+        enumerator ::  esr_Weir_TrapezoidalLeftSlope    !% trapezoidal weir left slope
+        enumerator ::  esr_Weir_TrapezoidalRightSlope   !% trapezoidal weir right slope
+        enumerator ::  esr_Weir_TriangularSideSlope     !% triangular weir side slope
+        enumerator ::  esr_Weir_Zcrest                  !% weir crest elevation
+        enumerator ::  esr_Weir_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, parameter :: Ncol_elemSR_Orifice = eSr_Orifice_Zcrest
+    integer, parameter :: Ncol_elemSR_Weir = esr_Weir_lastplusone-1
 
     enum, bind(c)
-        !% Define the column indexes for elemSR(:,:) for junction branches
-        enumerator :: eSr_JunctionBranch_Kfactor = 1 !% friction head loss factor in branch
+        enumerator ::  esr_Orifice_DischargeCoeff = 1       !% discharge coefficient orifice
+        enumerator ::  esr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention
+        enumerator ::  esr_Orifice_EffectiveHeadDelta       !% effective head delta across orifice
+        enumerator ::  esr_Orifice_NominalDownstreamHead    !% nominal downstream head for orifice
+        enumerator ::  esr_Orifice_RectangularBreadth       !% rectangular orifice breadth
+        enumerator ::  esr_Orifice_Zcrest                   !% orifice "crest" elevation - lowest edge of orifice.
+        enumerator ::  esr_Orifice_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is
-    integer, parameter :: Ncol_elemSR_JunctionBranch = eSr_JunctionBranch_Kfactor
+    integer, parameter :: Ncol_elemSR_Orifice = esr_Orifice_lastplusone-1
 
     ! enum, bind(c)
-    !     enumerator ::  eSr_conduit_SlotVolume = 1         !% slot volume
-    !     enumerator ::  eSr_conduit_SlotWidth              !% slot width
-    !     enumerator ::  eSr_conduit_SlotDepth              !% slot depth
-    !     enumerator ::  eSr_conduit_SlotArea               !% slot area
-    !     enumerator ::  eSr_conduit_SlotHydRadius          !% slot hydraulic radius
+    !     enumerator ::  esr_conduit_SlotVolume = 1         !% slot volume
+    !     enumerator ::  esr_conduit_SlotWidth              !% slot width
+    !     enumerator ::  esr_conduit_SlotDepth              !% slot depth
+    !     enumerator ::  esr_conduit_SlotArea               !% slot area
+    !     enumerator ::  esr_conduit_SlotHydRadius          !% slot hydraulic radius
+    !     enumerator ::  esr_conduit_lastplusone !% must be last enum item
     ! end enum
-    ! !% note, this must be changed to whatever the last enum element is
-    ! integer, parameter :: Ncol_elemSR_Conduit = eSr_conduit_SlotHydRadius
+    ! integer, parameter :: Ncol_elemSR_Conduit = esr_conduit_lastplusone-1
 
     !% NEED OTHER SPECIAL ELEMENTS HERE
 
@@ -524,29 +536,31 @@ module define_indexes
 
     !% Define the column indexes for elemGSR(:,:) for rectangular pipe or channel
     enum, bind(c)
-         enumerator ::  eSGR_Rectangular_Breadth = 1    !% breadth for rectangular geometry
+         enumerator ::  esgr_Rectangular_Breadth = 1    !% breadth for rectangular geometry
+         enumerator ::  esgr_Rectangular_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Rectangular =  eSGR_Rectangular_Breadth
+    integer, parameter :: Ncol_elemSGR_Rectangular =  esgr_Rectangular_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for trapezoidal pipe or channel
     enum, bind(c)
-         enumerator ::  eSGR_Trapezoidal_Breadth = 1    !% bottom breadth for trapezoidal geometry
-         enumerator ::  eSGR_Trapezoidal_LeftSlope      !% left slope for trapezoidal geometry
-         enumerator ::  eSGR_Trapezoidal_RightSlope     !% right slope for trapezoidal geometry
+         enumerator ::  esgr_Trapezoidal_Breadth = 1    !% bottom breadth for trapezoidal geometry
+         enumerator ::  esgr_Trapezoidal_LeftSlope      !% left slope for trapezoidal geometry
+         enumerator ::  esgr_Trapezoidal_RightSlope     !% right slope for trapezoidal geometry
+         enumerator ::  esgr_Trapezoidal_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Trapezoidal =  eSGR_Trapezoidal_RightSlope
+    integer, parameter :: Ncol_elemSGR_Trapezoidal =  esgr_Trapezoidal_lastplusone-1
 
     !% Define the column indexes for elemGSR(:,:) for circular pipe or channel
     enum, bind(c)
-         enumerator ::  eSGR_Circular_Diameter = 1    !% diameter for circular geometry
-         enumerator ::  eSGR_Circular_Radius          !% radius for circular geometry
-         enumerator ::  eSGR_Circular_YoverYfull      !% Y/Yfull for circular geometry
-         enumerator ::  eSGR_Circular_AoverAfull      !% A/Afull for circular geometry
+         enumerator ::  esgr_Circular_Diameter = 1    !% diameter for circular geometry
+         enumerator ::  esgr_Circular_Radius          !% radius for circular geometry
+         enumerator ::  esgr_Circular_YoverYfull      !% Y/Yfull for circular geometry
+         enumerator ::  esgr_Circular_AoverAfull      !% A/Afull for circular geometry
+         enumerator ::  esgr_Circular_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, parameter :: Ncol_elemSGR_Circular =  eSGR_Circular_AoverAfull
+    integer, parameter :: Ncol_elemSGR_Circular =  esgr_Circular_lastplusone-1
 
     !% Define the column indexes for elemSGR(:,:) for other geometry
 
@@ -579,13 +593,13 @@ module define_indexes
 
     !% define the column indexes for elemWDI(:,:) for width-depth pairs
     enum, bind(c)
-        enumerator ::  eWDi_Melem_Lidx = 1      !% Map to local idx of element
-        enumerator ::  eWDi_elemWDRidx_F        !% Location of first row in elemWDR array for this element
-        enumerator ::  eWDi_elemWDRidx_L        !% Location of last row in elemWDR array for this element
-        enumerator ::  eWDi_N_pair              !% Number of width-depth pairs (rows in elemWDR) for this element
+        enumerator ::  ewdi_Melem_Lidx = 1      !% Map to local idx of element
+        enumerator ::  ewdi_elemWDRidx_F        !% Location of first row in elemWDR array for this element
+        enumerator ::  ewdi_elemWDRidx_L        !% Location of last row in elemWDR array for this element
+        enumerator ::  ewdi_N_pair              !% Number of width-depth pairs (rows in elemWDR) for this element
+        enumerator ::  ewdi_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemWDI =  eWDi_Melem_Lidx
+    integer, target :: Ncol_elemWDI =  ewdi_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% define the column indexes for elemWDR(:,:)
@@ -597,11 +611,12 @@ module define_indexes
     !% the data will require use of the elemWDI array.
 
     enum, bind(c)
-        enumerator ::  eWDr_Width = 1               !% Width at a given depth
-        enumerator ::  eWDr_Depth                   !% Depth at a given width
+        enumerator ::  ewdr_Width = 1               !% Width at a given depth
+        enumerator ::  ewdr_Depth                   !% Depth at a given width
+        enumerator ::  ewdr_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemWDR =  eWDr_Depth
+    integer, target :: Ncol_elemWDR =  ewdr_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceI(:,:) arrays
@@ -627,10 +642,10 @@ module define_indexes
         ! enumerator ::  fi_eHeqType_d               !% type of H solution on element downstream
         ! enumerator ::  fi_eQeqType_u               !% type of Q solution on element upstream
         ! enumerator ::  fi_eQeqType_d               !% type of Q solution on element downstream
-
+        enumerator :: fi_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceI =  fi_link_idx
+    integer, target :: Ncol_faceI =  fi_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceM(:,:) arrays
@@ -639,9 +654,10 @@ module define_indexes
     enum, bind(c)
         enumerator :: fm_all = 1
         enumerator :: fm_dummy
+        enumerator :: fm_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceM =  fm_dummy
+    integer, target :: Ncol_faceM =  fm_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceR(:,:) arrays
@@ -666,10 +682,10 @@ module define_indexes
         ! enumerator :: fr_Zbottom_u             !% Bottom elevation on upstream side of face
         ! enumerator :: fr_Zbottom_d             !% Bottom elevation on downstream side of face
         ! enumerator :: fr_X                     !% Linear X location in system
-
+        enumerator :: fr_lastplusone !% must be last enum item
     end enum
     !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceR =  fr_Velocity_u
+    integer, target :: Ncol_faceR =  fr_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceP(:,:) arrays
@@ -683,9 +699,9 @@ module define_indexes
         enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
         enumerator :: fp_BCup
         enumerator :: fp_BCdn
+        enumerator :: fp_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceP =  fp_BCdn
+    integer, target :: Ncol_faceP =  fp_lastplusone-1
 
     !%-------------------------------------------------------------------------
     !% Define the column indexes for faceYN(:,:) arrays
@@ -699,23 +715,22 @@ module define_indexes
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull
         enumerator :: fYN_isDownstreamJbFace
-
         !% HACK: The following might not be needed
         ! enumerator :: fYN_isDiag_adjacent
         ! enumerator :: fYN_isETM_adjacent
         ! enumerator :: fYN_isBCface
+        enumerator :: fYN_lastplusone !% must be last enum item
     end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_faceYN =  fYN_isDownstreamJbFace
+    integer, target :: Ncol_faceYN =  fYN_lastplusone-1
 
     !% row indexes for profiler data
     enum, bind(c)
         enumerator :: pfr_thisstart = 1
         enumerator :: pfr_thisend
         enumerator :: pfr_cumulative
-        enumerator :: pfr_lastplusone
+        enumerator :: pfr_lastplusone !% must be last enum item
     end enum
-    integer, target :: Nrow_pf = pfr_lastplusone - 1
+    integer, target :: Nrow_pf = pfr_lastplusone-1
 
     !% column indexes for profiler_data. Each is the name of a procedure preceded by pfc_
     enum, bind(c)
@@ -742,9 +757,9 @@ module define_indexes
         enumerator :: pfc_init_IC_diagnostic_interpolation_weights
         enumerator :: pfc_face_interpolation
         enumerator :: pfc_diagnostic_toplevel
-        enumerator :: pfc_lastplusone
+        enumerator :: pfc_lastplusone  !% must be last enum item
     end enum
-    integer, target :: Ncol_pf = pfc_lastplusone - 1
+    integer, target :: Ncol_pf = pfc_lastplusone-1
 
     !
     !==========================================================================

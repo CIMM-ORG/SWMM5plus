@@ -1091,8 +1091,8 @@ contains
                 !% real branches
                 if (upBranchIdx /= nullvalueI) then
                     !% integer data
-                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)           = oneI
-                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection)  = upBranchIdx
+                    elemSI(ElemLocalCounter,esi_JunctionBranch_Exists)           = oneI
+                    elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection)  = upBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(upBranchIdx)
                     faceI(FaceLocalCounter,fi_link_idx) = upBranchIdx
                     !% set zbottom
@@ -1160,8 +1160,8 @@ contains
                 !% Check 3: if the branch is a valid branch
                 if (dnBranchIdx /= nullvalueI) then
                     !% integer data
-                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Exists)          = oneI
-                    elemSI(ElemLocalCounter,eSI_JunctionBranch_Link_Connection) = dnBranchIdx
+                    elemSI(ElemLocalCounter,esi_JunctionBranch_Exists)          = oneI
+                    elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection) = dnBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(dnBranchIdx)
                     elemYN(ElemLocalCounter,eYN_isDownstreamJB) = .true.
                     faceI(FacelocalCounter,fi_link_idx) = dnBranchIdx
@@ -1590,7 +1590,7 @@ contains
         elemR(ElemIdx,:)                            = zeroR
         elemSR(ElemIdx,:)                           = zeroR
         elemSGR(ElemIdx,:)                          = zeroR
-        elemSI(ElemIdx,eSI_JunctionBranch_Exists)   = zeroI
+        elemSI(ElemIdx,esi_JunctionBranch_Exists)   = zeroI
         faceR(FaceIdx,:)                            = zeroR
         faceYN(FaceIdx,fYN_isnull)                  = .true.
 

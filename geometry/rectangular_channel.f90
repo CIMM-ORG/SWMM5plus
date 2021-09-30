@@ -47,7 +47,7 @@ module rectangular_channel
         depth   => elemR(:,er_Depth)
         volume  => elemR(:,er_Volume)
         length  => elemR(:,er_Length)
-        breadth => elemSGR(:,eSGr_Rectangular_Breadth)
+        breadth => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------  
 
         depth(thisP) = volume(thisP) / (length(thisP) * breadth(thisP))
@@ -67,7 +67,7 @@ module rectangular_channel
         real(8), pointer :: depth(:), breadth(:)
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,eSGR_Rectangular_Breadth)
+        breadth => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
         outvalue = depth(indx) * breadth(indx)
 
@@ -89,7 +89,7 @@ module rectangular_channel
         !%-----------------------------------------------------------------------------
         thisP    => elemPGx(1:Npack,thisCol) 
         topwidth => elemR(:,er_Topwidth)
-        breadth  => elemSGR(:,eSGR_Rectangular_Breadth)
+        breadth  => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
 
         topwidth(thisP) = breadth(thisP)
@@ -107,7 +107,7 @@ module rectangular_channel
         integer, intent(in) :: indx 
         !%-----------------------------------------------------------------------------
         !%  
-        outvalue = elemSGR(indx,eSGR_Rectangular_Breadth)
+        outvalue = elemSGR(indx,esgr_Rectangular_Breadth)
 
     end function rectangular_topwidth_from_depth_singular
     !%
@@ -126,7 +126,7 @@ module rectangular_channel
         real(8), pointer :: breadth(:), depth(:), perimeter(:)
         !%-----------------------------------------------------------------------------
         thisP     => elemPGx(1:Npack,thisCol) 
-        breadth   => elemSGR(:,eSGR_Rectangular_Breadth)
+        breadth   => elemSGR(:,esgr_Rectangular_Breadth)
         depth     => elemR(:,er_Depth)
         perimeter => elemR(:,er_Perimeter)
         !%-----------------------------------------------------------------------------
@@ -150,7 +150,7 @@ module rectangular_channel
         real(8), pointer :: depth(:), breadth(:)
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,eSGR_Rectangular_Breadth)
+        breadth => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
         
         outvalue = twoR * depth(indx) + breadth(indx)
@@ -212,7 +212,7 @@ module rectangular_channel
         real(8), pointer :: depth(:), breadth(:)
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,eSGR_Rectangular_Breadth)
+        breadth => elemSGR(:,esgr_Rectangular_Breadth)
         !%-----------------------------------------------------------------------------
         
         outvalue = (depth(indx) * breadth(indx)) / ( twoR * depth(indx) + breadth(indx) )
@@ -291,7 +291,7 @@ module rectangular_channel
     !     head    => elemR(:,er_Head)
     !     volume  => elemR(:,er_Volume)
     !     length  => elemR(:,er_Length)
-    !     breadth => elemSGR(:,eSGr_Rectangular_Breadth)
+    !     breadth => elemSGR(:,esgr_Rectangular_Breadth)
     !     zbottom => elemR(:,er_Zbottom)
     !     !%-----------------------------------------------------------------------------   
 
@@ -316,7 +316,7 @@ module rectangular_channel
     !     thisP   => elemPGx(1:Npack,thisCol) 
     !     area    => elemR(:,er_Area)
     !     depth   => elemR(:,er_Depth)
-    !     breadth => elemSGR(:,eSGR_Rectangular_Breadth)
+    !     breadth => elemSGR(:,esgr_Rectangular_Breadth)
     !     !%-----------------------------------------------------------------------------
 
     !     area(thisP) = depth(thisP) * breadth(thisP)

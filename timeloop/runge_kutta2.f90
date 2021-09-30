@@ -40,28 +40,93 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1
+
         ! print*, '-------------------------------------------------------------------------'
         ! print*, '1st RK step'
+        ! print *, elemI(ietmp(4),ei_elementType), JM  !% main
+        ! print *, ietmp(3),ietmp(4)+1                     !% upstream
+        ! print *, ietmp(5), ietmp(4)+2                     !% downstream
+        ! print *, elemI(ietmp(3),ei_Mface_uL), iftmp(2)  !% upstream JB face
+        ! print *, elemI(ietmp(5),ei_Mface_dL), iftmp(5)  !% downstream JB face
+
+        ! print *, elemR(ietmp(1), er_Head),&
+        !          elemR(ietmp(2), er_Head),&
+        !          elemR(ietmp(3), er_Head),&
+        !          elemR(ietmp(4), er_Head),&
+        !          elemR(ietmp(5), er_Head),&
+        !          elemR(ietmp(6), er_Head),&
+        !          elemR(ietmp(7), er_Head)
+
+        ! write(*,"(10F8.3)")   &
+        !     elemR(ietmp(1), er_Head),&
+        !     elemR(ietmp(2), er_Head),&
+        !     elemR(ietmp(3), er_Head),&
+        !     elemR(ietmp(4), er_Head),&
+        !     elemR(ietmp(5), er_Head),&
+        !     elemR(ietmp(6), er_Head),&
+        !     elemR(ietmp(7), er_Head)   
+
+        ! print *, 'head'
+        ! write(*,"(16F8.3)")   &
+        !     elemR(ietmp(1), er_Head), faceR(iftmp(1), fr_Head_u), faceR(iftmp(1), fr_Head_d),&
+        !     elemR(ietmp(2), er_Head), faceR(iftmp(2), fr_Head_u), faceR(iftmp(2), fr_Head_d),&
+        !     elemR(ietmp(3), er_Head),&
+        !     elemR(ietmp(4), er_Head),&
+        !     elemR(ietmp(5), er_Head), faceR(iftmp(5), fr_Head_u), faceR(iftmp(5), fr_Head_d),&
+        !     elemR(ietmp(6), er_Head), faceR(iftmp(6), fr_Head_u), faceR(iftmp(6), fr_Head_d),&
+        !     elemR(ietmp(7), er_Head)        
+ 
+        !     print *, 'velocity'
+        !     write(*,"(16F8.3)")   &
+        !         elemR(ietmp(1), er_Velocity), faceR(iftmp(1), fr_Velocity_u), faceR(iftmp(1), fr_Velocity_d),&
+        !         elemR(ietmp(2), er_Velocity), faceR(iftmp(2), fr_Velocity_u), faceR(iftmp(2), fr_Velocity_d),&
+        !         elemR(ietmp(3), er_Velocity),&
+        !         elemR(ietmp(4), er_Velocity),&
+        !         elemR(ietmp(5), er_Velocity), faceR(iftmp(5), fr_Velocity_u), faceR(iftmp(5), fr_Velocity_d),&
+        !         elemR(ietmp(6), er_Velocity), faceR(iftmp(6), fr_Velocity_u), faceR(iftmp(6), fr_Velocity_d),&
+        !         elemR(ietmp(7), er_Velocity)               
+        ! !stop 98734
+
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 3 -- all aux variables for non-diagnostic
         call update_auxiliary_variables (ETM)
 
-        !BRHbugfix 20210812 MOVED THES ABOVE FACE INTERP
         !% junction branch flowrate and velocity update
-        call ll_junction_branch_flowrate_and_velocity(ETM) 
+        if (.not. setting%Junction%isDynamic) then
+            call ll_junction_branch_flowrate_and_velocity (ETM) 
+        else
+            !% called here because volume update on JB isn't known until after eta updated on JM 
+            call ll_momentum_solve_JB (ETM)
+        end if
+
+        ! print *, 'after ll'
+        ! print *, 'head'
+        ! write(*,"(16F8.3)")   &
+        !     elemR(ietmp(1), er_Head), faceR(iftmp(1), fr_Head_u), faceR(iftmp(1), fr_Head_d),&
+        !     elemR(ietmp(2), er_Head), faceR(iftmp(2), fr_Head_u), faceR(iftmp(2), fr_Head_d),&
+        !     elemR(ietmp(3), er_Head),&
+        !     elemR(ietmp(4), er_Head),&
+        !     elemR(ietmp(5), er_Head), faceR(iftmp(5), fr_Head_u), faceR(iftmp(5), fr_Head_d),&
+        !     elemR(ietmp(6), er_Head), faceR(iftmp(6), fr_Head_u), faceR(iftmp(6), fr_Head_d),&
+        !     elemR(ietmp(7), er_Head)        
+ 
+        !     print *, 'velocity'
+        !     write(*,"(16F8.3)")   &
+        !         elemR(ietmp(1), er_Velocity), faceR(iftmp(1), fr_Velocity_u), faceR(iftmp(1), fr_Velocity_d),&
+        !         elemR(ietmp(2), er_Velocity), faceR(iftmp(2), fr_Velocity_u), faceR(iftmp(2), fr_Velocity_d),&
+        !         elemR(ietmp(3), er_Velocity),&
+        !         elemR(ietmp(4), er_Velocity),&
+        !         elemR(ietmp(5), er_Velocity), faceR(iftmp(5), fr_Velocity_u), faceR(iftmp(5), fr_Velocity_d),&
+        !         elemR(ietmp(6), er_Velocity), faceR(iftmp(6), fr_Velocity_u), faceR(iftmp(6), fr_Velocity_d),&
+        !         elemR(ietmp(7), er_Velocity)               
+        ! !stop 987398
+
         !% compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
-        !BRHbugfix 20210812
 
         !% RK2 solution step 4 -- all face interpolation
         call face_interpolation(fp_all)
-
-        !% junction branch flowrate and velocity update
-        !call ll_junction_branch_flowrate_and_velocity(ETM)  !BRHbugfix 20210812
-
-        !% compute element Froude number for JB
-        !call update_Froude_number_junction_branch (ep_JM_ETM) !BRHbugfix 20210812
 
         !% RK2 solution step 5 -- update diagnostic elements and faces
         if (N_diag > 0) then
@@ -81,12 +146,16 @@ module runge_kutta2
         !% RK2 solution step 8(c)
         call update_auxiliary_variables(ETM)
 
-        !BRHbugfix 20210812 There was no branch handling after second step!
         !% junction branch flowrate and velocity update
-        call ll_junction_branch_flowrate_and_velocity(ETM) 
+        if (.not. setting%Junction%isDynamic) then
+            call ll_junction_branch_flowrate_and_velocity(ETM) 
+        else
+            !% called here because volume update on JB isn't known until after eta updated on JM 
+            call ll_momentum_solve_JB (ETM)
+        end if
+
         !% compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
-        !BRHbugfix 20210812
 
         !% RK2 solution step 8(d,e) -- update all faces
         call face_interpolation(fp_all)
@@ -98,7 +167,7 @@ module runge_kutta2
 
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
-        ! stop 11
+
         if (setting%Debug%File%runge_kutta2)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine rk2_toplevel_ETM
@@ -387,6 +456,11 @@ module runge_kutta2
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
         end if
 
+        !% junction branch momentum source
+        if (setting%Junction%isDynamic) then
+            call ll_momentum_source_JB (ETM, istep)
+        end if
+
     end subroutine rk2_momentum_step_ETM
     !%
     !%==========================================================================
@@ -477,7 +551,7 @@ module runge_kutta2
             call ll_restore_from_temporary (thisCol, Npack)
 
             !% update aux for restored variables
-    !        call update_auxiliary_variables_byPack (thisPackCol, Npack)
+            ! call update_auxiliary_variables_byPack (thisPackCol, Npack)
         end if
 
     end subroutine rk2_restore_to_midstep_ETM

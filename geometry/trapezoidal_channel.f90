@@ -48,9 +48,9 @@ module trapezoidal_channel
         depth   => elemR(:,er_Depth)
         volume  => elemR(:,er_Volume)
         length  => elemR(:,er_Length)
-        breadth => elemSGR(:,eSGR_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,eSGR_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,eSGR_Trapezoidal_RightSlope)
+        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%-----------------------------------------------------------------------------  
 
         depth(thisP)       = - onehalfR * (breadth(thisP)/(onehalfR*(lslope(thisP) + rslope(thisP))) &
@@ -72,9 +72,9 @@ module trapezoidal_channel
         real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,eSGR_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,eSGR_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,eSGR_Trapezoidal_RightSlope)
+        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%-----------------------------------------------------------------------------
         outvalue = (breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) * depth(indx)) * depth(indx)
 
@@ -97,9 +97,9 @@ module trapezoidal_channel
         thisP    => elemPGx(1:Npack,thisCol) 
         topwidth => elemR(:,er_Topwidth)
         depth    => elemR(:,er_Depth)
-        breadth  => elemSGR(:,eSGR_Trapezoidal_Breadth)
-        lslope   => elemSGR(:,eSGR_Trapezoidal_LeftSlope)
-        rslope   => elemSGR(:,eSGR_Trapezoidal_RightSlope)
+        breadth  => elemSGR(:,esgr_Trapezoidal_Breadth)
+        lslope   => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+        rslope   => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%-----------------------------------------------------------------------------
 
         topwidth(thisP) = breadth(thisP) + depth(thisP) * (lslope(thisP) + rslope(thisP))
@@ -118,9 +118,9 @@ module trapezoidal_channel
         real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,eSGR_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,eSGR_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,eSGR_Trapezoidal_RightSlope)
+        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%-----------------------------------------------------------------------------
         outvalue = breadth(indx) + depth(indx) * (lslope(indx) + rslope(indx))
 
@@ -143,9 +143,9 @@ module trapezoidal_channel
         thisP     => elemPGx(1:Npack,thisCol) 
         perimeter => elemR(:,er_Perimeter)
         depth     => elemR(:,er_Depth)
-        breadth   => elemSGR(:,eSGR_Trapezoidal_Breadth)
-        lslope    => elemSGR(:,eSGR_Trapezoidal_LeftSlope)
-        rslope    => elemSGR(:,eSGR_Trapezoidal_RightSlope)
+        breadth   => elemSGR(:,esgr_Trapezoidal_Breadth)
+        lslope    => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+        rslope    => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%-----------------------------------------------------------------------------
 
         perimeter(thisP) = breadth(thisP) + depth(thisP) * (sqrt(oneR + lslope(thisP)**twoR) &
@@ -168,9 +168,9 @@ module trapezoidal_channel
         real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,eSGR_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,eSGR_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,eSGR_Trapezoidal_RightSlope)
+        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%----------------------------------------------------------------------------- 
         
         outvalue =  breadth(indx) + depth(indx) * (sqrt(oneR + lslope(indx)**twoR) + &
@@ -195,9 +195,9 @@ module trapezoidal_channel
         thisP     => elemPGx(1:Npack,thisCol) 
         hyddepth  => elemR(:,er_HydDepth)
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,eSGR_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,eSGR_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,eSGR_Trapezoidal_RightSlope)
+        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%----------------------------------------------------------------------------- 
 
         hyddepth(thisP) = ((breadth(thisP) + onehalfR * (lslope(thisP) + rslope(thisP)) * &
@@ -220,9 +220,9 @@ module trapezoidal_channel
         real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,eSGR_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,eSGR_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,eSGR_Trapezoidal_RightSlope)
+        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%-----------------------------------------------------------------------------     
 
         outvalue = ((breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) * &
@@ -246,9 +246,9 @@ module trapezoidal_channel
         real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
         !%-----------------------------------------------------------------------------
         depth   => elemR(:,er_Depth)
-        breadth => elemSGR(:,eSGR_Trapezoidal_Breadth)
-        lslope  => elemSGR(:,eSGR_Trapezoidal_LeftSlope)
-        rslope  => elemSGR(:,eSGR_Trapezoidal_RightSlope)
+        breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
+        lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
+        rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
         !%----------------------------------------------------------------------------- 
         
         outvalue = ((breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) *  &

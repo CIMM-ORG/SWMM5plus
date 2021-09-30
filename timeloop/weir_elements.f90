@@ -39,7 +39,7 @@ module weir_elements
         !%  
         !% get the flow direction and element head
         call  common_head_and_flowdirection_singular &
-            (eIdx, eSr_Weir_Zcrest, eSr_Weir_NominalDownstreamHead, eSi_Weir_FlowDirection)
+            (eIdx, esr_Weir_Zcrest, esr_Weir_NominalDownstreamHead, esi_Weir_FlowDirection)
         
         !% find effective head difference accross weir element
         call weir_effective_head_delta (eIdx)
@@ -48,7 +48,7 @@ module weir_elements
         if (isSurcharged) then
             call weir_surcharge_flow (eIdx)
         else
-            call weir_flow (eIdx, eSr_Weir_EffectiveHeadDelta, .true.)
+            call weir_flow (eIdx, esr_Weir_EffectiveHeadDelta, .true.)
         endif
         
         !% update weir geometry from head
@@ -81,9 +81,9 @@ module weir_elements
         Zcrown => elemR(eIdx,er_Zcrown)
         
         !% output
-        EffectiveHeadDelta    => elemSR(eIdx,eSr_Weir_EffectiveHeadDelta)
-        Zcrest                => elemSR(eIdx,eSr_Weir_Zcrest)
-        NominalDownstreamHead => elemSR(eIdx,eSr_Weir_NominalDownstreamHead)
+        EffectiveHeadDelta    => elemSR(eIdx,esr_Weir_EffectiveHeadDelta)
+        Zcrest                => elemSR(eIdx,esr_Weir_Zcrest)
+        NominalDownstreamHead => elemSR(eIdx,esr_Weir_NominalDownstreamHead)
         
         CanSurcharge => elemYN(eIdx,eYN_canSurcharge)
         IsSurcharged => elemYN(eIdx,eYN_isSurcharged)
@@ -124,13 +124,13 @@ module weir_elements
         real(8), pointer :: Flowrate, EffectiveFullDepth, EffectiveHeadDelta
         real(8) :: CoeffOrifice
         !%-----------------------------------------------------------------------------
-        FlowDirection      => elemSI(eIdx,eSi_Weir_FlowDirection)
+        FlowDirection      => elemSI(eIdx,esi_Weir_FlowDirection)
         Flowrate           => elemR(eIdx,er_Flowrate) 
-        EffectiveFullDepth => elemSR(eIdx,eSr_Weir_EffectiveFullDepth)
-        EffectiveHeadDelta => elemSR(eIdx,eSr_Weir_EffectiveHeadDelta)
+        EffectiveFullDepth => elemSR(eIdx,esr_Weir_EffectiveFullDepth)
+        EffectiveHeadDelta => elemSR(eIdx,esr_Weir_EffectiveHeadDelta)
         !%-----------------------------------------------------------------------------
         ! get the flowrate for effective full depth without submergence correction
-        call weir_flow(eIdx, eSr_Weir_EffectiveFullDepth, .false.)
+        call weir_flow(eIdx, esr_Weir_EffectiveFullDepth, .false.)
 
         ! equivalent orifice flow coefficient for surcharge flow
         CoeffOrifice = Flowrate / sqrt(EffectiveFullDepth/twoR)
@@ -161,22 +161,22 @@ module weir_elements
         real(8) :: Zmidpt, CrestLength, SubCorrectionTriangular, SubCorrectionRectangular
         real(8) :: ratio
         !%-----------------------------------------------------------------------------
-        SpecificWeirType => elemSI(eIdx,eSi_Weir_SpecificType)
-        EndContractions  => elemSI(eIdx,eSi_Weir_EndContractions)
-        FlowDirection    => elemSI(eIdx,eSi_Weir_FlowDirection)
+        SpecificWeirType => elemSI(eIdx,esi_Weir_SpecificType)
+        EndContractions  => elemSI(eIdx,esi_Weir_EndContractions)
+        FlowDirection    => elemSI(eIdx,esi_Weir_FlowDirection)
 
         Head                  => elemR(eIdx,er_Head)
         Flowrate              => elemR(eIdx,er_Flowrate)
         EffectiveHeadDelta    => elemSR(eIdx,inCol)
-        Zcrest                => elemSR(eIdx,eSr_Weir_Zcrest)
-        RectangularBreadth    => elemSR(eIdx,eSr_Weir_RectangularBreadth)
-        TrapezoidalBreadth    => elemSR(eIdx,eSr_Weir_TrapezoidalBreadth)
-        TriangularSideSlope   => elemSR(eIdx,eSr_Weir_TriangularSideSlope)
-        TrapezoidalLeftSlope  => elemSR(eIdx,eSr_Weir_TrapezoidalLeftSlope)
-        TrapezoidalRightSlope => elemSR(eIdx,eSr_Weir_TrapezoidalRightSlope)
-        CoeffTriangular       => elemSR(eIdx,eSr_Weir_DischargeCoeff1)
-        CoeffRectangular      => elemSR(eIdx,eSr_Weir_DischargeCoeff2)
-        NominalDsHead => elemSR(eIdx,eSr_Weir_NominalDownstreamHead)
+        Zcrest                => elemSR(eIdx,esr_Weir_Zcrest)
+        RectangularBreadth    => elemSR(eIdx,esr_Weir_RectangularBreadth)
+        TrapezoidalBreadth    => elemSR(eIdx,esr_Weir_TrapezoidalBreadth)
+        TriangularSideSlope   => elemSR(eIdx,esr_Weir_TriangularSideSlope)
+        TrapezoidalLeftSlope  => elemSR(eIdx,esr_Weir_TrapezoidalLeftSlope)
+        TrapezoidalRightSlope => elemSR(eIdx,esr_Weir_TrapezoidalRightSlope)
+        CoeffTriangular       => elemSR(eIdx,esr_Weir_DischargeCoeff1)
+        CoeffRectangular      => elemSR(eIdx,esr_Weir_DischargeCoeff2)
+        NominalDsHead => elemSR(eIdx,esr_Weir_NominalDownstreamHead)
         !%-----------------------------------------------------------------------------
         !% initializing default local Villemonte submergence correction factors as 1
         !% These are changed below if needed
@@ -319,7 +319,7 @@ module weir_elements
         integer, pointer :: SpecificWeirType
         logical, pointer :: IsSurcharged
         !%-----------------------------------------------------------------------------
-        SpecificWeirType => elemSI(eIdx,eSi_Weir_SpecificType)
+        SpecificWeirType => elemSI(eIdx,esi_Weir_SpecificType)
 
         Head        => elemR(eIdx,er_Head)
         Length      => elemR(eIdx,er_Length)
@@ -333,12 +333,12 @@ module weir_elements
         HydDepth    => elemR(eIdx,er_HydDepth)
         HydRadius   => elemR(eIdx,er_HydRadius)
             
-        Zcrest                  => elemSR(eIdx,eSr_Weir_Zcrest)
-        RectangularBreadth      => elemSR(eIdx,eSr_Weir_RectangularBreadth)
-        TrapezoidalBreadth      => elemSR(eIdx,eSr_Weir_TrapezoidalBreadth)
-        TriangularSideSlope     => elemSR(eIdx,eSr_Weir_TriangularSideSlope)
-        TrapezoidalLeftSlope    => elemSR(eIdx,eSr_Weir_TrapezoidalLeftSlope)
-        TrapezoidalRightSlope   => elemSR(eIdx,eSr_Weir_TrapezoidalRightSlope)
+        Zcrest                  => elemSR(eIdx,esr_Weir_Zcrest)
+        RectangularBreadth      => elemSR(eIdx,esr_Weir_RectangularBreadth)
+        TrapezoidalBreadth      => elemSR(eIdx,esr_Weir_TrapezoidalBreadth)
+        TriangularSideSlope     => elemSR(eIdx,esr_Weir_TriangularSideSlope)
+        TrapezoidalLeftSlope    => elemSR(eIdx,esr_Weir_TrapezoidalLeftSlope)
+        TrapezoidalRightSlope   => elemSR(eIdx,esr_Weir_TrapezoidalRightSlope)
         
         IsSurcharged => elemYN(eIdx,eYN_isSurcharged)
         !%-----------------------------------------------------------------------------     

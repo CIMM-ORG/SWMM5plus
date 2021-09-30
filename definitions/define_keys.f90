@@ -98,7 +98,7 @@ module define_keys
         !% SWMM5+ element types based on time marching
         enumerator :: diagnostic            !% diagnostic element
         enumerator :: time_march            !% indicates a time marched
-        enumerator :: none                  !% where no Q method is used (junctions)
+        enumerator :: notused               !% where no Q method is used (junctions)
         !% SWMM5+ special element types
         enumerator :: transverse_weir       !% transverse weir type
         enumerator :: side_flow             !% sideflow weir type
