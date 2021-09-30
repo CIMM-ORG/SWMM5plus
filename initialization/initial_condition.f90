@@ -393,17 +393,17 @@ contains
             case (lweir)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
-                    elemI(:,ei_elementType)     = weir
-                    elemI(:,ei_QeqType)         = diagnostic
-                    elemYN(:,eYN_canSurcharge)  = link%YN(thisLink,lYN_CanSurcharge)
+                    elemI(:,ei_elementType)         = weir
+                    elemI(:,ei_QeqType)             = diagnostic
+                    elemYN(:,eYN_canSurcharge)      = link%YN(thisLink,lYN_CanSurcharge)
                 endwhere
 
             case (lOrifice)
 
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
-                    elemI(:,ei_elementType)     = orifice
-                    elemI(:,ei_QeqType)         = diagnostic
-                    elemYN(:,eYN_canSurcharge)  = .true.
+                    elemI(:,ei_elementType)            = orifice
+                    elemI(:,ei_QeqType)                = diagnostic
+                    elemYN(:,eYN_canSurcharge)         = .true.
                 endwhere
 
             case (lPump)
@@ -717,6 +717,7 @@ contains
                     elemSR(:,eSr_Weir_TrapezoidalLeftSlope)  = link%R(thisLink,lr_LeftSlope)
                     elemSR(:,eSr_Weir_TrapezoidalRightSlope) = link%R(thisLink,lr_RightSlope)
                     elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Weir_Zcrown)                = elemSR(:,eSr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -734,6 +735,7 @@ contains
                     elemSR(:,eSr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
                     elemSR(:,eSr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Weir_Zcrown)                = elemSR(:,eSr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -756,7 +758,7 @@ contains
                     elemSR(:,eSr_Weir_DischargeCoeff1)       = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,eSr_Weir_TriangularSideSlope)   = link%R(thisLink,lr_SideSlope)
                     elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
-
+                    elemSR(:,eSr_Weir_Zcrown)                = elemSR(:,eSr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
                 endwhere
@@ -773,6 +775,7 @@ contains
                     elemSR(:,eSr_Weir_DischargeCoeff2)       = link%R(thisLink,lr_DischargeCoeff2)
                     elemSR(:,eSr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Weir_Zcrown)                = elemSR(:,eSr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
                     !% HACK: I am not sure if we need to update the initial area or volume of an weir element
                     !% since they will all be set to zero values at the start of the simulation
@@ -816,21 +819,16 @@ contains
         select case (specificOrificeType)
             !% copy orifice specific data
             case (lBottomOrifice)
-
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemSI(:,eSi_specific_orifice_type)      = bottom_orifice
-
+                    elemSI(:,eSi_Orifice_SpecificType)      = bottom_orifice
                 endwhere
 
             case (lSideOrifice)
-
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
                     !% integer data
-                    elemSI(:,eSi_specific_orifice_type)       = side_orifice
-
+                    elemSI(:,eSi_Orifice_SpecificType)       = side_orifice
                 endwhere
-
             case default
 
                 print*, 'In ', subroutine_name
@@ -850,12 +848,12 @@ contains
                     elemSI(:,ei_geometryType)          = rectangular
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,eSr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
                     elemSR(:,eSr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,eSr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Orifice_Zcrown)             = elemSR(:,eSr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
                     elemSR(:,eSr_Orifice_RectangularBreadth) = link%R(thisLink,lr_BreadthScale)
-
-                endwhere
+                end where
 
             case (lCircular)
                 where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
@@ -863,9 +861,10 @@ contains
                     elemI(:,ei_geometryType)    = circular
 
                     !% real data
-                    elemSR(:,eSr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
+                    elemSR(:,eSr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
                     elemSR(:,eSr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,eSr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+                    elemSR(:,eSr_Orifice_Zcrown)             = elemSR(:,eSr_Orifice_Zcrest) + link%R(thisLink,lr_FullDepth)
                     elemSR(:,eSr_Orifice_CircularRadius)     = link%R(thisLink,lr_FullDepth)/twoR
                 end where
 

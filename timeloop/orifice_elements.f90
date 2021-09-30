@@ -68,9 +68,9 @@ module orifice_elements
         real(8) :: Zmidpt
         !%-----------------------------------------------------------------------------
         !% inputs
-        SpecificOrificeType   => elemSI(eIdx,eSi_specific_orifice_type)
+        SpecificOrificeType   => elemSI(eIdx,eSi_Orifice_SpecificType)
         Head                  => elemR(eIdx,er_Head)
-        Zcrown                => elemR(eIdx,er_Zcrown)
+        Zcrown                => elemSR(eIdx,eSr_Orifice_Zcrown)
         Zcrest                => elemSR(eIdx,eSr_Orifice_Zcrest)
         NominalDownstreamHead => elemSR(eIdx,eSr_Orifice_NominalDownstreamHead)
         !% output
@@ -120,7 +120,7 @@ module orifice_elements
         real(8) :: ratio
         !%-----------------------------------------------------------------------------
         GeometryType          => elemI(eIdx,ei_geometryType)
-        SpecificOrificeType   => elemSI(eIdx,eSi_specific_orifice_type)
+        SpecificOrificeType   => elemSI(eIdx,eSi_Orifice_SpecificType)
         FlowDirection         => elemSI(eIdx,eSi_Orifice_FlowDirection)
         Flowrate              => elemR(eIdx,er_Flowrate)
         Head                  => elemR(eIdx,er_Head)

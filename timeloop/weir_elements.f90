@@ -78,10 +78,11 @@ module weir_elements
         real(8) :: Zmidpt
         !%-----------------------------------------------------------------------------
         Head   => elemR(eIdx,er_Head)
-        Zcrown => elemR(eIdx,er_Zcrown)
+        
         
         !% output
         EffectiveHeadDelta    => elemSR(eIdx,eSr_Weir_EffectiveHeadDelta)
+        Zcrown                => elemSR(eIdx,eSr_Weir_Zcrown)
         Zcrest                => elemSR(eIdx,eSr_Weir_Zcrest)
         NominalDownstreamHead => elemSR(eIdx,eSr_Weir_NominalDownstreamHead)
         
@@ -324,7 +325,6 @@ module weir_elements
         Head        => elemR(eIdx,er_Head)
         Length      => elemR(eIdx,er_Length)
         Zbottom     => elemR(eIdx,er_Zbottom)
-        Zcrown      => elemR(eIdx,er_Zcrown)
         Depth       => elemR(eIdx,er_Depth)
         Area        => elemR(eIdx,er_Area)
         Volume      => elemR(eIdx,er_Volume)
@@ -334,6 +334,7 @@ module weir_elements
         HydRadius   => elemR(eIdx,er_HydRadius)
             
         Zcrest                  => elemSR(eIdx,eSr_Weir_Zcrest)
+        Zcrown                  => elemSR(eIdx,eSr_Weir_Zcrown)
         RectangularBreadth      => elemSR(eIdx,eSr_Weir_RectangularBreadth)
         TrapezoidalBreadth      => elemSR(eIdx,eSr_Weir_TrapezoidalBreadth)
         TriangularSideSlope     => elemSR(eIdx,eSr_Weir_TriangularSideSlope)
