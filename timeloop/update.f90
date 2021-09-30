@@ -123,7 +123,7 @@ module update
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
         end if
-
+        ! print*, flowrate(thisP), 'flowrate(thisP)'
     end subroutine update_CC_element_flowrate
     !%
     !%==========================================================================
@@ -261,7 +261,9 @@ module update
                 Npack2 => npack_elemP(thisCol_ClosedElems)
                 if (Npack2 > 0) then
                     thisP2 => elemP(1:Npack2,thisCol_ClosedElems)
-                    where(SlotVolume(thisP2) .gt. zeroR) 
+                    !% initialize preissmann slot celerity
+                    PCelerity(thisP2) = zeroR
+                    where (SlotVolume(thisP2) .gt. zeroR) 
                         PCelerity(thisP2) = sqrt(grav * fullArea(thisP2)/SlotWidth(thisP2))
                     end where
                 end if

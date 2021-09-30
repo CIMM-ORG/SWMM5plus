@@ -120,12 +120,17 @@
             "interval" : 100000
         }
     },
+    "Orifice" : {
+        "SharpCrestedWeirCoefficient" : 0.414,
+        "TransverseWeirExponent" : 1.5,
+        "VillemonteCorrectionExponent" : 0.385
+    },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 5.0
+        "CelerityFactor" : 100.0
     },
     "Simulation" : {
         "useHydrology" : true,

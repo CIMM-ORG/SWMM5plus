@@ -718,9 +718,6 @@ contains
                     elemSR(:,eSr_Weir_TrapezoidalRightSlope) = link%R(thisLink,lr_RightSlope)
                     elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                     elemSR(:,eSr_Weir_Zcrown)                = elemSR(:,eSr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
-
-                    !% HACK: I am not sure if we need to update the initial area or volume of an weir element
-                    !% since they will all be set to zero values at the start of the simulation
                 endwhere
 
             case (lSideFlowWeir)
@@ -736,9 +733,6 @@ contains
                     elemSR(:,eSr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                     elemSR(:,eSr_Weir_Zcrown)                = elemSR(:,eSr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
-
-                    !% HACK: I am not sure if we need to update the initial area or volume of an weir element
-                    !% since they will all be set to zero values at the start of the simulation
                 endwhere
 
             case (lRoadWayWeir)
@@ -759,8 +753,6 @@ contains
                     elemSR(:,eSr_Weir_TriangularSideSlope)   = link%R(thisLink,lr_SideSlope)
                     elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
                     elemSR(:,eSr_Weir_Zcrown)                = elemSR(:,eSr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
-                    !% HACK: I am not sure if we need to update the initial area or volume of an weir element
-                    !% since they will all be set to zero values at the start of the simulation
                 endwhere
 
             case (lTransverseWeir)
@@ -776,9 +768,6 @@ contains
                     elemSR(:,eSr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,eSr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)
                     elemSR(:,eSr_Weir_Zcrown)                = elemSR(:,eSr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
-
-                    !% HACK: I am not sure if we need to update the initial area or volume of an weir element
-                    !% since they will all be set to zero values at the start of the simulation
                 endwhere
 
             case default
@@ -848,6 +837,7 @@ contains
                     elemSI(:,ei_geometryType)          = rectangular
 
                     !% real data
+                    elemR(:,er_FullDepth)                    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,eSr_Orifice_EffectiveFullDepth) = link%R(thisLink,lr_FullDepth)
                     elemSR(:,eSr_Orifice_DischargeCoeff)     = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,eSr_Orifice_Zcrest)             = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
@@ -1432,6 +1422,10 @@ contains
                 elemR(:,er_SmallVolume) = (elemSGR(:,eSGR_Trapezoidal_Breadth) + onehalfR * &
                     (elemSGR(:,eSGR_Trapezoidal_LeftSlope) + elemSGR(:,eSGR_Trapezoidal_RightSlope)) * &
                     setting%SmallVolume%DepthCutoff) * setting%SmallVolume%DepthCutoff
+
+            elsewhere (elemI(:,ei_geometryType) == circular)
+                ! HACK: not the correct small volume according to geometry. But it will work for now
+                elemR(:,er_SmallVolume) = pi * (setting%SmallVolume%DepthCutoff / twoR) ** twoR
             endwhere
         else
             elemR(:,er_SmallVolume) = zeroR

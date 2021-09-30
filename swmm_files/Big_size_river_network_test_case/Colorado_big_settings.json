@@ -120,6 +120,11 @@
             "interval" : 100
         },
     },
+    "Orifice" : {
+        "SharpCrestedWeirCoefficient" : 0.414,
+        "TransverseWeirExponent" : 1.5,
+        "VillemonteCorrectionExponent" : 0.385
+    },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
     },

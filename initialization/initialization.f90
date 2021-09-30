@@ -160,7 +160,7 @@ contains
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
-        stop
+        
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine initialize_all
