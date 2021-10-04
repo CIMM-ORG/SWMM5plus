@@ -695,7 +695,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
         integer, pointer :: thisP(:), Npack
-        real(8), pointer :: ell(:), head(:), area(:), topwidth(:)
+        real(8), pointer :: ell(:), head(:), area(:), topwidth(:), hydDepth(:)
         real(8), pointer :: ZbreadthMax(:), breadthMax(:), areaBelowBreadthMax(:)
 
         character(64) :: subroutine_name = 'geo_ell'
@@ -706,6 +706,7 @@ module geometry
         Npack               => npack_elemP(thisColP)
         ell                 => elemR(:,er_ell)
         head                => elemR(:,er_Head)
+        hydDepth            => elemR(:,er_HydDepth)
         area                => elemR(:,er_Area)
         topwidth            => elemR(:,er_Topwidth)
         ZbreadthMax         => elemR(:,er_ZbreadthMax)
@@ -716,7 +717,7 @@ module geometry
         if (Npack > 0) then
             thisP               => elemP(1:Npack,thisColP)
             where (head(thisP) .le. ZbreadthMax(thisP))
-                ell(thisP) =  area(thisP) / topwidth(thisP)
+                ell(thisP) =  hydDepth(thisP)
             elsewhere
                 ell(thisP) = ( (head(thisP) - ZbreadthMax(thisP)) * breadthMax(thisP) &
                                 + areaBelowBreadthMax(thisP) ) / breadthMax(thisP)

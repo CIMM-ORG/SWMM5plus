@@ -495,6 +495,9 @@ module lowlevel_rk2
             elemR(thisP,inoutCol) = zeroR
         endwhere
 
+        ! print*
+        ! print*, 'in ll_momentum_velocity_CC'
+        ! print*, elemR(thisP,inoutCol), 'new velocity'
     end subroutine ll_momentum_velocity_CC
     !%
     !%==========================================================================
@@ -995,7 +998,7 @@ module lowlevel_rk2
         integer, pointer    :: thisP(:), SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
-        real(8), pointer    :: SlotHydRadius(:)
+        real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
         real(8), pointer    :: CelerityFactor
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
@@ -1011,6 +1014,7 @@ module lowlevel_rk2
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         SlotHydRadius => elemR(:,er_SlotHydRadius)
+        BreadthMax    => elemR(:,er_BreadthMax) 
 
         SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         CelerityFactor => setting%PreissmannSlot%CelerityFactor
@@ -1020,17 +1024,21 @@ module lowlevel_rk2
             case (VariableSlot)
 
                 SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-                ! SlotWidth(thisP) = 0.02
                 SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
                 SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
                 SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                 SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
                     ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
+                
             case (StaticSlot)
 
-                print*, 'In ', subroutine_name
-                print*, 'Static Preissmann Slot is not handeled yet'
-                stop "in " // subroutine_name
+                SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+                !% SWMM5 uses 1% of width max as slot width
+                SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
+                SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+                SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+                SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
+                    ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
 
             case default
                 !% should not reach this stage

@@ -16,11 +16,11 @@ START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
 REPORT_START_TIME    00:00:00
 END_DATE             06/14/2021
-END_TIME             00:15:00
+END_TIME             00:10:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:00:01
+REPORT_STEP          00:00:05
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0.01
@@ -75,10 +75,10 @@ DRY_ONLY         NO
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
 630016810                   0.0        0                  
-630016810                   0:01       0.0031    
-630016810                   0:10       0.0031    
-630016810                   0:11       0         
-630016810                   0:14       0         
+630016810                   0:02       0.0031    
+630016810                   0:06       0.0031    
+630016810                   0:07       0         
+630016810                   0:10       0         
 
 [REPORT]
 ;;Reporting Options
