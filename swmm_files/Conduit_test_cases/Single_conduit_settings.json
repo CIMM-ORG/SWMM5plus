@@ -102,7 +102,7 @@
             "TotalInflows" : 50
         },
         "Dt" : {
-            "Minimum"     : 1e-4,
+            "Minimum"     : 1e-10,
             "UseLimitMin" : true
         }
     },
@@ -133,7 +133,7 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 100.0
+        "CelerityFactor" : 200.0
     },
     "Simulation" : {
         "useHydrology" : true,

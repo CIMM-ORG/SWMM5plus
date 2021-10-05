@@ -133,7 +133,7 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 100.0
+        "CelerityFactor" : 1000.0
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -147,7 +147,7 @@
         "MinimumHydRadius" : 0.009,
         "MinimumPerimeter" : 0.52,
         "MinimumTopwidth" : 0.5,
-        "UseSmallVolumes" : true
+        "UseSmallVolumes" : false
     },
     "Solver" : {
         "MomentumSourceMethod" : "T00",

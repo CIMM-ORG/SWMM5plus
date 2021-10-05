@@ -138,14 +138,14 @@ module geometry
         !% compute hydradius
         call geo_hydradius_from_area_perimeter (thisColP_NonSurcharged)
 
+        !% the modified hydraulic depth "ell" is used for AC computations and
+        !% for Froude number computations on all elements, whether ETM or AC.
+        call geo_ell (thisColP_all)
+
         !% make adjustments for slots on closed elements only for ETM
         if (whichTM .eq. ETM) then
             call geo_slot_adjustments (thisColP_ClosedElems)
         end if
-
-        !% the modified hydraulic depth "ell" is used for AC computations and
-        !% for Froude number computations on all elements, whether ETM or AC.
-        call geo_ell (thisColP_all)
 
         !% compute the dHdA that are only for AC nonsurcharged
         if (whichTM .ne. ETM) then
@@ -833,12 +833,13 @@ module geometry
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
-            volume(thisP) = volume(thisP) + SlotVolume(thisP)
-            area(thisP)   = area(thisP)   + SlotArea(thisP)
-            depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
-            head(thisP)   = head(thisP)   + SlotDepth(thisP)
-            ! ell(thisP)    = ell(thisP) + SlotArea(thisP) / breadthMax(thisP)
-            hydRadius(thisP) = hydRadius(thisP) + SlotHydRadius(thisP)    
+            where (SlotVolume(thisP) .gt. zeroR) 
+                volume(thisP) = volume(thisP) + SlotVolume(thisP)
+                area(thisP)   = area(thisP)   + SlotArea(thisP)
+                depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
+                head(thisP)   = head(thisP)   + SlotDepth(thisP)
+                ell(thisP)    = ell(thisP) + SlotArea(thisP) / SlotWidth(thisP)
+            end where 
         end if
 
         if (setting%Debug%File%geometry) &
