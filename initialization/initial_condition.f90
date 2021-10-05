@@ -22,7 +22,7 @@ module initial_condition
 
     implicit none
 
-    public :: init_IC_setup
+    public :: init_IC_toplevel
 
     private
 
@@ -32,7 +32,7 @@ contains
     ! PUBLIC
     !==========================================================================
     !
-    subroutine init_IC_setup ()
+    subroutine init_IC_toplevel ()
     !--------------------------------------------------------------------------
     !
     !% set up the initial conditions for all the elements
@@ -41,7 +41,7 @@ contains
 
         integer          :: ii
         integer, pointer :: solver
-        character(64)    :: subroutine_name = 'init_IC_setup'
+        character(64)    :: subroutine_name = 'init_IC_toplevel'
 
     !--------------------------------------------------------------------------
         if (setting%Debug%File%initial_condition) &
@@ -49,37 +49,37 @@ contains
 
         solver => setting%Solver%SolverSelect
 
-        !if (setting%Verbose) print *,'begin init_IC_from_linkdata'
+        !if (setting%Output%Verbose) print *,'begin init_IC_from_linkdata'
 
         !% get data that can be extracted from links
         call init_IC_from_linkdata ()
 
-        !if (setting%Verbose) print *,'begin init_IC_from_nodedata'
+        !if (setting%Output%Verbose) print *,'begin init_IC_from_nodedata'
 
         !% get data that can be extracted from nodes
         call init_IC_from_nodedata ()
 
-        !if (setting%Verbose) print *,'begin init_set_zero_lateral_inflow'
+        !if (setting%Output%Verbose) print *,'begin init_set_zero_lateral_inflow'
 
         !% zero out the lateral inflow column
         call init_IC_set_zero_lateral_inflow ()
 
-        !if (setting%Verbose) print *, 'begin init_IC_solver_select '
+        !if (setting%Output%Verbose) print *, 'begin init_IC_solver_select '
 
         !% update time marching type
         call init_IC_solver_select (solver)
 
-        !if (setting%Verbose) print *, 'begin pack_mask arrays_all'
+        !if (setting%Output%Verbose) print *, 'begin pack_mask arrays_all'
 
         !% set up all the static packs and masks
         call pack_mask_arrays_all ()
 
-        !if (setting%Verbose) print *, 'begin init_IC_set_SmallVolumes'
+        !if (setting%Output%Verbose) print *, 'begin init_IC_set_SmallVolumes'
 
         !% set small volume values in elements 
         call init_IC_set_SmallVolumes ()
 
-        !if (setting%Verbose) print *, 'begin update_auxiliary_variables'
+        !if (setting%Output%Verbose) print *, 'begin update_auxiliary_variables'
 
         !% initialize slots
         call init_IC_slot ()
@@ -87,7 +87,7 @@ contains
         !% update all the auxiliary variables
         call update_auxiliary_variables (solver)
      
-        !if (setting%Verbose) print *,  'begin init_IC_diagnostic_interpolation_weights'
+        !if (setting%Output%Verbose) print *,  'begin init_IC_diagnostic_interpolation_weights'
 
         !% update diagnostic interpolation weights
         !% (the interpolation weights of diagnostic elements
@@ -95,23 +95,23 @@ contains
         !% are only needed to be set at the top of the simulation)
         call init_IC_diagnostic_interpolation_weights()
  
-        !if (setting%Verbose) print *, 'begin  init_IC_small_values_diagnostic_elements'
+        !if (setting%Output%Verbose) print *, 'begin  init_IC_small_values_diagnostic_elements'
 
         !% set small values to diagnostic element interpolation sets
         !% so that junk values does not mess up the first interpolation
         call init_IC_small_values_diagnostic_elements
 
-        !if (setting%Verbose) print *, 'begin face_interpolation '
+        !if (setting%Output%Verbose) print *, 'begin face_interpolation '
 
         !% update faces
         call face_interpolation (fp_all)
 
-        !if (setting%Verbose) print *, 'begin diagnostic_toplevel'
+        !if (setting%Output%Verbose) print *, 'begin diagnostic_toplevel'
 
         !% update the initial condition in all diagnostic elements
         call diagnostic_toplevel ()
 
-        !if (setting%Verbose) print *, 'begin init_IC_oneVectors'
+        !if (setting%Output%Verbose) print *, 'begin init_IC_oneVectors'
 
         !% populate er_ones columns with ones
         call init_IC_oneVectors ()
@@ -150,7 +150,8 @@ contains
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine init_IC_setup
+        
+    end subroutine init_IC_toplevel
     !
     !==========================================================================
     ! PRIVATE

@@ -56,11 +56,16 @@
         "slots" : 10,
         "disableInterpolation": false
     },
+    "CaseName" : {
+        "Long"  : "Medium River",
+        "Short" : "MR",
+        "withTimeStamp" : ""
+    },
     "Constant" : {
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 10.00,
+        "NominalElemLength" : 150.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -69,6 +74,12 @@
     },
     "FaceInterp" : {
         "DownJBFaceInterp" : "dynamic"
+    },
+    "File" : {
+        "library_folder" : "",
+        "links_input_file_exist" : false,
+        "nodes_input_file_exist" : false,  
+        "force_folder_creation"  : true
     },
     "Junction" : {
         "kFactor"  : 0.0,
@@ -94,7 +105,7 @@
             "Minimum" : 1e-6
         },
         "Velocity" : {
-            "Maximum" : 10.0,
+            "Maximum" : 20.0,
             "UseLimitMax" : true
         },
         "ArraySize" : {
@@ -111,17 +122,19 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Output" : {
-        "report" : true,
+        "report" : false,
         "reportStartTime" : 0.0,
         "reportDt" : 100.0,
         "reportStep" : 0,
         "slots" : 20,
-        "links_file" : "",
-        "nodes_file" : "",
+        "print_links_csv" : true,
+        "print_nodes_csv" : true,
+        "Verbose" : true,
+        "Warning" : true,
         "CommandLine" : {
             "quiet" : false,
             "interval" : 1000
-        }
+        },
     },
     "Orifice" : {
         "SharpCrestedWeirCoefficient" : 0.414,
@@ -283,13 +296,11 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : true,
-        "Output" : true,
-        "Tests" : true
+        "Setup"  : false,
+        "Output" : false,
+        "Tests" : false
     },
     "Profile" : {
-        "YN" : true  
-    },
-    "Warning"  : true,
-    "Verbose" : true
+        "YN" : true
+    }
 }

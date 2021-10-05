@@ -47,52 +47,24 @@ program main
     !% For more information, please refer to <http://unlicense.org/>
     !==========================================================================
     !
-    use define_globals
-    use define_indexes
     use initialization
-    use interface
     use timeloop
     use finalization
-    use define_settings, only: setting
 
     implicit none
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    ! --- store CPU clock start time
-    call cpu_time(setting%Time%CPU%EpochStartSeconds)
-    ! --- store Real time
-    setting%Time%Real%EpochStartSeconds = time()
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+!% MAIN PROGRAM
+!%
+    call initialize_toplevel()
 
-    ! --- Initialization
-    if (setting%Verbose) &
-        write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."
-    call initialize_all()
-    
-    ! print *, N_elem(this_image()), "N_elem"
-    ! if (this_image() == 1) print *, link%I(:,li_P_image)
-
-    ! --- Time Loop
-    if (setting%Verbose) &
-        write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
-    setting%Time%Real%EpochTimeLoopStartSeconds = time()
     call timeloop_toplevel()
 
-    if (setting%Verbose) &
-        write(*,"(2A,i5,A)") new_line(" "), 'finalize [Processor ', this_image(), "]"
-    ! --- Finalization
-    call finalize_all()
-
-    sync all
-
-    call cpu_time(setting%Time%CPU%EpochFinishSeconds)
-
-    write(*, "(A,i5,A,G0.6,A)") &
-        new_line(" ") // 'Processor ', this_image(), " | Simulation Time = ", &
-        (setting%Time%CPU%EpochFinishSeconds - setting%Time%CPU%EpochStartSeconds), " [s]"
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    call finalize_toplevel()
+!%
+!%==========================================================================
+!%==========================================================================
+!%
 end program main

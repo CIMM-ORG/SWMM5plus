@@ -152,7 +152,7 @@ contains
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
 
-            if (setting%verbose) write(*,"(A,i5,A)") "BIPquick Sweep", image
+            if (setting%Output%Verbose) write(*,"(A,i5,A)") "BIPquick Sweep", image
 
             !% Reset the node totalweight column, the ideal_exists boolean, and spanning_link integer
             B_nodeR(:, totalweight) = 0.0

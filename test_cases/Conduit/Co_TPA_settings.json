@@ -60,7 +60,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 150.00,
+        "NominalElemLength" : 0.036,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -102,7 +102,7 @@
             "TotalInflows" : 50
         },
         "Dt" : {
-            "Minimum"     : 1e-4,
+            "Minimum"     : 1e-10,
             "UseLimitMin" : true
         }
     },
@@ -116,12 +116,12 @@
         "reportDt" : 100.0,
         "reportStep" : 0,
         "slots" : 20,
-        "links_file" : "link_input.csv",
-        "nodes_file" : "node_input.csv",
+        "links_input_file" : "",
+        "nodes_input_file" : "",
         "CommandLine" : {
             "quiet" : false,
-            "interval" : 1000
-        },
+            "interval" : 100000
+        }
     },
     "Orifice" : {
         "SharpCrestedWeirCoefficient" : 0.414,
@@ -133,7 +133,7 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 1.0
+        "CelerityFactor" : 1000.0
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -147,7 +147,7 @@
         "MinimumHydRadius" : 0.009,
         "MinimumPerimeter" : 0.52,
         "MinimumTopwidth" : 0.5,
-        "UseSmallVolumes" : true
+        "UseSmallVolumes" : false
     },
     "Solver" : {
         "MomentumSourceMethod" : "T00",
@@ -253,9 +253,9 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
-            "output" : false,
+	        "output" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
@@ -288,7 +288,7 @@
         "Tests" : true
     },
     "Profile" : {
-        "YN" : true  
+        "YN" : true
     },
     "Warning"  : true,
     "Verbose" : true

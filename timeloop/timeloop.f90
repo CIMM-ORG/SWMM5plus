@@ -44,6 +44,10 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        if (setting%Output%Verbose) &
+            write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
+        setting%Time%Real%EpochTimeLoopStartSeconds = time()
+
         doHydraulics = setting%simulation%useHydraulics
         doHydrology = setting%simulation%useHydrology
 
@@ -422,7 +426,7 @@ contains
         seconds_to_completion = execution_realtime * (setting%Time%End - setting%Time%Now) &
                                                    / (setting%Time%Now - setting%Time%Start)                                
 
-        if (setting%Verbose) then
+        if (setting%Output%Verbose) then
             if (this_image() == 1) then
                 if (mod(step,interval) == 0) then
                     ! translate time in seconds into something more useful
