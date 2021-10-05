@@ -227,7 +227,7 @@ contains
                 form   = 'formatted', action = 'write', iostat = open_status)
 
                 if (open_status /= 0) then
-                    write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
                     stop "in " // subroutine_name
                 end if
 
@@ -395,7 +395,7 @@ contains
                 form   = 'formatted', action = 'write', iostat = open_status)
 
                 if (open_status /= 0) then
-                    write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
                     stop "in " // subroutine_name
                 end if
 
