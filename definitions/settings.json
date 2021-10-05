@@ -56,6 +56,11 @@
         "slots" : 10,
         "disableInterpolation": false
     },
+    "CaseName" : {
+        "Long"  : "Default",
+        "Short" : "Default",
+        "withTimeStamp" : ""     
+    },
     "Constant" : {
         "gravity" : 9.81
     },
@@ -68,10 +73,19 @@
         "InflowDepthIncreaseFroudeLimit" : 0.1
     },
     "FaceInterp" : {
-        "DownJBFaceInterp" : "static"
+        "DownJBFaceInterp" : "dynamic"
+    },
+    "File" : {
+        "library_folder" : "",
+        "links_input_file_exist" : false,
+        "nodes_input_file_exist" : false,  
+        "force_folder_creation"  : true
     },
     "Junction" : {
-        "kFactor" : 0.0
+        "kFactor"  : 0.0,
+        "HeadCoef" : 1.0,
+        "CFLlimit" : 0.5,
+        "isDynamic" : true
     },
     "Limiter" : {
         "BC" : {
@@ -113,8 +127,10 @@
         "reportDt" : 100.0,
         "reportStep" : 0,
         "slots" : 20,
-        "links_file" : "link_input.csv",
-        "nodes_file" : "node_input.csv",
+        "print_links_csv" : true,
+        "print_nodes_csv" : true,
+        "Verbose" : true,
+        "Warning" : true,
         "CommandLine" : {
             "quiet" : false,
             "interval" : 100
@@ -240,7 +256,7 @@
             "geometry" : false,
             "discretization"  : false,
             "initial_condition" : false,
-            "initialization" : true,
+            "initialization" : false,
             "interface" : false,
             "jump" : false,
             "lowlevel_rk2" : false,
@@ -248,7 +264,7 @@
             "orifice_elements" : false,
             "output" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
@@ -276,13 +292,11 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : true,
+        "Setup"  : true,
         "Output" : true,
         "Tests" : true
     },
     "Profile" : {
         "YN" : true
-    },
-    "Warning"  : true,
-    "Verbose" : true
+    }
 }

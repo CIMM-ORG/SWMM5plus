@@ -56,11 +56,16 @@
         "slots" : 10,
         "disableInterpolation": false
     },
+    "CaseName" : {
+        "Long"  : "Colorado big river",
+        "Short" : "BigRiver",
+        "withTimeStamp" : ""
+    },
     "Constant" : {
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 50.00,
+        "NominalElemLength" : 150.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -69,6 +74,12 @@
     },
     "FaceInterp" : {
         "DownJBFaceInterp" : "dynamic"
+    },
+    "File" : {
+        "library_folder" : "",
+        "links_input_file_exist" : false,
+        "nodes_input_file_exist" : false,  
+        "force_folder_creation"  : true
     },
     "Junction" : {
         "kFactor"  : 0.0,
@@ -116,12 +127,14 @@
         "reportDt" : 100.0,
         "reportStep" : 0,
         "slots" : 20,
-        "links_file" : "",
-        "nodes_file" : "",
+        "print_links_csv" : true,
+        "print_nodes_csv" : true,
+        "Verbose" : true,
+        "Warning" : true,
         "CommandLine" : {
             "quiet" : false,
             "interval" : 1000
-        }
+        },
     },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
@@ -248,9 +261,9 @@
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
-	        "output" : false,
+            "output" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : false,
+            "partitioning" : true,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
@@ -278,13 +291,11 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : true,
+        "Setup"  : true,
         "Output" : true,
         "Tests" : true
     },
     "Profile" : {
-        "YN" : true
-    },
-    "Warning"  : true,
-    "Verbose" : true
+        "YN" : true  
+    }
 }

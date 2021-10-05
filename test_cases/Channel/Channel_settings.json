@@ -56,11 +56,16 @@
         "slots" : 10,
         "disableInterpolation": false
     },
+    "CaseName" : {
+        "Long"  : "Y Junction",
+        "Short" : "YJunc",
+        "withTimeStamp" : ""
+    },
     "Constant" : {
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 0.036,
+        "NominalElemLength" : 10.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -70,8 +75,17 @@
     "FaceInterp" : {
         "DownJBFaceInterp" : "dynamic"
     },
+    "File" : {
+        "library_folder" : "",
+        "links_input_file_exist" : false,
+        "nodes_input_file_exist" : false,  
+        "force_folder_creation"  : true
+    },
     "Junction" : {
-        "kFactor" : 0.0
+        "kFactor"  : 0.0,
+        "HeadCoef" : 1.0,
+        "CFLlimit" : 0.5,
+        "isDynamic" : true
     },
     "Limiter" : {
         "BC" : {
@@ -99,7 +113,7 @@
             "TotalInflows" : 50
         },
         "Dt" : {
-            "Minimum"     : 1e-10,
+            "Minimum"     : 1e-4,
             "UseLimitMin" : true
         }
     },
@@ -113,11 +127,13 @@
         "reportDt" : 100.0,
         "reportStep" : 0,
         "slots" : 20,
-        "links_file" : "",
-        "nodes_file" : "",
+        "print_links_csv" : true,
+        "print_nodes_csv" : true,
+        "Verbose" : true,
+        "Warning" : true,
         "CommandLine" : {
             "quiet" : false,
-            "interval" : 100000
+            "interval" : 1000
         }
     },
     "Partitioning" : {
@@ -125,7 +141,7 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 5.0
+        "CelerityFactor" : 1.0
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -275,13 +291,11 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : true,
+        "Setup"  : true,
         "Output" : true,
         "Tests" : true
     },
     "Profile" : {
-        "YN" : true
-    },
-    "Warning"  : true,
-    "Verbose" : true
+        "YN" : true  
+    }
 }

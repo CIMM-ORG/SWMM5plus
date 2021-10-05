@@ -50,16 +50,16 @@ subroutine init_partitioning_method()
     !% Determine which partitioning method is being used
     print *   !% this is needed because SWMM-C doesn't have a newline after their last printout
     if (setting%Partitioning%PartitioningMethod == Default) then
-        if (setting%Verbose) print*, new_line(""), "Using Default Partitioning"
+        if (setting%Output%Verbose) print*, new_line(""), "Using Default Partitioning"
         call init_partitioning_default()
     else if (setting%Partitioning%PartitioningMethod == Random) then
-        if (setting%Verbose) print*, new_line(""), "Using Random Partitioning"
+        if (setting%Output%Verbose) print*, new_line(""), "Using Random Partitioning"
         call init_partitioning_random()
     else if (setting%Partitioning%PartitioningMethod == BLink) then
-        if (setting%Verbose) print*, new_line(""), "Using Balanced Link Partitioning"
+        if (setting%Output%Verbose) print*, new_line(""), "Using Balanced Link Partitioning"
         call init_partitioning_linkbalance()
     else if (setting%Partitioning%PartitioningMethod == BQuick) then
-        if (setting%Verbose) print*, new_line(""), "Using BIPquick Partitioning"
+        if (setting%Output%Verbose) print*, new_line(""), "Using BIPquick Partitioning"
         call init_partitioning_BIPquick()
     else
         print *, "Error, partitioning method not supported"

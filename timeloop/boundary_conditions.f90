@@ -92,7 +92,7 @@ contains
                                 end if
                                 tstep_larger_than_resolution = tstep_larger_than_resolution + 1
                             end do
-                            if ((tstep_larger_than_resolution > 0) .and. setting%Warning) then
+                            if ((tstep_larger_than_resolution > 0) .and. setting%Output%Warning) then
                                 call util_print_warning("Warning (bc.f08): The flow boundary condition for node " &
                                 // node%Names(nidx)%str // " has a higher resolution than the time step")
                             end if
@@ -126,7 +126,7 @@ contains
                                 end if
                                 tstep_larger_than_resolution = tstep_larger_than_resolution + 1
                             end do
-                            if ((tstep_larger_than_resolution > 0) .and. setting%Warning) then
+                            if ((tstep_larger_than_resolution > 0) .and. setting%Output%Warning) then
                                 call util_print_warning("Warning (bc.f08): The head boundary condition for node " &
                                 // node%Names(nidx)%str // " has a higher resolution than the time step")
                             end if

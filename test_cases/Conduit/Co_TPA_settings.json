@@ -60,7 +60,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 150.00,
+        "NominalElemLength" : 0.036,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -71,10 +71,7 @@
         "DownJBFaceInterp" : "dynamic"
     },
     "Junction" : {
-        "kFactor"  : 0.0,
-        "HeadCoef" : 1.0,
-        "CFLlimit" : 0.5,
-        "isDynamic" : true
+        "kFactor" : 0.0
     },
     "Limiter" : {
         "BC" : {
@@ -94,7 +91,7 @@
             "Minimum" : 1e-6
         },
         "Velocity" : {
-            "Maximum" : 20.0,
+            "Maximum" : 10.0,
             "UseLimitMax" : true
         },
         "ArraySize" : {
@@ -102,7 +99,7 @@
             "TotalInflows" : 50
         },
         "Dt" : {
-            "Minimum"     : 1e-4,
+            "Minimum"     : 1e-10,
             "UseLimitMin" : true
         }
     },
@@ -111,24 +108,24 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Output" : {
-        "report" : false,
+        "report" : true,
         "reportStartTime" : 0.0,
         "reportDt" : 100.0,
         "reportStep" : 0,
         "slots" : 20,
-        "links_file" : "link_input.csv",
-        "nodes_file" : "node_input.csv",
+        "links_input_file" : "",
+        "nodes_input_file" : "",
         "CommandLine" : {
             "quiet" : false,
-            "interval" : 1000
-        },
+            "interval" : 100000
+        }
     },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 1.0
+        "CelerityFactor" : 5.0
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -278,9 +275,9 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : false,
-        "Output" : false,
-        "Tests" : false
+        "Input"  : true,
+        "Output" : true,
+        "Tests" : true
     },
     "Profile" : {
         "YN" : true
