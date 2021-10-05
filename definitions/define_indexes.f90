@@ -451,6 +451,7 @@ module define_indexes
         enumerator :: esi_Weir_SpecificType             !% specific weir type
         enumerator :: esi_Weir_lastplusone !% must be last enum item
     end enum
+
     integer, parameter :: Ncol_elemSI_weir = esi_Weir_lastplusone-1
 
     enum, bind(c)
@@ -478,6 +479,7 @@ module define_indexes
         enumerator ::  esr_JunctionBranch_Kfactor = 1
         enumerator ::  esr_JunctionBranch_lastplusone !% must be last enum item
     end enum
+
     integer, parameter :: Ncol_elemSR_JunctionBranch = esr_JunctionBranch_lastplusone-1
 
     enum, bind(c)
@@ -491,6 +493,7 @@ module define_indexes
         enumerator ::  esr_Weir_TrapezoidalLeftSlope    !% trapezoidal weir left slope
         enumerator ::  esr_Weir_TrapezoidalRightSlope   !% trapezoidal weir right slope
         enumerator ::  esr_Weir_TriangularSideSlope     !% triangular weir side slope
+        enumerator ::  esr_Weir_Zcrown                  !% weir crown elevation
         enumerator ::  esr_Weir_Zcrest                  !% weir crest elevation
         enumerator ::  esr_Weir_lastplusone !% must be last enum item
     end enum
@@ -502,7 +505,8 @@ module define_indexes
         enumerator ::  esr_Orifice_EffectiveHeadDelta       !% effective head delta across orifice
         enumerator ::  esr_Orifice_NominalDownstreamHead    !% nominal downstream head for orifice
         enumerator ::  esr_Orifice_RectangularBreadth       !% rectangular orifice breadth
-        enumerator ::  esr_Orifice_Zcrest                   !% orifice "crest" elevation - lowest edge of orifice.
+        enumerator ::  esr_Orifice_Zcrown                   !% orifice "crown" elevation - highest edge of orifice
+        enumerator ::  esr_Orifice_Zcrest                   !% orifice "crest" elevation - lowest edge of orifice
         enumerator ::  esr_Orifice_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSR_Orifice = esr_Orifice_lastplusone-1

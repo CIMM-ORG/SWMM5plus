@@ -71,7 +71,10 @@
         "DownJBFaceInterp" : "dynamic"
     },
     "Junction" : {
-        "kFactor" : 0.0
+        "kFactor"  : 0.0,
+        "HeadCoef" : 1.0,
+        "CFLlimit" : 0.5,
+        "isDynamic" : true
     },
     "Limiter" : {
         "BC" : {
@@ -120,12 +123,17 @@
             "interval" : 100000
         }
     },
+    "Orifice" : {
+        "SharpCrestedWeirCoefficient" : 0.414,
+        "TransverseWeirExponent" : 1.5,
+        "VillemonteCorrectionExponent" : 0.385
+    },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 5.0
+        "CelerityFactor" : 100.0
     },
     "Simulation" : {
         "useHydrology" : true,

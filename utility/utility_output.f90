@@ -215,6 +215,22 @@ contains
                     stop "in " // subroutine_name
                 end if
 
+            else if(elemI(ii,ei_elementType) == orifice) then
+
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+
+                file_name = "debug_output/elemR/"//trim(str_image)//"_OR_" &
+                    // trim(ADJUSTL(str_link_node_idx))// &
+                    "_" // trim(ADJUSTL(str_elem_idx))//".csv"
+
+                open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
+                form   = 'formatted', action = 'write', iostat = open_status)
+
+                if (open_status /= 0) then
+                    write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
+                end if
+
             else if (elemI(ii,ei_elementType) == JM) then
 
                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
@@ -367,6 +383,21 @@ contains
                     stop "in " // subroutine_name
                 end if
 
+            else if (elemI(ii,ei_elementType) == orifice) then
+
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+
+                file_name = "debug_output/elemR/"//trim(str_image)//"_OR_" &
+                    // trim(ADJUSTL(str_link_node_idx))// &
+                    "_" // trim(ADJUSTL(str_elem_face_idx))//".csv"
+
+                open(newunit=fu, file = file_name, status = 'old',access = 'append', &
+                form   = 'formatted', action = 'write', iostat = open_status)
+
+                if (open_status /= 0) then
+                    write (error_unit, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
+                    stop "in " // subroutine_name
+                end if
 
             else if (elemI(ii,ei_elementType) == JM) then
 

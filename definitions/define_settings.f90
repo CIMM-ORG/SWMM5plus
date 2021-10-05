@@ -931,8 +931,18 @@ contains
         setting%Output%Warning = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Output.Warning not found'    
 
-    !% Partitioning   
-        !% --- Partitioning BIPQuick settings
+        ! Orifice settings
+        call json%get('Orifice.SharpCrestedWeirCoefficient', real_value, found)
+        setting%Orifice%SharpCrestedWeirCoefficient = real_value
+        if (.not. found) stop "Error - setting " // 'Orifice.SharpCrestedWeirCoefficient not found'
+        call json%get('Orifice.TransverseWeirExponent', real_value, found)
+        setting%Orifice%TransverseWeirExponent = real_value
+        if (.not. found) stop "Error - setting " // 'Orifice.TransverseWeirExponent not found'
+        call json%get('Orifice.VillemonteCorrectionExponent', real_value, found)
+        setting%Orifice%VillemonteCorrectionExponent = real_value
+        if (.not. found) stop "Error - setting " // 'Orifice.VillemonteCorrectionExponent not found'
+
+        ! Load BIPQuick settings
         call json%get('Partitioning.PartitioningMethod', c, found)
         call util_lower_case(c)
         if (c == 'default') then

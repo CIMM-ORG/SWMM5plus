@@ -399,6 +399,14 @@ int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value
         *value = FTTOM(Link[k].xsect.yFull);
     else if (attr == link_q0)
         *value = CFTOCM(Link[k].q0);
+    else if (attr == link_type)
+        *value =  Link[k].type;
+    else if (attr == pump_type)
+        *value =  Pump[Link[k].subIndex].pumpCurve;
+    else if (attr == orifice_type)
+        *value = Orifice[Link[k].subIndex].type;
+    else if (attr == weir_type)
+        *value = Weir[Link[k].subIndex].type;
     else if (attr == conduit_roughness)
     {
         if (Link[k].type == CONDUIT)
@@ -410,6 +418,34 @@ int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value
     {
         if (Link[k].type == CONDUIT)
             *value = FTTOM(Conduit[Link[k].subIndex].length);
+
+        else if (Link[k].type == ORIFICE)
+            *value = 0.01;
+        else if (Link[k].type == WEIR)
+            *value = 0.01;
+        else
+            *value = 0;
+    }
+    else if (attr == weir_end_contractions)
+    {
+        if (Link[k].type == WEIR)
+            *value = Weir[Link[k].subIndex].endCon;
+        else
+            *value = 0;
+    }
+    else if (attr == discharge_coeff1)
+    {
+        if (Link[k].type == WEIR)
+            *value = Weir[Link[k].subIndex].cDisch1;
+        else if (Link[k].type == ORIFICE)
+            *value = Orifice[Link[k].subIndex].cDisch;
+        else
+            *value = 0;
+    }
+    else if (attr == discharge_coeff2)
+    {
+        if (Link[k].type == WEIR)
+            *value = Weir[Link[k].subIndex].cDisch2;
         else
             *value = 0;
     }

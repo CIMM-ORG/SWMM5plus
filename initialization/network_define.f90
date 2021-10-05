@@ -148,7 +148,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_linkslope'
 
-        integer, pointer :: NodeUp, NodeDn
+        integer, pointer :: NodeUp, NodeDn, lType
         real(8), pointer :: zUp, zDn, Slope, Length
         integer          :: mm
 
@@ -164,15 +164,20 @@ contains
             zUp         => node%R(NodeUp,nr_Zbottom)
             zDn         => node%R(NodeDn,nr_Zbottom)
             Length      => link%R(mm,lr_Length)
+            lType       => link%I(mm,li_link_type)
             !%-------------------------------------------------------------------------
             !% HACK: Original length is used for slope calculation instead of adjusted
             !% length. Using adjusted lenghts will induce errors in slope calculations
             !% and will distort the original network.
             !%-------------------------------------------------------------------------
             !% Output
-            Slope       => link%R(mm,lr_Slope)
+            Slope => link%R(mm,lr_Slope)
 
-            Slope = (zUp - zDn) / Length
+            if ( (lType == lChannel) .or. (lType == lPipe)) then
+                Slope = (zUp - zDn) / Length
+            else
+                Slope = zeroR
+            end if
         end do
 
         if (setting%Debug%File%network_define) then

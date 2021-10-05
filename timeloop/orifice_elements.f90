@@ -6,6 +6,7 @@ module orifice_elements
     use define_settings, only: setting
     use common_elements
     use adjust
+    use xsect_tables
 
 
     implicit none
@@ -33,8 +34,12 @@ module orifice_elements
         !% crown (esr_Zcrown) and crest (esr_Zcrest) elevation from control setting.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx  !% must be a single element ID
+
+        character(64) :: subroutine_name = 'orifice_toplevel'
         !%-----------------------------------------------------------------------------
-        !%  
+        if (setting%Debug%File%orifice_elements) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
         call common_head_and_flowdirection_singular &
             (eIdx, esr_Orifice_Zcrest, esr_Orifice_NominalDownstreamHead, esi_Orifice_FlowDirection)
         
@@ -50,6 +55,8 @@ module orifice_elements
          !% update velocity from flowrate and area
         call common_velocity_from_flowrate_singular (eIdx)
 
+        if (setting%Debug%File%orifice_elements)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine orifice_toplevel
     ! %
     !%==========================================================================
@@ -62,22 +69,27 @@ module orifice_elements
         !% 
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% single ID of element
-        real(8), pointer :: EffectiveHeadDelta, NominalDownstreamHead, Head
-        real(8), pointer :: Zcrown, Zcrest
-        integer, pointer :: SpecificOrificeType
-        real(8) :: Zmidpt
+        real(8), pointer    :: EffectiveHeadDelta, NominalDownstreamHead, Head
+        real(8), pointer    :: Zcrown, Zcrest
+        integer, pointer    :: SpecificOrificeType
+        real(8)             :: Zmidpt
+
+        character(64) :: subroutine_name = 'orifice_effective_head_delta'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%orifice_elements) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
         !% inputs
         SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
         Head                  => elemR(eIdx,er_Head)
-        Zcrown                => elemR(eIdx,er_Zcrown)
+        Zcrown                => elemSR(eIdx,esr_Orifice_Zcrown)
         Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
         NominalDownstreamHead => elemSR(eIdx,esr_Orifice_NominalDownstreamHead)
         !% output
         EffectiveHeadDelta         => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
         !%-----------------------------------------------------------------------------
         select case (SpecificOrificeType)
-            case (BOTTOM_ORIFICE)
+            case (bottom_orifice)
                 if (Head <= Zcrest) then
                     EffectiveHeadDelta = zeroR
                 elseif (NominalDownstreamHead > Zcrest) then
@@ -85,7 +97,7 @@ module orifice_elements
                 else
                     EffectiveHeadDelta = Head - Zcrest
                 end if
-            case (SIDE_ORIFICE)
+            case (side_orifice)
                 if (Head <= Zcrest) then
                     EffectiveHeadDelta = zeroR
                 elseif (Head < Zcrown) then
@@ -99,7 +111,9 @@ module orifice_elements
                     end if
                 end if
         end select
-                    
+        
+        if (setting%Debug%File%orifice_elements)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine orifice_effective_head_delta
     !%
     !%========================================================================== 
@@ -107,22 +121,27 @@ module orifice_elements
     !%   
     subroutine orifice_flow (eIdx)
         !%-----------------------------------------------------------------------------
-        !% Description:
-        !% 
+        !% Description: calculates the flow in an orifice elements
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx
         integer, pointer :: SpecificOrificeType, FlowDirection, GeometryType
         real(8), pointer :: Flowrate, EffectiveHeadDelta, Zcrest, Head
         real(8), pointer :: RectangularBreadth, NominalDownstreamHead
-        real(8), pointer :: DischargeCoeff, EffectiveFullDepth
+        real(8), pointer :: DischargeCoeff, EffectiveFullDepth, FullArea
         real(8), pointer :: WeirExponent, VillemonteExponent, SharpCrestedWeirCoeff
-        real(8) :: CriticalDepth, AoverL, FractionCritDepth, Coef, FullArea
+        real(8) :: CriticalDepth, AoverL, FractionCritDepth, Coef
         real(8) :: ratio
+
+        character(64) :: subroutine_name = 'orifice_flow'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%orifice_elements) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
         GeometryType          => elemI(eIdx,ei_geometryType)
         SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
         FlowDirection         => elemSI(eIdx,esi_Orifice_FlowDirection)
         Flowrate              => elemR(eIdx,er_Flowrate)
+        FullArea              => elemR(eIdx,er_FullArea)
         Head                  => elemR(eIdx,er_Head)
         EffectiveHeadDelta    => elemSR(eIdx,esr_Orifice_EffectiveHeadDelta)
         Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
@@ -130,7 +149,6 @@ module orifice_elements
         DischargeCoeff        => elemSR(eIdx,esr_Orifice_DischargeCoeff)
         EffectiveFullDepth    => elemSR(eIdx,esr_Orifice_EffectiveFullDepth)
         NominalDownstreamHead => elemSR(eIdx,esr_Orifice_NominalDownstreamHead)
-        
         SharpCrestedWeirCoeff => Setting%Orifice%SharpCrestedWeirCoefficient
         WeirExponent          => Setting%Orifice%TransverseWeirExponent
         VillemonteExponent    => Setting%Orifice%VillemonteCorrectionExponent
@@ -150,7 +168,7 @@ module orifice_elements
         
         !% find critical depth to determine weir/orifice flow
         select case (SpecificOrificeType)
-            case (BOTTOM_ORIFICE)
+            case (bottom_orifice)
                 !% find critical height above opening where orifice flow turns into 
                 !% weir flow for Bottom orifice = (C_orifice/C_weir)*(Area/Length)
                 !% where C_orifice = given orifice coeff, C_weir = weir_coeff/sqrt(2g),
@@ -158,9 +176,9 @@ module orifice_elements
                 !% of the opening. For a basic sharp crested weir, C_weir = 0.414.
                 CriticalDepth = DischargeCoeff / SharpCrestedWeirCoeff * AoverL
                 FractionCritDepth = min(EffectiveHeadDelta / CriticalDepth, oneR)
-            case (SIDE_ORIFICE)
+            case (side_orifice)
                 CriticalDepth = EffectiveFullDepth
-                FractionCritDepth = min(((Head - Zcrest) / CriticalDepth), oneR)
+                FractionCritDepth = min(((Head - Zcrest) / EffectiveFullDepth), oneR)
                 !% another adjustment to critical depth is needed
                 !% for weir coeff calculation for side orifice
                 CriticalDepth = onehalfR * CriticalDepth 
@@ -173,20 +191,22 @@ module orifice_elements
         elseif (FractionCritDepth < oneR) then
             !% case where inlet depth is below critical depth thus,
             !% orifice behaves as a rectangular transverse weir
-            Coef     = DischargeCoeff * sqrt(CriticalDepth)
+            Coef     = DischargeCoeff * FullArea * sqrt(twoR * grav * CriticalDepth)
             Flowrate = FlowDirection * Coef * (FractionCritDepth ** WeirExponent)
         else 
             !% standard orifice flow condition 
             Coef      = DischargeCoeff * FullArea * sqrt(twoR * grav)
             Flowrate  = FlowDirection * Coef * sqrt(EffectiveHeadDelta)       
         end if    
-        
+
         !% applying Villemonte submergence correction for orifice having submerged weir flow
         if ((FractionCritDepth < oneR) .and. (NominalDownstreamHead > Zcrest)) then
             ratio = (NominalDownstreamHead - Zcrest) / (Head - Zcrest)
             Flowrate = Flowrate * ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent) 
         end if
-            
+
+        if (setting%Debug%File%orifice_elements) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine orifice_flow
     !%
     !%==========================================================================
@@ -202,25 +222,31 @@ module orifice_elements
         integer, intent(in) :: eIdx
         real(8), pointer :: Head, Length, Zbottom,  Zcrown
         real(8), pointer :: Depth, Area, Volume, Topwidth
-        real(8), pointer :: Perimeter, HydDepth, HydRadius,  Zcrest
-        real(8), pointer :: RectangularBreadth, TrapezoidalBreadth
-        real(8), pointer :: TriangularSideSlope, TrapezoidalLeftSlope, TrapezoidalRightSlope
+        real(8), pointer :: Perimeter, HydDepth, HydRadius,  Zcrest, Fullarea
+        real(8), pointer :: RectangularBreadth, EffectiveFullDepth
         integer, pointer :: GeometryType
+        real(8)          :: YoverYfull
+
+        character(64) :: subroutine_name = 'orifice_geometry_update'
         !%-----------------------------------------------------------------------------
-        GeometryType => elemI(eIdx,ei_geometryType)
-        Head        => elemR(eIdx,er_Head)
-        Length      => elemR(eIdx,er_Length)
-        Zbottom     => elemR(eIdx,er_Zbottom)
-        Zcrown      => elemR(eIdx,er_Zcrown)
-        Depth       => elemR(eIdx,er_Depth)
-        Area        => elemR(eIdx,er_Area)
-        Volume      => elemR(eIdx,er_Volume)
-        Topwidth    => elemR(eIdx,er_Topwidth)
-        Perimeter   => elemR(eIdx,er_Perimeter)
-        HydDepth    => elemR(eIdx,er_HydDepth)
-        HydRadius   => elemR(eIdx,er_HydRadius)
-        Zcrest                  => elemSR(eIdx,esr_Orifice_Zcrest)
-        RectangularBreadth      => elemSR(eIdx,esr_Orifice_RectangularBreadth)
+        if (setting%Debug%File%orifice_elements) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        GeometryType       => elemI(eIdx,ei_geometryType)
+        Head               => elemR(eIdx,er_Head)
+        Length             => elemR(eIdx,er_Length)
+        Zbottom            => elemR(eIdx,er_Zbottom)
+        Depth              => elemR(eIdx,er_Depth)
+        Area               => elemR(eIdx,er_Area)
+        Volume             => elemR(eIdx,er_Volume)
+        Topwidth           => elemR(eIdx,er_Topwidth)
+        Perimeter          => elemR(eIdx,er_Perimeter)
+        HydDepth           => elemR(eIdx,er_HydDepth)
+        HydRadius          => elemR(eIdx,er_HydRadius)
+        FullArea           => elemR(eIdx,er_FullArea)
+        Zcrown             => elemSR(eIdx,esr_Orifice_Zcrown)
+        Zcrest             => elemSR(eIdx,esr_Orifice_Zcrest)
+        RectangularBreadth => elemSR(eIdx,esr_Orifice_RectangularBreadth)
     
         !% find depth over bottom of orifice
         if (Head <= Zcrest) then
@@ -241,8 +267,17 @@ module orifice_elements
                 Perimeter = Topwidth + twoR * HydDepth
                 HydRadius = Area / Perimeter
             case (circular)
-                print *, 'error, the circular orifice is not yet implemented'
-                stop 2087
+                YoverYfull  = Depth / EffectiveFullDepth
+                Area        = FullArea * &
+                        xsect_table_lookup_singular (YoverYfull, ACirc, NACirc)
+                Volume      = Area * Length
+                Topwidth    = EffectiveFullDepth * &
+                        xsect_table_lookup_singular (YoverYfull, TCirc, NTCirc)
+                HydDepth    = min(Area / Topwidth, EffectiveFullDepth)
+                hydRadius   = onefourthR * EffectiveFullDepth * &
+                        xsect_table_lookup_singular (YoverYfull, RCirc, NRCirc)
+                Perimeter   = min(Area / hydRadius, &
+                        FullArea / (onefourthR * EffectiveFullDepth))
             case default
                 print *, 'error, the default case should not be reached'
                 stop 9478
@@ -256,31 +291,10 @@ module orifice_elements
         call adjust_limit_by_zerovalues_singular (eIdx, er_Topwidth,  setting%ZeroValue%Topwidth)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Perimeter, setting%ZeroValue%Topwidth)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Volume,    setting%ZeroValue%Volume)
-    
+        
+        if (setting%Debug%File%orifice_elements) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine  orifice_geometry_update
-    !%
-    !%==========================================================================
-    !%==========================================================================    
-    !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% 
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%  
-    !%
-    !%==========================================================================
-        !%==========================================================================    
-    !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% 
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%  
-    !%
     !%==========================================================================
     !% END OF MODULE
     !%+=========================================================================
