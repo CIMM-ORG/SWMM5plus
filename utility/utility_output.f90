@@ -570,8 +570,9 @@ contains
             thisP     => elemP(1:Npack,thisCol)
 
             ! thisCFL       = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
-            thisCFL =  max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP)), &
-                            maxval (abs(PCelerity(thisP)) * dt / length(thisP)))
+            thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP)), &
+                           maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * dt / length(thisP)))
+            
             max_velocity  = maxval(abs(velocity(thisP)))
             max_wavespeed = maxval(abs(wavespeed(thisP)))
             max_PCelerity = maxval(abs(PCelerity(thisP))) 
