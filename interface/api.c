@@ -249,6 +249,27 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
         else
             *value = FTTOM(Node[k].initDepth);
     }
+    else if (attr == node_StorageConstant)
+    {
+        if (Node[k].type == STORAGE)
+            *value = Storage[Node[k].subIndex].aConst;
+        else
+            *value = 0;
+    }
+    else if (attr == node_StorageCoeff)
+    {
+        if (Node[k].type == STORAGE)
+            *value = Storage[Node[k].subIndex].aCoeff;
+        else
+            *value = 0;
+    }
+    else if (attr == node_StorageExponent)
+    {
+        if (Node[k].type == STORAGE)
+            *value = Storage[Node[k].subIndex].aExpon;
+        else
+            *value = 0;
+    }
     else if (attr == node_extInflow_tSeries)
     {
         if (Node[k].extInflow)
