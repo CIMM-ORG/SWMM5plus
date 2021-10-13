@@ -249,6 +249,7 @@ contains
                 file = 'temp_fortran.txt',    &     
                 action = 'write', &
                 iostat = ios)
+            print*, 'ios', ios
             if (ios /= 0) then
                 write(*,"(A)") 'ERROR (CODE) file temp_fortran.txt could not be opened for writing.'
                 write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'

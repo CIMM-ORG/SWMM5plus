@@ -200,7 +200,7 @@ contains
 
             if (elemI(ii,ei_elementType) == CC) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_CC_" &
@@ -217,7 +217,7 @@ contains
 
             else if(elemI(ii,ei_elementType) == orifice) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = "debug_output/elemR/"//trim(str_image)//"_OR_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
@@ -368,7 +368,7 @@ contains
 
             if (elemI(ii,ei_elementType) == CC) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_CC_" &
@@ -385,7 +385,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == orifice) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = "debug_output/elemR/"//trim(str_image)//"_OR_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
