@@ -115,6 +115,8 @@ contains
             call util_profiler_start (pfc_initialize_all)
         end if
 
+        !%  --- finish setting all the file paths before initialing the interface
+        sync all
         !% --- initialize the API with the SWMM-C code
         call interface_init ()
 
