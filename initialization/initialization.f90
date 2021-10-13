@@ -100,6 +100,9 @@ contains
         !% --- output file directories
         call util_file_setup_output_folders()
 
+        !%  --- finish setting all the paths to output folders
+        sync all
+
         if (setting%Output%Verbose) then
             write(*,"(A)") "Simulation Starts..."
             write(*,"(A)") 'Using the following files:'

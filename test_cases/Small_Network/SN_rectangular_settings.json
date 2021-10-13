@@ -127,8 +127,8 @@
         "reportDt" : 100.0,
         "reportStep" : 0,
         "slots" : 20,
-        "print_links_csv" : true,
-        "print_nodes_csv" : true,
+        "print_links_csv" : false,
+        "print_nodes_csv" : false,
         "Verbose" : true,
         "Warning" : true,
         "CommandLine" : {

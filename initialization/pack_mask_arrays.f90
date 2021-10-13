@@ -1953,7 +1953,10 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+
         !% BC packs
+        !% zero out the number of upBC to get a new count of how many is in a given partition
+        N_nBCup = 0
         if (N_flowBC > 0) then
             N_nBCup = count(BC%flowI(:, bi_category) == BCup)
             if (N_nBCup > 0) then
@@ -1974,6 +1977,9 @@ contains
             end if
         end if
 
+        !% BC packs
+        !% zero out the number of dnBC to get a new count of how many is in a given partition
+        N_nBCdn = 0
         if (N_headBC > 0) then
             N_nBCdn = count(BC%headI(:, bi_category) == BCdn)
             if (N_nBCdn > 0) then

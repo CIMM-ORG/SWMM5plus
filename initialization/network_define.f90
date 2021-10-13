@@ -91,13 +91,13 @@ contains
             ! print*, '.......................Faces..................................'
             ! print*, 'b)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
             ! '    fYN_isnull    fYN_isUpGhost    fYN_isDnGhost'
-            ! do jj = 1,N_face(ii)
-            !     print*, faceI(jj,fi_Lidx)[ii],' ',faceI(jj,fi_BCtype)[ii],&
-            !     '           ',faceYN(jj,fYN_isInteriorFace)[ii], &
-            !     '                    ',faceYN(jj,fYN_isSharedFace)[ii], &
-            !     '              ',faceYN(jj,fYN_isnull)[ii], &
-            !     '            ',faceYN(jj,fYN_isUpGhost)[ii], &
-            !     '              ',faceYN(jj,fYN_isDnGhost)[ii]
+            ! do jj = 1,N_face(this_image())
+            !     print*, faceI(jj,fi_Lidx),' ',faceI(jj,fi_BCtype),&
+            !     '           ',faceYN(jj,fYN_isInteriorFace), &
+            !     '                    ',faceYN(jj,fYN_isSharedFace), &
+            !     '              ',faceYN(jj,fYN_isnull), &
+            !     '            ',faceYN(jj,fYN_isUpGhost), &
+            !     '              ',faceYN(jj,fYN_isDnGhost)
             ! end do
             print*, '===================================================================' //&
             '==================================================================='
