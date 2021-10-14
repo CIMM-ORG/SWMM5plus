@@ -63,12 +63,12 @@ contains
         !% HACK -- presently only handles ALL
         node%YN(1:N_node,nYN_isOutput) = .true.
 
-        print *, 'TESTING TO SEE WHAT HAPPENS IF ONLY ONE NODE IS OUTPUT'
-        node%YN(1:N_node,nYN_isOutput) = .false.
+        !print *, 'TESTING TO SEE WHAT HAPPENS IF ONLY ONE NODE IS OUTPUT'
+        !node%YN(1:N_node,nYN_isOutput) = .false.
 
         !node%YN(1,nYN_isOutput)  = .true.
-        node%YN(2,nYN_isOutput)  = .true.
-        node%YN(3,nYN_isOutput)  = .true.
+        !node%YN(2,nYN_isOutput)  = .true.
+        !node%YN(3,nYN_isOutput)  = .true.
         !node%YN(4,nYN_isOutput)  = .true.
 
     end subroutine output_COMMON_nodes_selection    
@@ -87,13 +87,13 @@ contains
         !% HACK -- presently only handles ALL
         link%YN(1:N_link,lYN_isOutput) = .true.
 
-        print *, 'TESTING TO SEE WHAT HAPPENS IF ONLY ONE LINK IS OUTPUT'
+        !print *, 'TESTING TO SEE WHAT HAPPENS IF ONLY ONE LINK IS OUTPUT'
 
-        link%YN(1:N_link,lYN_isOutput) = .false.
+        !link%YN(1:N_link,lYN_isOutput) = .false.
 
         !link%YN(1,lYN_isOutput)  = .true.
         ! link%YN(2,lYN_isOutput)  = .true.
-         link%YN(3,lYN_isOutput)  = .true.
+        ! link%YN(3,lYN_isOutput)  = .true.
 
     end subroutine output_COMMON_links_selection    
 !%

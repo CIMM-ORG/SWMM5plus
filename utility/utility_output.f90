@@ -517,18 +517,20 @@ contains
         !% Description:
         !% Calls write procedures for debug outout and reporting
         !%-----------------------------------------------------------------------------
+        logical :: isLastStep
         character(64) :: subroutine_name = "util_output_report"
         !%----------------------------------------------------------------------------- 
         if (setting%Debug%File%utility_output) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Debug%Output) call util_output_report_summary()
+        !if (setting%Debug%Output) call util_output_report_summary()
 
         if (setting%Output%report .and. util_output_must_report()) then
-            if (setting%Debug%Output) call util_output_write_elemR_faceR()
-            call output_write_link_files()
-            call output_write_node_files()
+            !brh20211006 if (setting%Debug%Output) call util_output_write_elemR_faceR()
+            !brh20211006 call outputD_write_link_files()
+            !brh20211006 call outputD_write_node_files()
         end if
+       
 
         if (setting%Debug%File%utility_output) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -556,6 +558,7 @@ contains
 
             !write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
             write(file_name, "(A,i5.5,A)") "summary_", this_image(), ".csv"
+            
             file_name = trim(setting%File%debug_output_summary_folder)//'/'//trim(file_name)
 
             thisCol   = col_elemP(ep_CC_ALLtm)
@@ -577,7 +580,7 @@ contains
             max_PCelerity = maxval(abs(PCelerity(thisP))) 
 
             open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
-                form = 'formatted', action = 'write', iostat = open_status)
+                 form = 'formatted', action = 'write', iostat = open_status)
 
             write(fu, fmt='(*(G0.6 : ","))') &
                 this_image(), timeNow, thisCFL, dt, max_velocity, max_wavespeed
@@ -612,7 +615,8 @@ contains
         reportStep  => setting%Output%reportStep
         timeNow     = setting%Time%Now
         reportDt    = setting%Output%reportDt
-        startReport = setting%output%reportStartTime
+        startReport = setting%Output%reportStartTime
+
 
         if ((timeNow >= reportDt * (reportStep + 1)) .and. (timeNow > startReport))then
             report = .true.
@@ -622,6 +626,7 @@ contains
         else
             report = .false.
         end if
+
 
     end function util_output_must_report
 !%
