@@ -67,6 +67,15 @@ contains
         setting%File%last_unit = setting%File%last_unit+1
         setting%File%UnitNumber%debug_setup_nodeYN_file  = setting%File%last_unit
 
+        !setting%File%last_unit = setting%File%last_unit+1
+        !setting%File%UnitNumber%outputML_combined_file  = setting%File%last_unit
+
+        setting%File%last_unit = setting%File%last_unit+1
+        setting%File%UnitNumber%outputML_filename_file  = setting%File%last_unit
+
+        setting%File%last_unit = setting%File%last_unit+1
+        setting%File%UnitNumber%outputML_control_file  = setting%File%last_unit
+
         ! !% -- debug output link and node files
         ! setting%File%last_unit = setting%File%last_unit+1
         ! setting%File%UnitNumber%debug_output_linkR_file  = setting%File%last_unit
@@ -370,6 +379,7 @@ contains
         !% initializes the output file path and filenames
         !%-----------------------------------------------------------------------------   
         integer :: istat, ireturn, ierr
+        logical :: isfolder = .false.
         character(len=256) :: cmsg, default_path, output_path, this_purpose
         character(64) :: subroutine_name = "util_file_setup_output_folders"
         !%-----------------------------------------------------------------------------
@@ -385,7 +395,7 @@ contains
         this_purpose = trim('first-level output folder (-o command line)')
         ireturn = 0   
         call util_file_check_if_folder_exist (setting%File%output_folder,this_purpose, ireturn)  
-
+        
         !% =======================
         !% --- Parse the time-stamp output folder and path
         !% --- use the input filename kernel and and '_output'
@@ -414,12 +424,13 @@ contains
             '/' // trim( setting%File%output_kernel) // '_' // trim(setting%Time%DateTimeStamp)
 
         !% --- check for clash if timestamp subfolder exists
+        !% --- HACK --- replace with inquire() 
         call chdir(trim(setting%File%output_timestamp_subfolder),ierr)
         if (ierr == 0) then
-            write(*,"(A)") "ERROR (operational) -- code must create a unique time-stamp output folder,"
-            write(*,"(A)") "but folder already exists. Either delete folder or wait a sufficient,"
-            write(*,"(A)") "time to get a unique time stamp."
-            write(*,"(A)") "Folder attempted to create was..."
+            write(*,"(A)") "ERROR (operational) -- code must create a unique time-stamp output folder,..."
+            write(*,"(A)") "...but folder already exists. Either delete folder or wait one minute"
+            write(*,"(A)") "...to get a unique time stamp."
+            write(*,"(A)") "...Folder attempted to create was..."
             write(*,"(A)") trim(setting%File%output_timestamp_subfolder)
             stop 'in ' // subroutine_name 
         end if
@@ -430,9 +441,10 @@ contains
                 cmdstat=istat, cmdmsg=cmsg)
             
             if (istat /= 0) then
-                write(*,"(A)") 'ERROR (user, code, or machine) -- attempting to make directory (mkdir)'
-                write(*,"(A)") 'for storing output files in directory '//trim(setting%File%output_timestamp_subfolder)     
-                write(*,"(A)") 'system returned an error message of...'
+                write(*,"(A)") 'ERROR (user, code, or machine) -- attempting to make directory (mkdir)...'
+                write(*,"(A)") '...for storing output files in directory...'
+                write(*,"(A)") trim(setting%File%output_timestamp_subfolder)     
+                write(*,"(A)") '...system returned an error message of...'
                 write(*,"(A)") trim(cmsg)
                 write(*,"(A,i5)") 'The cmdstat returned was ',istat
                 stop 'in ' // subroutine_name
@@ -442,6 +454,61 @@ contains
         this_purpose = 'timestamp subfolder'
         ireturn = 0
         call util_file_check_if_folder_exist (setting%File%output_timestamp_subfolder,this_purpose, ireturn)  
+
+        !% --- make directory for timestamp/temp subfolder
+        if (setting%File%output_temp_subfolder .eq. "") setting%File%output_temp_subfolder = 'temp'
+        
+        setting%File%output_temp_subfolder = trim(setting%File%output_timestamp_subfolder) // &
+            '/' // trim( setting%File%output_temp_subfolder) 
+
+        if (this_image() == 1) then    
+            call execute_command_line (('mkdir '//trim(setting%File%output_temp_subfolder)), &
+                cmdstat=istat, cmdmsg=cmsg)
+            if (istat /= 0) then
+                    write(*,"(A)") 'ERROR (user, code, or machine) -- attempting to make directory (mkdir)...'
+                    write(*,"(A)") '...for storing output files in directory...'
+                    write(*,"(A)") trim(setting%File%output_temp_subfolder)     
+                    write(*,"(A)") '...system returned an error message of...'
+                    write(*,"(A)") trim(cmsg)
+                    write(*,"(A,i5)") 'The cmdstat returned was ',istat
+                    stop 'in ' // subroutine_name
+            end if
+        end if        
+
+        !% --- combined multi-level output file kernel in temp directory (numbers added before writing)
+        if (setting%File%outputML_combinedfile_kernel .eq. "") setting%File%outputML_combinedfile_kernel = 'combined'
+        
+        setting%File%outputML_combinedfile_kernel= trim(setting%File%output_temp_subfolder) &
+             // '/' //trim(setting%File%outputML_combinedfile_kernel)
+
+        !% ---storage of output filenames (used when StoredFilenames is exceeded)
+        if (trim(setting%File%outputML_filename_file) .ne. "") then
+            setting%File%outputML_filename_file = trim(setting%File%output_timestamp_subfolder) &
+                // '/' // trim(setting%File%outputML_filename_file)
+        else 
+            setting%File%outputML_filename_file = trim(setting%File%output_timestamp_subfolder) &
+                // '/output_filenames.txt'
+        end if        
+
+        !% --- storage of control files for ML output
+        if (trim(setting%File%outputML_control_file) .ne. "") then
+            setting%File%outputML_control_file = trim(setting%File%output_timestamp_subfolder) &
+                // '/' // trim(setting%File%outputML_control_file)
+        else 
+            setting%File%outputML_control_file = trim(setting%File%output_timestamp_subfolder) &
+                // '/output_control.unf'
+        end if 
+
+        !% --- link output files
+        if (setting%File%outputML_Link_kernel .eq. "") setting%File%outputML_Link_kernel = 'link'
+        setting%File%outputML_Link_kernel = trim(setting%File%output_timestamp_subfolder) &
+             // '/' //trim(setting%File%outputML_Link_kernel)
+
+        !% --- node output files
+             if (setting%File%outputML_Node_kernel .eq. "") setting%File%outputML_Node_kernel = 'node'
+             setting%File%outputML_Node_kernel = trim(setting%File%output_timestamp_subfolder) &
+                  // '/' //trim(setting%File%outputML_Node_kernel)
+
 
         !% --- setup report and output files
         setting%File%out_file = trim(setting%File%output_timestamp_subfolder) // '/' //trim(setting%File%output_kernel)//'.out'
@@ -628,28 +695,40 @@ contains
                 if (setting%File%force_folder_creation) then
                     if (this_image() == 1) then
                         call execute_command_line (('mkdir '//trim(thisfolder)), &
-                            cmdstat=istat, cmdmsg=cmsg)                    
+                            exitstat=istat, cmdmsg=cmsg)      
                         if (istat /= 0) then
-                            write(*,"(A)") 'ERROR (user, code, or machine) -- attempting to make directory (mkdir)'
-                            write(*,"(A)") 'for storing output files in directory '//trim(thisfolder)     
-                            write(*,"(A)") 'system returned an error message of...'
+                            write(*,"(A)") 'WARNING (user,system) -- attempting to make directory (mkdir)...'
+                            write(*,"(A)") trim(thisfolder)     
+                            write(*,"(A)") '...but system returned an error message of...'
                             write(*,"(A)") trim(cmsg)
-                            write(*,"(A,i5)") 'The cmdstat returned was ',istat
+                            write(*,"(A,i5)") '...The istat returned was ',istat
+                            write(*,"(A)") '...Likely problem is that base directory does not exist and cannot be created.'
+                            write(*,"(A)") '...Folder purpose is: '//this_purpose  
+                            if (thisfolder(:1) == '/') then  
+                                write(*,"(A)") 'ERROR (user): the directory (see WARNING above) was an absolute directory...'
+                                write(*,"(A)") '... so code must stop here.'
+                                stop 'in ' // subroutine_name
+                            else   
+                                write(*,"(A)") '...code is continuing using default directories at command line or project folder'  
+                            end if
+                            !stop 'in ' // subroutine_name
                         end if                        
                     end if    
                 else    
-                    write(*,"(A,i3)") 'ERROR (USER): chdir() to a required folder returned error code ',ierr
-                    write(*,"(A)") 'It is likely that the path does not exist and must be created by user.'
-                    write(*,"(A)") 'Required folder entered as: '//trim(thisfolder)
-                    write(*,"(A)") 'Folder purpose is: '//this_purpose
+                    write(*,"(A,i3)") 'ERROR (user):  a required folder does not exist...'
+                    write(*,"(A)") '... It is likely that the path does not exist and must be created by user.'
+                    write(*,"(A)") '...Required folder entered as: '
+                    write(*,"(A)") trim(thisfolder)
+                    write(*,"(A)") '...Folder purpose is: '//this_purpose
                     stop 'in ' // subroutine_name
                 end if    
             else
                 ireturn = 2
-                write(*,"(A,i3)") 'ERROR (USER): chdir() to a required folder returned error code ',ierr
-                write(*,"(A)") 'It is likely that the path does not exist and must be created by user.'
-                write(*,"(A)") 'Required folder entered as: '//trim(thisfolder)
-                write(*,"(A)") 'Folder purpose is: '//this_purpose
+                write(*,"(A,i3)") 'ERROR (USER): a required folder does not exist...'
+                write(*,"(A)") '...It is likely that the path does not exist and must be created by user.'
+                write(*,"(A)") '...Required folder entered as: '
+                write(*,"(A)") trim(thisfolder)
+                write(*,"(A)") '...Folder purpose is: '//this_purpose
                 stop 'in ' // subroutine_name
             end if 
         else

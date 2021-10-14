@@ -170,6 +170,20 @@ module define_keys
         enumerator :: BLink
         enumerator :: StaticSlot
         enumerator :: VariableSlot
+        !% keys for report time processing
+        enumerator :: InSeconds
+        enumerator :: InMinutes
+        enumerator :: InHours  
+        enumerator :: InDays    
+        !% keys for output link processing
+        enumerator :: AverageElements
+        enumerator :: SumElements
+        enumerator :: MaximumValue
+        enumerator :: SingleValue
+        !% keys for output FeatureType
+        enumerator :: LinkOut
+        enumerator :: NodeElemOut
+        enumerator :: NodeFaceOut
     end enum
 
     !% rm 20210610 brh because of issues with ALLtm key
@@ -179,5 +193,7 @@ module define_keys
     !     enumerator :: ETM_AC
     !     enumerator :: AC
     ! end enum
+
+
 
 end module define_keys

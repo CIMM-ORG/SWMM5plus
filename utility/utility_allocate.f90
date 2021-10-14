@@ -34,33 +34,37 @@ module utility_allocate
     public :: util_allocate_columns
     public :: util_allocate_bc
     public :: util_allocate_profiler
+    public :: util_allocate_outputML_elemtypes
+    public :: util_allocate_outputML_facetypes
+    public :: util_allocate_outputML_storage
+    public :: util_allocate_outputML_times
+    public :: util_allocate_outputML_filenames  
+    public :: util_allocate_check
 
 contains
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+! PUBLIC
+!==========================================================================
+!
     subroutine util_allocate_linknode()
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   Allocates the link and node storage used for the coarse representation
-    !   of the network connectivity
-    !
-    ! Method:
-    !   The tables node%I, link%I, node%R, link%R, node%YN, link%YN, are allocated
-    !   These are defined in globals.f08). Every time memory is allocated, the
-    !   util_allocate_check functionality (from utility.f08) is used to
-    !   determine wheter or not there was an error during the allocation.
-    !
-    !-----------------------------------------------------------------------------
-
+        !-----------------------------------------------------------------------------
+        !
+        ! Description:
+        !   Allocates the link and node storage used for the coarse representation
+        !   of the network connectivity
+        !
+        ! Method:
+        !   The tables node%I, link%I, node%R, link%R, node%YN, link%YN, are allocated
+        !   These are defined in globals.f08). Every time memory is allocated, the
+        !   util_allocate_check functionality (from utility.f08) is used to
+        !   determine wheter or not there was an error during the allocation.
+        !
+        !-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'util_allocate_linknode'
         integer       :: additional_rows = 0
         integer       :: ii, obj_name_len
-
-    !-----------------------------------------------------------------------------
-
+        !-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -70,65 +74,67 @@ contains
         end if
 
         allocate(node%I(N_node + additional_rows, Ncol_nodeI), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'node%I')
         node%I(:,:) = nullvalueI
 
         allocate(link%I(SWMM_N_link + additional_rows, Ncol_linkI), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'link%I')
         link%I(:,:) = nullvalueI
 
         allocate(node%R(N_node + additional_rows, Ncol_nodeR), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'node%R')
         node%R(:,:) = nullvalueR
 
         allocate(link%R(SWMM_N_link + additional_rows, Ncol_linkR), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'link%R')
         link%R(:,:) = nullvalueR
 
         allocate(node%YN(N_node + additional_rows, Ncol_nodeYN), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'node%YN')
         node%YN(:,:) = nullvalueL
 
         allocate(link%YN(SWMM_N_link + additional_rows, Ncol_linkYN), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'link%YN')
         link%YN(:,:) = nullvalueL
 
         !% |
         !% | Only names of objects present in EPA-SWMM are stored
         !% v
 
+        !% --- allocate storage for node names
         allocate(node%Names(N_node), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'node%Names')
 
+        !% --- get the length of the node name and allocate node%Names(:)%str to the correct size
         do ii = 1, N_node
             obj_name_len = interface_get_obj_name_len(ii, API_NODE)
             allocate(character(obj_name_len) :: node%Names(ii)%str, stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg)
+            call util_allocate_check(allocation_status, emsg, 'character(obj_name_len) :: node%Names(ii)%str')
         end do
 
         allocate(link%Names(N_link), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'link%Names')
 
         do ii = 1, N_link
             obj_name_len = interface_get_obj_name_len(ii, API_LINK)
             allocate(character(obj_name_len) :: link%Names(ii)%str, stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg)
+            call util_allocate_check(allocation_status, emsg, 'character(obj_name_len) :: link%Names(ii)%str')
         end do
 
         !% allocate link_node_output_idx
         allocate(node_output_idx(N_node + additional_rows),stat=allocation_status,errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'node_output_idx')
 
         allocate(link_output_idx(SWMM_N_link + additional_rows), stat=allocation_status,errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'link_output_idx')
 
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_allocate_linknode
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_partitioning_arrays()
         allocate(adjacent_links(max_branch_per_node))
         allocate(elem_per_image(num_images()))
@@ -149,33 +155,33 @@ contains
             allocate(phantom_link_tracker(size(link%I, oneI)))
         end if
     end subroutine util_allocate_partitioning_arrays
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine util_deallocate_partitioning_arrays()
+!
+!==========================================================================
+!==========================================================================
+!!% MOVED TO UTILITY DEALLOCATE
+    ! subroutine util_deallocate_partitioning_arrays()
 
-        if (allocated(adjacent_links)) deallocate(adjacent_links)
-        if (allocated(elem_per_image)) deallocate(elem_per_image)
-        if (allocated(image_full)) deallocate(image_full)
+    !     if (allocated(adjacent_links)) deallocate(adjacent_links)
+    !     if (allocated(elem_per_image)) deallocate(elem_per_image)
+    !     if (allocated(image_full)) deallocate(image_full)
 
-        !% If BIPquick is being used for Partitioning, allocate additional arrays
-        if (setting%Partitioning%PartitioningMethod == BQuick) then
-            deallocate(B_nodeI)
-            deallocate(B_nodeR)
-            deallocate(totalweight_visited_nodes)
-            deallocate(partitioned_nodes)
-            deallocate(partitioned_links)
-            deallocate(weight_range)
-            deallocate(accounted_for_links)
-            deallocate(phantom_link_tracker)
-        end if
+    !     !% If BIPquick is being used for Partitioning, allocate additional arrays
+    !     if (setting%Partitioning%PartitioningMethod == BQuick) then
+    !         deallocate(B_nodeI)
+    !         deallocate(B_nodeR)
+    !         deallocate(totalweight_visited_nodes)
+    !         deallocate(partitioned_nodes)
+    !         deallocate(partitioned_links)
+    !         deallocate(weight_range)
+    !         deallocate(accounted_for_links)
+    !         deallocate(phantom_link_tracker)
+    !     end if
 
-    end subroutine util_deallocate_partitioning_arrays
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+    ! end subroutine util_deallocate_partitioning_arrays
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_elemX_faceX ()
         ! the max_caf_elem and max_caf_face are the maximum length of the coarray
         ! across all employed images
@@ -194,82 +200,82 @@ contains
         !==== elem allocation ====
         ncol => Ncol_elemR ! the maxmiumu number of columns
         allocate(elemR(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemR')
         elemR(:,:) = nullvalueR
 
         ncol => Ncol_elemI
         allocate(elemI(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemI')
         elemI(:,:) = nullvalueI
 
         ncol => Ncol_elemYN
         allocate(elemYN(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemYN')
         elemYN(:,:) = nullvalueL
 
         ncol => Ncol_elemP
         allocate(elemP(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemP')
         elemP(:,:) = nullvalueI
 
         ncol => Ncol_elemPGalltm
         allocate(elemPGalltm(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemPGalltm')
         elemPGalltm(:,:) = nullvalueI
 
         ncol => Ncol_elemPGetm
         allocate(elemPGetm(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemPGetm')
         elemPGetm(:,:) = nullvalueI
 
         ncol => Ncol_elemPGac
         allocate(elemPGac(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemPGac')
         elemPGac(:,:) = nullvalueI
 
         ncol => Ncol_elemSI
         allocate(elemSI(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemSI')
         elemSI(:,:) = nullvalueI
 
         ncol => Ncol_elemSR
         allocate(elemSR(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemSR')
         elemSR(:,:) = nullvalueR
 
         ncol => Ncol_elemSGR
         allocate(elemSGR(max_caf_elem_N+N_dummy_elem, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'elemSGR')
         elemSGR(:,:) = nullvalueR
 
         !==== face allocation ====
         ncol => Ncol_faceR
         allocate(faceR(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'faceR')
         faceR(:,:) = nullvalueR
 
         ncol=> Ncol_faceI
         allocate(faceI(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'faceI')
         faceI(:,:) = nullvalueI
 
         ncol=> Ncol_faceYN
         allocate(faceYN(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'faceYN')
         faceYN(:,:) = nullvalueL
 
         ncol=> Ncol_faceP
         allocate(faceP(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'Ncol_faceP')
         faceP(:,:) = nullvalueI
 
         allocate(facePS(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'facePS')
         facePS(:,:) = nullvalueI
 
         ncol=> Ncol_faceM
         allocate(faceM(max_caf_face_N, ncol)[*], stat=allocation_status, errmsg=emsg)
-        call util_allocate_check(allocation_status, emsg)
+        call util_allocate_check(allocation_status, emsg, 'faceM')
         faceM(:,:) = nullvalueL
 
         if (setting%Debug%File%utility_allocate) &
@@ -277,10 +283,10 @@ contains
 
 
     end subroutine util_allocate_elemX_faceX
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_columns()
         !-----------------------------------------------------------------------------
         !
@@ -289,9 +295,7 @@ contains
         !   variables are stored in col_elemX(:) arrays that is a target
         !
         !-----------------------------------------------------------------------------
-
         character(64) :: subroutine_name = 'util_allocate_columns'
-
         !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%utility_allocate) &
@@ -321,10 +325,512 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_columns
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine util_allocate_bc()
+        !-----------------------------------------------------------------------------
+        ! allocate storage for boundary conditions.
+        !-----------------------------------------------------------------------------
+        character(64)      :: subroutine_name = 'util_allocate_bc'
+        integer            :: ii, allocation_status, bc_node
+        character(len=99)  :: emsg
+        !-----------------------------------------------------------------------------
+    
+        if (setting%Debug%File%utility_allocate) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if (setting%BC%slots < 2) then
+            print *, "Error: the number of slots has to be greater than 2"
+            stop "in " // subroutine_name
+        end if
+
+        if (N_headBC > 0) then
+            allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%headI')
+
+            allocate(BC%headR_timeseries(N_headBC, setting%BC%slots, N_headR), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%headR_timeseries')
+
+            allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%headIdx')
+
+            allocate(BC%headRI(N_headBC), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%headRI')
+        end if
+
+        if (N_flowBC > 0) then
+            allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%flowI')
+
+            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%slots, N_flowR), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%flowR_timeseries')
+
+            allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%flowIdx')
+
+            allocate(BC%flowRI(N_flowBC), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'BC%flowRI(N_flowBC)')
+        end if
+
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
+    end subroutine util_allocate_bc
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine util_allocate_profiler ()
+        !-----------------------------------------------------------------------------    
+        character(64)      :: subroutine_name = 'util_allocate_profiler'
+        integer            :: ii, allocation_status, bc_node
+        character(len=99)  :: emsg
+        !-----------------------------------------------------------------------------
+        if (setting%Debug%File%utility) print *, '*** enter', this_image(),subroutine_name
+
+        if (setting%Profile%YN) then
+            !% allocate profiler data
+            allocate(profiler_data(Nrow_pf,Ncol_pf), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'profiler_data')
+            profiler_data(:,:) = zeroR
+
+            !% allocate storage of profiled procedure name
+            allocate(profiler_procedure_name(Ncol_pf), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'profiler_procedure_name')
+
+            !% allocate storage of profiled procedure level (1 = upper, 2 = middle, 3 = lower)
+            allocate(profiler_procedure_level(Ncol_pf), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'profiler_procedure_level')
+
+            !% assign profile procedure name and level
+            profiler_procedure_name(:) = 'name unassigned in code'
+            profiler_procedure_level(:) = 0
+
+            profiler_procedure_name(pfc_initialize_all) = 'initialize_all'
+            profiler_procedure_level(pfc_initialize_all) = 1
+
+            profiler_procedure_name(pfc_init_partitioning) = 'init_partitioning'
+            profiler_procedure_level(pfc_init_partitioning) = 1
+
+            profiler_procedure_name(pfc_init_network_define_toplevel) = 'init_network_define_toplevel'
+            profiler_procedure_level(pfc_init_network_define_toplevel) = 1
+
+            profiler_procedure_name(pfc_init_bc) = 'init_bc'
+            profiler_procedure_level(pfc_init_bc) = 3
+
+            profiler_procedure_name(pfc_init_IC_setup) = 'init_IC_setup'
+            profiler_procedure_level(pfc_init_IC_setup) = 1
+
+            profiler_procedure_name(pfc_init_IC_from_linkdata) = 'init_IC_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_from_linkdata) = 2
+
+            profiler_procedure_name(pfc_init_IC_get_depth_from_linkdata) = 'init_IC_get_depth_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_get_depth_from_linkdata) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_flow_roughness_from_linkdata) = 'init_IC_get_flow_roughness_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_get_flow_roughness_from_linkdata) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_elemtype_from_linkdata) = 'init_IC_get_elemtype_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_get_elemtype_from_linkdata) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_geometry_from_linkdata) = 'init_IC_get_geometry_from_linkdata'
+            profiler_procedure_level(pfc_init_IC_get_geometry_from_linkdata) = 2
+
+            profiler_procedure_name(pfc_init_IC_get_channel_geometry) = 'init_IC_get_channel_geometry'
+            profiler_procedure_level(pfc_init_IC_get_channel_geometry) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_conduit_geometry) = 'init_IC_get_conduit_geometry'
+            profiler_procedure_level(pfc_init_IC_get_conduit_geometry) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_weir_geometry) = 'init_IC_get_weir_geometry'
+            profiler_procedure_level(pfc_init_IC_get_weir_geometry) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_orifice_geometry) = 'init_IC_get_orifice_geometry'
+            profiler_procedure_level(pfc_init_IC_get_orifice_geometry) = 3
+
+            profiler_procedure_name(pfc_geo_assign_JB) = 'geo_assign_JB'
+            profiler_procedure_level(pfc_geo_assign_JB) = 3
+
+            profiler_procedure_name(pfc_init_IC_get_channel_conduit_velocity) = 'init_IC_get_channel_conduit_velocity'
+            profiler_procedure_level(pfc_init_IC_get_channel_conduit_velocity) = 3
+
+            profiler_procedure_name(pfc_init_IC_from_nodedata) = 'init_IC_from_nodedata'
+            profiler_procedure_level(pfc_init_IC_from_nodedata) = 2
+
+            profiler_procedure_name(pfc_init_IC_get_junction_data) = 'init_IC_get_junction_data'
+            profiler_procedure_level(pfc_init_IC_get_junction_data) = 3
+
+            profiler_procedure_name(pfc_update_auxiliary_variables) = 'update_auxiliary_variables'
+            profiler_procedure_level(pfc_update_auxiliary_variables) = 2
+
+            profiler_procedure_name(pfc_init_IC_set_SmallVolumes) = 'init_IC_set_SmallVolumes'
+            profiler_procedure_level(pfc_init_IC_set_SmallVolumes) = 3
+
+            profiler_procedure_name(pfc_init_IC_diagnostic_interpolation_weights) = 'init_IC_diagnostic_interpolation_weights'
+            profiler_procedure_level(pfc_init_IC_diagnostic_interpolation_weights) = 3
+
+            profiler_procedure_name(pfc_face_interpolation) = 'face_interpolation'  
+            profiler_procedure_level(pfc_face_interpolation) =  2   
+
+            profiler_procedure_name(pfc_diagnostic_toplevel) = 'diagnostic_toplevel'
+            profiler_procedure_level(pfc_diagnostic_toplevel) = 2
+        end if
+
+        if (setting%Debug%File%utility) print *, '*** leave ', this_image(),subroutine_name
+    end subroutine util_allocate_profiler
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_allocate_outputML_elemtypes ()
+        !%-----------------------------------------------------------------------------
+        !% allocates the output type arrays for the element data that are output
+        !%-----------------------------------------------------------------------------
+        integer            :: allocation_status
+        character(len=99)  :: emsg        
+        character(64)       :: subroutine_name = 'util_allocate_outputML_elemtypes'
+        !%-----------------------------------------------------------------------------
+
+        !% --- don't execute if no output elements
+        if (.not. setting%Output%OutputElementsExist) return
+
+        !% --- bug check
+        if (N_OutTypeElem < 1) then
+            write(*,"(A)") 'ERROR (code) the N_OutTypeElem is less than 1 (i.e. no output types selected)'
+                write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
+                write(*,"(A,i8)") '... setting%Output%N_OutTypeElem      ', N_OutTypeElem 
+                write(*,"(A,i8)") '... etting%Output%OutputElementsExist ', setting%Output%OutputElementsExist
+                stop 'in ' // subroutine_name
+        end if
+
+        !% --- allocate the output types for elements
+        allocate(output_types_elemR(N_OutTypeElem), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_types_elemR')
+        output_types_elemR(:) = nullvalueI
+
+        !% --- allocate the output type processing for elements
+        allocate(output_typeProcessing_elemR(N_OutTypeElem), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeProcessing_elemR')
+        output_typeProcessing_elemR(:) = nullvalueI
+
+
+        !% --- allocate the output typeNames
+        allocate(output_typeNames_elemR(N_OutTypeElem), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeNames_elemR')
+        output_typeNames_elemR(:) = ""
+
+        !% --- allocate the output typeUnits
+        allocate(output_typeUnits_elemR(N_OutTypeElem), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeUnits_elemR')
+        output_typeUnits_elemR(:) = ""
+
+        !% --- allocate the output typeNames for  elements + time
+        allocate(output_typeNames_withTime_elemR(N_OutTypeElem+1), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeNames_withTime_elemR')
+        output_typeNames_withTime_elemR(:) = ""
+
+        !% --- allocate the output typeUnits for  elements + time
+        allocate(output_typeUnits_withTime_elemR(N_OutTypeElem+1), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeUnits_withTime_elemR')
+        output_typeUnits_withTime_elemR(:) = ""
+
+    end subroutine util_allocate_outputML_elemtypes
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_allocate_outputML_facetypes ()
+        !%-----------------------------------------------------------------------------
+        !% allocates the output type arrays for the face data that are output
+        !%-----------------------------------------------------------------------------
+        integer            :: allocation_status
+        character(len=99)  :: emsg        
+        character(64)       :: subroutine_name = 'util_allocate_outputML_facetypes'
+        !%-----------------------------------------------------------------------------
+
+         !% --- don't execute if no output faces
+        if (.not. setting%Output%OutputFacesExist) return
+
+        !% --- bug check
+        if (N_OutTypeFace < 1) then
+            write(*,"(A)") 'ERROR (code) the N_OutTypeFace is less than 1 (i.e. no output types selected)'
+                write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
+                write(*,"(A,i8)") '... setting%Output%N_OutTypeFace      ', N_OutTypeFace
+                write(*,"(A,i8)") '... etting%Output%OutputElementsExist ', setting%Output%OutputFacesExist
+                stop 'in ' // subroutine_name
+        end if
+
+        !% --- allocate the output types for faces
+        allocate(output_types_faceR(N_OutTypeFace), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_types_faceR')
+        output_types_faceR(:) = nullvalueI
+
+        !% --- allocate the output type processing for faces
+        allocate(output_typeProcessing_faceR(N_OutTypeFace), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeProcessing_faceR')
+        output_typeProcessing_faceR(:) = nullvalueI
+
+        !% --- allocate the output typeNames for faces
+        allocate(output_typeNames_faceR(N_OutTypeFace), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeNames_faceR')
+        output_typeNames_faceR(:) = ""
+
+        !% --- allocate the output typeUnits for faces
+        allocate(output_typeUnits_faceR(N_OutTypeFace), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeUnits_faceR')
+        output_typeUnits_faceR(:) = ""
+
+        !% --- allocate the output typenames for faces + time
+        allocate(output_typeNames_withTime_faceR(N_OutTypeFace+1), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeNames_withTime_faceR')
+        output_typeNames_withTime_faceR(:) = ""
+
+        !% --- allocate the output typeUnits for faces + time
+        allocate(output_typeUnits_withTime_faceR(N_OutTypeFace+1), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_typeUnits_withTime_faceR')
+        output_typeUnits_withTime_faceR(:) = ""
+
+    end subroutine util_allocate_outputML_facetypes  
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
+    subroutine util_allocate_outputML_times ()
+        !%-----------------------------------------------------------------------------
+        !% allocates the output time array for multi-level output
+        !%-----------------------------------------------------------------------------  
+        integer            :: allocation_status
+        integer, pointer   :: nLevel
+        character(len=99)  :: emsg  
+        character(64)      :: subroutine_name = 'utility_allocate_outputtype'
+        !%-----------------------------------------------------------------------------
+
+        !% --- don't do this is output is suppressed
+        if (setting%Output%suppress_MultiLevel_Output) return
+
+        nLevel => setting%Output%StoredLevels
+
+        !% --- bug check
+        if (nLevel < 1) then
+            write(*,"(A)") 'ERROR (code) the Output.StoredLevels is less than 1...'
+            write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
+            write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels 
+            write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output ', setting%Output%suppress_MultiLevel_Output
+            stop 'in ' // subroutine_name
+        end if
+
+        allocate(output_times(nLevel), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_times')
+        output_times(:) = nullvalueR
+
+    end subroutine util_allocate_outputML_times   
+!%
+!%==========================================================================
+!%==========================================================================
+!%  
+    subroutine util_allocate_outputML_filenames ()
+        !%-----------------------------------------------------------------------------
+        !% allocates the output filename array for multi-level output
+        !%----------------------------------------------------------------------------- 
+        integer, pointer   :: nLevel
+        integer            :: allocation_status
+        character(len=99)  :: emsg  
+        character(64)      :: subroutine_name = 'utility_allocate_outputML_filenames'
+        !%-----------------------------------------------------------------------------
+
+        !% --- don't do this is output is suppressed
+        if (setting%Output%suppress_MultiLevel_Output) return
+
+        nLevel => setting%Output%StoredFileNames
+
+        !% --- bug check
+        if (nLevel < 1) then
+            write(*,"(A)") 'ERROR (code) the Output.StoredLevels is less than 1...'
+            write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
+            write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels 
+            write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output ', setting%Output%suppress_MultiLevel_Output
+            stop 'in ' // subroutine_name
+        end if
+
+        allocate(output_binary_filenames(nLevel), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_binary_filenames')
+        output_binary_filenames(:) = "null"
+        
+    end subroutine util_allocate_outputML_filenames    
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_allocate_outputML_storage ()   
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Creates multi-time-level storage for output data
+        !%-----------------------------------------------------------------------------
+        integer, pointer  :: nLevel, nType, nMaxLevel
+        integer           :: nElem, nFace, nTotal
+        integer           :: allocation_status
+        character(len=99) :: emsg  
+        character(64)     :: subroutine_name = ' util_allocate_outputML_storage'
+        !%-----------------------------------------------------------------------------
+        !% --- only for serial
+        if (this_image() .ne. 1) return
+
+        !% --- don't do this is output is suppressed
+        if (setting%Output%suppress_MultiLevel_Output) return
+
+        !% --- shorthand for the stored levels
+        nLevel => setting%Output%StoredLevels
+
+        !% --- get the total number of time levels for the report 
+        !% --- increase by 2 for start and end files
+        if (setting%Output%reportDt > zeroR) then
+            setting%Output%MaxExpectedLevels = 2 + (setting%Time%End - setting%Output%reportStartTime) /setting%Output%reportDt
+        else
+            write (*,"(A)") 'SWMM report step less than zero, which will suppress multi-level binary output files'
+            setting%Output%suppress_MultiLevel_Output = .true.
+            return
+        end if    
+
+        !% --- check and adjust stored level output so as not to waste memory
+        if ( setting%Output%StoredLevels > setting%Output%MaxExpectedLevels+ 2) then
+            write (*,"(A)") 'Changing Output.StoredLevels to Output.MaxExpectedLevels...'
+            write (*,"(A)") '... based on requested SWMM report step. Old and new stored levels are...'
+            write (*,"(2i8)") setting%Output%StoredLevels, setting%Output%MaxExpectedLevels
+            setting%Output%StoredLevels = setting%Output%MaxExpectedLevels
+        end if
+
+        !% --- bug check
+        if (nLevel < 1) then
+            write(*,"(A)") 'ERROR (code) the Output.StoredLevels is less than 1...'
+            write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
+            write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels 
+            write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output=', setting%Output%suppress_MultiLevel_Output
+            stop 'in ' // subroutine_name
+        end if
+
+        if (setting%Output%OutputElementsExist) then
+            !% --- shortand for the output types
+            nType => N_OutTypeElem
+
+            !% --- bug check
+            if (nType < 1) then
+                write(*,"(A)") 'ERROR (code) the N_OutTypeElem is less than 1 (i.e. no output types selected)'
+                write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
+                write(*,"(A,i8)") '... setting%Output%N_OutTypeElem       ', N_OutTypeElem 
+                write(*,"(A,L)") '... etting%Output%sOutputElementsExist =', setting%Output%OutputElementsExist
+                stop 'in ' // subroutine_name
+            end if
+            
+            !% --- set the maximum number of output elements in any image
+            nElem = maxval(N_OutElem(:))
+
+            !% --- bug check
+            if (nElem < 1) then
+                write(*,"(A)") 'ERROR (code) the maximum number of elements output from an image, ...'
+                write(*,"(A)") '... maxval(N_OutElem(images)), is less than 1...'
+                write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
+                write(*,"(A,L)") '... setting%Output%OutputElementsExist =', setting%Output%OutputElementsExist
+                write(*,"(A)") '... full listing of N_OutElem(:)...'
+                write(*,"(I8)") N_OutElem(:)
+                stop 'in ' // subroutine_name
+            end if
+
+            !% allocate the multi-level element storage for each image
+            allocate(elemOutR(nElem, nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'elemOutR')
+            elemOutR(:,:,:) = nullvalueR
+
+            !% ----------------------------
+            !% --- Allocate the Element combined storage from all images for stored time steps
+            !% ----------------------------
+
+            !% --- get the total number of output elements on all images
+            nTotal = sum(N_OutElem(:))
+
+            !% --- get space for combined element data
+            allocate(OutElemDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg, 'OutElemDataR')
+            OutElemDataR(:,:,:) = nullvalueR
+
+            !brh rm !% --- get space for the indexes to the elemR() etc array
+            !brh rm allocate(OutElemGidx(nTotal), stat=allocation_status, errmsg=emsg)
+            !brh rm call util_allocate_check(allocation_status, emsg, 'OutElemGidx')
+            !brh rm OutElemGidx(:) = nullvalueI  
+
+            !% --- get space for integer data for OutElemFixedI
+            allocate(OutElemFixedI(nTotal,Ncol_oefi), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg, 'OutElemFixedI')
+            OutElemFixedI(:,:) = nullvalueI
+            
+        end if
+
+        if (setting%Output%OutputFacesExist) then
+
+            !% --- shortand for the output types
+            nType => N_OutTypeFace
+
+            !% --- bug check
+            if (nType < 1) then
+                write(*,"(A)") 'ERROR (code) the N_OutTypeFace is less than 1 (i.e. no output types selected)'
+                write(*,"(A)") '... which should have caused Output.OutputFacseExist = .false.'
+                write(*,"(A,i8)") '... setting%Output%N_OutTypeNFaces     ', N_OutTypeFace
+                write(*,"(A,L)") '... setting%Output%sOutputFacesExist =', setting%Output%OutputFacesExist
+                stop 'in ' // subroutine_name
+            end if
+            
+
+            !% --- set the maximum number of output elements in any image
+            nFace = maxval(N_OutFace(:))
+
+            !% --- bug check
+            if (nFace < 1) then
+                write(*,"(A)") 'ERROR (code) the maximum number of faces output from an image, ...'
+                write(*,"(A)") '... maxval(N_OutFace(images)), is less than 1...'
+                write(*,"(A)") '... which should have caused Output.OutputFacesExist = .false.'
+                write(*,"(A,L)") '... setting%Output%OutputFacesExist =', setting%Output%OutputFacesExist
+                write(*,"(A)") '... full listing of N_OutElem(:)...'
+                write(*,"(I8)") N_OutElem(:)
+                stop 'in ' // subroutine_name
+            end if
+
+            !% allocate the multi-level element storage for each image
+            allocate(faceOutR(nElem, nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
+            call util_allocate_check (allocation_status, emsg, 'faceOutR')
+            faceOutR(:,:,:) = nullvalueR
+
+            !% ----------------------------
+            !% --- Allocate the Face combined storage from all images for stored time steps
+            !% ----------------------------
+
+            !% --- get the total number of output elements on all images
+            nTotal = sum(N_OutFace(:))
+
+            !% --- get space for combined element data
+            allocate(OutFaceDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg, 'OutFaceDataR')
+            OutFaceDataR(:,:,:) = nullvalueR
+
+            !brh rm !% --- get space for the indexes to the elemR() etc array
+            !brh rm  allocate(OutFaceGidx(nTotal), stat=allocation_status, errmsg=emsg)
+            !brh rm  call util_allocate_check(allocation_status, emsg, 'OutFaceGidx')
+            !brh rm  OutFaceGidx(:) = nullvalueI  
+
+            !% --- get space for integer data for OutElemFixedI
+            allocate(OutFaceFixedI(nTotal,Ncol_offi), stat=allocation_status, errmsg=emsg)
+            call util_allocate_check(allocation_status, emsg, 'OutFaceFixedI')
+            OutFaceFixedI(:,:) = nullvalueI
+
+        end if
+
+        
+    end subroutine util_allocate_outputML_storage 
+!%
+!%==========================================================================
+!% PRIVATE    
+!%==========================================================================
+!%
     subroutine util_allocate_col_elemI()
         !-----------------------------------------------------------------------------
         !
@@ -333,11 +839,9 @@ contains
         !   that correspond to the enumerated ei_... array_index parameter
         !
         !-----------------------------------------------------------------------------
-
         integer, pointer    :: ncol
         integer             :: ii, jj
         character(64)       :: subroutine_name = 'util_allocate_col_elemI'
-
         !-----------------------------------------------------------------------------
 
         if (setting%Debug%File%utility_allocate) &
@@ -347,7 +851,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_elemI(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemI')
 
         !% this array can be used as a pointer target in defining masks
         col_elemI(:) = [(ii,ii=1,ncol)]
@@ -399,11 +903,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate(npack_elemP(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'npack_elemP')
 
         !% allocate an array for storing the column of each packed type
         allocate( col_elemP(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemP')
 
         !% this array can be used as a pointer target in defining masks
         col_elemP(:) = [(ii,ii=1,ncol)]
@@ -445,11 +949,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGalltm(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'npack_elemPGalltm')
 
         !% allocate an array for storing the enum type of each column
         allocate( col_elemPGalltm(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemPGalltm')
 
         !% this array can be used as a pointer target in defining masks
         col_elemPGalltm(:) = [(ii,ii=1,ncol)]
@@ -491,11 +995,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGac(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'npack_elemPGac')
 
         !% allocate an array for storing the enum type of each column
         allocate( col_elemPGac(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemPGac')
 
         !% this array can be used as a pointer target in defining masks
         col_elemPGac(:) = [(ii,ii=1,ncol)]
@@ -537,11 +1041,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_elemPGetm(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'npack_elemPGetm')
 
         !% allocate an array for storing the enum type of each column
         allocate( col_elemPGetm(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemPGetm')
 
         !% this array can be used as a pointer target in defining masks
         col_elemPGetm(:) = [(ii,ii=1,ncol)]
@@ -580,7 +1084,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_elemR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemR')
 
         !% this array can be used as a pointer target in defining masks
         col_elemR(:) = [(ii,ii=1,ncol)]
@@ -616,7 +1120,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_elemSI(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemSI')
 
         !% this array can be used as a pointer target in defining masks
         col_elemSI(:) = [(ii,ii=1,ncol)]
@@ -652,7 +1156,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_elemSR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemSR')
 
         !% this array can be used as a pointer target in defining masks
         col_elemSR(:) = [(ii,ii=1,ncol)]
@@ -688,7 +1192,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_elemSGR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemSGR')
 
         !% this array can be used as a pointer target in defining masks
         col_elemSGR(:) = [(ii,ii=1,ncol)]
@@ -724,7 +1228,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_elemWDI(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemWDI')
 
         !% this array can be used as a pointer target in defining masks
         col_elemWDI(:) = [(ii,ii=1,ncol)]
@@ -760,7 +1264,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_elemWDR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemWDR')
 
         !% this array can be used as a pointer target in defining masks
         col_elemWDR(:) = [(ii,ii=1,ncol)]
@@ -796,7 +1300,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_elemYN(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_elemYN')
 
         !% this array can be used as a pointer target in defining masks
         col_elemYN(:) = [(ii,ii=1,ncol)]
@@ -832,7 +1336,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_faceI(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_faceI')
 
         !% this array can be used as a pointer target in defining masks
         col_faceI(:) = [(ii,ii=1,ncol)]
@@ -868,7 +1372,7 @@ contains
 
         !% allocate an array for storing the column
         allocate( col_faceM(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_faceM')
 
         !% this array can be used as a pointer target in defining masks
         col_faceM(:) = [(ii,ii=1,ncol)]
@@ -908,11 +1412,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_faceP(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'npack_faceP')
 
         !% allocate an array for storing the column of each packed type
         allocate( col_faceP(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_faceP')
 
         !% this array can be used as a pointer target in defining masks
         col_faceP(:) = [(ii,ii=1,ncol)]
@@ -958,11 +1462,11 @@ contains
 
         !% allocate an array for storing the size of each packed type
         allocate( npack_facePS(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'npack_facePS')
 
         !% allocate an array for storing the column of each packed type
         allocate( col_facePS(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_facePS')
 
         !% this array can be used as a pointer target in defining masks
         col_facePS(:) = [(ii,ii=1,ncol)]
@@ -1001,7 +1505,7 @@ contains
 
         !% allocate an array of column indexes that can be used as targets of pointers
         allocate( col_faceR(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_faceR')
 
         !% this array can be used as a pointer target in defining masks
         col_faceR(:) = [(ii,ii=1,ncol)]
@@ -1037,7 +1541,7 @@ contains
 
         !% allocate an array of column indexes that can be used as targets of pointers
         allocate( col_faceYN(ncol)[*], stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg)
+        call util_allocate_check (allocation_status, emsg, 'col_faceYN')
 
         !% this array can be used as a pointer target in defining masks
         col_faceYN(:) = [(ii,ii=1,ncol)]
@@ -1050,166 +1554,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine util_allocate_bc()
-    !
-    ! allocate storage for boundary conditions.
-    !
-    !-----------------------------------------------------------------------------
-
-        character(64)      :: subroutine_name = 'util_allocate_bc'
-        integer            :: ii, allocation_status, bc_node
-        character(len=99)  :: emsg
-
-    !-----------------------------------------------------------------------------
-
-        if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        if (setting%BC%slots < 2) then
-            print *, "Error: the number of slots has to be greater than 2"
-            stop "in " // subroutine_name
-        end if
-
-        if (N_headBC > 0) then
-            allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-
-            allocate(BC%headR_timeseries(N_headBC, setting%BC%slots, N_headR), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-
-            allocate(BC%headIdx(N_headBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-
-            allocate(BC%headRI(N_headBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-        end if
-
-        if (N_flowBC > 0) then
-            allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-
-            allocate(BC%flowR_timeseries(N_flowBC, setting%BC%slots, N_flowR), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-
-            allocate(BC%flowIdx(N_flowBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-
-            allocate(BC%flowRI(N_flowBC), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-        end if
-
-        if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine util_allocate_bc
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine util_allocate_profiler ()
-        !-----------------------------------------------------------------------------
-        
-            character(64)      :: subroutine_name = 'util_allocate_profiler'
-            integer            :: ii, allocation_status, bc_node
-            character(len=99)  :: emsg
-
-        !-----------------------------------------------------------------------------
-        if (setting%Debug%File%utility) print *, '*** enter', this_image(),subroutine_name
-
-        if (setting%Profile%YN) then
-            !% allocate profiler data
-            allocate(profiler_data(Nrow_pf,Ncol_pf), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-            profiler_data(:,:) = zeroR
-
-            !% allocate storage of profiled procedure name
-            allocate(profiler_procedure_name(Ncol_pf), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-
-            !% allocate storage of profiled procedure level (1 = upper, 2 = middle, 3 = lower)
-            allocate(profiler_procedure_level(Ncol_pf), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check (allocation_status, emsg)
-
-            !% assign profile procedure name and level
-            profiler_procedure_name(:) = 'name unassigned in code'
-            profiler_procedure_level(:) = 0
-
-            profiler_procedure_name(pfc_initialize_all) = 'initialize_all'
-            profiler_procedure_level(pfc_initialize_all) = 1
-
-            profiler_procedure_name(pfc_init_partitioning) = 'init_partitioning'
-            profiler_procedure_level(pfc_init_partitioning) = 1
-
-            profiler_procedure_name(pfc_init_network_define_toplevel) = 'init_network_define_toplevel'
-            profiler_procedure_level(pfc_init_network_define_toplevel) = 1
-
-            profiler_procedure_name(pfc_init_bc) = 'init_bc'
-            profiler_procedure_level(pfc_init_bc) = 3
-
-            profiler_procedure_name(pfc_init_IC_setup) = 'init_IC_setup'
-            profiler_procedure_level(pfc_init_IC_setup) = 1
-
-            profiler_procedure_name(pfc_init_IC_from_linkdata) = 'init_IC_from_linkdata'
-            profiler_procedure_level(pfc_init_IC_from_linkdata) = 2
-
-            profiler_procedure_name(pfc_init_IC_get_depth_from_linkdata) = 'init_IC_get_depth_from_linkdata'
-            profiler_procedure_level(pfc_init_IC_get_depth_from_linkdata) = 3
-
-            profiler_procedure_name(pfc_init_IC_get_flow_roughness_from_linkdata) = 'init_IC_get_flow_roughness_from_linkdata'
-            profiler_procedure_level(pfc_init_IC_get_flow_roughness_from_linkdata) = 3
-
-            profiler_procedure_name(pfc_init_IC_get_elemtype_from_linkdata) = 'init_IC_get_elemtype_from_linkdata'
-            profiler_procedure_level(pfc_init_IC_get_elemtype_from_linkdata) = 3
-
-            profiler_procedure_name(pfc_init_IC_get_geometry_from_linkdata) = 'init_IC_get_geometry_from_linkdata'
-            profiler_procedure_level(pfc_init_IC_get_geometry_from_linkdata) = 2
-
-            profiler_procedure_name(pfc_init_IC_get_channel_geometry) = 'init_IC_get_channel_geometry'
-            profiler_procedure_level(pfc_init_IC_get_channel_geometry) = 3
-
-            profiler_procedure_name(pfc_init_IC_get_conduit_geometry) = 'init_IC_get_conduit_geometry'
-            profiler_procedure_level(pfc_init_IC_get_conduit_geometry) = 3
-
-            profiler_procedure_name(pfc_init_IC_get_weir_geometry) = 'init_IC_get_weir_geometry'
-            profiler_procedure_level(pfc_init_IC_get_weir_geometry) = 3
-
-            profiler_procedure_name(pfc_init_IC_get_orifice_geometry) = 'init_IC_get_orifice_geometry'
-            profiler_procedure_level(pfc_init_IC_get_orifice_geometry) = 3
-
-            profiler_procedure_name(pfc_geo_assign_JB) = 'geo_assign_JB'
-		    profiler_procedure_level(pfc_geo_assign_JB) = 3
-
-            profiler_procedure_name(pfc_init_IC_get_channel_conduit_velocity) = 'init_IC_get_channel_conduit_velocity'
-		    profiler_procedure_level(pfc_init_IC_get_channel_conduit_velocity) = 3
-
-            profiler_procedure_name(pfc_init_IC_from_nodedata) = 'init_IC_from_nodedata'
-            profiler_procedure_level(pfc_init_IC_from_nodedata) = 2
-
-            profiler_procedure_name(pfc_init_IC_get_junction_data) = 'init_IC_get_junction_data'
-		    profiler_procedure_level(pfc_init_IC_get_junction_data) = 3
-
-            profiler_procedure_name(pfc_update_auxiliary_variables) = 'update_auxiliary_variables'
-            profiler_procedure_level(pfc_update_auxiliary_variables) = 2
-
-            profiler_procedure_name(pfc_init_IC_set_SmallVolumes) = 'init_IC_set_SmallVolumes'
-            profiler_procedure_level(pfc_init_IC_set_SmallVolumes) = 3
-
-            profiler_procedure_name(pfc_init_IC_diagnostic_interpolation_weights) = 'init_IC_diagnostic_interpolation_weights'
-            profiler_procedure_level(pfc_init_IC_diagnostic_interpolation_weights) = 3
-
-            profiler_procedure_name(pfc_face_interpolation) = 'face_interpolation'  
-            profiler_procedure_level(pfc_face_interpolation) =  2   
-
-            profiler_procedure_name(pfc_diagnostic_toplevel) = 'diagnostic_toplevel'
-		    profiler_procedure_level(pfc_diagnostic_toplevel) = 2
-        end if
-
-        if (setting%Debug%File%utility) print *, '*** leave ', this_image(),subroutine_name
-    end subroutine util_allocate_profiler
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine util_allocate_check(allocation_status, emsg)
+    subroutine util_allocate_check(allocation_status, emsg, locationstring)
         !-----------------------------------------------------------------------------
         !
         ! Description:
@@ -1219,6 +1564,7 @@ contains
 
             integer,           intent(in   ) :: allocation_status
             character(len=*),  intent(in   ) :: emsg
+            character(len=*),   intent(in   ) :: locationstring !% unique identifier of location
 
             character(64):: subroutine_name = 'util_allocate_check'
 
@@ -1228,7 +1574,9 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
             if (allocation_status > 0) then
+                print *, allocation_status
                 print *, trim(emsg)
+                print *, 'variable trying to allocate = ',trim(locationstring)
                 stop "in " // subroutine_name
             end if
 

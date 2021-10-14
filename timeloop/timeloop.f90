@@ -4,6 +4,7 @@ module timeloop
     use define_globals
     use define_indexes
     use define_keys
+    use output
     use pack_mask_arrays
     use runge_kutta2
     use utility_output
@@ -57,9 +58,17 @@ contains
             if (doHydrology) call tl_hydrology()
             if (doHydraulics) then
                 call bc_update()
-                call tl_hydraulics()
+                call tl_hydraulics()   
             end if
             call util_output_report() !% Results must be reported before counter increment
+            !% Multilevel time step output
+            if ( (setting%Output%report) .and. &
+                 (util_output_must_report()) .and. &
+                 (.not. setting%Output%suppress_MultiLevel_Output) ) then    
+                call outputML_store_data (.false.)
+
+                
+            end if
             call tl_increment_counters(doHydraulics, doHydrology)
         end do
 
@@ -103,30 +112,31 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_hydrology
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_hydraulics()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% Top level hydraulic solver for a single time step
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Top level hydraulic solver for a single time step
+        !%-----------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'tl_hydraulics'
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+         
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-
+            
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
             call tl_solver_select()
         end if
-
+        
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
         call pack_dynamic_arrays()
         ! print *, "Need to decide on pack_dynamic_arrays 94837"
-
+        
         !%  push the old values down the stack for AC solver
         call tl_save_previous_values()
 
@@ -150,14 +160,14 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_hydraulics
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_update_hydraulic_step()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%-----------------------------------------------------------------------------
 
         logical          :: matchHydrologyStep
         real(8)          :: timeleft, timeNow, thisCFL, targetCFL, maxCFL, maxCFLlow
@@ -168,7 +178,7 @@ contains
         integer, pointer :: thisCol, Npack, thisP(:)
         character(64)    :: subroutine_name = 'tl_update_hydraulic_step'
 
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -249,14 +259,14 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_update_hydraulic_step
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_increment_counters(doHydraulics, doHydrology)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%-----------------------------------------------------------------------------
         logical, intent(inout) :: doHydraulics, doHydrology
         logical                :: useHydrology, useHydraulics
         real(8)                :: nextTimeHydraulics, nextTimeHydrology, nextTime, dtTol
@@ -264,7 +274,7 @@ contains
         integer                :: minImg
         integer, pointer       :: hydraulicStep, hydrologyStep, step, reportStep
         character(64)          :: subroutine_name = 'tl_increment_counters'
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -317,10 +327,10 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end subroutine tl_increment_counters
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_solver_select()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -338,6 +348,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
 
+       
         thiscol = ep_ALLtm
         Npack => npack_elemP(thisCol)
         thisP => elemP(1:Npack,thisCol)

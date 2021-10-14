@@ -23,6 +23,8 @@ module define_globals
     integer :: ietmp(7) = (/99,100,102,101,103,208,209/)
     integer :: iftmp(6) = (/100,101,1,1,102,207/)
 
+    integer :: temptime(6) !used for temporary time debugging
+
     !% ===================================================================================
     !% ARRAYS
     !% ===================================================================================
@@ -70,12 +72,17 @@ module define_globals
     integer, allocatable, target :: N_elem(:)
     integer, allocatable, target :: N_face(:)
     integer, allocatable, target :: N_unique_face(:)
+    !% output elements on each image (coarray)
+    integer, allocatable, target :: N_OutElem(:)[:]
+    !% output nodes on each image (coarray)
+    integer, allocatable, target :: N_OutFace(:)[:]
 
     !%  elems in coarray
     real(8), allocatable, target :: elemR(:,:)[:]       !% coarray for elements
     integer, allocatable, target :: elemI(:,:)[:]       !% coarray for element Interger
     logical, allocatable, target :: elemYN(:,:)[:]      !% coarray for element logical
     integer, allocatable, target :: elemP(:,:)[:]       !% coarray for element pack array
+    real(8), allocatable, target :: elemOutR(:,:,:)[:]  !% coarray for packed, multi-level output storage (index,type,level)
 
     integer, allocatable, target :: elemPGalltm(:,:)[:] !% coarray for element pack geometry array
     integer, allocatable, target :: elemPGac(:,:)[:]    !% coarray for element pack geometry array
@@ -91,6 +98,7 @@ module define_globals
     integer, allocatable, target :: faceP(:,:)[:]       !% coarray for faces pack array
     integer, allocatable, target :: facePS(:,:)[:]      !% coarray for shared faces pack array
     logical, allocatable, target :: faceM(:,:)[:]       !% coarray for faces mask array
+    real(8), allocatable, target :: faceOutR(:,:,:)[:]  !% coarray for packed, multi-level output storage (index,type,level)
 
     !% BIPquick Arrays - (De)Allocated in BIPquick.f08
     integer, allocatable :: B_nodeI(:,:)
@@ -111,6 +119,49 @@ module define_globals
     !%link and node output_idx
     integer, allocatable :: link_output_idx(:)
     integer, allocatable :: node_output_idx(:)
+
+    !% element output types
+    integer, allocatable, target           :: output_types_elemR(:)
+    integer, allocatable, target           :: output_typeProcessing_elemR(:)
+    character(len=64), allocatable, target :: output_typeNames_elemR(:)
+    character(len=16), allocatable         :: output_typeUnits_elemR(:)
+    character(len=64), allocatable, target :: output_typeNames_withTime_elemR(:)
+    character(len=15), allocatable, target :: output_typeUnits_withTime_elemR(:)
+    
+
+    !% face output types
+    integer, allocatable, target           :: output_types_faceR(:)
+    integer, allocatable, target           :: output_typeProcessing_faceR(:)
+    character(len=64), allocatable, target :: output_typeNames_faceR(:)
+    character(len=16), allocatable         :: output_typeUnits_faceR(:)
+    character(len=64), allocatable, target :: output_typeNames_withTime_faceR(:)
+    character(len=16), allocatable         :: output_typeUnits_withTime_faceR(:)
+
+    !% output times
+    real(8), allocatable :: output_times(:)
+    ! filenames for output binaries
+    character(len=256), allocatable, target :: output_binary_filenames(:)
+    character(len=256), allocatable, target :: output_binary_filenames_all(:)
+
+    !% storage of global element index for output -- not coarray
+    !brh rm integer, allocatable, target :: OutElemGidx(:)   
+
+    !% storage for all real data on all output elements for limited time levels
+    !% (outelement, type, time-level) real data -- not coarray
+    real(8), allocatable, target :: OutElemDataR(:,:,:) 
+    !% storage for fixed integer data needed in output elements -- not coarray
+    !% (outelement, dataindex)
+    integer, allocatable, target :: OutElemFixedI(:,:)
+
+    !% storage of global face index for output -- not coarray
+    !brh rm integer, allocatable, target :: OutFaceGidx(:)      
+    
+    !% storage for all real data on all output faces for limited time levels
+    !% (outelement, type, time-level) real data -- not coarray
+    real(8), allocatable, target :: OutFaceDataR(:,:,:) 
+    !% storage for fixed integer data needed in output faces -- not coarray
+    !% (outface, dataindex)
+    integer, allocatable, target :: OutFaceFixedI(:,:)
 
     !% ===================================================================================
     !% CONSTANTS
@@ -144,6 +195,7 @@ module define_globals
     real(8), parameter :: threehalfR = threeR / twoR
     real(8), parameter :: fourthirdsR = fourR / threeR
 
+    real(8), parameter :: seconds_per_minute = 60.0
     real(8), parameter :: seconds_per_hour = 3600.0
     real(8), parameter :: seconds_per_day  = 86400.0
 
@@ -173,6 +225,8 @@ module define_globals
     integer :: N_etm
     integer :: N_link_output
     integer :: N_node_output
+    integer, target :: N_OutTypeElem
+    integer, target :: N_OutTypeFace
 
     !% Number of API parameters
     integer, parameter :: N_api_node_attributes = api_node_overflow

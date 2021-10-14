@@ -26,24 +26,24 @@ module network_define
     public :: init_network_define_toplevel
 
 contains
-    !
-    !==========================================================================
-    ! PUBLIC
-    !==========================================================================
-    !
+!
+!==========================================================================
+! PUBLIC
+!==========================================================================
+!
     subroutine init_network_define_toplevel ()
-    !--------------------------------------------------------------------------
-    !
-    !% Initializes a element-face network from a link-node network.
-    !%   Requires network links and nodes before execution
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% Initializes a element-face network from a link-node network.
+        !%   Requires network links and nodes before execution
+        !
+        !--------------------------------------------------------------------------
 
         integer :: ii, jj
 
         character(64) :: subroutine_name = 'init_network_define_toplevel'
 
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -108,11 +108,11 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_define_toplevel
-    !
-    !==========================================================================
-    ! PRIVATE
-    !==========================================================================
-    !
+!
+!==========================================================================
+! PRIVATE
+!==========================================================================
+!
     subroutine init_network_update_nj2_elem()
         integer, allocatable :: nJ2_nodes(:)
         integer              :: N_nJ2_nodes
@@ -135,16 +135,16 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_update_nj2_elem
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_linkslope()
-    !--------------------------------------------------------------------------
-    !
-    !% compute the slope across each link
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% compute the slope across each link
+        !
+        !--------------------------------------------------------------------------
 
         character(64) :: subroutine_name = 'init_network_linkslope'
 
@@ -152,7 +152,7 @@ contains
         real(8), pointer :: zUp, zDn, Slope, Length
         integer          :: mm
 
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -193,16 +193,16 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_network_linkslope
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_datacreate()
-    !--------------------------------------------------------------------------
-    !
-    !% creates the network of elements and faces from nodes and link
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% creates the network of elements and faces from nodes and link
+        !
+        !--------------------------------------------------------------------------
 
         integer :: ii, image
         integer :: ElemGlobalIdx, FaceGlobalIdx
@@ -212,7 +212,7 @@ contains
         integer, pointer :: NodeUp, NodeDn, NodeUpTyp, NodeDnTyp
 
         character(64) :: subroutine_name = 'init_network_datacreate'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -256,29 +256,29 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_datacreate
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_set_global_indexes &
         (image, ElemGlobalCounter, FaceGlobalCounter)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% This subroutine initaializes the global element and face indexes.
-    !% N_elem and N_face are global vectors of whose row number corresponds
-    !% to the number of elements and faces in a certain image. By looping
-    !% through all the images the element and face global indexes are set
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% This subroutine initaializes the global element and face indexes.
+        !% N_elem and N_face are global vectors of whose row number corresponds
+        !% to the number of elements and faces in a certain image. By looping
+        !% through all the images the element and face global indexes are set
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in)     :: image
         integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
 
         integer                 :: ii
 
         character(64) :: subroutine_name = 'init_network_set_global_indexes'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -293,22 +293,22 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_set_global_indexes
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_set_dummy_elem ()
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% initialize dummy row in the elem arrays
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% initialize dummy row in the elem arrays
+        !
+        !--------------------------------------------------------------------------
+        !
         integer       :: dummyIdx
 
         character(64) :: subroutine_name = 'init_network_set_dummy_elem'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -325,21 +325,21 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_set_dummy_elem
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_handle_partition &
         (image, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, FaceGlobalCounter)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% Traverse through all the links and nodes in a partition and creates
-    !% elements and faces. This subroutine assumes there will be at least
-    !% one link in a partition.
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% Traverse through all the links and nodes in a partition and creates
+        !% elements and faces. This subroutine assumes there will be at least
+        !% one link in a partition.
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in)     :: image
         integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
         integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
@@ -349,7 +349,7 @@ contains
         integer, dimension(:), allocatable, target :: packed_link_idx
 
         character(64) :: subroutine_name = 'init_network_handle_partition'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -389,18 +389,18 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_partition
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_map_nodes (image)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% map all the interior junction faces in an image
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% map all the interior junction faces in an image
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in)    :: image
 
         integer :: ii, pNodes
@@ -408,7 +408,7 @@ contains
         integer, dimension(:), allocatable, target :: packed_node_idx, JunctionElementIdx
 
         character(64) :: subroutine_name = 'init_network_map_nodes'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -452,18 +452,18 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_map_nodes
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_map_shared_faces (image)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% set the global indexes for shared faces across images
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% set the global indexes for shared faces across images
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in)    :: image
 
         integer :: ii, NsharedFaces
@@ -472,7 +472,7 @@ contains
         integer, dimension(:), allocatable, target ::  sharedFaces
 
         character(64) :: subroutine_name = 'init_network_map_shared_faces'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -505,20 +505,20 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_map_shared_faces
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_handle_upstreamnode &
         (image, thisLink, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
         FaceGlobalCounter)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% Handle the node upstream of a link to create elements and faces
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% Handle the node upstream of a link to create elements and faces
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in)     :: image, thisLink, thisNode
         integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
         integer, intent(inout)  :: ElemGlobalCounter, FaceGlobalCounter
@@ -527,7 +527,7 @@ contains
         integer, pointer        :: nAssignStatus, nodeType, linkUp
 
         character(64) :: subroutine_name = 'init_network_handle_upstreamnode'
-    !--------------------------------------------------------------------------
+       !--------------------------------------------------------------------------
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -560,6 +560,7 @@ contains
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
                         faceI(FaceLocalCounter,fi_BCtype)   = BCup
                         node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
+                        node%I(thisNode,ni_face_idx)        = FaceLocalCounter 
                         !% set zbottom
                         faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                         !% change the node assignmebt value
@@ -588,6 +589,7 @@ contains
                         !% First assign the face index to the nJ2 node, then will
                         !% update with the elem_uL index of the upstream element
                         node%I(thisNode,ni_elemface_idx)     = FaceLocalCounter
+                        node%I(thisNode,ni_face_idx)         = FaceLocalCounter
 
                         !% Check 3: If the node is an edge node (meaning this node is the
                         !% connecting node across partitions)
@@ -715,18 +717,18 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_upstreamnode
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_handle_link &
         (image, thisLink, upNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
         FaceGlobalCounter)
-    !--------------------------------------------------------------------------
-    !
-    !% handle links in a partition
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% handle links in a partition
+        !
+        !--------------------------------------------------------------------------
 
         integer, intent(in)     :: image, thisLink, upNode
         integer, intent(inout)  :: ElemLocalCounter, FaceLocalCounter
@@ -739,7 +741,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_handle_link'
 
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -813,19 +815,19 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_link
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_handle_downstreamnode &
         (image, thisLink, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
         FaceGlobalCounter)
-    !--------------------------------------------------------------------------
-    !
-    !% handle the node downstream of a link
-    !
-    !--------------------------------------------------------------------------
-    !
+        !--------------------------------------------------------------------------
+        !
+        !% handle the node downstream of a link
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in)    :: image, thisLink, thisNode
         integer, intent(inout) :: ElemLocalCounter, FaceLocalCounter
         integer, intent(inout) :: ElemGlobalCounter, FaceGlobalCounter
@@ -833,7 +835,7 @@ contains
         integer, pointer :: nAssignStatus, nodeType, linkDn
 
         character(64) :: subroutine_name = 'init_network_handle_downstreamnode'
-    !--------------------------------------------------------------------------
+     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -867,6 +869,7 @@ contains
                         !% set zbottom
                         faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                         node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
+                        node%I(thisNode,ni_face_idx)        = FaceLocalCounter 
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
@@ -892,6 +895,7 @@ contains
                         !% First assign the face index to the nJ2 node, then will
                         !% update with the elem_uL index of the upstream element
                         node%I(thisNode,ni_elemface_idx)   = FaceLocalCounter
+                        node%I(thisNode,ni_face_idx)        = FaceLocalCounter
 
                         !% integer data
                         if (node%I(thisNode,ni_P_is_boundary) == EdgeNode) then
@@ -994,18 +998,18 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_downstreamnode
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_handle_nJm &
         (image, thisNode, ElemLocalCounter, FaceLocalCounter, ElemGlobalCounter, &
         FaceGlobalCounter, nAssignStatus)
-    !--------------------------------------------------------------------------
-    !
-    !% subdivides the multi branch junctions into elements and faces
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% subdivides the multi branch junctions into elements and faces
+        !
+        !--------------------------------------------------------------------------
 
         integer, intent(in)    :: image, thisNode
         integer, intent(inout) :: ElemLocalCounter, FaceLocalCounter
@@ -1018,7 +1022,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_handle_nJm'
 
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1226,18 +1230,18 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_handle_nJm
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_map_nJm_branches (image, thisJNode, JelemIdx)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% map all the multi branch junction elements
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% map all the multi branch junction elements
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in)                       :: image, thisJNode
         integer, dimension(:), target, intent(in) :: JelemIdx
 
@@ -1246,7 +1250,7 @@ contains
         integer, pointer :: upBranchIdx, dnBranchIdx
         integer, pointer :: eIdx, fLidx
         character(64) :: subroutine_name = 'init_network_map_nJm_branches'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1351,25 +1355,25 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_network_map_nJm_branches
-        !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_map_shared_nJm_nodes (image, fLidx, nIdx)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% set the global index, map, and ghost element for nJm nodes
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% set the global index, map, and ghost element for nJm nodes
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in) :: image, fLidx, nIdx
 
         integer             :: ii
         integer, pointer    :: fGidx, eUp, eDn, targetImage, branchIdx
 
         character(64) :: subroutine_name = 'init_network_map_shared_nJm_nodes'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1405,20 +1409,20 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_map_shared_nJm_nodes
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_map_nJ2 (image, thisJNode)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% map all the nJ2 nodes. All the nJ2 node maps are handeled in the partition
-    !% this is for the special cases where a disconnected nJ2 has not been mapped
-    !% properly
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% map all the nJ2 nodes. All the nJ2 node maps are handeled in the partition
+        !% this is for the special cases where a disconnected nJ2 has not been mapped
+        !% properly
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in) :: image, thisJNode
 
         integer             :: ii, upBranchSelector, dnBranchSelector
@@ -1427,7 +1431,7 @@ contains
         integer, pointer    :: eIdx, fLidx
 
         character(64) :: subroutine_name = 'init_network_map_nJ2'
-    !--------------------------------------------------------------------------
+     !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1448,7 +1452,7 @@ contains
             LinkLastElem = link%I(upBranchIdx,li_last_elem_idx)
 
             !% find the downstream face index of that last element
-            fLidx => node%I(thisJNode,ni_elemface_idx)
+            fLidx => node%I(thisJNode,ni_elemface_idx) 
 
             !% if the face is a shared face across images,
             !% it will not have any upstream local element
@@ -1473,7 +1477,9 @@ contains
 
             !% find the downstream face index of that last element
             fLidx => node%I(thisJNode,ni_elemface_idx)
+ 
 
+            !stop 89703
             !% if the face is a shared face across images,
             !% it will not have any downstream local element
             !% (not sure if we need this condition)
@@ -1491,18 +1497,18 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_network_map_nJ2
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_map_shared_nJ2_nodes (image, fLidx, nIdx)
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% set the global index, map, and ghost element for nJ2 nodes
-    !
-    !--------------------------------------------------------------------------
-    !
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% set the global index, map, and ghost element for nJ2 nodes
+        !
+        !--------------------------------------------------------------------------
+        !
         integer, intent(in) :: image, fLidx, nIdx
 
         integer             :: ii
@@ -1510,7 +1516,7 @@ contains
         logical, pointer    :: isUpGhost, isDnGhost
 
         character(64) :: subroutine_name = 'init_network_map_shared_nJ2_nodes'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1544,22 +1550,22 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_map_shared_nJ2_nodes
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     function init_network_nJm_branch_length (LinkIdx) result (BranchLength)
-    !--------------------------------------------------------------------------
-    !
-    !% compute the length of a junction branch
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% compute the length of a junction branch
+        !
+        !--------------------------------------------------------------------------
 
         integer, intent(in)  :: LinkIdx
         real(8)              :: BranchLength
 
         character(64) :: subroutine_name = 'init_network_nJm_branch_length'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1573,21 +1579,21 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function init_network_nJm_branch_length
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_nullify_nJm_branch (ElemIdx, FaceIdx)
-    !--------------------------------------------------------------------------
-    !
-    !% set all the values to zero for a null junction
-    !
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        !
+        !% set all the values to zero for a null junction
+        !
+        !--------------------------------------------------------------------------
 
         integer, intent(in)  :: ElemIdx, FaceIdx
 
         character(64) :: subroutine_name = 'init_network_nullify_nJm_branch'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1602,19 +1608,19 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_nullify_nJm_branch
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine init_network_set_interior_faceYN ()
-    !
-    !--------------------------------------------------------------------------
-    !
-    !% set the logicals of fYN_isInteriorFace
-    !
-    !--------------------------------------------------------------------------
+        !
+        !--------------------------------------------------------------------------
+        !
+        !% set the logicals of fYN_isInteriorFace
+        !
+        !--------------------------------------------------------------------------
         character(64) :: subroutine_name = 'init_network_set_interior_faceYN'
-    !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1631,9 +1637,9 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_set_interior_faceYN
-    !
-    !==========================================================================
-    ! END OF MODULE
-    !==========================================================================
-    !
+!
+!==========================================================================
+! END OF MODULE
+!==========================================================================
+!
 end module network_define

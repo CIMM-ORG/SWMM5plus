@@ -129,6 +129,23 @@ module define_settings
         real (8) :: EpochFinishSeconds  = 0.0
     end type CPUTimeType   
 
+    !% setting%Output%DataLink
+    type DataOutType
+        logical :: isAreaOut         = .true.
+        logical :: isDepthOut        = .true.
+        logical :: isFlowrateOut     = .true.
+        logical :: isFroudeNumberOut = .false.
+        logical :: isHeadOut         = .true.
+        logical :: isHydRadiusOut    = .false.
+        logical :: isPerimeterOut    = .false.
+        logical :: isSlotWidthOut    = .false.
+        logical :: isSlotDepthOut    = .false.
+        logical :: isTopWidthOut     = .false.
+        logical :: isVelocityOut     = .true. 
+        logical :: isVolumeOut       = .true. 
+        logical :: isWaveSpeedOut    = .false.    
+    end type DataOutType  
+
     !% setting%Limiter%BC
     type LimiterBCType
         logical :: UseInflowLimiter = .true.
@@ -200,6 +217,10 @@ module define_settings
         integer :: debug_setup_nodeR_file
         integer :: debug_setup_nodeI_file
         integer :: debug_setup_nodeYN_file
+        !integer :: outputML_combined_file
+        integer :: outputML_filename_file
+        integer :: outputML_control_file
+
     !     integer :: debug_output_linkR_file
     !     integer :: debug_output_linkI_file
     !     integer :: debug_output_nodeR_file
@@ -347,11 +368,33 @@ module define_settings
 
     !% setting%File
     type FileType
-        character(len=256) :: base_folder = ""
-        character(len=256) :: library_folder = ""
-        character(len=256) :: project_folder = "" ! project path
-        character(len=256) :: output_folder= "" !
-        character(len=256) :: output_timestamp_subfolder = ""
+        !% standard files and folders
+        character(len=256)   :: base_folder = ""
+        character(len=256)   :: library_folder = ""
+        character(len=256)   :: project_folder = "" ! project path
+        character(len=256)   :: output_folder= "" !
+        character(len=256)   :: output_timestamp_subfolder = ""
+        character(len=256)   :: output_temp_subfolder = "temp"
+        character(len=256)   :: setting_file = "" ! path to settings JSON file
+        character(len=256)   :: input_kernel = "" ! main part of input file name
+        character(len=256)   :: output_kernel= "" ! main part ouf output file name
+        character(len=256)   :: inp_file = "" ! path to SWMM input (.inp) file
+        character(len=256)   :: rpt_file = "" ! path to SWMM report (.rpt) file
+        character(len=256)   :: out_file = "" ! path to SWMM output (.out) file
+        logical              :: force_folder_creation = .false.
+        integer              :: last_unit = 1000 !% starting point for assigning unit numbers
+        type(UnitNumberType) :: UnitNumber
+    
+        !% for multi-level output
+        character(len=256) :: outputML_Link_kernel = "link"
+        character(len=256) :: outputML_Node_kernel = "node" 
+        character(len=256) :: outputML_combinedfile_kernel = "combined_output" !% filenames that combine across images
+        character(len=256) :: outputML_filename_file = 'output_filenames.txt'  !% list of interim filenames used in combined output
+        character(len=256) :: outputML_control_file = 'control.unf'  !% global parameters that control the processing of combined output
+        integer            :: outputML_Ncombined_file_written = 0
+        integer            :: outputML_total_timelevels_written = 0
+        
+        !% for csv dump output
         character(len=256) :: debug_setup_link_folder = ""
         character(len=256) :: debug_setup_node_folder = ""
         character(len=256) :: debug_output_link_folder = ""
@@ -361,35 +404,15 @@ module define_settings
         character(len=256) :: debug_output_summary_folder = ""
         character(len=256) :: swmm5_output_link_folder = ""
         character(len=256) :: swmm5_output_node_folder = ""
-        character(len=256) :: setting_file = "" ! path to settings JSON file
-        character(len=256) :: inp_file = "" ! path to SWMM input (.inp) file
-        character(len=256) :: rpt_file = "" ! path to SWMM report (.rpt) file
-        character(len=256) :: out_file = "" ! path to SWMM output (.out) file
-
         character(len=256) :: links_input_file = "links_input.csv"
         character(len=256) :: nodes_input_file = "nodes_input.csv"
-
         character(len=256) :: debug_setup_linkR_file = "linkR.csv"
         character(len=256) :: debug_setup_linkI_file = "linkI.csv"
         character(len=256) :: debug_setup_nodeR_file = "nodeR.csv"
         character(len=256) :: debug_setup_nodeI_file = "nodeI.csv"
-        character(len=256) :: debug_setup_nodeYN_file = "nodeYN.csv"
-
-        ! character(len=256) :: debug_output_linkR_file = ""
-        ! character(len=256) :: debug_output_linkI_file = ""
-        ! character(len=256) :: debug_output_nodeR_file = ""
-        ! character(len=256) :: debug_output_nodeI_file = ""
-        ! character(len=256) :: debug_output_nodeYN_file = ""
-        ! character(len=256) :: debug_output_elemR_file = ""
-        ! character(len=256) :: debug_output_faceR_file = ""
-
-        character(len=256) :: input_kernel = "" ! main part of input file name
-        character(len=256) :: output_kernel= "" ! main part ouf output file name
+        character(len=256) :: debug_setup_nodeYN_file = "nodeYN.csv"        
         logical :: links_input_file_exist = .false.
         logical :: nodes_input_file_exist = .false.
-        logical :: force_folder_creation = .false.
-        type(UnitNumberType)   :: UnitNumber
-        integer :: last_unit = 1000
     end type FileType  
 
     ! setting%Junction
@@ -430,14 +453,24 @@ module define_settings
         real(8) :: reportStartTime
         real(8) :: reportDt
         integer :: reportStep
-        !integer :: Slots = 20
-        integer :: max_links_csv = 10
-        integer :: max_nodes_csv = 10
+        integer :: reportTimeUnits = InHours
+        integer :: LastLevel = 0
+        integer :: MaxExpectedLevels = 0
+        integer :: StoredLevels = 100
+        logical :: OutputElementsExist = .false.
+        logical :: OutputFacesExist = .false.
+        integer :: StoredFileNames = 2
+        logical :: UseFileNameFile = .false.
+        !integer :: Slots = 20 !% remove?
+        integer :: max_links_csv = 100
+        integer :: max_nodes_csv = 100
         logical :: print_links_csv = .false.
         logical :: print_nodes_csv = .false.
+        logical :: suppress_MultiLevel_Output = .false.
         logical :: Verbose = .true.
         logical :: Warning = .true.
         type(CommandLineType) :: CommandLine
+        type(DataOutType) :: DataOut
     end type OutputType    
 
     !% setting%Partitioning
@@ -888,31 +921,69 @@ contains
         call json%get('Output.report', logical_value, found)
         setting%Output%report = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Output.report not found'
+
         call json%get('Output.reportStartTime', real_value, found)
         setting%Output%reportStartTime = real_value
         if (.not. found) stop "Error - json file - setting " // 'Output.reportStartTime not found'
+
         call json%get('Output.reportDt', real_value, found)
         setting%Output%reportDt = real_value
         if (.not. found) stop "Error - json file - setting " // 'Output.reportDt not found'
+
         call json%get('Output.reportStep', integer_value, found)
         setting%Output%reportStep = integer_value
         if (.not. found) stop "Error - json file - setting " // 'Output.reportStep not found'
+
+       ! Load BIPQuick settings
+        call json%get('Output.reportTimeUnits', c, found)
+        call util_lower_case(c)
+        if (c == 'seconds') then
+            setting%Output%reportTimeUnits = InSeconds
+        else if (c == 'minutes') then
+            setting%Output%reportTimeUnits = InMinutes
+        else if (c == 'hours') then
+            setting%Output%reportTimeUnits = InHours
+        else if (c == 'days') then
+            setting%Output%reportTimeUnits = InDays
+        else
+            print *, "Error, the setting '" // trim(c) // "' is not supported for Output.reportTimeUnits"
+            stop 4201
+        end if
+        if (.not. found) stop "Error - json file - setting " // 'Output.reportTimeUnits'
+
+
+        call json%get('Output.StoredLevels', integer_value, found)
+        setting%Output%StoredLevels = integer_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.StoredLevels not found'
+
+        call json%get('Output.StoredFileNames', integer_value, found)
+        setting%Output%StoredFileNames = integer_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.StoredFileNames not found'
+       
+        call json%get('Output.UseFileNameFile', logical_value, found)
+        setting%Output%UseFileNameFile = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.UseFileNameFile not found'
 
         !% --- HACK NOT USED?
         !call json%get('Output.slots', integer_value, found)
         !setting%Output%slots = integer_value
         !if (.not. found) stop "Error - json file - setting " // 'Output.slots not found'
 
+        !% --- suppression of output
+        call json%get('Output.suppress_MultiLevel_Output', logical_value, found)
+        setting%Output%suppress_MultiLevel_Output = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.suppress_MultiLevel_Output not found'
+        
+
         !% --- link and node text files
         call json%get('Output.print_links_csv', logical_value, found)
         setting%Output%print_links_csv = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Output.print_links_csv not found'
+
         call json%get('Output.print_nodes_csv', logical_value, found)
         setting%Output%print_nodes_csv = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Output.print_nodes_csv not found'
         
-
-
         !% --- command line
         call json%get('Output.CommandLine.quiet', logical_value, found)
         setting%Output%CommandLine%quiet = logical_value
@@ -931,7 +1002,60 @@ contains
         setting%Output%Warning = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Output.Warning not found'    
 
-        ! Orifice settings
+        !% -------------------------
+        !% --- data out ----
+        !%
+        !% --- Area
+        call json%get('Output.DataOut.isAreaOut', logical_value, found)
+        setting%Output%DataOut%isAreaOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isAreaOut not found' 
+        !% --- Depth
+        call json%get('Output.DataOut.isDepthOut', logical_value, found)
+        setting%Output%DataOut%isDepthOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isDepthOut not found' 
+        !% --- Flowrate
+        call json%get('Output.DataOut.isFlowrateOut', logical_value, found)
+        setting%Output%DataOut%isFlowrateOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isFlowrateOut not found' 
+        !% --- Froude Number
+        call json%get('Output.DataOut.isFroudeNumberOut', logical_value, found)
+        setting%Output%DataOut%isFroudeNumberOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isFroudeNumberOut not found'  
+        !% --- Head
+        call json%get('Output.DataOut.isHeadOut', logical_value, found)
+        setting%Output%DataOut%isHeadOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isHeadOut not found'   
+        !% --- Hydraulic Radius
+        call json%get('Output.DataOut.isHydRadiusOut', logical_value, found)
+        setting%Output%DataOut%isHydRadiusOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isHydRadiusOut not found'  
+        !% --- Perimeter
+        call json%get('Output.DataOut.isPerimeterOut', logical_value, found)
+        setting%Output%DataOut%isPerimeterOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isPerimeterOut not found'  
+        !% --- Slot width
+        call json%get('Output.DataOut.isSlotWidthOut', logical_value, found)
+        setting%Output%DataOut%isSlotWidthOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isSlotWidthOut not found'  
+        !% --- Slot depth
+        call json%get('Output.DataOut.isSlotDepthOut', logical_value, found)
+        setting%Output%DataOut%isSlotDepthOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isSlotDepthOut not found'  
+        !% --- Top Width
+        call json%get('Output.DataOut.isTopWidthOut', logical_value, found)
+        setting%Output%DataOut%isTopWidthOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isTopWidthOut not found'  
+        !% --- Velocity
+        call json%get('Output.DataOut.isVelocityOut', logical_value, found)
+        setting%Output%DataOut%isVelocityOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isVelocityOut not found'
+        !% --- Volume
+        call json%get('Output.DataOut.isVolumeOut', logical_value, found)
+        setting%Output%DataOut%isVolumeOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isVolumeOut not found'   
+
+        !-------------------------
+        ! --- Orifice settings
         call json%get('Orifice.SharpCrestedWeirCoefficient', real_value, found)
         setting%Orifice%SharpCrestedWeirCoefficient = real_value
         if (.not. found) stop "Error - setting " // 'Orifice.SharpCrestedWeirCoefficient not found'
