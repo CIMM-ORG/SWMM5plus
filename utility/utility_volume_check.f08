@@ -8,7 +8,6 @@ module utility_volume_check
 
     implicit none
 
-
 !-----------------------------------------------------------------------------
 !
 ! Description:
@@ -16,19 +15,17 @@ module utility_volume_check
 !
 !-----------------------------------------------------------------------------
 
-
     private
 
     public :: util_volume_conservation
 
     
     contains
-    !%
-    !%==========================================================================  
-    !% PUBLIC
-    !%==========================================================================  
-    !%
-
+!%
+!%==========================================================================  
+!% PUBLIC
+!%==========================================================================  
+!%
     subroutine util_volume_conservation(diagnostic_type)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -44,7 +41,7 @@ module utility_volume_check
 
         character(64) :: subroutine_name = 'util_volume_conservation'
 
-
+        if (icrash) return
         if (setting%Debug%File%utility_volume_check) print *, '*** enter ',subroutine_name
 
         select case(diagnostic_type)
@@ -55,6 +52,8 @@ module utility_volume_check
             case (2) ! Volume recorder in timeloop 
 
             case (3) ! Simply record max/min volume during the simulation
+            end select       
+             
         if (count() .and. count())
 
   
@@ -64,9 +63,13 @@ module utility_volume_check
 
 
         if (setting%Debug%File%utility_volume_check) print *, '*** leave ',subroutine_name
-    end subroutine utility_volume_conservation
 
-    
+    end subroutine util_volume_conservation
+!%
+!%==========================================================================  
+!% PRIVATE
+!%==========================================================================  
+!%  
     subroutine util_volume_bc(diagnostic_type)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -77,6 +80,7 @@ module utility_volume_check
 
         character(64) :: subroutine_name = 'util_volume_bc'
 
+        if (icrash) return
         if (setting%Debug%File%utility_volume_check) print *, '*** enter ',subroutine_name
 
 

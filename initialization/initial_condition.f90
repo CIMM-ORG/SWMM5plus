@@ -44,6 +44,7 @@ contains
         character(64)    :: subroutine_name = 'init_IC_toplevel'
 
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -170,6 +171,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_from_linkdata'
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -227,6 +229,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -335,6 +338,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -365,6 +369,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -441,6 +446,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_flow_roughness_from_linkdata'
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -500,6 +506,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_channel_geometry'
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -601,6 +608,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -695,7 +703,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_weir_geometry'
     !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -799,7 +807,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_orifice_geometry'
     !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -885,7 +893,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_channel_conduit_velocity'
     !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -929,6 +937,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_from_nodedata'
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -975,7 +984,7 @@ contains
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
     !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1283,6 +1292,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_solver_select'
 
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1338,6 +1348,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_small_values_diagnostic_elements'
 
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1370,6 +1381,7 @@ contains
         integer, pointer ::  Npack, thisP(:), tM
         integer :: ii, kk, tB
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1437,6 +1449,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
 
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1475,6 +1488,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_set_zero_lateral_inflow'
 
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1497,6 +1511,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_oneVectors'
 
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1519,6 +1534,7 @@ contains
         character(64)       :: subroutine_name = 'init_IC_slot'
 
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 

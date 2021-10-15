@@ -57,7 +57,7 @@ contains
         integer       :: connectivity
 
         ! -----------------------------------------------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -260,6 +260,7 @@ contains
     ! -----------------------------------------------------------------------------------------------------------------
         character(64) :: subroutine_name = 'bip_allocate_arrays'
     ! -----------------------------------------------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -291,6 +292,7 @@ contains
             character(64) :: subroutine_name = 'bip_allocate_arrays'
             integer       :: ii, counter
         ! -----------------------------------------------------------------------------------------------------------------
+            if (icrash) return
             if (setting%Debug%File%BIPquick) &
                 write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -329,6 +331,7 @@ contains
         integer :: upstream_link, upstream_node, uplink_counter
         integer ii, jj, uplinks
     ! ----------------------------------------------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -383,6 +386,7 @@ contains
         integer, intent(in) :: link_index
         real(8)             :: weight, length, element_length
     ! --------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),function_name
 
         !% Sometimes the Interface gives garbage for these values so I need to adjust
@@ -422,6 +426,7 @@ contains
         integer :: ii, jj
 
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -467,6 +472,7 @@ contains
         integer, intent(in out) :: weight_index, root
         integer :: jj
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -518,6 +524,7 @@ contains
         integer :: ii, weight_index
 
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -575,6 +582,7 @@ contains
         integer :: upstream_node_list(3)
         integer :: ii, jj, kk
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -633,6 +641,7 @@ contains
         integer :: jj
 
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -698,6 +707,7 @@ contains
         real(8) :: nearest_overestimate
         integer :: ii
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -772,6 +782,7 @@ contains
         integer :: upstream_node
         integer :: ii, jj
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -834,6 +845,7 @@ contains
         integer :: upstream_node
         integer :: ii, jj
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -893,6 +905,7 @@ contains
         real(8) :: length_from_start, total_length, start_weight, weight_ratio, link_weight
         integer :: upstream_node
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) print *, '*** enter ', this_image(),function_name
 
         !% The length of the spanning_link
@@ -941,6 +954,7 @@ contains
         integer :: kk
         real    :: l1, l2, y1, y2
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1068,6 +1082,7 @@ contains
         integer   :: jj
 
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1160,6 +1175,7 @@ contains
         integer    :: ii, kk
 
     !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 

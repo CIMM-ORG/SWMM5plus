@@ -65,6 +65,7 @@ contains
         integer       :: additional_rows = 0
         integer       :: ii, obj_name_len
         !-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -136,6 +137,7 @@ contains
 !==========================================================================
 !
     subroutine util_allocate_partitioning_arrays()
+        if (icrash) return
         allocate(adjacent_links(max_branch_per_node))
         allocate(elem_per_image(num_images()))
         allocate(image_full(num_images()))
@@ -193,7 +195,7 @@ contains
         character(64) :: subroutine_name = 'util_allocate_elemX_faceX'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -297,7 +299,7 @@ contains
         !-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'util_allocate_columns'
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -337,7 +339,7 @@ contains
         integer            :: ii, allocation_status, bc_node
         character(len=99)  :: emsg
         !-----------------------------------------------------------------------------
-    
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -388,6 +390,7 @@ contains
         integer            :: ii, allocation_status, bc_node
         character(len=99)  :: emsg
         !-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%utility) print *, '*** enter', this_image(),subroutine_name
 
         if (setting%Profile%YN) then
@@ -492,7 +495,6 @@ contains
         character(len=99)  :: emsg        
         character(64)       :: subroutine_name = 'util_allocate_outputML_elemtypes'
         !%-----------------------------------------------------------------------------
-
         !% --- don't execute if no output elements
         if (.not. setting%Output%OutputElementsExist) return
 
@@ -843,7 +845,7 @@ contains
         integer             :: ii, jj
         character(64)       :: subroutine_name = 'util_allocate_col_elemI'
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -873,10 +875,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemI
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemP()
         !-----------------------------------------------------------------------------
         !
@@ -894,7 +896,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemP'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -919,10 +921,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemP
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemPGalltm()
         !-----------------------------------------------------------------------------
         !
@@ -940,7 +942,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemPGalltm'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -965,10 +967,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemPGalltm
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemPGac()
         !-----------------------------------------------------------------------------
         !
@@ -986,7 +988,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemPGac'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1011,10 +1013,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemPGac
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemPGetm()
         !-----------------------------------------------------------------------------
         !
@@ -1032,7 +1034,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemPGetm'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1057,10 +1059,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemPGetm
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemR()
         !-----------------------------------------------------------------------------
         !
@@ -1075,7 +1077,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemR'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1093,10 +1095,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemR
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemSI()
         !-----------------------------------------------------------------------------
         !
@@ -1111,7 +1113,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemSI'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1129,10 +1131,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemSI
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemSR()
         !-----------------------------------------------------------------------------
         !
@@ -1147,7 +1149,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemSR'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1165,10 +1167,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemSR
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemSGR()
         !-----------------------------------------------------------------------------
         !
@@ -1183,7 +1185,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemSGR'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1201,10 +1203,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemSGR
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemWDI()
         !-----------------------------------------------------------------------------
         !
@@ -1219,7 +1221,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemWDI'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1237,10 +1239,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemWDI
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemWDR()
         !-----------------------------------------------------------------------------
         !
@@ -1255,7 +1257,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemWDI'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1273,10 +1275,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemWDR
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_elemYN()
         !-----------------------------------------------------------------------------
         !
@@ -1291,7 +1293,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_elemYN'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1309,10 +1311,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemYN
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_faceI()
         !-----------------------------------------------------------------------------
         !
@@ -1327,7 +1329,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceI'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1345,10 +1347,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceI
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_faceM()
         !-----------------------------------------------------------------------------
         !
@@ -1363,7 +1365,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceM'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1381,10 +1383,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceM
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_faceP()
         !-----------------------------------------------------------------------------
         !
@@ -1403,7 +1405,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceP'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1428,10 +1430,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceP
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_facePS()
         !-----------------------------------------------------------------------------
         !
@@ -1453,7 +1455,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_facePS'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1478,10 +1480,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_facePS
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_col_faceR()
         !-----------------------------------------------------------------------------
         !
@@ -1496,7 +1498,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceR'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1514,9 +1516,9 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceR
-    !
-    !==========================================================================
-    !==========================================================================
+!
+!==========================================================================
+!==========================================================================
     !
     subroutine util_allocate_col_faceYN()
         !-----------------------------------------------------------------------------
@@ -1532,7 +1534,7 @@ contains
         character(64)       :: subroutine_name = 'util_allocate_col_faceYN'
 
         !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1550,10 +1552,10 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceYN
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine util_allocate_check(allocation_status, emsg, locationstring)
         !-----------------------------------------------------------------------------
         !
@@ -1569,7 +1571,7 @@ contains
             character(64):: subroutine_name = 'util_allocate_check'
 
         !-----------------------------------------------------------------------------
-
+            if (icrash) return
             if (setting%Debug%File%utility) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 

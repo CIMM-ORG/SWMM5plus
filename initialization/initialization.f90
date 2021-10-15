@@ -55,6 +55,7 @@ contains
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'initialize_toplevel'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -231,6 +232,11 @@ contains
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
+
+        if (icrash) then  !% if crash in initialization, write the output and exit
+            call outputML_store_data (.true.)
+            return
+        end if
         
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -267,6 +273,7 @@ contains
         character(len=13) :: datetimestamp   
         character(64) :: subroutine_name = 'init_timestamp'
         !%-----------------------------------------------------------------------------  
+        if (icrash) return
         call date_and_time(values = thisTime)
         write(cyear, "(i4)") thisTime(1)
         write(cmonth,"(i2)") thisTime(2)
@@ -341,21 +348,6 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!%  
-    subroutine init_linknode_input_csv_files ()
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% initializes csv input files with links and nodes for output
-        !%-----------------------------------------------------------------------------   
-
-        !%-----------------------------------------------------------------------------  
-
-        stop 709873
-
-    end subroutine init_linknode_input_csv_files   
-!%    
-!%==========================================================================
-!%==========================================================================
 !%      
     subroutine init_linknode_arrays()
         !%-----------------------------------------------------------------------------
@@ -373,7 +365,7 @@ contains
         character(64) :: subroutine_name = 'init_linknode_arrays'
 
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -511,7 +503,7 @@ contains
         integer :: ntseries, nbasepat
         character(64) :: subroutine_name = "init_bc"
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -635,7 +627,7 @@ contains
         integer       :: ii
         character(64) :: subroutine_name = 'init_partitioning'
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -689,7 +681,8 @@ contains
         integer :: duplicated_face_counter=0
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
-
+        !%----------------------------------------------------------------------------- 
+        if (icrash) return
         if (setting%Debug%File%utility_array) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -779,7 +772,6 @@ contains
     end subroutine init_coarray_length
 !%
 !%==========================================================================
-
 !%==========================================================================
 !%
     subroutine init_time()

@@ -44,6 +44,7 @@ contains
         character(64) :: subroutine_name = 'init_network_define_toplevel'
 
         !--------------------------------------------------------------------------
+        if (icrash) return
 
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -119,7 +120,7 @@ contains
         integer, allocatable :: nJ2_nodes(:)
         integer              :: N_nJ2_nodes
         character(64) :: subroutine_name = 'init_network_update_nj2_elem'
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -155,7 +156,7 @@ contains
         integer          :: mm
 
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -215,7 +216,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_datacreate'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -281,7 +282,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_set_global_indexes'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -311,7 +312,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_set_dummy_elem'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -352,7 +353,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_handle_partition'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -411,7 +412,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_map_nodes'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -475,7 +476,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_map_shared_faces'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -530,6 +531,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_handle_upstreamnode'
        !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -766,7 +768,7 @@ contains
         character(64) :: subroutine_name = 'init_network_handle_link'
 
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -862,7 +864,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_handle_downstreamnode'
      !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1072,7 +1074,7 @@ contains
         character(64) :: subroutine_name = 'init_network_handle_nJm'
 
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1313,7 +1315,7 @@ contains
         integer, pointer :: eIdx, fLidx
         character(64) :: subroutine_name = 'init_network_map_nJm_branches'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1436,7 +1438,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_map_shared_nJm_nodes'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1494,7 +1496,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_map_nJ2'
      !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1579,7 +1581,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_map_shared_nJ2_nodes'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1656,6 +1658,7 @@ contains
 
         character(64) :: subroutine_name = 'init_network_nullify_nJm_branch'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1683,7 +1686,7 @@ contains
         !--------------------------------------------------------------------------
         character(64) :: subroutine_name = 'init_network_set_interior_faceYN'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%network_define) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 

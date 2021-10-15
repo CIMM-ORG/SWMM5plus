@@ -33,7 +33,7 @@ contains
 
         character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -77,7 +77,7 @@ contains
         character(64) :: subroutine_name = 'init_discretization_nominal'
 
     !-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 

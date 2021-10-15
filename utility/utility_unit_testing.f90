@@ -19,7 +19,11 @@ module utility_unit_testing
   public :: util_utest_global_index_check
 
 contains
-
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
   subroutine util_utest_local_global
 
     !% In this subroutine we are checking the the local and global indexs of the link,node,elem and face arrays are unique
@@ -149,7 +153,10 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
   end subroutine util_utest_local_global
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_utest_pack_arrays
 
       !% Going through all of the pack arrays and making sure they are unique, this follows the same process as the subroutine above, with a slight change.
@@ -1474,7 +1481,10 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_pack_arrays
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_utest_node_link_image
 
       !% In this subroutine we are checking whether the every image has atleast one node and link assigned to it.
@@ -1542,7 +1552,10 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_node_link_image
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine util_utest_slope_checking
       !% In this subroutine we are checking that all of the slopes are postive.
       !% To do this and loop through and if we find a negative slope then we exit the loop and report it.
@@ -1572,7 +1585,10 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_slope_checking
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
 
     subroutine util_utest_global_index_check
       !% In this subroutine we are checking that the global indexs are correct by adding the first valid global index of an image with the local index
@@ -1632,7 +1648,10 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_global_index_check
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     !subroutine geometry_checking
 
       !integer ii, jj
@@ -1647,6 +1666,9 @@ contains
 
     !end subroutine geometry_checking
 
-
-
+!%
+!%==========================================================================
+!% END MODULE    
+!%==========================================================================
+!%
   end module utility_unit_testing

@@ -55,7 +55,6 @@ contains
 !==========================================================================
 !==========================================================================
 !
-
     subroutine util_deallocate_linknode()
     !-----------------------------------------------------------------------------
     !
@@ -77,6 +76,7 @@ contains
         character(64) :: subroutine_name = 'util_deallocate_linknode'
 
     !-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -155,6 +155,7 @@ contains
     !-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'util_deallocate_partitioning_arrays'
     !-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -188,6 +189,7 @@ contains
         character(64) :: subroutine_name = 'util_deallocate_elemX_faceX'
 
     !-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -268,6 +270,7 @@ contains
         character(64) :: subroutine_name = 'util_deallocate_columns'
 
     !-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -353,6 +356,7 @@ contains
 
         character(64) :: subroutine_name = 'util_deallocate_bc'
 
+        if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -408,8 +412,6 @@ contains
 !==========================================================================
 !==========================================================================
 !
-
-
     subroutine util_deallocate_check(deallocation_status, emsg, locationstring)
         !-----------------------------------------------------------------------------
         !
@@ -424,7 +426,7 @@ contains
             character(64):: subroutine_name = 'util_deallocate_check'
 
         !-----------------------------------------------------------------------------
-
+            if (icrash) return
             if (setting%Debug%File%utility) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 

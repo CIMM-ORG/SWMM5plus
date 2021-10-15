@@ -25,9 +25,19 @@ module define_globals
 
     integer :: temptime(6) !used for temporary time debugging
 
-    !% ===================================================================================
-    !% ARRAYS
-    !% ===================================================================================
+!% ===================================================================================
+!% VARIABLES
+!% ===================================================================================
+!% Developer note -- most variables are in setting%..., the only variables that should
+!% be in globals are ones that are internal to the code (no user setting) and always 
+!% referred to with a short name
+
+    
+    logical :: icrash = .false. !% error condition 
+
+!% ===================================================================================
+!% ARRAYS
+!% ===================================================================================
 
     !% Number of maximum branches for a junction
     integer, parameter :: max_us_branch_per_node = 3
@@ -163,9 +173,18 @@ module define_globals
     !% (outface, dataindex)
     integer, allocatable, target :: OutFaceFixedI(:,:)
 
-    !% ===================================================================================
-    !% CONSTANTS
-    !% ===================================================================================
+
+    !% Profiling Timer
+    type(wall_clk) :: timer
+
+    !% profiling storage
+    real(8), allocatable :: profiler_data(:,:)
+    character (len=64), allocatable :: profiler_procedure_name(:)
+    integer, allocatable :: profiler_procedure_level(:)
+
+!% ===================================================================================
+!% CONSTANTS
+!% ===================================================================================
 
     !% note that nullvalueI < 0 is required
     integer, parameter :: nullvalueI = 998877
@@ -291,12 +310,5 @@ module define_globals
         reshape((/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, & ! normal years
         31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/), (/12,2/)) ! leap years
 
-    !% Profiling Timer
-    type(wall_clk) :: timer
-
-    !% profiling storage
-    real(8), allocatable :: profiler_data(:,:)
-    character (len=64), allocatable :: profiler_procedure_name(:)
-    integer, allocatable :: profiler_procedure_level(:)
     
 end module define_globals

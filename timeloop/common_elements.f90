@@ -19,11 +19,11 @@ module common_elements
 
 
     contains
-    !%
-    !%========================================================================== 
-    ! PUBLIC
-    !%==========================================================================    
-    !%  
+!%
+!%========================================================================== 
+! PUBLIC
+!%==========================================================================    
+!%  
     subroutine common_velocity_from_flowrate_singular (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -33,6 +33,7 @@ module common_elements
         real(8), pointer :: Flowrate, Area, Velocity, Vmax
         logical, pointer :: isAdHocFlowrate
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         Vmax     => setting%Limiter%Velocity%Maximum
         Velocity => elemR(eIdx,er_Velocity)
         Flowrate => elemR(eIdx,er_Flowrate)
@@ -54,10 +55,10 @@ module common_elements
         end if
         
     end subroutine common_velocity_from_flowrate_singular
-    !%      
-    !%==========================================================================
-       !%==========================================================================    
-    !%  
+!%      
+!%==========================================================================
+!%==========================================================================    
+!%  
     subroutine common_head_and_flowdirection_singular &
         (eIdx, ZcrestCol, NominalDownstreamHeadCol, FlowDirectionCol)
         !%-----------------------------------------------------------------------------
@@ -72,6 +73,7 @@ module common_elements
         real(8), pointer :: UpstreamFaceHead, DownstreamFaceHead, Zcrest
         integer, pointer :: FlowDirection, iupf, idnf
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         !% outputs
         Head           => elemR(eIdx,er_Head)
         NominalDSHead  => elemSR(eIdx,NominalDownstreamHeadCol)
@@ -95,10 +97,10 @@ module common_elements
         NominalDSHead = min(UpstreamFaceHead, DownstreamFaceHead)
         
     end subroutine common_head_and_flowdirection_singular
-    !%
-    !%==========================================================================
-    !%==========================================================================    
-    !%  
+!%
+!%==========================================================================
+!%==========================================================================    
+!%  
         !%-----------------------------------------------------------------------------
         !% Description:
         !% 
@@ -106,8 +108,8 @@ module common_elements
 
         !%-----------------------------------------------------------------------------
         !%  
-    !%
-    !%==========================================================================
-    !% END OF MODULE
-    !%+=========================================================================
+!%
+!%==========================================================================
+!% END OF MODULE
+!%+=========================================================================
 end module common_elements

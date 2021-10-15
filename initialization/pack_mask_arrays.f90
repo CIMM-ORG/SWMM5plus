@@ -37,6 +37,7 @@ contains
         integer :: ii
         character(64) :: subroutine_name = 'pack_mask_arrays_all'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -86,6 +87,7 @@ contains
         !--------------------------------------------------------------------------
         character(64) :: subroutine_name = 'pack_dynamic_arrays'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -110,6 +112,7 @@ contains
         !--------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'pack_nodes'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -145,6 +148,8 @@ contains
         !--------------------------------------------------------------------------
         integer :: psize
         character(64) :: subroutine_name = 'pack_bc'
+        !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -199,7 +204,7 @@ contains
         integer, pointer :: eIdx(:), ptype, npack
         character(64) :: subroutine_name = 'pack_element_outputML'
         !--------------------------------------------------------------------------
-
+        if (icrash) return
         !% don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
 
@@ -238,6 +243,7 @@ contains
         integer, pointer :: fIdx(:), ptype, npack
         character(64) :: subroutine_name = 'pack_face_outputML'
         !--------------------------------------------------------------------------
+        if (icrash) return
         !% don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
 
@@ -275,6 +281,7 @@ contains
         integer, pointer :: mcol
         character(64) :: subroutine_name = 'mask_faces_whole_array_static'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -302,6 +309,7 @@ contains
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -438,6 +446,7 @@ contains
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -559,6 +568,7 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_etm_elements'
 
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -686,6 +696,7 @@ contains
         integer, pointer :: ptype, npack, eIDx(:)
         character(64) :: subroutine_name = 'pack_nongeometry_static_elements'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -979,6 +990,7 @@ contains
         integer, allocatable :: fup(:), fdn(:)
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1692,6 +1704,7 @@ contains
         character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1766,6 +1779,7 @@ contains
         integer, pointer :: Nfaces, ptype, npack, fIdx(:), eup(:), edn(:)
         character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1849,6 +1863,7 @@ contains
         logical, pointer :: isUpGhost, isDnGhost
         character(64) :: subroutine_name = 'pack_static_shared_faces'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1941,6 +1956,7 @@ contains
         logical, pointer :: isUpGhost, isDnGhost
         character(64)    :: subroutine_name = 'pack_dynamic_shared_faces'
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -2123,6 +2139,7 @@ contains
         integer :: ii, jj, link_output_idx_length, node_output_idx_length
         character(64)    :: subroutine_name = 'pack_link_node_output'
         !% --------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 

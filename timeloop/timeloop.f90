@@ -10,7 +10,6 @@ module timeloop
     use utility_output
     use boundary_conditions
     use utility_profiler
-    !use utility_prof_jobcount
     use interface, only: interface_export_link_results
 
     implicit none
@@ -27,11 +26,11 @@ module timeloop
     public  :: timeloop_toplevel
 
 contains
-
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine timeloop_toplevel()
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -42,6 +41,7 @@ contains
         logical          :: doHydraulics, doHydrology
         character(64)    :: subroutine_name = 'timeloop_toplevel'
     !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -66,16 +66,14 @@ contains
                  (util_output_must_report()) .and. &
                  (.not. setting%Output%suppress_MultiLevel_Output) ) then    
                 call outputML_store_data (.false.)
-
-                
             end if
             call tl_increment_counters(doHydraulics, doHydrology)
+            if (icrash) then
+                call outputML_store_data (.true.)
+                exit
+            end if
         end do
 
-        ! if (setting%Profile%File%timeloop) then
-        !     call util_toc(timer, 3)
-        !     print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(3))
-        ! end if
 
         !% >>> BEGIN HACK
         !%     Temporary for debugging (can be deleted for deployment)
@@ -93,11 +91,11 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine timeloop_toplevel
-
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================
-
+!%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
     subroutine tl_hydrology()
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -105,6 +103,7 @@ contains
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_hydrology'
     !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -123,7 +122,7 @@ contains
         !%-----------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'tl_hydraulics'
         !%-----------------------------------------------------------------------------
-         
+        if (icrash) return 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
             
@@ -179,7 +178,7 @@ contains
         character(64)    :: subroutine_name = 'tl_update_hydraulic_step'
 
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -278,7 +277,7 @@ contains
         integer, pointer       :: hydraulicStep, hydrologyStep, step, reportStep
         character(64)          :: subroutine_name = 'tl_increment_counters'
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -347,10 +346,10 @@ contains
         real(8), pointer :: volume(:), FullVolume(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_solver_select'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-
        
         thiscol = ep_ALLtm
         Npack => npack_elemP(thisCol)
@@ -378,10 +377,10 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_solver_select
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_save_previous_values()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -393,6 +392,7 @@ contains
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_save_previous_values'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%  push the old values down the stack
@@ -408,10 +408,10 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_save_previous_values
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_command_line_step_output ()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -425,6 +425,7 @@ contains
         real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
         character(3) :: timeunit
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         dt            => setting%Time%Dt
@@ -486,7 +487,8 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"   
     end subroutine tl_command_line_step_output
-    !%==========================================================================
-    !% END OF MODULE
-    !%+=========================================================================
+!%
+!%==========================================================================
+!% END OF MODULE
+!%+=========================================================================
 end module timeloop
