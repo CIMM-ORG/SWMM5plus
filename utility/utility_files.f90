@@ -432,7 +432,7 @@ contains
             write(*,"(A)") "...to get a unique time stamp."
             write(*,"(A)") "...Folder attempted to create was..."
             write(*,"(A)") trim(setting%File%output_timestamp_subfolder)
-            stop 'in ' // subroutine_name 
+            stop
         end if
 
         !% --- make directory for timestamp subfolder

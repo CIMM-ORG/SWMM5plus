@@ -110,7 +110,9 @@ contains
         integer, pointer :: elementType(:), link_idx(:), node_idx(:), tlink, tnode
         logical, pointer :: isLinkOut(:), isNodeOut(:), isElemOut(:)
         character(64) :: subroutine_name = 'outputML_element_selection'
-        !%-----------------------------------------------------------------------------  
+        !%----------------------------------------------------------------------------- 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
         elementType => elemI(:,ei_elementType)
         link_idx    => elemI(:,ei_link_Gidx_SWMM)
         node_idx    => elemI(:,ei_node_Gidx_SWMM)
@@ -157,7 +159,8 @@ contains
         !     print *, ii, elemYN(ii,eYN_isOutput)
         ! end do
         ! stop 80987
-
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_element_selection  
 !%
 !%==========================================================================
@@ -174,10 +177,12 @@ contains
         logical, pointer :: isNodeOut(:), isFaceOut(:)
         character(64) :: subroutine_name = 'outputML_face_selection'
         !%-----------------------------------------------------------------------------  
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
         !elementType => elemI(:,ei_elementType)
         !link_idx    => elemI(:,ei_link_Gidx_SWMM)
         face_idx    => faceI(:,fi_Gidx)
-        node_idx    => faceI(:,fi_node_idx_BIPquick)
+        node_idx    => faceI(:,fi_node_idx_SWMM)
         isNodeOut   => node%YN(:,nYN_isOutput)  
         isFaceOut   => faceYN(:,fYN_isFaceOut)
 
@@ -197,11 +202,11 @@ contains
                         isFaceOut(ii) = .true.
                     end if
                 end if
-                !print *, ii, face_idx(ii), node_idx(ii), isNodeOut(node_idx(ii)), &
-                !        isFaceOut(ii), node%Names(node_idx(ii))%str
             end if
         end do
 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_face_selection   
 !%
 !%==========================================================================
@@ -215,6 +220,8 @@ contains
         integer :: ii
         character(64)    :: subroutine_name = 'outputML_size_OutElem_by_image'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
 
         !% don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -227,19 +234,10 @@ contains
 
         !% the packed number of elements is the number with "true" in eYN_isOutput
         !% for each image
-        do ii = 1,num_images()
-            if (ii == this_image()) then
-                N_OutElem(ii) = npack_elemP(ep_Output_Elements)
-            end if
-        end do
+        N_OutElem(this_image()) = npack_elemP(ep_Output_Elements)
         sync all
-
-        !% HACK -- is there a better way to make the assignment?
-        do ii=1,num_images()
-            if (ii .ne. this_image()) then
-                N_OutElem(ii) = N_OutElem(ii)[ii]
-            end if
-        end do
+        !% distribute the number of output elements over all images 
+        call co_max(N_OutElem)
 
         !% check for zero output elements
         if (maxval(N_OutElem) < 1) then
@@ -248,6 +246,8 @@ contains
             setting%Output%OutputElementsExist = .true.
         end if    
 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_size_OutElem_by_image
 !%
 !%==========================================================================
@@ -261,6 +261,8 @@ contains
         integer :: ii
         character(64)    :: subroutine_name = 'outputML_size_OutFace_by_image'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
 
         !% don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -273,19 +275,10 @@ contains
 
         !% the packed number of elements is the number with "true" in eYN_isOutput
         !% for each image
-        do ii = 1,num_images()
-            if (ii == this_image()) then
-                N_OutFace(ii) = npack_faceP(fp_Output_Faces)
-            end if
-        end do
+        N_OutFace(this_image()) = npack_faceP(fp_Output_Faces)
         sync all
-
-        !% HACK -- is there a better way to make the assignment?
-        do ii=1,num_images()
-            if (ii .ne. this_image()) then
-                N_OutFace(ii) = N_OutFace(ii)[ii]
-            end if
-        end do
+        !% distribute the number of output faces over all images 
+        call co_max(N_OutFace)
 
         !% check for zero output elements
         if (maxval(N_OutFace) < 1) then
@@ -293,6 +286,9 @@ contains
         else
             setting%Output%OutputFacesExist = .true.
         end if    
+
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_size_OutFace_by_image
 !%
 !%==========================================================================
@@ -306,6 +302,8 @@ contains
         integer :: ii
         character(64)        :: subroutine_name = 'outputML_element_outtype_selection'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
 
         !% don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -469,8 +467,8 @@ contains
                 stop 'in '//subroutine_name
         end select
 
-
-
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_element_outtype_selection
 !%    
 !%==========================================================================   
@@ -484,6 +482,8 @@ contains
         integer :: ii
         character(64)        :: subroutine_name = 'output_face_outtype_selection'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
 
         !% don't do this is outpuot is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -622,6 +622,8 @@ contains
                 stop 'in '//subroutine_name
         end select      
         
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_face_outtype_selection
 !%    
 !%==========================================================================   
@@ -642,6 +644,8 @@ contains
         integer, pointer :: thisLevel, Npack, thisP(:), thisType(:)
         character(64)    :: subroutine_name = 'outputML_store_data'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
 
         !% --- do not execute if ML output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -694,6 +698,8 @@ contains
             thisLevel = 0
         end if
 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_store_data
 !%    
 !%==========================================================================
@@ -716,7 +722,7 @@ contains
         integer :: nMaxElem, nMaxFace
 
         integer :: allocation_status, deallocation_status, ios
-        integer :: Lasti, npack, ii,  kk, mm, pp
+        integer :: Lasti, firstIdx, lastIdx, npack, ii,  kk, mm, pp
         integer ::  thisUnit  !% file unit numbers
 
         integer :: dimvector(3)    !% used to store (nTotalElem, nType, nLevel)
@@ -726,12 +732,14 @@ contains
         character(len=16) :: str_header
         character(64)    :: subroutine_name = 'outputML_combine_and_write_data'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
 
         !% --- do not execute if ML output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
 
         !% --- only run serial
-        if (this_image() .ne. 1) return
+        ! if (this_image() .ne. 1) return
         
         !% --- point to latest data on number of files written and time levels writte 
         nWritten         => setting%File%outputML_Ncombined_file_written
@@ -742,43 +750,44 @@ contains
         !% 
         nTotalElem = sum(N_OutElem(:))
         nTypeElem  = size(output_types_elemR)
-  
         nMaxElem = maxval(N_OutElem)
-        allocate(thisE(nMaxElem), stat=allocation_status, errmsg=emsg)
+        allocate(thisE(N_OutElem(this_image())), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'thisE')
         thisE(:) = nullvalueI
 
         !% --- combine the data from all images
         Lasti = 0 !% counter of the last element or face that has been stored
-        !% --- 
-        do ii = 1,num_images()
 
-            !% --- get the number of packed LOCAL element indexes
-            npack = npack_elemP(ep_Output_Elements)[ii]
+        if (this_image() /= 1) then
+           do ii=1, this_image() -1
+              Lasti = Lasti + N_OutElem(ii)
+           end do
+        end if
+        sync all
 
-            !% --- store the coarray elements on this image
-            thisE(1:npack) = elemP(1:npack,ep_Output_Elements)[ii]
+        npack = npack_elemP(ep_Output_Elements)
+        firstIdx = Lasti + 1
+        lastIdx  = Lasti+npack
 
-            !% --- store the GLOBAL indexes for elements, SWMM links and SWMM nodes
-            !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
-            do kk=Lasti+1,Lasti+npack
-                OutElemFixedI(kk,oefi_elem_Gidx)      = elemI(thisE(kk),ei_Gidx)[ii]
-                OutElemFixedI(kk,oefi_link_Gidx_SWMM) = elemI(thisE(kk),ei_link_Gidx_SWMM)[ii]
-                OutElemFixedI(kk,oefi_node_Gidx_SWMM) = elemI(thisE(kk),ei_node_Gidx_SWMM)[ii]
-            end do !%kk
+        !% --- store the coarray elements on this image
+        thisE(1:npack) = elemP(1:npack,ep_Output_Elements)
+        !% --- store the GLOBAL indexes for elements, SWMM links and SWMM nodes
+        OutElemFixedI(firstIdx:lastIdx,oefi_elem_Gidx)      = elemI(thisE,ei_Gidx)
+        OutElemFixedI(firstIdx:lastIdx,oefi_link_Gidx_SWMM) = elemI(thisE,ei_link_Gidx_SWMM)
+        OutElemFixedI(firstIdx:lastIdx,oefi_node_Gidx_SWMM) = elemI(thisE,ei_node_Gidx_SWMM)
 
-            !% --- store the real data
-            !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
-            do kk=Lasti+1,Lasti+npack
-                do mm=1,nTypeElem
-                    do pp=1,nLevel
-                        OutElemDataR(kk,mm,pp) =  elemOutR(kk,mm,pp)[ii]
-                    end do !% pp
-                end do !% mm
-            end do !% kk
-            !% increment Lasti for the next image
-            Lasti = Lasti + npack
-        end do !% images
+        !% since the OutElemFixedI data is initializaed with nullvalueI,
+        !% function co_min will distribute all the regular data all over
+        !% the images since the regular data is smaller than nullvalueI
+        !% however, if the number of elements exceeds nullvalueI, it will 
+        !% not work
+        call co_min(OutElemFixedI)
+
+        !% --- store the real data
+        OutElemDataR(firstIdx:lastIdx,:,:) = elemOutR(1:npack,:,:)
+
+        !% same logic as above
+        call co_min(OutElemDataR)
 
         deallocate(thisE, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'thisE')
@@ -790,143 +799,149 @@ contains
         nTypeFace = size(output_types_faceR)
 
         nMaxFace = maxval(N_OutFace)
-        allocate(thisF(nMaxFace), stat=allocation_status, errmsg=emsg)
+        allocate(thisF(N_OutFace(this_image())), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'thisF')
         thisF(:) = nullvalueI
-      
-        Lasti = 0 !% counter of the last element or face that has been stored  
-        do ii = 1,num_images()
-       
-            !% --- get the packed LOCAL face indexes
-            npack = npack_faceP(fp_Output_Faces)[ii]
 
-            !% --- store the coarray elements on this image
-            thisF(1:npack) = faceP(1:npack,fp_Output_Faces)[ii]
+        !% --- combine the data from all images
+        Lasti = 0 !% counter of the last element or face that has been stored
 
-            !% --- store the GLOBAL indexes for faces, SWMM links and SWMM nodes
-            !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
-            do kk=Lasti+1,Lasti+npack
-                OutFaceFixedI(kk,offi_face_Gidx)      = faceI(thisF(kk),fi_Gidx)[ii]
-                OutFaceFixedI(kk,offi_node_Gidx_SWMM) = faceI(thisF(kk),fi_node_idx_SWMM)[ii]
-            end do !% kk
+        if (this_image() /= 1) then
+           do ii=1, this_image() -1
+              Lasti = Lasti + N_OutFace(ii)
+           end do
+        end if
+        sync all
+
+        npack = npack_faceP(fp_Output_Faces)
+        firstIdx = Lasti + 1
+        lastIdx  = Lasti + npack
+
+        !% --- store the coarray elements on this image
+        thisF(1:npack) = faceP(1:npack,fp_Output_Faces)
+
+        !% --- store the GLOBAL indexes for faces, SWMM links and SWMM nodes
+        OutFaceFixedI(firstIdx:lastIdx,offi_face_Gidx)      = faceI(thisF,fi_Gidx)
+        OutFaceFixedI(firstIdx:lastIdx,offi_node_Gidx_SWMM) = faceI(thisF,fi_node_idx_SWMM)
+
+        !% since the OutElemFixedI data is initializaed with nullvalueI,
+        !% function co_min will distribute all the regular data all over
+        !% the images since the regular data is smaller than nullvalueI
+        !% however, if the number of elements exceeds nullvalueI, it will 
+        !% not work
+        call co_min(OutFaceFixedI)
         
-            !% --- store the real data
-            !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
-            do kk=Lasti+1,Lasti+npack
-                do mm=1,nTypeFace 
-                    do pp=1,nLevel
-                        OutFaceDataR(kk,mm,pp) =  faceOutR(kk,mm,pp)[ii]
-                    end do !% pp
-                end do !% mm
-            end do !% kk
-
-            !% increment Lasti for the next image
-            Lasti = Lasti + npack
-        end do !% images()
+        !% --- store the real data
+        OutFaceDataR(firstIdx:lastIdx,:,:) =  faceOutR(1:npack,:,:)
 
         deallocate(thisF, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'thisF')
        
-        !% --- keeping track of number of files written
-        !% --- begins at 0 so nWritten=1 is when writing first file
-        nWritten = nWritten + 1
-        !% --- HACK the following limits number of files -- fails if nWritten > 99999
-        !% --- Need a method for (1) larger string (2)) warning if the number
-        !% --- of files gets large and (3) soft stop when max is hit
-        if (nWritten > 99999) then
-            write(*,"(A)") 'ERROR (code, user): the intermediate output files have reached ...'
-            write(*,"(A,I6,A)") '...the code the limit of',nWritten,' files...' 
-            write(*,"(A)") 'Suggest increasing setting.Output.StoredLevels.'
-            stop
+        !% use the 1st processor to write
+        if (this_image() == 1) then
+            !% --- keeping track of number of files written
+            !% --- begins at 0 so nWritten=1 is when writing first file
+            nWritten = nWritten + 1
+            !% --- HACK the following limits number of files -- fails if nWritten > 99999
+            !% --- Need a method for (1) larger string (2)) warning if the number
+            !% --- of files gets large and (3) soft stop when max is hit
+            if (nWritten > 99999) then
+                write(*,"(A)") 'ERROR (code, user): the intermediate output files have reached ...'
+                write(*,"(A,I6,A)") '...the code the limit of',nWritten,' files...' 
+                write(*,"(A)") 'Suggest increasing setting.Output.StoredLevels.'
+                stop
+            end if
+
+            !% -----------------------------------------------
+            !% --- WRITING DATA
+            !%
+            write(thisnum,"(I5.5)") nWritten  
+
+            !% --- file name to write data to
+            file_name = trim(setting%File%outputML_combinedfile_kernel) &
+                //'_'//thisnum//'.bin'
+            !% --- store the filename for later use    
+            call outputML_store_binary_output_filenames (nWritten, file_name)
+
+            !% --- open unformatted file for data writing
+            open(newunit=thisUnit, file=trim(file_name), form='unformatted', &
+                    action='write',status='new', iostat = ios)
+            if (ios /= 0) then
+                write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
+                write(*,"(A)") 'filename is ...'
+                write(*,"(A)") trim(file_name)
+                stop 'in ' // subroutine_name  
+            end if  
+
+            !% ----------------------------------
+            !% --- TIME LEVELS ARE COMMON TO FACES AND ELEMENT OUTPUT
+            !% --- the time levels
+            write(thisUnit) nLevel
+            write(thisUnit) output_times(1:nLevel)
+            nTotalTimeLevels = nTotalTimeLevels+nLevel
+
+            !% ----------------------------------
+            !% --- WRITING ELEMENTS
+            !% --- dimension vector
+            dimvector(1) = nTotalElem
+            dimvector(2) = nTypeElem
+            dimvector(3) = nLevel
+
+            if (nTotalElem > 0) then
+                !% --- the indexes of elements
+                !brh rm write(thisUnit) nTotalElem
+                !brh rm write(thisUnit) OutElemGidx(1:nTotalElem)
+
+                !% --- the output types
+                write(thisUnit) nTypeElem
+                write(thisUnit) output_types_elemR(1:nTypeElem)       
+                
+                !% --- the fixed integer data
+                write(thisUnit) (/ nTotalElem, Ncol_oefi/)
+                write(thisUnit) OutElemFixedI(:,:)
+
+                !% --- the combined elemR output array
+                write(thisUnit) dimvector(:)
+                write(thisUnit) OutElemDataR(1:nTotalElem,1:nTypeElem,1:nLevel)
+            end if    
+
+            !% ----------------------------------
+            !% --- WRITING FACES
+            !% --- dimension vector
+            dimvector(1) = nTotalFace
+            dimvector(2) = nTypeFace
+            dimvector(3) = nLevel
+      
+            if (nTotalFace > 0) then
+                !!brh rm !% --- the indexes of faces
+                !!brh rm write(thisUnit) nTotalFace
+                !!brh rm write(thisUnit) OutFaceGidx(1:nTotalFace)
+
+                !% --- the output face types
+                write(thisUnit) nTypeFace
+                write(thisUnit) output_types_faceR(1:nTypeFace)
+
+                !% --- the fixed integer data
+                write(thisUnit) (/ nTotalFace, Ncol_offi/)
+                write(thisUnit) OutFaceFixedI(:,:)
+
+                !% --- the combined elemR output array
+                write(thisUnit) dimvector(:)
+                write(thisUnit) OutFaceDataR(1:nTotalFace,1:nTypeFace,1:nLevel)
+            end if
+
+            if (setting%Output%Verbose) write(*,"(A,i5)") &
+                '************************************************* finished writing file #', nWritten
+
+            !% --- close the unformatted unit
+            close(thisUnit)
+
+            !% --- note that fnunit for setting%File%outputML_filename_file remains open
+            !% --- this is so that subsequent calls can write to it.
         end if
-
-        !% -----------------------------------------------
-        !% --- WRITING DATA
-        !%
-        write(thisnum,"(I5.5)") nWritten  
-
-        !% --- file name to write data to
-        file_name = trim(setting%File%outputML_combinedfile_kernel) &
-            //'_'//thisnum//'.bin'
-        !% --- store the filename for later use    
-        call outputML_store_binary_output_filenames (nWritten, file_name)
-
-        !% --- open unformatted file for data writing
-        open(newunit=thisUnit, file=trim(file_name), form='unformatted', &
-                action='write',status='new', iostat = ios)
-        if (ios /= 0) then
-            write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
-            write(*,"(A)") 'filename is ...'
-            write(*,"(A)") trim(file_name)
-            stop 'in ' // subroutine_name  
-        end if  
-
-        !% ----------------------------------
-        !% --- TIME LEVELS ARE COMMON TO FACES AND ELEMENT OUTPUT
-        !% --- the time levels
-        write(thisUnit) nLevel
-        write(thisUnit) output_times(1:nLevel)
-        nTotalTimeLevels = nTotalTimeLevels+nLevel
-
-        !% ----------------------------------
-        !% --- WRITING ELEMENTS
-        !% --- dimension vector
-        dimvector(1) = nTotalElem
-        dimvector(2) = nTypeElem
-        dimvector(3) = nLevel
-
-        if (nTotalElem > 0) then
-            !% --- the indexes of elements
-            !brh rm write(thisUnit) nTotalElem
-            !brh rm write(thisUnit) OutElemGidx(1:nTotalElem)
-
-            !% --- the output types
-            write(thisUnit) nTypeElem
-            write(thisUnit) output_types_elemR(1:nTypeElem)       
-            
-            !% --- the fixed integer data
-            write(thisUnit) (/ nTotalElem, Ncol_oefi/)
-            write(thisUnit) OutElemFixedI(:,:)
-
-            !% --- the combined elemR output array
-            write(thisUnit) dimvector(:)
-            write(thisUnit) OutElemDataR(1:nTotalElem,1:nTypeElem,1:nLevel)
-        end if    
-
-        !% ----------------------------------
-        !% --- WRITING FACES
-        !% --- dimension vector
-        dimvector(1) = nTotalFace
-        dimvector(2) = nTypeFace
-        dimvector(3) = nLevel
-  
-        if (nTotalFace > 0) then
-            !!brh rm !% --- the indexes of faces
-            !!brh rm write(thisUnit) nTotalFace
-            !!brh rm write(thisUnit) OutFaceGidx(1:nTotalFace)
-
-            !% --- the output face types
-            write(thisUnit) nTypeFace
-            write(thisUnit) output_types_faceR(1:nTypeFace)
-
-            !% --- the fixed integer data
-            write(thisUnit) (/ nTotalFace, Ncol_offi/)
-            write(thisUnit) OutFaceFixedI(:,:)
-
-            !% --- the combined elemR output array
-            write(thisUnit) dimvector(:)
-            write(thisUnit) OutFaceDataR(1:nTotalFace,1:nTypeFace,1:nLevel)
-        end if
-
-        if (setting%Output%Verbose) write(*,"(A,i5)") &
-            '************************************************* finished writing file #', nWritten
-
-        !% --- close the unformatted unit
-        close(thisUnit)
-
-        !% --- note that fnunit for setting%File%outputML_filename_file remains open
-        !% --- this is so that subsequent calls can write to it.
-
+        
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_combine_and_write_data
 !%    
 !%==========================================================================   
@@ -948,6 +963,9 @@ contains
         character(len=256) :: file_name
         character(64) :: subroutine_name = 'outputML_write_control_file'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
+
         !% --- do not execute if ML output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
 
@@ -989,6 +1007,8 @@ contains
 
         close(thisunit)
 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_write_control_file
 !%    
 !%==========================================================================
@@ -1133,6 +1153,9 @@ contains
         integer :: startdate(6) !% yr, month, day, hr, min, sec
         character(64)      :: subroutine_name = 'outputML_convert_elements_to_linknode_and_write'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
+
         !% --- do not execute if ML output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return     
 
@@ -1502,7 +1525,7 @@ contains
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... SWMM_N_link is ',SWMM_N_link
                             write(*,"(A)") ',... size(link%I(:,li_idx)) is ',size(link%I(:,li_idx))
-                            stop 'in ' // subroutine_name
+                            ! stop 'in ' // subroutine_name
                         end if
 
                         if (nOutLink > 0) then
@@ -1572,7 +1595,7 @@ contains
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... SWMM_N_node is ',SWMM_N_node
                             write(*,"(A)") ',... size(node%I(:,li_idx)) is ',size(node%I(:,li_idx))
-                            stop 'in ' // subroutine_name
+                            ! stop 'in ' // subroutine_name
                         end if
 
                         if (nOutNodeElem > 0) then
@@ -1634,7 +1657,7 @@ contains
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... SWMM_N_node is ',SWMM_N_node
                             write(*,"(A)") ',... size(node%I(:,ni_idx)) is ',size(node%I(:,ni_idx))
-                            stop 'in ' // subroutine_name
+                            ! stop 'in ' // subroutine_name
                         end if
 
                         if (nOutNodeFace > 0) then
@@ -2342,6 +2365,8 @@ contains
         !print *, 'finished ',subroutine_name
         !stop 897033
 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_convert_elements_to_linknode_and_write
 !%
 !%==========================================================================
@@ -2382,6 +2407,8 @@ contains
         integer :: mm
         character(64) :: subroutine_name = 'outputML_csv_header'
         !%----------------------------------------------------------------------------- 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
 
         !% -- ROW 1 --- LINK OR NODE ID (keyword, string)
         write(funitIn,fmt='(2a)') 'SWMM_ID: ,', trim(tlinkname)
@@ -2506,6 +2533,8 @@ contains
             write(funitIn,fmt='(a)') trim(output_type_units(nType+1))
         end if
 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_csv_header  
 !%
 !%==========================================================================
@@ -2539,6 +2568,8 @@ contains
 
         character(64) :: subroutine_name = 'outputML_unf_header'
         !%----------------------------------------------------------------------------- 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
 
         !% HACK --- THIS NEEDS TO BE REVISED
 
@@ -2577,6 +2608,8 @@ contains
             write(funitIn) output_type_units(:)
         end if
 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine outputML_unf_header
 !%
 !%==========================================================================
@@ -2596,9 +2629,13 @@ contains
         real(8), intent(in) :: Out_ElemDataR(:,:,:,:)    !% (link/node,element,type,timelevel)
         logical, intent(in) :: isFV   !% is finite volume output
 
+        character(64) :: subroutine_name = 'outputML_csv_writedata'
+
         integer :: mm
         !%----------------------------------------------------------------------------- 
-        
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
+
         if (isFV) then
             !% --- FV write is columns that are elements of the idx1 link
             do mm=1,nLevel
@@ -2613,6 +2650,8 @@ contains
             end do
         end if
 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine  outputML_csv_writedata
 !%
 !%==========================================================================
@@ -2630,11 +2669,18 @@ contains
         real(8), intent(in) :: OutLink_ProcessedDataR(:,:,:)
 
         integer :: mm
+
+        character(64) :: subroutine_name = 'outputML_unf_writedata'
         !%----------------------------------------------------------------------------- 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
         do mm = 1,nLevel
             write(funitIn) OutLink_ProcessedDataR(klink,1:nType,mm)
         end do
 
+        if (setting%Debug%File%output) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine outputML_unf_writedata
 !%   
 !%==========================================================================
@@ -2861,7 +2907,6 @@ contains
 
         if (setting%Debug%File%output) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
     end subroutine outputD_read_csv_node_names
 !%
 !%==========================================================================

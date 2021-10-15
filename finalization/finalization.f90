@@ -35,7 +35,7 @@ contains
             write(*,"(2A,i5,A)") new_line(" "), 'finalize [Processor ', this_image(), "]"
 
         !% finalize the profiler and print times
-        call util_profiler_print_summary()
+        ! call util_profiler_print_summary()
 
         !% write a final combined multi-level files
         call outputML_store_data (.true.)
@@ -71,7 +71,7 @@ contains
 
         ! sync all
 
-        ! call cpu_time(setting%Time%CPU%EpochFinishSeconds)
+        call cpu_time(setting%Time%CPU%EpochFinishSeconds)
 
         write(*, "(A,i5,A,G0.6,A)") &
             new_line(" ") // 'Processor ', this_image(), " | Simulation Time = ", &
