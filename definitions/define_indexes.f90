@@ -163,6 +163,7 @@ module define_indexes
         enumerator :: nYN_has_extInflow
         enumerator :: nYN_has_dwfInflow
         enumerator :: nYN_isOutput
+        enumerator :: nYN_is_phantom_node
         enumerator :: nYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_nodeYN  = nYN_lastplusone-1
@@ -642,9 +643,10 @@ module define_indexes
         enumerator ::  fi_GhostElem_uL              !% map to upstream ghost element
         enumerator ::  fi_GhostElem_dL              !% map to downstream ghost element
         enumerator ::  fi_Connected_image           !% image number a shared face connected to
-        enumerator ::  fi_node_Gidx_SWMM            !% global node indexes for SWMM nodes
-        enumerator ::  fi_node_idx                  !% if the face is originated from a node, then the idx
-        enumerator ::  fi_link_idx                  !% face connected to a link element 
+        enumerator ::  fi_node_idx_BIPquick         !% if the face is originated from a node, then the BQ idx
+        enumerator ::  fi_link_idx_BIPquick         !% face connected to a BQ link element 
+        enumerator ::  fi_node_idx_SWMM             !% if the face is originated from a node, then the SWMM idx
+        enumerator ::  fi_link_idx_SWMM             !% face connected to a SWMM link element 
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
         ! enumerator ::  fi_Melem_dG                 !% map to element upstream (global index)

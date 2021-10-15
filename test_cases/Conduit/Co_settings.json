@@ -113,7 +113,7 @@
             "TotalInflows" : 50
         },
         "Dt" : {
-            "Minimum"     : 1e-4,
+            "Minimum"     : 1e-10,
             "UseLimitMin" : true
         }
     },
@@ -122,18 +122,38 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Output" : {
-        "report" : true,
-        "reportStartTime" : 0.0,
-        "reportDt" : 100.0,
-        "reportStep" : 0,
-        "slots" : 20,
         "print_links_csv" : true,
         "print_nodes_csv" : true,
+        "report" : true,
+        "reportStartTime" : 0.0,
+        "reportDt" : 900.0,
+        "reportStep" : 0,
+        "reportTimeUnits" : "Hours",
+        "slots" : 20,
+        "StoredLevels" : 100,
+        "StoredFileNames" : 100,
+        "suppress_MultiLevel_Output" : false,
+        "UseFileNameFile" : false,
         "Verbose" : true,
         "Warning" : true,
         "CommandLine" : {
             "quiet" : false,
-            "interval" : 100000
+            "interval" : 100
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFroudeNumberOut" : false,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : false
         }
     },
     "Orifice" : {
@@ -146,7 +166,7 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 100.0
+        "CelerityFactor" : 200.0
     },
     "Simulation" : {
         "useHydrology" : true,

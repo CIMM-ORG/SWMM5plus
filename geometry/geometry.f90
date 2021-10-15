@@ -833,12 +833,12 @@ module geometry
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
-            volume(thisP) = volume(thisP) + SlotVolume(thisP)
-            area(thisP)   = area(thisP)   + SlotArea(thisP)
-            depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
-            head(thisP)   = head(thisP)   + SlotDepth(thisP)
-            ! ell(thisP)    = ell(thisP) + SlotArea(thisP) / breadthMax(thisP)
-            hydRadius(thisP) = hydRadius(thisP) + SlotHydRadius(thisP)    
+            where (SlotVolume(thisP) .gt. zeroR) 
+                volume(thisP) = volume(thisP) + SlotVolume(thisP)
+                area(thisP)   = area(thisP)   + SlotArea(thisP)
+                depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
+                head(thisP)   = head(thisP)   + SlotDepth(thisP)
+            end where 
         end if
 
         if (setting%Debug%File%geometry) &

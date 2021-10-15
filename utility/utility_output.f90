@@ -200,7 +200,7 @@ contains
 
             if (elemI(ii,ei_elementType) == CC) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_CC_" &
@@ -217,7 +217,7 @@ contains
 
             else if(elemI(ii,ei_elementType) == orifice) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = "debug_output/elemR/"//trim(str_image)//"_OR_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
@@ -233,7 +233,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == JM) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_JM_" &
@@ -250,7 +250,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == JB) then
 
-                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_BIPquick)
 
                  file_name = trim(setting%File%debug_output_elemR_folder) &
                      //"/img"//trim(str_image)//"_JB_" &
@@ -368,7 +368,7 @@ contains
 
             if (elemI(ii,ei_elementType) == CC) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_CC_" &
@@ -385,7 +385,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == orifice) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = "debug_output/elemR/"//trim(str_image)//"_OR_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
@@ -401,7 +401,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == JM) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_JM_" &
@@ -418,7 +418,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == JB) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_JB_" &
@@ -482,8 +482,8 @@ contains
 !% 
     subroutine util_output_create_summary_files
         integer :: fu, open_status
-        character(64) :: file_name
-        character(64) :: subroutine_name = 'util_output_create_summary_files'
+        character(512) :: file_name
+        character(64)  :: subroutine_name = 'util_output_create_summary_files'
         !%-----------------------------------------------------------------------------
         !% Description:
         !% creates the summary file
@@ -493,11 +493,6 @@ contains
         !write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
         write(file_name, "(A,i5.5,A)") "summary_", this_image(), ".csv"
         file_name = trim(setting%File%debug_output_summary_folder)//'/'//trim(file_name)
-
-        print *
-        print *, 'in ', subroutine_name
-        print *, file_name
-        print *
 
         open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
             form = 'formatted', action = 'write', iostat = open_status)
@@ -548,7 +543,7 @@ contains
         integer, pointer :: thisP(:)
         real(8)          :: thisCFL, max_velocity, max_wavespeed, max_PCelerity
         real(8), pointer :: dt, timeNow, velocity(:), wavespeed(:), length(:), PCelerity(:)
-        character(512)    :: file_name
+        character(512)   :: file_name
         character(64)    :: subroutine_name = "util_output_report_summary"
         !%---------------------------------------------------------------------------
         if (setting%Debug%File%utility_output) &
@@ -573,8 +568,9 @@ contains
             thisP     => elemP(1:Npack,thisCol)
 
             ! thisCFL       = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
-            thisCFL =  max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP)), &
-                            maxval (abs(PCelerity(thisP)) * dt / length(thisP)))
+            thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP)), &
+                           maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * dt / length(thisP)))
+            
             max_velocity  = maxval(abs(velocity(thisP)))
             max_wavespeed = maxval(abs(wavespeed(thisP)))
             max_PCelerity = maxval(abs(PCelerity(thisP))) 

@@ -245,11 +245,11 @@ contains
                 !%  if the link has a uniform depth as an initial condition
                 if (link%R(thisLink,lr_InitialDepth) .ne. nullvalueR) then
 
-                    where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                    where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                         elemR(:,er_Depth) = link%R(thisLink,lr_InitialDepth)
                     endwhere
                 else
-                    where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                    where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                         elemR(:,er_Depth) = onehalfR * (DepthUp + DepthDn)
                     endwhere
                 end if
@@ -258,16 +258,16 @@ contains
 
                 !% if the link has linearly-varying depth
                 !% depth at the upstream element (link position = 1)
-                where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
+                where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
                     elemR(:,er_Depth) = DepthUp
                 endwhere
 
                 !%  using a linear distribution over the links
-                ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                 do mm=2,ei_max
                     !% find the element that is at the mm position in the link
-                    where ( (elemI(:,ei_link_Pos) == mm) .and. (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
+                    where ( (elemI(:,ei_link_Pos) == mm) .and. (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
                         !% use a linear interpolation
                         elemR(:,er_Depth) = DepthUp - (DepthUp - DepthDn) * real(mm - oneI) / real(ei_max - oneI)
                     endwhere
@@ -277,34 +277,34 @@ contains
 
                 !% if the link has exponentially decayed depth
                 !% depth at the upstream element (link position = 1)
-                where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
+                where ( (elemI(:,ei_link_Pos) == 1) .and. (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
                     elemR(:,er_Depth) = DepthUp
                 endwhere
 
                 !% find the remaining elements in the link
-                ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                ei_max = maxval(elemI(:,ei_link_Pos), 1, elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                 do mm=2,ei_max
                     kappa = real(mm - oneI)
 
                     !%  depth decreases exponentially going downstream
                     if (DepthUp - DepthDn > zeroR) then
-                        where ( (elemI(:,ei_link_Pos)       == mm      ) .and. &
-                                (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
+                        where ( (elemI(:,ei_link_Pos)           == mm      ) .and. &
+                                (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
                             elemR(:,er_Depth) = DepthUp - (DepthUp - DepthDn) * exp(-kappa)
                         endwhere
 
                     !%  depth increases exponentially going downstream
                     elseif (DepthUp - DepthDn < zeroR) then
-                        where ( (elemI(:,ei_link_Pos)       == mm      ) .and. &
-                                (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
+                        where ( (elemI(:,ei_link_Pos)           == mm      ) .and. &
+                                (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
                             elemR(:,er_Depth) = DepthUp + (DepthDn - DepthUp) * exp(-kappa)
                         endwhere
 
                     !%  uniform depth
                     else
-                        where ( (elemI(:,ei_link_Pos)       == mm      ) .and. &
-                                (elemI(:,ei_link_Gidx_SWMM) == thisLink) )
+                        where ( (elemI(:,ei_link_Pos)           == mm      ) .and. &
+                                (elemI(:,ei_link_Gidx_BIPquick) == thisLink) )
                             elemR(:,er_Depth) = DepthUp
                         endwhere
                     end if
@@ -339,7 +339,7 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !%  handle all the initial conditions that don't depend on geometry type
-        where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+        where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
             elemR(:,er_Flowrate)       = link%R(thisLink,lr_InitialFlowrate)
             elemR(:,er_Flowrate_N0)    = link%R(thisLink,lr_InitialFlowrate)
             elemR(:,er_Flowrate_N1)    = link%R(thisLink,lr_InitialFlowrate)
@@ -375,7 +375,7 @@ contains
 
             case (lChannel)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
                     elemI(:,ei_QeqType)         = time_march
@@ -384,7 +384,7 @@ contains
 
             case (lpipe)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)     = CC
                     elemI(:,ei_HeqType)         = time_march
                     elemI(:,ei_QeqType)         = time_march
@@ -393,7 +393,7 @@ contains
 
             case (lweir)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)         = weir
                     elemI(:,ei_QeqType)             = diagnostic
                     elemYN(:,eYN_canSurcharge)      = link%YN(thisLink,lYN_CanSurcharge)
@@ -401,7 +401,7 @@ contains
 
             case (lOrifice)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     elemI(:,ei_elementType)            = orifice
                     elemI(:,ei_QeqType)                = diagnostic
                     elemYN(:,eYN_canSurcharge)         = .true.
@@ -510,7 +510,7 @@ contains
 
             case (lRectangular)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                     elemI(:,ei_geometryType) = rectangular
 
@@ -537,7 +537,7 @@ contains
 
             case (lTrapezoidal)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                     elemI(:,ei_geometryType) = trapezoidal
 
@@ -611,7 +611,7 @@ contains
 
         ! case (lRectangular)
 
-        !     where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+        !     where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
         !         elemI(:,ei_geometryType)    = rectangular_closed
 
@@ -634,7 +634,7 @@ contains
 
         case (lCircular)
 
-            where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
 
                 elemI(:,ei_geometryType)    = circular
 
@@ -706,7 +706,7 @@ contains
             !% copy weir specific data
             case (lTrapezoidalWeir)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = trapezoidal_weir
 
@@ -723,7 +723,7 @@ contains
 
             case (lSideFlowWeir)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = side_flow
                     elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
@@ -744,7 +744,7 @@ contains
 
             case (lVnotchWeir)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = vnotch_weir
 
@@ -758,7 +758,7 @@ contains
 
             case (lTransverseWeir)
 
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Weir_SpecificType)          = transverse_weir
                     elemSI(:,esi_Weir_EndContractions)       = link%I(thisLink,li_weir_EndContrations)
@@ -809,13 +809,13 @@ contains
         select case (specificOrificeType)
             !% copy orifice specific data
             case (lBottomOrifice)
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Orifice_SpecificType)      = bottom_orifice
                 endwhere
 
             case (lSideOrifice)
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,esi_Orifice_SpecificType)       = side_orifice
                 endwhere
@@ -833,7 +833,7 @@ contains
         select case (OrificeGeometryType)
             !% copy orifice specific geometry data
             case (lRectangular)
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemSI(:,ei_geometryType)          = rectangular
 
@@ -847,7 +847,7 @@ contains
                 end where
 
             case (lCircular)
-                where (elemI(:,ei_link_Gidx_SWMM) == thisLink)
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
                     !% integer data
                     elemI(:,ei_geometryType)    = circular
 
@@ -890,17 +890,17 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% HACK: this might not be right
-        where ( (elemI(:,ei_link_Gidx_SWMM) == thisLink) .and. &
-                (elemR(:,er_area)           .gt. zeroR   ) .and. &
-                (elemI(:,ei_elementType)    == CC      ) )
+        where ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
+                (elemR(:,er_area)               .gt. zeroR ) .and. &
+                (elemI(:,ei_elementType)        == CC      ) )
 
             elemR(:,er_Velocity)    = elemR(:,er_Flowrate) / elemR(:,er_Area)
             elemR(:,er_Velocity_N0) = elemR(:,er_Velocity)
             elemR(:,er_Velocity_N1) = elemR(:,er_Velocity)
 
-        elsewhere ( (elemI(:,ei_link_Gidx_SWMM) == thisLink) .and. &
-                    (elemR(:,er_area)           .le. zeroR   ) .and. &
-                    (elemI(:,ei_elementType)    == CC      ) )
+        elsewhere ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
+                    (elemR(:,er_area)               .le. zeroR ) .and. &
+                    (elemI(:,ei_elementType)        == CC    ) )
 
             elemR(:,er_Velocity)    = zeroR
             elemR(:,er_Velocity_N0) = zeroR

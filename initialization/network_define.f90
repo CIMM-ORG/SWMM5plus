@@ -70,32 +70,34 @@ contains
             print*, 'image = ', this_image()
             print*, '.......................Elements...............................'
             print*
-            print*, '     ei_Lidx     ei_Gidx     ei_link    ei_node    Mface_uL    Mface_dL'
+            print*, '     ei_Lidx       ei_Gidx     link_BQ    link_SWMM  node_BQ   node_SWMM      Mface_uL    Mface_dL'
             do jj = 1,N_elem(this_image())
-                print*, elemI(jj,ei_Lidx), elemI(jj,ei_Gidx), elemI(jj,ei_link_Gidx_SWMM), &
-                elemI(jj,ei_node_Gidx_SWMM), elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL)
+                print*, elemI(jj,ei_Lidx), elemI(jj,ei_Gidx), elemI(jj,ei_link_Gidx_BIPquick), &
+                elemI(jj,ei_link_Gidx_SWMM),elemI(jj,ei_node_Gidx_BIPquick),elemI(jj,ei_node_Gidx_SWMM), &
+                elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL)
             end do
             print*
             print*, '.......................Faces.............................'
-            print*, 'a)  fi_Lidx     fi_Gidx     elem_uL     elem_dL     C_image' //&
-            '    GElem_up    GElem_dn     node_id     link_id      zbottom'
+            print*, 'a)     fi_Lidx     fi_Gidx    elem_uL     elem_dL   C_image' //&
+            '     GElem_up    GElem_dn     node_BQ   node_SWMM    link_BQ   link_SWMM      zbottom'
             do jj = 1,N_face(this_image())
                 print*, faceI(jj,fi_Lidx),faceI(jj,fi_Gidx),faceI(jj,fi_Melem_uL), &
                 faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image), faceI(jj,fi_GhostElem_uL),&
-                faceI(jj,fi_GhostElem_dL),faceI(jj,fi_node_idx),faceI(jj, fi_link_idx), faceR(jj,fr_Zbottom)
+                faceI(jj,fi_GhostElem_dL),faceI(jj,fi_node_idx_BIPquick),faceI(jj, fi_node_idx_SWMM),&
+                faceI(jj,fi_link_idx_BIPquick),faceI(jj,fi_link_idx_SWMM),faceR(jj,fr_Zbottom)
             end do
 
             ! print*
             ! print*, '.......................Faces..................................'
             ! print*, 'b)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
             ! '    fYN_isnull    fYN_isUpGhost    fYN_isDnGhost'
-            ! do jj = 1,N_face(ii)
-            !     print*, faceI(jj,fi_Lidx)[ii],' ',faceI(jj,fi_BCtype)[ii],&
-            !     '           ',faceYN(jj,fYN_isInteriorFace)[ii], &
-            !     '                    ',faceYN(jj,fYN_isSharedFace)[ii], &
-            !     '              ',faceYN(jj,fYN_isnull)[ii], &
-            !     '            ',faceYN(jj,fYN_isUpGhost)[ii], &
-            !     '              ',faceYN(jj,fYN_isDnGhost)[ii]
+            ! do jj = 1,N_face(this_image())
+            !     print*, faceI(jj,fi_Lidx),' ',faceI(jj,fi_BCtype),&
+            !     '           ',faceYN(jj,fYN_isInteriorFace), &
+            !     '                    ',faceYN(jj,fYN_isSharedFace), &
+            !     '              ',faceYN(jj,fYN_isnull), &
+            !     '            ',faceYN(jj,fYN_isUpGhost), &
+            !     '              ',faceYN(jj,fYN_isDnGhost)
             ! end do
             print*, '===================================================================' //&
             '==================================================================='
@@ -433,7 +435,7 @@ contains
 
                 case (nJm)
                     JunctionElementIdx = pack( elemI(:,ei_Lidx), &
-                                             ( elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode) )
+                                             ( elemI(:,ei_node_Gidx_BIPquick) == thisJunctionNode) )
 
                     call init_network_map_nJm_branches (image, thisJunctionNode, JunctionElementIdx)
 
@@ -485,7 +487,7 @@ contains
 
         do ii = 1,NsharedFaces
             fLidx       => sharedFaces(ii)
-            nIdx        => faceI(fLidx,fi_node_idx)
+            nIdx        => faceI(fLidx,fi_node_idx_BIPquick)
             nodeType    => node%I(nIdx,ni_node_type)
 
             select case (nodeType)
@@ -553,7 +555,6 @@ contains
                         !% integer data
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
-                        faceI(FacelocalCounter,fi_node_idx) = thisNode
                         !% an upstream boundary face does not have any local upstream element
                         !% thus, it is mapped to the dummy element
                         faceI(FaceLocalCounter,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
@@ -563,6 +564,9 @@ contains
                         node%I(thisNode,ni_face_idx)        = FaceLocalCounter 
                         !% set zbottom
                         faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
+                        !% set the node the face has been originated from
+                        faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
+                        faceI(FacelocalCounter,fi_node_idx_SWMM)     = thisNode
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
                     end if
@@ -580,12 +584,13 @@ contains
                         !% integer data
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
-                        faceI(FacelocalCounter,fi_node_idx) = thisNode
                         faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
                         faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
                         faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         !% set zbottom
                         faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
+                        !% set the node the face has been originated from
+                        faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
                         !% First assign the face index to the nJ2 node, then will
                         !% update with the elem_uL index of the upstream element
                         node%I(thisNode,ni_elemface_idx)     = FaceLocalCounter
@@ -623,6 +628,16 @@ contains
                                 faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
                             end if
 
+                            !% set the swmm idx. if the node is phantom, it will not have
+                            !% any SWMM idx
+                            if (.not. node%YN(thisNode,nYN_is_phantom_node)) then
+                                faceI(FacelocalCounter,fi_node_idx_SWMM) = thisNode
+                            endif
+
+                        else
+                            !% the node is not a edge node thus, the node cannot be a phantom node
+                            !% and the bipquick and SWMM idx will be the same
+                            faceI(FacelocalCounter,fi_node_idx_SWMM) = thisNode
                         end if
 
                         !% change the node assignmebt value
@@ -667,9 +682,18 @@ contains
             !% integer data
             faceI(FacelocalCounter,fi_Lidx)     = FacelocalCounter
             faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
-            faceI(FacelocalCounter,fi_node_idx) = thisNode
-            faceI(FacelocalCounter,fi_link_idx) = thisLink
-            faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
+            faceI(FacelocalCounter,fi_Connected_image)   = node%I(thisNode,ni_P_image)
+            faceI(FacelocalCounter,fi_link_idx_BIPquick) = thisLink
+            faceI(FacelocalCounter,fi_link_idx_SWMM)     = link%I(thisLink,li_parent_link)
+
+            !% set the face from the node it has been originated from
+            faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
+
+            !% Set the swmm idx. 
+            !% If the node is phantom, it will not have any SWMM idx
+            if (.not. node%YN(thisNode,nYN_is_phantom_node)) then
+                faceI(FacelocalCounter,fi_node_idx_SWMM) = thisNode
+            endif
 
             !% real data
             faceR(FaceLocalCounter,fr_Zbottom) = node%R(thisNode,nr_Zbottom)
@@ -764,13 +788,14 @@ contains
                 !%................................................................
 
                 !% integer data
-                elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
-                elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
-                elemI(ElemLocalCounter,ei_elementType)      = link%I(thisLink,li_link_type)
-                elemI(ElemLocalCounter,ei_link_Gidx_SWMM)   = thisLink
-                elemI(ElemLocalCounter,ei_Mface_uL)         = FaceLocalCounter
-                elemI(ElemLocalCounter,ei_Mface_dL)         = FaceLocalCounter + oneI
-                elemI(ElemLocalCounter,ei_link_pos)         = ii
+                elemI(ElemLocalCounter,ei_Lidx)                 = ElemLocalCounter
+                elemI(ElemLocalCounter,ei_Gidx)                 = ElemGlobalCounter
+                elemI(ElemLocalCounter,ei_elementType)          = link%I(thisLink,li_link_type)      
+                elemI(ElemLocalCounter,ei_Mface_uL)             = FaceLocalCounter
+                elemI(ElemLocalCounter,ei_Mface_dL)             = FaceLocalCounter + oneI
+                elemI(ElemLocalCounter,ei_link_pos)             = ii
+                elemI(ElemLocalCounter,ei_link_Gidx_BIPquick)   = thisLink
+                elemI(ElemLocalCounter,ei_link_Gidx_SWMM)       = link%I(thisLink,li_parent_link)
 
                 !% real data
                 elemR(ElemLocalCounter,er_Length)           = link%R(thisLink,lr_AdjustedLength)/link%I(thisLink,li_N_element)
@@ -790,9 +815,10 @@ contains
                     faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
                     faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter + oneI
                     faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
-                    faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
-                    faceI(FaceLocalCounter,fi_link_idx) = thisLink
+                    faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist 
                     faceR(FaceLocalCounter,fr_Zbottom)  = zDownstream
+                    faceI(FaceLocalCounter,fi_link_idx_BIPquick) = thisLink
+                    faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(thisLink,li_parent_link)
                 end if
 
                 !% counter for element z bottom calculation
@@ -865,11 +891,14 @@ contains
                         faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
                         faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
                         faceI(FaceLocalCounter,fi_BCtype)   = BCdn
-                        faceI(FacelocalCounter,fi_node_idx) = thisNode
                         !% set zbottom
                         faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                         node%I(thisNode,ni_elemface_idx)    = FaceLocalCounter
                         node%I(thisNode,ni_face_idx)        = FaceLocalCounter 
+
+                        !% set the node the face has been originated from
+                        faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
+                        faceI(FacelocalCounter,fi_node_idx_SWMM)     = thisNode
 
                         !% change the node assignmebt value
                         nAssignStatus =  nAssigned
@@ -886,7 +915,6 @@ contains
                         !% integer data
                         faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                         faceI(FaceLocalCounter,fi_Gidx)     = FaceGlobalCounter
-                        faceI(FacelocalCounter,fi_node_idx) = thisNode
                         faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
                         faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
                         faceI(FacelocalCounter,fi_Melem_dL) = ElemLocalCounter
@@ -896,6 +924,9 @@ contains
                         !% update with the elem_uL index of the upstream element
                         node%I(thisNode,ni_elemface_idx)   = FaceLocalCounter
                         node%I(thisNode,ni_face_idx)        = FaceLocalCounter
+
+                        !% set the node the face has been originated from
+                        faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
 
                         !% integer data
                         if (node%I(thisNode,ni_P_is_boundary) == EdgeNode) then
@@ -926,6 +957,16 @@ contains
                                 !% these global indexes will be set later
                                 faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
                             end if
+
+                            !% set the swmm idx. 
+                            !% if the node is phantom, it will not have any SWMM idx
+                            if (.not. node%YN(thisNode,nYN_is_phantom_node)) then
+                                faceI(FacelocalCounter,fi_node_idx_SWMM) = thisNode
+                            endif
+                        else
+                            !% the node is not a edge node thus, the node cannot be a phantom node
+                            !% and the bipquick and SWMM idx will be the same
+                            faceI(FacelocalCounter,fi_node_idx_SWMM) = thisNode
                         end if
 
                         !% change the node assignmebt value
@@ -968,10 +1009,18 @@ contains
             faceI(FacelocalCounter,fi_Lidx)     = FaceLocalCounter
             faceI(FaceLocalCounter,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
             faceI(FacelocalCounter,fi_Melem_uL) = ElemLocalCounter - oneI
-            faceI(FacelocalCounter,fi_node_idx) = thisNode
-            faceI(FacelocalCounter,fi_link_idx) = thisLink
             faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
-            faceI(FacelocalCounter,fi_Connected_image) = node%I(thisNode,ni_P_image)
+            faceI(FacelocalCounter,fi_Connected_image)   = node%I(thisNode,ni_P_image)
+            !% set the node the face has been originated from
+            faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
+            faceI(FacelocalCounter,fi_link_idx_BIPquick) = thisLink
+            faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(thisLink,li_parent_link)
+
+            !% Set the swmm idx. 
+            !% If the node is phantom, it will not have any SWMM idx
+            if (.not. node%YN(thisNode,nYN_is_phantom_node)) then
+                faceI(FacelocalCounter,fi_node_idx_SWMM) = thisNode
+            endif
 
             !% real data
             faceR(FaceLocalCounter,fr_Zbottom) = node%R(thisNode,nr_Zbottom)
@@ -1033,12 +1082,14 @@ contains
 
         !% Element Arrays
         !% integer data
-        elemI(ElemLocalCounter,ei_Lidx)             = ElemLocalCounter
-        elemI(ElemLocalCounter,ei_Gidx)             = ElemGlobalCounter
-        elemI(ElemLocalCounter,ei_elementType)      = JM
-        elemI(ElemLocalCounter,ei_node_Gidx_SWMM)   = thisNode
+        elemI(ElemLocalCounter,ei_Lidx)                 = ElemLocalCounter
+        elemI(ElemLocalCounter,ei_Gidx)                 = ElemGlobalCounter
+        elemI(ElemLocalCounter,ei_elementType)          = JM
+        elemI(ElemLocalCounter,ei_node_Gidx_BIPquick)   = thisNode
+        !% a JM node will never be a phantom node. Thus, the BQuick and SWMM idx will be the same
+        elemI(ElemLocalCounter,ei_node_Gidx_SWMM)       = thisNode
         !% Assign junction main element to node
-        node%I(thisNode,ni_elemface_idx)             = ElemLocalCounter
+        node%I(thisNode,ni_elemface_idx)                = ElemLocalCounter
 
         !% real data
         elemR(ElemLocalCounter,er_Zbottom) = node%R(thisNode,nr_zbottom)
@@ -1064,7 +1115,10 @@ contains
             elemI(ElemLocalCounter,ei_Lidx)           = ElemLocalCounter
             elemI(ElemLocalCounter,ei_Gidx)           = ElemGlobalCounter
             elemI(ElemLocalCounter,ei_elementType)    = JB
-            elemI(ElemLocalCounter,ei_node_Gidx_SWMM) = thisNode
+            elemI(ElemLocalCounter,ei_node_Gidx_BIPquick)   = thisNode
+            !% A JB will never come from a phantom node. 
+            !% Thus, the BQuick and SWMM idx will be the same
+            elemI(ElemLocalCounter,ei_node_Gidx_SWMM)       = thisNode
 
             !% real data
             elemR(ElemLocalCounter,er_Zbottom) = node%R(thisNode,nr_zbottom)
@@ -1093,9 +1147,12 @@ contains
                 !% integer data
                 faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                 faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
-                faceI(FacelocalCounter,fi_node_idx) = thisNode
                 faceI(FaceLocalCounter,fi_Melem_dL) = ElemLocalCounter
                 faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
+
+                !% set the node the face has been originated from
+                faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
+                faceI(FaceLocalCounter,fi_node_idx_SWMM)     = thisNode
 
                 !% real branches
                 if (upBranchIdx /= nullvalueI) then
@@ -1103,7 +1160,8 @@ contains
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Exists)           = oneI
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection)  = upBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(upBranchIdx)
-                    faceI(FaceLocalCounter,fi_link_idx) = upBranchIdx
+                    faceI(FaceLocalCounter,fi_link_idx_BIPquick) = upBranchIdx
+                    faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(upBranchIdx,li_parent_link)
                     !% set zbottom
                     faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                     !% Check 4: this node is the connecting node across partitions
@@ -1162,9 +1220,12 @@ contains
                 !% integer data
                 faceI(FaceLocalCounter,fi_Lidx)     = FaceLocalCounter
                 faceI(FacelocalCounter,fi_Gidx)     = FaceGlobalCounter
-                faceI(FacelocalCounter,fi_node_idx) = thisNode
                 faceI(FaceLocalCounter,fi_Melem_uL) = ElemLocalCounter
                 faceI(FaceLocalCounter,fi_BCtype)   = doesnotexist
+
+                !% set the node the face has been originated from
+                faceI(FacelocalCounter,fi_node_idx_BIPquick) = thisNode
+                faceI(FaceLocalCounter,fi_node_idx_SWMM)     = thisNode
 
                 !% Check 3: if the branch is a valid branch
                 if (dnBranchIdx /= nullvalueI) then
@@ -1173,7 +1234,8 @@ contains
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection) = dnBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(dnBranchIdx)
                     elemYN(ElemLocalCounter,eYN_isDownstreamJB) = .true.
-                    faceI(FacelocalCounter,fi_link_idx) = dnBranchIdx
+                    faceI(FacelocalCounter,fi_link_idx_BIPquick) = dnBranchIdx
+                    faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(dnBranchIdx,li_parent_link)
                     !% set zbottom
                     faceR(FaceLocalCounter,fr_Zbottom)  = node%R(thisNode,nr_Zbottom)
                     !% identifier for downstream junction branch faces
@@ -1204,7 +1266,7 @@ contains
                         else
                             !% set global index as nullvalue for shared faces.
                             !% these global indexes will be set later
-                            faceI(FaceLocalCounter,fi_Gidx)     = nullvalueI
+                            faceI(FaceLocalCounter,fi_Gidx) = nullvalueI
                         end if
                     end if
 
@@ -1383,13 +1445,13 @@ contains
         eUp         => faceI(fLidx,fi_Melem_uL)
         eDn         => faceI(fLidx,fi_Melem_dL)
         targetImage => faceI(fLidx,fi_Connected_image)
-        branchIdx   => faceI(fLidx,fi_link_idx)
+        branchIdx   => faceI(fLidx,fi_link_idx_BIPquick)
 
         do ii = 1,N_face(targetImage)
 
-            if ((faceI(ii,fi_Connected_image)[targetImage] == image) .and. &
-                (faceI(ii,fi_node_idx)[targetImage] == nIdx        ) .and. &
-                (faceI(ii,fi_link_idx)[targetImage] == branchIdx   ))   then
+            if ((faceI(ii,fi_Connected_image)[targetImage]   == image)   .and. &
+                (faceI(ii,fi_node_idx_BIPquick)[targetImage] == nIdx )   .and. &
+                (faceI(ii,fi_link_idx_BIPquick)[targetImage] == branchIdx)) then
 
                 !% find the local ghost element index of the connected image
                 if (faceYN(ii,fYN_isUpGhost)[targetImage]) then
@@ -1529,8 +1591,8 @@ contains
 
         do ii = 1,N_face(targetImage)
 
-            if ((faceI(ii,fi_Connected_image)[targetImage] == image) .and. &
-                (faceI(ii,fi_node_idx)[targetImage] == nIdx)) then
+            if ((faceI(ii,fi_Connected_image)[targetImage]   == image) .and. &
+                (faceI(ii,fi_node_idx_BIPquick)[targetImage] == nIdx)) then
 
                 !% find the local ghost element index of the connected image
                 if (faceYN(ii,fYN_isUpGhost)[targetImage]) then

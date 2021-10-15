@@ -102,6 +102,9 @@ contains
         !% --- output file directories
         call util_file_setup_output_folders()
 
+        !%  --- finish setting all the paths to output folders
+        sync all
+
         if (setting%Output%Verbose) then
             write(*,"(A)") "Simulation Starts..."
             write(*,"(A)") 'Using the following files:'
@@ -117,6 +120,8 @@ contains
             call util_profiler_start (pfc_initialize_all)
         end if
 
+        !%  --- finish setting all the file paths before initialing the interface
+        sync all
         !% --- initialize the API with the SWMM-C code
         call interface_init ()
 
@@ -138,14 +143,14 @@ contains
         call init_network_define_toplevel ()
 
         !% --- HACK --- NEEDS FIXING FOR MULTILEVEL OUTPUT WITH MULTIPLE PROCESSOR
-        if (num_images() > 1) then
-            print *, "ERROR (code) -- NEED TO FIX HACK"
-            stop 9347044
-        else
-            !% temporarily assign the node index to the Global swmm index
-            !% only good for one processor operation
-            faceI(:,fi_node_Gidx_SWMM) = faceI(:,fi_node_idx)    
-        end if    
+        ! if (num_images() > 1) then
+        !     print *, "ERROR (code) -- NEED TO FIX HACK"
+        !     stop 9347044
+        ! else
+        !     !% temporarily assign the node index to the Global swmm index
+        !     !% only good for one processor operation
+        !     faceI(:,fi_node_Gidx_SWMM) = faceI(:,fi_node_idx)    
+        ! end if    
         !% ---- END HACK
    
         !% --- setup for csv output of links and nodes
@@ -259,7 +264,7 @@ contains
         integer :: thisTime(8), ii, thisunit, ios
         character(len=4) :: cyear
         character(len=2) :: cmonth, cday, chour, cmin
-        character(len=13) :: datetimestamp
+        character(len=13) :: datetimestamp   
         character(64) :: subroutine_name = 'init_timestamp'
         !%-----------------------------------------------------------------------------  
         call date_and_time(values = thisTime)
@@ -280,45 +285,55 @@ contains
         if (thisTime(6) < 10) then
             cmin = '0'//adjustl(cmin)
         end if
-        setting%Time%DateTimeStamp = cyear//cmonth//cday//'_'//chour//cmin
-        !print *, setting%Time%DateTimeStamp
-        
-        !% --- distribute to all processors
-        !% --- HACK using a write/read file as the setting varialble is not a coarray
-        if (this_image() == 1) then
-            open(newunit = thisunit, &
-                file = 'temp_fortran.txt',    &     
-                action = 'write', &
-                iostat = ios)
-            if (ios /= 0) then
-                write(*,"(A)") 'ERROR (CODE) file temp_fortran.txt could not be opened for writing.'
-                write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
-                stop 'in ' // subroutine_name  
-            end if    
-            write(thisunit,"(A)") setting%Time%DateTimeStamp
-            close(thisunit)
-        end if
-        !% testing
-        !open(newunit = thisunit, &
-        !    file = 'temp_fortran.txt',    &     
-        !    action = 'read', &
-        !    iostat = ios)
-        !read(thisunit,"(A)")  datetimestamp
-        !print *, datetimestamp  
 
-        !% read sequentially into other images
-        do ii = 2,num_images()
-            open(newunit = thisunit, &
-                file = 'temp_fortran.txt',    &     
-                action = 'read', &
-                iostat = ios)       
-            if (ios /= 0) then
-                write(*,"(A)") 'ERROR (CODE) temp_fortran.txt file could not be opened for reading.'
-                write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
-                stop 'in ' // subroutine_name  
-            end if                       
-            read(thisunit,"(A)") setting%Time%DateTimeStamp  
-        end do   
+        if (this_image() == 1) then
+            datetimestamp = cyear//cmonth//cday//'_'//chour//cmin
+        endif
+
+        call co_broadcast (datetimestamp, source_image=1)
+
+        setting%Time%DateTimeStamp = datetimestamp
+
+        ! print*, 'image', this_image()
+        ! print *, setting%Time%DateTimeStamp
+
+        ! !% --- distribute to all processors
+        ! !% --- HACK using a write/read file as the setting varialble is not a coarray
+        ! if (this_image() == 1) then
+        !     open(newunit = thisunit, &
+        !         file = 'temp_fortran.txt',    &     
+        !         action = 'write', &
+        !         iostat = ios)
+        !     print*, 'ios', ios
+        !     if (ios /= 0) then
+        !         write(*,"(A)") 'ERROR (CODE) file temp_fortran.txt could not be opened for writing.'
+        !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
+        !         stop 'in ' // subroutine_name  
+        !     end if    
+        !     write(thisunit,"(A)") setting%Time%DateTimeStamp
+        !     close(thisunit)
+        ! end if
+        ! !% testing
+        ! !open(newunit = thisunit, &
+        ! !    file = 'temp_fortran.txt',    &     
+        ! !    action = 'read', &
+        ! !    iostat = ios)
+        ! !read(thisunit,"(A)")  datetimestamp
+        ! !print *, datetimestamp  
+
+        ! !% read sequentially into other images
+        ! do ii = 2,num_images()
+        !     open(newunit = thisunit, &
+        !         file = 'temp_fortran.txt',    &     
+        !         action = 'read', &
+        !         iostat = ios)       
+        !     if (ios /= 0) then
+        !         write(*,"(A)") 'ERROR (CODE) temp_fortran.txt file could not be opened for reading.'
+        !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
+        !         stop 'in ' // subroutine_name  
+        !     end if                       
+        !     read(thisunit,"(A)") setting%Time%DateTimeStamp  
+        ! end do   
 
         sync all
 

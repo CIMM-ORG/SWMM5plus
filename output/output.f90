@@ -177,7 +177,7 @@ contains
         !elementType => elemI(:,ei_elementType)
         !link_idx    => elemI(:,ei_link_Gidx_SWMM)
         face_idx    => faceI(:,fi_Gidx)
-        node_idx    => faceI(:,fi_node_idx)
+        node_idx    => faceI(:,fi_node_idx_BIPquick)
         isNodeOut   => node%YN(:,nYN_isOutput)  
         isFaceOut   => faceYN(:,fYN_isFaceOut)
 
@@ -807,7 +807,7 @@ contains
             !% --- HACK --- we should be able to use array processing, but Open Coarrays doesn't support
             do kk=Lasti+1,Lasti+npack
                 OutFaceFixedI(kk,offi_face_Gidx)      = faceI(thisF(kk),fi_Gidx)[ii]
-                OutFaceFixedI(kk,offi_node_Gidx_SWMM) = faceI(thisF(kk),fi_node_Gidx_SWMM)[ii]
+                OutFaceFixedI(kk,offi_node_Gidx_SWMM) = faceI(thisF(kk),fi_node_idx_SWMM)[ii]
             end do !% kk
         
             !% --- store the real data

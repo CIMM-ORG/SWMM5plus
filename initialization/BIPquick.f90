@@ -966,6 +966,9 @@ contains
         !% The downstream link for the phantom node is the phantom link
         node%I(phantom_node_idx, ni_Mlink_d1) = phantom_link_idx
 
+        !% Identifier for phantom node
+        node%YN(phantom_node_idx,nYN_is_phantom_node) = .true.
+
         !% Reset the phantom node directweight to 0.0 (for cleanliness, this won't matter)
         B_nodeR(phantom_node_idx, directweight) = 0.0
 

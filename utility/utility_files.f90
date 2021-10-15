@@ -517,73 +517,91 @@ contains
         !% --- HACK -- need error handling for all the mkdir below
 
         !% --- debug and swmm output folders
-        if ( this_image() == 1) then
-            if (setting%Debug%Setup) then
+        if (setting%Debug%Setup) then
+
+            !% --- setup the subfolders for links and nodes
+            setting%File%debug_setup_link_folder = trim(setting%File%output_timestamp_subfolder) &
+                // '/' // 'debug_setup/link'
+            setting%File%debug_setup_node_folder = trim(setting%File%output_timestamp_subfolder) &
+                // '/' // 'debug_setup/node'
+
+            !% --- create directories only using image 1
+            if ( this_image() == 1) then
                 !% --- create the debug_setup folder
                 call execute_command_line ( &
                     ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/debug_setup'), &
                     cmdstat=istat, cmdmsg=cmsg)
-                
                 !% --- create the subfolders for links and nodes
-                setting%File%debug_setup_link_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_setup/link'
                 call execute_command_line ( &
                     ('mkdir '// trim(setting%File%debug_setup_link_folder)), cmdstat=istat, cmdmsg=cmsg)
-
-                setting%File%debug_setup_node_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_setup/node' 
                 call execute_command_line (&
-                    ('mkdir '// trim(setting%File%debug_setup_node_folder)), cmdstat=istat, cmdmsg=cmsg)  
-                    
-            end if
-            if (setting%Debug%Output .or. setting%Output%report) then
-                !% --- create the debug_output folder
-                call execute_command_line ( &
-                    ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/debug_output'), &
-                    cmdstat=istat, cmdmsg=cmsg)
+                    ('mkdir '// trim(setting%File%debug_setup_node_folder)), cmdstat=istat, cmdmsg=cmsg) 
+            end if     
 
-                !% --- create the subfolders for links and nodes
+        end if
+            if (setting%Debug%Output .or. setting%Output%report) then
+
+                !% --- setup the subfolders for links and nodes
                 setting%File%debug_output_link_folder = trim(setting%File%output_timestamp_subfolder) &
                     // '/' // 'debug_output/link'
-                call execute_command_line ( &
-                    ('mkdir '// trim(setting%File%debug_output_link_folder)), cmdstat=istat, cmdmsg=cmsg)
 
                 setting%File%debug_output_node_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_output/node' 
-                call execute_command_line (&
-                    ('mkdir '// trim(setting%File%debug_output_node_folder)), cmdstat=istat, cmdmsg=cmsg)      
+                    // '/' // 'debug_output/node'    
 
-                !% --- create subfolders for elemR, faceR, summmary
+                !% --- setup subfolders for elemR, faceR, summmary
                 setting%File%debug_output_elemR_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_output/elemR' 
-                call execute_command_line (&
-                    ('mkdir '// trim(setting%File%debug_output_elemR_folder)), cmdstat=istat, cmdmsg=cmsg)     
+                    // '/' // 'debug_output/elemR'    
 
                 setting%File%debug_output_faceR_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_output/faceR' 
-                call execute_command_line (&
-                    ('mkdir '// trim(setting%File%debug_output_faceR_folder)), cmdstat=istat, cmdmsg=cmsg)      
+                    // '/' // 'debug_output/faceR'      
                     
                 setting%File%debug_output_summary_folder = trim(setting%File%output_timestamp_subfolder) &
-                    // '/' // 'debug_output/summary' 
-                call execute_command_line (&
-                    ('mkdir '// trim(setting%File%debug_output_summary_folder)), cmdstat=istat, cmdmsg=cmsg)     
+                    // '/' // 'debug_output/summary'    
 
-                !% --- create the swmm_output folder
-                call execute_command_line ( &
-                    ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/swmm5_output'), &
-                    cmdstat=istat, cmdmsg=cmsg)
-
-                !% --- create swmm% subfolders for link an node
+                !% --- setup swmm% subfolders for link an node
                 setting%File%swmm5_output_link_folder = trim(setting%File%output_timestamp_subfolder) &
                     // '/' // 'swmm5_output/link' 
-                call execute_command_line (&
-                    ('mkdir '// trim(setting%File%swmm5_output_link_folder)), cmdstat=istat, cmdmsg=cmsg)  
 
                 setting%File%swmm5_output_node_folder = trim(setting%File%output_timestamp_subfolder) &
                     // '/' // 'swmm5_output/node' 
-                call execute_command_line (&
-                    ('mkdir '// trim(setting%File%swmm5_output_node_folder)), cmdstat=istat, cmdmsg=cmsg)      
+
+
+                !% --- create directories only using image 1
+                if ( this_image() == 1) then
+                    !% --- create the debug_output folder
+                    call execute_command_line ( &
+                        ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/debug_output'), &
+                        cmdstat=istat, cmdmsg=cmsg)
+
+                    !% --- create the subfolders for links and nodes
+                    call execute_command_line ( &
+                        ('mkdir '// trim(setting%File%debug_output_link_folder)), cmdstat=istat, cmdmsg=cmsg)
+
+                    call execute_command_line (&
+                        ('mkdir '// trim(setting%File%debug_output_node_folder)), cmdstat=istat, cmdmsg=cmsg) 
+
+                    !% --- create subfolders for elemR, faceR, summmary
+                    call execute_command_line (&
+                        ('mkdir '// trim(setting%File%debug_output_elemR_folder)), cmdstat=istat, cmdmsg=cmsg)     
+ 
+                    call execute_command_line (&
+                        ('mkdir '// trim(setting%File%debug_output_faceR_folder)), cmdstat=istat, cmdmsg=cmsg)      
+                         
+                    call execute_command_line (&
+                        ('mkdir '// trim(setting%File%debug_output_summary_folder)), cmdstat=istat, cmdmsg=cmsg)
+
+                    !% --- create the swmm_output folder
+                    call execute_command_line ( &
+                        ('mkdir '// trim(setting%File%output_timestamp_subfolder) // '/swmm5_output'), &
+                        cmdstat=istat, cmdmsg=cmsg)
+
+                    !% --- create swmm% subfolders for link an node
+                    call execute_command_line (&
+                        ('mkdir '// trim(setting%File%swmm5_output_link_folder)), cmdstat=istat, cmdmsg=cmsg)  
+
+                    call execute_command_line (&
+                        ('mkdir '// trim(setting%File%swmm5_output_node_folder)), cmdstat=istat, cmdmsg=cmsg) 
+                end if 
             end if
             !if (setting%Debug%Output) then
                 ! call system('mkdir debug_output/elemR')
@@ -595,7 +613,7 @@ contains
                 ! call system('mkdir debug_output/swmm5/node')
                 ! !% >>> END HACK
             !end if
-        end if
+        ! end if
 
         ! !% --- debug and swmm output files
         ! if (setting%Debug%Setup) then

@@ -149,6 +149,8 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% BC packs
+        !% zero out the number of upBC to get a new count of how many is in a given partition
+        N_nBCup = 0
         if (N_flowBC > 0) then
             N_nBCup = count(BC%flowI(:, bi_category) == BCup)
             if (N_nBCup > 0) then
@@ -169,6 +171,9 @@ contains
             end if
         end if
 
+        !% BC packs
+        !% zero out the number of dnBC to get a new count of how many is in a given partition
+        N_nBCdn = 0
         if (N_headBC > 0) then
             N_nBCdn = count(BC%headI(:, bi_category) == BCdn)
             if (N_nBCdn > 0) then
@@ -2022,7 +2027,95 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_shared_faces
+    !
+    !==========================================================================
+    ! MOVED UP WITH PUBLIC ROUTINES
+!     !==========================================================================
+!     !
+!     subroutine pack_nodes()
+!         !--------------------------------------------------------------------------
+!         !% This allocates and packs the node data in the arrays of node%P.
+!         !% With this approach using the P type, each of the arrays on the images
+!         !% are allocated to the size needed.
+!         !--------------------------------------------------------------------------
+!         character(64)    :: subroutine_name = 'pack_nodes'
+!         !--------------------------------------------------------------------------
+!         if (setting%Debug%File%pack_mask_arrays) &
+!             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+!         N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
+!                         (node%I(:,ni_P_image) == this_image()))
+
+!         if (N_flowBC > 0) then
+!             allocate(node%P%have_flowBC(N_flowBC))
+!             node%P%have_flowBC = pack(node%I(:,ni_idx), &
+!                 node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
+!         end if
+
+!         !% HACK -- this assumes that a head BC is always a downstream BC.
+!         N_headBC = count((node%I(:, ni_node_type) == nBCdn) .and. &
+!                         (node%I(:,ni_P_image) == this_image()))
+
+!         if (N_headBC > 0) then
+!             allocate(node%P%have_headBC(N_headBC))
+!             node%P%have_headBC = pack(node%I(:,ni_idx), &
+!             (node%I(:, ni_node_type) == nBCdn) .and. &
+!             (node%I(:,ni_P_image) == this_image()))
+!         end if
+!         if (setting%Debug%File%pack_mask_arrays) &
+!         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+!     end subroutine pack_nodes
+! !
+!==========================================================================
+!% MOVED UP TO PUBLIC  
+!==========================================================================
 !
+!     subroutine pack_bc
+!         integer :: psize
+!         character(64) :: subroutine_name = 'pack_bc'
+!         if (setting%Debug%File%pack_mask_arrays) &
+!             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+
+!         !% BC packs
+        
+!         if (N_flowBC > 0) then
+!             N_nBCup = count(BC%flowI(:, bi_category) == BCup)
+!             if (N_nBCup > 0) then
+!                 allocate(BC%P%BCup(N_nBCup))
+!                 BC%P%BCup = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BCup)
+!                 !% Face packs
+!                 npack_faceP(fp_BCup) = N_nBCup
+!                 faceP(1:N_nBCup,fp_BCup) = BC%flowI(BC%P%BCup, bi_face_idx)
+!             end if
+
+!             N_nBClat = count(BC%flowI(:, bi_category) == BClat)
+!             if (N_nBClat > 0) then
+!                 allocate(BC%P%BClat(N_nBClat))
+!                 BC%P%BClat = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BClat)
+!                 !% Elem Packs
+!                 npack_elemP(ep_BClat) = N_nBClat
+!                 elemP(1:N_nBClat,ep_BClat) = BC%flowI(BC%P%BClat, bi_elem_idx)
+!             end if
+!         end if
+
+!         !% BC packs
+!         !% zero out the number of dnBC to get a new count of how many is in a given partition
+!         N_nBCdn = 0
+!         if (N_headBC > 0) then
+!             N_nBCdn = count(BC%headI(:, bi_category) == BCdn)
+!             if (N_nBCdn > 0) then
+!                 allocate(BC%P%BCdn(N_nBCdn))
+!                 BC%P%BCdn = pack(BC%headI(:, bi_idx), BC%headI(:, bi_category) == BCdn)
+!                 !% Face packs
+!                 npack_faceP(fp_BCdn) = N_nBCdn
+!                 faceP(1:N_nBCdn,fp_BCdn) = BC%headI(BC%P%BCdn, bi_face_idx)
+!             end if
+!         end if
+!         if (setting%Debug%File%pack_mask_arrays) &
+!         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+!     end subroutine pack_bc
+! !
 !==========================================================================
 !==========================================================================
 !

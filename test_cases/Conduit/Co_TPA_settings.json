@@ -56,6 +56,11 @@
         "slots" : 10,
         "disableInterpolation": false
     },
+    "CaseName" : {
+        "Long"  : "Conduit",
+        "Short" : "Co",
+        "withTimeStamp" : ""
+    },
     "Constant" : {
         "gravity" : 9.81
     },
@@ -69,6 +74,12 @@
     },
     "FaceInterp" : {
         "DownJBFaceInterp" : "dynamic"
+    },
+    "File" : {
+        "library_folder" : "",
+        "links_input_file_exist" : false,
+        "nodes_input_file_exist" : false,  
+        "force_folder_creation"  : true
     },
     "Junction" : {
         "kFactor"  : 0.0,
@@ -111,16 +122,38 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Output" : {
+        "print_links_csv" : true,
+        "print_nodes_csv" : true,
         "report" : true,
         "reportStartTime" : 0.0,
-        "reportDt" : 100.0,
+        "reportDt" : 900.0,
         "reportStep" : 0,
+        "reportTimeUnits" : "Hours",
         "slots" : 20,
-        "links_input_file" : "",
-        "nodes_input_file" : "",
+        "StoredLevels" : 100,
+        "StoredFileNames" : 100,
+        "suppress_MultiLevel_Output" : false,
+        "UseFileNameFile" : false,
+        "Verbose" : true,
+        "Warning" : true,
         "CommandLine" : {
             "quiet" : false,
-            "interval" : 100000
+            "interval" : 100
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFroudeNumberOut" : false,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : false
         }
     },
     "Orifice" : {
@@ -133,7 +166,7 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 100.0
+        "CelerityFactor" : 1000.0
     },
     "Simulation" : {
         "useHydrology" : true,
@@ -147,7 +180,7 @@
         "MinimumHydRadius" : 0.009,
         "MinimumPerimeter" : 0.52,
         "MinimumTopwidth" : 0.5,
-        "UseSmallVolumes" : true
+        "UseSmallVolumes" : false
     },
     "Solver" : {
         "MomentumSourceMethod" : "T00",
@@ -283,7 +316,7 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : true,
+        "Setup"  : true,
         "Output" : true,
         "Tests" : true
     },
