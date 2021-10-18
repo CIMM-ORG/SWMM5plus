@@ -84,7 +84,7 @@ contains
 
         !% initialize slots
         call init_IC_slot ()
-
+        
         !% update all the auxiliary variables
         call update_auxiliary_variables (solver)
      
@@ -116,6 +116,8 @@ contains
 
         !% populate er_ones columns with ones
         call init_IC_oneVectors ()
+        
+        ! if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_setup)
 
         if (setting%Debug%File%initial_condition) then
            print*, '----------------------------------------------------'
