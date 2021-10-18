@@ -695,9 +695,6 @@ contains
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        !% --- only for serial
-        ! if (this_image() .ne. 1) return
-
         !% --- don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
 
@@ -770,20 +767,23 @@ contains
             !% --- get the total number of output elements on all images
             nTotal = sum(N_OutElem(:))
 
-            !% --- get space for combined element data
-            allocate(OutElemDataR(nTotal,nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg, 'OutElemDataR')
-            OutElemDataR(:,:,:) = nullvalueR
+            !% allocate the full network multi-level output array to one processor 
+            if (this_image() == 1) then
+                !% --- get space for combined element data
+                allocate(OutElemDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'OutElemDataR')
+                OutElemDataR(:,:,:) = nullvalueR
 
-            !brh rm !% --- get space for the indexes to the elemR() etc array
-            !brh rm allocate(OutElemGidx(nTotal), stat=allocation_status, errmsg=emsg)
-            !brh rm call util_allocate_check(allocation_status, emsg, 'OutElemGidx')
-            !brh rm OutElemGidx(:) = nullvalueI  
+                !brh rm !% --- get space for the indexes to the elemR() etc array
+                !brh rm allocate(OutElemGidx(nTotal), stat=allocation_status, errmsg=emsg)
+                !brh rm call util_allocate_check(allocation_status, emsg, 'OutElemGidx')
+                !brh rm OutElemGidx(:) = nullvalueI  
 
-            !% --- get space for integer data for OutElemFixedI
-            allocate(OutElemFixedI(nTotal,Ncol_oefi)[*], stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg, 'OutElemFixedI')
-            OutElemFixedI(:,:) = nullvalueI
+                !% --- get space for integer data for OutElemFixedI
+                allocate(OutElemFixedI(nTotal,Ncol_oefi), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'OutElemFixedI')
+                OutElemFixedI(:,:) = nullvalueI
+            end if
             
         end if
 
@@ -817,7 +817,7 @@ contains
             end if
 
             !% allocate the multi-level element storage for each image
-            allocate(faceOutR(nElem, nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
+            allocate(faceOutR(nElem,nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'faceOutR')
             faceOutR(:,:,:) = nullvalueR
 
@@ -828,20 +828,23 @@ contains
             !% --- get the total number of output elements on all images
             nTotal = sum(N_OutFace(:))
 
-            !% --- get space for combined element data
-            allocate(OutFaceDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg, 'OutFaceDataR')
-            OutFaceDataR(:,:,:) = nullvalueR
+            !% allocate the full network multi-level output array to one processor 
+            if (this_image() == 1) then
+                !% --- get space for combined element data
+                allocate(OutFaceDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'OutFaceDataR')
+                OutFaceDataR(:,:,:) = nullvalueR
 
-            !brh rm !% --- get space for the indexes to the elemR() etc array
-            !brh rm  allocate(OutFaceGidx(nTotal), stat=allocation_status, errmsg=emsg)
-            !brh rm  call util_allocate_check(allocation_status, emsg, 'OutFaceGidx')
-            !brh rm  OutFaceGidx(:) = nullvalueI  
+                !brh rm !% --- get space for the indexes to the elemR() etc array
+                !brh rm  allocate(OutFaceGidx(nTotal), stat=allocation_status, errmsg=emsg)
+                !brh rm  call util_allocate_check(allocation_status, emsg, 'OutFaceGidx')
+                !brh rm  OutFaceGidx(:) = nullvalueI  
 
-            !% --- get space for integer data for OutElemFixedI
-            allocate(OutFaceFixedI(nTotal,Ncol_offi), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg, 'OutFaceFixedI')
-            OutFaceFixedI(:,:) = nullvalueI
+                !% --- get space for integer data for OutElemFixedI
+                allocate(OutFaceFixedI(nTotal,Ncol_offi), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'OutFaceFixedI')
+                OutFaceFixedI(:,:) = nullvalueI
+            end if
 
         end if
 
