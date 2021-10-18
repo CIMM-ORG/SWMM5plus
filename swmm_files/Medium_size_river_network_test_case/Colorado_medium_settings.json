@@ -227,6 +227,7 @@
         "File" : {
             "adjust" : false,
             "boundary_conditions" : false,
+            "BIPquick" : false,
             "c_library" : false,
             "define_globals" : false,
             "define_indexes" : false,
@@ -239,15 +240,15 @@
             "geometry" : false,
             "discretization"  : false,
             "initial_condition" : false,
-            "initialization" : false,
+            "initialization" : true,
             "interface" : false,
             "jump" : false,
             "lowlevel_rk2" : false,
             "network_define" : false,
             "orifice_elements" : false,
-	        "output" : false,
+            "output" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : false,
+            "partitioning" : true,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
@@ -275,9 +276,9 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : false,
-        "Output" : false,
-        "Tests" : false
+        "Input"  : true,
+        "Output" : true,
+        "Tests" : true
     },
     "Profile" : {
         "YN" : true

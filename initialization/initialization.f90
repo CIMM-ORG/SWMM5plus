@@ -139,24 +139,28 @@ contains
         endif
         call init_IC_setup ()
 
-        !if (setting%Verbose) print *, "begin setup of output files"
+        if (setting%Verbose) print *, "begin setup of output files"
 
-        !% creating output_folders and files
-        call util_output_clean_folders()
-        call util_output_create_folders()
+        ! !% creating output_folders and files
+        ! call util_output_clean_folders()
+        ! call util_output_create_folders()
 
-        if ((this_image() == 1) .and. setting%Debug%Input) call util_output_export_linknode_input()
-        if (setting%Debug%Output) then
-            call util_output_create_elemR_files()
-            call util_output_create_faceR_files()
-            call util_output_create_summary_files()
-        end if
-        if (setting%Debug%Output .or. setting%Output%report) then
-            call output_create_link_files()
-            call output_create_node_files()
-        end if
+        ! if ((this_image() == 1) .and. setting%Debug%Input) call util_output_export_linknode_input()
+        ! if (setting%Debug%Output) then
+        !     call util_output_create_elemR_files()
+        !     call util_output_create_faceR_files()
+        !     call util_output_create_summary_files()
+        ! end if
+        ! if (setting%Debug%Output .or. setting%Output%report) then
+        !     call output_create_link_files()
+        !     call output_create_node_files()
+        ! end if
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
+        print*, "Here 1"
+
+        if ( this_image() == 1 ) then
+            if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
+        endif
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
@@ -632,7 +636,6 @@ contains
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
         !% Initialize report step
         setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
-
         if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
             stop "Error: Hydrology time step can't be smaller than hydraulics time step"
         end if
