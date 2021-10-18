@@ -15,12 +15,17 @@ module boundary_conditions
     public :: bc_update
 
 contains
-
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine bc_update()
+        !%-----------------------------------------------------------------------------
         integer :: ii
         character(64) :: subroutine_name = "bc_update"
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -56,15 +61,18 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end if
     end subroutine bc_update
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine bc_step()
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
         integer :: ii, nidx, lidx
         integer :: tstep_larger_than_resolution
         real(8) :: ttime, tnow, tend
         character(64) :: subroutine_name = "bc_step"
-    !%-----------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -92,7 +100,7 @@ contains
                                 end if
                                 tstep_larger_than_resolution = tstep_larger_than_resolution + 1
                             end do
-                            if ((tstep_larger_than_resolution > 0) .and. setting%Warning) then
+                            if ((tstep_larger_than_resolution > 0) .and. setting%Output%Warning) then
                                 call util_print_warning("Warning (bc.f08): The flow boundary condition for node " &
                                 // node%Names(nidx)%str // " has a higher resolution than the time step")
                             end if
@@ -126,7 +134,7 @@ contains
                                 end if
                                 tstep_larger_than_resolution = tstep_larger_than_resolution + 1
                             end do
-                            if ((tstep_larger_than_resolution > 0) .and. setting%Warning) then
+                            if ((tstep_larger_than_resolution > 0) .and. setting%Output%Warning) then
                                 call util_print_warning("Warning (bc.f08): The head boundary condition for node " &
                                 // node%Names(nidx)%str // " has a higher resolution than the time step")
                             end if
@@ -136,16 +144,20 @@ contains
             end do
         end if
     end subroutine bc_step
-
+!%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
     subroutine bc_fetch_flow(bc_idx)
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
         integer, intent(in) :: bc_idx
         integer             :: ii, NN
         real(8)             :: new_inflow_time
         real(8)             :: new_inflow_value
         character(64)       :: subroutine_name = "bc_fetch_flow"
-    !%-----------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -176,16 +188,19 @@ contains
         end if
 
     end subroutine bc_fetch_flow
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine bc_fetch_head(bc_idx)
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
         integer, intent(in) :: bc_idx
         integer             :: ii, NN
         real(8)             :: new_head_time
         real(8)             :: new_head_value
         character(64)       :: subroutine_name = "bc_fetch_head"
-    !%-----------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -210,8 +225,10 @@ contains
         if (setting%Debug%File%boundary_conditions) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine bc_fetch_head
-
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine bc_interpolate()
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -223,7 +240,7 @@ contains
         integer :: ii, slot_idx, upper_idx, lower_idx
         character(64) :: subroutine_name = 'bc_interpolate'
     !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -284,4 +301,8 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine bc_interpolate
+!%
+!%==========================================================================
+!% END OF MODULE
+!%+=========================================================================
 end module boundary_conditions

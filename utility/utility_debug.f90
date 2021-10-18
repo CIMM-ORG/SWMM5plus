@@ -14,7 +14,11 @@ module utility_debug
   public :: debug_Nface_check
 
 contains
-
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
   subroutine debug_2D_array_csv(file_name_input, type, header, arr_real, arr_int, arr_log)
 
     character(64) :: subroutine_name = 'debug_2D_array_csv'
@@ -28,6 +32,7 @@ contains
     character(len = 5) :: str_image
     integer :: ii, jj, fu, rc, image
 
+    if (icrash) return
     if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -97,15 +102,17 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
   end subroutine debug_2D_array_csv
-
-
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
   subroutine debug_Nface_check
     !% debug to check that the number of faces on each processor is equal to N_Face
 
     integer :: ii, total_faces
 
     character(64) :: subroutine_name = 'debug_Nface_check'
+    if (icrash) return
     if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -146,5 +153,8 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
   end subroutine debug_Nface_check
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
 end module utility_debug

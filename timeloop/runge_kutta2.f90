@@ -24,94 +24,163 @@ module runge_kutta2
     public :: rk2_toplevel_ETMAC
 
     contains
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
     subroutine rk2_toplevel_ETM ()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% single RK2 step for explicit time advance of SVE
         !%-----------------------------------------------------------------------------
         integer :: istep, ii
-        !%-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'rk2_toplevel_ETM'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%runge_kutta2) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1
+
         ! print*, '-------------------------------------------------------------------------'
         ! print*, '1st RK step'
+        ! print *, elemI(ietmp(4),ei_elementType), JM  !% main
+        ! print *, ietmp(3),ietmp(4)+1                     !% upstream
+        ! print *, ietmp(5), ietmp(4)+2                     !% downstream
+        ! print *, elemI(ietmp(3),ei_Mface_uL), iftmp(2)  !% upstream JB face
+        ! print *, elemI(ietmp(5),ei_Mface_dL), iftmp(5)  !% downstream JB face
+
+        ! print *, elemR(ietmp(1), er_Head),&
+        !          elemR(ietmp(2), er_Head),&
+        !          elemR(ietmp(3), er_Head),&
+        !          elemR(ietmp(4), er_Head),&
+        !          elemR(ietmp(5), er_Head),&
+        !          elemR(ietmp(6), er_Head),&
+        !          elemR(ietmp(7), er_Head)
+
+        ! write(*,"(10F8.3)")   &
+        !     elemR(ietmp(1), er_Head),&
+        !     elemR(ietmp(2), er_Head),&
+        !     elemR(ietmp(3), er_Head),&
+        !     elemR(ietmp(4), er_Head),&
+        !     elemR(ietmp(5), er_Head),&
+        !     elemR(ietmp(6), er_Head),&
+        !     elemR(ietmp(7), er_Head)   
+
+        ! print *, 'head'
+        ! write(*,"(16F8.3)")   &
+        !     elemR(ietmp(1), er_Head), faceR(iftmp(1), fr_Head_u), faceR(iftmp(1), fr_Head_d),&
+        !     elemR(ietmp(2), er_Head), faceR(iftmp(2), fr_Head_u), faceR(iftmp(2), fr_Head_d),&
+        !     elemR(ietmp(3), er_Head),&
+        !     elemR(ietmp(4), er_Head),&
+        !     elemR(ietmp(5), er_Head), faceR(iftmp(5), fr_Head_u), faceR(iftmp(5), fr_Head_d),&
+        !     elemR(ietmp(6), er_Head), faceR(iftmp(6), fr_Head_u), faceR(iftmp(6), fr_Head_d),&
+        !     elemR(ietmp(7), er_Head)        
+ 
+        !     print *, 'velocity'
+        !     write(*,"(16F8.3)")   &
+        !         elemR(ietmp(1), er_Velocity), faceR(iftmp(1), fr_Velocity_u), faceR(iftmp(1), fr_Velocity_d),&
+        !         elemR(ietmp(2), er_Velocity), faceR(iftmp(2), fr_Velocity_u), faceR(iftmp(2), fr_Velocity_d),&
+        !         elemR(ietmp(3), er_Velocity),&
+        !         elemR(ietmp(4), er_Velocity),&
+        !         elemR(ietmp(5), er_Velocity), faceR(iftmp(5), fr_Velocity_u), faceR(iftmp(5), fr_Velocity_d),&
+        !         elemR(ietmp(6), er_Velocity), faceR(iftmp(6), fr_Velocity_u), faceR(iftmp(6), fr_Velocity_d),&
+        !         elemR(ietmp(7), er_Velocity)               
+        ! !stop 98734
+
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 3 -- all aux variables for non-diagnostic
         call update_auxiliary_variables (ETM)
 
-        !BRHbugfix 20210812 MOVED THES ABOVE FACE INTERP
         !% junction branch flowrate and velocity update
-        call ll_junction_branch_flowrate_and_velocity(ETM) 
+        if (.not. setting%Junction%isDynamic) then
+            call ll_junction_branch_flowrate_and_velocity (ETM) 
+        else
+            !% called here because volume update on JB isn't known until after eta updated on JM 
+            call ll_momentum_solve_JB (ETM)
+        end if
+
+        ! print *, 'after ll'
+        ! print *, 'head'
+        ! write(*,"(16F8.3)")   &
+        !     elemR(ietmp(1), er_Head), faceR(iftmp(1), fr_Head_u), faceR(iftmp(1), fr_Head_d),&
+        !     elemR(ietmp(2), er_Head), faceR(iftmp(2), fr_Head_u), faceR(iftmp(2), fr_Head_d),&
+        !     elemR(ietmp(3), er_Head),&
+        !     elemR(ietmp(4), er_Head),&
+        !     elemR(ietmp(5), er_Head), faceR(iftmp(5), fr_Head_u), faceR(iftmp(5), fr_Head_d),&
+        !     elemR(ietmp(6), er_Head), faceR(iftmp(6), fr_Head_u), faceR(iftmp(6), fr_Head_d),&
+        !     elemR(ietmp(7), er_Head)        
+ 
+        !     print *, 'velocity'
+        !     write(*,"(16F8.3)")   &
+        !         elemR(ietmp(1), er_Velocity), faceR(iftmp(1), fr_Velocity_u), faceR(iftmp(1), fr_Velocity_d),&
+        !         elemR(ietmp(2), er_Velocity), faceR(iftmp(2), fr_Velocity_u), faceR(iftmp(2), fr_Velocity_d),&
+        !         elemR(ietmp(3), er_Velocity),&
+        !         elemR(ietmp(4), er_Velocity),&
+        !         elemR(ietmp(5), er_Velocity), faceR(iftmp(5), fr_Velocity_u), faceR(iftmp(5), fr_Velocity_d),&
+        !         elemR(ietmp(6), er_Velocity), faceR(iftmp(6), fr_Velocity_u), faceR(iftmp(6), fr_Velocity_d),&
+        !         elemR(ietmp(7), er_Velocity)               
+        ! !stop 987398
+
         !% compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
-        !BRHbugfix 20210812
 
         !% RK2 solution step 4 -- all face interpolation
         call face_interpolation(fp_all)
 
-        !% junction branch flowrate and velocity update
-        !call ll_junction_branch_flowrate_and_velocity(ETM)  !BRHbugfix 20210812
-
-        !% compute element Froude number for JB
-        !call update_Froude_number_junction_branch (ep_JM_ETM) !BRHbugfix 20210812
-
         !% RK2 solution step 5 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel()
-        end if
-        
+        call diagnostic_toplevel()
+
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
 
         !% RK2 solution step 8 -- RK2 second step for ETM
         !% RK2 solution step 8(a)
         istep=2
-        ! print*, '-------------------------------------------------------------------------'
-        ! print*, '2nd RK step'
+        
         call rk2_step_ETM (istep)
 
         !% RK2 solution step 8(c)
         call update_auxiliary_variables(ETM)
 
-        !BRHbugfix 20210812 There was no branch handling after second step!
         !% junction branch flowrate and velocity update
-        call ll_junction_branch_flowrate_and_velocity(ETM) 
+        if (.not. setting%Junction%isDynamic) then
+            call ll_junction_branch_flowrate_and_velocity(ETM) 
+        else
+            !% called here because volume update on JB isn't known until after eta updated on JM 
+            call ll_momentum_solve_JB (ETM)
+        end if
+
         !% compute element Froude number for JB
         call update_Froude_number_junction_branch (ep_JM_ETM) 
-        !BRHbugfix 20210812
 
         !% RK2 solution step 8(d,e) -- update all faces
         call face_interpolation(fp_all)
 
         !% RK2 solution step 9 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel()
-        end if
+        call diagnostic_toplevel()
+
 
         !% RK2 solution step X -- make ad hoc adjustments
         call adjust_values (ETM)
-        ! stop 11
+
         if (setting%Debug%File%runge_kutta2)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine rk2_toplevel_ETM
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_toplevel_AC ()
         !%-----------------------------------------------------------------------------
         !% Description:
         !%
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'rk2_toplevel_AC'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%runge_kutta2) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -123,10 +192,10 @@ module runge_kutta2
         stop 57839
 
     end subroutine rk2_toplevel_AC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_toplevel_ETMAC ()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -135,9 +204,11 @@ module runge_kutta2
         integer :: istep, faceMaskCol, thisCol
         integer, pointer :: Npack
         character(64) :: subroutine_name = 'rk2_toplevel_ETMAC'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%runge_kutta2) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
+        
         !% step 1 -- RK2 step 1 for ETM
 
         istep=1
@@ -162,9 +233,7 @@ module runge_kutta2
         call face_interpolation(fp_all)
 
         !% step 5 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel ()
-        end if
+        call diagnostic_toplevel ()
 
         !% step X -- make ad hoc adjustments
         call adjust_values (ALLtm)
@@ -189,9 +258,8 @@ module runge_kutta2
         end if
 
         !% step 7 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel()
-        end if
+        call diagnostic_toplevel()
+
 
         !% step 8 -- RK2 step 2 for ETM
         if (N_etm > 0) then
@@ -211,9 +279,7 @@ module runge_kutta2
         end if
 
         !% step 9 -- update diagnostic elements and faces
-        if (N_diag > 0) then
-            call diagnostic_toplevel
-        end if
+        call diagnostic_toplevel
 
         !% step X -- make ad hoc adjustments
         call adjust_values (ALLtm)
@@ -221,11 +287,11 @@ module runge_kutta2
         if (setting%Debug%File%runge_kutta2)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine rk2_toplevel_ETMAC
-    !%
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
     subroutine rk2_step_ETM (istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -234,6 +300,7 @@ module runge_kutta2
         integer, intent(in) :: istep
         integer :: tmType
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         !%
         !% perform the continuity step of the rk2 for ETM
         call rk2_continuity_step_ETM(istep)
@@ -241,10 +308,10 @@ module runge_kutta2
         call rk2_momentum_step_ETM(istep)
 
     end subroutine rk2_step_ETM
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_step_AC (istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -252,16 +319,17 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: istep
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         !% AC continuity
         call rk2_continuity_step_AC(istep)
         !% AC momentum
         call rk2_momentum_step_AC(istep)
 
     end subroutine rk2_step_AC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_continuity_step_ETM (istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -271,6 +339,7 @@ module runge_kutta2
         integer, pointer :: thisPackCol, Npack
         !%-----------------------------------------------------------------------------
         !%
+        if (icrash) return
         !% Baseline continuity source:
         !% Compute net flowrates for channels, conduits and special elements
         thisPackCol => col_elemP(ep_CC_H_ETM)
@@ -307,10 +376,10 @@ module runge_kutta2
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_ETM))
 
     end subroutine rk2_continuity_step_ETM
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_continuity_step_AC (istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -320,6 +389,7 @@ module runge_kutta2
         integer, pointer ::  thisMaskCol, thisPackCol, Npack
         !%-----------------------------------------------------------------------------
         !%
+        if (icrash) return
         !% Compute net flowrates for channels, conduits and special elements
         thisPackCol => col_elemP(ep_CC_AC)
         Npack => npack_elemP(thisPackCol)
@@ -358,10 +428,10 @@ module runge_kutta2
         call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, col_elemP(ep_CCJM_H_AC))
 
     end subroutine rk2_continuity_step_AC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_momentum_step_ETM (istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -374,6 +444,7 @@ module runge_kutta2
         Npack       => npack_elemP(thisPackCol)
         !%-----------------------------------------------------------------------------
         !%
+        if (icrash) return
         if (Npack > 0) then
             !% momentum K source terms for different methods for ETM
             call ll_momentum_Ksource_CC (er_Ksource, thisPackCol, Npack)
@@ -387,11 +458,16 @@ module runge_kutta2
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
         end if
 
+        !% junction branch momentum source
+        if (setting%Junction%isDynamic) then
+            call ll_momentum_source_JB (ETM, istep)
+        end if
+
     end subroutine rk2_momentum_step_ETM
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_momentum_step_AC (istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -402,6 +478,7 @@ module runge_kutta2
         integer, parameter  :: thisMethod = AC
         !%-----------------------------------------------------------------------------
         !%
+        if (icrash) return
         thisCol => col_elemP(ep_CC_Q_AC)
         Npack => npack_elemP(thisCol)
         if (Npack > 0) then
@@ -427,10 +504,10 @@ module runge_kutta2
         end if
 
     end subroutine rk2_momentum_step_AC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_extrapolate_to_fullstep_ETM ()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -440,6 +517,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         thisCol => col_elemP(ep_CCJB_eETM_i_fAC)
         Npack => npack_elemP(thisCol)
 
@@ -455,10 +533,10 @@ module runge_kutta2
         end if
 
     end subroutine rk2_extrapolate_to_fullstep_ETM
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_restore_to_midstep_ETM ()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -469,6 +547,7 @@ module runge_kutta2
         integer, pointer ::  thisCol, Npack
         !%-----------------------------------------------------------------------------
         !%
+        if (icrash) return
         thisCol => col_elemP(ep_CCJB_eETM_i_fAC)
         Npack   => npack_elemP(thisCol)
 
@@ -477,14 +556,14 @@ module runge_kutta2
             call ll_restore_from_temporary (thisCol, Npack)
 
             !% update aux for restored variables
-    !        call update_auxiliary_variables_byPack (thisPackCol, Npack)
+            ! call update_auxiliary_variables_byPack (thisPackCol, Npack)
         end if
 
     end subroutine rk2_restore_to_midstep_ETM
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_interpolate_to_halfstep_AC ()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -494,6 +573,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         !%
         thisCol => col_elemP( ep_CCJB_eAC_i_fETM)
         Npack => npack_elemP(thisCol)
@@ -510,10 +590,10 @@ module runge_kutta2
         end if
 
     end subroutine rk2_interpolate_to_halfstep_AC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine rk2_restore_to_fullstep_AC()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -523,6 +603,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         integer, pointer :: thisCol, Npack
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         thisCol = col_elemP(ep_CCJB_eAC_i_fETM)
         Npack => npack_elemP(thisCol)
 
@@ -535,10 +616,10 @@ module runge_kutta2
         end if
 
     end subroutine rk2_restore_to_fullstep_AC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
         !%-----------------------------------------------------------------------------
         !% Description:
         !%
@@ -546,7 +627,7 @@ module runge_kutta2
 
         !%-----------------------------------------------------------------------------
         !%
-    !%==========================================================================
-    !% END OF MODULE
-    !%+=========================================================================
+!%==========================================================================
+!% END OF MODULE
+!%==========================================================================
 end module runge_kutta2

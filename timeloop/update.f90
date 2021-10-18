@@ -23,9 +23,9 @@ module update
     real(8), pointer :: grav => setting%constant%gravity
 
     contains
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
     !%
     subroutine update_auxiliary_variables (whichTM)
         !%-----------------------------------------------------------------------------
@@ -36,6 +36,8 @@ module update
         integer, pointer :: thisCol_all
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'update_auxiliary_variables'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%update) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -100,10 +102,10 @@ module update
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
     end subroutine update_auxiliary_variables
     !%
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================
-    !%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
     subroutine update_CC_element_flowrate (thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -114,6 +116,7 @@ module update
         integer, pointer ::  Npack, thisP(:)
         real(8), pointer :: flowrate(:), velocity(:), area(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         flowrate => elemR(:,er_Flowrate)
         velocity => elemR(:,er_Velocity)
         area     => elemR(:,er_Area)
@@ -123,12 +126,12 @@ module update
             thisP    => elemP(1:Npack,thisCol)
             flowrate(thisP) = area(thisP) * velocity(thisP)
         end if
-
+        ! print*, flowrate(thisP), 'flowrate(thisP)'
     end subroutine update_CC_element_flowrate
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine update_Froude_number_element (thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -138,6 +141,7 @@ module update
         integer, pointer :: Npack, thisP(:)
         real(8), pointer :: Froude(:), velocity(:), depth(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
@@ -150,10 +154,10 @@ module update
         end if
 
     end subroutine update_Froude_number_element
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine update_Froude_number_junction_branch (thisCol_JM)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -166,10 +170,11 @@ module update
         real(8), pointer :: Froude(:), velocity(:), depth(:)
         integer :: ii, kk, tB
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         Froude   => elemR(:,er_FroudeNumber)
         velocity => elemR(:,er_Velocity)
         depth    => elemR(:,er_ell)  !% Use the ell value (modified hydraulic depth)
-        BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
+        BranchExists => elemSI(:,esi_JunctionBranch_Exists)
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%update) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -192,10 +197,10 @@ module update
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine update_Froude_number_junction_branch
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine update_interpolation_weights_element (thisCol, whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -209,6 +214,7 @@ module update
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
         real(8), pointer :: Fr(:) !BRHbugfix20210811 test
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%update) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -261,7 +267,9 @@ module update
                 Npack2 => npack_elemP(thisCol_ClosedElems)
                 if (Npack2 > 0) then
                     thisP2 => elemP(1:Npack2,thisCol_ClosedElems)
-                    where(SlotVolume(thisP2) .gt. zeroR) 
+                    !% initialize preissmann slot celerity
+                    PCelerity(thisP2) = zeroR
+                    where (SlotVolume(thisP2) .gt. zeroR) 
                         PCelerity(thisP2) = sqrt(grav * fullArea(thisP2)/SlotWidth(thisP2))
                     end where
                 end if
@@ -275,8 +283,19 @@ module update
             ! w_uQ(thisP) = - onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) - wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
             ! w_dQ(thisP) = + onehalfR * length(thisP)  / ( abs(Fr(thisp)**10) * velocity(thisP) + wavespeed(thisP)) !BRHbugfix 20210813 testing Fr
 
-            w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
-            w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
+            ! w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP) &
+            !         - PCelerity(thisP)) !bugfix SAZ 09212021 
+            ! w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP) &
+            !         + PCelerity(thisP)) !bugfix SAZ 09212021 
+
+            where (PCelerity(thisP) .le. zeroR)
+                w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - wavespeed(thisP)) !bugfix SAZ 09212021 
+                w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + wavespeed(thisP)) !bugfix SAZ 09212021 
+            elsewhere (PCelerity(thisP) .gt. zeroR)
+                w_uQ(thisP) = - onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) - PCelerity(thisP)) !bugfix SAZ 10122021 
+                w_dQ(thisP) = + onehalfR * length(thisP)  / (abs(Fr(thisp)**0) * velocity(thisP) + PCelerity(thisP)) !bugfix SAZ 10122021 
+            end where
+
 
             !% apply limiters to timescales
             where (w_uQ(thisP) < zeroR)
@@ -334,10 +353,10 @@ module update
         if (setting%Debug%File%update)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine update_interpolation_weights_element
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine update_interpolation_weights_ds_JB ()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -350,8 +369,9 @@ module update
         integer, pointer :: Npack1, Npack2,  thisP1(:), thisP2(:)
         real(8), pointer :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%update)  &
-        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         w_uQ      => elemR(:,er_InterpWeight_uQ)
         w_dQ      => elemR(:,er_InterpWeight_dQ)
         w_uG      => elemR(:,er_InterpWeight_uG)

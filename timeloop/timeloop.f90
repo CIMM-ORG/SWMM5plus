@@ -4,12 +4,12 @@ module timeloop
     use define_globals
     use define_indexes
     use define_keys
+    use output
     use pack_mask_arrays
     use runge_kutta2
     use utility_output
     use boundary_conditions
     use utility_profiler
-    !use utility_prof_jobcount
     use interface, only: interface_export_link_results
 
     implicit none
@@ -26,11 +26,11 @@ module timeloop
     public  :: timeloop_toplevel
 
 contains
-
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine timeloop_toplevel()
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -41,8 +41,13 @@ contains
         logical          :: doHydraulics, doHydrology
         character(64)    :: subroutine_name = 'timeloop_toplevel'
     !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if (setting%Output%Verbose) &
+            write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
+        setting%Time%Real%EpochTimeLoopStartSeconds = time()
 
         doHydraulics = setting%simulation%useHydraulics
         doHydrology = setting%simulation%useHydrology
@@ -53,16 +58,22 @@ contains
             if (doHydrology) call tl_hydrology()
             if (doHydraulics) then
                 call bc_update()
-                call tl_hydraulics()
+                call tl_hydraulics()   
             end if
             call util_output_report() !% Results must be reported before counter increment
+            !% Multilevel time step output
+            if ( (setting%Output%report) .and. &
+                 (util_output_must_report()) .and. &
+                 (.not. setting%Output%suppress_MultiLevel_Output) ) then    
+                call outputML_store_data (.false.)
+            end if
             call tl_increment_counters(doHydraulics, doHydrology)
+            if (icrash) then
+                call outputML_store_data (.true.)
+                exit
+            end if
         end do
 
-        ! if (setting%Profile%File%timeloop) then
-        !     call util_toc(timer, 3)
-        !     print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(3))
-        ! end if
 
         !% >>> BEGIN HACK
         !%     Temporary for debugging (can be deleted for deployment)
@@ -80,11 +91,11 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine timeloop_toplevel
-
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================
-
+!%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
     subroutine tl_hydrology()
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -92,6 +103,7 @@ contains
     !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_hydrology'
     !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -99,30 +111,31 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_hydrology
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_hydraulics()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% Top level hydraulic solver for a single time step
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Top level hydraulic solver for a single time step
+        !%-----------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'tl_hydraulics'
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        if (icrash) return 
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-
+            
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
             call tl_solver_select()
         end if
-
+        
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
         call pack_dynamic_arrays()
         ! print *, "Need to decide on pack_dynamic_arrays 94837"
-
+        
         !%  push the old values down the stack for AC solver
         call tl_save_previous_values()
 
@@ -146,14 +159,14 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_hydraulics
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_update_hydraulic_step()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%-----------------------------------------------------------------------------
 
         logical          :: matchHydrologyStep
         real(8)          :: timeleft, timeNow, thisCFL, targetCFL, maxCFL, maxCFLlow
@@ -164,8 +177,8 @@ contains
         integer, pointer :: thisCol, Npack, thisP(:)
         character(64)    :: subroutine_name = 'tl_update_hydraulic_step'
 
-    !%-----------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -197,7 +210,10 @@ contains
             nextTimeHydrology = (setting%Time%Hydrology%Step + 1) * setting%Time%Hydrology%Dt
             timeLeft = nextTimeHydrology - timeNow
             thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * timeleft / length(thisP)), &
-                           maxval (abs(PCelerity(thisP)) * timeleft / length(thisP)))
+                           maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * timeleft / length(thisP)))
+
+            ! thisCFL = maxval((abs(velocity(thisP)) + abs(wavespeed(thisP)) + abs(PCelerity(thisP))) &
+            !     * timeleft / length(thisP))
 
             !% check to see if max CFL is exceeded
             if (thisCFL < maxCFL) then
@@ -215,8 +231,8 @@ contains
         else
             !% For hydraulics only, keep the timestep stable unless it
             !% exceeds CFL limits (both high and low limits).
-            thisCFL =  max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP)), &
-                            maxval (abs(PCelerity(thisP)) * dt / length(thisP)))
+            thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP)), &
+                           maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * dt / length(thisP)))
 
             if (thisCFL > maxCFL) then
                 !% decrease the time step and reset the checkStep counter
@@ -245,14 +261,14 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_update_hydraulic_step
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_increment_counters(doHydraulics, doHydrology)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%-----------------------------------------------------------------------------
         logical, intent(inout) :: doHydraulics, doHydrology
         logical                :: useHydrology, useHydraulics
         real(8)                :: nextTimeHydraulics, nextTimeHydrology, nextTime, dtTol
@@ -260,8 +276,8 @@ contains
         integer                :: minImg
         integer, pointer       :: hydraulicStep, hydrologyStep, step, reportStep
         character(64)          :: subroutine_name = 'tl_increment_counters'
-    !%-----------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -313,10 +329,10 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end subroutine tl_increment_counters
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_solver_select()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -330,10 +346,11 @@ contains
         real(8), pointer :: volume(:), FullVolume(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_solver_select'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-
+       
         thiscol = ep_ALLtm
         Npack => npack_elemP(thisCol)
         thisP => elemP(1:Npack,thisCol)
@@ -360,10 +377,10 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_solver_select
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_save_previous_values()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -375,6 +392,7 @@ contains
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'tl_save_previous_values'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%  push the old values down the stack
@@ -390,10 +408,10 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine tl_save_previous_values
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine tl_command_line_step_output ()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -407,6 +425,7 @@ contains
         real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
         character(3) :: timeunit
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         dt            => setting%Time%Dt
@@ -422,7 +441,7 @@ contains
         seconds_to_completion = execution_realtime * (setting%Time%End - setting%Time%Now) &
                                                    / (setting%Time%Now - setting%Time%Start)                                
 
-        if (setting%Verbose) then
+        if (setting%Output%Verbose) then
             if (this_image() == 1) then
                 if (mod(step,interval) == 0) then
                     ! translate time in seconds into something more useful
@@ -468,7 +487,8 @@ contains
         if (setting%Debug%File%timeloop) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"   
     end subroutine tl_command_line_step_output
-    !%==========================================================================
-    !% END OF MODULE
-    !%+=========================================================================
+!%
+!%==========================================================================
+!% END OF MODULE
+!%+=========================================================================
 end module timeloop

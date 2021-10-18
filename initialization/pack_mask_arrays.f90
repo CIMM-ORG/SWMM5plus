@@ -21,25 +21,23 @@ module pack_mask_arrays
     public :: pack_dynamic_arrays
     public :: pack_nodes
     public :: pack_bc
+    public :: pack_element_outputML
+    public :: pack_face_outputML
 
 contains
-    !
-    !==========================================================================
-    ! PUBLIC
-    !==========================================================================
-    !
+!
+!==========================================================================
+! PUBLIC
+!==========================================================================
+!
     subroutine pack_mask_arrays_all()
         !--------------------------------------------------------------------------
-        !
         !% set all the static packs and masks
-        !
         !--------------------------------------------------------------------------
-
         integer :: ii
-
         character(64) :: subroutine_name = 'pack_mask_arrays_all'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -53,7 +51,7 @@ contains
         call pack_static_shared_faces()
         call pack_dynamic_interior_faces()
         call pack_dynamic_shared_faces()
-        call pack_output()
+        !brh20211006 call pack_link_node_output()
 
         if (setting%Debug%File%initial_condition) then
             !% only using the first processor to print results
@@ -79,20 +77,17 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_mask_arrays_all
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine pack_dynamic_arrays()
         !--------------------------------------------------------------------------
-        !
         !% set all the dynamic packs and masks
-        !
         !--------------------------------------------------------------------------
-
         character(64) :: subroutine_name = 'pack_dynamic_arrays'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -105,23 +100,188 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_arrays
-    !
-    !==========================================================================
-    ! PRIVATE
-    !==========================================================================
-    !
+!    
+!==========================================================================    
+!==========================================================================
+!
+    subroutine pack_nodes()
+        !--------------------------------------------------------------------------
+        !% This allocates and packs the node data in the arrays of node%P.
+        !% With this approach using the P type, each of the arrays on the images
+        !% are allocated to the size needed.
+        !--------------------------------------------------------------------------
+        character(64)    :: subroutine_name = 'pack_nodes'
+        !--------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
+                        (node%I(:,ni_P_image) == this_image()))
+
+        if (N_flowBC > 0) then
+            allocate(node%P%have_flowBC(N_flowBC))
+            node%P%have_flowBC = pack(node%I(:,ni_idx), &
+                node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
+        end if
+
+        !% HACK -- this assumes that a head BC is always a downstream BC.
+        N_headBC = count((node%I(:, ni_node_type) == nBCdn) .and. &
+                        (node%I(:,ni_P_image) == this_image()))
+
+        if (N_headBC > 0) then
+            allocate(node%P%have_headBC(N_headBC))
+            node%P%have_headBC = pack(node%I(:,ni_idx), &
+            (node%I(:, ni_node_type) == nBCdn) .and. &
+            (node%I(:,ni_P_image) == this_image()))
+        end if
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+    end subroutine pack_nodes
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine pack_bc
+        !--------------------------------------------------------------------------
+        !% 
+        !--------------------------------------------------------------------------
+        integer :: psize
+        character(64) :: subroutine_name = 'pack_bc'
+        !--------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%pack_mask_arrays) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        !% BC packs
+        !% zero out the number of upBC to get a new count of how many is in a given partition
+        N_nBCup = 0
+        if (N_flowBC > 0) then
+            N_nBCup = count(BC%flowI(:, bi_category) == BCup)
+            if (N_nBCup > 0) then
+                allocate(BC%P%BCup(N_nBCup))
+                BC%P%BCup = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BCup)
+                !% Face packs
+                npack_faceP(fp_BCup) = N_nBCup
+                faceP(1:N_nBCup,fp_BCup) = BC%flowI(BC%P%BCup, bi_face_idx)
+            end if
+
+            N_nBClat = count(BC%flowI(:, bi_category) == BClat)
+            if (N_nBClat > 0) then
+                allocate(BC%P%BClat(N_nBClat))
+                BC%P%BClat = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BClat)
+                !% Elem Packs
+                npack_elemP(ep_BClat) = N_nBClat
+                elemP(1:N_nBClat,ep_BClat) = BC%flowI(BC%P%BClat, bi_elem_idx)
+            end if
+        end if
+
+        !% BC packs
+        !% zero out the number of dnBC to get a new count of how many is in a given partition
+        N_nBCdn = 0
+        if (N_headBC > 0) then
+            N_nBCdn = count(BC%headI(:, bi_category) == BCdn)
+            if (N_nBCdn > 0) then
+                allocate(BC%P%BCdn(N_nBCdn))
+                BC%P%BCdn = pack(BC%headI(:, bi_idx), BC%headI(:, bi_category) == BCdn)
+                !% Face packs
+                npack_faceP(fp_BCdn) = N_nBCdn
+                faceP(1:N_nBCdn,fp_BCdn) = BC%headI(BC%P%BCdn, bi_face_idx)
+            end if
+        end if
+        if (setting%Debug%File%pack_mask_arrays) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+    end subroutine pack_bc
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine pack_element_outputML ()
+        !--------------------------------------------------------------------------
+        !% creates a pack for elemR, elemI, elemYN for output elements
+        !--------------------------------------------------------------------------
+        logical, pointer :: isElemOut(:)
+        integer, pointer :: eIdx(:), ptype, npack
+        character(64) :: subroutine_name = 'pack_element_outputML'
+        !--------------------------------------------------------------------------
+        if (icrash) return
+        !% don't do this is output is suppressed
+        if (setting%Output%suppress_MultiLevel_Output) return
+
+        eIdx => elemI(:,ei_Lidx)
+
+        !% logical control on output for each element
+        isElemOut => elemYN(:,eYN_isOutput)
+
+        !% pointers for storage of type and npack storage
+        ptype => col_elemP(ep_Output_Elements)
+        npack => npack_elemP(ptype)
+
+        !% count the output elements to be packed
+        npack = count(isElemOut)
+
+        !% output the true element indexes into a pack
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,isElemOut)
+            setting%Output%OutputElementsExist = .true.
+        else 
+            !% if there are no output elements, suppress the output
+            setting%Output%OutputElementsExist = .false.       
+        end if    
+
+    end subroutine pack_element_outputML        
+!
+!==========================================================================
+!==========================================================================
+!    
+    subroutine pack_face_outputML ()
+        !--------------------------------------------------------------------------
+        !% packed arrays faceR, faceI, faceYN output elements
+        !--------------------------------------------------------------------------
+        !--------------------------------------------------------------------------
+        logical, pointer :: isFaceOut(:)
+        integer, pointer :: fIdx(:), ptype, npack
+        character(64) :: subroutine_name = 'pack_face_outputML'
+        !--------------------------------------------------------------------------
+        if (icrash) return
+        !% don't do this is output is suppressed
+        if (setting%Output%suppress_MultiLevel_Output) return
+
+        fIdx => faceI(:,fi_Lidx)
+
+        !% logical control on output for each element
+        isFaceOut => faceYN(:,fYN_isFaceOut)
+
+        !% pointers for storage of type and npack storage
+        ptype => col_faceP(fp_Output_Faces)
+        npack => npack_faceP(ptype)
+
+        !% count the output elements to be packed
+        npack = count(isFaceOut)
+
+        !% output the true element indexes into a pack
+        if (npack > 0) then
+            faceP(1:npack,ptype) = pack(fIdx,isFaceOut)
+            setting%Output%OutputFacesExist = .true. 
+        else 
+            !% if there are no output face
+            setting%Output%OutputFacesExist = .false.    
+        end if  
+
+    end subroutine pack_face_outputML
+!
+!==========================================================================
+! PRIVATE
+!==========================================================================
+!
     subroutine mask_faces_whole_array_static()
         !--------------------------------------------------------------------------
-        !
         !% find all the faces except boundary and null faces
-        !
         !--------------------------------------------------------------------------
-
         integer, pointer :: mcol
-
         character(64) :: subroutine_name = 'mask_faces_whole_array_static'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -138,22 +298,18 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine mask_faces_whole_array_static
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine pack_geometry_alltm_elements()
         !--------------------------------------------------------------------------
-        !
         !% packed arrays for geometry types in elemPGalltm
-        !
         !--------------------------------------------------------------------------
-
         integer, pointer :: ptype, npack, eIDx(:)
-
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -279,22 +435,18 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_alltm_elements
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine pack_geometry_ac_elements()
         !--------------------------------------------------------------------------
-        !
         !% packed arrays for geometry types for AC elements
-        !
         !--------------------------------------------------------------------------
-
         integer, pointer :: ptype, npack, eIDx(:)
-
         character(64) :: subroutine_name = 'pack_geometry_alltm_elements'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -402,15 +554,13 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_ac_elements
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine pack_geometry_etm_elements()
         !--------------------------------------------------------------------------
-        !
         !% packed arrays for geometry types
-        !
         !--------------------------------------------------------------------------
 
         integer, pointer :: ptype, npack, eIDx(:)
@@ -418,6 +568,7 @@ contains
         character(64) :: subroutine_name = 'pack_geometry_etm_elements'
 
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -525,10 +676,10 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_etm_elements
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine pack_nongeometry_static_elements()
         !--------------------------------------------------------------------------
         !
@@ -542,12 +693,10 @@ contains
         !% in Q or doesnotexist
         !
         !--------------------------------------------------------------------------
-
         integer, pointer :: ptype, npack, eIDx(:)
-
         character(64) :: subroutine_name = 'pack_nongeometry_static_elements'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -828,25 +977,20 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_static_elements
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine pack_nongeometry_dynamic_elements()
         !--------------------------------------------------------------------------
-        !
         !% packed arrays for non geometry dynamic elements
-        !
         !--------------------------------------------------------------------------
-
         integer          :: ii
-
         integer, pointer :: ptype, npack, eIDx(:)
         integer, allocatable :: fup(:), fdn(:)
-
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -977,7 +1121,6 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC)     )
         end if
-
 
         !% ep_CC_AC_surcharged
         !% - all channel conduit elements elements that are AC and surcharged
@@ -1546,15 +1689,13 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_dynamic_elements
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine pack_static_interior_faces()
         !--------------------------------------------------------------------------
-        !
         !% packed arrays for static faces
-        !
         !--------------------------------------------------------------------------
         integer :: ii, image
 
@@ -1563,6 +1704,7 @@ contains
         character(64) :: subroutine_name = 'pack_static_interior_faces'
 
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1620,27 +1762,24 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_static_interior_faces
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine pack_dynamic_interior_faces()
         !--------------------------------------------------------------------------
-        !
         !% packed arrays for dynamic faces
+        !%
         !% HACK: Should the jump packing be called after all jump conditions are
         !% changed? or can it wait until the end of a time step? Note that this
         !% simply packs what is stored in faceI(:,fi_jump_type) as the actual
         !% computation of what is a jump is in the identify_hydraulic_jump subroutine.
-        !
         !--------------------------------------------------------------------------
-
         integer          :: ii, image
         integer, pointer :: Nfaces, ptype, npack, fIdx(:), eup(:), edn(:)
-
         character(64) :: subroutine_name = 'pack_dynamic_interior_faces'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1710,24 +1849,21 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_interior_faces
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!
+!==========================================================================
+!==========================================================================
+!
     subroutine pack_static_shared_faces()
         !--------------------------------------------------------------------------
-        !
         !% packed arrays for static shared faces
-        !
         !--------------------------------------------------------------------------
         integer :: ii, image
         integer, pointer :: ptype, npack, fIdx(:), eup, edn, gup, gdn, Nfaces
         integer, pointer :: c_image, N_shared_faces, thisP
         logical, pointer :: isUpGhost, isDnGhost
-
         character(64) :: subroutine_name = 'pack_static_shared_faces'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1801,28 +1937,26 @@ contains
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_static_shared_faces
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-     subroutine pack_dynamic_shared_faces()
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine pack_dynamic_shared_faces()
         !--------------------------------------------------------------------------
-        !
         !% packed arrays for dynamic shared faces
+        !%
         !% HACK: Should the jump packing be called after all jump conditions are
         !% changed? or can it wait until the end of a time step? Note that this
         !% simply packs what is stored in faceI(:,fi_jump_type) as the actual
         !% computation of what is a jump is in the identify_hydraulic_jump subroutine.
-        !
         !--------------------------------------------------------------------------
-
         integer          :: ii, image
         integer, pointer :: ptype, npack, fIdx(:), Nfaces
         integer, pointer :: N_shared_faces, thisP, eup, edn, gup, gdn, c_image
         logical, pointer :: isUpGhost, isDnGhost
         character(64)    :: subroutine_name = 'pack_dynamic_shared_faces'
-
         !--------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1911,87 +2045,101 @@ contains
     end subroutine pack_dynamic_shared_faces
     !
     !==========================================================================
-    !==========================================================================
-    !
-    subroutine pack_nodes()
-        !--------------------------------------------------------------------------
-        !% This allocates and packs the node data in the arrays of node%P.
-        !% With this approach using the P type, each of the arrays on the images
-        !% are allocated to the size needed.
-        !--------------------------------------------------------------------------
-        character(64)    :: subroutine_name = 'pack_nodes'
-        !--------------------------------------------------------------------------
-        if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+    ! MOVED UP WITH PUBLIC ROUTINES
+!     !==========================================================================
+!     !
+!     subroutine pack_nodes()
+!         !--------------------------------------------------------------------------
+!         !% This allocates and packs the node data in the arrays of node%P.
+!         !% With this approach using the P type, each of the arrays on the images
+!         !% are allocated to the size needed.
+!         !--------------------------------------------------------------------------
+!         character(64)    :: subroutine_name = 'pack_nodes'
+!         !--------------------------------------------------------------------------
+!         if (setting%Debug%File%pack_mask_arrays) &
+!             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
-                        (node%I(:,ni_P_image) == this_image()))
+!         N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
+!                         (node%I(:,ni_P_image) == this_image()))
 
-        if (N_flowBC > 0) then
-            allocate(node%P%have_flowBC(N_flowBC))
-            node%P%have_flowBC = pack(node%I(:,ni_idx), &
-                node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
-        end if
+!         if (N_flowBC > 0) then
+!             allocate(node%P%have_flowBC(N_flowBC))
+!             node%P%have_flowBC = pack(node%I(:,ni_idx), &
+!                 node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
+!         end if
 
-        !% HACK -- this assumes that a head BC is always a downstream BC.
-        N_headBC = count((node%I(:, ni_node_type) == nBCdn) .and. &
-                        (node%I(:,ni_P_image) == this_image()))
+!         !% HACK -- this assumes that a head BC is always a downstream BC.
+!         N_headBC = count((node%I(:, ni_node_type) == nBCdn) .and. &
+!                         (node%I(:,ni_P_image) == this_image()))
 
-        if (N_headBC > 0) then
-            allocate(node%P%have_headBC(N_headBC))
-            node%P%have_headBC = pack(node%I(:,ni_idx), &
-            (node%I(:, ni_node_type) == nBCdn) .and. &
-            (node%I(:,ni_P_image) == this_image()))
-        end if
-        if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine pack_nodes
+!         if (N_headBC > 0) then
+!             allocate(node%P%have_headBC(N_headBC))
+!             node%P%have_headBC = pack(node%I(:,ni_idx), &
+!             (node%I(:, ni_node_type) == nBCdn) .and. &
+!             (node%I(:,ni_P_image) == this_image()))
+!         end if
+!         if (setting%Debug%File%pack_mask_arrays) &
+!         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+!     end subroutine pack_nodes
+! !
+!==========================================================================
+!% MOVED UP TO PUBLIC  
+!==========================================================================
+!
+!     subroutine pack_bc
+!         integer :: psize
+!         character(64) :: subroutine_name = 'pack_bc'
+!         if (setting%Debug%File%pack_mask_arrays) &
+!             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-    subroutine pack_bc
-        integer :: psize
-        character(64) :: subroutine_name = 'pack_bc'
-        if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        !% BC packs
-        if (N_flowBC > 0) then
-            N_nBCup = count(BC%flowI(:, bi_category) == BCup)
-            if (N_nBCup > 0) then
-                allocate(BC%P%BCup(N_nBCup))
-                BC%P%BCup = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BCup)
-                !% Face packs
-                npack_faceP(fp_BCup) = N_nBCup
-                faceP(1:N_nBCup,fp_BCup) = BC%flowI(BC%P%BCup, bi_face_idx)
-            end if
+!         !% BC packs
+        
+!         if (N_flowBC > 0) then
+!             N_nBCup = count(BC%flowI(:, bi_category) == BCup)
+!             if (N_nBCup > 0) then
+!                 allocate(BC%P%BCup(N_nBCup))
+!                 BC%P%BCup = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BCup)
+!                 !% Face packs
+!                 npack_faceP(fp_BCup) = N_nBCup
+!                 faceP(1:N_nBCup,fp_BCup) = BC%flowI(BC%P%BCup, bi_face_idx)
+!             end if
 
-            N_nBClat = count(BC%flowI(:, bi_category) == BClat)
-            if (N_nBClat > 0) then
-                allocate(BC%P%BClat(N_nBClat))
-                BC%P%BClat = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BClat)
-                !% Elem Packs
-                npack_elemP(ep_BClat) = N_nBClat
-                elemP(1:N_nBClat,ep_BClat) = BC%flowI(BC%P%BClat, bi_elem_idx)
-            end if
-        end if
+!             N_nBClat = count(BC%flowI(:, bi_category) == BClat)
+!             if (N_nBClat > 0) then
+!                 allocate(BC%P%BClat(N_nBClat))
+!                 BC%P%BClat = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BClat)
+!                 !% Elem Packs
+!                 npack_elemP(ep_BClat) = N_nBClat
+!                 elemP(1:N_nBClat,ep_BClat) = BC%flowI(BC%P%BClat, bi_elem_idx)
+!             end if
+!         end if
 
-        if (N_headBC > 0) then
-            N_nBCdn = count(BC%headI(:, bi_category) == BCdn)
-            if (N_nBCdn > 0) then
-                allocate(BC%P%BCdn(N_nBCdn))
-                BC%P%BCdn = pack(BC%headI(:, bi_idx), BC%headI(:, bi_category) == BCdn)
-                !% Face packs
-                npack_faceP(fp_BCdn) = N_nBCdn
-                faceP(1:N_nBCdn,fp_BCdn) = BC%headI(BC%P%BCdn, bi_face_idx)
-            end if
-        end if
-        if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine pack_bc
-
-    subroutine pack_output
+!         !% BC packs
+!         !% zero out the number of dnBC to get a new count of how many is in a given partition
+!         N_nBCdn = 0
+!         if (N_headBC > 0) then
+!             N_nBCdn = count(BC%headI(:, bi_category) == BCdn)
+!             if (N_nBCdn > 0) then
+!                 allocate(BC%P%BCdn(N_nBCdn))
+!                 BC%P%BCdn = pack(BC%headI(:, bi_idx), BC%headI(:, bi_category) == BCdn)
+!                 !% Face packs
+!                 npack_faceP(fp_BCdn) = N_nBCdn
+!                 faceP(1:N_nBCdn,fp_BCdn) = BC%headI(BC%P%BCdn, bi_face_idx)
+!             end if
+!         end if
+!         if (setting%Debug%File%pack_mask_arrays) &
+!         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+!     end subroutine pack_bc
+! !
+!==========================================================================
+!==========================================================================
+!
+    subroutine pack_link_node_output
         integer :: ii, jj, link_output_idx_length, node_output_idx_length
-        character(64)    :: subroutine_name = 'pack_output'
+        character(64)    :: subroutine_name = 'pack_link_node_output'
         !% --------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -2011,5 +2159,10 @@ contains
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine pack_output
+    end subroutine pack_link_node_output
+!
+!==========================================================================
+! END MODULE
+!==========================================================================
+!    
 end module pack_mask_arrays

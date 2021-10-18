@@ -27,11 +27,11 @@ module circular_conduit
 
 
     contains
-    !%
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine circular_depth_from_volume (elemPGx, Npack, thisCol)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -52,10 +52,10 @@ module circular_conduit
         length     => elemR(:,er_Length)
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,eSGR_Circular_AoverAfull)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------  
-
+        if (icrash) return
         AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP))
 
         !% HACK: when AoverAfull < 4%, SWMM5 uses a special function to get the 
@@ -71,10 +71,10 @@ module circular_conduit
         depth(thisP) = YoverYfull(thisP) * fulldepth(thisP)
 
     end subroutine circular_depth_from_volume
-    !%  
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%  
+!%==========================================================================
+!%==========================================================================
+!%
     real(8) function circular_area_from_depth_singular (indx) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -85,11 +85,12 @@ module circular_conduit
         real(8), pointer    :: depth(:), AoverAfull(:), YoverYfull(:)
         real(8), pointer    :: fullArea(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         depth      => elemR(:,er_Depth)
         fullArea   => elemR(:,er_FullArea)
         fulldepth  => elemR(:,er_FullDepth)
-        AoverAfull => elemSGR(:,eSGR_Circular_AoverAfull)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%----------------------------------------------------------------------------- 
 
         !% find Y/Yfull
@@ -102,10 +103,10 @@ module circular_conduit
         outvalue = AoverAfull(indx) * fullArea(indx)
 
     end function circular_area_from_depth_singular
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine circular_topwidth_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -116,11 +117,12 @@ module circular_conduit
         integer, pointer :: thisP(:)
         real(8), pointer :: depth(:), topwidth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         thisP      => elemPGx(1:Npack,thisCol) 
         depth      => elemR(:,er_Depth)
         topwidth   => elemR(:,er_Topwidth)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%-----------------------------------------------------------------------------  
 
         !% HACK: at this point, YoverYfull probably should be calculated already.
@@ -135,10 +137,10 @@ module circular_conduit
         topwidth(thisP) = max (topwidth(thisP) * fulldepth(thisP), setting%ZeroValue%Topwidth)
 
     end subroutine circular_topwidth_from_depth
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     real(8) function circular_topwidth_from_depth_singular (indx) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -147,9 +149,10 @@ module circular_conduit
         integer, intent(in) :: indx 
         real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%----------------------------------------------------------------------------- 
 
         !% find Y/Yfull
@@ -163,10 +166,10 @@ module circular_conduit
         outvalue = max(outvalue, setting%ZeroValue%Topwidth)
 
     end function circular_topwidth_from_depth_singular
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine circular_perimeter_from_depth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -178,13 +181,14 @@ module circular_conduit
         real(8), pointer :: depth(:), hydRadius(:), YoverYfull(:) 
         real(8), pointer :: fulldepth(:), perimeter(:), area(:), fullperimeter(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         thisP      => elemPGx(1:Npack,thisCol) 
         depth      => elemR(:,er_Depth)
         area       => elemR(:,er_Area)
         hydRadius  => elemR(:,er_HydRadius)
         perimeter  => elemR(:,er_Perimeter)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         fullperimeter => elemR(:,er_FullPerimeter)
         !%-----------------------------------------------------------------------------  
 
@@ -203,10 +207,10 @@ module circular_conduit
 
         !% HACK: perimeter correction is needed when the pipe is empty.
     end subroutine circular_perimeter_from_depth
-    ! !%    
-    ! !%==========================================================================    
-    ! !%==========================================================================
-    ! !%
+!%    
+!%==========================================================================    
+!%==========================================================================
+!%
     real(8) function circular_perimeter_from_hydradius_singular (indx) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
@@ -218,6 +222,7 @@ module circular_conduit
         integer, intent(in) :: indx
         real(8), pointer :: hydRadius(:), area(:), fullperimeter(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         hydRadius     => elemR(:,er_HydRadius)
         area          => elemR(:,er_Area)
         fullperimeter => elemR(:,er_FullPerimeter)
@@ -226,10 +231,10 @@ module circular_conduit
         outvalue = min(area(indx) / hydRadius(indx), fullperimeter(indx))
         !% HACK: perimeter correction is needed when the pipe is empt
     end function circular_perimeter_from_hydradius_singular
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
         !%  
         !%-----------------------------------------------------------------------------
@@ -242,6 +247,7 @@ module circular_conduit
         real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
         real(8), pointer    :: depth(:), hyddepth(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         thisP        => elemPGx(1:Npack,thisCol) 
         area         => elemR(:,er_Area)
         topwidth     => elemR(:,er_Topwidth)
@@ -265,10 +271,10 @@ module circular_conduit
         endwhere
 
     end subroutine circular_hyddepth_from_topwidth
-    !%    
-    !%==========================================================================  
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================  
+!%==========================================================================
+!%
     real(8) function circular_hyddepth_from_topwidth_singular (indx) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
@@ -279,6 +285,7 @@ module circular_conduit
         integer, intent(in) :: indx   
         real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:), depth(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         depth        => elemR(:,er_Depth)
         area         => elemR(:,er_Area)
         topwidth     => elemR(:,er_Topwidth)
@@ -298,11 +305,10 @@ module circular_conduit
         endif
 
     end function circular_hyddepth_from_topwidth_singular
-    ! !% 
-    ! !%==========================================================================
-
-    ! !%==========================================================================
-    ! !%
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
     real(8) function circular_hydradius_from_depth_singular (indx) result (outvalue)
         !%  
         !%-----------------------------------------------------------------------------
@@ -313,9 +319,10 @@ module circular_conduit
         integer, intent(in) :: indx 
         real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
-        YoverYfull => elemSGR(:,eSGR_Circular_YoverYfull)
+        YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         !%----------------------------------------------------------------------------- 
 
         !% find Y/Yfull
@@ -327,61 +334,61 @@ module circular_conduit
                 xsect_table_lookup_singular (YoverYfull(indx), RCirc, NRCirc)
 
     end function circular_hydradius_from_depth_singular
-    ! !%    
-    ! !%==========================================================================
+!%    
+!%==========================================================================
 
-    ! !%
-    ! !%    
-    ! !%==========================================================================
-    ! !%==========================================================================
-    ! !%
-    !     !%  
-    !     !%-----------------------------------------------------------------------------
-    !     !% Description:
-    !     !% 
-    !     !%-----------------------------------------------------------------------------
+!%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+        !%  
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% 
+        !%-----------------------------------------------------------------------------
 
-    !     !%-----------------------------------------------------------------------------
-    !     !%  
-    ! !%
-    ! !%    
-    ! !%==========================================================================
-    ! !%==========================================================================
-    ! !%
-    !     !%  
-    !     !%-----------------------------------------------------------------------------
-    !     !% Description:
-    !     !% 
-    !     !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !%  
+!%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+        !%  
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% 
+        !%-----------------------------------------------------------------------------
 
-    !     !%-----------------------------------------------------------------------------
-    !     !%  
-    ! !%
-    ! !%    
-    ! !%==========================================================================
-    ! !%==========================================================================
-    ! !%
-    !     !%  
-    !     !%-----------------------------------------------------------------------------
-    !     !% Description:
-    !     !% 
-    !     !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !%  
+!%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+!%  
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !% 
+    !%-----------------------------------------------------------------------------
 
-    !     !%-----------------------------------------------------------------------------
-    !     !%  
-    ! !%
-    ! !%    
-    ! !%==========================================================================
-    ! !% PRIVATE
-    ! !%==========================================================================   
-    ! !%  
-    !     !%-----------------------------------------------------------------------------
-    !     !% Description:
-    !     !% 
-    !     !%-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !%  
+!%
+!%    
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================   
+!%  
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !% 
+    !%-----------------------------------------------------------------------------
 
-    !     !%-----------------------------------------------------------------------------
-    !     !%  
+    !%-----------------------------------------------------------------------------
+    !%  
 
     !    !%==========================================================================   
     ! ! !%
@@ -400,7 +407,7 @@ module circular_conduit
     ! !     head    => elemR(:,er_Head)
     ! !     volume  => elemR(:,er_Volume)
     ! !     length  => elemR(:,er_Length)
-    ! !     breadth => elemSGR(:,eSGr_circular_Breadth)
+    ! !     breadth => elemSGR(:,esgr_circular_Breadth)
     ! !     zbottom => elemR(:,er_Zbottom)
     ! !     !%-----------------------------------------------------------------------------   
 
@@ -425,7 +432,7 @@ module circular_conduit
     ! !     thisP   => elemPGx(1:Npack,thisCol) 
     ! !     area    => elemR(:,er_Area)
     ! !     depth   => elemR(:,er_Depth)
-    ! !     breadth => elemSGR(:,eSGR_circular_Breadth)
+    ! !     breadth => elemSGR(:,esgr_circular_Breadth)
     ! !     !%-----------------------------------------------------------------------------
 
     ! !     area(thisP) = depth(thisP) * breadth(thisP)

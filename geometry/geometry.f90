@@ -13,10 +13,10 @@ module geometry
 
     implicit none
 
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% Geometry computations
-    !%
+!%-----------------------------------------------------------------------------
+!% Description:
+!% Geometry computations
+!%
 
     private
 
@@ -26,10 +26,10 @@ module geometry
     real(8), pointer :: grav => setting%constant%gravity
 
     contains
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-    !%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine geometry_toplevel (whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -45,6 +45,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geometry_toplevel'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -156,10 +157,10 @@ module geometry
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geometry_toplevel
 
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================
-    !%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
     subroutine geo_surcharged (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -174,6 +175,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_surcharged'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         Npack => npack_elemP(thisColP)
         !%-------------------------------------------------
         if (setting%Debug%File%geometry) &
@@ -193,10 +195,10 @@ module geometry
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         end subroutine geo_surcharged
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_depth_from_volume (elemPGx, npack_elemPGx, col_elemPGx)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -208,6 +210,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_depth_from_volume'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !% cycle through different geometries
@@ -237,10 +240,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_depth_from_volume
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_limit_incipient_surcharge (geocol, fullcol, thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -252,6 +255,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_limit_incipient_surcharge'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         Npack      => npack_elemP(thisColP)
         geovalue   => elemR(:,geocol)
         fullvalue  => elemR(:,fullcol)
@@ -269,10 +273,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_limit_incipient_surcharge
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_head_from_depth (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -284,6 +288,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_head_from_depth'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         Npack     => npack_elemP(thisColP)
         depth     => elemR(:,er_Depth)
         fulldepth => elemR(:,er_FullDepth)
@@ -302,10 +307,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_head_from_depth
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_assign_JB (whichTM, thisColP_JM)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -341,6 +346,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_assign_JB'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -365,8 +371,8 @@ module geometry
         fulldepth     => elemR(:,er_FullDepth)
         fullhyddepth  => elemR(:,er_FullHydDepth)
         fullperimeter => elemR(:,er_FullPerimeter)
-        Kfac          => elemSR(:,eSr_JunctionBranch_Kfactor)
-        BranchExists  => elemSI(:,eSI_JunctionBranch_Exists)
+        Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
+        BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
         thisSolve     => elemI(:,ei_tmType)
         !%-----------------------------------------------------------------------------
         if (Npack > 0) then
@@ -418,7 +424,7 @@ module geometry
                                 area(tB)      = setting%ZeroValue%Area
                                 ! HACK fix
                                 if (elemI(tB,ei_geometryType) == rectangular)  then
-                                    topwidth(tB) = elemSGR(tB,eSGR_Rectangular_Breadth)
+                                    topwidth(tB) = elemSGR(tB,esgr_Rectangular_Breadth)
                                 else
                                     topwidth(tB)  = setting%ZeroValue%Topwidth
                                 end if
@@ -489,10 +495,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_assign_JB
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_area_from_volume (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -505,6 +511,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_area_from_volume'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         Npack  => npack_elemP(thisColP)
         area   => elemR(:,er_Area)
         volume => elemR(:,er_Volume)
@@ -538,6 +545,7 @@ module geometry
         character(64) :: subroutine_name = 'geo_topwidth_from_depth'
         !%-----------------------------------------------------------------------------
         !% cycle through different geometries
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -563,10 +571,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_topwidth_from_depth
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_perimeter_from_depth &
         (elemPGx, npack_elemPGx, col_elemPGx)
         !%-----------------------------------------------------------------------------
@@ -579,6 +587,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_perimeter_from_depth'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -606,10 +615,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_perimeter_from_depth
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_hyddepth (elemPGx, npack_elemPGx, col_elemPGx)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -623,6 +632,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hyddepth_from_depth'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -651,10 +661,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_hyddepth
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_hydradius_from_area_perimeter (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -667,6 +677,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_hydradius_from_area_perimeter'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -684,10 +695,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_hydradius_from_area_perimeter
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_ell (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -695,17 +706,19 @@ module geometry
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: thisColP
         integer, pointer :: thisP(:), Npack
-        real(8), pointer :: ell(:), head(:), area(:), topwidth(:)
+        real(8), pointer :: ell(:), head(:), area(:), topwidth(:), hydDepth(:)
         real(8), pointer :: ZbreadthMax(:), breadthMax(:), areaBelowBreadthMax(:)
 
         character(64) :: subroutine_name = 'geo_ell'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         Npack               => npack_elemP(thisColP)
         ell                 => elemR(:,er_ell)
         head                => elemR(:,er_Head)
+        hydDepth            => elemR(:,er_HydDepth)
         area                => elemR(:,er_Area)
         topwidth            => elemR(:,er_Topwidth)
         ZbreadthMax         => elemR(:,er_ZbreadthMax)
@@ -716,7 +729,7 @@ module geometry
         if (Npack > 0) then
             thisP               => elemP(1:Npack,thisColP)
             where (head(thisP) .le. ZbreadthMax(thisP))
-                ell(thisP) =  area(thisP) / topwidth(thisP)
+                ell(thisP) =  hydDepth(thisP)
             elsewhere
                 ell(thisP) = ( (head(thisP) - ZbreadthMax(thisP)) * breadthMax(thisP) &
                                 + areaBelowBreadthMax(thisP) ) / breadthMax(thisP)
@@ -726,10 +739,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_ell
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     real(8) function geo_ell_singular (indx) result (outvalue)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -742,6 +755,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_ell_singular'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -762,10 +776,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function geo_ell_singular
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_dHdA (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -779,6 +793,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_dHdA'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -795,10 +810,10 @@ module geometry
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_dHdA
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine geo_slot_adjustments (thisColP)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -812,6 +827,7 @@ module geometry
 
         character(64) :: subroutine_name = 'geo_slot_adjustments'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -832,20 +848,20 @@ module geometry
 
         if (Npack > 0) then
             thisP    => elemP(1:Npack,thisColP)
-            volume(thisP) = volume(thisP) + SlotVolume(thisP)
-            area(thisP)   = area(thisP)   + SlotArea(thisP)
-            depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
-            head(thisP)   = head(thisP)   + SlotDepth(thisP)
-            ! ell(thisP)    = ell(thisP) + SlotArea(thisP) / breadthMax(thisP)
-            hydRadius(thisP) = hydRadius(thisP) + SlotHydRadius(thisP)    
+            where (SlotVolume(thisP) .gt. zeroR) 
+                volume(thisP) = volume(thisP) + SlotVolume(thisP)
+                area(thisP)   = area(thisP)   + SlotArea(thisP)
+                depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
+                head(thisP)   = head(thisP)   + SlotDepth(thisP)
+            end where 
         end if
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine geo_slot_adjustments
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !% END OF MODULE
-    !%+=========================================================================
+!%
+!%==========================================================================
+!%==========================================================================
+!% END OF MODULE
+!%+=========================================================================
 end module geometry

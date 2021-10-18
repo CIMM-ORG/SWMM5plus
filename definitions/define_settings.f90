@@ -21,14 +21,15 @@ module define_settings
     !%    associated to the setting. Settings flags (e.g., verbose -v)
     !%    overwrite any value defined via default or JSON values.
     !% -------------------------------------------------------------------------------
+!%
+!%==========================================================================
+!% PUBLIC TYPES
+!%==========================================================================
+!%
+    !% ---------------------------------------------------------------
+    !% Third Level Types
 
-    ! Third Level Types
-
-    ! -
-    ! --
-    ! ---
-
-    ! setting%ACmethod%Anomaly
+    !% setting%ACmethod%Anomaly
     type ACmethodAnomalyType
         ! density anomaly correction to handle residual (or non-convergence) of the AC
         logical :: UseDensityCorrection = .false.
@@ -50,7 +51,7 @@ module define_settings
         real(8) :: a3 = +onehalfR
     end type ACmethodImplicitCoefType
 
-    ! setting%ACmethod%CFL
+    !% setting%ACmethod%CFL
     type ACmethodCFLType
         ! maximum cfl for the AC dtau -- may be higher than 1.0)
         real(8) :: CFLmax = 2.0
@@ -58,13 +59,13 @@ module define_settings
         real(8) :: CFLsmall = 0.05
     end type ACmethodCFLType
 
-    ! setting%ACmethod%Celerity
+    !% setting%ACmethod%Celerity
     type ACmethodCelerityType
         ! celerity ratio of AC wave speed to gravity wave speed (1.0 works)
         real(8) :: RC = 1.0
     end type ACmethodCelerityType
 
-    ! setting%ACmethod%Convergence
+    !% setting%ACmethod%Convergence
     type ACmethodConvergenceType
         ! AC convergence relative change in L2 norm when cutting off AC
         real(8) :: Hrelative = 1e-2
@@ -76,7 +77,7 @@ module define_settings
         real(8) :: Qabsolute = 1e-5
     end type ACmethodConvergenceType
 
-    ! setting%ACmethod%Iter
+    !% setting%ACmethod%Iter
     type ACmethodIterType
         ! cutoff for AC iterations without convergence
         integer :: Max = 100
@@ -86,7 +87,7 @@ module define_settings
         integer :: Firststep = 100
     end type ACmethodIterType
 
-    ! setting%ACmethod%Switch
+    !% setting%ACmethod%Switch
     type ACmethodSwitchType
         ! switch to AC solver if depth/depthMax >  0.9
         real(8) :: Depth = 0.9
@@ -96,31 +97,56 @@ module define_settings
         real(8) :: Buffer = 0.05
     end type ACmethodSwitchType
 
-    ! setting%Adjust%Flowrate
+    !% setting%Adjust%Flowrate
     type AdjustFlowrateType
         logical :: Apply = .true.
         real(8) :: Coef = 1.0
         integer :: Approach = vshape
     end type AdjustFlowrateType
 
-    ! setting%Adjust%Head
+    !% setting%Adjust%Head
     type AdjustHeadType
         logical :: Apply = .false.
         real(8) :: Coef = 1.0
         integer :: Approach = vshape
     end type AdjustHeadType
 
-    ! setting%Adjust%WidthDepth
+    !% setting%Adjust%WidthDepth
     type AdjustWidthDepthType
         logical :: Apply = .true.
     end type AdjustWidthDepthType
 
+    !% setting%Output%CommandLine
     type CommandLineType
         logical :: quiet = .false.
         integer :: interval = 10
     end type CommandLineType
 
-    ! setting%Limiter%BC
+    !% setting%Time%CPU
+    type CPUTimeType
+        real (8) :: EpochStartSeconds = 0.0
+        real (8) :: EpochNowSeconds  = 0.0
+        real (8) :: EpochFinishSeconds  = 0.0
+    end type CPUTimeType   
+
+    !% setting%Output%DataLink
+    type DataOutType
+        logical :: isAreaOut         = .true.
+        logical :: isDepthOut        = .true.
+        logical :: isFlowrateOut     = .true.
+        logical :: isFroudeNumberOut = .false.
+        logical :: isHeadOut         = .true.
+        logical :: isHydRadiusOut    = .false.
+        logical :: isPerimeterOut    = .false.
+        logical :: isSlotWidthOut    = .false.
+        logical :: isSlotDepthOut    = .false.
+        logical :: isTopWidthOut     = .false.
+        logical :: isVelocityOut     = .true. 
+        logical :: isVolumeOut       = .true. 
+        logical :: isWaveSpeedOut    = .false.    
+    end type DataOutType  
+
+    !% setting%Limiter%BC
     type LimiterBCType
         logical :: UseInflowLimiter = .true.
         integer :: Approach = FroudeNumber
@@ -128,12 +154,12 @@ module define_settings
         real(8) :: FroudeInflowMaximum = 1.5
     end type LimiterBCType
 
-    ! setting%Limiter%Channel
+    !% setting%Limiter%Channel
     type LimiterChannelType
         real(8) :: LargeDepthFactor = 10.0
     end type LimiterChannelType
 
-    ! setting%Limiter%Flowrate
+    !% setting%Limiter%Flowrate
     type LimiterFlowrateType
         logical :: UseFaceVolumeTransport = .true.
         ! Fraction of usptream volume that can be
@@ -141,29 +167,74 @@ module define_settings
         real(8) :: FaceVolumeTransport = 0.5
     end type LimiterFlowrateType
 
-    ! setting%Limiter%InterpWeight
+    !% setting%Limiter%InterpWeight
     type LimiterInterpWeightType
         real(8) :: Maximum = 1e6
         real(8) :: Minimum = 1e-6
     end type LimiterInterpWeightType
 
-    ! setting%Limiter%Velocity
+    !% setting%Limiter%Velocity
     type LimiterVelocityType
         logical :: UseLimitMax = .true.
         real(8) :: Maximum = 10.0 ! m/s
     end type LimiterVelocityType
 
-    ! setting%Limiter%ArraySize
+    !% setting%Limiter%ArraySize
     type LimiterArraySizeType
         integer :: TemporalInflows = 10
         integer :: TotallInflows = 50
     end type LimiterArraySizeType
 
+    !% setting%Limiter%Dt
     type LimiterDtType
         logical :: UseLimitMin = .true.
         real(8) :: Minimum     = 1e-6
     end type LimiterDtType
 
+    !% setting%Time%Real
+    type RealTimeType
+        integer :: EpochStartSeconds = 0
+        integer :: EpochTimeLoopStartSeconds = 0
+        integer :: EpochNowSeconds  = 0
+    end type RealTimeType
+
+    !% setting%Time% ...Hydraulics, Hydrology
+    type TimeStepType
+        real(8) :: Dt
+        integer :: Step
+    end type TimeStepType   
+
+    !% setting%File%UnitNumber
+    type UnitNumberType
+        integer :: inp_file
+        integer :: out_file
+        integer :: rpt_file
+        integer :: setting_file
+        integer :: links_input_file
+        integer :: nodes_input_file
+        integer :: debug_setup_linkR_file
+        integer :: debug_setup_linkI_file     
+        integer :: debug_setup_nodeR_file
+        integer :: debug_setup_nodeI_file
+        integer :: debug_setup_nodeYN_file
+        !integer :: outputML_combined_file
+        integer :: outputML_filename_file
+        integer :: outputML_control_file
+
+    !     integer :: debug_output_linkR_file
+    !     integer :: debug_output_linkI_file
+    !     integer :: debug_output_nodeR_file
+    !     integer :: debug_output_nodeI_file
+    !     integer :: debug_output_nodeYN_file
+    !     integer :: debug_output_elemR_file
+    !     integer :: debug_output_faceR_file
+    !    integer :: swmm5_output_linkR_file
+    !    integer :: swmm5_output_linkI_file
+    !    integer :: swmm5_output_nodeR_file
+    !    integer :: swmm5_output_nodeI_file
+    end type
+
+    !% setting%Weir% ...Transverse, SideFlow, VNotch, Trapezoidal
     type WeirConstantType
         real(8) :: WeirExponent
         real(8) :: WeirContractionFactor
@@ -227,87 +298,8 @@ module define_settings
         logical :: utility          = .false.
     end type DebugFileGroupYNType
 
-    type TimeStepType
-        real(8) :: Dt
-        integer :: Step
-    end type TimeStepType
-
-    type RealTimeType
-        integer :: EpochStartSeconds = 0
-        integer :: EpochTimeLoopStartSeconds = 0
-        integer :: EpochNowSeconds  = 0
-    end type RealTimeType
-
-    type CPUTimeType
-        real (8) :: EpochStartSeconds = 0.0
-        real (8) :: EpochNowSeconds  = 0.0
-        real (8) :: EpochFinishSeconds  = 0.0
-    end type CPUTimeType   
-
-    ! -
-    ! --
-    ! ---
-
+    !% ---------------------------------------------------------------
     ! Second Level Types
-
-    ! -
-    ! --
-
-    ! setting%Profile%File
-    ! type ProfileFileYNType
-    !     logical :: adjust              = .false.
-    !     logical :: BIPquick            = .false.
-    !     logical :: boundary_conditions = .false.
-    !     logical :: c_library           = .false.
-    !     logical :: define_globals      = .false.
-    !     logical :: define_indexes      = .false.
-    !     logical :: define_keys         = .false.
-    !     logical :: define_settings     = .false.
-    !     logical :: define_types        = .false.
-    !     logical :: diagnostic_elements = .false.
-    !     logical :: discretization      = .false.
-    !     logical :: face                = .false.
-    !     logical :: finalization        = .false.
-    !     logical :: geometry            = .false.
-    !     logical :: initial_condition   = .false.
-    !     logical :: initialization      = .true.
-    !     logical :: jump                = .false.
-    !     logical :: lowlevel_rk2        = .false.
-    !     logical :: network_define      = .false.
-    !     logical :: orifice_elements    = .false.
-    !     logical :: rectangular_channel = .false.
-    !     logical :: trapezoidal_channel = .false.
-    !     logical :: runge_kutta2        = .false.
-    !     logical :: pack_mask_arrays    = .false.
-    !     logical :: partitioning        = .false.
-    !     logical :: pump_elements       = .false.
-    !     logical :: interface           = .false.
-    !     logical :: timeloop            = .false.
-    !     logical :: update              = .false.
-    !     logical :: utility             = .false.
-    !     logical :: utility_allocate    = .false.
-    !     logical :: utility_deallocate  = .false.
-    !     logical :: utility_array       = .false.
-    !     logical :: utility_datetime    = .false.
-    !     logical :: utility_interpolate = .false.
-    !     logical :: utility_output      = .false.
-    !     logical :: utility_string      = .false.
-    !     logical :: weir_elements       = .false.
-    !     logical :: output              = .false.
-    ! end type ProfileFileYNType
-    
-    ! ! setting%Profile%FileGroup
-    ! type ProfileFileGroupYNType
-    !     logical :: all              = .false.
-    !     logical :: definitions      = .false.
-    !     logical :: finalization     = .false.
-    !     logical :: geometry         = .false.
-    !     logical :: initialization   = .false.
-    !     logical :: interface        = .false.
-    !     logical :: output           = .false.
-    !     logical :: timeloop         = .false.
-    !     logical :: utility          = .false.
-    ! end type ProfileFileGroupYNType
 
     ! setting%ACmethodType
     type ACmethodType
@@ -334,10 +326,26 @@ module define_settings
         logical :: disableInterpolation = .false.
     end type BCPropertiesType
 
+    ! setting%CaseName
+    type CaseNameType
+        character(256) ::    Long
+        character(16)  ::    Short
+        character(31)  ::    withTimeStamp
+    end type CaseNameType
+
     ! setting%Constant
     type ConstantType
         real(8) :: gravity = 9.81 ! m^2/s
     end type ConstantType
+
+    !% setting%Debug
+    type DebugType
+        logical :: Tests = .false.
+        type(DebugFileYNType) :: File
+        type(DebugFileGroupYNType) :: FileGroup
+        logical :: Setup
+        logical :: Output
+    end type DebugType   
 
     !% setting%Discretization
     type DiscretizationType
@@ -358,9 +366,61 @@ module define_settings
         integer :: DownJBFaceInterp = Static
     end type FaceInterpType
 
+    !% setting%File
+    type FileType
+        !% standard files and folders
+        character(len=256)   :: base_folder = ""
+        character(len=256)   :: library_folder = ""
+        character(len=256)   :: project_folder = "" ! project path
+        character(len=256)   :: output_folder= "" !
+        character(len=256)   :: output_timestamp_subfolder = ""
+        character(len=256)   :: output_temp_subfolder = "temp"
+        character(len=256)   :: setting_file = "" ! path to settings JSON file
+        character(len=256)   :: input_kernel = "" ! main part of input file name
+        character(len=256)   :: output_kernel= "" ! main part ouf output file name
+        character(len=256)   :: inp_file = "" ! path to SWMM input (.inp) file
+        character(len=256)   :: rpt_file = "" ! path to SWMM report (.rpt) file
+        character(len=256)   :: out_file = "" ! path to SWMM output (.out) file
+        logical              :: force_folder_creation = .false.
+        integer              :: last_unit = 1000 !% starting point for assigning unit numbers
+        type(UnitNumberType) :: UnitNumber
+    
+        !% for multi-level output
+        character(len=256) :: outputML_Link_kernel = "link"
+        character(len=256) :: outputML_Node_kernel = "node" 
+        character(len=256) :: outputML_combinedfile_kernel = "combined_output" !% filenames that combine across images
+        character(len=256) :: outputML_filename_file = 'output_filenames.txt'  !% list of interim filenames used in combined output
+        character(len=256) :: outputML_control_file = 'control.unf'  !% global parameters that control the processing of combined output
+        integer            :: outputML_Ncombined_file_written = 0
+        integer            :: outputML_total_timelevels_written = 0
+        
+        !% for csv dump output
+        character(len=256) :: debug_setup_link_folder = ""
+        character(len=256) :: debug_setup_node_folder = ""
+        character(len=256) :: debug_output_link_folder = ""
+        character(len=256) :: debug_output_node_folder = ""
+        character(len=256) :: debug_output_elemR_folder = ""
+        character(len=256) :: debug_output_faceR_folder = ""
+        character(len=256) :: debug_output_summary_folder = ""
+        character(len=256) :: swmm5_output_link_folder = ""
+        character(len=256) :: swmm5_output_node_folder = ""
+        character(len=256) :: links_input_file = "links_input.csv"
+        character(len=256) :: nodes_input_file = "nodes_input.csv"
+        character(len=256) :: debug_setup_linkR_file = "linkR.csv"
+        character(len=256) :: debug_setup_linkI_file = "linkI.csv"
+        character(len=256) :: debug_setup_nodeR_file = "nodeR.csv"
+        character(len=256) :: debug_setup_nodeI_file = "nodeI.csv"
+        character(len=256) :: debug_setup_nodeYN_file = "nodeYN.csv"        
+        logical :: links_input_file_exist = .false.
+        logical :: nodes_input_file_exist = .false.
+    end type FileType  
+
     ! setting%Junction
     type JunctionType
-        real(8) :: kFactor = 0.7    !% junction branch k-factor for entrance or exit losses
+        real(8) :: kFactor  = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
+        real(8) :: HeadCoef = 1.0   !% junction branch head coef for diagnostic junction (must be > 0)
+        real(8) :: CFLlimit = 0.5   !% limiter on CFL to control dynamic junction
+        logical :: isDynamic = .true.
     end type JunctionType
 
     ! setting%Limiter
@@ -380,23 +440,59 @@ module define_settings
         character(512) :: PropertiesFile
     end type LinkType
 
-    !% HACK - not defined in settings.json
+    !% setting%Orifice
     type OrificeType
         real(8) :: SharpCrestedWeirCoefficient
         real(8) :: TransverseWeirExponent
         real(8) :: VillemonteCorrectionExponent
     end type OrificeType
 
+    !% setting%Output
+    type OutputType
+        logical :: report
+        real(8) :: reportStartTime
+        real(8) :: reportDt
+        integer :: reportStep
+        integer :: reportTimeUnits = InHours
+        integer :: LastLevel = 0
+        integer :: MaxExpectedLevels = 0
+        integer :: StoredLevels = 100
+        logical :: OutputElementsExist = .false.
+        logical :: OutputFacesExist = .false.
+        integer :: StoredFileNames = 2
+        logical :: UseFileNameFile = .false.
+        !integer :: Slots = 20 !% remove?
+        integer :: max_links_csv = 100
+        integer :: max_nodes_csv = 100
+        logical :: print_links_csv = .false.
+        logical :: print_nodes_csv = .false.
+        logical :: suppress_MultiLevel_Output = .false.
+        logical :: Verbose = .true.
+        logical :: Warning = .true.
+        type(CommandLineType) :: CommandLine
+        type(DataOutType) :: DataOut
+    end type OutputType    
+
     !% setting%Partitioning
     type PartitioningType
         integer :: PartitioningMethod = BLink
-    endtype PartitioningType
+    endtype PartitioningType 
 
     !% setting%PreissmannSlot
     type PreissmannSlotType
         integer :: PreissmannSlotMethod = VariableSlot
         real(8) :: CelerityFactor = 1.0
     end type PreissmannSlotType
+
+    !% setting%Profile
+    type ProfileType
+        logical :: YN = .false.
+        !logical :: Tests = .false.
+        !type(ProfileFileYNType) :: File
+        !type(ProfileFileGroupYNType) :: FileGroup
+        !logical :: Input
+        !logical :: Output
+    end type ProfileType
 
     !% setting%Simulation
     type SimulationType
@@ -427,7 +523,7 @@ module define_settings
         real(8) :: SwitchFractionDn = 0.8
         real(8) :: SwitchFractionUp = 0.9
     end type SolverType
-
+ 
     type TestCaseType
         logical       :: UseTestCase = .false.
         character(64) :: TestName
@@ -451,6 +547,7 @@ module define_settings
         type(CPUTimeType)  :: CPU
     end type TimeType
 
+    !% setting%Weir
     type WeirType
         type(WeirConstantType) :: Transverse
         type(WeirConstantType) :: SideFlow
@@ -480,85 +577,46 @@ module define_settings
         real(8) :: Volume = 1.0e-4 ! m^3
     end type ZerovalueType
 
-    !% setting%Debug
-    type DebugType
-        logical :: Tests = .false.
-        type(DebugFileYNType) :: File
-        type(DebugFileGroupYNType) :: FileGroup
-        logical :: Input
-        logical :: Output
-    end type DebugType
+    !% ---------------------------------------------------------------
+    !% First Level Type (setting)
 
-    !% setting%Profile
-    type ProfileType
-        logical :: YN = .false.
-        !logical :: Tests = .false.
-        !type(ProfileFileYNType) :: File
-        !type(ProfileFileGroupYNType) :: FileGroup
-        !logical :: Input
-        !logical :: Output
-    end type ProfileType
-
-    !% setting%Paths
-    type PathType
-        character(len=256) :: project ! project path
-        character(len=256) :: setting = "" ! path to settings JSON file
-        character(len=256) :: inp = "" ! path to SWMM input (.inp) file
-        character(len=256) :: rpt ! path to SWMM report (.rpt) file
-        character(len=256) :: out ! path to SWMM output (.out) file
-    end type PathType
-
-    !% setting%Output
-    type OutputType
-        logical :: report
-        real(8) :: reportStartTime
-        real(8) :: reportDt
-        integer :: reportStep
-        integer :: Slots = 20
-        character(len=256) :: nodes_file = "node_input.csv"
-        character(len=256) :: links_file = "link_input.csv"
-        type(CommandLineType) :: CommandLine
-    end type OutputType
-
-
-    ! -
-    ! --
-
-    ! First Level Type (setting)
     type settingType
         type(ACmethodType)       :: ACmethod
         type(AdjustType)         :: Adjust
         type(BCPropertiesType)   :: BC
+        type(CaseNameType)       :: CaseName  ! name of case
         type(ConstantType)       :: Constant ! Constants
+        type(DebugType)          :: Debug
         type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
         type(FaceInterpType)     :: FaceInterp ! Temporary: setting for face interpolation in downstream JB
+        type(FileType)           :: File
         type(JunctionType)       :: Junction
         type(LimiterType)        :: Limiter ! maximum and minimum limiters
         type(LinkType)           :: Link
         type(OrificeType)        :: Orifice
+        type(OutputType)         :: Output
         type(PartitioningType)   :: Partitioning
         type(PreissmannSlotType) :: PreissmannSlot
+        type(ProfileType)        :: Profile
         type(SimulationType)     :: Simulation
         type(SmallVolumeType)    :: SmallVolume ! controls for small volumes
         type(SolverType)         :: Solver ! switch for solver
+        type(TestCaseType)       :: TestCase
         type(TimeType)           :: Time ! controls of time step
         type(VariableDTType)     :: VariableDT
         type(WeirType)           :: Weir
         type(ZeroValueType)      :: ZeroValue ! finite values to represent small or negative values
-        type(TestCaseType)       :: TestCase
-        type(PathType)           :: Paths
-        type(DebugType)          :: Debug
-        type(ProfileType)        :: Profile
-        type(OutputType)         :: Output
-        logical                  :: Verbose
-        logical                  :: Warning = .true.
     end type settingType
 
     type(settingType), target :: setting
 
 contains
-
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine def_load_settings()
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -577,92 +635,101 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call json%initialize()
-        call json%load(filename = trim(setting%paths%setting))
+        call json%load(filename = trim(setting%File%setting_file))
 
-        ! Load ACmethod Settings
+    !% --- load the settings from the json file
+
+    !% AC method
+        !% --- ACmethod anomaly settings
         call json%get('ACmethod.dtau', real_value, found)
         setting%ACmethod%dtau = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.dtau not found'
+        if (.not. found) then
+            write(*,"(A)") "Error - json file - setting " // 'ACmethod.dtau not found'
+            write(*,"(A)") "this is first item in json file, which may indicate formatting problem in file"
+            stop 970984
+        end if
+    
         call json%get('ACmethod.Anomaly.DensityLowCutoff', real_value, found)
         setting%ACmethod%Anomaly%DensityLowCutoff = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Anomaly.DensityLowCutoff not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Anomaly.DensityLowCutoff not found'
         call json%get('ACmethod.Anomaly.FullPipeFactor', real_value, found)
         setting%ACmethod%Anomaly%FullPipeFactor = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Anomaly.FullPipeFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Anomaly.FullPipeFactor not found'
         call json%get('ACmethod.Anomaly.OpenPipeFactor', real_value, found)
         setting%ACmethod%Anomaly%OpenPipeFactor = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Anomaly.OpenPipeFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Anomaly.OpenPipeFactor not found'
         call json%get('ACmethod.Anomaly.UseDensityCorrection', logical_value, found)
         setting%ACmethod%Anomaly%UseDensityCorrection = logical_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Anomaly.UseDensityCorrection not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Anomaly.UseDensityCorrection not found'
         call json%get('ACmethod.Anomaly.DensityHighCutoff', real_value, found)
         setting%ACmethod%Anomaly%DensityHighCutoff = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Anomaly.DensityHighCutoff not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Anomaly.DensityHighCutoff not found'
 
-        ! Load implicit stencil coefficients
+        !% --- ACmethod implicit stencil coefficients
         call json%get('ACmethod.ImplicitCoef.a1', real_value, found)
         setting%ACmethod%ImplicitCoef%a1 = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.ImplicitCoef.a1 not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.ImplicitCoef.a1 not found'
         call json%get('ACmethod.ImplicitCoef.a2', real_value, found)
         setting%ACmethod%ImplicitCoef%a2 = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.ImplicitCoef.a2 not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.ImplicitCoef.a2 not found'
         call json%get('ACmethod.ImplicitCoef.a3', real_value, found)
         setting%ACmethod%ImplicitCoef%a3 = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.ImplicitCoef.a3 not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.ImplicitCoef.a3 not found'
 
-        ! Load CFL Settings
+        !% --- AC method CFL settings
         call json%get('ACmethod.CFL.CFLmax', real_value, found)
         setting%ACmethod%CFL%CFLmax = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.CFL.CFLmax not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.CFL.CFLmax not found'
         call json%get('ACmethod.CFL.CFLmax', real_value, found)
         setting%ACmethod%CFL%CFLmax = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.CFL.CFLmax not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.CFL.CFLmax not found'
 
-        ! Load Celerity Settings
+        !% --- AC method celerity settings
         call json%get('ACmethod.Celerity.RC', real_value, found)
         setting%ACmethod%Celerity%RC = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Celerity.RC not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Celerity.RC not found'
 
-        ! Load Convergence Settings
+        !% --- AC method convergence settings
         call json%get('ACmethod.Convergence.Habsolute', real_value, found)
         setting%ACmethod%Convergence%Habsolute = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Convergence.Habsolute not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Convergence.Habsolute not found'
         call json%get('ACmethod.Convergence.Hrelative', real_value, found)
         setting%ACmethod%Convergence%Hrelative = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Convergence.Hrelative not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Convergence.Hrelative not found'
         call json%get('ACmethod.Convergence.Qabsolute', real_value, found)
         setting%ACmethod%Convergence%Qabsolute = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Convergence.Qabsolute not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Convergence.Qabsolute not found'
         call json%get('ACmethod.Convergence.Qrelative', real_value, found)
         setting%ACmethod%Convergence%Qrelative = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Convergence.Qrelative not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Convergence.Qrelative not found'
 
-        ! Load Iter Settings
+        !% --- AC method iter settings
         call json%get('ACmethod.Iter.Firststep', integer_value, found)
         setting%ACmethod%Iter%Firststep = integer_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Iter.Firststep not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Iter.Firststep not found'
         call json%get('ACmethod.Iter.Max', integer_value, found)
         setting%ACmethod%Iter%Max = integer_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Iter.Max not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Iter.Max not found'
         call json%get('ACmethod.Iter.Min', integer_value, found)
         setting%ACmethod%Iter%Min = integer_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Iter.Min not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Iter.Min not found'
 
-        ! Load Switch Settings
+        !% --- AC method switch settings
         call json%get('ACmethod.Switch.Area', real_value, found)
         setting%ACmethod%Switch%Area = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Switch.Area not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Switch.Area not found'
         call json%get('ACmethod.Switch.Buffer', real_value, found)
         setting%ACmethod%Switch%Buffer = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Switch.Buffer not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Switch.Buffer not found'
         call json%get('ACmethod.Switch.Depth', real_value, found)
         setting%ACmethod%Switch%Depth = real_value
-        if (.not. found) stop "Error - setting " // 'ACmethod.Switch.Depth not found'
+        if (.not. found) stop "Error - json file - setting " // 'ACmethod.Switch.Depth not found'
 
-        ! Load Adjust Settings
+    !% Adjustments     
+        !% --- Adjust flowrate settings
         call json%get('Adjust.Flowrate.Apply', logical_value, found)
         setting%Adjust%Flowrate%Apply = logical_value
-        if (.not. found) stop "Error - setting " // 'Adjust.Flowrate.Apply not found'
+        if (.not. found) stop "Error - json file - setting " // 'Adjust.Flowrate.Apply not found'
         call json%get('Adjust.Flowrate.approach', c, found)
         call util_lower_case(c)
         if (c == 'vshape') then
@@ -672,11 +739,12 @@ contains
         end if
         call json%get('Adjust.Flowrate.Coef', real_value, found)
         setting%Adjust%Flowrate%Coef = real_value
-        if (.not. found) stop "Error - setting " // 'Adjust.Flowrate.Coef not found'
+        if (.not. found) stop "Error - json file - setting " // 'Adjust.Flowrate.Coef not found'
 
+        !% --- Adjust head settings
         call json%get('Adjust.Head.Apply', logical_value, found)
         setting%Adjust%Head%Apply = logical_value
-        if (.not. found) stop "Error - setting " // 'Adjust.Head.Apply not found'
+        if (.not. found) stop "Error - json file - setting " // 'Adjust.Head.Apply not found'
         call json%get('Adjust.Head.approach', c, found)
         call util_lower_case(c)
         if (c == 'vshape_surcharge_only') then
@@ -686,38 +754,52 @@ contains
         end if
         call json%get('Adjust.Head.Coef', real_value, found)
         setting%Adjust%Head%Coef = real_value
-        if (.not. found) stop "Error - setting " // 'Adjust.Head.Coef not found'
+        if (.not. found) stop "Error - json file - setting " // 'Adjust.Head.Coef not found'
 
-        ! Load BC Settings
+    !% BC    
+        !% --- BC settings
         call json%get('BC.slots', real_value, found)
         setting%BC%slots = real_value
-        if (.not. found) stop "Error - setting " // 'BC.slots not found'
+        if (.not. found) stop "Error - json file - setting " // 'BC.slots not found'
         call json%get('BC.disableInterpolation', logical_value, found)
         setting%BC%disableInterpolation = logical_value
-        if (.not. found) stop "Error - setting " // 'BC.disableInterpolation not found'
+        if (.not. found) stop "Error - json file - setting " // 'BC.disableInterpolation not found'
 
-        ! Load Constant Settings
+    !% Case
+        !%--- Case name settings
+        call json%get('CaseName.Long', c, found)
+        if (.not. found) stop "Error - json file - setting " // 'CaseName.Long not found'
+        setting%CaseName%Long = trim(c)
+        call json%get('CaseName.Short', c, found)
+        if (.not. found) stop "Error - json file - setting " // 'CaseName.Short not found'
+        setting%CaseName%Short = trim(c)
+
+    !% Constant
+        !% --- Constant settings
         call json%get('Constant.gravity', real_value, found)
         setting%Constant%gravity = real_value
-        if (.not. found) stop "Error - setting " // 'Constant.gravity not found'
+        if (.not. found) stop "Error - json file - setting " // 'Constant.gravity not found'
 
-        ! For element length adjustment
+    !% Discretization    
+        !% -- Nominal element length adjustment
         call json%get('Discretization.NominalElemLength', real_value, found)
         setting%Discretization%NominalElemLength = real_value
-        if (.not. found) stop "Error - setting " // 'Discretization.NominalElemLength not found'
+        if (.not. found) stop "Error - json file - setting " // 'Discretization.NominalElemLength not found'
         call json%get('Discretization.LinkShortingFactor', real_value, found)
         setting%Discretization%LinkShortingFactor = real_value
-        if (.not. found) stop "Error - setting " // 'Discretization.LinkShortingFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'Discretization.LinkShortingFactor not found'
 
-        ! Load Eps Settings
+    !% epsilon    
+        !% --- Eps Settings
         call json%get('Eps.FroudeJump', real_value, found)
         setting%Eps%FroudeJump = real_value
-        if (.not. found) stop "Error - setting " // 'Eps.FroudeJump not found'
+        if (.not. found) stop "Error - json file - setting " // 'Eps.FroudeJump not found'
         call json%get('Eps.InflowDepthIncreaseFroudeLimit', real_value, found)
         setting%Eps%InflowDepthIncreaseFroudeLimit = real_value
-        if (.not. found) stop "Error - setting " // 'Eps.InflowDepthIncreaseFroudeLimit not found'
+        if (.not. found) stop "Error - json file - setting " // 'Eps.InflowDepthIncreaseFroudeLimit not found'
 
-        ! Load FaceInterp Settings
+    !% Face interpolation    
+        !% --- FaceInterp settings
         call json%get('FaceInterp.DownJBFaceInterp', c, found)
         call util_lower_case(c)
         if (c == 'static') then
@@ -728,13 +810,45 @@ contains
             print *, "Error, the setting '" // trim(c) // "' is not supported for DownJBFaceInterp"
             stop "in " // subroutine_name
         end if
+    
+    !% Files
+        !% --- (filenames and paths should not be read)    
+        !% -- links and nodes input files exist 
+        call json%get('File.links_input_file_exist', logical_value, found)
+        setting%File%links_input_file_exist = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'File.links_input_file_exist not found'
+        call json%get('File.nodes_input_file_exist', logical_value, found)
+        setting%File%nodes_input_file_exist = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'File.nodes_input_file_exist not found'
 
-        ! Load Junction Settings
+        call json%get('File.force_folder_creation', logical_value, found)
+        setting%File%force_folder_creation = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'File.force_folder_creation not found'
+
+        call json%get('File.library_folder', c, found)
+        setting%File%library_folder = trim(c)
+        if (.not. found) stop "Error - json file - setting "// 'File.library_folder not found'
+
+    !% Junctions    
+        !%--- Junction Settings
         call json%get('Junction.kFactor', real_value, found)
         setting%Junction%kFactor = real_value
-        if (.not. found) stop "Error - setting " // 'Junction.kFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'Junction.kFactor not found'
 
-        ! Load Limiter Settings
+        call json%get('Junction.HeadCoef', real_value, found)
+        setting%Junction%HeadCoef = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Junction.HeeadCoef not found'
+
+        call json%get('Junction.CFLlimit', real_value, found)
+        setting%Junction%CFLlimit = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
+
+        call json%get('Junction.isDynamic', logical_value, found)
+        setting%Junction%isDynamic = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.Junction.isDynamic not found'
+
+    !% Limiters    
+        !% --- Limiter settings
         call json%get('Limiter.BC.approach', c, found)
         call util_lower_case(c)
         if (c == 'froudenumber') then
@@ -742,46 +856,47 @@ contains
         else
             stop "Error, Limiter.BC.approach not compatible"
         end if
-        if (.not. found) stop "Error - setting " // 'Limiter.BC.approach not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.BC.approach not found'
         call json%get('Limiter.BC.FroudeInflowMaximum', real_value, found)
         setting%Limiter%BC%FroudeInflowMaximum = real_value
-        if (.not. found) stop "Error - setting " // 'Limiter.BC.FroudeInflowMaximum not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.BC.FroudeInflowMaximum not found'
         call json%get('Limiter.BC.UseInflowLimiter', logical_value, found)
         setting%Limiter%BC%UseInflowLimiter = logical_value
-        if (.not. found) stop "Error - setting " // 'Limiter.BC.UseInflowLimiter not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.BC.UseInflowLimiter not found'
 
         call json%get('Limiter.Channel.LargeDepthFactor', real_value, found)
         setting%Limiter%Channel%LargeDepthFactor = real_value
-        if (.not. found) stop "Error - setting " // 'Limiter.Channel.LargeDepthFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.Channel.LargeDepthFactor not found'
 
         call json%get('Limiter.Flowrate.FaceVolumeTransport', real_value, found)
         setting%Limiter%Flowrate%FaceVolumeTransport = real_value
-        if (.not. found) stop "Error - setting " // 'Limiter.Flowrate.FaceVolumeTransport not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.Flowrate.FaceVolumeTransport not found'
         call json%get('Limiter.Flowrate.UseFaceVolumeTransport', logical_value, found)
         setting%Limiter%Flowrate%UseFaceVolumeTransport = logical_value
-        if (.not. found) stop "Error - setting " // 'Limiter.Flowrate.UseFaceVolumeTransport not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.Flowrate.UseFaceVolumeTransport not found'
 
         call json%get('Limiter.InterpWeight.Maximum', real_value, found)
         setting%Limiter%InterpWeight%Maximum = real_value
-        if (.not. found) stop "Error - setting " // 'Limiter.InterpWeight.Maximum not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.InterpWeight.Maximum not found'
         call json%get('Limiter.InterpWeight.Minimum', real_value, found)
         setting%Limiter%InterpWeight%Minimum = real_value
-        if (.not. found) stop "Error - setting " // 'Limiter.InterpWeight.Minimum not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.InterpWeight.Minimum not found'
 
         call json%get('Limiter.Velocity.Maximum', real_value, found)
         setting%Limiter%Velocity%Maximum = real_value
-        if (.not. found) stop "Error - setting " // 'Limiter.Velocity.Maximum not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.Velocity.Maximum not found'
         call json%get('Limiter.Velocity.UseLimitMax', logical_value, found)
         setting%Limiter%Velocity%UseLimitMax = logical_value
-        if (.not. found) stop "Error - setting " // 'Limiter.Velocity.UseLimitMax not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.Velocity.UseLimitMax not found'
 
         call json%get('Limiter.Dt.Minimum', real_value, found)
         setting%Limiter%Dt%Minimum = real_value
-        if (.not. found) stop "Error - setting " // 'Limiter.Dt.Minimum not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.Dt.Minimum not found'
         call json%get('Limiter.Dt.UseLimitMin', logical_value, found)
         setting%Limiter%Dt%UseLimitMin = logical_value
-        if (.not. found) stop "Error - setting " // 'Limiter.Dt.UseLimitMin not found'
+        if (.not. found) stop "Error - json file - setting " // 'Limiter.Dt.UseLimitMin not found'
 
+    !% Links    
         ! Load Link settings
         call json%get('Link.DefaultInitDepthType', c, found)
         call util_lower_case(c)
@@ -795,11 +910,161 @@ contains
             print *, "Error, the setting '" // trim(c) // "' is not supported for Link.DefaultInitDepthType"
             stop "in " // subroutine_name
         end if
-        if (.not. found) stop "Error - setting " // 'Link.DefaultInitDepthType not found'
+        if (.not. found) stop "Error - json file - setting " // 'Link.DefaultInitDepthType not found'
 
         call json%get('Link.PropertiesFile', c, found)
         setting%Link%PropertiesFile = c
-        if (.not. found) stop "Error - setting " // 'Link.PropertiesFile not found'
+        if (.not. found) stop "Error - json file - setting " // 'Link.PropertiesFile not found'
+
+    !% Output    
+        !% --- Report settings
+        call json%get('Output.report', logical_value, found)
+        setting%Output%report = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.report not found'
+
+        call json%get('Output.reportStartTime', real_value, found)
+        setting%Output%reportStartTime = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.reportStartTime not found'
+
+        call json%get('Output.reportDt', real_value, found)
+        setting%Output%reportDt = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.reportDt not found'
+
+        call json%get('Output.reportStep', integer_value, found)
+        setting%Output%reportStep = integer_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.reportStep not found'
+
+       ! Load BIPQuick settings
+        call json%get('Output.reportTimeUnits', c, found)
+        call util_lower_case(c)
+        if (c == 'seconds') then
+            setting%Output%reportTimeUnits = InSeconds
+        else if (c == 'minutes') then
+            setting%Output%reportTimeUnits = InMinutes
+        else if (c == 'hours') then
+            setting%Output%reportTimeUnits = InHours
+        else if (c == 'days') then
+            setting%Output%reportTimeUnits = InDays
+        else
+            print *, "Error, the setting '" // trim(c) // "' is not supported for Output.reportTimeUnits"
+            stop 4201
+        end if
+        if (.not. found) stop "Error - json file - setting " // 'Output.reportTimeUnits'
+
+
+        call json%get('Output.StoredLevels', integer_value, found)
+        setting%Output%StoredLevels = integer_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.StoredLevels not found'
+
+        call json%get('Output.StoredFileNames', integer_value, found)
+        setting%Output%StoredFileNames = integer_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.StoredFileNames not found'
+       
+        call json%get('Output.UseFileNameFile', logical_value, found)
+        setting%Output%UseFileNameFile = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.UseFileNameFile not found'
+
+        !% --- HACK NOT USED?
+        !call json%get('Output.slots', integer_value, found)
+        !setting%Output%slots = integer_value
+        !if (.not. found) stop "Error - json file - setting " // 'Output.slots not found'
+
+        !% --- suppression of output
+        call json%get('Output.suppress_MultiLevel_Output', logical_value, found)
+        setting%Output%suppress_MultiLevel_Output = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.suppress_MultiLevel_Output not found'
+        
+
+        !% --- link and node text files
+        call json%get('Output.print_links_csv', logical_value, found)
+        setting%Output%print_links_csv = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.print_links_csv not found'
+
+        call json%get('Output.print_nodes_csv', logical_value, found)
+        setting%Output%print_nodes_csv = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.print_nodes_csv not found'
+        
+        !% --- command line
+        call json%get('Output.CommandLine.quiet', logical_value, found)
+        setting%Output%CommandLine%quiet = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.CommandLine.quiet not found'
+        call json%get('Output.CommandLine.interval', integer_value, found)
+        setting%Output%CommandLine%interval = integer_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.CommandLine.interval not found'
+
+        !% -- verbose or non-verbose run
+        call json%get('Output.Verbose', logical_value, found)
+        setting%Output%Verbose = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.Verbose not found'
+
+        !% --- warnings
+        call json%get('Output.Warning', logical_value, found)
+        setting%Output%Warning = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.Warning not found'    
+
+        !% -------------------------
+        !% --- data out ----
+        !%
+        !% --- Area
+        call json%get('Output.DataOut.isAreaOut', logical_value, found)
+        setting%Output%DataOut%isAreaOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isAreaOut not found' 
+        !% --- Depth
+        call json%get('Output.DataOut.isDepthOut', logical_value, found)
+        setting%Output%DataOut%isDepthOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isDepthOut not found' 
+        !% --- Flowrate
+        call json%get('Output.DataOut.isFlowrateOut', logical_value, found)
+        setting%Output%DataOut%isFlowrateOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isFlowrateOut not found' 
+        !% --- Froude Number
+        call json%get('Output.DataOut.isFroudeNumberOut', logical_value, found)
+        setting%Output%DataOut%isFroudeNumberOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isFroudeNumberOut not found'  
+        !% --- Head
+        call json%get('Output.DataOut.isHeadOut', logical_value, found)
+        setting%Output%DataOut%isHeadOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isHeadOut not found'   
+        !% --- Hydraulic Radius
+        call json%get('Output.DataOut.isHydRadiusOut', logical_value, found)
+        setting%Output%DataOut%isHydRadiusOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isHydRadiusOut not found'  
+        !% --- Perimeter
+        call json%get('Output.DataOut.isPerimeterOut', logical_value, found)
+        setting%Output%DataOut%isPerimeterOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isPerimeterOut not found'  
+        !% --- Slot width
+        call json%get('Output.DataOut.isSlotWidthOut', logical_value, found)
+        setting%Output%DataOut%isSlotWidthOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isSlotWidthOut not found'  
+        !% --- Slot depth
+        call json%get('Output.DataOut.isSlotDepthOut', logical_value, found)
+        setting%Output%DataOut%isSlotDepthOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isSlotDepthOut not found'  
+        !% --- Top Width
+        call json%get('Output.DataOut.isTopWidthOut', logical_value, found)
+        setting%Output%DataOut%isTopWidthOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isTopWidthOut not found'  
+        !% --- Velocity
+        call json%get('Output.DataOut.isVelocityOut', logical_value, found)
+        setting%Output%DataOut%isVelocityOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isVelocityOut not found'
+        !% --- Volume
+        call json%get('Output.DataOut.isVolumeOut', logical_value, found)
+        setting%Output%DataOut%isVolumeOut = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isVolumeOut not found'   
+
+        !-------------------------
+        ! --- Orifice settings
+        call json%get('Orifice.SharpCrestedWeirCoefficient', real_value, found)
+        setting%Orifice%SharpCrestedWeirCoefficient = real_value
+        if (.not. found) stop "Error - setting " // 'Orifice.SharpCrestedWeirCoefficient not found'
+        call json%get('Orifice.TransverseWeirExponent', real_value, found)
+        setting%Orifice%TransverseWeirExponent = real_value
+        if (.not. found) stop "Error - setting " // 'Orifice.TransverseWeirExponent not found'
+        call json%get('Orifice.VillemonteCorrectionExponent', real_value, found)
+        setting%Orifice%VillemonteCorrectionExponent = real_value
+        if (.not. found) stop "Error - setting " // 'Orifice.VillemonteCorrectionExponent not found'
 
         ! Load BIPQuick settings
         call json%get('Partitioning.PartitioningMethod', c, found)
@@ -816,8 +1081,9 @@ contains
             print *, "Error, the setting '" // trim(c) // "' is not supported for Partitioning.PartitioningMethod"
             stop 420
         end if
-        if (.not. found) stop "Error - setting " // 'Partitioning.PartitioningMethod not found'
+        if (.not. found) stop "Error - json file - setting " // 'Partitioning.PartitioningMethod not found'
 
+    !% Preissman slot    
         ! Load PreissmanSlot settings
         call json%get('PreissmannSlot.PreissmannSlotMethod', c, found)
         call util_lower_case(c)
@@ -829,52 +1095,58 @@ contains
             print *, "Error, the setting '" // trim(c) // "' is not supported for PreissmannSlot.PreissmannSlotMethod"
             stop 470
         end if
-        if (.not. found) stop "Error - setting " // 'PreissmannSlot.PreissmannSlotMethod not found'
+        if (.not. found) stop "Error - json file - setting " // 'PreissmannSlot.PreissmannSlotMethod not found'
         call json%get('PreissmannSlot.CelerityFactor', real_value, found)
         setting%PreissmannSlot%CelerityFactor = real_value
-        if (.not. found) stop "Error - setting " // 'PreissmannSlot.CelerityFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'PreissmannSlot.CelerityFactor not found'
 
+    !% Simulation controls
+        !% --- Hydrology and hydraulics simulation controls    
         call json%get('Simulation.useHydrology', logical_value, found)
         setting%Simulation%useHydrology = logical_value
-        if (.not. found) stop "Error - setting " // 'Simulation.useHydrology not found'
+        if (.not. found) stop "Error - json file - setting " // 'Simulation.useHydrology not found'
         call json%get('Simulation.useHydraulics', logical_value, found)
         setting%Simulation%useHydraulics = logical_value
-        if (.not. found) stop "Error - setting " // 'Simulation.useHydraulics not found'
+        if (.not. found) stop "Error - json file - setting " // 'Simulation.useHydraulics not found'
         call json%get('Simulation.useSWMMC', logical_value, found)
         if (logical_value) then
             setting%Simulation%useSWMMC = 1
         else
             setting%Simulation%useSWMMC = 0
         end if
-        if (.not. found) stop "Error - setting " // 'Simulation.useSWMMC not found'
+        if (.not. found) stop "Error - json file - setting " // 'Simulation.useSWMMC not found'
 
-        ! Load SmallVolume Settings
+    !% Small volume    
+        !% --- SmallVolume settings
         call json%get('SmallVolume.DepthCutoff', real_value, found)
         setting%SmallVolume%DepthCutoff = real_value
-        if (.not. found) stop "Error - setting " // 'SmallVolume.DepthCutoff not found'
+        if (.not. found) stop "Error - json file - setting " // 'SmallVolume.DepthCutoff not found'
         call json%get('SmallVolume.ManningsN', real_value, found)
         setting%SmallVolume%ManningsN = real_value
-        if (.not. found) stop "Error - setting " // 'SmallVolume.ManningsN not found'
+        if (.not. found) stop "Error - json file - setting " // 'SmallVolume.ManningsN not found'
         call json%get('SmallVolume.MinimumArea', real_value, found)
         setting%SmallVolume%MinimumArea = real_value
-        if (.not. found) stop "Error - setting " // 'SmallVolume.MinimumArea not found'
+        if (.not. found) stop "Error - json file - setting " // 'SmallVolume.MinimumArea not found'
         call json%get('SmallVolume.MinimumHydRadius', real_value, found)
         setting%SmallVolume%MinimumHydRadius = real_value
-        if (.not. found) stop "Error - setting " // 'SmallVolume.MinimumHydRadius not found'
+        if (.not. found) stop "Error - json file - setting " // 'SmallVolume.MinimumHydRadius not found'
         call json%get('SmallVolume.MinimumPerimeter', real_value, found)
         setting%SmallVolume%MinimumPerimeter = real_value
-        if (.not. found) stop "Error - setting " // 'SmallVolume.MinimumPerimeter not found'
+        if (.not. found) stop "Error - json file - setting " // 'SmallVolume.MinimumPerimeter not found'
         call json%get('SmallVolume.MinimumTopwidth', real_value, found)
         setting%SmallVolume%MinimumTopwidth = real_value
-        if (.not. found) stop "Error - setting " // 'SmallVolume.MinimumTopwidth not found'
+        if (.not. found) stop "Error - json file - setting " // 'SmallVolume.MinimumTopwidth not found'
         call json%get('SmallVolume.UseSmallVolumes', logical_value, found)
         setting%SmallVolume%UseSmallVolumes = logical_value
-        if (.not. found) stop "Error - setting " // 'SmallVolume.UseSmallVolumes not found'
+        if (.not. found) stop "Error - json file - setting " // 'SmallVolume.UseSmallVolumes not found'
 
-        ! Load Solver Settings
+    !% Solver    
+        !% ---Solver Settings
         ! call json%get('Solver.crk2', real_value, found)
         ! setting%Solver%crk2 = [real_value, real_value]
-        ! if (.not. found) stop "Error - setting " // 'Solver.crk2 not found'
+        ! if (.not. found) stop "Error - json file - setting " // 'Solver.crk2 not found'
+
+        !% --- Momentum source
         call json%get('Solver.MomentumSourceMethod', c, found)
         call util_lower_case(c)
         if (c == 't00') then
@@ -887,10 +1159,14 @@ contains
             print *, "Error, the setting '" // trim(c) // "' is not supported for MomentumSourceMethod"
             stop 540
         end if
-        if (.not. found) stop "Error - setting " // 'Solver.MomentumSourceMethod not found'
+        if (.not. found) stop "Error - json file - setting " // 'Solver.MomentumSourceMethod not found'
+
+        !% --- Preissmann slot
         call json%get('Solver.PreissmanSlot', logical_value, found)
         setting%Solver%PreissmanSlot = logical_value
-        if (.not. found) stop "Error - setting " // 'Solver.PreissmanSlot not found'
+        if (.not. found) stop "Error - json file - setting " // 'Solver.PreissmanSlot not found'
+
+        !% --- solver selection
         call json%get('Solver.SolverSelect', c, found)
         call util_lower_case(c)
         if (c == 'etm') then
@@ -903,529 +1179,344 @@ contains
             print *, "Error, the setting '" // trim(c) // "' is not supported for SolverSelect"
             stop 570
         end if
-        if (.not. found) stop "Error - setting " // 'Solver.SolverSelect not found'
+        if (.not. found) stop "Error - json file - setting " // 'Solver.SolverSelect not found'
+
+        !% --- solver switch fraction
         call json%get('Solver.SwitchFractionDn', real_value, found)
         setting%Solver%SwitchFractionDn = real_value
-        if (.not. found) stop "Error - setting " // 'Solver.SwitchFractionDn not found'
+        if (.not. found) stop "Error - json file - setting " // 'Solver.SwitchFractionDn not found'
         call json%get('Solver.SwitchFractionUp', real_value, found)
         setting%Solver%SwitchFractionUp = real_value
-        if (.not. found) stop "Error - setting " // 'Solver.SwitchFractionUp not found'
+        if (.not. found) stop "Error - json file - setting " // 'Solver.SwitchFractionUp not found'
 
-        ! Load Step Settings
-        !rm 20210607 brh call json%get('Step.Current', real_value, found)
-        !rm 20210607 brh setting%Step%Current = real_value
-        !rm 20210607 brh if (.not. found) stop "Error - setting " // 'Step.Current not found'
-        !rm 20210607 brh call json%get('Step.Final', real_value, found)
-        !rm 20210607 brh setting%Step%Final = real_value
-        !rm 20210607 brh if (.not. found) stop "Error - setting " // 'Step.Final not found'
-        !rm 20210607 brh call json%get('Step.First', real_value, found)
-        !rm 20210607 brh setting%Step%First = real_value
-        !rm 20210607 brh if (.not. found) stop "Error - setting " // 'Step.First not found'
-
-        ! Load Time Settings
+    !% Time    
+        !% --- Time settings
         call json%get('Time.matchHydrologyStep', logical_value, found)
         setting%Time%matchHydrologyStep = logical_value
-        if (.not. found) stop "Error - setting " // 'Time.matchHydrologyStep not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.matchHydrologyStep not found'
         call json%get('Time.Start', real_value, found)
         setting%Time%Start = real_value
-        if (.not. found) stop "Error - setting " // 'Time.Start not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.Start not found'
         call json%get('Time.Now', real_value, found)
         setting%Time%Now = real_value
-        if (.not. found) stop "Error - setting " // 'Time.Now not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.Now not found'
         call json%get('Time.End', real_value, found)
         setting%Time%End = real_value
-        if (.not. found) stop "Error - setting " // 'Time.End not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.End not found'
         call json%get('Time.Dt', real_value, found)
         setting%Time%Dt = real_value
-        if (.not. found) stop "Error - setting " // 'Time.Dt not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.Dt not found'
         call json%get('Time.Step', integer_value, found)
         setting%Time%Step = integer_value
-        if (.not. found) stop "Error - setting " // 'Time.Step not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.Step not found'
         call json%get('Time.Hydraulics.Dt', real_value, found)
         setting%Time%Hydraulics%Dt = real_value
-        if (.not. found) stop "Error - setting " // 'Time.Hydraulics.Dt not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.Hydraulics.Dt not found'
         call json%get('Time.Hydraulics.Step', integer_value, found)
         setting%Time%Hydraulics%Step = integer_value
-        if (.not. found) stop "Error - setting " // 'Time.Hydraulics.Step not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.Hydraulics.Step not found'
         call json%get('Time.Hydrology.Dt', real_value, found)
         setting%Time%Hydrology%Dt = real_value
-        if (.not. found) stop "Error - setting " // 'Time.Hydrology.Dt not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.Hydrology.Dt not found'
         call json%get('Time.Hydrology.Step', integer_value, found)
         setting%Time%Hydrology%Step = integer_value
-        if (.not. found) stop "Error - setting " // 'Time.Hydrology.Step not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.Hydrology.Step not found'
         call json%get('Time.DtTol', real_value, found)
         setting%Time%DtTol = real_value
-        if (.not. found) stop "Error - setting " // 'Time.Hydrology.DtTol not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.Hydrology.DtTol not found'
         call json%get('Time.DateTimeStamp', c, found)
         setting%Time%DateTimeStamp = c
-        if (.not. found) stop "Error - setting " // 'Time.DateTimeStamp not found'
+        if (.not. found) stop "Error - json file - setting " // 'Time.DateTimeStamp not found'
 
         ! NOTE: these are NOT initialized because we set the times before the json file is read
         !call json%get('Time.Real.EpochStartSeconds', integer_value, found)
         !setting%Time%Real%EpochStartSeconds = integer_value
-        !if (.not. found) stop "Error - setting " // 'Time.Real.EpochStartSeconds not found'
+        !if (.not. found) stop "Error - json file - setting " // 'Time.Real.EpochStartSeconds not found'
         !call json%get('Time.Real.EpochNowSeconds', integer_value, found)
         !setting%Time%Real%EpochNowSeconds = integer_value
-        !if (.not. found) stop "Error - setting " // 'Time.Real.EpochNowSeconds not found'
+        !if (.not. found) stop "Error - json file - setting " // 'Time.Real.EpochNowSeconds not found'
         !call json%get('Time.CPU.EpochStartSeconds', integer_value, found)
 
         ! NOTE: these are NOT initialized because we set the times before the json file is read
         !setting%Time%CPU%EpochStartSeconds = real_value
-        !if (.not. found) stop "Error - setting " // 'Time.CPU.EpochStartSeconds not found'
+        !if (.not. found) stop "Error - json file - setting " // 'Time.CPU.EpochStartSeconds not found'
         !call json%get('Time.CPU.EpochNowSeconds', real_value, found)
         !setting%Time%CPU%EpochNowSeconds = real_value
-        !if (.not. found) stop "Error - setting " // 'Time.CPU.EpochNowSeconds not found'
+        !if (.not. found) stop "Error - json file - setting " // 'Time.CPU.EpochNowSeconds not found'
         !call json%get('Time.CPU.EpochFinishSeconds', real_value, found)
         !setting%Time%CPU%EpochFinishSeconds = real_value
-        !if (.not. found) stop "Error - setting " // 'Time.CPU.EpochFinishSeconds not found'
+        !if (.not. found) stop "Error - json file - setting " // 'Time.CPU.EpochFinishSeconds not found'
 
-        ! Transverse Weir settings
+    !% Weir    
+        !% --- Transverse weir settings
         call json%get('Weir.Transverse.WeirExponent', real_value, found)
         setting%Weir%Transverse%WeirExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.Transverse.WeirExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.Transverse.WeirExponent not found'
         call json%get('Weir.Transverse.WeirContractionFactor', real_value, found)
         setting%Weir%Transverse%WeirContractionFactor = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.Transverse.WeirContractionFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.Transverse.WeirContractionFactor not found'
         call json%get('Weir.Transverse.SideFlowWeirCrestExponent', real_value, found)
         setting%Weir%Transverse%SideFlowWeirCrestExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.Transverse.SideFlowWeirCrestExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.Transverse.SideFlowWeirCrestExponent not found'
         call json%get('Weir.Transverse.VillemonteCorrectionExponent', real_value, found)
         setting%Weir%Transverse%VillemonteCorrectionExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.Transverse.VillemonteCorrectionExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.Transverse.VillemonteCorrectionExponent not found'
 
-        ! Sideflow Weir settings
+        !% --- Sideflow weir settings
         call json%get('Weir.SideFlow.WeirExponent', real_value, found)
         setting%Weir%SideFlow%WeirExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.SideFlow.WeirExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.SideFlow.WeirExponent not found'
         call json%get('Weir.SideFlow.WeirContractionFactor', real_value, found)
         setting%Weir%SideFlow%WeirContractionFactor = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.SideFlow.WeirContractionFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.SideFlow.WeirContractionFactor not found'
         call json%get('Weir.SideFlow.SideFlowWeirCrestExponent', real_value, found)
         setting%Weir%SideFlow%SideFlowWeirCrestExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.SideFlow.SideFlowWeirCrestExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.SideFlow.SideFlowWeirCrestExponent not found'
         call json%get('Weir.SideFlow.VillemonteCorrectionExponent', real_value, found)
         setting%Weir%SideFlow%VillemonteCorrectionExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.SideFlow.VillemonteCorrectionExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.SideFlow.VillemonteCorrectionExponent not found'
 
+        !% --- V-notch weir settings
         call json%get('Weir.VNotch.WeirExponent', real_value, found)
         setting%Weir%VNotch%WeirExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.VNotch.WeirExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.VNotch.WeirExponent not found'
         call json%get('Weir.VNotch.WeirContractionFactor', real_value, found)
         setting%Weir%VNotch%WeirContractionFactor = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.VNotch.WeirContractionFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.VNotch.WeirContractionFactor not found'
         call json%get('Weir.VNotch.SideFlowWeirCrestExponent', real_value, found)
         setting%Weir%VNotch%SideFlowWeirCrestExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.VNotch.SideFlowWeirCrestExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.VNotch.SideFlowWeirCrestExponent not found'
         call json%get('Weir.VNotch.VillemonteCorrectionExponent', real_value, found)
         setting%Weir%VNotch%VillemonteCorrectionExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.VNotch.VillemonteCorrectionExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.VNotch.VillemonteCorrectionExponent not found'
 
-
+        !% --- Trapezoidal weir settings
         call json%get('Weir.Trapezoidal.WeirExponent', real_value, found)
         setting%Weir%Trapezoidal%WeirExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.Trapezoidal.WeirExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.Trapezoidal.WeirExponent not found'
         call json%get('Weir.Trapezoidal.WeirContractionFactor', real_value, found)
         setting%Weir%Trapezoidal%WeirContractionFactor = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.Trapezoidal.WeirContractionFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.Trapezoidal.WeirContractionFactor not found'
         call json%get('Weir.Trapezoidal.SideFlowWeirCrestExponent', real_value, found)
         setting%Weir%Trapezoidal%SideFlowWeirCrestExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.Trapezoidal.SideFlowWeirCrestExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.Trapezoidal.SideFlowWeirCrestExponent not found'
         call json%get('Weir.Trapezoidal.VillemonteCorrectionExponent', real_value, found)
         setting%Weir%Trapezoidal%VillemonteCorrectionExponent = real_value
-        if (.not. found) stop "Error - setting " // 'Weir.Trapezoidal.VillemonteCorrectionExponent not found'
+        if (.not. found) stop "Error - json file - setting " // 'Weir.Trapezoidal.VillemonteCorrectionExponent not found'
 
-        !% load variable time step settings
+    !% Variable time step    
+        !% ---variable time step settings
         call json%get('VariableDT.Apply', logical_value, found)
         setting%VariableDT%Apply = logical_value
-        if (.not. found) stop "Error - setting " // 'VariableDT.Apply not found'
+        if (.not. found) stop "Error - json file - setting " // 'VariableDT.Apply not found'
         call json%get('VariableDT.CFL_hi_max', real_value, found)
         setting%VariableDT%CFL_hi_max = real_value
-        if (.not. found) stop "Error - setting " // 'VariableDT.CFL_hi_max not found'
+        if (.not. found) stop "Error - json file - setting " // 'VariableDT.CFL_hi_max not found'
         call json%get('VariableDT.CFL_target', real_value, found)
         setting%VariableDT%CFL_target = real_value
-        if (.not. found) stop "Error - setting " // 'VariableDT.CFL_target not found'
+        if (.not. found) stop "Error - json file - setting " // 'VariableDT.CFL_target not found'
         call json%get('VariableDT.CFL_lo_max', real_value, found)
         setting%VariableDT%CFL_lo_max = real_value
-        if (.not. found) stop "Error - setting " // 'VariableDT.CFL_lo_max not found'
+        if (.not. found) stop "Error - json file - setting " // 'VariableDT.CFL_lo_max not found'
         call json%get('VariableDT.decreaseFactor', real_value, found)
         setting%VariableDT%decreaseFactor = real_value
-        if (.not. found) stop "Error - setting " // 'VariableDT.decreaseFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'VariableDT.decreaseFactor not found'
         call json%get('VariableDT.increaseFactor', real_value, found)
         setting%VariableDT%increaseFactor = real_value
-        if (.not. found) stop "Error - setting " // 'VariableDT.increaseFactor not found'
+        if (.not. found) stop "Error - json file - setting " // 'VariableDT.increaseFactor not found'
         call json%get('VariableDT.NstepsForCheck', integer_value, found)
         setting%VariableDT%NstepsForCheck = integer_value
-        if (.not. found) stop "Error - setting " // 'VariableDT.NstepsForCheck not found'
+        if (.not. found) stop "Error - json file - setting " // 'VariableDT.NstepsForCheck not found'
 
-        ! Load ZeroValue Settings
+    !% Zero Value    
+        !% --- ZeroValue settings
         call json%get('ZeroValue.Area', real_value, found)
         setting%ZeroValue%Area = real_value
-        if (.not. found) stop "Error - setting " // 'ZeroValue.Area not found'
+        if (.not. found) stop "Error - json file - setting " // 'ZeroValue.Area not found'
         call json%get('ZeroValue.Depth', real_value, found)
         setting%ZeroValue%Depth = real_value
-        if (.not. found) stop "Error - setting " // 'ZeroValue.Depth not found'
+        if (.not. found) stop "Error - json file - setting " // 'ZeroValue.Depth not found'
         call json%get('ZeroValue.Topwidth', real_value, found)
         setting%ZeroValue%Topwidth = real_value
-        if (.not. found) stop "Error - setting " // 'ZeroValue.Topwidth not found'
+        if (.not. found) stop "Error - json file - setting " // 'ZeroValue.Topwidth not found'
         call json%get('ZeroValue.UseZeroValues', logical_value, found)
         setting%ZeroValue%UseZeroValues = logical_value
-        if (.not. found) stop "Error - setting " // 'ZeroValue.UseZeroValues not found'
+        if (.not. found) stop "Error - json file - setting " // 'ZeroValue.UseZeroValues not found'
         call json%get('ZeroValue.Volume', real_value, found)
         setting%ZeroValue%Volume = real_value
-        if (.not. found) stop "Error - setting " // 'ZeroValue.Volume not found'
+        if (.not. found) stop "Error - json file - setting " // 'ZeroValue.Volume not found'
 
-        ! Load Output settings
-        call json%get('Output.report', logical_value, found)
-        setting%Output%report = logical_value
-        if (.not. found) stop "Error - setting " // 'Output.report not found'
-        call json%get('Output.reportStartTime', real_value, found)
-        setting%Output%reportStartTime = real_value
-        if (.not. found) stop "Error - setting " // 'Output.reportStartTime not found'
-        call json%get('Output.reportDt', real_value, found)
-        setting%Output%reportDt = real_value
-        if (.not. found) stop "Error - setting " // 'Output.reportDt not found'
-        call json%get('Output.reportStep', integer_value, found)
-        setting%Output%reportStep = integer_value
-        if (.not. found) stop "Error - setting " // 'Output.reportStep not found'
-        call json%get('Output.slots', integer_value, found)
-        setting%Output%slots = integer_value
-        if (.not. found) stop "Error - setting " // 'Output.slots not found'
-        call json%get('Output.links_file', c, found)
-        setting%Output%links_file = c
-        if (.not. found) stop "Error - setting " // 'Output.links_file not found'
-        call json%get('Output.nodes_file', c, found)
-        setting%Output%nodes_file = c
-        if (.not. found) stop "Error - setting " // 'Output.nodes_file not found'
-        call json%get('Output.CommandLine.quiet', logical_value, found)
-        setting%Output%CommandLine%quiet = logical_value
-        if (.not. found) stop "Error - setting " // 'Output.CommandLine.quiet not found'
-        call json%get('Output.CommandLine.interval', integer_value, found)
-        setting%Output%CommandLine%interval = integer_value
-        if (.not. found) stop "Error - setting " // 'Output.CommandLine.interval not found'
 
-        ! Load verbose or non-verbose run
-        call json%get('Verbose', logical_value, found)
-        setting%Verbose = logical_value
-        if (.not. found) stop "Error - setting " // 'Verbose not found'
 
-        ! Load Debug Settings
+    !% Debug    
+        !% --- Debug Settings
         call json%get('Debug.Tests', logical_value, found)
         setting%Debug%Tests = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.Tests not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.Tests not found'
         call json%get('Debug.File.adjust', logical_value, found)
         setting%Debug%File%adjust = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.adjust not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.adjust not found'
         call json%get('Debug.File.boundary_conditions', logical_value, found)
         setting%Debug%File%boundary_conditions = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.boundary_conditions not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.boundary_conditions not found'
         call json%get('Debug.File.c_library', logical_value, found)
         setting%Debug%File%c_library = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.c_library not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.c_library not found'
         call json%get('Debug.File.define_globals', logical_value, found)
         setting%Debug%File%define_globals = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.define_globals not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.define_globals not found'
         call json%get('Debug.File.define_indexes', logical_value, found)
         setting%Debug%File%define_indexes = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.define_indexes not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.define_indexes not found'
         call json%get('Debug.File.define_keys', logical_value, found)
         setting%Debug%File%define_keys = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.define_keys not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.define_keys not found'
         call json%get('Debug.File.define_settings', logical_value, found)
         setting%Debug%File%define_settings = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.define_settings not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.define_settings not found'
         call json%get('Debug.File.define_types', logical_value, found)
         setting%Debug%File%define_types = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.define_types not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.define_types not found'
         call json%get('Debug.File.diagnostic_elements', logical_value, found)
         setting%Debug%File%diagnostic_elements = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.diagnostic_elements not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.diagnostic_elements not found'
         call json%get('Debug.File.discretization', logical_value, found)
         setting%Debug%File%discretization = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.discretization not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.discretization not found'
         call json%get('Debug.File.face', logical_value, found)
         setting%Debug%File%face = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.face not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.face not found'
         call json%get('Debug.File.geometry', logical_value, found)
         setting%Debug%File%geometry = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.geometry not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.geometry not found'
         call json%get('Debug.File.interface', logical_value, found)
         setting%Debug%File%interface = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.interface not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.interface not found'
         call json%get('Debug.File.initial_condition', logical_value, found)
         setting%Debug%File%initial_condition = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.initial_condition not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.initial_condition not found'
         call json%get('Debug.File.initialization', logical_value, found)
         setting%Debug%File%initialization = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.initialization not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.initialization not found'
         call json%get('Debug.File.jump', logical_value, found)
         setting%Debug%File%jump = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.jump not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.jump not found'
         call json%get('Debug.File.lowlevel_rk2', logical_value, found)
         setting%Debug%File%lowlevel_rk2 = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.lowlevel_rk2 not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.lowlevel_rk2 not found'
         call json%get('Debug.File.network_define', logical_value, found)
         setting%Debug%File%network_define = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.network_define not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.network_define not found'
         call json%get('Debug.File.orifice_elements', logical_value, found)
         setting%Debug%File%orifice_elements = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.orifice_elements not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.orifice_elements not found'
         call json%get('Debug.File.pack_mask_arrays', logical_value, found)
         setting%Debug%File%pack_mask_arrays = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.pack_mask_arrays not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.pack_mask_arrays not found'
         call json%get('Debug.File.partitioning', logical_value, found)
         setting%Debug%File%partitioning = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.partitioning not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.partitioning not found'
         call json%get('Debug.File.pump_elements', logical_value, found)
         setting%Debug%File%pump_elements = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.pump_elements not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.pump_elements not found'
         call json%get('Debug.File.rectangular_channel', logical_value, found)
         setting%Debug%File%rectangular_channel = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.rectangular_channel not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.rectangular_channel not found'
         call json%get('Debug.File.trapezoidal_channel', logical_value, found)
         setting%Debug%File%trapezoidal_channel = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.trapezoidal_channel not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.trapezoidal_channel not found'
         call json%get('Debug.File.runge_kutta2', logical_value, found)
         setting%Debug%File%runge_kutta2 = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.runge_kutta2 not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.runge_kutta2 not found'
         call json%get('Debug.File.timeloop', logical_value, found)
         setting%Debug%File%timeloop = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.timeloop not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.timeloop not found'
         call json%get('Debug.File.update', logical_value, found)
         setting%Debug%File%update = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.update not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.update not found'
         call json%get('Debug.File.utility_allocate', logical_value, found)
         setting%Debug%File%utility_allocate = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.utility_allocate not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.utility_allocate not found'
         call json%get('Debug.File.utility_deallocate', logical_value, found)
         setting%Debug%File%utility_deallocate = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.utility_deallocate not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.utility_deallocate not found'
         call json%get('Debug.File.utility_array', logical_value, found)
         setting%Debug%File%utility_array = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.utility_array not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.utility_array not found'
         call json%get('Debug.File.utility_datetime', logical_value, found)
         setting%Debug%File%utility_datetime = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.utility_datetime not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.utility_datetime not found'
         call json%get('Debug.File.utility_interpolate', logical_value, found)
         setting%Debug%File%utility_interpolate = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.utility_interpolate not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.utility_interpolate not found'
         call json%get('Debug.File.utility_output', logical_value, found)
         setting%Debug%File%utility_output = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.utility_output not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.utility_output not found'
         call json%get('Debug.File.utility_string', logical_value, found)
         setting%Debug%File%utility_string = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.utility_string not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.utility_string not found'
         call json%get('Debug.File.utility', logical_value, found)
         setting%Debug%File%utility = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.utility not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.utility not found'
         call json%get('Debug.File.weir_elements', logical_value, found)
         setting%Debug%File%weir_elements = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.weir_elements not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.weir_elements not found'
         call json%get('Debug.File.output', logical_value, found)
         setting%Debug%File%output = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.File.output not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.File.output not found'
         call json%get('Debug.FileGroup.all', logical_value, found)
         setting%Debug%FileGroup%all = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.all not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.FileGroup.all not found'
         call json%get('Debug.FileGroup.definitions', logical_value, found)
         setting%Debug%FileGroup%definitions = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.definitions not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.FileGroup.definitions not found'
         call json%get('Debug.FileGroup.finalization', logical_value, found)
         setting%Debug%FileGroup%finalization = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.finalization not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.FileGroup.finalization not found'
         call json%get('Debug.FileGroup.geometry', logical_value, found)
         setting%Debug%FileGroup%geometry = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.geometry not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.FileGroup.geometry not found'
         call json%get('Debug.FileGroup.initialization', logical_value, found)
         setting%Debug%FileGroup%initialization = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.initialization not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.FileGroup.initialization not found'
         call json%get('Debug.FileGroup.interface', logical_value, found)
         setting%Debug%FileGroup%interface = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.interface not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.FileGroup.interface not found'
         call json%get('Debug.FileGroup.output', logical_value, found)
         setting%Debug%FileGroup%output = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.output not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.FileGroup.output not found'
         call json%get('Debug.FileGroup.timeloop', logical_value, found)
         setting%Debug%FileGroup%timeloop = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.timeloop not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.FileGroup.timeloop not found'
         call json%get('Debug.FileGroup.utility', logical_value, found)
         setting%Debug%FileGroup%utility = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.FileGroup.utility not found'
-        call json%get('Debug.Input', logical_value, found)
-        setting%Debug%Input = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.Input not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.FileGroup.utility not found'
+        call json%get('Debug.Setup', logical_value, found)
+        setting%Debug%Setup = logical_value
+        if (.not. found) stop "Error - json file - setting " // 'Debug.Setup not found'
         call json%get('Debug.Output', logical_value, found)
         setting%Debug%Output = logical_value
-        if (.not. found) stop "Error - setting " // 'Debug.Output not found'
+        if (.not. found) stop "Error - json file - setting " // 'Debug.Output not found'
 
         call def_update_debug_options()
 
-
-
-        !% Load Profile Settings
+    !% Profiler
+        !% --- Profile settings
         call json%get('Profile.YN', logical_value, found)
         setting%Profile%YN = logical_value
-        if (.not. found) stop "Error - setting " // 'Profile.YN not found'
+        if (.not. found) stop "Error - json file - setting " // 'Profile.YN not found'
 
-        ! call json%get('Profile.Tests', logical_value, found)
-        ! setting%Profile%Tests = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.Tests not found'
-        ! call json%get('Profile.File.adjust', logical_value, found)
-        ! setting%Profile%File%adjust = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.adjust not found'
-        ! call json%get('Profile.File.BIPquick', logical_value, found)
-        ! setting%Profile%File%BIPquick = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.BIPquick not found'
-        ! call json%get('Profile.File.boundary_conditions', logical_value, found)
-        ! setting%Profile%File%boundary_conditions = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.boundary_conditions not found'
-        ! call json%get('Profile.File.c_library', logical_value, found)
-        ! setting%Profile%File%c_library = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.c_library not found'
-        ! call json%get('Profile.File.define_globals', logical_value, found)
-        ! setting%Profile%File%define_globals = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.define_globals not found'
-        ! call json%get('Profile.File.define_indexes', logical_value, found)
-        ! setting%Profile%File%define_indexes = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.define_indexes not found'
-        ! call json%get('Profile.File.define_keys', logical_value, found)
-        ! setting%Profile%File%define_keys = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.define_keys not found'
-        ! call json%get('Profile.File.define_settings', logical_value, found)
-        ! setting%Profile%File%define_settings = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.define_settings not found'
-        ! call json%get('Profile.File.define_types', logical_value, found)
-        ! setting%Profile%File%define_types = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.define_types not found'
-        ! call json%get('Profile.File.diagnostic_elements', logical_value, found)
-        ! setting%Profile%File%diagnostic_elements = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.diagnostic_elements not found'
-        ! call json%get('Profile.File.discretization', logical_value, found)
-        ! setting%Profile%File%discretization = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.discretization not found'
-        ! call json%get('Profile.File.face', logical_value, found)
-        ! setting%Profile%File%face = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.face not found'
-        ! call json%get('Profile.File.geometry', logical_value, found)
-        ! setting%Profile%File%geometry = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.geometry not found'
-        ! call json%get('Profile.File.interface', logical_value, found)
-        ! setting%Profile%File%interface = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.interface not found'
-        ! call json%get('Profile.File.initial_condition', logical_value, found)
-        ! setting%Profile%File%initial_condition = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.initial_condition not found'
-        ! call json%get('Profile.File.initialization', logical_value, found)
-        ! setting%Profile%File%initialization = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.initialization not found'
-        ! call json%get('Profile.File.jump', logical_value, found)
-        ! setting%Profile%File%jump = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.jump not found'
-        ! call json%get('Profile.File.lowlevel_rk2', logical_value, found)
-        ! setting%Profile%File%lowlevel_rk2 = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.lowlevel_rk2 not found'
-        ! call json%get('Profile.File.network_define', logical_value, found)
-        ! setting%Profile%File%network_define = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.network_define not found'
-        ! call json%get('Profile.File.orifice_elements', logical_value, found)
-        ! setting%Profile%File%orifice_elements = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.orifice_elements not found'
-        ! call json%get('Profile.File.pack_mask_arrays', logical_value, found)
-        ! setting%Profile%File%pack_mask_arrays = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.pack_mask_arrays not found'
-        ! call json%get('Profile.File.partitioning', logical_value, found)
-        ! setting%Profile%File%partitioning = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.partitioning not found'
-        ! call json%get('Profile.File.pump_elements', logical_value, found)
-        ! setting%Profile%File%pump_elements = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.pump_elements not found'
-        ! call json%get('Profile.File.rectangular_channel', logical_value, found)
-        ! setting%Profile%File%rectangular_channel = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.rectangular_channel not found'
-        ! call json%get('Profile.File.trapezoidal_channel', logical_value, found)
-        ! setting%Profile%File%trapezoidal_channel = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.trapezoidal_channel not found'
-        ! call json%get('Profile.File.runge_kutta2', logical_value, found)
-        ! setting%Profile%File%runge_kutta2 = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.runge_kutta2 not found'
-        ! call json%get('Profile.File.timeloop', logical_value, found)
-        ! setting%Profile%File%timeloop = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.timeloop not found'
-        ! call json%get('Profile.File.update', logical_value, found)
-        ! setting%Profile%File%update = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.update not found'
-        ! call json%get('Profile.File.utility_allocate', logical_value, found)
-        ! setting%Profile%File%utility_allocate = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.utility_allocate not found'
-        ! call json%get('Profile.File.utility_deallocate', logical_value, found)
-        ! setting%Profile%File%utility_deallocate = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.utility_deallocate not found'
-        ! call json%get('Profile.File.utility_array', logical_value, found)
-        ! setting%Profile%File%utility_array = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.utility_array not found'
-        ! call json%get('Profile.File.utility_datetime', logical_value, found)
-        ! setting%Profile%File%utility_datetime = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.utility_datetime not found'
-        ! call json%get('Profile.File.utility_interpolate', logical_value, found)
-        ! setting%Profile%File%utility_interpolate = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.utility_interpolate not found'
-        ! call json%get('Profile.File.utility_output', logical_value, found)
-        ! setting%Profile%File%utility_output = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.utility_output not found'
-        ! call json%get('Profile.File.utility_string', logical_value, found)
-        ! setting%Profile%File%utility_string = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.utility_string not found'
-        ! call json%get('Profile.File.utility', logical_value, found)
-        ! setting%Profile%File%utility = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.utility not found'
-        ! call json%get('Profile.File.weir_elements', logical_value, found)
-        ! setting%Profile%File%weir_elements = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.weir_elements not found'
-        ! call json%get('Profile.File.output', logical_value, found)
-        ! setting%Profile%File%output = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.File.output not found'
-        ! call json%get('Profile.FileGroup.all', logical_value, found)
-        ! setting%Profile%FileGroup%all = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.FileGroup.all not found'
-        ! call json%get('Profile.FileGroup.definitions', logical_value, found)
-        ! setting%Profile%FileGroup%definitions = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.FileGroup.definitions not found'
-        ! call json%get('Profile.FileGroup.finalization', logical_value, found)
-        ! setting%Profile%FileGroup%finalization = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.FileGroup.finalization not found'
-        ! call json%get('Profile.FileGroup.geometry', logical_value, found)
-        ! setting%Profile%FileGroup%geometry = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.FileGroup.geometry not found'
-        ! call json%get('Profile.FileGroup.initialization', logical_value, found)
-        ! setting%Profile%FileGroup%initialization = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.FileGroup.initialization not found'
-        ! call json%get('Profile.FileGroup.interface', logical_value, found)
-        ! setting%Profile%FileGroup%interface = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.FileGroup.interface not found'
-        ! call json%get('Profile.FileGroup.output', logical_value, found)
-        ! setting%Profile%FileGroup%output = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.FileGroup.output not found'
-        ! call json%get('Profile.FileGroup.timeloop', logical_value, found)
-        ! setting%Profile%FileGroup%timeloop = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.FileGroup.timeloop not found'
-        ! call json%get('Profile.FileGroup.utility', logical_value, found)
-        ! setting%Profile%FileGroup%utility = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.FileGroup.utility not found'
-        ! call json%get('Profile.Input', logical_value, found)
-        ! setting%Profile%Input = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.Input not found'
-        ! call json%get('Profile.Output', logical_value, found)
-        ! setting%Profile%Output = logical_value
-        ! if (.not. found) stop "Error - setting " // 'Profile.Output not found'
-
-        ! call def_update_profile_options()
-
+     !% finished    
         call json%destroy()
         if (json%failed()) stop "JSON failed to destroy"
 
         if (setting%Debug%File%define_settings) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine def_load_settings
-
+!%
+!%==========================================================================    
+!%==========================================================================
+!%    
     subroutine def_update_debug_options()
         if (setting%Debug%FileGroup%all) then
             setting%Debug%FileGroup%definitions = .true.
@@ -1493,68 +1584,8 @@ contains
             setting%Debug%File%utility = .true.
         end if
     end subroutine def_update_debug_options
-
-    ! subroutine def_update_profile_options()
-    !     if (setting%Profile%FileGroup%all) then
-    !         setting%Profile%FileGroup%definitions = .true.
-    !         setting%Profile%FileGroup%finalization = .true.
-    !         setting%Profile%FileGroup%geometry = .true.
-    !         setting%Profile%FileGroup%initialization = .true.
-    !         setting%Profile%FileGroup%interface = .true.
-    !         setting%Profile%FileGroup%timeloop  = .true.
-    !         setting%Profile%FileGroup%utility = .true.
-    !     end if
-    !     if (setting%Profile%FileGroup%definitions) then
-    !         setting%Profile%File%define_globals = .true.
-    !         setting%Profile%File%define_indexes = .true.
-    !         setting%Profile%File%define_keys = .true.
-    !         setting%Profile%File%define_settings = .true.
-    !         setting%Profile%File%define_types = .true.
-    !     end if
-    !     if (setting%Profile%FileGroup%finalization) then
-    !         setting%Profile%File%finalization = .true.
-    !     end if
-    !     if (setting%Profile%FileGroup%geometry) then
-    !         setting%Profile%File%geometry = .true.
-    !         setting%Profile%File%rectangular_channel = .true.
-    !         setting%Profile%File%trapezoidal_channel = .true.
-    !     end if
-    !     if (setting%Profile%FileGroup%initialization) then
-    !         setting%Profile%File%discretization = .true.
-    !         setting%Profile%File%initial_condition = .true.
-    !         setting%Profile%File%initialization = .true.
-    !         setting%Profile%File%network_define = .true.
-    !         setting%Profile%File%partitioning = .true.
-    !         setting%Profile%File%BIPquick = .true.
-    !         setting%Profile%File%pack_mask_arrays = .true.
-    !     end if
-    !     if (setting%Profile%FileGroup%interface) then
-    !         setting%Profile%File%c_library = .true.
-    !         setting%Profile%File%interface = .true.
-    !     end if
-    !     if (setting%Profile%FileGroup%timeloop) then
-    !         setting%Profile%File%adjust = .true.
-    !         setting%Profile%File%boundary_conditions = .true.
-    !         setting%Profile%File%diagnostic_elements = .true.
-    !         setting%Profile%File%face = .true.
-    !         setting%Profile%File%jump = .true.
-    !         setting%Profile%File%lowlevel_rk2 = .true.
-    !         setting%Profile%File%orifice_elements = .true.
-    !         setting%Profile%File%pump_elements = .true.
-    !         setting%Profile%File%runge_kutta2 = .true.
-    !         setting%Profile%File%timeloop = .true.
-    !         setting%Profile%File%update = .true.
-    !         setting%Profile%File%weir_elements = .true.
-    !     endif
-    !     if (setting%Profile%FileGroup%utility) then
-    !         setting%Profile%File%utility_allocate = .true.
-    !         setting%Profile%File%utility_deallocate = .true.
-    !         setting%Profile%File%utility_array = .true.
-    !         setting%Profile%File%utility_datetime = .true.
-    !         setting%Profile%File%utility_interpolate = .true.
-    !         setting%Profile%File%utility_output = .true.
-    !         setting%Profile%File%utility_string = .true.
-    !         setting%Profile%File%utility = .true.
-    !     end if
-    ! end subroutine def_update_profile_options
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
 end module define_settings

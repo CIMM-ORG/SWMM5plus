@@ -12,123 +12,158 @@ module initialization
     use pack_mask_arrays, only: pack_nodes
     use utility_allocate
     use utility_array
+    use utility_datetime
     use utility_output
     use utility_array
     use utility_profiler
-    !use utility_prof_jobcount
+    use utility_files
     use pack_mask_arrays
     use output
 
     implicit none
 
-!-----------------------------------------------------------------------------
-!
-! Description:
-!    General initialization of data structures (not including network)
-!
-! Method:
-!    Creates the arrays index structures that are used for accessing data.
-!    Arguably, this could be done more simply but we want the fundamental
-!    column indexes in array_index to be parameters rather than variables. By
-!    using parameters we reduce the possibility of accidentally changing a
-!    column definition.
-!
-! Note on naming:
-!    The driver subroutine is named after the driver module (in this case,
-!    initialization).  Subsequent subroutines are name such that the subroutine
-!    name is essentially a path "init_<module>_<subroutine_name>"
-!-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    General initialization of data structures (not including network)
+    !%
+    !% Method:
+    !%    Creates the arrays index structures that are used for accessing data.
+    !%    Arguably, this could be done more simply but we want the fundamental
+    !%    column indexes in array_index to be parameters rather than variables. By
+    !%    using parameters we reduce the possibility of accidentally changing a
+    !%    column definition.
+    !%
+    !% Note on naming:
+    !%    The driver subroutine is named after the driver module (in this case,
+    !%    initialization).  Subsequent subroutines are name such that the subroutine
+    !%    name is essentially a path "init_<module>_<subroutine_name>"
+    !%-----------------------------------------------------------------------------
 
     private
-
-    public :: initialize_all
+    public :: initialize_toplevel
 
 contains
-    !%
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-    !%
-    subroutine initialize_all()
-    !%-----------------------------------------------------------------------------
-    !%
-    !% Description:
-    !%   a public subroutine that calls all the private initialization subroutines
-    !%
-    !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'initialize_all'
-    !%-----------------------------------------------------------------------------
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
+    subroutine initialize_toplevel ()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%   a public subroutine that calls all the private initialization subroutines
+        !%-----------------------------------------------------------------------------
+        character(64) :: subroutine_name = 'initialize_toplevel'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        !% ---  Define project & settings paths
-        call getcwd(setting%Paths%project)
-        setting%paths%setting = trim(setting%Paths%project) // "/definitions/settings.json"
+        !% --- CPU and wall-clock timers    
+        call init_model_timer()
 
-        !% read and store the command-line options
-        call init_read_arguments ()
+        !% --- assign and store unit numbers for files
+        call util_file_assign_unitnumber ()
 
-        !% set the branchsign global -- this is used for junction branches (JB)
-        !% for upstream (+1) and downstream (-1)
-        !% HACK: for clarity and consistency, this probably should be moved into
-        !% the init_network. Placed here for the time being in case we need it
-        !% for translating link/node from SWMM-C or partitioning.
+        !% --- get command line assignments and store
+        call util_file_get_commandline ()
+
+        !% --- input project paths and filenames from command line arguments
+        !%     note that all files and folders must exist
+        call util_file_setup_input_paths_and_files()
+
+        if (setting%Output%Verbose) &
+            write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."    
+
+        !% --- set the branchsign global -- this is used for junction branches (JB)
+        !%     for upstream (+1) and downstream (-1)
+        !%     HACK: for clarity and consistency, this probably should be moved into
+        !%     the init_network. Placed here for the time being in case we need it
+        !%     for translating link/node from SWMM-C or partitioning.
         branchsign(1:max_branch_per_node-1:2) = +oneR
         branchsign(2:max_branch_per_node:2)   = -oneR
 
-        !% load the settings.json file with the default setting% model control structure
-        !% def_load_settings is one of the few subroutines in the Definition modules
+        !% --- load the settings.json file with the default setting% model control structure
+        !%     def_load_settings is one of the few subroutines in the Definition modules
         call def_load_settings()
 
-        !% read and store the command-line options
-        call init_read_arguments ()
+        !% --- initialize the time stamp used for output (must be after json is read)
+        call init_timestamp ()
 
-        if (setting%Verbose) print *, "Simulation Starts"
 
-        !% set up the profiler
+        !% HACK
+        !% --- Read and process the command-line options a second time to prevent overwrite 
+        !%     from json file and reprocess. 
+        !%     Possibly replace this later with a set of settings that are saved 
+        !%     and simply overwrite after the settings.json is loaded.
+        call util_file_assign_unitnumber ()
+        call util_file_get_commandline ()
+        call util_file_setup_input_paths_and_files()
+
+        !% --- output file directories
+        call util_file_setup_output_folders()
+
+        !%  --- finish setting all the paths to output folders
+        sync all
+
+        if (setting%Output%Verbose) then
+            write(*,"(A)") "Simulation Starts..."
+            write(*,"(A)") 'Using the following files:'
+            write(*,"(A)") 'input file  : '//trim(setting%File%inp_file)
+            write(*,"(A)") 'setting file: '//trim(setting%File%setting_file)
+            write(*,"(A)") 'report file : '//trim(setting%File%rpt_file)
+            write(*,"(A)") 'output file : '//trim(setting%File%out_file)
+        end if
+
+        !% --- set up the profiler
         if (setting%Profile%YN) then
             call util_allocate_profiler ()   
             call util_profiler_start (pfc_initialize_all)
         end if
 
-        !% initialize the API with the SWMM-C code
+        !%  --- finish setting all the file paths before initialing the interface
+        sync all
+        !% --- initialize the API with the SWMM-C code
         call interface_init ()
 
-        !if (setting%Verbose) print *, "begin link-node processing"
-
-        !% set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
+        !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
+        if (setting%Output%Verbose) print *, "begin link-node processing"
         call init_linknode_arrays ()
 
-        !if (setting%Verbose) print *, "begin partitioning"
-
+        if (setting%Output%Verbose) print *, "begin partitioning"
         call init_partitioning()
-
-        !% HACK -- to this point the above could all be done on image(1) and then
+   
+        !% --- HACK -- to this point the above could all be done on image(1) and then
         !% distributed to the other images. This might create problems in ensuring
         !% that all the data gets copied over when new stuff is added. Probably OK
         !% to keep the above as computing on all images until the code is near complete
 
-        !% HACK: this sync call is probably not needed
         sync all
 
-        !if (setting%Verbose) print *, "begin network definition"
-
+        if (setting%Output%Verbose) print *, "begin network definition"
         call init_network_define_toplevel ()
 
-        !if (setting%Verbose) print *, "begin reading csv"
+        !% --- HACK --- NEEDS FIXING FOR MULTILEVEL OUTPUT WITH MULTIPLE PROCESSOR
+        ! if (num_images() > 1) then
+        !     print *, "ERROR (code) -- NEED TO FIX HACK"
+        !     stop 9347044
+        ! else
+        !     !% temporarily assign the node index to the Global swmm index
+        !     !% only good for one processor operation
+        !     faceI(:,fi_node_Gidx_SWMM) = faceI(:,fi_node_idx)    
+        ! end if    
+        !% ---- END HACK
+   
+        !% --- setup for csv output of links and nodes
+        !brh20211006 call outputD_read_csv_link_names()
+        !brh20211006 call outputD_read_csv_node_names()
 
-        !% read in link names for output
-        call output_read_csv_link_names()
-        call output_read_csv_node_names()
-
-        !if (setting%Verbose) print *, "begin initializing boundary conditions"
-
-        !% initialize boundary conditions
+        !% --- initialize boundary condition
+        if (setting%Output%Verbose) print *, "begin initializing boundary conditions"
         call init_bc()
-
         call init_time()
 
-        if (setting%Verbose) then
+        if (setting%Output%Verbose) then
             if (this_image() == 1) then
             if ((N_link > 5000) .or. (N_node > 5000)) then
                 print *, "begin setting initial conditions (this takes several minutes for big systems)"
@@ -137,6 +172,7 @@ contains
             endif
             endif
         endif
+<<<<<<< HEAD
         call init_IC_setup ()
 
         if (setting%Verbose) print *, "begin setup of output files"
@@ -161,36 +197,202 @@ contains
         if ( this_image() == 1 ) then
             if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
         endif
+=======
+        call init_IC_toplevel ()
+
+        print *
+        print *, 'WORK NEEDED HERE ',73794
+        print *
+        !% --- designate/select the nodes/links for output
+        call output_COMMON_nodes_selection ()
+        call output_COMMON_links_selection ()
+        !% --- designate the corresponding elements for output   
+        call outputML_element_selection ()
+        !% --- deisgnate the corresponding face to output
+        call outputML_face_selection ()
+        !% --- create packed arrays of elem row numbers that are output  
+        call pack_element_outputML ()
+        !% --- create packed arrays of face row numbers that are output  
+        call pack_face_outputML ()
+
+        !print *, elemP(1:npack_elemP(ep_Output_Elements),ep_Output_Elements)
+        !print *
+        !print *, faceP(1:npack_faceP(fp_Output_Faces),fp_Output_Faces)
+        !stop 34780
+
+        !% --- compute the N_OutElem for each image
+        call outputML_size_OutElem_by_image ()
+        !% --- compute the N_OutFace for each imaige
+        call outputML_size_OutFace_by_image ()
+        !% --- setup the output element data types
+        call outputML_element_outtype_selection ()
+        !% -- setup the output face data types
+        call outputML_face_outtype_selection ()
+        !% --- create storage space for multi-level output data
+        call util_allocate_outputML_storage ()
+        !% --- create storage for output times
+        call util_allocate_outputML_times ()
+        !% --- create storage for output binary filenames
+        call util_allocate_outputML_filenames ()
+
+        !if (setting%Output%Verbose) print *, "begin setup of output files"
+     
+        !% creating output_folders and files
+        !% brh 20211004 -- moved this functionality into util_file_setup_output_files
+        !call util_output_clean_folders()
+        !call util_output_create_folders()
+
+        !brh20211006 COMMENTING OUT THE OUTPUT BY CSV
+        !brh20211006 if ((this_image() == 1) .and. setting%Debug%Setup) call util_output_export_linknode_input()
+        !brh20211006 if (setting%Debug%Output) then
+        !brh20211006     call util_output_create_elemR_files()
+        !brh20211006     call util_output_create_faceR_files()
+        !brh20211006     call util_output_create_summary_files()
+        !brh20211006 end if
+        !brh20211006 if (setting%Debug%Output .or. setting%Output%report) then
+        !brh20211006     call output_create_link_files()
+        !brh20211006     call output_create_node_files()
+        !brh20211006 end if
+
+        if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
+>>>>>>> daac7942fad83f96788197b6c13cf668a159b5c5
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
 
+        if (icrash) then  !% if crash in initialization, write the output and exit
+            call outputML_store_data (.true.)
+            return
+        end if
+        
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine initialize_all
-    !%
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================
-    !%
+    end subroutine initialize_toplevel
+!%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
+    subroutine init_model_timer()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% starts and stores the CPU clock and wall clock time
+        !%-----------------------------------------------------------------------------
+        !% store CPU clock start time
+        call cpu_time(setting%Time%CPU%EpochStartSeconds)
+
+        !% store Real time
+        setting%Time%Real%EpochStartSeconds = time()
+
+    end subroutine init_model_timer     
+!%
+!%==========================================================================
+!%==========================================================================
+!%   
+    subroutine init_timestamp ()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% initializes time stamp used for output files
+        !%-----------------------------------------------------------------------------           
+        integer :: thisTime(8), ii, thisunit, ios
+        character(len=4) :: cyear
+        character(len=2) :: cmonth, cday, chour, cmin
+        character(len=13) :: datetimestamp   
+        character(64) :: subroutine_name = 'init_timestamp'
+        !%-----------------------------------------------------------------------------  
+        if (icrash) return
+        call date_and_time(values = thisTime)
+        write(cyear, "(i4)") thisTime(1)
+        write(cmonth,"(i2)") thisTime(2)
+        write(cday,  "(i2)") thisTime(3)
+        write(chour, "(i2)") thisTime(5)
+        write(cmin,  "(i2)") thisTime(6)
+        if (thisTime(2) < 10) then
+            cmonth = '0'//adjustl(cmonth)
+        end if
+        if (thisTime(3) < 10) then
+            cday = '0'//adjustl(cday)
+        end if
+        if (thisTime(5) < 10) then
+            chour = '0'//adjustl(chour)  
+        end if
+        if (thisTime(6) < 10) then
+            cmin = '0'//adjustl(cmin)
+        end if
+
+        if (this_image() == 1) then
+            datetimestamp = cyear//cmonth//cday//'_'//chour//cmin
+        endif
+
+        call co_broadcast (datetimestamp, source_image=1)
+
+        setting%Time%DateTimeStamp = datetimestamp
+
+        ! print*, 'image', this_image()
+        ! print *, setting%Time%DateTimeStamp
+
+        ! !% --- distribute to all processors
+        ! !% --- HACK using a write/read file as the setting varialble is not a coarray
+        ! if (this_image() == 1) then
+        !     open(newunit = thisunit, &
+        !         file = 'temp_fortran.txt',    &     
+        !         action = 'write', &
+        !         iostat = ios)
+        !     print*, 'ios', ios
+        !     if (ios /= 0) then
+        !         write(*,"(A)") 'ERROR (CODE) file temp_fortran.txt could not be opened for writing.'
+        !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
+        !         stop 'in ' // subroutine_name  
+        !     end if    
+        !     write(thisunit,"(A)") setting%Time%DateTimeStamp
+        !     close(thisunit)
+        ! end if
+        ! !% testing
+        ! !open(newunit = thisunit, &
+        ! !    file = 'temp_fortran.txt',    &     
+        ! !    action = 'read', &
+        ! !    iostat = ios)
+        ! !read(thisunit,"(A)")  datetimestamp
+        ! !print *, datetimestamp  
+
+        ! !% read sequentially into other images
+        ! do ii = 2,num_images()
+        !     open(newunit = thisunit, &
+        !         file = 'temp_fortran.txt',    &     
+        !         action = 'read', &
+        !         iostat = ios)       
+        !     if (ios /= 0) then
+        !         write(*,"(A)") 'ERROR (CODE) temp_fortran.txt file could not be opened for reading.'
+        !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
+        !         stop 'in ' // subroutine_name  
+        !     end if                       
+        !     read(thisunit,"(A)") setting%Time%DateTimeStamp  
+        ! end do   
+
+        sync all
+
+    end subroutine init_timestamp
+!%
+!%==========================================================================
+!%==========================================================================
+!%      
     subroutine init_linknode_arrays()
-    !%-----------------------------------------------------------------------------
-    !%
-    !% Description:
-    !%   Retrieves data from EPA-SWMM interface and populates link and node tables
-    !% Note:
-    !%   The order in which link and nodes are populated coincides with the
-    !%   order in which links and nodes are allocated in EPA-SWMM data structures
-    !%   Keeping the same order is important to be able to locate node/link data
-    !%   by label and not by index, reusing EPA-SWMM functionalities.
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%   Retrieves data from EPA-SWMM interface and populates link and node tables
+        !% Note:
+        !%   The order in which link and nodes are populated coincides with the
+        !%   order in which links and nodes are allocated in EPA-SWMM data structures
+        !%   Keeping the same order is important to be able to locate node/link data
+        !%   by label and not by index, reusing EPA-SWMM functionalities.
+        !%-----------------------------------------------------------------------------
 
         integer       :: ii, total_n_links
 
         character(64) :: subroutine_name = 'init_linknode_arrays'
 
-    !%-----------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -209,6 +411,9 @@ contains
         do ii = 1, SWMM_N_link
             link%I(ii,li_idx) = ii
             link%I(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
+            link%I(ii,li_weir_type) = interface_get_link_attribute(ii, api_weir_type)
+            link%I(ii,li_orif_type) = interface_get_link_attribute(ii, api_orifice_type)
+            link%I(ii,li_pump_type) = interface_get_link_attribute(ii, api_pump_type)
             link%I(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
             link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
             link%I(ii,li_Mnode_d) = interface_get_link_attribute(ii, api_link_node2) + 1 ! node2 in C starts from 0
@@ -239,6 +444,26 @@ contains
             link%R(ii,lr_FullDepth) = interface_get_link_attribute(ii, api_link_xsect_yFull)
             link%R(ii,lr_InletOffset) = interface_get_link_attribute(ii,api_link_offset1)
             link%R(ii,lr_OutletOffset) = interface_get_link_attribute(ii,api_link_offset2)
+
+            !% special element attributes
+            link%I(ii,li_weir_EndContrations) = interface_get_link_attribute(ii, api_weir_end_contractions)
+            link%R(ii,lr_DischargeCoeff1) = interface_get_link_attribute(ii, api_discharge_coeff1)
+            link%R(ii,lr_DischargeCoeff2) = interface_get_link_attribute(ii, api_discharge_coeff2)
+
+            !% SWMM5 doesnot distinct between channel and conduit
+            !% however we need that distinction to set up the init condition
+            if ( (link%I(ii,li_link_type) == lPipe)          .and. &
+                 ( &
+                 (link%I(ii,li_geometry) == lRectangular)    .or. &
+                 (link%I(ii,li_geometry) == lTrapezoidal)    .or. &
+                 (link%I(ii,li_geometry) == lPower_function) .or. &
+                 (link%I(ii,li_geometry) == lRect_triang)    .or. &
+                 (link%I(ii,li_geometry) == lRect_round)     .or. &
+                 (link%I(ii,li_geometry) == lMod_basket)     .or. &   
+                 (link%I(ii,li_geometry) == lIrregular)) ) then
+
+                link%I(ii,li_link_type) = lChannel
+            end if
         end do
 
         do ii = 1, N_node
@@ -272,37 +497,40 @@ contains
         !% Update Link/Node names
         call interface_update_linknode_names()
 
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
     end subroutine init_linknode_arrays
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_bc()
-    !%-----------------------------------------------------------------------------
-    !%
-    !% Description:
-    !%    Initializes boundary connditions
-    !%
-    !% Notes:
-    !%    The structures are general enough to support 3 types of BCs:
-    !%
-    !%    BCup: updstream boundary condition which can be inflow or head BC
-    !%    BCdn: downstream boundary condition which can be inflow or head BC
-    !%    BClat: lateral inflow coming into and nJ2 or nJm node.
-    !%
-    !%    However, the code only supports inflow BCs for BCup and BClat,
-    !%    and head BCs for BCdn, mimimcking EPA-SWMM 5.13 functionalities.
-    !%    Further developments allowing other types of inflow and head BCs,
-    !%    should store the respective BC in either the BC%inflowX or the
-    !%    BC%headX arrays defining the corresponding type of BC (i.e., BCup,
-    !%    BCdn, and BClat) in the BC%xI(:,bi_category) column.
-    !%
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !%
+        !% Description:
+        !%    Initializes boundary connditions
+        !%
+        !% Notes:
+        !%    The structures are general enough to support 3 types of BCs:
+        !%
+        !%    BCup: updstream boundary condition which can be inflow or head BC
+        !%    BCdn: downstream boundary condition which can be inflow or head BC
+        !%    BClat: lateral inflow coming into and nJ2 or nJm node.
+        !%
+        !%    However, the code only supports inflow BCs for BCup and BClat,
+        !%    and head BCs for BCdn, mimimcking EPA-SWMM 5.13 functionalities.
+        !%    Further developments allowing other types of inflow and head BCs,
+        !%    should store the respective BC in either the BC%inflowX or the
+        !%    BC%headX arrays defining the corresponding type of BC (i.e., BCup,
+        !%    BCdn, and BClat) in the BC%xI(:,bi_category) column.
+        !%
+        !%-----------------------------------------------------------------------------
         integer :: ii, nidx, ntype, counter_bc_er
         integer :: ntseries, nbasepat
         character(64) :: subroutine_name = "init_bc"
-    !%-----------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -409,24 +637,24 @@ contains
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_bc
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_partitioning()
-    !%-----------------------------------------------------------------------------
-    !%
-    !% Description:
-    !%   This subroutine calls the public subroutine from the utility module,
-    !%   partitioning.f08. It also calls a public subroutine from the temporary
-    !%   coarray_partition.f08 utility module that defines how big the coarrays
-    !%   must be.
-    !%
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !%
+        !% Description:
+        !%   This subroutine calls the public subroutine from the utility module,
+        !%   partitioning.f08. It also calls a public subroutine from the temporary
+        !%   coarray_partition.f08 utility module that defines how big the coarrays
+        !%   must be.
+        !%
+        !%-----------------------------------------------------------------------------
         integer       :: ii
         character(64) :: subroutine_name = 'init_partitioning'
-    !%-----------------------------------------------------------------------------
-
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -461,12 +689,18 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_partitioning
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_coarray_length()
-        !% for coarray length determination
+        !%-----------------------------------------------------------------------------
+        !%
+        !% Description:
+        !% Determines the overall length of the common coarray to handle the different
+        !% number of elements on each processor
+        !%
+        !%-----------------------------------------------------------------------------        
         integer :: nimgs_assign
         integer, allocatable :: unique_imagenum(:)
         integer :: ii, jj, kk, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
@@ -474,7 +708,8 @@ contains
         integer :: duplicated_face_counter=0
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
-
+        !%----------------------------------------------------------------------------- 
+        if (icrash) return
         if (setting%Debug%File%utility_array) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -483,6 +718,7 @@ contains
         allocate(N_elem(num_images()))
         allocate(N_face(num_images()))
         allocate(N_unique_face(num_images()))
+
 
         do ii=1, num_images()
 
@@ -561,72 +797,18 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_coarray_length
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine init_read_arguments()
-        integer :: ii
-        logical :: arg_param = .false.
-        character(len=8) :: param
-        character(len=256) :: arg
-        character(64) :: subroutine_name = "init_read_arguments"
-
-        if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        do ii = 1, iargc()
-            call getarg(ii, arg)
-            if (.not. arg_param) then
-                param = arg
-                if (ii == 1) then
-                    if (arg(:1) == '-') then
-                        print *, "ERROR: it is necessary to define the path to the .inp file"
-                        stop "in " // subroutine_name
-                    end if
-                    setting%Paths%inp = arg
-                elseif ((trim(arg) == "-s") .or. & ! user provides settings file
-                        ((trim(arg) == "--test") .or. (trim(arg) == "-t"))) then  ! hard coded test case
-                    arg_param = .true.
-                elseif ((trim(arg) == '--verbose') .or. (trim(arg) == "-v")) then
-                    setting%Verbose = .true.
-                elseif ((trim(arg) == '--warnings-off') .or. (trim(arg) == "-woff")) then
-                    setting%Warning = .false.
-                else
-                    write(*, *) 'The argument ' // trim(arg) // ' is unsupported'
-                    stop "in " // subroutine_name
-                end if
-            else
-                arg_param = .false.
-                if (trim(param) == '-s') then
-                    setting%Paths%setting = arg
-                elseif ((trim(arg) == "--test") .or. (trim(arg) == "-t")) then
-                    setting%TestCase%UseTestCase = .true.
-                    setting%TestCase%TestName = trim(arg)
-                    if (trim(arg) == 'simple_channel') then
-                    else if (trim(arg) == 'simple_orifice') then
-                    else
-                        write(*, *) 'The test case ' // trim(arg) // ' is unsupported. Please use one of the following:'
-                        print *, new_line('')
-                        print *, "simple_channel, simple_orifice, simple_pipe"
-                        print *, "simple_weir, swashes, waller_creek"
-                        print *, "y_channel, y_storage_channel"
-                        stop "in " // subroutine_name
-                    end if
-                elseif (trim(param) == '--run-tests') then
-                end if
-            end if
-        end do
-
-        if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine init_read_arguments
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_time()
-        logical :: doHydraulics
+        !%-----------------------------------------------------------------------------
+        !%
+        !% Description:
+        !%
+        !%-----------------------------------------------------------------------------     
+
+        !%-----------------------------------------------------------------------------  
 
         setting%Time%Dt = setting%Time%Hydraulics%Dt
         setting%Time%Now = 0
@@ -634,15 +816,16 @@ contains
         setting%Time%Hydraulics%Step = 0
         setting%Time%Hydrology%Step = 0
         if (.not. setting%Simulation%useHydrology) setting%Time%Hydrology%Dt = nullValueR
+
         !% Initialize report step
         setting%Output%reportStep = int(setting%Output%reportStartTime / setting%Output%reportDt)
         if (setting%Time%Hydrology%Dt < setting%Time%Hydraulics%Dt) then
             stop "Error: Hydrology time step can't be smaller than hydraulics time step"
         end if
     end subroutine init_time
-    !%
-    !%==========================================================================
-    !% END OF MODULE
-    !%==========================================================================
-    !%
+
+!%==========================================================================
+!% END OF MODULE
+!%==========================================================================
+!%
 end module initialization

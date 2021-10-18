@@ -26,22 +26,22 @@ module adjust
    
 
     contains
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-    !%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine adjust_values (whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Performs ad-hoc adjustments that may be needed for stability
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: whichTM  !% indicates which Time marching method
-        !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_values'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
-        
+              
         !% ad hoc adjustments to flowrate 
         if (setting%Adjust%Flowrate%Apply) then   
             select case (setting%Adjust%Flowrate%Approach)
@@ -85,8 +85,9 @@ module adjust
         integer, pointer :: Npack, thisP(:)
         real(8), pointer :: geovalue(:)    
         logical, pointer :: NearZeroVolume(:)   
-        !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -129,8 +130,9 @@ module adjust
         integer, intent(in) :: geocol, eIdx
         real(8), intent(in) :: geozero
         real(8), pointer :: geovalue(:)        
-        !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues_singular'
+        if (icrash) return
+        !%-----------------------------------------------------------------------------
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -164,9 +166,9 @@ module adjust
         integer, intent(in) ::whichTM, velocityCol, volumeCol
         integer, pointer :: thisCol_all, thisSmallVolumeCol, thisVelocityCol
         integer, pointer :: Npack
-        !%-------------------------------------------------
-        !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_velocity'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -250,8 +252,9 @@ module adjust
         integer, pointer :: Npack, thisP(:)
         real(8), pointer :: f_area_u(:), f_area_d(:), f_velocity_u(:), f_velocity_d(:)
         real(8), pointer :: f_flowrate(:), zeroValue, vMax
-        !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_face_dynamic_limit'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -342,6 +345,8 @@ module adjust
         logical, pointer :: isAdhocFlowrate(:)
         !%-----------------------------------------------------------------------------  
         character(64) :: subroutine_name = 'adjust_Vshaped_flowrate'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return       
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------  
@@ -439,6 +444,8 @@ module adjust
         real(8), pointer :: w_uH(:), w_dH(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return              
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -516,6 +523,8 @@ module adjust
         integer, pointer :: thisP(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_smallvolumes_reset_old'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return              
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -543,6 +552,8 @@ module adjust
         logical, pointer :: isSmallVol(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_smallvolumes_identify'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return              
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------  
@@ -582,6 +593,8 @@ module adjust
         logical, pointer :: isSmallVol(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_smallvolumes_pack'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return              
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -614,6 +627,8 @@ module adjust
         integer, pointer :: thisP(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_velocity_limiter_reset_old'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return              
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -641,6 +656,8 @@ module adjust
         logical, pointer :: isAdhocFlowrate(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_velocity_limiter'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return              
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -674,6 +691,8 @@ module adjust
         real(8), pointer :: velocityBlend(:), svRatio(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_velocity_smallvolume_blended'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return              
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -738,6 +757,8 @@ module adjust
         logical, pointer :: isAdhocFlowrate(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'adjust_zero_velocity_at_zero_volume'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return              
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%----------------------------------------------------------------------------- 

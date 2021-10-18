@@ -39,13 +39,15 @@ module lowlevel_rk2
     public :: ll_extrapolate_values
     public :: ll_interpolate_values
     public :: ll_junction_branch_flowrate_and_velocity
+    public :: ll_momentum_source_JB
+    public :: ll_momentum_solve_JB
     public :: ll_slot_computation_ETM
 
     contains
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-    !%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine ll_continuity_netflowrate_CC (outCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -65,10 +67,10 @@ module lowlevel_rk2
         elemR(thisP,outCol) = fQ(iup(thisP)) - fQ(idn(thisP)) + eQlat(thisP)
 
     end subroutine ll_continuity_netflowrate_CC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_continuity_netflowrate_JM (outCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -94,10 +96,10 @@ module lowlevel_rk2
             +fQ(iup(thisP+5)) - fQ(idn(thisP+6)) &
             +eQlat(thisP)
     end subroutine ll_continuity_netflowrate_JM
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_continuity_volume_CCJM_ETM (outCol, thisCol, Npack, istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -118,10 +120,10 @@ module lowlevel_rk2
         elemR(thisP,outCol) = VolumeN0(thisP) + crk(istep) * dt * Csource(thisP)
 
     end subroutine ll_continuity_volume_CCJM_ETM
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_continuity_volume_CCJM_AC_open (outCol,  thisCol, Npack, istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -145,10 +147,10 @@ module lowlevel_rk2
               / (oneR + crk * dtau * Cgamma(thisP) )
 
     end subroutine ll_continuity_volume_CCJM_AC_open
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_continuity_head_CCJM_AC_surcharged (outCol, thisCol, Npack, istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -172,10 +174,10 @@ module lowlevel_rk2
               / (oneR + crk * dtau * Cgamma(thisP ) )
 
     end subroutine ll_continuity_head_CCJM_AC_surcharged
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_continuity_add_source_CCJM_AC_open (outCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -219,10 +221,10 @@ module lowlevel_rk2
         stop 9366
 
     end subroutine ll_continuity_add_source_CCJM_AC_open
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_continuity_add_source_CCJM_AC_surcharged (outCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -257,10 +259,10 @@ module lowlevel_rk2
         stop 84792
 
     end subroutine ll_continuity_add_source_CCJM_AC_surcharged
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_continuity_add_gamma_CCJM_AC_open (outCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -297,10 +299,10 @@ module lowlevel_rk2
         stop 29870
 
     end subroutine ll_continuity_add_gamma_CCJM_AC_open
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_momentum_Ksource_CC (outCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -332,7 +334,7 @@ module lowlevel_rk2
                     -fAdn(iup(thisP)) * fHup(idn(thisP)) )
             case (T20)
                 elemR(thisP,outCol) = grav * onesixthR *  (                       &
-                    +fAup(idn(thisP)) * ( fHdn(iup(thisP)) + fourR * eHead(:) )   &
+                    +fAup(idn(thisP)) * ( fHdn(iup(thisP)) + fourR * eHead(thisP) )   &
                     -fAdn(iup(thisP)) * ( fHup(idn(thisP)) + fourR * eHead(thisP) ) )
             case default
                 print *, 'error, case default that should not be reached'
@@ -340,10 +342,10 @@ module lowlevel_rk2
             !% Error
         end select
     end subroutine ll_momentum_Ksource_CC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_momentum_source_CC (outCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -396,10 +398,10 @@ module lowlevel_rk2
         if (setting%Debug%File%lowlevel_rk2) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine ll_momentum_source_CC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_momentum_gamma_CC (outCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -425,10 +427,10 @@ module lowlevel_rk2
                 ( rh(thisP)**fourthirdsR )
 
     end subroutine ll_momentum_gamma_CC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_momentum_solve_CC (outCol, thisCol, Npack, thisMethod, istep)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -466,10 +468,10 @@ module lowlevel_rk2
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
     end subroutine ll_momentum_solve_CC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_momentum_velocity_CC (inoutCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -493,11 +495,14 @@ module lowlevel_rk2
             elemR(thisP,inoutCol) = zeroR
         endwhere
 
+        ! print*
+        ! print*, 'in ll_momentum_velocity_CC'
+        ! print*, elemR(thisP,inoutCol), 'new velocity'
     end subroutine ll_momentum_velocity_CC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_momentum_add_gamma_CC_AC (inoutCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -518,10 +523,10 @@ module lowlevel_rk2
         elemR(thisP,inoutCol) = GammaM(thisP) + a1 / dt
 
     end subroutine ll_momentum_add_gamma_CC_AC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_momentum_add_source_CC_AC (inoutCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -549,10 +554,10 @@ module lowlevel_rk2
                    +a3 * volumeN1(thisP) * velocityN1(thisP) ) / dt
 
     end subroutine ll_momentum_add_source_CC_AC
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_store_in_temporary (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -580,10 +585,10 @@ module lowlevel_rk2
         elemR(thisP,er_store) = elemR(thisP,er_data)
 
     end subroutine ll_store_in_temporary
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_restore_from_temporary (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -606,10 +611,10 @@ module lowlevel_rk2
         elemR(thisP,er_data) = elemR(thisP,er_store)
 
     end subroutine ll_restore_from_temporary
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_extrapolate_values (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -635,10 +640,10 @@ module lowlevel_rk2
                 + twoR * ( elemR(thisP,eNow) - elemR(thisP,eN0) )
 
     end subroutine ll_extrapolate_values
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_interpolate_values (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -662,10 +667,10 @@ module lowlevel_rk2
         elemR(thisP,eNow) = onehalfR * ( elemR(thisP,eN0) + elemR(thisP,eNow) )
 
     end subroutine ll_interpolate_values
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine ll_junction_branch_flowrate_and_velocity (whichTM)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -675,37 +680,34 @@ module lowlevel_rk2
         integer, intent(in) :: whichTM
         integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
         integer, pointer :: Npack
-        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) ! BRHbugfix 20210811
-        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), vMax ! BRHbugfix 20210829
-        real(8), pointer :: eVolume(:), dt  !BRHbugfix 20210829
+        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) 
+        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), vMax 
+        real(8), pointer :: eVolume(:), dt, headC  
         logical, pointer :: isAdhocFlowrate(:)
         integer :: ii, kk, tB
-        !% BRHbugfix 20210812 start
         real(8) :: dHead
-        integer, pointer :: iFaceUp(:), iFaceDn(:) !, iElemUp(:), iElemDn(:)
-        integer, pointer :: tFup, tFdn !, tEup, tEdn
-        !% BRHbugfix 20210812 end
+        integer, pointer :: iFaceUp(:), iFaceDn(:) 
+        integer, pointer :: tFup, tFdn 
         !%-----------------------------------------------------------------------------
         !%
-        BranchExists => elemSI(:,eSI_JunctionBranch_Exists)
+        BranchExists => elemSI(:,esi_JunctionBranch_Exists)
         eArea        => elemR(:,er_Area)
         eVelocity    => elemR(:,er_Velocity)
         eFlow        => elemR(:,er_Flowrate)
-        eVolume      => elemR(:,er_Volume)       ! BRHbugfix 20210829
+        eVolume      => elemR(:,er_Volume)      
 
         fFlow        => faceR(:,fr_Flowrate)
-        iFaceUp      => elemI(:,ei_Mface_uL) !% BRHbugfix 20210811
-        iFaceDn      => elemI(:,ei_Mface_dL)!% BRHbugfix 20210811
-        !iElemUp      => faceI(:,fi_Melem_uL) !% BRHbugfix 20210811
-        !iElemDn       => faceI(:,fi_Melem_dL)!% BRHbugfix 20210811
-        !% BRHbugfix 20210811 start
+        iFaceUp      => elemI(:,ei_Mface_uL)
+        iFaceDn      => elemI(:,ei_Mface_dL)
+
         eHead        => elemR(:,er_Head)
         fHead_u      => faceR(:,fr_Head_u)
         fHead_d      => faceR(:,fr_Head_d)
         vMax         => setting%Limiter%Velocity%Maximum
         isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
-        !% BRHbugfix 20210811 end
-        dt           => setting%Time%Hydraulics%Dt  ! BRHbugfix 20210829
+
+        dt           => setting%Time%Hydraulics%Dt  
+        headC        => setting%Junction%HeadCoef
         !%-----------------------------------------------------------------------------
         !%
         select case (whichTM)
@@ -723,7 +725,6 @@ module lowlevel_rk2
         Npack => npack_elemP(thisColP_JM)
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisColP_JM)
-            ! BRHbugfix 20210811 start
             do ii=1,Npack
                 tM => thisP(ii)
                 ! handle the upstream branches
@@ -732,22 +733,18 @@ module lowlevel_rk2
                     if (BranchExists(tB)==1) then
                         ! head difference across the branch
                         tFup => iFaceUp(tB)
-                        !tEup => iElemUp(tFup)
-                        !dHead = eHead(tEup) - eHead(tB) !% using elem to elem
                         dHead = fHead_u(tFup) - eHead(tB) !% using elem to face
                         if (dHead >= zeroR) then
                             ! downstream flow in an upstream branch use upstream values
-                            !BRH bugfix 20210829eFlow(tB) = fFlow(tFup) !% using face
-                            !eFlow(tB) = eFlow(tEup)!%  using elem
-                            eFlow(tB) = eArea(tB) * sqrt(twoR * setting%Constant%gravity * dHead) !BRH bugfix 20210829
+                            eFlow(tB) = headC * eArea(tB) * sqrt(twoR * grav * dHead) 
                         else
                             ! upstream flow in an upstream branch
-                            eFlow(tB) = - eArea(tB) * sqrt(twoR * setting%Constant%gravity * (-dHead))
+                            eFlow(tB) = - headC * eArea(tB) * sqrt(twoR * grav * (-dHead))
                             ! if outflow, limit negative flowrate by 1/3 main volume
-                            eFlow(tB) = max(eFlow(tB), -eVolume(tM)/(threeR * dt) ) !BRHbugfix 20210829
+                            eFlow(tB) = max(eFlow(tB), -eVolume(tM)/(threeR * dt) )
                         end if
 
-                        !% HACK: Fix for velocity blowup
+                        !% HACK: Fix for velocity blowup due to small areas
                         if (eArea(tB) <= setting%ZeroValue%Area) then
                             eVelocity(tB) = zeroR
                         else
@@ -766,22 +763,18 @@ module lowlevel_rk2
                     tB = tM + kk
                     if (BranchExists(tB)==1) then
                         tFdn => iFaceDn(tB)
-                        !tEdn => iElemDn(tFdn)
-                        !dHead =  eHead(tB) - eHead(tEdn) !% using elem to elem
                         dHead = eHead(tB) - fHead_d(tFdn) !% using elem to face
                         if (dHead < zeroR) then
                             ! upstream flow in a downstream branch use downstream values
-                            !BRH bugfix 20210829 eFlow(tB) = fFlow(tFdn) !% using face
-                            !eFlow(tB) = eFlow(tEdn) !%  using elem
                             eFlow(tB) =  - eArea(tB) * sqrt(twoR * setting%Constant%gravity * (-dHead) ) !BRH bugfix 20210829
                         else
                             ! downstream flow in an downstream branch
                             eFlow(tB) =  + eArea(tB) * sqrt(twoR * setting%Constant%gravity * dHead )
                             ! if outflow, limit flowrate by 1/3 main volume
-                            eFlow(tB) = min(eFlow(tB), eVolume(tM)/(threeR * dt) )  !BRHbugfix 20210829
+                            eFlow(tB) = min(eFlow(tB), eVolume(tM)/(threeR * dt) ) 
                         end if
 
-                        !% HACK: Fix for velocity blowup
+                        !% HACK: Fix for velocity blowup due to small areas
                         if (eArea(tB) <= setting%ZeroValue%Area) then
                             eVelocity(tB) = zeroR
                         else
@@ -797,34 +790,206 @@ module lowlevel_rk2
                 end do
 
             end do
-
-            ! remove old stuff
-            !     ! handle the upstream branches
-            !     do kk=1,max_branch_per_node,2
-            !         tB = tM + kk
-            !         if (BranchExists(tB)==1) then
-            !             eFlow(tB) = fFlow(iup(tB))
-            !             eVelocity(tB) = eFlow(tB) / eArea(tB)
-            !         end if
-            !     end do
-            !     !% handle the downstream branches
-            !     do kk=2,max_branch_per_node,2
-            !         tB = tM + kk
-            !         if (BranchExists(tB)==1) then
-
-            !             eFlow(tB) = fFlow(idn(tB))
-            !             eVelocity(tB) = eFlow(tB) / eArea(tB)
-            !         end if
-            !     end do
-            ! end do
-            ! BRHbugfix 20210811 end
         end if
 
     end subroutine ll_junction_branch_flowrate_and_velocity
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_momentum_source_JB (thisMethod, istep)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the RK2 step for VU on the junction branches
+        !% Note that this MUST be called separately for AC and ETM as the low-level VU
+        !% algorithm uses different dt and different volumes in the computation.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: thisMethod, istep
+
+        integer, pointer :: thisColP_JM, Npack, tM
+        integer, pointer :: thisP(:), BranchExists(:), iFaceUp(:), iFaceDn(:)
+        real(8), pointer :: fHead_u(:), fHead_d(:)
+
+        real(8), pointer :: delt
+
+        integer :: ii, kk, tB,  volumeLastCol, velocityLastCol
+
+        real(8) :: fHead
+
+        !%-----------------------------------------------------------------------------
+        !%
+        BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+        fHead_u      => faceR(:,fr_Head_u)
+        fHead_d      => faceR(:,fr_Head_d)
+        iFaceUp      => elemI(:,ei_Mface_uL) 
+        iFaceDn      => elemI(:,ei_Mface_dL)
+
+        !%-----------------------------------------------------------------------------
+        !%
+        if (thisMethod == AC) then !% AC time march
+            thisColP_JM     => col_elemP(ep_JM_AC)
+            delt            => setting%ACmethod%dtau
+            volumeLastCol   =  er_VolumeLastAC
+            velocityLastCol =  er_VelocityLastAC
+        elseif (thisMethod == ETM) then !% real time march
+            thisColP_JM     => col_elemP(ep_JM_ETM)
+            delt            => setting%Time%Hydraulics%Dt
+            volumeLastCol   =  er_Volume_N0
+            velocityLastCol =  er_Velocity_N0
+        else
+            print *, 'error, if-else that should not be reached'
+            stop 38293
+        end if
+
+        Npack => npack_elemP(thisColP_JM)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,thisColP_JM)
+            do ii=1,Npack
+                tM => thisP(ii)              
+                ! handle the upstream branches
+                do kk=1,max_branch_per_node,2
+                    tB = tM + kk
+                    if (BranchExists(tB)==1) then
+                        !% head on the upstream side of the upstream face
+                        fHead = fHead_u(iFaceUp(tB))
+                        call ll_junction_branch_VU ( &
+                            fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
+                    end if
+                end do
+                !% handle the downstream branches
+                do kk=2,max_branch_per_node,2
+                    tB = tM + kk
+                    if (BranchExists(tB)==1) then  
+                        ! head on the downstream side of the downstream face
+                        fHead = fHead_d(iFaceDn(tB)) 
+                        call ll_junction_branch_VU (&
+                            fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
+                    end if
+                end do
+            end do
+        end if
+
+    end subroutine ll_momentum_source_JB
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_junction_branch_VU &
+        (fHead, delt, volumeLastCol, velocityLastCol, tB, kk, istep)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% computes product of volume*velocity for a junction branch dynamic update
+        !% using an RK2
+        !% input: 
+        !%    fHead is the head at the valid branch face (either up or down stream)
+        !%    delt is the RK2 time march step (ETM or AC)
+        !%    volumeLastCol, velocityLastCol are the columns for either AC or ETM
+        !%        previous velocities used as the RK2 base.
+        !%    tB is the branch local index
+        !%    kk is the row of the branch after the main
+        !%    istep is the step of the RK2
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: tB, kk, istep, volumeLastCol, velocityLastCol
+        real(8), intent(in) :: fHead, delt
+
+        real(8), pointer :: eLength(:), eWaveSpeed(:), eHead(:)
+        real(8), pointer :: eVolume0(:), eVelocity0(:), Msource(:)
+        real(8), pointer :: cLim,  crk(:)
+
+        real(8) :: dC, deltaHead
+        !%-----------------------------------------------------------------------------
+        !%
+        Msource      => elemR(:,er_SourceMomentum)     
+        eVolume0     => elemR(:,volumeLastCol)  
+        eVelocity0   => elemR(:,velocityLastCol)
+        eLength      => elemR(:,er_Length)   
+        eHead        => elemR(:,er_Head)
+        eWaveSpeed   => elemR(:,er_WaveSpeed)
+
+        cLim         => setting%Junction%CFLlimit
+        crk          => setting%Solver%crk2
+
+        !% dynamic coefficient
+        dC = + grav * eVolume0(tB) &
+                / max(eLength(tB), (abs(eVelocity0(tB)) + abs(eWaveSpeed(tB))) / (cLim * delt))
+        !% head difference from downstream to upstream (d \eta /dx)*dx     
+        deltaHead = branchsign(kk) * (eHead(tB) - fHead)   
+        !% RK2 source
+        Msource(tB) = eVolume0(tB) * eVelocity0(tB) - crk(istep) * dC * deltaHead
+                     
+    end subroutine ll_junction_branch_VU   
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_momentum_solve_JB (whichTM)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Computes the velocity and flowrate on junction branches to finish the dynamic
+        !% RK2 approach. Note that this assumes the JB volume and area have been updated 
+        !% from the JM water surface elevation in update_auxiliary_variables.
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: whichTM
+
+        integer, pointer :: thisColP_JM, Npack, tM, thisP(:), BranchExists(:)
+
+        real(8), pointer :: eVolume(:), eVelocity(:), eArea(:), Msource(:), eFlow(:)
+        real(8), pointer :: vMax
+
+        logical, pointer :: isAdhocFlowrate(:)
+
+        integer :: ii, kk, tB
+        !%-----------------------------------------------------------------------------
+        !% 
+        select case (whichTM)
+        case (ALLtm)
+            thisColP_JM            => col_elemP(ep_JM_ALLtm)
+         case (ETM)
+            thisColP_JM            => col_elemP(ep_JM_ETM)
+        case (AC)
+            thisColP_JM            => col_elemP(ep_JM_AC)
+        case default
+            print *, 'error, case default should never be reached.'
+            stop 7659
+        end select
+        
+        vMax            => setting%Limiter%Velocity%Maximum
+        BranchExists    => elemSI(:,esi_JunctionBranch_Exists)
+        isAdhocFlowrate => elemYN(:,eYN_IsAdhocFlowrate)
+        eVolume         => elemR(:,er_Volume)
+        eVelocity       => elemR(:,er_Velocity)
+        eArea           => elemR(:,er_Area)
+        eFlow           => elemR(:,er_Flowrate)
+        Msource         => elemR(:,er_SourceMomentum)
+
+        Npack => npack_elemP(thisColP_JM)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,thisColP_JM)
+            do ii=1,Npack
+                tM => thisP(ii)              
+                do kk=1,max_branch_per_node
+                    tB = tM + kk
+                    if (BranchExists(tB)==1) then
+                        if (eVolume(tB) <= setting%ZeroValue%Volume) then
+                            eVelocity(tB) = zeroR
+                        else
+                            eVelocity(tB) = Msource(tB) / eVolume(tB)
+                        end if
+                        if (abs(eVelocity(tB)) > vMax) then
+                            eVelocity(tB) = sign( 0.99 * vMax, eVelocity(tB) )
+                            isAdhocFlowrate(tB) = .true.
+                        end if
+                        eFlow(tB) = eVelocity(tB) * eArea(tB)
+                    end if
+                end do
+            end do
+        end if
+
+    end subroutine ll_momentum_solve_JB
+!%
+!%==========================================================================   
+!%==========================================================================
+!%
     subroutine ll_slot_computation_ETM (thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -834,7 +999,7 @@ module lowlevel_rk2
         integer, pointer    :: thisP(:), SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
         real(8), pointer    :: volume(:), fullvolume(:), fullarea(:), ell(:), length(:)
-        real(8), pointer    :: SlotHydRadius(:)
+        real(8), pointer    :: SlotHydRadius(:), BreadthMax(:)
         real(8), pointer    :: CelerityFactor
 
         character(64) :: subroutine_name = 'll_slot_computation_ETM'
@@ -850,6 +1015,7 @@ module lowlevel_rk2
         SlotDepth  => elemR(:,er_SlotDepth)
         SlotArea   => elemR(:,er_SlotArea)
         SlotHydRadius => elemR(:,er_SlotHydRadius)
+        BreadthMax    => elemR(:,er_BreadthMax) 
 
         SlotMethod     => setting%PreissmannSlot%PreissmannSlotMethod
         CelerityFactor => setting%PreissmannSlot%CelerityFactor
@@ -859,17 +1025,21 @@ module lowlevel_rk2
             case (VariableSlot)
 
                 SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
-                ! SlotWidth(thisP) = 0.02
                 SlotWidth(thisP)  = fullarea(thisP) / (CelerityFactor * ell(thisP))
                 SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
                 SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                 SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
                     ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
+                
             case (StaticSlot)
 
-                print*, 'In ', subroutine_name
-                print*, 'Static Preissmann Slot is not handeled yet'
-                stop "in " // subroutine_name
+                SlotVolume(thisP) = max(volume(thisP) - fullvolume(thisP), zeroR)
+                !% SWMM5 uses 1% of width max as slot width
+                SlotWidth(thisP)  = 0.01 * BreadthMax(thisP)
+                SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
+                SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+                SlotHydRadius(thisP) = (SlotDepth(thisP) * SlotWidth(thisP) / &
+                    ( twoR * SlotDepth(thisP) + SlotWidth(thisP) ))
 
             case default
                 !% should not reach this stage
@@ -880,10 +1050,10 @@ module lowlevel_rk2
         end select
 
     end subroutine ll_slot_computation_ETM
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
         !%-----------------------------------------------------------------------------
         !% Description:
         !%
@@ -892,11 +1062,7 @@ module lowlevel_rk2
         !%-----------------------------------------------------------------------------
         !%
 
-    !%==========================================================================
-    !% END OF MODULE
-    !%+=========================================================================
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================
-
+!%==========================================================================
+!% END OF MODULE
+!%==========================================================================
 end module lowlevel_rk2

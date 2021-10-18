@@ -10,42 +10,79 @@ module finalization
 
     implicit none
 
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !% 
+    !%-----------------------------------------------------------------------------
+
 contains
-
-    subroutine finalize_all()
-        character(64) :: subroutine_name = 'finalize_all'
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
+    subroutine finalize_toplevel()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% 
+        !%-----------------------------------------------------------------------------
+        logical :: isLastStep
+        character(64) :: subroutine_name = 'finalize_toplevel'
         !------------------------------------------------------------------------------
-
         if (setting%Debug%File%finalization) print *, '*** enter ', this_image(), subroutine_name
 
-        !if (setting%Profile%File%finalization) call util_tic(timer, 4)
-        if ((this_image() == 1) .and. (setting%Profile%YN)) then
-            call util_profiler_print_summary()
-        end if
+        if (setting%Output%Verbose) &
+            write(*,"(2A,i5,A)") new_line(" "), 'finalize [Processor ', this_image(), "]"
 
-        if ((this_image() == 1) .and. &
-            (setting%Output%report .or. setting%Debug%Output)) then
-            call output_combine_links()
-        end if
+        !% finalize the profiler and print times
+        call util_profiler_print_summary()
+
+        !% write a final combined multi-level files
+        call outputML_store_data (.true.)
+        
+        !% write the control file for the stored mult-level files
+        call outputML_write_control_file ()
+
+        ! !brh20211006 if ((this_image() == 1) .and. &
+        ! !brh20211006     (setting%Output%report .or. setting%Debug%Output)) then
+        ! !brh20211006     call outputD_combine_links()
+        ! !brh20211006 end if
 
         sync all
 
-        if (setting%Output%report .or. setting%Debug%Output) call output_move_node_files
-        if (setting%Output%report .or. setting%Debug%Output) call output_update_swmm_out
-        call interface_finalize()
-        call util_deallocate_network_data()
+        call outputML_convert_elements_to_linknode_and_write ()
 
-        ! if (setting%Profile%File%finalization) then
-        !     call util_toc(timer, 4)
-        !     print *, '** time', this_image(),subroutine_name, ' = ', duration(timer%jobs(4))
-        !     call util_free_jobs(timer)
-        ! end if
+        !brh20211006 if (setting%Output%report .or. setting%Debug%Output) call outputD_move_node_files
+        !brh20211006 if (setting%Output%report .or. setting%Debug%Output) call outputD_update_swmm_out
 
-        if ((this_image() == 1) .and. (.not. setting%Debug%Output)) then
-            call system('mkdir -p debug_output')
-            call system('rm -r debug_output')
-        end if
-    end subroutine finalize_all
+        ! call interface_finalize()
 
+        ! call util_deallocate_network_data()
+        
+        ! !% brh 20211005 -- commented this. since debug_output is now in a time-stamped
+        ! !% subdirectory we can leave it for user to delete
+        ! ! !% we don't want an old debug_output directory to confuse things, so
+        ! ! !% here we first create the directory (if it doesn't exist) and
+        ! ! !% then remove the new directory or (recursively) remove the entire old directory
+        ! ! if ((this_image() == 1) .and. (.not. setting%Debug%Output)) then
+        ! !     call system('mkdir -p debug_output')
+        ! !     call system('rm -r debug_output')
+        ! ! end if
 
+        ! sync all
+
+        ! call cpu_time(setting%Time%CPU%EpochFinishSeconds)
+
+        write(*, "(A,i5,A,G0.6,A)") &
+            new_line(" ") // 'Processor ', this_image(), " | Simulation Time = ", &
+            (setting%Time%CPU%EpochFinishSeconds - setting%Time%CPU%EpochStartSeconds), " [s]"
+        write(*,"(A)") '========================= SWMM5+ finished =================================='
+        write(*,"(A)") ''    
+        
+    end subroutine finalize_toplevel
+!%
+!%==========================================================================
+!% END MODULE
+!%==========================================================================
+!%
 end module finalization

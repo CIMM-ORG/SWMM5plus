@@ -25,10 +25,10 @@ module face
     public :: face_interpolate_bc
 
     contains
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-    !%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine face_interpolation (facecol)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -36,8 +36,10 @@ module face
         !%-----------------------------------------------------------------------------
         integer, intent(in)  :: faceCol
         integer, pointer :: Npack
-        !%-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'face_interpolation'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         
@@ -69,10 +71,10 @@ module face
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_interpolation
     !%
-    !%==========================================================================
-    !% PRIVATE
-    !%==========================================================================
-    !%
+!%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
     subroutine face_interpolate_bc()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -80,7 +82,7 @@ module face
         !%-----------------------------------------------------------------------------
         character (64) :: subroutine_name = 'face_interpolate_bc'
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%face)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -94,10 +96,10 @@ module face
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine face_interpolate_bc
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_interpolation_upBC_byPack()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -112,7 +114,7 @@ module face
         integer, pointer :: face_P(:), edn(:), idx_P(:), fdn(:)
 
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -195,10 +197,10 @@ module face
         if (setting%Debug%File%boundary_conditions) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_interpolation_upBC_byPack
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_interpolation_latBC_byPack()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -212,7 +214,7 @@ module face
         integer, pointer :: elem_P(:), idx_P(:)
 
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -239,10 +241,10 @@ module face
         if (setting%Debug%File%boundary_conditions) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_interpolation_latBC_byPack
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_interpolation_dnBC_byPack()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -257,7 +259,7 @@ module face
         real :: DownStreamBcHead
 
         !%-----------------------------------------------------------------------------
-
+        if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -332,10 +334,10 @@ module face
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_interpolation_dnBC_byPack
 
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_interpolation_interior_byPack (facePackCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -351,6 +353,7 @@ module face
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         !% Face values are needed for
         !% Area_u, Area_d, Head_u, Head_d, Flowrate,
 
@@ -403,10 +406,10 @@ module face
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_interpolation_interior_byPack
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_interp_across_images ()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -419,10 +422,10 @@ module face
         stop 7387
 
     end subroutine face_interp_across_images
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_interpolation_shared_byPack (facePackCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -433,8 +436,10 @@ module face
         integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
         integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
         integer :: fFlowSet(1), eFlowSet(1)
-        !%-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'face_interpolation_shared_byPack'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -488,10 +493,10 @@ module face
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_interpolation_shared_byPack
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_interp_set_byMask &
         (fset, eset, eWdn, eWup, faceMaskCol)
         !%-----------------------------------------------------------------------------
@@ -501,8 +506,10 @@ module face
         integer, intent(in) :: fset(:), eset(:), eWdn, eWup, faceMaskCol
         integer, pointer :: eup(:), edn(:)
         integer :: ii
-        !%-----------------------------------------------------------------------------
+        
         character(64) :: subroutine_name = 'face_interp_set_byMask'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -526,10 +533,10 @@ module face
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_interp_set_byMask
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_interp_interior_set_byPack &
         (fset, eset, eWdn, eWup, facePackCol, Npack)
         !%-----------------------------------------------------------------------------
@@ -539,8 +546,9 @@ module face
         integer, intent(in) :: fset(:), eset(:), eWdn, eWup, facePackCol, Npack
         integer, pointer :: thisP(:), eup(:), edn(:)
         integer :: ii
-        !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interp_interior_set_byPack'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -569,10 +577,10 @@ module face
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_interp_interior_set_byPack
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_interp_shared_set_byPack &
         (fset, eset, eWdn, eWup, facePackCol, Npack)
         !%-----------------------------------------------------------------------------
@@ -585,6 +593,8 @@ module face
         integer :: ii, jj
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_interp_shared_set_byPack'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -639,10 +649,10 @@ module face
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_interp_shared_set_byPack
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_copy_upstream_to_downstream_interior_byPack &
         (downstreamSet, upstreamSet, facePackCol, Npack)
         !%-----------------------------------------------------------------------------
@@ -654,6 +664,8 @@ module face
         integer, pointer :: thisP(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_copy_upstream_to_downstream_interior_byPack'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -665,10 +677,10 @@ module face
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_copy_upstream_to_downstream_interior_byPack
-    !%
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine face_copy_upstream_to_downstream_shared_byPack &
         (downstreamSet, upstreamSet, facePackCol, Npack)
         !%-----------------------------------------------------------------------------
@@ -680,6 +692,8 @@ module face
         integer, pointer :: thisP(:)
         !%-----------------------------------------------------------------------------
         character(64) :: subroutine_name = 'face_copy_upstream_to_downstream_byPack'
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
@@ -691,8 +705,8 @@ module face
         if (setting%Debug%File%face) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine face_copy_upstream_to_downstream_shared_byPack
-    !%
-    !%==========================================================================
-    !% END OF MODULE
-    !%==========================================================================
+!%
+!%==========================================================================
+!% END OF MODULE
+!%==========================================================================
 end module face

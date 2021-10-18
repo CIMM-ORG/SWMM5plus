@@ -44,22 +44,22 @@ subroutine init_partitioning_method()
         real(8) :: part_size_balance
         character(64) :: subroutine_name = 'init_partitioning_method'
     !% --------------------------------------------------------
-
+    if (icrash) return
     call util_allocate_partitioning_arrays()
 
     !% Determine which partitioning method is being used
     print *   !% this is needed because SWMM-C doesn't have a newline after their last printout
     if (setting%Partitioning%PartitioningMethod == Default) then
-        if (setting%Verbose) print*, new_line(""), "Using Default Partitioning"
+        if (setting%Output%Verbose) print*, new_line(""), "Using Default Partitioning"
         call init_partitioning_default()
     else if (setting%Partitioning%PartitioningMethod == Random) then
-        if (setting%Verbose) print*, new_line(""), "Using Random Partitioning"
+        if (setting%Output%Verbose) print*, new_line(""), "Using Random Partitioning"
         call init_partitioning_random()
     else if (setting%Partitioning%PartitioningMethod == BLink) then
-        if (setting%Verbose) print*, new_line(""), "Using Balanced Link Partitioning"
+        if (setting%Output%Verbose) print*, new_line(""), "Using Balanced Link Partitioning"
         call init_partitioning_linkbalance()
     else if (setting%Partitioning%PartitioningMethod == BQuick) then
-        if (setting%Verbose) print*, new_line(""), "Using BIPquick Partitioning"
+        if (setting%Output%Verbose) print*, new_line(""), "Using BIPquick Partitioning"
         call init_partitioning_BIPquick()
     else
         print *, "Error, partitioning method not supported"
@@ -124,6 +124,7 @@ subroutine init_partitioning_default()
     real(8) :: partition_threshold
     logical :: partition_correct
 
+    if (icrash) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
 
@@ -225,7 +226,7 @@ subroutine init_partitioning_random()
     integer :: current_node_image, adjacent_link_image
     real(8) :: partition_threshold, rand_num
     !% ----------------------------------------------------------------------------------------------------------------
-
+    if (icrash) return
     !% Determines the number of nodes of each type for the purpose of calculating partition threshold
     call util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2)
 
@@ -337,6 +338,7 @@ subroutine init_partitioning_linkbalance()
     character(64) :: subroutine_name = 'init_partitioning_linkbalance'
 
 !-----------------------------------------------------------------------------
+    if (icrash) return
     if (setting%Debug%File%partitioning) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -403,7 +405,7 @@ function init_partitioning_metric_partsizebalance() result(part_size_balance)
     integer :: part_size_balance
     integer :: ii, current_image, max_elem, min_elem
     ! -----------------------------------------------------------------------------------------------------------------
-
+    if (icrash) return
     !% Reset the elem_per_image array to all zeros
     elem_per_image(:) = 0
 
