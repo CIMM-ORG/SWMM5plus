@@ -228,7 +228,7 @@ contains
         !brh20211006     call output_create_node_files()
         !brh20211006 end if
 
-        if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
+        ! if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
