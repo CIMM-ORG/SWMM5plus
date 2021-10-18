@@ -254,21 +254,28 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
         if (Node[k].type == STORAGE)
             *value = Storage[Node[k].subIndex].aConst;
         else
-            *value = 0;
+            *value = -1;
     }
     else if (attr == node_StorageCoeff)
     {
         if (Node[k].type == STORAGE)
             *value = Storage[Node[k].subIndex].aCoeff;
         else
-            *value = 0;
+            *value = -1;
     }
     else if (attr == node_StorageExponent)
     {
         if (Node[k].type == STORAGE)
             *value = Storage[Node[k].subIndex].aExpon;
         else
-            *value = 0;
+            *value = -1;
+    }
+    else if (attr == node_StorageCurveID)
+    {
+        if (Node[k].type == STORAGE)
+            *value = Storage[Node[k].subIndex].aCurve;
+        else
+            *value = -1;
     }
     else if (attr == node_extInflow_tSeries)
     {

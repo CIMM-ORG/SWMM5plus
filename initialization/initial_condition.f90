@@ -150,7 +150,7 @@ contains
            print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
            call execute_command_line('')
         end if
-
+        stop
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         
@@ -1002,11 +1002,25 @@ contains
         elemI(JMidx,ei_HeqType)      = time_march
         elemI(JMidx,ei_QeqType)      = notused
         
-        !%-----------------------------------------------------------------------
-        !% HACK: Junction main are always rectangular
-        elemI(JMidx,ei_geometryType) = rectangular
-        !%-----------------------------------------------------------------------
-
+        !% set the type of junction main
+        if (node%YN(thisJunctionNode,nYN_has_storage)) then
+            if (node%I(thisJunctionNode,ni_curve_ID) .ne. -1) then
+                elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
+                elemSI(JMidx,esi_JunctionMain_Curve_ID) = node%I(thisJunctionNode,ni_curve_ID)
+            else
+                elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
+                elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
+                elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
+                elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)
+            end if
+        else
+            !%-----------------------------------------------------------------------
+            !% HACK: Junction main with artifical storage are rectangular
+            !%-----------------------------------------------------------------------
+            elemSI(JMidx,esi_JunctionMain_Type) = ArtificalStorage
+            elemI(JMidx,ei_geometryType)        = rectangular
+        end if
+        
         !% junction main depth and head from initial conditions
         elemR(JMidx,er_Depth) = node%R(thisJunctionNode,nr_InitialDepth)
         elemR(JMidx,er_Head)  = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)

@@ -61,6 +61,7 @@ enum api_node_attributes {
   node_StorageConstant,
   node_StorageCoeff,
   node_StorageExponent,
+  node_StorageCurveID,
   node_extInflow_tSeries,
   node_extInflow_tSeries_x1,
   node_extInflow_tSeries_x2,

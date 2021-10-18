@@ -445,7 +445,8 @@ contains
             if (interface_get_node_attribute(ii, api_node_type) == API_OUTFALL) then
                 node%I(ii, ni_node_type) = nBCdn
             else if (interface_get_node_attribute(ii, api_node_type) == API_STORAGE) then
-                node%I(ii, ni_node_type) = nStorage
+                node%I(ii, ni_node_type) = nJm
+                node%YN(ii, nYN_has_storage) = .true.
             else if ((total_n_links == twoI)          .and. &
                      (node%I(ii,ni_N_link_u) == oneI) .and. &
                      (node%I(ii,ni_N_link_d) == oneI) )then
@@ -469,6 +470,7 @@ contains
             node%R(ii,nr_StorageConstant) = interface_get_node_attribute(ii, api_node_StorageConstant)
             node%R(ii,nr_StorageCoeff)    = interface_get_node_attribute(ii, api_node_StorageCoeff)
             node%R(ii,nr_StorageExponent) = interface_get_node_attribute(ii, api_node_StorageExponent)
+            node%I(ii,ni_curve_ID)        = interface_get_node_attribute(ii, api_node_StorageCurveID)
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
         end do
 

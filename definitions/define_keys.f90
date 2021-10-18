@@ -82,6 +82,9 @@ module define_keys
         enumerator :: pump                  !% pump element
         enumerator :: JM                    !% junction main element
         enumerator :: JB                    !% junction branch element
+        enumerator :: ArtificalStorage      !% junction main storage is artificially created
+        enumerator :: FunctionalStorage     !% junction main storage is cauculated from a user provided function
+        enumerator :: TabularStorage        !% junction main storage is cauculated from a user provided table
         enumerator :: storage               !% storage element
         enumerator :: manhole               !% manhole elemen (HACK: not sure if we need this)
         enumerator :: dummy                 !% dummy element type
