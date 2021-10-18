@@ -116,11 +116,8 @@ contains
 
         !% populate er_ones columns with ones
         call init_IC_oneVectors ()
-<<<<<<< HEAD
         
         if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_setup)
-=======
->>>>>>> daac7942fad83f96788197b6c13cf668a159b5c5
 
         if (setting%Debug%File%initial_condition) then
            print*, '----------------------------------------------------'

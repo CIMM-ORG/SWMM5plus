@@ -172,32 +172,6 @@ contains
             endif
             endif
         endif
-<<<<<<< HEAD
-        call init_IC_setup ()
-
-        if (setting%Verbose) print *, "begin setup of output files"
-
-        ! !% creating output_folders and files
-        ! call util_output_clean_folders()
-        ! call util_output_create_folders()
-
-        ! if ((this_image() == 1) .and. setting%Debug%Input) call util_output_export_linknode_input()
-        ! if (setting%Debug%Output) then
-        !     call util_output_create_elemR_files()
-        !     call util_output_create_faceR_files()
-        !     call util_output_create_summary_files()
-        ! end if
-        ! if (setting%Debug%Output .or. setting%Output%report) then
-        !     call output_create_link_files()
-        !     call output_create_node_files()
-        ! end if
-
-        print*, "Here 1"
-
-        if ( this_image() == 1 ) then
-            if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
-        endif
-=======
         call init_IC_toplevel ()
 
         print *
@@ -255,7 +229,6 @@ contains
         !brh20211006 end if
 
         if (setting%Profile%YN) call util_profiler_stop (pfc_initialize_all)
->>>>>>> daac7942fad83f96788197b6c13cf668a159b5c5
 
         !% wait for all the processors to reach this stage before starting the time loop
         sync all
