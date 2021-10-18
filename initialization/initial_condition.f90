@@ -150,7 +150,7 @@ contains
            print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
            call execute_command_line('')
         end if
-        stop
+        stop 1132156
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         
