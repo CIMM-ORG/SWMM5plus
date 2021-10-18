@@ -23,10 +23,10 @@ module orifice_elements
     real(8), pointer :: grav => setting%constant%gravity
 
     contains
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-    !%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine orifice_toplevel (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -37,6 +37,7 @@ module orifice_elements
 
         character(64) :: subroutine_name = 'orifice_toplevel'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -58,11 +59,11 @@ module orifice_elements
         if (setting%Debug%File%orifice_elements)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine orifice_toplevel
-    ! %
-    !%==========================================================================
-    !% PRIVATE
-    !%========================================================================== 
-    !%  
+! %
+!%==========================================================================
+!% PRIVATE
+!%========================================================================== 
+!%  
     subroutine orifice_effective_head_delta (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -76,6 +77,7 @@ module orifice_elements
 
         character(64) :: subroutine_name = 'orifice_effective_head_delta'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -115,10 +117,10 @@ module orifice_elements
         if (setting%Debug%File%orifice_elements)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine orifice_effective_head_delta
-    !%
-    !%========================================================================== 
-    !%========================================================================== 
-    !%   
+!%
+!%========================================================================== 
+!%========================================================================== 
+!%   
     subroutine orifice_flow (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description: calculates the flow in an orifice elements
@@ -134,6 +136,7 @@ module orifice_elements
 
         character(64) :: subroutine_name = 'orifice_flow'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -208,10 +211,10 @@ module orifice_elements
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine orifice_flow
-    !%
-    !%==========================================================================
-    !%==========================================================================    
-    !%  
+!%
+!%==========================================================================
+!%==========================================================================    
+!%  
     subroutine orifice_geometry_update (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -229,6 +232,7 @@ module orifice_elements
 
         character(64) :: subroutine_name = 'orifice_geometry_update'
         !%-----------------------------------------------------------------------------
+        if (icrash) return
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -295,7 +299,7 @@ module orifice_elements
         if (setting%Debug%File%orifice_elements) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine  orifice_geometry_update
-    !%==========================================================================
-    !% END OF MODULE
-    !%+=========================================================================
+!%==========================================================================
+!% END OF MODULE
+!%==========================================================================
 end module orifice_elements

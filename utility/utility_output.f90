@@ -200,7 +200,7 @@ contains
 
             if (elemI(ii,ei_elementType) == CC) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_CC_" &
@@ -217,7 +217,7 @@ contains
 
             else if(elemI(ii,ei_elementType) == orifice) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = "debug_output/elemR/"//trim(str_image)//"_OR_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
@@ -233,7 +233,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == JM) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_JM_" &
@@ -250,7 +250,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == JB) then
 
-                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                 write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_BIPquick)
 
                  file_name = trim(setting%File%debug_output_elemR_folder) &
                      //"/img"//trim(str_image)//"_JB_" &
@@ -368,7 +368,7 @@ contains
 
             if (elemI(ii,ei_elementType) == CC) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_CC_" &
@@ -385,7 +385,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == orifice) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_link_Gidx_BIPquick)
 
                 file_name = "debug_output/elemR/"//trim(str_image)//"_OR_" &
                     // trim(ADJUSTL(str_link_node_idx))// &
@@ -401,7 +401,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == JM) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_JM_" &
@@ -418,7 +418,7 @@ contains
 
             else if (elemI(ii,ei_elementType) == JB) then
 
-                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_SWMM)
+                write(str_link_node_idx,'(I10)') elemI(ii,ei_node_Gidx_BIPquick)
 
                 file_name = trim(setting%File%debug_output_elemR_folder) &
                     //"/img"//trim(str_image)//"_JB_" &
@@ -482,8 +482,8 @@ contains
 !% 
     subroutine util_output_create_summary_files
         integer :: fu, open_status
-        character(64) :: file_name
-        character(64) :: subroutine_name = 'util_output_create_summary_files'
+        character(512) :: file_name
+        character(64)  :: subroutine_name = 'util_output_create_summary_files'
         !%-----------------------------------------------------------------------------
         !% Description:
         !% creates the summary file
@@ -493,11 +493,6 @@ contains
         !write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
         write(file_name, "(A,i5.5,A)") "summary_", this_image(), ".csv"
         file_name = trim(setting%File%debug_output_summary_folder)//'/'//trim(file_name)
-
-        print *
-        print *, 'in ', subroutine_name
-        print *, file_name
-        print *
 
         open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
             form = 'formatted', action = 'write', iostat = open_status)
@@ -517,18 +512,20 @@ contains
         !% Description:
         !% Calls write procedures for debug outout and reporting
         !%-----------------------------------------------------------------------------
+        logical :: isLastStep
         character(64) :: subroutine_name = "util_output_report"
         !%----------------------------------------------------------------------------- 
         if (setting%Debug%File%utility_output) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Debug%Output) call util_output_report_summary()
+        !if (setting%Debug%Output) call util_output_report_summary()
 
         if (setting%Output%report .and. util_output_must_report()) then
-            if (setting%Debug%Output) call util_output_write_elemR_faceR()
-            call output_write_link_files()
-            call output_write_node_files()
+            !brh20211006 if (setting%Debug%Output) call util_output_write_elemR_faceR()
+            !brh20211006 call outputD_write_link_files()
+            !brh20211006 call outputD_write_node_files()
         end if
+       
 
         if (setting%Debug%File%utility_output) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -546,7 +543,7 @@ contains
         integer, pointer :: thisP(:)
         real(8)          :: thisCFL, max_velocity, max_wavespeed, max_PCelerity
         real(8), pointer :: dt, timeNow, velocity(:), wavespeed(:), length(:), PCelerity(:)
-        character(512)    :: file_name
+        character(512)   :: file_name
         character(64)    :: subroutine_name = "util_output_report_summary"
         !%---------------------------------------------------------------------------
         if (setting%Debug%File%utility_output) &
@@ -556,6 +553,7 @@ contains
 
             !write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
             write(file_name, "(A,i5.5,A)") "summary_", this_image(), ".csv"
+            
             file_name = trim(setting%File%debug_output_summary_folder)//'/'//trim(file_name)
 
             thisCol   = col_elemP(ep_CC_ALLtm)
@@ -578,7 +576,7 @@ contains
             max_PCelerity = maxval(abs(PCelerity(thisP))) 
 
             open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
-                form = 'formatted', action = 'write', iostat = open_status)
+                 form = 'formatted', action = 'write', iostat = open_status)
 
             write(fu, fmt='(*(G0.6 : ","))') &
                 this_image(), timeNow, thisCFL, dt, max_velocity, max_wavespeed
@@ -613,7 +611,8 @@ contains
         reportStep  => setting%Output%reportStep
         timeNow     = setting%Time%Now
         reportDt    = setting%Output%reportDt
-        startReport = setting%output%reportStartTime
+        startReport = setting%Output%reportStartTime
+
 
         if ((timeNow >= reportDt * (reportStep + 1)) .and. (timeNow > startReport))then
             report = .true.
@@ -623,6 +622,7 @@ contains
         else
             report = .false.
         end if
+
 
     end function util_output_must_report
 !%

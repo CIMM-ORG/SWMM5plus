@@ -17,11 +17,11 @@ module utility_array
     public :: util_image_number_calculation
 
     contains
-    !
-    !==========================================================================
-    ! PUBLIC
-    !==========================================================================
-    !
+!
+!==========================================================================
+! PUBLIC
+!==========================================================================
+!
     subroutine util_image_number_calculation(nimgs_assign, unique_imagenum)
         ! Get the unique list of images from partitioning modules
 
@@ -31,6 +31,7 @@ module utility_array
         integer :: ii=0, min_val, max_val
         character(64) :: subroutine_name = 'util_image_number_calculation'
 
+        if (icrash) return
         if (setting%Debug%File%utility_array) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 

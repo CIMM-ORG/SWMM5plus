@@ -313,6 +313,23 @@ contains
         SWMM_N_node = get_num_objects(API_NODE)
         N_node = SWMM_N_node
 
+        print * 
+        print *, 'BUG WARNING location ',980879,' in ',subroutine_name
+        print *, '...if the SWMM code detects a parse error for the *.inp file then the ...'
+        print *, '...get_num_objects function returns an error code 200 (SWMM parse error)... '
+        print *, '...that is stored instead of the names of nodes and links...'
+        print *, '...this has unexpected errors.'
+        if ((N_link == 200) .AND. (N_node == 200)) then
+             print *, SWMM_N_link, SWMM_N_node
+             print *, 'ERROR (input file): Appears to be parse error in the input file...'
+             print *, '...where some links/nodes are either not connected or not identified...'
+             print *, '...This can happen if nodes are renamed and some of the conduit connection did not get changed...'
+             print *, '...This error might have been tripped accidently if the system has exactly...'
+             print *, '...200 nodes and 200 links.'
+             stop 'in' // subroutine_name
+        end if
+        print *
+
         !% Defines start and end simulation times
         !% SWMM defines start and end dates as epoch times in days
         !% we need to transform those values to durations in seconds,
@@ -426,6 +443,7 @@ contains
 
         do ii = 1, SWMM_N_link
             errstat = ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
+
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 stop "in " // subroutine_name
@@ -434,6 +452,7 @@ contains
 
         do ii = 1, SWMM_N_node
             errstat = ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
+
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
                 stop "in " // subroutine_name
@@ -565,9 +584,11 @@ contains
     !%-----------------------------------------------------------------------------
         integer :: link_idx, attr, error
         real(8) :: interface_get_link_attribute
-        character(64) :: subroutine_name = 'interface_get_link_attribute'
+        
         type(c_ptr) :: cptr_value
         real(c_double), target :: link_value
+        character(64) :: thisposition
+        character(64) :: subroutine_name = 'interface_get_link_attribute'
     !%-----------------------------------------------------------------------------
 
         cptr_value = c_loc(link_value)
@@ -596,12 +617,14 @@ contains
         if (attr <= N_api_link_attributes) then
             ! Fortran index starts in 1, whereas in C starts in 0
             error = ptr_api_get_link_attribute(api, link_idx-1, attr, cptr_value)
-            call print_api_error(error, subroutine_name)
+            thisposition = trim(subroutine_name)//'_A01'
+            call print_api_error(error, thisposition)
             interface_get_link_attribute = link_value
         else if ( (attr > N_api_link_attributes) .and. &
                   (attr <= (N_api_link_attributes + N_api_link_type_attributes)) )then
             error = ptr_api_get_link_attribute(api, link_idx-1, api_link_type, cptr_value)
-            call print_api_error(error, subroutine_name)
+            thisposition = trim(subroutine_name)//'_B02'
+            call print_api_error(error, thisposition)
             interface_get_link_attribute = link_value
             if (link_value == API_CONDUIT) then
                 if (attr == api_link_type) then
@@ -624,7 +647,8 @@ contains
                     interface_get_link_attribute = nullvalueI
                 else if (attr == api_pump_type) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_pump_type, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_C03'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                     if (link_value == API_TYPE1_PUMP) then
                         interface_get_link_attribute = lType1Pump
@@ -646,7 +670,8 @@ contains
                     interface_get_link_attribute = nullvalueI
                 else if (attr == api_orifice_type) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_orifice_type, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_D04'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                     if (link_value == API_SIDE_ORIFICE) then
                         interface_get_link_attribute = lSideOrifice
@@ -662,7 +687,8 @@ contains
                     interface_get_link_attribute = lWeir
                 else if (attr == api_weir_type) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_weir_type, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_E05'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                     if (link_value == API_TRANSVERSE_WEIR) then
                         interface_get_link_attribute = lType1Pump
@@ -684,18 +710,21 @@ contains
 
         else
             error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_type, cptr_value)
-            call print_api_error(error, subroutine_name)
+            thisposition = trim(subroutine_name)//'_E05'
+            call print_api_error(error, thisposition)
             interface_get_link_attribute = link_value
             if (link_value == API_RECT_CLOSED) then
                 if (attr == api_link_geometry) then
                     interface_get_link_attribute = lRectangular_closed
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_F06'
+                     call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else if (attr == api_link_xsect_yFull) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_G07'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -705,11 +734,13 @@ contains
                     interface_get_link_attribute = lRectangular
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_H08'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else if (attr == api_link_xsect_yFull) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_I09'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -719,11 +750,13 @@ contains
                     interface_get_link_attribute = lTrapezoidal
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yBot, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_J10'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else if (attr == api_link_xsect_yFull) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_K11'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -733,11 +766,13 @@ contains
                     interface_get_link_attribute = lTriangular
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_M12'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else if (attr == api_link_xsect_yFull) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_N13'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -747,11 +782,13 @@ contains
                     interface_get_link_attribute = lParabolic
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_O14'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else if (attr == api_link_xsect_yFull) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_P15'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -761,11 +798,13 @@ contains
                     interface_get_link_attribute = lCircular
                 else if (attr == api_link_xsect_wMax) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_Q16'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else if (attr == api_link_xsect_yFull) then
                     error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
-                    call print_api_error(error, subroutine_name)
+                    thisposition = trim(subroutine_name)//'_R17'
+                    call print_api_error(error, thisposition)
                     interface_get_link_attribute = link_value
                 else
                     interface_get_link_attribute = nullvalueR
@@ -1122,8 +1161,13 @@ contains
         end if
         call c_f_procpointer(c_lib%procaddr, ptr_api_get_report_times)
 
-        !% reportStart is given in epoch datetime
-        !% reportStep and hydroStep are given in integer seconds
+        !% --- reportStart is given in epoch datetime
+        !% --- reportStep and hydroStep are given in integer seconds
+        !%
+        !% --- Note that if reportStart is earlier than StartEpoch from get_start_datetime()
+        !% ... then SWMM will make reportStart = start datetime.
+        !%
+        !% --- This generates EPA-SWMM Error Code: -1 if the reportStart is after the end time.
         error = ptr_api_get_report_times(api, cptr_reportStart, cptr_reportStep, cptr_hydroStep)
         call print_api_error(error, subroutine_name)
 
@@ -1275,7 +1319,7 @@ contains
         character(64), intent(in) :: subroutine_name
 
         if (error /= 0) then
-            write(*, "(A,i2,A)") new_line("") // "EPA-SWMM Error Code: ", error, " in "// subroutine_name
+            write(*, "(A,i5,A)") new_line("") // "EPA-SWMM Error Code: ", error, " in "// subroutine_name
             stop "in " // subroutine_name
         end if
     end subroutine print_api_error

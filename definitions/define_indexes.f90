@@ -91,6 +91,7 @@ module define_indexes
         ! if node is BCup or BCdn, ni_elemface_idx is the index of its associated BC face
         ! if node is nJm or nJ2, ni_elemface_idx is the index of the associated element
         enumerator :: ni_elemface_idx
+        enumerator :: ni_face_idx      !% for nJ2, this is the face associated with the node
         enumerator :: ni_pattern_resolution ! minimum resolution of patterns associated with node BC
         enumerator :: ni_lastplusone !% must be last enum item
     end enum
@@ -161,6 +162,8 @@ module define_indexes
         enumerator :: nYN_has_inflow = 1
         enumerator :: nYN_has_extInflow
         enumerator :: nYN_has_dwfInflow
+        enumerator :: nYN_isOutput
+        enumerator :: nYN_is_phantom_node
         enumerator :: nYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_nodeYN  = nYN_lastplusone-1
@@ -235,6 +238,8 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: lYN_CanSurcharge = 1
+        enumerator :: lYN_isOutput
+        enumerator :: lYN_isPhantomLink
         enumerator :: lYN_temp1
         enumerator :: lYN_lastplusone !% must be last enum item
     end enum
@@ -388,7 +393,8 @@ module define_indexes
         enumerator :: ep_BClat                      !% all elements with lateral BC
         enumerator :: ep_JB_DownStreamJB            !% all the downstream JB elements 
         enumerator :: ep_CC_DownstreamJbAdjacent    !% all CC element downstream of a JB 
-        enumerator :: ep_Closed_Elements            !% all closed elements        
+        enumerator :: ep_Closed_Elements            !% all closed elements    
+        enumerator :: ep_Output_Elements            !% all output elements -- local index   
         enumerator :: ep_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemP = ep_lastplusone-1
@@ -425,6 +431,7 @@ module define_indexes
         enumerator :: eYN_isNearZeroVolume              !% TRUE if volume qualifies as "near zero"
         enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
+        enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
         enumerator :: eYN_isDummy
         enumerator :: eYN_lastplusone !% must be last enum item
     end enum
@@ -637,8 +644,10 @@ module define_indexes
         enumerator ::  fi_GhostElem_uL              !% map to upstream ghost element
         enumerator ::  fi_GhostElem_dL              !% map to downstream ghost element
         enumerator ::  fi_Connected_image           !% image number a shared face connected to
-        enumerator ::  fi_node_idx                  !% if the face is originated from a node, then the idx
-        enumerator ::  fi_link_idx                  !% face connected to a link element 
+        enumerator ::  fi_node_idx_BIPquick         !% if the face is originated from a node, then the BQ idx
+        enumerator ::  fi_link_idx_BIPquick         !% face connected to a BQ link element 
+        enumerator ::  fi_node_idx_SWMM             !% if the face is originated from a node, then the SWMM idx
+        enumerator ::  fi_link_idx_SWMM             !% face connected to a SWMM link element 
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
         ! enumerator ::  fi_Melem_dG                 !% map to element upstream (global index)
@@ -703,6 +712,7 @@ module define_indexes
         enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
         enumerator :: fp_BCup
         enumerator :: fp_BCdn
+        enumerator :: fp_Output_Faces           !% faces that are selected for output
         enumerator :: fp_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_faceP =  fp_lastplusone-1
@@ -719,6 +729,7 @@ module define_indexes
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull
         enumerator :: fYN_isDownstreamJbFace
+        enumerator :: fYN_isFaceOut
         !% HACK: The following might not be needed
         ! enumerator :: fYN_isDiag_adjacent
         ! enumerator :: fYN_isETM_adjacent
@@ -764,6 +775,24 @@ module define_indexes
         enumerator :: pfc_lastplusone  !% must be last enum item
     end enum
     integer, target :: Ncol_pf = pfc_lastplusone-1
+
+    !% data types (columns) in the OutElemFixedI
+    enum, bind(c)
+        enumerator :: oefi_elem_Gidx = 1
+        enumerator :: oefi_link_Gidx_SWMM
+        enumerator :: oefi_node_Gidx_SWMM
+        enumerator :: oefi_lastplusone !% must be the last enum item
+    end enum
+    integer, target :: Ncol_oefi = oefi_lastplusone-1
+
+ !% data types (columns) in the OutFaceFixedI
+    enum, bind(c)
+        enumerator :: offi_face_Gidx = 1
+        enumerator :: offi_node_Gidx_SWMM
+        enumerator :: offi_lastplusone !% must be the last enum item
+    end enum
+    integer, target :: Ncol_offi = offi_lastplusone-1
+
 
     !
     !==========================================================================
