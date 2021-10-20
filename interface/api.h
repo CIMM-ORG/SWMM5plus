@@ -133,6 +133,12 @@ enum api_link_attributes {
 
 // };
 
+enum api_table_attributes {
+  table_ID = 1,
+  table_type,
+  table_refers_to,
+};
+
 enum api_double_vars {
   api_left_slope,
   api_right_slope,
@@ -175,11 +181,13 @@ double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_dateti
 int DLLEXPORT api_get_report_times(void * f_api, double * report_start_datetime, int * report_step, int * hydrology_step);
 int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value);
 int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value);
+int DLLEXPORT api_get_table_attribute(void* f_api, int k, int attr, double* value);
 int DLLEXPORT api_get_num_objects(void* f_api, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
 int DLLEXPORT api_get_next_entry_tseries(int k);
 int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
+int DLLEXPORT api_get_num_table_entries(int k, int table_type, int * num_entries);
 
 // Output fcns
 int DLLEXPORT api_write_output_line(void* f_api, double t);

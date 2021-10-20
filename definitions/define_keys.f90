@@ -40,6 +40,7 @@ module define_keys
         enumerator :: lType3Pump            !% type 3 pump link
         enumerator :: lType4Pump            !% type 4 pump link
         enumerator :: lTypeIdealPump        !% ideal pump link
+        !% open channel cross-sectional geometry types
         enumerator :: lRectangular           !% rectangular open channel
         enumerator :: lTrapezoidal           !% trapezoidal open channel
         enumerator :: lTriangular            !% triangular open channel
@@ -187,6 +188,18 @@ module define_keys
         enumerator :: LinkOut
         enumerator :: NodeElemOut
         enumerator :: NodeFaceOut
+        !% keys for curve types
+        enumerator :: StorageCurve             !% surf. area v. depth for storage node
+        enumerator :: DiversionCurve           !% diverted flow v. inflow for divider node
+        enumerator :: TidalCurve               !% water elev. v. hour of day for outfall
+        enumerator :: RatingCurve              !% flow rate v. head for outlet link
+        enumerator :: ControlCurve             !% control setting v. controller variable
+        enumerator :: ShapeCurve               !% width v. depth for custom x-section
+        enumerator :: WeirCurve                !% discharge coeff. v. head for weir
+        enumerator :: Pump1Curve               !% flow v. wet well volume for pump
+        enumerator :: Pump2Curve               !% flow v. depth for pump (discrete)
+        enumerator :: Pump3Curve               !% flow v. head for pump (continuous)
+        enumerator :: Pump4Curve               !% flow v. depth for pump (continuous)
     end enum
 
     !% rm 20210610 brh because of issues with ALLtm key

@@ -410,6 +410,7 @@ module define_indexes
         enumerator :: epg_CCJM_rectangular_nonsurcharged = 1 !% CC and JM rectangular channels that are not surcharged
         enumerator :: epg_CCJM_trapezoidal_nonsurcharged     !% CC and JM trapezoidal channels that are not surcharged
         enumerator :: epg_CCJM_circular_nonsurcharged        !% CC and JM circular conduits that are not surcharged
+        enumerator :: epg_JM_functional_nonsurcharged        !% JM functional geometry relationship nonsurcharges
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
         enumerator :: epg_JB_circular                        !% all circular junction branches

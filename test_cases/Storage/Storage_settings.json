@@ -65,7 +65,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 10.00,
+        "NominalElemLength" : 100.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {

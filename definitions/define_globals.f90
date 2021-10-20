@@ -55,6 +55,9 @@ module define_globals
     !% Boundary conditions
     type(BCArray), target :: BC
 
+    !!% Table types
+    type(tableType), dimension(:), allocatable, target :: table
+
     !%  columns of element and face arrays
     integer, allocatable, target :: col_elemI(:)[:]                                !% columns of elemI array
     integer, allocatable, target :: col_elemP(:)[:],       npack_elemP(:)[:]       !% columns and number of packs for elemP array
@@ -244,6 +247,8 @@ module define_globals
     integer :: N_etm
     integer :: N_link_output
     integer :: N_node_output
+    integer :: SWMM_N_Table
+    integer :: N_table
     integer, target :: N_OutTypeElem
     integer, target :: N_OutTypeFace
 
@@ -254,6 +259,7 @@ module define_globals
     integer, parameter :: N_api_link_xsect_attributes = api_link_xsect_yFull - N_api_link_type_attributes
     integer, parameter :: N_api_total_link_attributes = N_api_link_attributes + N_api_link_type_attributes &
                                                         + N_api_link_xsect_attributes
+    integer, parameter :: N_api_total_table_attributes = api_table_refers_to
 
     !% Coarray variables
     integer :: max_caf_elem_N    ! size of all elem array in coarray

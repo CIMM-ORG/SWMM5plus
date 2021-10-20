@@ -67,7 +67,7 @@ void DLLEXPORT api_finalize(void* f_api)
 //  Input: f_api is an Interface object passed as a void*
 //  Output: None
 //  Purpose: Closes the link with the EPA-SWMM library
-//
+//3
 {
     int i;
     Interface* api = (Interface*) f_api;
@@ -500,6 +500,25 @@ int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value
     return 0;
 }
 
+int DLLEXPORT api_get_table_attribute(void* f_api, int k, int attr, double* value)
+{
+    int error;
+    Interface * api = (Interface*) f_api;
+
+    error = check_api_is_initialized(api);
+    if (error != 0) return error;
+
+    if (attr == table_ID)
+        *value = k;
+    else if (attr == table_type)
+        *value = Curve[k].curveType;
+    else if (attr == table_refers_to)
+        *value = Curve[k].refersTo;
+    else
+        *value = nullvalue;
+    return 0;
+}
+
 int DLLEXPORT api_get_num_objects(void* f_api, int object_type)
 {
     int error;
@@ -557,19 +576,76 @@ int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int obj
     return 0;
 }
 
-int DLLEXPORT api_get_next_entry_tseries(int k)
+int DLLEXPORT api_get_num_table_entries(int k, int table_type, int * num_entries)
+{
+    double x, y;
+    int success;
+     
+    *num_entries = 0;
+    // printf("1 Number of entries in Curve %d: %d\n", k, *num_entries);
+    if (table_type == CURVE)
+    {
+        // ERROR handling
+        if (k >= Nobjects[CURVE] || Nobjects[CURVE] == 0) return -1;
+        success = table_getFirstEntry(&Curve[k], &x, &y); // first values in the table
+        (*num_entries)++;
+        while (success)
+        {   
+            success = table_getNextEntry(&(Curve[k]), &x, &y);
+            if (success) (*num_entries)++;
+            // printf("0 Number of entries in Curve %d: %d\n", k, *num_entries);
+        }       
+    }
+    else
+    {
+        return -1;
+    }
+    // printf("Number of entries in Curve %d: %d\n", k, *num_entries);
+    // printf("SUCCESS %d\n", success);
+
+    return 0;
+}
+
+int DLLEXPORT api_get_first_entry_table(int k, int table_type, int *x, int *y)
 {
     int success;
-    double x2, y2;
 
-    x2 = Tseries[k].x2;
-    y2 = Tseries[k].y2;
-    success = table_getNextEntry(&(Tseries[k]), &(Tseries[k].x2), &(Tseries[k].y2));
-    if (success == TRUE)
+    if (table_type == CURVE)
+        success = table_getFirstEntry(&(Curve[k]), x, y);
+    else if (table_type == TSERIES)
+        success = table_getFirstEntry(&(Tseries[k]), x, y);
+    else
+        return -1;
+    return success;
+}
+
+int DLLEXPORT api_get_next_entry_table(int k, int table_type, int *x, int *y)
+{
+    int success;
+
+    if (table_type == TSERIES)
     {
-        Tseries[k].x1 = x2;
-        Tseries[k].y1 = y2;
+        *x = Tseries[k].x2;
+        *y = Tseries[k].y2;
+        success = table_getNextEntry(&(Tseries[k]), &(Tseries[k].x2), &(Tseries[k].y2));
+        if (success)
+        {
+            Tseries[k].x1 = *x;
+            Tseries[k].y1 = *y;
+        }
     }
+    else if (table_type == CURVE)
+    {
+        *x = Curve[k].x2;
+        *y = Curve[k].y2;
+        success = table_getNextEntry(&(Curve[k]), &(Curve[k].x2), &(Curve[k].y2));
+        if (success)
+        {
+            Curve[k].x1 = *x;
+            Curve[k].y1 = *y;
+        }
+    }
+
     return success;
 }
 

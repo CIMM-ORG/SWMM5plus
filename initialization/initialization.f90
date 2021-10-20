@@ -130,6 +130,10 @@ contains
         if (setting%Output%Verbose) print *, "begin link-node processing"
         call init_linknode_arrays ()
 
+        !% --- store the SWMM-C tables in equivalent Fortran arrays
+        if (setting%Output%Verbose) print *, "begin SWMM5 table processing"
+        call init_tables()
+
         if (setting%Output%Verbose) print *, "begin partitioning"
         call init_partitioning()
    
@@ -481,6 +485,53 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_linknode_arrays
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_tables()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%   Retrieves data from EPA-SWMM interface and populates curve tables
+        !%-----------------------------------------------------------------------------
+
+        integer       :: ii, num_rows
+
+        character(64) :: subroutine_name = 'init_tables'
+
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if (.not. api_is_initialized) then
+            print *, "ERROR: API is not initialized"
+            stop "in " // subroutine_name
+        end if
+
+        !% Allocate storage for table tables
+        !% HACK: move it to utility allocate module later
+        allocate(table(N_table))
+
+        do ii = 1, SWMM_N_table
+            table(ii)%ID = interface_get_table_attribute(ii, api_table_id)
+            table(ii)%Type = interface_get_table_attribute(ii, api_table_type)
+            ! print*, num_rows, 'num_rows'
+            !% get the number of entries in a table
+            num_rows = interface_get_num_table_entries(ii)
+            
+            !% allocate the X and Y space
+            !% HACK: move it to utility allocate module later
+            allocate(table(ii)%X(num_rows))
+            table(ii)%X = nullvalueR
+            allocate(table(ii)%Y(num_rows))
+            table(ii)%Y = nullvalueR
+        end do
+
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
+    end subroutine init_tables
 !%
 !%==========================================================================
 !%==========================================================================

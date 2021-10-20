@@ -28,6 +28,8 @@ module interface
     ! public :: interface_run_step
     public :: interface_get_node_attribute
     public :: interface_get_link_attribute
+    public :: interface_get_table_attribute
+    public :: interface_get_num_table_entries
     public :: interface_get_obj_name_len
     public :: interface_update_linknode_names
     public :: interface_get_BC_resolution
@@ -137,6 +139,16 @@ module interface
             integer(c_int) :: api_get_link_attribute
         end function api_get_link_attribute
         !% -------------------------------------------------------------------------------
+        function api_get_table_attribute(api, k, attr, value)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            type(c_ptr), value, intent(in) :: api
+            integer(c_int), value :: k
+            integer(c_int), value :: attr
+            type(c_ptr), value, intent(in) :: value
+            integer(c_int) :: api_get_table_attribute
+        end function api_get_table_attribute
+        !% -------------------------------------------------------------------------------
         function api_get_num_objects(api, obj_type)
             use, intrinsic :: iso_c_binding
             implicit none
@@ -163,6 +175,15 @@ module interface
             integer(c_int), value :: object_type
             integer(c_int) :: api_get_object_name
         end function api_get_object_name
+        !% -------------------------------------------------------------------------------
+        function api_get_num_table_entries(k, table_type, num_entries)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: table_type
+            type(c_ptr), value, intent(in) :: num_entries
+            integer(c_int) :: api_get_num_table_entries
+        end function api_get_num_table_entries
         !% -------------------------------------------------------------------------------
         function api_get_next_entry_tseries(k)
             use, intrinsic :: iso_c_binding
@@ -227,9 +248,11 @@ module interface
     procedure(api_finalize),               pointer :: ptr_api_finalize
     procedure(api_get_node_attribute),     pointer :: ptr_api_get_node_attribute
     procedure(api_get_link_attribute),     pointer :: ptr_api_get_link_attribute
+    procedure(api_get_table_attribute),    pointer :: ptr_api_get_table_attribute
     procedure(api_get_num_objects),        pointer :: ptr_api_get_num_objects
     procedure(api_get_object_name_len),    pointer :: ptr_api_get_object_name_len
     procedure(api_get_object_name),        pointer :: ptr_api_get_object_name
+    procedure(api_get_num_table_entries),  pointer :: ptr_api_get_num_table_entries
     procedure(api_get_start_datetime),     pointer :: ptr_api_get_start_datetime
     procedure(api_get_end_datetime),       pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),             pointer :: ptr_api_get_flowBC
@@ -312,6 +335,8 @@ contains
         N_link = SWMM_N_link
         SWMM_N_node = get_num_objects(API_NODE)
         N_node = SWMM_N_node
+        SWMM_N_Table = get_num_objects(API_CURVE)
+        N_table = SWMM_N_Table
 
         print * 
         print *, 'BUG WARNING location ',980879,' in ',subroutine_name
@@ -818,6 +843,142 @@ contains
             ! print *, "LINK", link_value, attr
         end if
     end function interface_get_link_attribute
+!%    
+!%=============================================================================
+!%=============================================================================
+!%
+    function interface_get_table_attribute(table_idx, attr)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves table attributes from EPA-SWMM. API table attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
+        integer :: table_idx, attr, error
+        real(8) :: interface_get_table_attribute
+        
+        type(c_ptr) :: cptr_value
+        real(c_double), target :: table_value
+        character(64) :: thisposition
+        character(64) :: subroutine_name = 'interface_get_table_attribute'
+    !%-----------------------------------------------------------------------------
+
+        cptr_value = c_loc(table_value)
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if ((attr > N_api_total_table_attributes) .or. (attr < 1)) then
+            print *, "error: unexpected table attribute value", attr
+            stop "in " // subroutine_name
+        end if
+
+        if ((table_idx > SWMM_N_Table) .or. (table_idx < 1)) then
+            print *, "error: unexpected table index value", table_idx
+            stop "in " // subroutine_name
+        end if
+
+        c_lib%procname = "api_get_table_attribute"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop "in " // subroutine_name
+        end if
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_table_attribute)
+        !% Substracts 1 to every Fortran index (it becomes a C index)
+        if (attr == api_table_type) then
+            error = ptr_api_get_table_attribute(api, table_idx-1, attr, cptr_value)
+            if (table_value == API_STORAGE_CURVE) then
+                interface_get_table_attribute = StorageCurve
+            else if (table_value == API_DIVERSION_CURVE) then
+                interface_get_table_attribute = DiversionCurve
+            else if (table_value == API_TIDAL_CURVE) then
+                interface_get_table_attribute = TidalCurve
+            else if (table_value == API_RATING_CURVE) then
+                interface_get_table_attribute = RatingCurve
+            else if (table_value == API_CONTROL_CURVE) then
+                interface_get_table_attribute = ControlCurve
+            else if (table_value == API_SHAPE_CURVE) then
+                interface_get_table_attribute = ShapeCurve
+            else if (table_value == API_WEIR_CURVE) then
+                interface_get_table_attribute = WeirCurve
+            else if (table_value == API_PUMP1_CURVE) then
+                interface_get_table_attribute = Pump1Curve
+            else if (table_value == API_PUMP2_CURVE) then
+                interface_get_table_attribute = Pump2Curve
+            else if (table_value == API_PUMP3_CURVE) then
+                interface_get_table_attribute = Pump3Curve
+            else if (table_value == API_PUMP4_CURVE) then
+                interface_get_table_attribute = Pump4Curve
+            else
+                interface_get_table_attribute = nullvalueI
+            end if
+        else
+            error = ptr_api_get_table_attribute(api, table_idx-1, attr, cptr_value)
+            call print_api_error(error, subroutine_name)
+            interface_get_table_attribute = table_value
+        end if
+
+        if (setting%Debug%File%interface)  then
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            print *, "table", table_value, attr
+        end if
+    end function interface_get_table_attribute
+!%    
+!%=============================================================================
+!%=============================================================================
+!%
+    function interface_get_num_table_entries(table_idx)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves table attributes from EPA-SWMM. API table attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
+        integer :: table_idx, table_type, error
+        integer :: interface_get_num_table_entries
+        
+        type(c_ptr) :: cptr_value
+        integer(c_int), target :: table_entries
+        character(64) :: thisposition
+        character(64) :: subroutine_name = 'interface_get_num_table_entries'
+    !%-----------------------------------------------------------------------------
+
+        cptr_value = c_loc(table_entries)
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if ((table_idx > SWMM_N_Table) .or. (table_idx < 1)) then
+            print *, "error: unexpected table index value", table_idx
+            stop "in " // subroutine_name
+        end if
+
+        c_lib%procname = "api_get_num_table_entries"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop "in " // subroutine_name
+        end if
+
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_table_entries)
+        !% Substracts 1 to every Fortran index (it becomes a C index)
+        error = ptr_api_get_num_table_entries(table_idx-1, API_CURVE, cptr_value)
+
+        call print_api_error(error, subroutine_name)
+        interface_get_num_table_entries = table_entries
+
+        if (setting%Debug%File%interface)  then
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            print *, "table", table_entries
+        end if
+    end function interface_get_num_table_entries
 !%    
 !%=============================================================================
 !%   Boundary Conditions (execute after initialization only)
