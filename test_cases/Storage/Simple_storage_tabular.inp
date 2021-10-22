@@ -80,10 +80,14 @@ C2               CIRCULAR     2                0          0          0          
 [CURVES]
 ;;Name           Type       X-Value    Y-Value   
 ;;-------------- ---------- ---------- ----------
-ST_CURVE_1       Storage    1          1000      
-ST_CURVE_1                  2          1500      
-ST_CURVE_1                  3          1700      
-ST_CURVE_1                  4          2000      
+ST_CURVE_1       Storage    0.5          500      
+ST_CURVE_1                  1.0          1000      
+ST_CURVE_1                  1.5          1500      
+ST_CURVE_1                  2.0          2000
+ST_CURVE_1                  2.5          2500      
+ST_CURVE_1                  3.0          3000      
+ST_CURVE_1                  3.5          3500 
+ST_CURVE_1                  4.0          4000        
 
 [REPORT]
 ;;Reporting Options

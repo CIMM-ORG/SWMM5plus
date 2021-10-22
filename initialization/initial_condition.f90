@@ -982,7 +982,7 @@ contains
         integer, intent(in) :: thisJunctionNode
 
         integer             :: ii, JMidx, JBidx
-        integer, pointer    :: BranchIdx, geometryType, JmType
+        integer, pointer    :: BranchIdx, geometryType, JmType, curveID
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
     !--------------------------------------------------------------------------
@@ -1004,14 +1004,15 @@ contains
         
         !% set the type of junction main
         if (node%YN(thisJunctionNode,nYN_has_storage)) then
-            if (node%I(thisJunctionNode,ni_curve_ID) .ne. -1) then
-                elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
-                elemSI(JMidx,esi_JunctionMain_Curve_ID) = node%I(thisJunctionNode,ni_curve_ID)
-            else
+            if (node%I(thisJunctionNode,ni_curve_ID) .eq. -1) then
                 elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
                 elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
                 elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
                 elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)
+                
+            else
+                elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
+                elemSI(JMidx,esi_JunctionMain_Curve_ID) = node%I(thisJunctionNode,ni_curve_ID)
             end if
         else
             !%-----------------------------------------------------------------------
@@ -1020,7 +1021,7 @@ contains
             elemSI(JMidx,esi_JunctionMain_Type) = ArtificalStorage
             elemI(JMidx,ei_geometryType)        = rectangular
         end if
-        
+
         !% junction main depth and head from initial conditions
         elemR(JMidx,er_Depth) = node%R(thisJunctionNode,nr_InitialDepth)
         elemR(JMidx,er_Head)  = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
@@ -1187,7 +1188,8 @@ contains
 
         !% get junction main geometry based on type
         JmType => elemSI(JMidx,esi_JunctionMain_Type)
-        select case (geometryType)
+
+        select case (JmType)
 
             case (ArtificalStorage)
                 
@@ -1223,10 +1225,18 @@ contains
                 elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
 
             case (TabularStorage)
-
+                curveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+                table(curveID)%ElemIdx = JMidx
+                print*, table(curveID)%ElemIdx, 'table'
+                print*, table(curveID)%Value, 'value'
                 print*, 'In, ', subroutine_name
                 print*, 'storage with tabular depth vs. volume relationship has not been developed yet'
                 stop 54894
+
+            case default
+                print*, 'In, ', subroutine_name
+                print*, 'error: unknown junction main type, ', JmType
+                stop 54895 
 
         end select
 

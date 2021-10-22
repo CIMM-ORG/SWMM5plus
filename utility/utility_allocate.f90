@@ -38,8 +38,11 @@ module utility_allocate
     public :: util_allocate_outputML_facetypes
     public :: util_allocate_outputML_storage
     public :: util_allocate_outputML_times
-    public :: util_allocate_outputML_filenames  
+    public :: util_allocate_outputML_filenames 
+    public :: util_allocate_tables 
+    public :: util_allocate_table_entries
     public :: util_allocate_check
+
 
 contains
 !
@@ -1540,7 +1543,7 @@ contains
 !
 !==========================================================================
 !==========================================================================
-    !
+!
     subroutine util_allocate_col_faceYN()
         !-----------------------------------------------------------------------------
         !
@@ -1573,6 +1576,65 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceYN
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine util_allocate_tables ()
+        !-----------------------------------------------------------------------------
+        !
+        !
+        !-----------------------------------------------------------------------------
+
+        character(64)       :: subroutine_name = 'util_allocate_tables'
+
+        !-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%utility_allocate) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        !% allocate tables
+        allocate( table(N_table), stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'table')
+        
+        table%ID = nullvalueI
+        table%Type = nullvalueI
+        table%RefersTo = nullvalueI
+        table%ElemIdx = nullvalueI
+        table%FaceIdx = nullvalueI
+
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
+    end subroutine util_allocate_tables
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine util_allocate_table_entries (table_idx, num_entries)
+        !-----------------------------------------------------------------------------
+        !
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, intent(in) :: table_idx, num_entries
+        character(64)       :: subroutine_name = 'util_allocate_table_entries'
+
+        !-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%utility_allocate) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        !% allocate the value array of table
+        allocate( table(table_idx)%Value(num_entries,twoI), stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'table')
+
+        table(table_idx)%Value = nullvalueR
+
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
+    end subroutine util_allocate_table_entries
 !
 !==========================================================================
 !==========================================================================

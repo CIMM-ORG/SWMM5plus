@@ -25,8 +25,7 @@ module define_types
         integer :: RefersTo
         integer :: ElemIdx
         integer :: FaceIdx
-        real(8), dimension(:), allocatable :: X
-        real(8), dimension(:), allocatable :: Y
+        real(8), dimension(:,:), allocatable :: Value
     end type
 
     !%  control data

@@ -474,7 +474,7 @@ contains
             node%R(ii,nr_StorageConstant) = interface_get_node_attribute(ii, api_node_StorageConstant)
             node%R(ii,nr_StorageCoeff)    = interface_get_node_attribute(ii, api_node_StorageCoeff)
             node%R(ii,nr_StorageExponent) = interface_get_node_attribute(ii, api_node_StorageExponent)
-            node%I(ii,ni_curve_ID)        = interface_get_node_attribute(ii, api_node_StorageCurveID)
+            node%I(ii,ni_curve_ID)        = interface_get_node_attribute(ii, api_node_StorageCurveID) + 1
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
         end do
 
@@ -495,7 +495,7 @@ contains
         !%   Retrieves data from EPA-SWMM interface and populates curve tables
         !%-----------------------------------------------------------------------------
 
-        integer       :: ii, num_rows
+        integer       :: ii, jj, num_rows
 
         character(64) :: subroutine_name = 'init_tables'
 
@@ -509,23 +509,22 @@ contains
             stop "in " // subroutine_name
         end if
 
-        !% Allocate storage for table tables
-        !% HACK: move it to utility allocate module later
-        allocate(table(N_table))
+        !% allocate the number of table objets from SWMM5
+        call util_allocate_tables()
 
         do ii = 1, SWMM_N_table
-            table(ii)%ID = interface_get_table_attribute(ii, api_table_id)
+            table(ii)%ID = ii
             table(ii)%Type = interface_get_table_attribute(ii, api_table_type)
-            ! print*, num_rows, 'num_rows'
             !% get the number of entries in a table
             num_rows = interface_get_num_table_entries(ii)
-            
-            !% allocate the X and Y space
-            !% HACK: move it to utility allocate module later
-            allocate(table(ii)%X(num_rows))
-            table(ii)%X = nullvalueR
-            allocate(table(ii)%Y(num_rows))
-            table(ii)%Y = nullvalueR
+            !% allocate the value space
+            call util_allocate_table_entries (ii,num_rows)
+            !% get the first entry of the table
+            table(ii)%Value(1,:) = interface_get_first_entry_table(ii)
+            !% populate the rest of the tables
+            do jj = 2,num_rows
+                table(ii)%Value(jj,:) = interface_get_next_entry_table(ii, API_CURVE)
+            end do
         end do
 
         if (setting%Debug%File%initialization)  &

@@ -576,7 +576,7 @@ int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int obj
     return 0;
 }
 
-int DLLEXPORT api_get_num_table_entries(int k, int table_type, int * num_entries)
+int DLLEXPORT api_get_num_table_entries(int k, int table_type, int *num_entries)
 {
     double x, y;
     int success;
@@ -606,7 +606,7 @@ int DLLEXPORT api_get_num_table_entries(int k, int table_type, int * num_entries
     return 0;
 }
 
-int DLLEXPORT api_get_first_entry_table(int k, int table_type, int *x, int *y)
+int DLLEXPORT api_get_first_entry_table(int k, int table_type, double *x, double *y)
 {
     int success;
 
@@ -615,37 +615,49 @@ int DLLEXPORT api_get_first_entry_table(int k, int table_type, int *x, int *y)
     else if (table_type == TSERIES)
         success = table_getFirstEntry(&(Tseries[k]), x, y);
     else
-        return -1;
+        return 0;
     return success;
 }
 
-int DLLEXPORT api_get_next_entry_table(int k, int table_type, int *x, int *y)
+int DLLEXPORT api_get_next_entry_table(int k, int table_type, double *x, double *y)
 {
     int success;
 
     if (table_type == TSERIES)
     {
-        *x = Tseries[k].x2;
-        *y = Tseries[k].y2;
         success = table_getNextEntry(&(Tseries[k]), &(Tseries[k].x2), &(Tseries[k].y2));
         if (success)
         {
-            Tseries[k].x1 = *x;
-            Tseries[k].y1 = *y;
+            *x = Tseries[k].x2;
+            *y = Tseries[k].y2;
         }
     }
     else if (table_type == CURVE)
     {
-        *x = Curve[k].x2;
-        *y = Curve[k].y2;
         success = table_getNextEntry(&(Curve[k]), &(Curve[k].x2), &(Curve[k].y2));
         if (success)
-        {
-            Curve[k].x1 = *x;
-            Curve[k].y1 = *y;
+        {   
+            *x = Curve[k].x2;
+            *y = Curve[k].y2;
         }
     }
 
+    return success;
+}
+
+int DLLEXPORT api_get_next_entry_tseries(int k)
+{
+    int success;
+    double x2, y2;
+
+    x2 = Tseries[k].x2;
+    y2 = Tseries[k].y2;
+    success = table_getNextEntry(&(Tseries[k]), &(Tseries[k].x2), &(Tseries[k].y2));
+    if (success == TRUE)
+    {
+        Tseries[k].x1 = x2;
+        Tseries[k].y1 = y2;
+    }
     return success;
 }
 

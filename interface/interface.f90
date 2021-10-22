@@ -30,6 +30,8 @@ module interface
     public :: interface_get_link_attribute
     public :: interface_get_table_attribute
     public :: interface_get_num_table_entries
+    public :: interface_get_first_entry_table
+    public :: interface_get_next_entry_table
     public :: interface_get_obj_name_len
     public :: interface_update_linknode_names
     public :: interface_get_BC_resolution
@@ -185,6 +187,26 @@ module interface
             integer(c_int) :: api_get_num_table_entries
         end function api_get_num_table_entries
         !% -------------------------------------------------------------------------------
+        function api_get_first_entry_table(k, table_type, x, y)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: table_type
+            type(c_ptr), value, intent(in) :: x
+            type(c_ptr), value, intent(in) :: y
+            integer(c_int) :: api_get_first_entry_table
+        end function api_get_first_entry_table
+        !% -------------------------------------------------------------------------------
+        function api_get_next_entry_table(k, table_type, x, y)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: table_type
+            type(c_ptr), value, intent(in) :: x
+            type(c_ptr), value, intent(in) :: y
+            integer(c_int) :: api_get_next_entry_table
+        end function api_get_next_entry_table
+        !% -------------------------------------------------------------------------------
         function api_get_next_entry_tseries(k)
             use, intrinsic :: iso_c_binding
             implicit none
@@ -244,8 +266,8 @@ module interface
 !% Procedures    
 !%==========================================================================
 !%    
-    procedure(api_initialize),             pointer :: ptr_api_initialize
-    procedure(api_finalize),               pointer :: ptr_api_finalize
+    procedure(api_initialize),             pointer :: ptr_api_initialize 
+    procedure(api_finalize),               pointer :: ptr_api_finalize 
     procedure(api_get_node_attribute),     pointer :: ptr_api_get_node_attribute
     procedure(api_get_link_attribute),     pointer :: ptr_api_get_link_attribute
     procedure(api_get_table_attribute),    pointer :: ptr_api_get_table_attribute
@@ -253,6 +275,8 @@ module interface
     procedure(api_get_object_name_len),    pointer :: ptr_api_get_object_name_len
     procedure(api_get_object_name),        pointer :: ptr_api_get_object_name
     procedure(api_get_num_table_entries),  pointer :: ptr_api_get_num_table_entries
+    procedure(api_get_first_entry_table),  pointer :: ptr_api_get_first_entry_table
+    procedure(api_get_next_entry_table),   pointer :: ptr_api_get_next_entry_table
     procedure(api_get_start_datetime),     pointer :: ptr_api_get_start_datetime
     procedure(api_get_end_datetime),       pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),             pointer :: ptr_api_get_flowBC
@@ -979,6 +1003,122 @@ contains
             print *, "table", table_entries
         end if
     end function interface_get_num_table_entries
+!%    
+!%=============================================================================
+!%=============================================================================
+!% 
+    function interface_get_first_entry_table(table_idx)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves first table entries from EPA-SWMM. API table attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
+        integer :: table_idx, error, success
+        real(8) :: interface_get_first_entry_table(2)
+        
+        type(c_ptr) :: cptr_x_entry, cptr_y_entry
+        real(c_double), target :: x_entry, y_entry
+        character(64) :: subroutine_name = 'interface_get_first_entry_table'
+    !%-----------------------------------------------------------------------------
+
+        cptr_x_entry = c_loc(x_entry)
+        cptr_y_entry = c_loc(y_entry)
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if ((table_idx > SWMM_N_Table) .or. (table_idx < 1)) then
+            print *, "error: unexpected table index value", table_idx
+            stop "in " // subroutine_name
+        end if
+
+        c_lib%procname = "api_get_first_entry_table"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop "in " // subroutine_name
+        end if
+
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_first_entry_table)
+        !% Substracts 1 to every Fortran index (it becomes a C index)
+        success = ptr_api_get_first_entry_table(table_idx-1, API_CURVE, cptr_x_entry, cptr_y_entry)
+
+        if (success == 0) then
+            error = -1 
+        else
+            error = 0 
+        end if
+        
+        call print_api_error(error, subroutine_name)
+        interface_get_first_entry_table(1) = x_entry
+        interface_get_first_entry_table(2) = y_entry
+
+        if (setting%Debug%File%interface)  then
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        end if
+    end function interface_get_first_entry_table
+!%    
+!%=============================================================================
+!%=============================================================================
+!% 
+    function interface_get_next_entry_table(table_idx, table_type)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves next table entries from EPA-SWMM. API table attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
+        integer :: table_idx, table_type, error, success
+        real(8) :: interface_get_next_entry_table(2)
+        
+        type(c_ptr) :: cptr_x_entry, cptr_y_entry
+        real(c_double), target :: x_entry, y_entry
+        character(64) :: subroutine_name = 'interface_get_next_entry_table'
+    !%-----------------------------------------------------------------------------
+
+        cptr_x_entry = c_loc(x_entry)
+        cptr_y_entry = c_loc(y_entry)
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if ((table_idx > SWMM_N_Table) .or. (table_idx < 1)) then
+            print *, "error: unexpected table index value", table_idx
+            stop "in " // subroutine_name
+        end if
+
+        c_lib%procname = "api_get_next_entry_table"
+        call c_lib_load(c_lib, errstat, errmsg)
+        if (errstat /= 0) then
+            print *, "ERROR: " // trim(errmsg)
+            stop "in " // subroutine_name
+        end if
+
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_table)
+        !% Substracts 1 to every Fortran index (it becomes a C index)
+        success = ptr_api_get_next_entry_table(table_idx-1, table_type, cptr_x_entry, cptr_y_entry)
+
+        if (success == 0) then
+            error = -1 
+        else
+            error = 0 
+        end if
+        
+        call print_api_error(error, subroutine_name)
+        interface_get_next_entry_table(1) = x_entry
+        interface_get_next_entry_table(2) = y_entry
+
+        if (setting%Debug%File%interface)  then
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        end if
+    end function interface_get_next_entry_table
 !%    
 !%=============================================================================
 !%   Boundary Conditions (execute after initialization only)
