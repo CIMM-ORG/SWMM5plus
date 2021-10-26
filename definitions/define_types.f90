@@ -18,14 +18,15 @@ module define_types
         character(len=:), allocatable :: str
     end type string
 
-    !% Table data
-    type tableType
+    !% curve data
+    type curveType
         integer :: ID
         integer :: Type
         integer :: RefersTo
+        integer :: NumRows
         integer :: ElemIdx
         integer :: FaceIdx
-        real(8), dimension(:,:), allocatable :: Value
+        real(8), dimension(:,:), allocatable :: ValueArray
     end type
 
     !%  control data

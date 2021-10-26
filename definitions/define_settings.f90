@@ -417,10 +417,11 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
-        real(8) :: kFactor  = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
-        real(8) :: HeadCoef = 1.0   !% junction branch head coef for diagnostic junction (must be > 0)
-        real(8) :: CFLlimit = 0.5   !% limiter on CFL to control dynamic junction
-        logical :: isDynamic = .true.
+        real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
+        real(8) :: HeadCoef     = 1.0   !% junction branch head coef for diagnostic junction (must be > 0)
+        real(8) :: CFLlimit     = 0.5   !% limiter on CFL to control dynamic junction
+        integer :: FunStorageN  = 10    !% number of curve entries for functional storage
+        logical :: isDynamic    = .true.
     end type JunctionType
 
     ! setting%Limiter
@@ -841,6 +842,10 @@ contains
 
         call json%get('Junction.CFLlimit', real_value, found)
         setting%Junction%CFLlimit = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
+
+        call json%get('Junction.FunStorageN', integer_value, found)
+        setting%Junction%FunStorageN = integer_value
         if (.not. found) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
 
         call json%get('Junction.isDynamic', logical_value, found)

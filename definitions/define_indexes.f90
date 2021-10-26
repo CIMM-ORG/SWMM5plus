@@ -411,6 +411,7 @@ module define_indexes
         enumerator :: epg_CCJM_trapezoidal_nonsurcharged     !% CC and JM trapezoidal channels that are not surcharged
         enumerator :: epg_CCJM_circular_nonsurcharged        !% CC and JM circular conduits that are not surcharged
         enumerator :: epg_JM_functional_nonsurcharged        !% JM functional geometry relationship nonsurcharges
+        enumerator :: epg_JM_tabular_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
         enumerator :: epg_JB_circular                        !% all circular junction branches
@@ -800,7 +801,7 @@ module define_indexes
     end enum
     integer, target :: Ncol_oefi = oefi_lastplusone-1
 
- !% data types (columns) in the OutFaceFixedI
+    !% data types (columns) in the OutFaceFixedI
     enum, bind(c)
         enumerator :: offi_face_Gidx = 1
         enumerator :: offi_node_Gidx_SWMM
@@ -808,7 +809,28 @@ module define_indexes
     end enum
     integer, target :: Ncol_offi = offi_lastplusone-1
 
+    !% data types (columns) in the table
+    !% define column indexes for storage curve types
+    enum, bind(c)
+        enumerator :: curve_storage_depth = 1
+        enumerator :: curve_storage_area
+        enumerator :: curve_storage_volume
+        enumerator :: curve_storage_lastplusone !% must be the last enum item
+    end enum
+    integer, parameter :: Ncol_storage_curve = curve_storage_lastplusone-1
 
+    !% define column indexes for pump curve types
+    enum, bind(c)
+        enumerator :: curve_pump_depth = 1
+        enumerator :: curve_pump_flowrate
+        enumerator :: curve_pump_lastplusone !% must be the last enum item
+    end enum
+    integer, parameter :: Ncol_pump_curve = curve_pump_lastplusone-1
+
+    !% determine the largest number of columns for table data structure
+    integer, target :: Ncol_curve = max(&
+                            Ncol_storage_curve, &
+                            Ncol_pump_curve)
     !
     !==========================================================================
     ! definitions

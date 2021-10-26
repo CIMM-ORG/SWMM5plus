@@ -150,6 +150,7 @@ module define_api_keys
         enumerator :: api_node_dwfInflow_avgvalue
         enumerator :: api_node_has_dwfInflow
         enumerator :: api_node_depth
+        enumerator :: api_node_fullDepth
         enumerator :: api_node_inflow
         enumerator :: api_node_volume
         enumerator :: api_node_overflow

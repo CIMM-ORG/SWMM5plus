@@ -39,8 +39,8 @@ module utility_allocate
     public :: util_allocate_outputML_storage
     public :: util_allocate_outputML_times
     public :: util_allocate_outputML_filenames 
-    public :: util_allocate_tables 
-    public :: util_allocate_table_entries
+    public :: util_allocate_curves 
+    public :: util_allocate_curve_entries
     public :: util_allocate_check
 
 
@@ -1580,61 +1580,62 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    subroutine util_allocate_tables ()
+    subroutine util_allocate_curves ()
         !-----------------------------------------------------------------------------
         !
         !
         !-----------------------------------------------------------------------------
 
-        character(64)       :: subroutine_name = 'util_allocate_tables'
+        character(64)       :: subroutine_name = 'util_allocate_curves'
 
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        !% allocate tables
-        allocate( table(N_table), stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg, 'table')
+        !% allocate curves
+        allocate( curve(N_curve), stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'curve')
         
-        table%ID = nullvalueI
-        table%Type = nullvalueI
-        table%RefersTo = nullvalueI
-        table%ElemIdx = nullvalueI
-        table%FaceIdx = nullvalueI
+        curve%ID = nullvalueI
+        curve%Type = nullvalueI
+        curve%RefersTo = nullvalueI
+        curve%NumRows = nullvalueI
+        curve%ElemIdx = nullvalueI
+        curve%FaceIdx = nullvalueI
 
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-    end subroutine util_allocate_tables
+    end subroutine util_allocate_curves
 !
 !==========================================================================
 !==========================================================================
 !
-    subroutine util_allocate_table_entries (table_idx, num_entries)
+    subroutine util_allocate_curve_entries (curve_idx, num_entries)
         !-----------------------------------------------------------------------------
         !
         !
         !-----------------------------------------------------------------------------
 
-        integer, intent(in) :: table_idx, num_entries
-        character(64)       :: subroutine_name = 'util_allocate_table_entries'
+        integer, intent(in) :: curve_idx, num_entries
+        character(64)       :: subroutine_name = 'util_allocate_curve_entries'
 
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        !% allocate the value array of table
-        allocate( table(table_idx)%Value(num_entries,twoI), stat=allocation_status, errmsg= emsg)
-        call util_allocate_check (allocation_status, emsg, 'table')
+        !% allocate the value array of curve
+        allocate( curve(curve_idx)%ValueArray(num_entries,Ncol_curve), stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'curve')
 
-        table(table_idx)%Value = nullvalueR
+        curve(curve_idx)%ValueArray = nullvalueR
 
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-    end subroutine util_allocate_table_entries
+    end subroutine util_allocate_curve_entries
 !
 !==========================================================================
 !==========================================================================

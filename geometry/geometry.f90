@@ -242,7 +242,14 @@ module geometry
         thisCol => col_elemPGx(epg_JM_functional_nonsurcharged)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call functional_storage_depth_from_volume (elemPGx, Npack, thisCol)
+            call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% JM with tabular geomtery
+        thisCol => col_elemPGx(epg_JM_tabular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
         end if
   
         if (setting%Debug%File%geometry) &

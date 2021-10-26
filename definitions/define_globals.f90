@@ -55,8 +55,8 @@ module define_globals
     !% Boundary conditions
     type(BCArray), target :: BC
 
-    !!% Table types
-    type(tableType), dimension(:), allocatable, target :: table
+    !!% Curve types
+    type(curveType), dimension(:), allocatable, target :: curve
 
     !%  columns of element and face arrays
     integer, allocatable, target :: col_elemI(:)[:]                                !% columns of elemI array
@@ -247,8 +247,8 @@ module define_globals
     integer :: N_etm
     integer :: N_link_output
     integer :: N_node_output
-    integer :: SWMM_N_Table
-    integer :: N_table
+    integer :: SWMM_N_Curve
+    integer :: N_Curve
     integer, target :: N_OutTypeElem
     integer, target :: N_OutTypeFace
 

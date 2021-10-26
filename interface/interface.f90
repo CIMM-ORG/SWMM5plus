@@ -359,8 +359,8 @@ contains
         N_link = SWMM_N_link
         SWMM_N_node = get_num_objects(API_NODE)
         N_node = SWMM_N_node
-        SWMM_N_Table = get_num_objects(API_CURVE)
-        N_table = SWMM_N_Table
+        SWMM_N_Curve = get_num_objects(API_CURVE)
+        N_curve = SWMM_N_Curve
 
         print * 
         print *, 'BUG WARNING location ',980879,' in ',subroutine_name
@@ -900,7 +900,7 @@ contains
             stop "in " // subroutine_name
         end if
 
-        if ((table_idx > SWMM_N_Table) .or. (table_idx < 1)) then
+        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
             stop "in " // subroutine_name
         end if
@@ -979,7 +979,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if ((table_idx > SWMM_N_Table) .or. (table_idx < 1)) then
+        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
             stop "in " // subroutine_name
         end if
@@ -1031,7 +1031,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if ((table_idx > SWMM_N_Table) .or. (table_idx < 1)) then
+        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
             stop "in " // subroutine_name
         end if
@@ -1089,7 +1089,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if ((table_idx > SWMM_N_Table) .or. (table_idx < 1)) then
+        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
             stop "in " // subroutine_name
         end if

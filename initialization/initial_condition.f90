@@ -19,6 +19,7 @@ module initial_condition
     use diagnostic_elements
     use geometry !BRHbugfix 20210813
     use circular_conduit
+    use storage_geometry
 
     implicit none
 
@@ -150,7 +151,7 @@ contains
            print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
            call execute_command_line('')
         end if
-        stop 1132156
+        
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         
@@ -981,8 +982,9 @@ contains
     !
         integer, intent(in) :: thisJunctionNode
 
-        integer             :: ii, JMidx, JBidx
-        integer, pointer    :: BranchIdx, geometryType, JmType, curveID
+        integer              :: ii, jj, JMidx, JBidx
+        integer, pointer     :: BranchIdx, geometryType, JmType, curveID
+        real(8), allocatable :: integrated_volume(:)
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
     !--------------------------------------------------------------------------
@@ -1004,7 +1006,7 @@ contains
         
         !% set the type of junction main
         if (node%YN(thisJunctionNode,nYN_has_storage)) then
-            if (node%I(thisJunctionNode,ni_curve_ID) .eq. -1) then
+            if (node%I(thisJunctionNode,ni_curve_ID) .eq. 0) then
                 elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
                 elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
                 elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
@@ -1023,8 +1025,9 @@ contains
         end if
 
         !% junction main depth and head from initial conditions
-        elemR(JMidx,er_Depth) = node%R(thisJunctionNode,nr_InitialDepth)
-        elemR(JMidx,er_Head)  = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
+        elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
+        elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
+        elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
 
         !% JM elements are not solved for momentum. 
         elemR(JMidx,er_Flowrate)     = zeroR
@@ -1178,7 +1181,6 @@ contains
             end if
         end do
 
-
         !% HACK: 
         !% set initial conditions for junction main from the junction branch data
         !% For the momentum we are simply using rectangular geometry as a damping pot for the junctions.
@@ -1216,22 +1218,25 @@ contains
                 elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
 
             case (FunctionalStorage)
-
-                 elemR(JMidx,er_Volume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth) +          &
-                        (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR)) * &
-                        elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
+                elemR(JMidx,er_Volume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth) +          &
+                    (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR)) * &
+                    elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
 
                 elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume) 
                 elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
 
+                !% create a storage curve
+                call storage_create_curve (JMidx)
+
             case (TabularStorage)
                 curveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
-                table(curveID)%ElemIdx = JMidx
-                print*, table(curveID)%ElemIdx, 'table'
-                print*, table(curveID)%Value, 'value'
-                print*, 'In, ', subroutine_name
-                print*, 'storage with tabular depth vs. volume relationship has not been developed yet'
-                stop 54894
+                Curve(curveID)%ElemIdx = JMidx
+                !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used 
+                !% to get to integrate the area vs depth curve
+                call storage_integrate_area_vs_depth_curve (curveID)
+
+                !% now interpolate from the cure to get the volume
+                call storage_interpolate_volume_from_depth_singular (JMidx)
 
             case default
                 print*, 'In, ', subroutine_name

@@ -65,7 +65,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 1.00,
+        "NominalElemLength" : 10.00,
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -85,6 +85,7 @@
         "kFactor"  : 0.0,
         "HeadCoef" : 1.0,
         "CFLlimit" : 0.5,
+        "FunStorageN" : 10,
         "isDynamic" : true
     },
     "Limiter" : {

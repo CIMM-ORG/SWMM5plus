@@ -77,6 +77,7 @@ enum api_node_attributes {
   node_dwfInflow_avgvalue,
   node_has_dwfInflow,
   node_depth,
+  node_fullDepth,
   node_inflow,
   node_volume,
   node_overflow

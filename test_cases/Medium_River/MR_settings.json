@@ -85,6 +85,7 @@
         "kFactor"  : 0.0,
         "HeadCoef" : 1.0,
         "CFLlimit" : 0.5,
+        "FunStorageN" : 10,
         "isDynamic" : true
     },
     "Limiter" : {
@@ -317,7 +318,6 @@
             "timeloop" : false,
             "utility" : false
         },
-<<<<<<< HEAD:swmm_files/Medium_size_river_network_test_case/Colorado_medium_settings.json
         "Input"  : true,
         "Output" : true,
         "Tests" : true
@@ -328,13 +328,4 @@
     "Warning"  : true,
     "Verbose" : true
 }
-=======
-        "Setup"  : false,
-        "Output" : false,
-        "Tests" : false
-    },
-    "Profile" : {
-        "YN" : true
-    }
-}
->>>>>>> daac7942fad83f96788197b6c13cf668a159b5c5:test_cases/Medium_River/MR_settings.json
+

@@ -14,7 +14,6 @@ module initialization
     use utility_array
     use utility_datetime
     use utility_output
-    use utility_array
     use utility_profiler
     use utility_files
     use pack_mask_arrays
@@ -130,9 +129,9 @@ contains
         if (setting%Output%Verbose) print *, "begin link-node processing"
         call init_linknode_arrays ()
 
-        !% --- store the SWMM-C tables in equivalent Fortran arrays
-        if (setting%Output%Verbose) print *, "begin SWMM5 table processing"
-        call init_tables()
+        !% --- store the SWMM-C curves in equivalent Fortran arrays
+        if (setting%Output%Verbose) print *, "begin SWMM5 curve processing"
+        call init_curves()
 
         if (setting%Output%Verbose) print *, "begin partitioning"
         call init_partitioning()
@@ -469,12 +468,13 @@ contains
                 end if
             end if
 
-            node%R(ii,nr_InitialDepth) = interface_get_node_attribute(ii, api_node_initDepth)
-            node%R(ii,nr_Zbottom) = interface_get_node_attribute(ii, api_node_invertElev)
-            node%R(ii,nr_StorageConstant) = interface_get_node_attribute(ii, api_node_StorageConstant)
-            node%R(ii,nr_StorageCoeff)    = interface_get_node_attribute(ii, api_node_StorageCoeff)
-            node%R(ii,nr_StorageExponent) = interface_get_node_attribute(ii, api_node_StorageExponent)
-            node%I(ii,ni_curve_ID)        = interface_get_node_attribute(ii, api_node_StorageCurveID) + 1
+            node%R(ii,nr_InitialDepth)      = interface_get_node_attribute(ii, api_node_initDepth)
+            node%R(ii,nr_Zbottom)           = interface_get_node_attribute(ii, api_node_invertElev)
+            node%R(ii,nr_FullDepth)         = interface_get_node_attribute(ii, api_node_fullDepth)
+            node%R(ii,nr_StorageConstant)   = interface_get_node_attribute(ii, api_node_StorageConstant)
+            node%R(ii,nr_StorageCoeff)      = interface_get_node_attribute(ii, api_node_StorageCoeff)
+            node%R(ii,nr_StorageExponent)   = interface_get_node_attribute(ii, api_node_StorageExponent)
+            node%I(ii,ni_curve_ID)          = interface_get_node_attribute(ii, api_node_StorageCurveID) + 1
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
         end do
 
@@ -489,15 +489,15 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine init_tables()
+    subroutine init_curves()
         !%-----------------------------------------------------------------------------
         !% Description:
-        !%   Retrieves data from EPA-SWMM interface and populates curve tables
+        !%   Retrieves data from EPA-SWMM interface and populates curve curves
         !%-----------------------------------------------------------------------------
 
-        integer       :: ii, jj, num_rows
+        integer       :: ii, jj, additional_storage_curves, Total_curves
 
-        character(64) :: subroutine_name = 'init_tables'
+        character(64) :: subroutine_name = 'init_curves'
 
         !%-----------------------------------------------------------------------------
         if (icrash) return
@@ -509,28 +509,36 @@ contains
             stop "in " // subroutine_name
         end if
 
-        !% allocate the number of table objets from SWMM5
-        call util_allocate_tables()
+        !% we create additional curves for functional storage as well
+        !% this allocates the space for functional storage curve
+        additional_storage_curves = count((node%YN(:, nYN_has_storage)) .and. &
+                                          (node%I(:,ni_curve_ID) == 0))
 
-        do ii = 1, SWMM_N_table
-            table(ii)%ID = ii
-            table(ii)%Type = interface_get_table_attribute(ii, api_table_type)
-            !% get the number of entries in a table
-            num_rows = interface_get_num_table_entries(ii)
+        Total_Curves = additional_storage_curves + SWMM_N_Curve
+        if (Total_Curves > SWMM_N_Curve) N_Curve = SWMM_N_Curve + additional_storage_curves
+        
+        !% allocate the number of curve objets from SWMM5
+        call util_allocate_curves()
+
+        do ii = 1, SWMM_N_Curve
+            curve(ii)%ID = ii
+            curve(ii)%Type = interface_get_table_attribute(ii, api_table_type)
+            !% get the number of entries in a curve
+            curve(ii)%NumRows = interface_get_num_table_entries(ii)
             !% allocate the value space
-            call util_allocate_table_entries (ii,num_rows)
-            !% get the first entry of the table
-            table(ii)%Value(1,:) = interface_get_first_entry_table(ii)
-            !% populate the rest of the tables
-            do jj = 2,num_rows
-                table(ii)%Value(jj,:) = interface_get_next_entry_table(ii, API_CURVE)
+            call util_allocate_curve_entries (ii,curve(ii)%NumRows)
+            !% get the first entry of the curve
+            curve(ii)%ValueArray(1,:) = interface_get_first_entry_table(ii)
+            !% populate the rest of the curves
+            do jj = 2,curve(ii)%NumRows
+                curve(ii)%ValueArray(jj,:) = interface_get_next_entry_table(ii, API_CURVE)
             end do
         end do
 
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
-    end subroutine init_tables
+    end subroutine init_curves
 !%
 !%==========================================================================
 !%==========================================================================

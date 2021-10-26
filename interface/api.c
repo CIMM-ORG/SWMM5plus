@@ -242,6 +242,10 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     }
     else if (attr == node_invertElev)
         *value = FTTOM(Node[k].invertElev);
+
+    else if (attr == node_fullDepth)
+        *value = FTTOM(Node[k].fullDepth);
+    
     else if (attr == node_initDepth)
     {
         if (Node[k].type == OUTFALL)

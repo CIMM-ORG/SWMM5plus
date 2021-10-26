@@ -58,7 +58,7 @@ Out1             0          FIXED      1                NO
 [STORAGE]
 ;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     
 ;;-------------- -------- ---------- ----------- ---------- ---------------------------- -------- --------          -------- --------
-ST1              0.1390   4          1          TABULAR    ST_CURVE_1                   0        0       
+ST1              0.1390   8.0          1         TABULAR    ST_CURVE_1                   0        0       
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -87,7 +87,14 @@ ST_CURVE_1                  2.0          2000
 ST_CURVE_1                  2.5          2500      
 ST_CURVE_1                  3.0          3000      
 ST_CURVE_1                  3.5          3500 
-ST_CURVE_1                  4.0          4000        
+ST_CURVE_1                  4.0          4000
+ST_CURVE_1                  4.5          4100      
+ST_CURVE_1                  5.0          4211     
+ST_CURVE_1                  5.5          4567
+ST_CURVE_1                  6.0          5157      
+ST_CURVE_1                  6.5          5523      
+ST_CURVE_1                  7.0          6001 
+ST_CURVE_1                  8.0          6503         
 
 [REPORT]
 ;;Reporting Options
