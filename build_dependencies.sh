@@ -103,8 +103,8 @@ then
     fi
     tar -xvf *.tar.gz
     rm *.tar.gz
-    mv Stormwater*/src "$API_DIR/src"
-    rm -r Stormwater*
+    cp -r Stormwater*/src "$API_DIR/src"
+    sudo rm -r Stormwater*
 fi
 
 # --------------------------------------------------------------------------------------
@@ -314,11 +314,14 @@ echo
 
 cp -f "$API_DIR/api.h" "$API_DIR/src/"
 cp -f "$API_DIR/api.c" "$API_DIR/src/"
+cp -f "$API_DIR/api_error.h" "$API_DIR/src/"
+cp -f "$API_DIR/api_error.c" "$API_DIR/src/"
 
 # Insert new files in EPA-SWMM Makefile
 
-SCRIPTS='api.o'
-OBJECTS='api.o   : headers.h api.h\
+SCRIPTS='api_error.o api.o'
+OBJECTS='api_error.o   : headers.h api_error.h\
+api.o   : api.h api_error.h headers.h\
 '
 
 API_TEST_FILES=""

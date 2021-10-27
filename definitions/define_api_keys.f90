@@ -16,7 +16,7 @@ module define_api_keys
     !%   the beginning of the API key
     !%
     !%   Variables written in caps are extracted from native
-    !%   EPA-SWMM, whereas lowercase vars are added to the
+    !%   EPA-SWMM, whereas lower case vars are added to the
     !%   EPA-SWMM
     !% --------------------------------------------------------
 

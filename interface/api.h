@@ -1,13 +1,5 @@
-#define UPSTREAM 0
-#define DOWNSTREAM 1
-#define SSIGN(X) (X > 0) - (X < 0)
-#define CFTOCM(cf) cf*0.0283168466 // Cubic feet to cubic meters
-#define FT2TOM2(sft) sft*0.09290304 // Square feet to square meters
-#define FTTOM(ft) ft*0.3048 // Feet to meters
-#define nullvalueI -998877
-
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#ifndef API_H
+#define API_H
 
 // --- define WINDOWS
 
@@ -27,29 +19,34 @@
     #define DLLEXPORT
 #endif
 
-
-#define nullvalue -998877022E8
+#define UPSTREAM 0
+#define DOWNSTREAM 1
+#define SSIGN(X) (X > 0) - (X < 0)
+#define CFTOCM(cf) cf*0.0283168466 // Cubic feet to cubic meters
+#define FT2TOM2(sft) sft*0.09290304 // Square feet to square meters
+#define FTTOM(ft) ft*0.3048 // Feet to meters
+#define API_NULL_VALUE_I -998877022E8
 #define NUM_API_INT_VARS 0
 #define NUM_API_DOUBLE_VARS 2
 #define NUM_API_TABLES 1
 
-// Interface error codes:
-#define ERROR_FEATURE_NOT_COMPATIBLE 100001
+// Enums written in caps are extracted from native
+// EPA-SWMM, whereas lower case vars are added to EPA-SWMM
 
-#define MAX_API_OUTPUT_NODE_ATTR 4
 enum api_output_node_attribute {
   output_node_depth = 0,
   output_node_volume,
   output_node_latflow,
-  output_node_inflow
+  output_node_inflow,
+  MAX_API_OUTPUT_NODE_ATTR
 };
 
-#define MAX_API_OUTPUT_LINK_ATTR 4
 enum api_output_link_attribute {
   output_link_depth = 0,
   output_link_flow,
   output_link_volume,
-  output_link_direction
+  output_link_direction,
+  MAX_API_OUTPUT_LINK_ATTR
 };
 
 enum api_node_attributes {
@@ -167,14 +164,14 @@ int DLLEXPORT api_get_link_results(void* f_api, char* link_name, float* flow, fl
 double DLLEXPORT api_get_start_datetime();
 double DLLEXPORT api_get_end_datetime();
 double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime);
-double DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime);
+int DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime, double* headBC);
 int DLLEXPORT api_get_report_times(void * f_api, double * report_start_datetime, int * report_step, int * hydrology_step);
 int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value);
 int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value);
 int DLLEXPORT api_get_num_objects(void* f_api, int object_type);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
 int DLLEXPORT api_get_next_entry_tseries(int k);
-int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type);
+int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type, int* len);
 int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
 
 // Output fcns
