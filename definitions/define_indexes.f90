@@ -239,6 +239,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: lYN_CanSurcharge = 1
         enumerator :: lYN_isOutput
+        enumerator :: lYN_isPhantomLink
         enumerator :: lYN_temp1
         enumerator :: lYN_lastplusone !% must be last enum item
     end enum

@@ -158,7 +158,7 @@ module define_globals
 
     !% storage for all real data on all output elements for limited time levels
     !% (outelement, type, time-level) real data -- not coarray
-    real(8), allocatable, target :: OutElemDataR(:,:,:) 
+    real(8), allocatable, target :: OutElemDataR(:,:,:)
     !% storage for fixed integer data needed in output elements -- not coarray
     !% (outelement, dataindex)
     integer, allocatable, target :: OutElemFixedI(:,:)

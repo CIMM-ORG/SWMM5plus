@@ -282,8 +282,6 @@ contains
 
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
-
     end subroutine util_allocate_elemX_faceX
 !
 !==========================================================================
@@ -391,7 +389,8 @@ contains
         character(len=99)  :: emsg
         !-----------------------------------------------------------------------------
         if (icrash) return
-        if (setting%Debug%File%utility) print *, '*** enter', this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         if (setting%Profile%YN) then
             !% allocate profiler data
@@ -481,7 +480,8 @@ contains
             profiler_procedure_level(pfc_diagnostic_toplevel) = 2
         end if
 
-        if (setting%Debug%File%utility) print *, '*** leave ', this_image(),subroutine_name
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_allocate_profiler
 !%
 !%==========================================================================
@@ -495,6 +495,8 @@ contains
         character(len=99)  :: emsg        
         character(64)       :: subroutine_name = 'util_allocate_outputML_elemtypes'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
         !% --- don't execute if no output elements
         if (.not. setting%Output%OutputElementsExist) return
 
@@ -538,6 +540,8 @@ contains
         call util_allocate_check (allocation_status, emsg, 'output_typeUnits_withTime_elemR')
         output_typeUnits_withTime_elemR(:) = ""
 
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_elemtypes
 !%
 !%==========================================================================
@@ -551,8 +555,10 @@ contains
         character(len=99)  :: emsg        
         character(64)       :: subroutine_name = 'util_allocate_outputML_facetypes'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-         !% --- don't execute if no output faces
+        !% --- don't execute if no output faces
         if (.not. setting%Output%OutputFacesExist) return
 
         !% --- bug check
@@ -594,6 +600,8 @@ contains
         call util_allocate_check (allocation_status, emsg, 'output_typeUnits_withTime_faceR')
         output_typeUnits_withTime_faceR(:) = ""
 
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_facetypes  
 !%
 !%==========================================================================
@@ -608,6 +616,8 @@ contains
         character(len=99)  :: emsg  
         character(64)      :: subroutine_name = 'utility_allocate_outputtype'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% --- don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -627,6 +637,8 @@ contains
         call util_allocate_check (allocation_status, emsg, 'output_times')
         output_times(:) = nullvalueR
 
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_times   
 !%
 !%==========================================================================
@@ -641,6 +653,8 @@ contains
         character(len=99)  :: emsg  
         character(64)      :: subroutine_name = 'utility_allocate_outputML_filenames'
         !%-----------------------------------------------------------------------------
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% --- don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -660,6 +674,8 @@ contains
         call util_allocate_check (allocation_status, emsg, 'output_binary_filenames')
         output_binary_filenames(:) = "null"
         
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_filenames    
 !%
 !%==========================================================================
@@ -676,8 +692,8 @@ contains
         character(len=99) :: emsg  
         character(64)     :: subroutine_name = ' util_allocate_outputML_storage'
         !%-----------------------------------------------------------------------------
-        !% --- only for serial
-        if (this_image() .ne. 1) return
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% --- don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -715,7 +731,7 @@ contains
         if (setting%Output%OutputElementsExist) then
             !% --- shortand for the output types
             nType => N_OutTypeElem
-
+            print*, nType, 'nType in image = ', this_image()
             !% --- bug check
             if (nType < 1) then
                 write(*,"(A)") 'ERROR (code) the N_OutTypeElem is less than 1 (i.e. no output types selected)'
@@ -751,20 +767,23 @@ contains
             !% --- get the total number of output elements on all images
             nTotal = sum(N_OutElem(:))
 
-            !% --- get space for combined element data
-            allocate(OutElemDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg, 'OutElemDataR')
-            OutElemDataR(:,:,:) = nullvalueR
+            !% allocate the full network multi-level output array to one processor 
+            if (this_image() == 1) then
+                !% --- get space for combined element data
+                allocate(OutElemDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'OutElemDataR')
+                OutElemDataR(:,:,:) = nullvalueR
 
-            !brh rm !% --- get space for the indexes to the elemR() etc array
-            !brh rm allocate(OutElemGidx(nTotal), stat=allocation_status, errmsg=emsg)
-            !brh rm call util_allocate_check(allocation_status, emsg, 'OutElemGidx')
-            !brh rm OutElemGidx(:) = nullvalueI  
+                !brh rm !% --- get space for the indexes to the elemR() etc array
+                !brh rm allocate(OutElemGidx(nTotal), stat=allocation_status, errmsg=emsg)
+                !brh rm call util_allocate_check(allocation_status, emsg, 'OutElemGidx')
+                !brh rm OutElemGidx(:) = nullvalueI  
 
-            !% --- get space for integer data for OutElemFixedI
-            allocate(OutElemFixedI(nTotal,Ncol_oefi), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg, 'OutElemFixedI')
-            OutElemFixedI(:,:) = nullvalueI
+                !% --- get space for integer data for OutElemFixedI
+                allocate(OutElemFixedI(nTotal,Ncol_oefi), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'OutElemFixedI')
+                OutElemFixedI(:,:) = nullvalueI
+            end if
             
         end if
 
@@ -798,7 +817,7 @@ contains
             end if
 
             !% allocate the multi-level element storage for each image
-            allocate(faceOutR(nElem, nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
+            allocate(faceOutR(nElem,nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'faceOutR')
             faceOutR(:,:,:) = nullvalueR
 
@@ -809,24 +828,28 @@ contains
             !% --- get the total number of output elements on all images
             nTotal = sum(N_OutFace(:))
 
-            !% --- get space for combined element data
-            allocate(OutFaceDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg, 'OutFaceDataR')
-            OutFaceDataR(:,:,:) = nullvalueR
+            !% allocate the full network multi-level output array to one processor 
+            if (this_image() == 1) then
+                !% --- get space for combined element data
+                allocate(OutFaceDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'OutFaceDataR')
+                OutFaceDataR(:,:,:) = nullvalueR
 
-            !brh rm !% --- get space for the indexes to the elemR() etc array
-            !brh rm  allocate(OutFaceGidx(nTotal), stat=allocation_status, errmsg=emsg)
-            !brh rm  call util_allocate_check(allocation_status, emsg, 'OutFaceGidx')
-            !brh rm  OutFaceGidx(:) = nullvalueI  
+                !brh rm !% --- get space for the indexes to the elemR() etc array
+                !brh rm  allocate(OutFaceGidx(nTotal), stat=allocation_status, errmsg=emsg)
+                !brh rm  call util_allocate_check(allocation_status, emsg, 'OutFaceGidx')
+                !brh rm  OutFaceGidx(:) = nullvalueI  
 
-            !% --- get space for integer data for OutElemFixedI
-            allocate(OutFaceFixedI(nTotal,Ncol_offi), stat=allocation_status, errmsg=emsg)
-            call util_allocate_check(allocation_status, emsg, 'OutFaceFixedI')
-            OutFaceFixedI(:,:) = nullvalueI
+                !% --- get space for integer data for OutElemFixedI
+                allocate(OutFaceFixedI(nTotal,Ncol_offi), stat=allocation_status, errmsg=emsg)
+                call util_allocate_check(allocation_status, emsg, 'OutFaceFixedI')
+                OutFaceFixedI(:,:) = nullvalueI
+            end if
 
         end if
 
-        
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_storage 
 !%
 !%==========================================================================
@@ -873,7 +896,6 @@ contains
 
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
     end subroutine util_allocate_col_elemI
 !
 !==========================================================================
@@ -898,7 +920,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemP
@@ -1057,7 +1079,6 @@ contains
 
         if (setting%Debug%File%utility_allocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-
     end subroutine util_allocate_col_elemPGetm
 !
 !==========================================================================

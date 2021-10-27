@@ -1052,6 +1052,7 @@ contains
         !% The resets the phantom index to having the phantom link and phantom node (as upstream node)
         link%I(phantom_link_idx, li_idx) = phantom_link_idx
         link%I(phantom_link_idx, li_Mnode_u) = phantom_node_idx
+        link%YN(phantom_link_idx, lYN_isPhantomLink) = .true.
 
         if (setting%Debug%File%BIPquick) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
