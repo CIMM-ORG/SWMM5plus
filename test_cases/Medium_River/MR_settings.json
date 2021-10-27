@@ -66,6 +66,8 @@
     },
     "Discretization" : {
         "NominalElemLength" : 150.00,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {

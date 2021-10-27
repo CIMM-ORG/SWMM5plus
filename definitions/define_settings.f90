@@ -349,8 +349,10 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
-        real(8) :: NominalElemLength  = 10.0
-        real(8) :: LinkShortingFactor = 0.33
+        real(8) :: NominalElemLength   = 10.0
+        integer :: MinElemLengthMethod = ElemLengthAdjust
+        real(8) :: MinElemLengthFactor = 0.50
+        real(8) :: LinkShortingFactor  = 0.33
     end type DiscretizationType
 
     ! setting%Eps
@@ -785,7 +787,19 @@ contains
         !% -- Nominal element length adjustment
         call json%get('Discretization.NominalElemLength', real_value, found)
         setting%Discretization%NominalElemLength = real_value
-        if (.not. found) stop "Error - json file - setting " // 'Discretization.NominalElemLength not found'
+        !% -- Minimum CC element length
+        call json%get('Discretization.MinElemLengthFactor', real_value, found)
+        setting%Discretization%MinElemLengthFactor = real_value
+        if (.not. found) stop "Error - json file - setting " // 'Discretization.MinElemLengthFactor not found'
+        !% -- Minimum CC element length algorithm
+        call json%get('Discretization.MinElemLengthMethod', c, found)
+        call util_lower_case(c)
+        if (c == 'elemlengthadjust') then
+            setting%Discretization%MinElemLengthMethod = ElemLengthAdjust
+        else
+            stop "Error, Discretization.MinElemLengthMethod not compatible. See data_keys.f90"
+        end if
+
         call json%get('Discretization.LinkShortingFactor', real_value, found)
         setting%Discretization%LinkShortingFactor = real_value
         if (.not. found) stop "Error - json file - setting " // 'Discretization.LinkShortingFactor not found'

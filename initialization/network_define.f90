@@ -61,6 +61,10 @@ contains
         !% of the face associated with the node
         call init_network_update_nj2_elem ()
 
+        !% look for small CC elements in the network and elongates them 
+        !% to a user defined value
+        call init_network_CC_elem_length_adjust ()
+
         sync all
 
         !% print result
@@ -792,7 +796,19 @@ contains
                 !% integer data
                 elemI(ElemLocalCounter,ei_Lidx)                 = ElemLocalCounter
                 elemI(ElemLocalCounter,ei_Gidx)                 = ElemGlobalCounter
-                elemI(ElemLocalCounter,ei_elementType)          = link%I(thisLink,li_link_type)      
+
+                !% set the element type
+                if ((link%I(thisLink,li_link_type) == lPipe) .or. &
+                    (link%I(thisLink,li_link_type) == lChannel)) then
+                    elemI(ElemLocalCounter,ei_elementType)      = CC
+                elseif (link%I(thisLink,li_link_type) == lWeir) then
+                    elemI(ElemLocalCounter,ei_elementType)      = weir
+                elseif (link%I(thisLink,li_link_type) == lOrifice) then
+                    elemI(ElemLocalCounter,ei_elementType)      = orifice
+                elseif (link%I(thisLink,li_link_type) == lPump) then
+                    elemI(ElemLocalCounter,ei_elementType)      = pump
+                endif  
+
                 elemI(ElemLocalCounter,ei_Mface_uL)             = FaceLocalCounter
                 elemI(ElemLocalCounter,ei_Mface_dL)             = FaceLocalCounter + oneI
                 elemI(ElemLocalCounter,ei_link_pos)             = ii
@@ -1702,6 +1718,61 @@ contains
         if (setting%Debug%File%network_define) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine init_network_set_interior_faceYN
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine init_network_CC_elem_length_adjust ()
+        !
+        !--------------------------------------------------------------------------
+        !
+        !--------------------------------------------------------------------------
+        integer          :: ii
+        integer, pointer :: AdjustType, elementType(:), elementIdx(:)
+        real(8), pointer :: NominalLength, MinLengthFactor, elementLength(:)
+        real(8)          :: MinElemLength
+        character(64)    :: subroutine_name = 'init_network_CC_elem_length_adjust'
+        !--------------------------------------------------------------------------
+        if (icrash) return
+        
+        AdjustType      => setting%Discretization%MinElemLengthMethod
+        NominalLength   => setting%Discretization%NominalElemLength
+        MinLengthFactor => setting%Discretization%MinElemLengthFactor
+
+        elementIdx    => elemI(:,ei_Lidx)
+        elementType   => elemI(:,ei_elementType)
+        elementLength => elemR(:,er_Length)
+
+        select case (AdjustType)
+
+        case(RawElemLength)
+            !% do not do any adjustment and return the raw network
+            return
+
+        case (ElemLengthAdjust)
+
+            MinElemLength = NominalLength * MinLengthFactor
+
+            do ii = 1,N_elem(this_image())
+                if ((elementType(ii) == CC) .and. (elementLength(ii) < MinElemLength)) then
+                    if (setting%Output%Verbose) then 
+                        print*, 'In, ', subroutine_name
+                        print*, 'Small element detected at ElemIdx = ', elementIdx(ii), ' in image = ',this_image()
+                        print*, 'Element length = ', elementLength(ii), ' is adjusted to ', MinElemLength
+                    end if
+                    elementLength(ii) = MinElemLength
+                end if
+            end do
+
+        case default
+            print*, 'In, ', subroutine_name
+            print*, 'should not reach default condition'
+            stop 89537
+        end select
+
+        if (setting%Debug%File%network_define) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+    end subroutine init_network_CC_elem_length_adjust
 !
 !==========================================================================
 ! END OF MODULE

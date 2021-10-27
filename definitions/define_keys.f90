@@ -200,6 +200,9 @@ module define_keys
         enumerator :: Pump2Curve               !% flow v. depth for pump (discrete)
         enumerator :: Pump3Curve               !% flow v. head for pump (continuous)
         enumerator :: Pump4Curve               !% flow v. depth for pump (continuous)
+        !% keys for minimum element size adjustment
+        enumerator :: ElemLengthAdjust         !% only adjust the element length and set it to user defined min
+        enumerator :: RawElemLength            !% keep the raw data and do not adjust
     end enum
 
     !% rm 20210610 brh because of issues with ALLtm key
