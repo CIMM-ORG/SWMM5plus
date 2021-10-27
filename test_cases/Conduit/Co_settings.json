@@ -85,7 +85,8 @@
         "kFactor"  : 0.0,
         "HeadCoef" : 1.0,
         "CFLlimit" : 0.5,
-        "isDynamic" : true
+        "FunStorageN" : 10,
+        "isDynamic" : false
     },
     "Limiter" : {
         "BC" : {
