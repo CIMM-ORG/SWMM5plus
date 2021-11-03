@@ -20,6 +20,7 @@ module utility
     public :: util_count_node_types
     public :: util_sign_with_ones
     public :: util_print_warning
+    public :: util_linspace
 
     contains
     !%
@@ -85,6 +86,35 @@ module utility
 
 
     end subroutine util_print_warning
+
+    !%
+    !%==========================================================================
+    !%==========================================================================
+    !%
+
+    function util_linspace(startPoint,endPoint,N) result(outArray)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% similar to python/matlab linspace
+        !%-----------------------------------------------------------------------------
+        real(8), intent(in)  :: startPoint 
+        real(8), intent(in)  :: endPoint
+        integer, intent(in)  :: N
+        real(8)              :: delta
+        real(8), allocatable :: outArray(:)
+        integer :: ii
+        !%-----------------------------------------------------------------------------
+        !% calculate step size
+        delta = (endPoint - startPoint)/real(N-1,8)
+
+        !% allocate the outArry based on number of samples
+        allocate(outArray(N))
+
+        do ii = 1, N
+            outArray(ii) = startPoint + (ii-1)*delta
+        end do
+
+    end function util_linspace
 
     !%==========================================================================
     !% END OF MODULE

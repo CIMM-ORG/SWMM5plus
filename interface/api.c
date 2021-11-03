@@ -69,7 +69,7 @@ void DLLEXPORT api_finalize()
 //  Input: f_api is an Interface object passed as a void*
 //  Output: None
 //  Purpose: Closes the link with the EPA-SWMM library
-//
+//3
 {
     int i;
 
@@ -183,7 +183,7 @@ double DLLEXPORT api_get_flowBC(int node_idx, double current_datetime) {
         {
             total_extinflow += table_tseriesLookup(&Tseries[j], current_datetime, FALSE) * sfactor;
         }
-        total_inflow += total_extinflow;
+        total_inflow += CFTOCM(total_extinflow);
     }
     return total_inflow;
 }
@@ -246,6 +246,10 @@ int DLLEXPORT api_get_node_attribute(int k, int attr, double* value)
     }
     else if (attr == node_invertElev)
         *value = FTTOM(Node[k].invertElev);
+
+    else if (attr == node_fullDepth)
+        *value = FTTOM(Node[k].fullDepth);
+
     else if (attr == node_initDepth)
     {
         if (Node[k].type == OUTFALL)
@@ -256,6 +260,34 @@ int DLLEXPORT api_get_node_attribute(int k, int attr, double* value)
         }
         else
             *value = FTTOM(Node[k].initDepth);
+    }
+    else if (attr == node_StorageConstant)
+    {
+        if (Node[k].type == STORAGE)
+            *value = Storage[Node[k].subIndex].aConst;
+        else
+            *value = -1;
+    }
+    else if (attr == node_StorageCoeff)
+    {
+        if (Node[k].type == STORAGE)
+            *value = Storage[Node[k].subIndex].aCoeff;
+        else
+            *value = -1;
+    }
+    else if (attr == node_StorageExponent)
+    {
+        if (Node[k].type == STORAGE)
+            *value = Storage[Node[k].subIndex].aExpon;
+        else
+            *value = -1;
+    }
+    else if (attr == node_StorageCurveID)
+    {
+        if (Node[k].type == STORAGE)
+            *value = Storage[Node[k].subIndex].aCurve;
+        else
+            *value = -1;
     }
     else if (attr == node_extInflow_tSeries)
     {
@@ -524,6 +556,29 @@ int DLLEXPORT api_get_link_attribute(int k, int attr, double* value)
     return 0;
 }
 
+int DLLEXPORT api_get_table_attribute(int k, int attr, double* value)
+{
+    int error;
+
+    error = check_api_is_initialized("api_get_table_attribute");
+    if (error) return error;
+
+    if (attr == table_ID)
+        *value = k;
+    else if (attr == table_type)
+        *value = Curve[k].curveType;
+    else if (attr == table_refers_to)
+        *value = Curve[k].refersTo;
+    else
+    {
+        *value = API_NULL_VALUE_I;
+        sprintf(errmsg, "attr %d [api.c -> api_get_table_attribute]", attr);
+        api_report_writeErrorMsg(api_err_not_developed, errmsg);
+        return api_err_not_developed;
+    }
+    return 0;
+}
+
 int DLLEXPORT api_get_num_objects(int object_type)
 {
     int error;
@@ -595,6 +650,75 @@ int DLLEXPORT api_get_object_name(int k, char* object_name, int object_type)
         return api_err_not_developed;
     }
     return 0;
+}
+
+int DLLEXPORT api_get_num_table_entries(int k, int table_type, int *num_entries)
+{
+    double x, y;
+    int success;
+
+    *num_entries = 0;
+    // printf("1 Number of entries in Curve %d: %d\n", k, *num_entries);
+    if (table_type == CURVE)
+    {
+        // ERROR handling
+        if (k >= Nobjects[CURVE] || Nobjects[CURVE] == 0) return -1;
+        success = table_getFirstEntry(&Curve[k], &x, &y); // first values in the table
+        (*num_entries)++;
+        while (success)
+        {
+            success = table_getNextEntry(&(Curve[k]), &x, &y);
+            if (success) (*num_entries)++;
+            // printf("0 Number of entries in Curve %d: %d\n", k, *num_entries);
+        }
+    }
+    else
+    {
+        return -1;
+    }
+    // printf("Number of entries in Curve %d: %d\n", k, *num_entries);
+    // printf("SUCCESS %d\n", success);
+
+    return 0;
+}
+
+int DLLEXPORT api_get_first_entry_table(int k, int table_type, double *x, double *y)
+{
+    int success;
+
+    if (table_type == CURVE)
+        success = table_getFirstEntry(&(Curve[k]), x, y);
+    else if (table_type == TSERIES)
+        success = table_getFirstEntry(&(Tseries[k]), x, y);
+    else
+        return 0;
+    return success;
+}
+
+int DLLEXPORT api_get_next_entry_table(int k, int table_type, double *x, double *y)
+{
+    int success;
+
+    if (table_type == TSERIES)
+    {
+        success = table_getNextEntry(&(Tseries[k]), &(Tseries[k].x2), &(Tseries[k].y2));
+        if (success)
+        {
+            *x = Tseries[k].x2;
+            *y = Tseries[k].y2;
+        }
+    }
+    else if (table_type == CURVE)
+    {
+        success = table_getNextEntry(&(Curve[k]), &(Curve[k].x2), &(Curve[k].y2));
+        if (success)
+        {
+            *x = Curve[k].x2;
+            *y = Curve[k].y2;
+        }
+    }
+
+    return success;
 }
 
 int DLLEXPORT api_get_next_entry_tseries(int k)

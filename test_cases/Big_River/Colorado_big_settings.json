@@ -66,6 +66,8 @@
     },
     "Discretization" : {
         "NominalElemLength" : 150.00,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -78,14 +80,15 @@
     "File" : {
         "library_folder" : "",
         "links_input_file_exist" : false,
-        "nodes_input_file_exist" : false,  
+        "nodes_input_file_exist" : false,
         "force_folder_creation"  : true
     },
     "Junction" : {
         "kFactor"  : 0.0,
         "HeadCoef" : 1.0,
         "CFLlimit" : 0.5,
-        "isDynamic" : true
+        "FunStorageN" : 10,
+        "isDynamic" : false
     },
     "Limiter" : {
         "BC" : {
@@ -288,7 +291,7 @@
             "orifice_elements" : false,
             "output" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
@@ -321,6 +324,6 @@
         "Tests" : true
     },
     "Profile" : {
-        "YN" : true  
+        "YN" : true
     }
 }

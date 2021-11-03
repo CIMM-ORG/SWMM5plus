@@ -432,6 +432,76 @@ contains
                 ))
         end if
 
+        !% junction main with functional geometry relationship
+        ptype => col_elemPGalltm(epg_JM_functional_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
+        !% junction main with tabular geometry relationship
+        ptype => col_elemPGalltm(epg_JM_tabular_nonsurcharged)
+        npack => npack_elemPGalltm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGalltm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_alltm_elements
@@ -549,6 +619,76 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == AC) &
                 )
+        end if
+
+        !% junction main with functional geometry relationship
+        ptype => col_elemPGac(epg_JM_functional_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
+        !% junction main with functional geometry relationship
+        ptype => col_elemPGac(epg_JM_tabular_nonsurcharged)
+        npack => npack_elemPGac(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGac(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
@@ -671,6 +811,76 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
+        end if
+
+        !% junction main with functional geometry relationship
+        ptype => col_elemPGetm(epg_JM_functional_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+        end if
+
+        !% junction main with functional geometry relationship
+        ptype => col_elemPGetm(epg_JM_tabular_nonsurcharged)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
+
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                ( &
+                    (elemI(:,ei_elementType) == JM) &
+                ) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
+                .and. &
+                (.not. elemYN(:,eYN_isSurcharged)) &
+                .and. &
+                ( &
+                    (elemI(:,ei_HeqType) == time_march) &
+                    .or. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                ))
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &

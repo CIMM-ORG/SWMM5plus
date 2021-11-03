@@ -7,6 +7,7 @@ module geometry
     use rectangular_channel
     use trapezoidal_channel
     use circular_conduit
+    use storage_geometry
     use adjust
     use utility_profiler
 
@@ -236,6 +237,20 @@ module geometry
         end if
 
         !% HACK Needs additional geometries
+
+        !% JM with functional geomtery
+        thisCol => col_elemPGx(epg_JM_functional_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
+
+        !% JM with tabular geomtery
+        thisCol => col_elemPGx(epg_JM_tabular_nonsurcharged)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then
+            call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
+        end if
   
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"

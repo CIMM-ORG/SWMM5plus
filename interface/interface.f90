@@ -27,6 +27,10 @@ module interface
     ! public :: interface_run_step
     public :: interface_get_node_attribute
     public :: interface_get_link_attribute
+    public :: interface_get_table_attribute
+    public :: interface_get_num_table_entries
+    public :: interface_get_first_entry_table
+    public :: interface_get_next_entry_table
     public :: interface_get_obj_name_len
     public :: interface_update_linknode_names
     public :: interface_get_BC_resolution
@@ -129,6 +133,15 @@ module interface
             integer(c_int) :: api_get_link_attribute
         end function api_get_link_attribute
         !% -------------------------------------------------------------------------------
+        function api_get_table_attribute(k, attr, value)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value :: k
+            integer(c_int), value :: attr
+            type(c_ptr), value, intent(in) :: value
+            integer(c_int) :: api_get_table_attribute
+        end function api_get_table_attribute
+        !% -------------------------------------------------------------------------------
         function api_get_num_objects(obj_type)
             use, intrinsic :: iso_c_binding
             implicit none
@@ -136,12 +149,13 @@ module interface
             integer(c_int) :: api_get_num_objects
         end function api_get_num_objects
         !% -------------------------------------------------------------------------------
-        function api_get_object_name_len(k, object_type)
+        function api_get_object_name_len(k, object_type, len_value)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value :: k
-            integer(c_int), value :: object_type
-            integer(c_int) :: api_get_object_name_len
+            integer(c_int), value          :: k
+            integer(c_int), value          :: object_type
+            type(c_ptr), value, intent(in) :: len_value
+            integer(c_int)                 :: api_get_object_name_len
         end function api_get_object_name_len
         !% -------------------------------------------------------------------------------
         function api_get_object_name(k, object_name, object_type)
@@ -152,6 +166,35 @@ module interface
             integer(c_int), value :: object_type
             integer(c_int) :: api_get_object_name
         end function api_get_object_name
+        !% -------------------------------------------------------------------------------
+        function api_get_num_table_entries(k, table_type, num_entries)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: table_type
+            type(c_ptr), value, intent(in) :: num_entries
+            integer(c_int) :: api_get_num_table_entries
+        end function api_get_num_table_entries
+        !% -------------------------------------------------------------------------------
+        function api_get_first_entry_table(k, table_type, x, y)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: table_type
+            type(c_ptr), value, intent(in) :: x
+            type(c_ptr), value, intent(in) :: y
+            integer(c_int) :: api_get_first_entry_table
+        end function api_get_first_entry_table
+        !% -------------------------------------------------------------------------------
+        function api_get_next_entry_table(k, table_type, x, y)
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: table_type
+            type(c_ptr), value, intent(in) :: x
+            type(c_ptr), value, intent(in) :: y
+            integer(c_int) :: api_get_next_entry_table
+        end function api_get_next_entry_table
         !% -------------------------------------------------------------------------------
         function api_get_next_entry_tseries(k)
             use, intrinsic :: iso_c_binding
@@ -203,18 +246,22 @@ module interface
         end function api_update_linkResult
         !% -------------------------------------------------------------------------------
     end interface
-    !%
-    !%==========================================================================
-    !% Procedures
-    !%==========================================================================
-    !%
+!%
+!%==========================================================================
+!% Procedures
+!%==========================================================================
+!%
     procedure(api_initialize),             pointer :: ptr_api_initialize
     procedure(api_finalize),               pointer :: ptr_api_finalize
     procedure(api_get_node_attribute),     pointer :: ptr_api_get_node_attribute
     procedure(api_get_link_attribute),     pointer :: ptr_api_get_link_attribute
+    procedure(api_get_table_attribute),    pointer :: ptr_api_get_table_attribute
     procedure(api_get_num_objects),        pointer :: ptr_api_get_num_objects
     procedure(api_get_object_name_len),    pointer :: ptr_api_get_object_name_len
     procedure(api_get_object_name),        pointer :: ptr_api_get_object_name
+    procedure(api_get_num_table_entries),  pointer :: ptr_api_get_num_table_entries
+    procedure(api_get_first_entry_table),  pointer :: ptr_api_get_first_entry_table
+    procedure(api_get_next_entry_table),   pointer :: ptr_api_get_next_entry_table
     procedure(api_get_start_datetime),     pointer :: ptr_api_get_start_datetime
     procedure(api_get_end_datetime),       pointer :: ptr_api_get_end_datetime
     procedure(api_get_flowBC),             pointer :: ptr_api_get_flowBC
@@ -263,8 +310,7 @@ contains
         setting%File%out_file = trim(setting%File%out_file) // c_null_char
         c_lib%filename = trim(setting%File%library_folder) // "/libswmm5.so"
 
-        call load_all_api_procedures()
-
+        call load_api_procedure("api_initialize")
         error = ptr_api_initialize( &
             setting%File%inp_file, &
             setting%File%rpt_file, &
@@ -279,6 +325,8 @@ contains
         N_link = SWMM_N_link
         SWMM_N_node = get_num_objects(API_NODE)
         N_node = SWMM_N_node
+        SWMM_N_Curve = get_num_objects(API_CURVE)
+        N_curve = SWMM_N_Curve
 
         print *
         print *, 'BUG WARNING location ',980879,' in ',subroutine_name
@@ -395,6 +443,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         do ii = 1, SWMM_N_link
+            call load_api_procedure("api_get_object_name")
             errstat = ptr_api_get_object_name(ii-1, link%Names(ii)%str, API_LINK)
 
             if (errstat /= 0) then
@@ -404,6 +453,7 @@ contains
         end do
 
         do ii = 1, SWMM_N_node
+            call load_api_procedure("api_get_object_name")
             errstat = ptr_api_get_object_name(ii-1, node%Names(ii)%str, API_NODE)
 
             if (errstat /= 0) then
@@ -440,15 +490,22 @@ contains
     !%    node%Names arraysr. The function is currently compatible with NODE and
     !%    LINK types.
     !%-----------------------------------------------------------------------------
-        integer, intent(in) :: obj_idx  ! index of the EPA-SWMM object
-        integer, intent(in) :: obj_type ! type of EPA-SWMM object (API_NODE, API_LINK)
-        character(64)       :: subroutine_name = "interface_get_obj_name_len"
+        integer, intent(in)    :: obj_idx  ! index of the EPA-SWMM object
+        integer, intent(in)    :: obj_type ! type of EPA-SWMM object (API_NODE, API_LINK)
+        integer                :: error
+        type(c_ptr)            :: cptr_value
+        real(c_double), target :: len_value
+        character(64)          :: subroutine_name = "interface_get_obj_name_len"
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        obj_name_len = ptr_api_get_object_name_len(obj_idx-1, obj_type)
+        cptr_value = c_loc(len_value)
+        call load_api_procedure("api_get_object_name_len")
+        error = ptr_api_get_object_name_len(obj_idx-1, obj_type, cptr_value)
+        call print_api_error(error, subroutine_name)
+        obj_name_len = len_value
 
         if (setting%Debug%File%interface) then
             print *, obj_idx, obj_type, obj_name_len
@@ -494,6 +551,7 @@ contains
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
+        call load_api_procedure("api_get_node_attribute")
         error = ptr_api_get_node_attribute(node_idx-1, attr, cptr_value)
         call print_api_error(error, subroutine_name)
 
@@ -547,12 +605,14 @@ contains
 
         if (attr <= N_api_link_attributes) then
             ! Fortran index starts in 1, whereas in C starts in 0
+            call load_api_procedure("api_get_link_attribute")
             error = ptr_api_get_link_attribute(link_idx-1, attr, cptr_value)
             thisposition = trim(subroutine_name)//'_A01'
             call print_api_error(error, thisposition)
             attr_value = link_value
         else if ( (attr > N_api_link_attributes) .and. &
                   (attr <= (N_api_link_attributes + N_api_link_type_attributes)) )then
+            call load_api_procedure("api_get_link_attribute")
             error = ptr_api_get_link_attribute(link_idx-1, api_link_type, cptr_value)
             thisposition = trim(subroutine_name)//'_B02'
             call print_api_error(error, thisposition)
@@ -577,6 +637,7 @@ contains
                 else if (attr == api_orifice_type) then
                     attr_value = nullvalueI
                 else if (attr == api_pump_type) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_pump_type, cptr_value)
                     thisposition = trim(subroutine_name)//'_C03'
                     call print_api_error(error, thisposition)
@@ -600,6 +661,7 @@ contains
                 else if (attr == api_weir_type) then
                     attr_value = nullvalueI
                 else if (attr == api_orifice_type) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_orifice_type, cptr_value)
                     thisposition = trim(subroutine_name)//'_D04'
                     call print_api_error(error, thisposition)
@@ -617,6 +679,7 @@ contains
                 if (attr == api_link_type) then
                     attr_value = lWeir
                 else if (attr == api_weir_type) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_weir_type, cptr_value)
                     thisposition = trim(subroutine_name)//'_E05'
                     call print_api_error(error, thisposition)
@@ -640,6 +703,7 @@ contains
             endif
 
         else
+            call load_api_procedure("api_get_link_attribute")
             error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_type, cptr_value)
             thisposition = trim(subroutine_name)//'_E05'
             call print_api_error(error, thisposition)
@@ -648,11 +712,13 @@ contains
                 if (attr == api_link_geometry) then
                     attr_value = lRectangular_closed
                 else if (attr == api_link_xsect_wMax) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_F06'
-                     call print_api_error(error, thisposition)
+                    call print_api_error(error, thisposition)
                     attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_G07'
                     call print_api_error(error, thisposition)
@@ -664,11 +730,13 @@ contains
                 if (attr == api_link_geometry) then
                     attr_value = lRectangular
                 else if (attr == api_link_xsect_wMax) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_H08'
                     call print_api_error(error, thisposition)
                     attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_I09'
                     call print_api_error(error, thisposition)
@@ -680,11 +748,13 @@ contains
                 if (attr == api_link_geometry) then
                     attr_value = lTrapezoidal
                 else if (attr == api_link_xsect_wMax) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yBot, cptr_value)
                     thisposition = trim(subroutine_name)//'_J10'
                     call print_api_error(error, thisposition)
                     attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_K11'
                     call print_api_error(error, thisposition)
@@ -696,11 +766,13 @@ contains
                 if (attr == api_link_geometry) then
                     attr_value = lTriangular
                 else if (attr == api_link_xsect_wMax) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_M12'
                     call print_api_error(error, thisposition)
                     attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_N13'
                     call print_api_error(error, thisposition)
@@ -712,11 +784,13 @@ contains
                 if (attr == api_link_geometry) then
                     attr_value = lParabolic
                 else if (attr == api_link_xsect_wMax) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_O14'
                     call print_api_error(error, thisposition)
                     attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_P15'
                     call print_api_error(error, thisposition)
@@ -728,11 +802,13 @@ contains
                 if (attr == api_link_geometry) then
                     attr_value = lCircular
                 else if (attr == api_link_xsect_wMax) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_Q16'
                     call print_api_error(error, thisposition)
                     attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
+                    call load_api_procedure("api_get_link_attribute")
                     error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_R17'
                     call print_api_error(error, thisposition)
@@ -749,6 +825,231 @@ contains
             ! print *, "LINK", link_value, attr
         end if
     end function interface_get_link_attribute
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    function interface_get_table_attribute(table_idx, attr)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves table attributes from EPA-SWMM. API table attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
+        integer :: table_idx, attr, error
+        real(8) :: interface_get_table_attribute
+
+        type(c_ptr) :: cptr_value
+        real(c_double), target :: table_value
+        character(64) :: thisposition
+        character(64) :: subroutine_name = 'interface_get_table_attribute'
+    !%-----------------------------------------------------------------------------
+
+        cptr_value = c_loc(table_value)
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if ((attr > N_api_total_table_attributes) .or. (attr < 1)) then
+            print *, "error: unexpected table attribute value", attr
+            stop "in " // subroutine_name
+        end if
+
+        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
+            print *, "error: unexpected table index value", table_idx
+            stop "in " // subroutine_name
+        end if
+
+        !% Substracts 1 to every Fortran index (it becomes a C index)
+        if (attr == api_table_type) then
+            call load_api_procedure("api_get_table_attribute")
+            error = ptr_api_get_table_attribute(table_idx-1, attr, cptr_value)
+            if (table_value == API_STORAGE_CURVE) then
+                interface_get_table_attribute = StorageCurve
+            else if (table_value == API_DIVERSION_CURVE) then
+                interface_get_table_attribute = DiversionCurve
+            else if (table_value == API_TIDAL_CURVE) then
+                interface_get_table_attribute = TidalCurve
+            else if (table_value == API_RATING_CURVE) then
+                interface_get_table_attribute = RatingCurve
+            else if (table_value == API_CONTROL_CURVE) then
+                interface_get_table_attribute = ControlCurve
+            else if (table_value == API_SHAPE_CURVE) then
+                interface_get_table_attribute = ShapeCurve
+            else if (table_value == API_WEIR_CURVE) then
+                interface_get_table_attribute = WeirCurve
+            else if (table_value == API_PUMP1_CURVE) then
+                interface_get_table_attribute = Pump1Curve
+            else if (table_value == API_PUMP2_CURVE) then
+                interface_get_table_attribute = Pump2Curve
+            else if (table_value == API_PUMP3_CURVE) then
+                interface_get_table_attribute = Pump3Curve
+            else if (table_value == API_PUMP4_CURVE) then
+                interface_get_table_attribute = Pump4Curve
+            else
+                interface_get_table_attribute = nullvalueI
+            end if
+        else
+            call load_api_procedure("api_get_table_attribute")
+            error = ptr_api_get_table_attribute(table_idx-1, attr, cptr_value)
+            call print_api_error(error, subroutine_name)
+            interface_get_table_attribute = table_value
+        end if
+
+        if (setting%Debug%File%interface)  then
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            print *, "table", table_value, attr
+        end if
+    end function interface_get_table_attribute
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    function interface_get_num_table_entries(table_idx) result(num_entries)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves table attributes from EPA-SWMM. API table attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
+        integer :: table_idx, table_type, error
+        integer :: num_entries
+
+        type(c_ptr) :: cptr_value
+        integer(c_int), target :: table_entries
+        character(64) :: thisposition
+        character(64) :: subroutine_name = 'interface_get_num_table_entries'
+    !%-----------------------------------------------------------------------------
+
+        cptr_value = c_loc(table_entries)
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
+            print *, "error: unexpected table index value", table_idx
+            stop "in " // subroutine_name
+        end if
+
+        !% Substracts 1 to every Fortran index (it becomes a C index)
+        call load_api_procedure("api_get_num_table_entries")
+        error = ptr_api_get_num_table_entries(table_idx-1, API_CURVE, cptr_value)
+        call print_api_error(error, subroutine_name)
+        num_entries = table_entries
+
+        if (setting%Debug%File%interface)  then
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            print *, "table", table_entries
+        end if
+    end function interface_get_num_table_entries
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    function interface_get_first_entry_table(table_idx)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves first table entries from EPA-SWMM. API table attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
+        integer :: table_idx, error, success
+        real(8) :: interface_get_first_entry_table(2)
+
+        type(c_ptr) :: cptr_x_entry, cptr_y_entry
+        real(c_double), target :: x_entry, y_entry
+        character(64) :: subroutine_name = 'interface_get_first_entry_table'
+    !%-----------------------------------------------------------------------------
+
+        cptr_x_entry = c_loc(x_entry)
+        cptr_y_entry = c_loc(y_entry)
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
+            print *, "error: unexpected table index value", table_idx
+            stop "in " // subroutine_name
+        end if
+
+        !% Substracts 1 to every Fortran index (it becomes a C index)
+        call load_api_procedure("api_get_first_entry_table")
+        success = ptr_api_get_first_entry_table(table_idx-1, API_CURVE, cptr_x_entry, cptr_y_entry)
+
+        if (success == 0) then
+            error = -1
+        else
+            error = 0
+        end if
+
+        call print_api_error(error, subroutine_name)
+        interface_get_first_entry_table(1) = x_entry
+        interface_get_first_entry_table(2) = y_entry
+
+        if (setting%Debug%File%interface)  then
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        end if
+    end function interface_get_first_entry_table
+!%
+!%=============================================================================
+!%=============================================================================
+!%
+    function interface_get_next_entry_table(table_idx, table_type)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Retrieves next table entries from EPA-SWMM. API table attributes are
+    !%    defined in define_api_keys.f08.
+    !% Notes:
+    !%    Fortran indexes are translated to C indexes and viceversa when
+    !%    necessary. Fortran indexes always start from 1, whereas C indexes
+    !%    start from 0.
+    !%-----------------------------------------------------------------------------
+        integer :: table_idx, table_type, error, success
+        real(8) :: interface_get_next_entry_table(2)
+
+        type(c_ptr) :: cptr_x_entry, cptr_y_entry
+        real(c_double), target :: x_entry, y_entry
+        character(64) :: subroutine_name = 'interface_get_next_entry_table'
+    !%-----------------------------------------------------------------------------
+
+        cptr_x_entry = c_loc(x_entry)
+        cptr_y_entry = c_loc(y_entry)
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
+            print *, "error: unexpected table index value", table_idx
+            stop "in " // subroutine_name
+        end if
+
+        !% Substracts 1 to every Fortran index (it becomes a C index)
+        call load_api_procedure("api_get_next_entry_table")
+        success = ptr_api_get_next_entry_table(table_idx-1, table_type, cptr_x_entry, cptr_y_entry)
+
+        if (success == 0) then
+            error = -1
+        else
+            error = 0
+        end if
+
+        call print_api_error(error, subroutine_name)
+        interface_get_next_entry_table(1) = x_entry
+        interface_get_next_entry_table(2) = y_entry
+
+        if (setting%Debug%File%interface)  then
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        end if
+    end function interface_get_next_entry_table
 !%
 !%=============================================================================
 !%   Boundary Conditions (execute after initialization only)
@@ -912,6 +1213,7 @@ contains
 
         nidx = BC%flowI(bc_idx, bi_node_idx)
         epochNow = util_datetime_secs_to_epoch(tnow)
+        call load_api_procedure("api_get_flowBC")
         bc_value = ptr_api_get_flowBC(nidx-1, epochNow)
 
         if (setting%Debug%File%interface)  &
@@ -936,6 +1238,7 @@ contains
 
         nidx = BC%headI(bc_idx, bi_node_idx)
         epochNow = util_datetime_secs_to_epoch(tnow)
+        call load_api_procedure("api_get_headBC")
         bc_value = ptr_api_get_headBC(nidx-1, epochNow)
 
         if (setting%Debug%File%interface)  &
@@ -955,6 +1258,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        call load_api_procedure("api_export_link_results")
         error = ptr_api_export_link_results(link_idx-1)
         call print_api_error(error, subroutine_name)
 
@@ -976,6 +1280,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        call load_api_procedure("api_update_nodeResult")
         error = ptr_api_update_nodeResult(node_idx-1, result_type, node_result)
         call print_api_error(error, subroutine_name)
 
@@ -996,6 +1301,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        call load_api_procedure("api_update_linkResult")
         error = ptr_api_update_linkResult(link_idx-1, result_type, link_result)
         call print_api_error(error, subroutine_name)
 
@@ -1007,18 +1313,19 @@ contains
 !%=============================================================================
 !%
     subroutine interface_write_output_line(reportTime)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !%    Writes .out file with SWMM5+ data
-        !%-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Writes .out file with SWMM5+ data
+    !%-----------------------------------------------------------------------------
         real(c_double),intent(in) :: reportTime ! time in seconds
         integer                   :: error
         character(64)             :: subroutine_name = "interface_write_output_line"
-        !%-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        call load_api_procedure("api_write_output_line")
         error = ptr_api_write_output_line(reportTime)
         call print_api_error(error, subroutine_name)
 
@@ -1030,11 +1337,13 @@ contains
 !%=============================================================================
 !%
     subroutine interface_get_report_times()
+    !%-----------------------------------------------------------------------------
         integer                :: error
         real(c_double), target :: reportStart
         integer(c_int), target :: reportStep, hydroStep
         type(c_ptr)            :: cptr_reportStart, cptr_reportStep, cptr_hydroStep
         character(64)          :: subroutine_name = 'interface_get_report_times'
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -1050,6 +1359,7 @@ contains
         !% ... then SWMM will make reportStart = start datetime.
         !%
         !% --- This generates EPA-SWMM Error Code: -1 if the reportStart is after the end time.
+        call load_api_procedure("api_get_report_times")
         error = ptr_api_get_report_times(cptr_reportStart, cptr_reportStep, cptr_hydroStep)
         call print_api_error(error, subroutine_name)
 
@@ -1078,6 +1388,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        call load_api_procedure("api_find_object")
         object_idx = ptr_api_find_object(object_type, trim(object_name)//c_null_char) + 1
 
         if (setting%Debug%File%interface)  &
@@ -1089,93 +1400,74 @@ contains
 !% PRIVATE
 !%=============================================================================
 !%
-    subroutine load_all_api_procedures()
-        character(64) :: subroutine_name
-        subroutine_name = 'load_all_api_procedures'
+    subroutine load_api_procedure(api_procedure_name)
+        character(len=*) :: api_procedure_name
+        character(64) :: subroutine_name = 'load_api_procedure'
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% Open the shared library
         call c_lib_open(c_lib, errstat, errmsg)
+        c_lib%procname = api_procedure_name
+        call c_lib_load(c_lib, errstat, errmsg)
 
         !% Loads shared library funcitonalities
-
-        c_lib%procname = "api_finalize"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
-
-        c_lib%procname = "api_get_node_attribute"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_node_attribute)
-
-        c_lib%procname = "api_get_link_attribute"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_link_attribute)
-
-        c_lib%procname = "api_get_num_objects"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_objects)
-
-        c_lib%procname = "api_get_object_name_len"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name_len)
-
-        c_lib%procname = "api_get_object_name"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
-
-        c_lib%procname = "api_get_start_datetime"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_start_datetime)
-
-        c_lib%procname = "api_get_end_datetime"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_end_datetime)
-
-        c_lib%procname = "api_get_flowBC"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
-
-        c_lib%procname = "api_get_headBC"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
-
-        c_lib%procname = "api_get_report_times"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_report_times)
-
-        c_lib%procname = "api_get_next_entry_tseries"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
-
-        c_lib%procname = "api_find_object"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
-
-        c_lib%procname = "api_run_step"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_run_step)
-
-        c_lib%procname = "api_export_link_results"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_export_link_results)
-
-        c_lib%procname = "api_write_output_line"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_write_output_line)
-
-        c_lib%procname = "api_update_nodeResult"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
-
-        c_lib%procname = "api_update_linkResult"
-        call c_lib_load(c_lib, errstat, errmsg)
-        call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
+        select case (api_procedure_name)
+            case ("api_initialize")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
+            case ("api_finalize")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
+            case ("api_get_node_attribute")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_node_attribute)
+            case ("api_get_link_attribute")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_link_attribute)
+            case ("api_get_table_attribute")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_table_attribute)
+            case ("api_get_num_objects")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_objects)
+            case ("api_get_object_name_len")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name_len)
+            case ("api_get_object_name")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
+            case ("api_get_num_table_entries")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_table_entries)
+            case ("api_get_first_entry_table")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_first_entry_table)
+            case ("api_get_next_entry_table")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_table)
+            case ("api_get_start_datetime")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_start_datetime)
+            case ("api_get_end_datetime")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_end_datetime)
+            case ("api_get_flowBC")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
+            case ("api_get_headBC")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
+            case ("api_get_report_times")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_report_times)
+            case ("api_get_next_entry_tseries")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
+            case ("api_find_object")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
+            case ("api_run_step")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_run_step)
+            case ("api_export_link_results")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_export_link_results)
+            case ("api_write_output_line")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_write_output_line)
+            case ("api_update_nodeResult")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
+            case ("api_update_linkResult")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
+            case default
+                write(*,"(A,A)") "Error, procedure " // api_procedure_name // " cannot been handled"
+                stop
+        end select
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine load_all_api_procedures
+    end subroutine load_api_procedure
 
     function get_next_entry_tseries(k) result(success)
         integer, intent(in   ) :: k
@@ -1187,6 +1479,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        call load_api_procedure("api_get_next_entry_tseries")
         success = ptr_api_get_next_entry_tseries(k-1) ! Fortran to C convention
 
         if (setting%Debug%File%interface)  &
@@ -1207,6 +1500,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        call load_api_procedure("api_get_num_objects")
         get_num_objects = ptr_api_get_num_objects(obj_type)
 
         if (setting%Debug%File%interface)  &
@@ -1224,6 +1518,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        call load_api_procedure("api_get_start_datetime")
         get_start_datetime = ptr_api_get_start_datetime()
 
         if (setting%Debug%File%interface)  &
@@ -1242,6 +1537,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
+        call load_api_procedure("api_get_end_datetime")
         get_end_datetime = ptr_api_get_end_datetime()
 
         if (setting%Debug%File%interface)  &

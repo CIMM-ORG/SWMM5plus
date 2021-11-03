@@ -19,6 +19,7 @@ module initial_condition
     use diagnostic_elements
     use geometry !BRHbugfix 20210813
     use circular_conduit
+    use storage_geometry
 
     implicit none
 
@@ -150,7 +151,7 @@ contains
            print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
            call execute_command_line('')
         end if
-
+        
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         
@@ -981,8 +982,9 @@ contains
     !
         integer, intent(in) :: thisJunctionNode
 
-        integer             :: ii, JMidx, JBidx
-        integer, pointer    :: BranchIdx, geometryType
+        integer              :: ii, jj, JMidx, JBidx
+        integer, pointer     :: BranchIdx, geometryType, JmType, curveID
+        real(8), allocatable :: integrated_volume(:)
 
         character(64) :: subroutine_name = 'init_IC_get_junction_data'
     !--------------------------------------------------------------------------
@@ -1002,14 +1004,30 @@ contains
         elemI(JMidx,ei_HeqType)      = time_march
         elemI(JMidx,ei_QeqType)      = notused
         
-        !%-----------------------------------------------------------------------
-        !% HACK: Junction main are always rectangular
-        elemI(JMidx,ei_geometryType) = rectangular
-        !%-----------------------------------------------------------------------
+        !% set the type of junction main
+        if (node%YN(thisJunctionNode,nYN_has_storage)) then
+            if (node%I(thisJunctionNode,ni_curve_ID) .eq. 0) then
+                elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
+                elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
+                elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
+                elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)
+                
+            else
+                elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
+                elemSI(JMidx,esi_JunctionMain_Curve_ID) = node%I(thisJunctionNode,ni_curve_ID)
+            end if
+        else
+            !%-----------------------------------------------------------------------
+            !% HACK: Junction main with artifical storage are rectangular
+            !%-----------------------------------------------------------------------
+            elemSI(JMidx,esi_JunctionMain_Type) = ArtificalStorage
+            elemI(JMidx,ei_geometryType)        = rectangular
+        end if
 
         !% junction main depth and head from initial conditions
-        elemR(JMidx,er_Depth) = node%R(thisJunctionNode,nr_InitialDepth)
-        elemR(JMidx,er_Head)  = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
+        elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
+        elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
+        elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
 
         !% JM elements are not solved for momentum. 
         elemR(JMidx,er_Flowrate)     = zeroR
@@ -1022,6 +1040,7 @@ contains
         !% find if the node can surcharge
         if (node%R(thisJunctionNode,nr_SurchargeDepth) .ne. nullValueR) then
             elemYN(JMidx,eYN_canSurcharge)  = .true.
+            elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_SurchargeDepth)
         else    
             elemYN(JMidx,eYN_canSurcharge)  = .false.
         end if
@@ -1093,102 +1112,46 @@ contains
                         elemI(JBidx,ei_geometryType) = rectangular
                         elemR(JBidx,er_BreadthMax)   = link%R(BranchIdx,lr_BreadthScale)
                         elemR(JBidx,er_Area)         = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_Depth)
-                        ! BRHbugfix 20210813 elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
-                        ! BRHbugfix 20210813 elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
-                        ! BRHbugfix 20210813 elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
-                        ! BRHbugfix 20210813 elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
-                        ! BRHbugfix 20210813 elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
 
                         !% store geometry specific data
                         elemSGR(JBidx,esgr_Rectangular_Breadth) = link%R(BranchIdx,lr_BreadthScale)
-                        elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
-                        elemR(JBidx,er_ZbreadthMax) = zeroR
-
-                        !% HACK: not sure if we need surcharge condition for junction branches
-                        !% ANSWER -- yes, we do need surcharge on JB for conduits, but should be more general
-                        !% That is, does not need to be in rectangular sectoin
-                        ! BRHbugfix 20210813 if (link%I(BranchIdx,li_link_type) == lPipe) then
-                            ! BRHbugfix 20210813 elemYN(JBidx,eYN_canSurcharge)  = .true.
-                            ! BRHbugfix 20210813 elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
-                            !elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
-                            !elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
-                            ! BRHbugfix 20210813 elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
-                            ! BRHbugfix 20210813 elemR(JBidx,er_BreadthMax)  = zeroR
-                            ! BRHbugfix 20210813 elemR(JBidx,er_ZbreadthMax) = zeroR
-                        ! BRHbugfix 20210813 else
-                            !% the full depth of channel is set to a large depth so it
-                            !% never surcharges. the large depth is set as, factor x width,
-                            !% where the factor is an user controlled paratmeter.
-                            ! BRHbugfix 20210813 elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
-                            ! BRHbugfix 20210813                             link%R(BranchIdx,lr_BreadthScale)
-                            !elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
-                            !elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
-                            ! BRHbugfix 20210813 elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
-                            ! BRHbugfix 20210813 elemR(JBidx,er_ZbreadthMax)  = link%R(BranchIdx,lr_FullDepth)
-                        ! BRHbugfix 20210813 end if
-
+                        elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * link%R(BranchIdx,lr_FullDepth) 
+                        elemR(JBidx,er_ZbreadthMax) = link%R(BranchIdx,lr_FullDepth) + elemR(JBidx,er_Zbottom) 
 
                     case (lTrapezoidal)
 
-                            print *, 'Need to rewrite trapezoidal inital conditions'
-                            stop 3983
-                            elemI(JBidx,ei_geometryType) = trapezoidal
+                        print *, 'Need to rewrite trapezoidal inital conditions'
+                        stop 3983
+                        elemI(JBidx,ei_geometryType) = trapezoidal
 
-                            !% store geometry specific data
-                            elemSGR(JBidx,esgr_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
-                            elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
-                            elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
+                        !% store geometry specific data
+                        elemSGR(JBidx,esgr_Trapezoidal_Breadth)    = link%R(BranchIdx,lr_BreadthScale)
+                        elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)  = link%R(BranchIdx,lr_LeftSlope)
+                        elemSGR(JBidx,esgr_Trapezoidal_RightSlope) = link%R(BranchIdx,lr_RightSlope)
 
-                            ! (Bottom width + averageSlope * Depth)*Depth
-                            ! BRHbugfix 20210813 elemR(JBidx,er_Area)         = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
-                            ! BRHbugfix 20210813             (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
-                            ! BRHbugfix 20210813             elemR(JBidx,er_Depth)) * elemR(JBidx,er_Depth)
+                        
+                        elemR(JBidx,er_ZBreadthMax) = link%R(BranchIdx,lr_FullDepth) + elemR(JBidx,er_Zbottom) 
 
-                            ! BRHbugfix 20210813 elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
-                            ! BRHbugfix 20210813 elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
-                            ! BRHbugfix 20210813 elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
-                            ! BRHbugfix 20210813 elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
-                            ! BRHbugfix 20210813 elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
+                        elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) + &
+                                (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + &
+                                elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * elemR(JBidx,er_ZbreadthMax)
 
-                            !% Junction branch k-factor
-                            !% HACK: if the user does not input the k-factor for junction brnaches,
-                            !% get a default value from the setting
-                            ! BRHbugfix 20210813 if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
-                            ! BRHbugfix 20210813     elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
-                            ! BRHbugfix 20210813 else
-                            ! BRHbugfix 20210813     elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
-                            ! BRHbugfix 20210813 end if
-                            
-                            elemR(JBidx,er_ZBreadthMax)  =elemR(JBidx,er_FullDepth)  ! BRHbugfix 20210813 !
+                        elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
+                                (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
+                                elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth) !  BRHbugfix 20210813 
 
-                            if (link%I(BranchIdx,li_link_type) == lPipe) then
+                    case (lCircular)
+                        elemI(JBidx,ei_geometryType) = circular
 
-                                ! BRHbugfix 20210813 elemYN(JBidx,eYN_canSurcharge)  = .true.
+                        !% store geometry specific data
+                        elemSGR(JBidx,esgr_Circular_Diameter) = link%R(BranchIdx,lr_FullDepth)
+                        elemSGR(JBidx,esgr_Circular_Radius)   = elemSGR(JBidx,esgr_Circular_Diameter) / twoR
 
-                                ! BRHbugfix 20210813 elemR(JBidx,er_FullDepth)   = link%R(BranchIdx,lr_FullDepth)
-                                ! BRHbugfix 20210813 elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
-                                ! BRHbugfix 20210813 elemR(JBidx,er_FullArea)    = elemR(JBidx,er_BreadthMax) * elemR(JBidx,er_FullDepth)
-                                !  BRHbugfix 20210813 elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
-                                !  BRHbugfix 20210813         (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
-                                 !  BRHbugfix 20210813        elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth)
-                                ! ! BRHbugfix 20210813 elemR(JBidx,er_BreadthMax)  = zeroR
+                        elemR(JBidx,er_ZBreadthMax) = link%R(BranchIdx,lr_FullDepth) / twoR + elemR(JBidx,er_Zbottom) 
 
-                            else
-                                elemR(JBidx,er_BreadthMax)  = elemSGR(JBidx,esgr_Trapezoidal_Breadth) + &
-                                            (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + &
-                                            elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * elemR(JBidx,er_ZbreadthMax)
-                                !  BRHbugfix 20210813 elemR(JBidx,er_FullDepth)   = setting%Limiter%Channel%LargeDepthFactor * &
-                                !    BRHbugfix 20210813                     link%R(BranchIdx,lr_BreadthScale)
-                                !  BRHbugfix 20210813 elemR(JBidx,er_Zcrown)      = elemR(JBidx,er_Zbottom) + elemR(JBidx,er_FullDepth)
-                           
-                                !  BRHbugfix 20210813 elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
-                                !  BRHbugfix 20210813         (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
-                                 !  BRHbugfix 20210813        elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth)
-                                !  BRHbugfix 20210813 elemR(JBidx,er_FullVolume)  = elemR(JBidx,er_FullArea) * elemR(JBidx,er_Length)
-                            end if
-                            elemR(JBidx,er_FullArea)    = (elemSGR(JBidx,esgr_Trapezoidal_Breadth) + onehalfR * &
-                                    (elemSGR(JBidx,esgr_Trapezoidal_LeftSlope) + elemSGR(JBidx,esgr_Trapezoidal_RightSlope)) * &
-                                    elemR(JBidx,er_FullDepth)) * elemR(JBidx,er_FullDepth) !  BRHbugfix 20210813 
+                        elemR(JBidx,er_BreadthMax)  = link%R(BranchIdx,lr_FullDepth)
+
+                        elemR(JBidx,er_FullArea)    = pi * elemSGR(JBidx,esgr_Circular_Radius) ** twoR
 
                     case default
 
@@ -1218,60 +1181,69 @@ contains
             end if
         end do
 
-        ! print *, 'depth'
-        !         print *, elemR(ietmp(1), er_Depth),&
-        !          elemR(ietmp(2), er_Depth),&
-        !          elemR(ietmp(3), er_Depth),&
-        !          elemR(ietmp(4), er_Depth),&
-        !          elemR(ietmp(5), er_Depth),&
-        !          elemR(ietmp(6), er_Depth),&
-        !          elemR(ietmp(7), er_Depth)        
-        ! print *, 'area'
-        !         print *, elemR(ietmp(1), er_Area),&
-        !          elemR(ietmp(2), er_Area),&
-        !          elemR(ietmp(3), er_Area),&
-        !          elemR(ietmp(4), er_Area),&
-        !          elemR(ietmp(5), er_Area),&
-        !          elemR(ietmp(6), er_Area),&
-        !          elemR(ietmp(7), er_Area)
-        ! print *, 'velocity'
-        ! write(*,"(16F8.3)")   &
-        ! elemR(ietmp(1), er_Velocity), faceR(iftmp(1), fr_Velocity_u), faceR(iftmp(1), fr_Velocity_d),&
-        ! elemR(ietmp(2), er_Velocity), faceR(iftmp(2), fr_Velocity_u), faceR(iftmp(2), fr_Velocity_d),&
-        ! elemR(ietmp(3), er_Velocity),&
-        ! elemR(ietmp(4), er_Velocity),&
-        ! elemR(ietmp(5), er_Velocity), faceR(iftmp(5), fr_Velocity_u), faceR(iftmp(5), fr_Velocity_d),&
-        ! elemR(ietmp(6), er_Velocity), faceR(iftmp(6), fr_Velocity_u), faceR(iftmp(6), fr_Velocity_d),&
-        ! elemR(ietmp(7), er_Velocity)   
-        ! stop 98703
-
         !% HACK: 
         !% set initial conditions for junction main from the junction branch data
         !% For the momentum we are simply using rectangular geometry as a damping pot for the junctions.
         !% Goal is to ensure consistency with the links and mass conservation.
         !% Need to replace how JM geometry is handled in timeloop before we change this.
         !% length -- here uses the largest 2 input and output to get a maximum length
-        elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
-                                     elemR(JMidx+5,er_Length)) + &
-                                 max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
-                                     elemR(JMidx+6,er_Length))
 
-        !% HACK: finding the average breadth. This will not work for channels with other than rectangular geometry.
-        !% we need to generalize this
-        elemSGR(JMidx,esgr_Rectangular_Breadth) = (elemR(JMidx+1,er_Length)*elemSGR(JMidx+1,esgr_Rectangular_Breadth) + &
-                                                   elemR(JMidx+2,er_Length)*elemSGR(JMidx+2,esgr_Rectangular_Breadth) + &
-                                                   elemR(JMidx+3,er_Length)*elemSGR(JMidx+3,esgr_Rectangular_Breadth) + &
-                                                   elemR(JMidx+4,er_Length)*elemSGR(JMidx+4,esgr_Rectangular_Breadth) + &
-                                                   elemR(JMidx+5,er_Length)*elemSGR(JMidx+5,esgr_Rectangular_Breadth) + &
-                                                   elemR(JMidx+6,er_Length)*elemSGR(JMidx+6,esgr_Rectangular_Breadth))/ &   
-                                                   elemR(JMidx,er_Length)
+        !% get junction main geometry based on type
+        JmType => elemSI(JMidx,esi_JunctionMain_Type)
 
-        !% Volume
-        !% rectangular volume depends on characteristic length and breadth.
-        elemR(JMidx,er_Volume) =   elemSGR(JMidx,esgr_Rectangular_Breadth) * elemR(JMidx,er_Length) * elemR(JMidx,er_Depth)
-                                                                                    
-        elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume) 
-        elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume) 
+        select case (JmType)
+
+            case (ArtificalStorage)
+                
+                elemR(JMidx,er_Length) = max(elemR(JMidx+1,er_Length), elemR(JMidx+3,er_Length), &
+                                             elemR(JMidx+5,er_Length)) + &
+                                         max(elemR(JMidx+2,er_Length), elemR(JMidx+4,er_Length), &
+                                             elemR(JMidx+6,er_Length))
+
+                !% HACK: finding the average breadth. This will not work for channels with other than rectangular geometry.
+                !% we need to generalize this
+                elemSGR(JMidx,esgr_Rectangular_Breadth) = (elemR(JMidx+1,er_Length)*elemSGR(JMidx+1,esgr_Rectangular_Breadth) + &
+                                                           elemR(JMidx+2,er_Length)*elemSGR(JMidx+2,esgr_Rectangular_Breadth) + &
+                                                           elemR(JMidx+3,er_Length)*elemSGR(JMidx+3,esgr_Rectangular_Breadth) + &
+                                                           elemR(JMidx+4,er_Length)*elemSGR(JMidx+4,esgr_Rectangular_Breadth) + &
+                                                           elemR(JMidx+5,er_Length)*elemSGR(JMidx+5,esgr_Rectangular_Breadth) + &
+                                                           elemR(JMidx+6,er_Length)*elemSGR(JMidx+6,esgr_Rectangular_Breadth))/ &   
+                                                           elemR(JMidx,er_Length)
+
+                !% Volume
+                !% rectangular volume depends on characteristic length and breadth.
+                elemR(JMidx,er_Volume) =   elemSGR(JMidx,esgr_Rectangular_Breadth) * elemR(JMidx,er_Length) * elemR(JMidx,er_Depth)
+                                                                                            
+                elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume) 
+                elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
+
+            case (FunctionalStorage)
+                elemR(JMidx,er_Volume) = elemSR(JMidx,esr_Storage_Constant) * elemR(JMidx,er_Depth) +          &
+                    (elemSR(JMidx,esr_Storage_Coefficient) / (elemSR(JMidx,esr_Storage_Exponent) + oneR)) * &
+                    elemR(JMidx,er_Depth) ** (elemSR(JMidx,esr_Storage_Exponent) + oneR)
+
+                elemR(JMidx,er_Volume_N0) = elemR(JMidx,er_Volume) 
+                elemR(JMidx,er_Volume_N1) = elemR(JMidx,er_Volume)
+
+                !% create a storage curve
+                call storage_create_curve (JMidx)
+
+            case (TabularStorage)
+                curveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+                Curve(curveID)%ElemIdx = JMidx
+                !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used 
+                !% to get to integrate the area vs depth curve
+                call storage_integrate_area_vs_depth_curve (curveID)
+
+                !% now interpolate from the cure to get the volume
+                call storage_interpolate_volume_from_depth_singular (JMidx)
+
+            case default
+                print*, 'In, ', subroutine_name
+                print*, 'error: unknown junction main type, ', JmType
+                stop 54895 
+
+        end select
 
         ! call the standard geometry update for junction branches
         call geo_assign_JB (ALLtm, ep_JM_ALLtm)     

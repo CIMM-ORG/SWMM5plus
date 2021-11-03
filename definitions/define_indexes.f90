@@ -84,7 +84,7 @@ module define_indexes
         enumerator :: ni_node_type
         enumerator :: ni_N_link_u      ! number of upstream links at this node
         enumerator :: ni_N_link_d      ! number of downstram links at this node
-        enumerator :: ni_curve_type    ! ID for nodal storage surface area curve type. 1 for functional and 2 for tabular
+        enumerator :: ni_curve_ID      ! ID for nodal storage surface area curve
         enumerator :: ni_assigned      ! given 1 when node has been assigned to face/elem,
         enumerator :: ni_P_image       ! image number assigned from BIPquick
         enumerator :: ni_P_is_boundary ! 0=this node has nothing to do with image communication; >0=this node is a partition boundary
@@ -162,6 +162,7 @@ module define_indexes
         enumerator :: nYN_has_inflow = 1
         enumerator :: nYN_has_extInflow
         enumerator :: nYN_has_dwfInflow
+        enumerator :: nYN_has_storage
         enumerator :: nYN_isOutput
         enumerator :: nYN_is_phantom_node
         enumerator :: nYN_lastplusone !% must be last enum item
@@ -409,6 +410,8 @@ module define_indexes
         enumerator :: epg_CCJM_rectangular_nonsurcharged = 1 !% CC and JM rectangular channels that are not surcharged
         enumerator :: epg_CCJM_trapezoidal_nonsurcharged     !% CC and JM trapezoidal channels that are not surcharged
         enumerator :: epg_CCJM_circular_nonsurcharged        !% CC and JM circular conduits that are not surcharged
+        enumerator :: epg_JM_functional_nonsurcharged        !% JM functional geometry relationship nonsurcharges
+        enumerator :: epg_JM_tabular_nonsurcharged           !% JM tabular geometry relationship nonsurcharges
         enumerator :: epg_JB_rectangular                     !% all rectangular junction branches
         enumerator :: epg_JB_trapezoidal                     !% all trapezoidal junction branches
         enumerator :: epg_JB_circular                        !% all circular junction branches
@@ -443,8 +446,10 @@ module define_indexes
     !%-------------------------------------------------------------------------
 
     enum, bind(c)
-        !% define the column indexes for elemSI(:,:) junction elements
-        enumerator ::  esi_JunctionBranch_Exists            = 1    !% assigned 1 if branch exists
+        !% define the column indexes for elemSI(:,:) junction branch elements
+        enumerator ::  esi_JunctionMain_Type       = 1             !% junction main type
+        enumerator ::  esi_JunctionMain_Curve_ID                   !% id of the junction storage cure if exists
+        enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
         enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
         enumerator ::  esi_JunctionBranch_lastplusone !% must be last enum item
     end enum
@@ -488,6 +493,16 @@ module define_indexes
     end enum
 
     integer, parameter :: Ncol_elemSR_JunctionBranch = esr_JunctionBranch_lastplusone-1
+
+    !% define the column indexes for elemSr(:,:) for geometry that has not yet been confirmed and assigned:
+    enum, bind(c)
+        enumerator ::  esr_Storage_Constant = 1
+        enumerator ::  esr_Storage_Coefficient
+        enumerator ::  esr_Storage_Exponent
+        enumerator ::  esr_Storage_lastplusone !% must be last enum item
+    end enum
+
+    integer, parameter :: Ncol_elemSR_Storage = esr_Storage_lastplusone-1
 
     enum, bind(c)
         enumerator ::  esr_Weir_DischargeCoeff1 = 1     !% discharge coefficient for triangular weir
@@ -533,6 +548,7 @@ module define_indexes
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSR = max(&
                             Ncol_elemSR_JunctionBranch, &
+                            Ncol_elemSR_Storage, &
                             Ncol_elemSR_Weir, &
                             Ncol_elemSR_Orifice) !, &
                             ! Ncol_elemSR_Conduit)
@@ -785,7 +801,7 @@ module define_indexes
     end enum
     integer, target :: Ncol_oefi = oefi_lastplusone-1
 
- !% data types (columns) in the OutFaceFixedI
+    !% data types (columns) in the OutFaceFixedI
     enum, bind(c)
         enumerator :: offi_face_Gidx = 1
         enumerator :: offi_node_Gidx_SWMM
@@ -793,7 +809,28 @@ module define_indexes
     end enum
     integer, target :: Ncol_offi = offi_lastplusone-1
 
+    !% data types (columns) in the table
+    !% define column indexes for storage curve types
+    enum, bind(c)
+        enumerator :: curve_storage_depth = 1
+        enumerator :: curve_storage_area
+        enumerator :: curve_storage_volume
+        enumerator :: curve_storage_lastplusone !% must be the last enum item
+    end enum
+    integer, parameter :: Ncol_storage_curve = curve_storage_lastplusone-1
 
+    !% define column indexes for pump curve types
+    enum, bind(c)
+        enumerator :: curve_pump_depth = 1
+        enumerator :: curve_pump_flowrate
+        enumerator :: curve_pump_lastplusone !% must be the last enum item
+    end enum
+    integer, parameter :: Ncol_pump_curve = curve_pump_lastplusone-1
+
+    !% determine the largest number of columns for table data structure
+    integer, target :: Ncol_curve = max(&
+                            Ncol_storage_curve, &
+                            Ncol_pump_curve)
     !
     !==========================================================================
     ! definitions

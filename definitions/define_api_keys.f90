@@ -58,7 +58,7 @@ module define_api_keys
         enumerator :: API_BOTTOM_ORIFICE
     end enum
 
-    !% SWMM Pump Curve types ($API_DIR/src/enums.h) -> WeirType
+    !% SWMM Weir types ($API_DIR/src/enums.h) -> WeirType
     enum, bind(c)
         enumerator :: API_TRANSVERSE_WEIR = 0
         enumerator :: API_SIDEFLOW_WEIR
@@ -70,8 +70,23 @@ module define_api_keys
     !% SWMM Table types ($API_DIR/src/enums.h -> ObjectType)
     enum, bind(c)
         enumerator :: API_TIMEPATTERN = 6
-        enumerator :: API_CURVES
+        enumerator :: API_CURVE
         enumerator :: API_TSERIES
+    end enum
+
+    !% SWMM Curve types ($API_DIR/src/enums.h -> ObjectType)
+    enum, bind(c)
+        enumerator :: API_STORAGE_CURVE = 0         !% surf. area v. depth for storage node
+        enumerator :: API_DIVERSION_CURVE           !% diverted flow v. inflow for divider node
+        enumerator :: API_TIDAL_CURVE               !% water elev. v. hour of day for outfall
+        enumerator :: API_RATING_CURVE              !% flow rate v. head for outlet link
+        enumerator :: API_CONTROL_CURVE             !% control setting v. controller variable
+        enumerator :: API_SHAPE_CURVE               !% width v. depth for custom x-section
+        enumerator :: API_WEIR_CURVE                !% discharge coeff. v. head for weir
+        enumerator :: API_PUMP1_CURVE               !% flow v. wet well volume for pump
+        enumerator :: API_PUMP2_CURVE               !% flow v. depth for pump (discrete)
+        enumerator :: API_PUMP3_CURVE               !% flow v. head for pump (continuous)
+        enumerator :: API_PUMP4_CURVE               !% flow v. depth for pump (continuous)
     end enum
 
     !% SWMM XSECT_TYPES ($API_DIR/src/enums.h -> XsectType)
@@ -116,6 +131,10 @@ module define_api_keys
         enumerator :: api_node_outfall_type
         enumerator :: api_node_invertElev
         enumerator :: api_node_initDepth
+        enumerator :: api_node_StorageConstant
+        enumerator :: api_node_StorageCoeff
+        enumerator :: api_node_StorageExponent
+        enumerator :: api_node_StorageCurveID
         enumerator :: api_node_extInflow_tSeries
         enumerator :: api_node_extInflow_tSeries_x1
         enumerator :: api_node_extInflow_tSeries_x2
@@ -131,6 +150,7 @@ module define_api_keys
         enumerator :: api_node_dwfInflow_avgvalue
         enumerator :: api_node_has_dwfInflow
         enumerator :: api_node_depth
+        enumerator :: api_node_fullDepth
         enumerator :: api_node_inflow
         enumerator :: api_node_volume
         enumerator :: api_node_overflow
@@ -168,6 +188,13 @@ module define_api_keys
         enumerator :: api_link_xsect_wMax
         enumerator :: api_link_xsect_yBot
         enumerator :: api_link_xsect_yFull
+    end enum
+
+    !% API table attributes
+    enum, bind(c)
+        enumerator :: api_table_ID = 1
+        enumerator :: api_table_type
+        enumerator :: api_table_refers_to
     end enum
 
     !% API Link Output attributes

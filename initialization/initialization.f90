@@ -14,7 +14,6 @@ module initialization
     use utility_array
     use utility_datetime
     use utility_output
-    use utility_array
     use utility_profiler
     use utility_files
     use pack_mask_arrays
@@ -59,7 +58,7 @@ contains
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        !% --- CPU and wall-clock timers    
+        !% --- CPU and wall-clock timers
         call init_model_timer()
 
         !% --- assign and store unit numbers for files
@@ -73,7 +72,7 @@ contains
         call util_file_setup_input_paths_and_files()
 
         if (setting%Output%Verbose) &
-            write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."    
+            write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."
 
         !% --- set the branchsign global -- this is used for junction branches (JB)
         !%     for upstream (+1) and downstream (-1)
@@ -92,9 +91,9 @@ contains
 
 
         !% HACK
-        !% --- Read and process the command-line options a second time to prevent overwrite 
-        !%     from json file and reprocess. 
-        !%     Possibly replace this later with a set of settings that are saved 
+        !% --- Read and process the command-line options a second time to prevent overwrite
+        !%     from json file and reprocess.
+        !%     Possibly replace this later with a set of settings that are saved
         !%     and simply overwrite after the settings.json is loaded.
         call util_file_assign_unitnumber ()
         call util_file_get_commandline ()
@@ -109,15 +108,15 @@ contains
         if (setting%Output%Verbose) then
             write(*,"(A)") "Simulation Starts..."
             write(*,"(A)") 'Using the following files:'
-            write(*,"(A)") 'input file  : '//trim(setting%File%inp_file)
-            write(*,"(A)") 'setting file: '//trim(setting%File%setting_file)
-            write(*,"(A)") 'report file : '//trim(setting%File%rpt_file)
-            write(*,"(A)") 'output file : '//trim(setting%File%out_file)
+            write(*,"(A)") 'Input file  : '//trim(setting%File%inp_file)
+            write(*,"(A)") 'Report file : '//trim(setting%File%rpt_file)
+            write(*,"(A)") 'Output file : '//trim(setting%File%out_file)
+            write(*,"(A)") 'Settings file: '//trim(setting%File%setting_file)
         end if
 
         !% --- set up the profiler
         if (setting%Profile%YN) then
-            call util_allocate_profiler ()   
+            call util_allocate_profiler ()
             call util_profiler_start (pfc_initialize_all)
         end if
 
@@ -130,9 +129,13 @@ contains
         if (setting%Output%Verbose) print *, "begin link-node processing"
         call init_linknode_arrays ()
 
+        !% --- store the SWMM-C curves in equivalent Fortran arrays
+        if (setting%Output%Verbose) print *, "begin SWMM5 curve processing"
+        call init_curves()
+
         if (setting%Output%Verbose) print *, "begin partitioning"
         call init_partitioning()
-   
+
         !% --- HACK -- to this point the above could all be done on image(1) and then
         !% distributed to the other images. This might create problems in ensuring
         !% that all the data gets copied over when new stuff is added. Probably OK
@@ -150,10 +153,10 @@ contains
         ! else
         !     !% temporarily assign the node index to the Global swmm index
         !     !% only good for one processor operation
-        !     faceI(:,fi_node_Gidx_SWMM) = faceI(:,fi_node_idx)    
-        ! end if    
+        !     faceI(:,fi_node_Gidx_SWMM) = faceI(:,fi_node_idx)
+        ! end if
         !% ---- END HACK
-   
+
         !% --- setup for csv output of links and nodes
         !brh20211006 call outputD_read_csv_link_names()
         !brh20211006 call outputD_read_csv_node_names()
@@ -180,13 +183,13 @@ contains
         !% --- designate/select the nodes/links for output
         call output_COMMON_nodes_selection ()
         call output_COMMON_links_selection ()
-        !% --- designate the corresponding elements for output   
+        !% --- designate the corresponding elements for output
         call outputML_element_selection ()
         !% --- deisgnate the corresponding face to output
         call outputML_face_selection ()
-        !% --- create packed arrays of elem row numbers that are output  
+        !% --- create packed arrays of elem row numbers that are output
         call pack_element_outputML ()
-        !% --- create packed arrays of face row numbers that are output  
+        !% --- create packed arrays of face row numbers that are output
         call pack_face_outputML ()
 
         !print *, elemP(1:npack_elemP(ep_Output_Elements),ep_Output_Elements)
@@ -210,7 +213,7 @@ contains
         call util_allocate_outputML_filenames ()
 
         !if (setting%Output%Verbose) print *, "begin setup of output files"
-     
+
         !% creating output_folders and files
         !% brh 20211004 -- moved this functionality into util_file_setup_output_files
         !call util_output_clean_folders()
@@ -237,7 +240,7 @@ contains
             call outputML_store_data (.true.)
             return
         end if
-        
+
         if (setting%Debug%File%initialization)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine initialize_toplevel
@@ -257,22 +260,22 @@ contains
         !% store Real time
         setting%Time%Real%EpochStartSeconds = time()
 
-    end subroutine init_model_timer     
+    end subroutine init_model_timer
 !%
 !%==========================================================================
 !%==========================================================================
-!%   
+!%
     subroutine init_timestamp ()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% initializes time stamp used for output files
-        !%-----------------------------------------------------------------------------           
+        !%-----------------------------------------------------------------------------
         integer :: thisTime(8), ii, thisunit, ios
         character(len=4) :: cyear
         character(len=2) :: cmonth, cday, chour, cmin
-        character(len=13) :: datetimestamp   
+        character(len=13) :: datetimestamp
         character(64) :: subroutine_name = 'init_timestamp'
-        !%-----------------------------------------------------------------------------  
+        !%-----------------------------------------------------------------------------
         if (icrash) return
         call date_and_time(values = thisTime)
         write(cyear, "(i4)") thisTime(1)
@@ -287,7 +290,7 @@ contains
             cday = '0'//adjustl(cday)
         end if
         if (thisTime(5) < 10) then
-            chour = '0'//adjustl(chour)  
+            chour = '0'//adjustl(chour)
         end if
         if (thisTime(6) < 10) then
             cmin = '0'//adjustl(cmin)
@@ -308,39 +311,39 @@ contains
         ! !% --- HACK using a write/read file as the setting varialble is not a coarray
         ! if (this_image() == 1) then
         !     open(newunit = thisunit, &
-        !         file = 'temp_fortran.txt',    &     
+        !         file = 'temp_fortran.txt',    &
         !         action = 'write', &
         !         iostat = ios)
         !     print*, 'ios', ios
         !     if (ios /= 0) then
         !         write(*,"(A)") 'ERROR (CODE) file temp_fortran.txt could not be opened for writing.'
         !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
-        !         stop 'in ' // subroutine_name  
-        !     end if    
+        !         stop 'in ' // subroutine_name
+        !     end if
         !     write(thisunit,"(A)") setting%Time%DateTimeStamp
         !     close(thisunit)
         ! end if
         ! !% testing
         ! !open(newunit = thisunit, &
-        ! !    file = 'temp_fortran.txt',    &     
+        ! !    file = 'temp_fortran.txt',    &
         ! !    action = 'read', &
         ! !    iostat = ios)
         ! !read(thisunit,"(A)")  datetimestamp
-        ! !print *, datetimestamp  
+        ! !print *, datetimestamp
 
         ! !% read sequentially into other images
         ! do ii = 2,num_images()
         !     open(newunit = thisunit, &
-        !         file = 'temp_fortran.txt',    &     
+        !         file = 'temp_fortran.txt',    &
         !         action = 'read', &
-        !         iostat = ios)       
+        !         iostat = ios)
         !     if (ios /= 0) then
         !         write(*,"(A)") 'ERROR (CODE) temp_fortran.txt file could not be opened for reading.'
         !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
-        !         stop 'in ' // subroutine_name  
-        !     end if                       
-        !     read(thisunit,"(A)") setting%Time%DateTimeStamp  
-        ! end do   
+        !         stop 'in ' // subroutine_name
+        !     end if
+        !     read(thisunit,"(A)") setting%Time%DateTimeStamp
+        ! end do
 
         sync all
 
@@ -348,7 +351,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!%      
+!%
     subroutine init_linknode_arrays()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -432,7 +435,7 @@ contains
                  (link%I(ii,li_geometry) == lPower_function) .or. &
                  (link%I(ii,li_geometry) == lRect_triang)    .or. &
                  (link%I(ii,li_geometry) == lRect_round)     .or. &
-                 (link%I(ii,li_geometry) == lMod_basket)     .or. &   
+                 (link%I(ii,li_geometry) == lMod_basket)     .or. &
                  (link%I(ii,li_geometry) == lIrregular)) ) then
 
                 link%I(ii,li_link_type) = lChannel
@@ -444,6 +447,9 @@ contains
             node%I(ii, ni_idx) = ii
             if (interface_get_node_attribute(ii, api_node_type) == API_OUTFALL) then
                 node%I(ii, ni_node_type) = nBCdn
+            else if (interface_get_node_attribute(ii, api_node_type) == API_STORAGE) then
+                node%I(ii, ni_node_type) = nJm
+                node%YN(ii, nYN_has_storage) = .true.
             else if ((total_n_links == twoI)          .and. &
                      (node%I(ii,ni_N_link_u) == oneI) .and. &
                      (node%I(ii,ni_N_link_d) == oneI) )then
@@ -462,9 +468,14 @@ contains
                 end if
             end if
 
-            node%R(ii,nr_InitialDepth) = interface_get_node_attribute(ii, api_node_initDepth)
-            node%R(ii,nr_Zbottom) = interface_get_node_attribute(ii, api_node_invertElev)
-            node%I(ii, ni_pattern_resolution) = interface_get_BC_resolution(ii)
+            node%R(ii,nr_InitialDepth)      = interface_get_node_attribute(ii, api_node_initDepth)
+            node%R(ii,nr_Zbottom)           = interface_get_node_attribute(ii, api_node_invertElev)
+            node%R(ii,nr_FullDepth)         = interface_get_node_attribute(ii, api_node_fullDepth)
+            node%R(ii,nr_StorageConstant)   = interface_get_node_attribute(ii, api_node_StorageConstant)
+            node%R(ii,nr_StorageCoeff)      = interface_get_node_attribute(ii, api_node_StorageCoeff)
+            node%R(ii,nr_StorageExponent)   = interface_get_node_attribute(ii, api_node_StorageExponent)
+            node%I(ii,ni_curve_ID)          = interface_get_node_attribute(ii, api_node_StorageCurveID) + 1
+            node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
         end do
 
         !% Update Link/Node names
@@ -474,6 +485,60 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine init_linknode_arrays
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_curves()
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%   Retrieves data from EPA-SWMM interface and populates curve curves
+        !%-----------------------------------------------------------------------------
+
+        integer       :: ii, jj, additional_storage_curves, Total_curves
+
+        character(64) :: subroutine_name = 'init_curves'
+
+        !%-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%initialization) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        if (.not. api_is_initialized) then
+            print *, "ERROR: API is not initialized"
+            stop "in " // subroutine_name
+        end if
+
+        !% we create additional curves for functional storage as well
+        !% this allocates the space for functional storage curve
+        additional_storage_curves = count((node%YN(:, nYN_has_storage)) .and. &
+                                          (node%I(:,ni_curve_ID) == 0))
+
+        Total_Curves = additional_storage_curves + SWMM_N_Curve
+        if (Total_Curves > SWMM_N_Curve) N_Curve = SWMM_N_Curve + additional_storage_curves
+
+        !% allocate the number of curve objets from SWMM5
+        call util_allocate_curves()
+
+        do ii = 1, SWMM_N_Curve
+            curve(ii)%ID = ii
+            curve(ii)%Type = interface_get_table_attribute(ii, api_table_type)
+            !% get the number of entries in a curve
+            curve(ii)%NumRows = interface_get_num_table_entries(ii)
+            !% allocate the value space
+            call util_allocate_curve_entries (ii,curve(ii)%NumRows)
+            !% get the first entry of the curve
+            curve(ii)%ValueArray(1,:) = interface_get_first_entry_table(ii)
+            !% populate the rest of the curves
+            do jj = 2,curve(ii)%NumRows
+                curve(ii)%ValueArray(jj,:) = interface_get_next_entry_table(ii, API_CURVE)
+            end do
+        end do
+
+        if (setting%Debug%File%initialization)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
+    end subroutine init_curves
 !%
 !%==========================================================================
 !%==========================================================================
@@ -631,7 +696,7 @@ contains
         if (setting%Debug%File%initialization) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning) 
+        if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning)
 
         !% find the number of elements in a link based on nominal element length
         do ii = 1, SWMM_N_link
@@ -673,7 +738,7 @@ contains
         !% Determines the overall length of the common coarray to handle the different
         !% number of elements on each processor
         !%
-        !%-----------------------------------------------------------------------------        
+        !%-----------------------------------------------------------------------------
         integer :: nimgs_assign
         integer, allocatable :: unique_imagenum(:)
         integer :: ii, jj, kk, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
@@ -681,7 +746,7 @@ contains
         integer :: duplicated_face_counter=0
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
-        !%----------------------------------------------------------------------------- 
+        !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_array) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -779,9 +844,9 @@ contains
         !%
         !% Description:
         !%
-        !%-----------------------------------------------------------------------------     
+        !%-----------------------------------------------------------------------------
 
-        !%-----------------------------------------------------------------------------  
+        !%-----------------------------------------------------------------------------
 
         setting%Time%Dt = setting%Time%Hydraulics%Dt
         setting%Time%Now = 0

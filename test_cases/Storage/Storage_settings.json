@@ -56,11 +56,18 @@
         "slots" : 10,
         "disableInterpolation": false
     },
+    "CaseName" : {
+        "Long"  : "Storage Unit",
+        "Short" : "ST",
+        "withTimeStamp" : ""
+    },
     "Constant" : {
         "gravity" : 9.81
     },
     "Discretization" : {
         "NominalElemLength" : 10.00,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -70,8 +77,18 @@
     "FaceInterp" : {
         "DownJBFaceInterp" : "dynamic"
     },
+    "File" : {
+        "library_folder" : "",
+        "links_input_file_exist" : false,
+        "nodes_input_file_exist" : false,  
+        "force_folder_creation"  : true
+    },
     "Junction" : {
-        "kFactor" : 0.0
+        "kFactor"  : 0.0,
+        "HeadCoef" : 1.0,
+        "CFLlimit" : 0.5,
+        "FunStorageN" : 10,
+        "isDynamic" : false
     },
     "Limiter" : {
         "BC" : {
@@ -108,17 +125,44 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Output" : {
+        "print_links_csv" : true,
+        "print_nodes_csv" : true,
         "report" : true,
         "reportStartTime" : 0.0,
-        "reportDt" : 100.0,
+        "reportDt" : 900.0,
         "reportStep" : 0,
+        "reportTimeUnits" : "Hours",
         "slots" : 20,
-        "links_file" : "",
-        "nodes_file" : "",
+        "StoredLevels" : 100,
+        "StoredFileNames" : 100,
+        "suppress_MultiLevel_Output" : false,
+        "UseFileNameFile" : false,
+        "Verbose" : true,
+        "Warning" : true,
         "CommandLine" : {
             "quiet" : false,
-            "interval" : 1000
+            "interval" : 100
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFroudeNumberOut" : false,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : false
         }
+    },
+    "Orifice" : {
+        "SharpCrestedWeirCoefficient" : 0.414,
+        "TransverseWeirExponent" : 1.5,
+        "VillemonteCorrectionExponent" : 0.385
     },
     "Partitioning" : {
         "PartitioningMethod" : "bquick"
@@ -227,7 +271,6 @@
         "File" : {
             "adjust" : false,
             "boundary_conditions" : false,
-            "BIPquick" : false,
             "c_library" : false,
             "define_globals" : false,
             "define_indexes" : false,
@@ -240,7 +283,7 @@
             "geometry" : false,
             "discretization"  : false,
             "initial_condition" : false,
-            "initialization" : true,
+            "initialization" : false,
             "interface" : false,
             "jump" : false,
             "lowlevel_rk2" : false,
@@ -248,7 +291,7 @@
             "orifice_elements" : false,
             "output" : false,
             "pack_mask_arrays" : false,
-            "partitioning" : true,
+            "partitioning" : false,
             "pump_elements" : false,
             "rectangular_channel" : false,
             "trapezoidal_channel" : false,
@@ -276,13 +319,11 @@
             "timeloop" : false,
             "utility" : false
         },
-        "Input"  : false,
-        "Output" : false,
+        "Setup"  : true,
+        "Output" : true,
         "Tests" : true
     },
     "Profile" : {
         "YN" : true
-    },
-    "Warning"  : true,
-    "Verbose" : true
+    }
 }

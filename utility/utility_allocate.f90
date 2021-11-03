@@ -38,8 +38,11 @@ module utility_allocate
     public :: util_allocate_outputML_facetypes
     public :: util_allocate_outputML_storage
     public :: util_allocate_outputML_times
-    public :: util_allocate_outputML_filenames  
+    public :: util_allocate_outputML_filenames 
+    public :: util_allocate_curves 
+    public :: util_allocate_curve_entries
     public :: util_allocate_check
+
 
 contains
 !
@@ -1540,7 +1543,7 @@ contains
 !
 !==========================================================================
 !==========================================================================
-    !
+!
     subroutine util_allocate_col_faceYN()
         !-----------------------------------------------------------------------------
         !
@@ -1573,6 +1576,66 @@ contains
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceYN
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine util_allocate_curves ()
+        !-----------------------------------------------------------------------------
+        !
+        !
+        !-----------------------------------------------------------------------------
+
+        character(64)       :: subroutine_name = 'util_allocate_curves'
+
+        !-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%utility_allocate) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        !% allocate curves
+        allocate( curve(N_curve), stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'curve')
+        
+        curve%ID = nullvalueI
+        curve%Type = nullvalueI
+        curve%RefersTo = nullvalueI
+        curve%NumRows = nullvalueI
+        curve%ElemIdx = nullvalueI
+        curve%FaceIdx = nullvalueI
+
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
+    end subroutine util_allocate_curves
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine util_allocate_curve_entries (curve_idx, num_entries)
+        !-----------------------------------------------------------------------------
+        !
+        !
+        !-----------------------------------------------------------------------------
+
+        integer, intent(in) :: curve_idx, num_entries
+        character(64)       :: subroutine_name = 'util_allocate_curve_entries'
+
+        !-----------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%utility_allocate) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        !% allocate the value array of curve
+        allocate( curve(curve_idx)%ValueArray(num_entries,Ncol_curve), stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'curve')
+
+        curve(curve_idx)%ValueArray = nullvalueR
+
+        if (setting%Debug%File%utility_allocate) &
+        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
+    end subroutine util_allocate_curve_entries
 !
 !==========================================================================
 !==========================================================================

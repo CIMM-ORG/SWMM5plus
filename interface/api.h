@@ -55,6 +55,10 @@ enum api_node_attributes {
   node_outfall_type,
   node_invertElev,
   node_initDepth,
+  node_StorageConstant,
+  node_StorageCoeff,
+  node_StorageExponent,
+  node_StorageCurveID,
   node_extInflow_tSeries,
   node_extInflow_tSeries_x1,
   node_extInflow_tSeries_x2,
@@ -70,6 +74,7 @@ enum api_node_attributes {
   node_dwfInflow_avgvalue,
   node_has_dwfInflow,
   node_depth,
+  node_fullDepth,
   node_inflow,
   node_volume,
   node_overflow
@@ -126,6 +131,12 @@ enum api_link_attributes {
 
 // };
 
+enum api_table_attributes {
+  table_ID = 1,
+  table_type,
+  table_refers_to,
+};
+
 enum api_double_vars {
   api_left_slope,
   api_right_slope,
@@ -173,6 +184,10 @@ int DLLEXPORT api_get_object_name(int k, char* object_name, int object_type);
 int DLLEXPORT api_get_next_entry_tseries(int k);
 int DLLEXPORT api_get_object_name_len(int k, int object_type, int* len);
 int DLLEXPORT api_get_object_name(int k, char* object_name, int object_type);
+int DLLEXPORT api_get_num_table_entries(int k, int table_type, int * num_entries);
+int DLLEXPORT api_get_table_attribute(int k, int attr, double* value);
+int DLLEXPORT api_get_first_entry_table(int k, int table_type, double *x, double *y);
+int DLLEXPORT api_get_next_entry_table(int k, int table_type, double *x, double *y);
 
 // Output fcns
 int DLLEXPORT api_write_output_line(double t);

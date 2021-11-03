@@ -12,7 +12,7 @@ module finalization
 
     !%-----------------------------------------------------------------------------
     !% Description:
-    !% 
+    !%
     !%-----------------------------------------------------------------------------
 
 contains
@@ -24,7 +24,7 @@ contains
     subroutine finalize_toplevel()
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% 
+        !%
         !%-----------------------------------------------------------------------------
         logical :: isLastStep
         character(64) :: subroutine_name = 'finalize_toplevel'
@@ -39,7 +39,7 @@ contains
 
         !% write a final combined multi-level files
         call outputML_store_data (.true.)
-        
+
         !% write the control file for the stored mult-level files
         call outputML_write_control_file ()
 
@@ -58,7 +58,7 @@ contains
         ! call interface_finalize()
 
         ! call util_deallocate_network_data()
-        
+
         ! !% brh 20211005 -- commented this. since debug_output is now in a time-stamped
         ! !% subdirectory we can leave it for user to delete
         ! ! !% we don't want an old debug_output directory to confuse things, so
@@ -77,8 +77,8 @@ contains
             new_line(" ") // 'Processor ', this_image(), " | Simulation Time = ", &
             (setting%Time%CPU%EpochFinishSeconds - setting%Time%CPU%EpochStartSeconds), " [s]"
         write(*,"(A)") '========================= SWMM5+ finished =================================='
-        write(*,"(A)") ''    
-        
+        write(*,"(A)") ''
+
     end subroutine finalize_toplevel
 !%
 !%==========================================================================
