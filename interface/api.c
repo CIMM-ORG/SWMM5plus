@@ -183,7 +183,7 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
         {
             total_extinflow += table_tseriesLookup(&Tseries[j], current_datetime, FALSE) * sfactor;
         }
-        total_inflow += total_extinflow;
+        total_inflow += CFTOCM(total_extinflow);
     }
     return total_inflow;
 }
