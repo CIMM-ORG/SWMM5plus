@@ -19,7 +19,6 @@ module interface
 !%==========================================================================
 
     type(c_lib_type), public :: c_lib
-    type(c_ptr), public :: api
     logical, public :: api_is_initialized = .false.
 
     !% Public subroutines/functions
@@ -53,23 +52,21 @@ module interface
         function api_initialize(inp_file, report_file, out_file, run_routing)
             use, intrinsic :: iso_c_binding
             implicit none
-            character(c_char), dimension(*) :: inp_file
-            character(c_char), dimension(*) :: report_file
-            character(c_char), dimension(*) :: out_file
-            integer(c_int),    value        :: run_routing
-            type(c_ptr) :: api_initialize
+            character(len=*,kind=c_char), intent(in) :: inp_file
+            character(len=*,kind=c_char), intent(in) :: report_file
+            character(len=*,kind=c_char), intent(in) :: out_file
+            integer(c_int),               value      :: run_routing
+            integer(c_int) :: api_initialize
         end function api_initialize
-        !% -------------------------------------------------------------------------------    
-        subroutine api_finalize(api)
+        !% -------------------------------------------------------------------------------
+        subroutine api_finalize()
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
         end subroutine api_finalize
         !% -------------------------------------------------------------------------------
-        function api_run_step(api)
+        function api_run_step()
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
             real(c_double) :: api_run_step
         end function api_run_step
         !% -------------------------------------------------------------------------------
@@ -88,76 +85,68 @@ module interface
             real(c_double) :: api_get_end_datetime
         end function api_get_end_datetime
         !% -------------------------------------------------------------------------------
-        function api_get_flowBC(api, k, current_datetime)
+        function api_get_flowBC(k, current_datetime)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr),    value, intent(in) :: api
             integer(c_int), value, intent(in) :: k
             real(c_double),        intent(in) :: current_datetime
             real(c_double)                    :: api_get_flowBC
         end function api_get_flowBC
         !% -------------------------------------------------------------------------------
-        function api_get_headBC(api, k, current_datetime)
+        function api_get_headBC(k, current_datetime)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr),    value, intent(in) :: api
             integer(c_int), value, intent(in) :: k
             real(c_double),        intent(in) :: current_datetime
             real(c_double)                    :: api_get_headBC
         end function api_get_headBC
         !% -------------------------------------------------------------------------------
         function api_get_report_times &
-            (api, report_start_datetime, report_step, hydrology_step)
+            (report_start_datetime, report_step, hydrology_step)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
             type(c_ptr), value, intent(in) :: report_start_datetime
             type(c_ptr), value, intent(in) :: report_step
             type(c_ptr), value, intent(in) :: hydrology_step
             integer(c_int) :: api_get_report_times
         end function api_get_report_times
         !% -------------------------------------------------------------------------------
-        function api_get_node_attribute(api, k, attr, value)
+        function api_get_node_attribute(k, attr, value)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
             integer(c_int), value :: k
             integer(c_int), value :: attr
             type(c_ptr), value, intent(in) :: value
             integer(c_int) :: api_get_node_attribute
         end function api_get_node_attribute
         !% -------------------------------------------------------------------------------
-        function api_get_link_attribute(api, k, attr, value)
+        function api_get_link_attribute(k, attr, value)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
             integer(c_int), value :: k
             integer(c_int), value :: attr
             type(c_ptr), value, intent(in) :: value
             integer(c_int) :: api_get_link_attribute
         end function api_get_link_attribute
         !% -------------------------------------------------------------------------------
-        function api_get_num_objects(api, obj_type)
+        function api_get_num_objects(obj_type)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
             integer(c_int), value :: obj_type
             integer(c_int) :: api_get_num_objects
         end function api_get_num_objects
         !% -------------------------------------------------------------------------------
-        function api_get_object_name_len(api, k, object_type)
+        function api_get_object_name_len(k, object_type)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
             integer(c_int), value :: k
             integer(c_int), value :: object_type
             integer(c_int) :: api_get_object_name_len
         end function api_get_object_name_len
         !% -------------------------------------------------------------------------------
-        function api_get_object_name(api, k, object_name, object_type)
+        function api_get_object_name(k, object_name, object_type)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr), value, intent(in) :: api
             integer(c_int), value :: k
             character(c_char), dimension(*) :: object_name
             integer(c_int), value :: object_type
@@ -181,36 +170,32 @@ module interface
         !% -------------------------------------------------------------------------------
         ! --- Write Output
         !% -------------------------------------------------------------------------------
-        function api_export_link_results(api, link_idx)
+        function api_export_link_results(link_idx)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr),    value, intent(in) :: api
             integer(c_int), value             :: link_idx
             integer(c_int)                    :: api_export_link_results
         end function api_export_link_results
         !% -------------------------------------------------------------------------------
-        function api_write_output_line(api, t)
+        function api_write_output_line(t)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr),    value, intent(in) :: api
             real(c_double),        intent(in) :: t
             integer(c_int)                    :: api_write_output_line
         end function api_write_output_line
         !% -------------------------------------------------------------------------------
-        function api_update_nodeResult(api, node_idx, resultType, newNodeResult)
+        function api_update_nodeResult(node_idx, resultType, newNodeResult)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr),    value, intent(in) :: api
             integer(c_int), value             :: node_idx
             integer(c_int), value             :: resultType
             real(c_double), intent(in)        :: newNodeResult
             integer(c_int)                    :: api_update_nodeResult
         end function api_update_nodeResult
         !% -------------------------------------------------------------------------------
-        function api_update_linkResult(api, link_idx, resultType, newLinkResult)
+        function api_update_linkResult(link_idx, resultType, newLinkResult)
             use, intrinsic :: iso_c_binding
             implicit none
-            type(c_ptr),    value, intent(in) :: api
             integer(c_int), value             :: link_idx
             integer(c_int), value             :: resultType
             real(c_double), value, intent(in) :: newLinkResult
@@ -218,11 +203,11 @@ module interface
         end function api_update_linkResult
         !% -------------------------------------------------------------------------------
     end interface
-!%   
-!%==========================================================================
-!% Procedures    
-!%==========================================================================
-!%    
+    !%
+    !%==========================================================================
+    !% Procedures
+    !%==========================================================================
+    !%
     procedure(api_initialize),             pointer :: ptr_api_initialize
     procedure(api_finalize),               pointer :: ptr_api_finalize
     procedure(api_get_node_attribute),     pointer :: ptr_api_get_node_attribute
@@ -258,52 +243,34 @@ contains
 !%=============================================================================
 
     subroutine interface_init()
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !%    initializes the EPA-SWMM shared library, creating input (.inp),
-        !%    report (.rpt), and output (.out) files, necessary to run simulation with
-        !%    EPA-SWMM. It also updates the number of objects in the SWMM model, i.e.,
-        !%    number of links, nodes, and tables, and defines the start and end
-        !%    simulation times.
-        !%-----------------------------------------------------------------------------
-        integer :: ppos, num_args
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    initializes the EPA-SWMM shared library, creating input (.inp),
+    !%    report (.rpt), and output (.out) files, necessary to run simulation with
+    !%    EPA-SWMM. It also updates the number of objects in the SWMM model, i.e.,
+    !%    number of links, nodes, and tables, and defines the start and end
+    !%    simulation times.
+    !%-----------------------------------------------------------------------------
+        integer :: ppos, num_args, error
         character(64) :: subroutine_name = 'interface_init'
-        !%-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-
-        !% Initialize C API
-
-        api = c_null_ptr
-
-        !% brh 20211004 -- these are handled in utility_files.f90
-        !if (setting%File%inp_file == "") then
-        !    print *, "ERROR: it is necessary to define the path to the .inp file"
-        !    stop "in " // subroutine_name
-        !end if
-        !ppos = scan(trim(setting%File%inp_file), '.', back = .true.)
-        !if (ppos > 0) then
-        !    setting%File%rpt_file = setting%File%inp_file(1:ppos) // "rpt"
-        !    setting%File%out_file = setting%File%inp_file(1:ppos) // "out"
-        !end if
 
         setting%File%inp_file = trim(setting%File%inp_file) // c_null_char
         setting%File%rpt_file = trim(setting%File%rpt_file) // c_null_char
         setting%File%out_file = trim(setting%File%out_file) // c_null_char
         c_lib%filename = trim(setting%File%library_folder) // "/libswmm5.so"
-        c_lib%procname = "api_initialize"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
-        api = ptr_api_initialize( &
+
+        call load_all_api_procedures()
+
+        error = ptr_api_initialize( &
             setting%File%inp_file, &
             setting%File%rpt_file, &
             setting%File%out_file, &
             setting%Simulation%useSWMMC)
+        call print_api_error(error, subroutine_name)
         api_is_initialized = .true.
 
         !% Get number of objects
@@ -313,7 +280,7 @@ contains
         SWMM_N_node = get_num_objects(API_NODE)
         N_node = SWMM_N_node
 
-        print * 
+        print *
         print *, 'BUG WARNING location ',980879,' in ',subroutine_name
         print *, '...if the SWMM code detects a parse error for the *.inp file then the ...'
         print *, '...get_num_objects function returns an error code 200 (SWMM parse error)... '
@@ -355,10 +322,10 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end if
     end subroutine interface_init
-!%    
-!%=============================================================================
-!%=============================================================================
-!%   
+    !%
+    !%=============================================================================
+    !%=============================================================================
+    !%
     subroutine interface_finalize()
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -370,22 +337,16 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_finalize"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
-        call ptr_api_finalize(api)
+        call ptr_api_finalize()
+
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end subroutine interface_finalize
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
-!%   
+!%
     ! subroutine interface_run_step()
     ! !%-----------------------------------------------------------------------------
     ! !% Description:
@@ -414,11 +375,11 @@ contains
     !     write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     ! end subroutine interface_run_step
-!%    
+!%
 !%=============================================================================
-!%   Property-extraction functions (only run after initialization) 
+!%   Property-extraction functions (only run after initialization)
 !%=============================================================================
-!%   
+!%
     subroutine interface_update_linknode_names()
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -433,16 +394,8 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_get_object_name"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
-
         do ii = 1, SWMM_N_link
-            errstat = ptr_api_get_object_name(api, ii-1, link%Names(ii)%str, API_LINK)
+            errstat = ptr_api_get_object_name(ii-1, link%Names(ii)%str, API_LINK)
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
@@ -451,7 +404,7 @@ contains
         end do
 
         do ii = 1, SWMM_N_node
-            errstat = ptr_api_get_object_name(api, ii-1, node%Names(ii)%str, API_NODE)
+            errstat = ptr_api_get_object_name(ii-1, node%Names(ii)%str, API_NODE)
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
@@ -475,10 +428,10 @@ contains
         end if
 
     end subroutine interface_update_linknode_names
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
-!%   
+!%
     integer function interface_get_obj_name_len(obj_idx, obj_type) result(obj_name_len)
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -489,20 +442,13 @@ contains
     !%-----------------------------------------------------------------------------
         integer, intent(in) :: obj_idx  ! index of the EPA-SWMM object
         integer, intent(in) :: obj_type ! type of EPA-SWMM object (API_NODE, API_LINK)
-        character(64) :: subroutine_name = "interface_get_obj_name_len"
+        character(64)       :: subroutine_name = "interface_get_obj_name_len"
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_get_object_name_len"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name_len)
-        obj_name_len = ptr_api_get_object_name_len(api, obj_idx-1, obj_type)
+        obj_name_len = ptr_api_get_object_name_len(obj_idx-1, obj_type)
 
         if (setting%Debug%File%interface) then
             print *, obj_idx, obj_type, obj_name_len
@@ -511,11 +457,11 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function interface_get_obj_name_len
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
-    function interface_get_node_attribute(node_idx, attr)
+    function interface_get_node_attribute(node_idx, attr) result(attr_value)
     !%-----------------------------------------------------------------------------
     !% Description:
     !%    Retrieves node attributes from EPA-SWMM. API node attributes are
@@ -526,7 +472,7 @@ contains
     !%    start from 0.
     !%-----------------------------------------------------------------------------
         integer :: node_idx, attr, error
-        real(8) :: interface_get_node_attribute
+        real(8) :: attr_value
         type(c_ptr) :: cptr_value
         real(c_double), target :: node_value
         character(64) :: subroutine_name = 'interface_get_node_attribute'
@@ -547,32 +493,25 @@ contains
             stop "in " // subroutine_name
         end if
 
-        c_lib%procname = "api_get_node_attribute"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_node_attribute)
         !% Substracts 1 to every Fortran index (it becomes a C index)
-        error = ptr_api_get_node_attribute(api, node_idx-1, attr, cptr_value)
+        error = ptr_api_get_node_attribute(node_idx-1, attr, cptr_value)
         call print_api_error(error, subroutine_name)
 
-        interface_get_node_attribute = node_value
+        attr_value = node_value
 
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
         if ((attr == api_node_extInflow_tSeries) .or. (attr == api_node_extInflow_basePat)) then
-            if (node_value /= -1) interface_get_node_attribute = interface_get_node_attribute + 1
+            if (node_value /= -1) attr_value = attr_value + 1
         end if
 
         if (setting%Debug%File%interface) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function interface_get_node_attribute
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
-    function interface_get_link_attribute(link_idx, attr)
+    function interface_get_link_attribute(link_idx, attr) result(attr_value)
     !%-----------------------------------------------------------------------------
     !% Description:
     !%    Retrieves link attributes from EPA-SWMM. API link attributes are
@@ -583,8 +522,8 @@ contains
     !%    start from 0.
     !%-----------------------------------------------------------------------------
         integer :: link_idx, attr, error
-        real(8) :: interface_get_link_attribute
-        
+        real(8) :: attr_value
+
         type(c_ptr) :: cptr_value
         real(c_double), target :: link_value
         character(64) :: thisposition
@@ -606,211 +545,203 @@ contains
             stop "in " // subroutine_name
         end if
 
-        c_lib%procname = "api_get_link_attribute"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_link_attribute)
-
         if (attr <= N_api_link_attributes) then
             ! Fortran index starts in 1, whereas in C starts in 0
-            error = ptr_api_get_link_attribute(api, link_idx-1, attr, cptr_value)
+            error = ptr_api_get_link_attribute(link_idx-1, attr, cptr_value)
             thisposition = trim(subroutine_name)//'_A01'
             call print_api_error(error, thisposition)
-            interface_get_link_attribute = link_value
+            attr_value = link_value
         else if ( (attr > N_api_link_attributes) .and. &
                   (attr <= (N_api_link_attributes + N_api_link_type_attributes)) )then
-            error = ptr_api_get_link_attribute(api, link_idx-1, api_link_type, cptr_value)
+            error = ptr_api_get_link_attribute(link_idx-1, api_link_type, cptr_value)
             thisposition = trim(subroutine_name)//'_B02'
             call print_api_error(error, thisposition)
-            interface_get_link_attribute = link_value
+            attr_value = link_value
             if (link_value == API_CONDUIT) then
                 if (attr == api_link_type) then
-                    interface_get_link_attribute = lPipe
+                    attr_value = lPipe
                 else if (attr == api_weir_type) then
-                    interface_get_link_attribute = nullvalueI
+                    attr_value = nullvalueI
                 else if (attr == api_orifice_type) then
-                    interface_get_link_attribute = nullvalueI
+                    attr_value = nullvalueI
                 else if (attr == api_pump_type) then
-                    interface_get_link_attribute = nullvalueI
+                    attr_value = nullvalueI
                 end if
 
             else if (link_value == API_PUMP) then
 
                 if (attr == api_link_type) then
-                    interface_get_link_attribute = lPump
+                    attr_value = lPump
                 else if (attr == api_weir_type) then
-                    interface_get_link_attribute = nullvalueI
+                    attr_value = nullvalueI
                 else if (attr == api_orifice_type) then
-                    interface_get_link_attribute = nullvalueI
+                    attr_value = nullvalueI
                 else if (attr == api_pump_type) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_pump_type, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_pump_type, cptr_value)
                     thisposition = trim(subroutine_name)//'_C03'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                     if (link_value == API_TYPE1_PUMP) then
-                        interface_get_link_attribute = lType1Pump
+                        attr_value = lType1Pump
                     else if (link_value == API_TYPE2_PUMP) then
-                        interface_get_link_attribute = lType2Pump
+                        attr_value = lType2Pump
                     else if (link_value == API_TYPE3_PUMP) then
-                        interface_get_link_attribute = lType3Pump
+                        attr_value = lType3Pump
                     else if (link_value == API_TYPE4_PUMP) then
-                        interface_get_link_attribute = lType4Pump
+                        attr_value = lType4Pump
                     else if (link_value == API_IDEAL_PUMP) then
-                        interface_get_link_attribute = lTypeIdealPump
+                        attr_value = lTypeIdealPump
                     endif
                 end if
 
             else if (link_value == API_ORIFICE) then
                 if (attr == api_link_type) then
-                    interface_get_link_attribute = lOrifice
+                    attr_value = lOrifice
                 else if (attr == api_weir_type) then
-                    interface_get_link_attribute = nullvalueI
+                    attr_value = nullvalueI
                 else if (attr == api_orifice_type) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_orifice_type, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_orifice_type, cptr_value)
                     thisposition = trim(subroutine_name)//'_D04'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                     if (link_value == API_SIDE_ORIFICE) then
-                        interface_get_link_attribute = lSideOrifice
+                        attr_value = lSideOrifice
                     else if (link_value == API_BOTTOM_ORIFICE) then
-                        interface_get_link_attribute = lBottomOrifice
+                        attr_value = lBottomOrifice
                     endif
                 else if (attr == api_pump_type) then
-                    interface_get_link_attribute = nullvalueI
+                    attr_value = nullvalueI
                 end if
 
             else if (link_value == API_WEIR) then
                 if (attr == api_link_type) then
-                    interface_get_link_attribute = lWeir
+                    attr_value = lWeir
                 else if (attr == api_weir_type) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_weir_type, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_weir_type, cptr_value)
                     thisposition = trim(subroutine_name)//'_E05'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                     if (link_value == API_TRANSVERSE_WEIR) then
-                        interface_get_link_attribute = lType1Pump
+                        attr_value = lType1Pump
                     else if (link_value == API_SIDEFLOW_WEIR) then
-                        interface_get_link_attribute = lType2Pump
+                        attr_value = lType2Pump
                     else if (link_value == API_VNOTCH_WEIR) then
-                        interface_get_link_attribute = lType3Pump
+                        attr_value = lType3Pump
                     else if (link_value == API_TRAPEZOIDAL_WEIR) then
-                        interface_get_link_attribute = lType4Pump
+                        attr_value = lType4Pump
                     else if (link_value == API_ROADWAY_WEIR) then
-                        interface_get_link_attribute = lTypeIdealPump
+                        attr_value = lTypeIdealPump
                     endif
                 else if (attr == api_orifice_type) then
-                    interface_get_link_attribute = nullvalueI
+                    attr_value = nullvalueI
                 else if (attr == api_pump_type) then
-                    interface_get_link_attribute = nullvalueI
+                    attr_value = nullvalueI
                 end if
             endif
 
         else
-            error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_type, cptr_value)
+            error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_type, cptr_value)
             thisposition = trim(subroutine_name)//'_E05'
             call print_api_error(error, thisposition)
-            interface_get_link_attribute = link_value
+            attr_value = link_value
             if (link_value == API_RECT_CLOSED) then
                 if (attr == api_link_geometry) then
-                    interface_get_link_attribute = lRectangular_closed
+                    attr_value = lRectangular_closed
                 else if (attr == api_link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_F06'
                      call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_G07'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else
-                    interface_get_link_attribute = nullvalueR
+                    attr_value = nullvalueR
                 end if
             else if (link_value == API_RECT_OPEN) then
                 if (attr == api_link_geometry) then
-                    interface_get_link_attribute = lRectangular
+                    attr_value = lRectangular
                 else if (attr == api_link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_H08'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_I09'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else
-                    interface_get_link_attribute = nullvalueR
+                    attr_value = nullvalueR
                 end if
             else if (link_value == API_TRAPEZOIDAL) then
                 if (attr == api_link_geometry) then
-                    interface_get_link_attribute = lTrapezoidal
+                    attr_value = lTrapezoidal
                 else if (attr == api_link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yBot, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yBot, cptr_value)
                     thisposition = trim(subroutine_name)//'_J10'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_K11'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else
-                    interface_get_link_attribute = nullvalueR
+                    attr_value = nullvalueR
                 end if
             else if (link_value == API_TRIANGULAR) then
                 if (attr == api_link_geometry) then
-                    interface_get_link_attribute = lTriangular
+                    attr_value = lTriangular
                 else if (attr == api_link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_M12'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_N13'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else
-                    interface_get_link_attribute = nullvalueR
+                    attr_value = nullvalueR
                 end if
             else if (link_value == API_PARABOLIC) then
                 if (attr == api_link_geometry) then
-                    interface_get_link_attribute = lParabolic
+                    attr_value = lParabolic
                 else if (attr == api_link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_O14'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_P15'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else
-                    interface_get_link_attribute = nullvalueR
+                    attr_value = nullvalueR
                 end if
             else if (link_value == API_CIRCULAR) then
                 if (attr == api_link_geometry) then
-                    interface_get_link_attribute = lCircular
+                    attr_value = lCircular
                 else if (attr == api_link_xsect_wMax) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_wMax, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_wMax, cptr_value)
                     thisposition = trim(subroutine_name)//'_Q16'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else if (attr == api_link_xsect_yFull) then
-                    error = ptr_api_get_link_attribute(api, link_idx-1, api_link_xsect_yFull, cptr_value)
+                    error = ptr_api_get_link_attribute(link_idx-1, api_link_xsect_yFull, cptr_value)
                     thisposition = trim(subroutine_name)//'_R17'
                     call print_api_error(error, thisposition)
-                    interface_get_link_attribute = link_value
+                    attr_value = link_value
                 else
-                    interface_get_link_attribute = nullvalueR
+                    attr_value = nullvalueR
                 end if
             else
-                interface_get_link_attribute = nullvalueR
+                attr_value = nullvalueR
             end if
         end if
         if (setting%Debug%File%interface)  then
@@ -818,7 +749,7 @@ contains
             ! print *, "LINK", link_value, attr
         end if
     end function interface_get_link_attribute
-!%    
+!%
 !%=============================================================================
 !%   Boundary Conditions (execute after initialization only)
 !%=============================================================================
@@ -886,7 +817,7 @@ contains
         end if
 
     end function interface_get_BC_resolution
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
@@ -935,7 +866,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function interface_get_next_inflow_time
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
@@ -963,7 +894,7 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end function interface_get_next_head_time
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
@@ -979,22 +910,15 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_get_flowBC"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
         nidx = BC%flowI(bc_idx, bi_node_idx)
         epochNow = util_datetime_secs_to_epoch(tnow)
-        bc_value = ptr_api_get_flowBC(api, nidx-1, epochNow)
+        bc_value = ptr_api_get_flowBC(nidx-1, epochNow)
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end function interface_get_flowBC
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
@@ -1010,22 +934,15 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_get_headBC"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
         nidx = BC%headI(bc_idx, bi_node_idx)
         epochNow = util_datetime_secs_to_epoch(tnow)
-        bc_value = ptr_api_get_headBC(api, nidx-1, epochNow)
+        bc_value = ptr_api_get_headBC(nidx-1, epochNow)
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
     end function interface_get_headBC
-!%    
+!%
 !%=============================================================================
 !%    Write Outputs (execute after initialization only)
 !%=============================================================================
@@ -1038,20 +955,13 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_export_link_results"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_export_link_results)
-        error = ptr_api_export_link_results(api, link_idx-1)
+        error = ptr_api_export_link_results(link_idx-1)
         call print_api_error(error, subroutine_name)
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine interface_export_link_results
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
@@ -1066,14 +976,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_update_nodeResult"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
-        error = ptr_api_update_nodeResult(api, node_idx-1, result_type, node_result)
+        error = ptr_api_update_nodeResult(node_idx-1, result_type, node_result)
         call print_api_error(error, subroutine_name)
 
         if (setting%Debug%File%interface)  &
@@ -1093,20 +996,13 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_update_linkResult"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
-        error = ptr_api_update_linkResult(api, link_idx-1, result_type, link_result)
+        error = ptr_api_update_linkResult(link_idx-1, result_type, link_result)
         call print_api_error(error, subroutine_name)
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine interface_update_linkResult
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
@@ -1123,19 +1019,13 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_write_output_line"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_write_output_line)
-        error = ptr_api_write_output_line(api, reportTime)
+        error = ptr_api_write_output_line(reportTime)
         call print_api_error(error, subroutine_name)
+
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine interface_write_output_line
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
@@ -1153,14 +1043,6 @@ contains
         cptr_reportStep = c_loc(reportStep)
         cptr_hydroStep = c_loc(hydroStep)
 
-        c_lib%procname = "api_get_report_times"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_report_times)
-
         !% --- reportStart is given in epoch datetime
         !% --- reportStep and hydroStep are given in integer seconds
         !%
@@ -1168,7 +1050,7 @@ contains
         !% ... then SWMM will make reportStart = start datetime.
         !%
         !% --- This generates EPA-SWMM Error Code: -1 if the reportStart is after the end time.
-        error = ptr_api_get_report_times(api, cptr_reportStart, cptr_reportStep, cptr_hydroStep)
+        error = ptr_api_get_report_times(cptr_reportStart, cptr_reportStep, cptr_hydroStep)
         call print_api_error(error, subroutine_name)
 
         reportStart = util_datetime_epoch_to_secs(reportStart)
@@ -1180,7 +1062,7 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine interface_get_report_times
-!%    
+!%
 !%=============================================================================
 !%=============================================================================
 !%
@@ -1196,14 +1078,6 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_find_object"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
-        print *, object_name
         object_idx = ptr_api_find_object(object_type, trim(object_name)//c_null_char) + 1
 
         if (setting%Debug%File%interface)  &
@@ -1215,6 +1089,94 @@ contains
 !% PRIVATE
 !%=============================================================================
 !%
+    subroutine load_all_api_procedures()
+        character(64) :: subroutine_name
+        subroutine_name = 'load_all_api_procedures'
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        !% Open the shared library
+        call c_lib_open(c_lib, errstat, errmsg)
+
+        !% Loads shared library funcitonalities
+
+        c_lib%procname = "api_finalize"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
+
+        c_lib%procname = "api_get_node_attribute"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_node_attribute)
+
+        c_lib%procname = "api_get_link_attribute"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_link_attribute)
+
+        c_lib%procname = "api_get_num_objects"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_objects)
+
+        c_lib%procname = "api_get_object_name_len"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name_len)
+
+        c_lib%procname = "api_get_object_name"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_object_name)
+
+        c_lib%procname = "api_get_start_datetime"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_start_datetime)
+
+        c_lib%procname = "api_get_end_datetime"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_end_datetime)
+
+        c_lib%procname = "api_get_flowBC"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_flowBC)
+
+        c_lib%procname = "api_get_headBC"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_headBC)
+
+        c_lib%procname = "api_get_report_times"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_report_times)
+
+        c_lib%procname = "api_get_next_entry_tseries"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
+
+        c_lib%procname = "api_find_object"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_find_object)
+
+        c_lib%procname = "api_run_step"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_run_step)
+
+        c_lib%procname = "api_export_link_results"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_export_link_results)
+
+        c_lib%procname = "api_write_output_line"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_write_output_line)
+
+        c_lib%procname = "api_update_nodeResult"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
+
+        c_lib%procname = "api_update_linkResult"
+        call c_lib_load(c_lib, errstat, errmsg)
+        call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
+
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+    end subroutine load_all_api_procedures
+
     function get_next_entry_tseries(k) result(success)
         integer, intent(in   ) :: k
         integer                :: success
@@ -1225,13 +1187,6 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_get_next_entry_tseries"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_next_entry_tseries)
         success = ptr_api_get_next_entry_tseries(k-1) ! Fortran to C convention
 
         if (setting%Debug%File%interface)  &
@@ -1252,14 +1207,8 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_get_num_objects"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_num_objects)
-        get_num_objects = ptr_api_get_num_objects(api, obj_type)
+        get_num_objects = ptr_api_get_num_objects(obj_type)
+
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -1275,14 +1224,8 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_get_start_datetime"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_start_datetime)
         get_start_datetime = ptr_api_get_start_datetime()
+
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function get_start_datetime
@@ -1299,14 +1242,8 @@ contains
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        c_lib%procname = "api_get_end_datetime"
-        call c_lib_load(c_lib, errstat, errmsg)
-        if (errstat /= 0) then
-            print *, "ERROR: " // trim(errmsg)
-            stop "in " // subroutine_name
-        end if
-        call c_f_procpointer(c_lib%procaddr, ptr_api_get_end_datetime)
         get_end_datetime = ptr_api_get_end_datetime()
+
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end function get_end_datetime
@@ -1325,7 +1262,7 @@ contains
     end subroutine print_api_error
 !%
 !%=============================================================================
-!% END MODULE interface    
+!% END MODULE interface
 !%=============================================================================
 !%
 end module interface

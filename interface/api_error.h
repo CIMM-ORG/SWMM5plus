@@ -35,7 +35,6 @@ enum api_error_codes {
     api_max_err_msg
 };
 
-int APIErrCode = 0;
 char APIErrMsg[MAXMSG+1];
 
 #ifdef __cplusplus

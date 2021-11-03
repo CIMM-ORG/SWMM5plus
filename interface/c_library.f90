@@ -12,6 +12,7 @@ module c_library
     !% -------------------------------------------------------------------------------
 
     public :: c_lib_type
+    public :: c_lib_open
     public :: c_lib_load
     public :: c_lib_close
 
@@ -55,6 +56,42 @@ module c_library
 
 contains
 
+    subroutine c_lib_open(c_lib, errstat, errmsg)
+    !%-----------------------------------------------------------------------------
+    !% Description:
+    !%    Opens the EPA-SWMM shared library
+    !%-----------------------------------------------------------------------------
+        type (c_lib_type), intent(inout) :: c_lib ! pointer to shared library
+        integer, intent(out) :: errstat ! -1 ir there was an error, 0 if successful
+        character(*), intent(out) :: errmsg
+        character(64) :: subroutine_name = "c_lib_open"
+    !%-----------------------------------------------------------------------------
+
+        if (setting%Debug%File%c_library) &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        errmsg = ''
+
+        if (.not. c_lib%loaded) then
+            c_lib%fileaddrx = dlopen(trim(c_lib%filename) // c_null_char, 1) ! load DLL
+            if ( .not. c_associated(c_lib%fileaddrx) ) then
+                errstat = -1
+                write(errmsg, "(A, I2, A)") &
+                        'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
+                        //' Check that the file ' // 'exists in the specified location and' &
+                        //' that it is compiled for ', (c_intptr_t*8), '-bit systems.'
+                stop
+            end if
+            c_lib%loaded = .true.
+        end if
+
+        errstat = 0
+
+        if (setting%Debug%File%c_library) &
+            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
+    end subroutine c_lib_open
+
     subroutine c_lib_load(c_lib, errstat, errmsg)
     !%-----------------------------------------------------------------------------
     !% Description:
@@ -79,25 +116,12 @@ contains
 
         errmsg = ''
 
-        if (.not. c_lib%loaded) then
-            c_lib%fileaddrx = dlopen(trim(c_lib%filename) // c_null_char, 1) ! load DLL
-            if ( .not. c_associated(c_lib%fileaddrx) ) then
-                errstat = -1
-                write(errmsg, "(A, I2, A)") &
-                        'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
-                        //' Check that the file ' // 'exists in the specified location and' &
-                        //' that it is compiled for ', (c_intptr_t*8), '-bit systems.'
-                return
-            end if
-            c_lib%loaded = .true.
-        end if
-
         c_lib%procaddr = dlsym(c_lib%fileaddrx, trim(c_lib%procname) // c_null_char)
         if (.not. c_associated(c_lib%procaddr)) then
             errstat = -1
             errmsg = 'The procedure ' // trim(c_lib%procname) // ' in file ' &
                      // trim(c_lib%filename) // ' could not be loaded.'
-            return
+            stop
         end if
 
         errstat = 0

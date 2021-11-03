@@ -26,6 +26,7 @@ int APIErrCodes[] =
     { 0,      1001,        1002,        1003,        1004,        1005,        1006};
 
 char  APIErrString[256];
+int APIErrCode = 0;
 
 char* api_error_getMsg(int i)
 {

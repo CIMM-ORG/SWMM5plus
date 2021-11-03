@@ -25,7 +25,7 @@
 #define CFTOCM(cf) cf*0.0283168466 // Cubic feet to cubic meters
 #define FT2TOM2(sft) sft*0.09290304 // Square feet to square meters
 #define FTTOM(ft) ft*0.3048 // Feet to meters
-#define API_NULL_VALUE_I -998877022E8
+#define API_NULL_VALUE_I -998877
 #define NUM_API_INT_VARS 0
 #define NUM_API_DOUBLE_VARS 2
 #define NUM_API_TABLES 1
@@ -150,46 +150,46 @@ extern "C" {
 
 // --- Simulation
 
-void* DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing);
-void DLLEXPORT api_finalize(void* f_api);
+int DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing);
+void DLLEXPORT api_finalize();
 
 // --- Property-extraction
 
 // * During Simulation
 
-int DLLEXPORT api_get_node_results(void* f_api, char* node_name, float* inflow, float* overflow, float* depth, float* volume);
-int DLLEXPORT api_get_link_results(void* f_api, char* link_name, float* flow, float* depth, float* volume);
+int DLLEXPORT api_get_node_results(char* node_name, float* inflow, float* overflow, float* depth, float* volume);
+int DLLEXPORT api_get_link_results(char* link_name, float* flow, float* depth, float* volume);
 
 // * After Initialization
 double DLLEXPORT api_get_start_datetime();
 double DLLEXPORT api_get_end_datetime();
-double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime);
-int DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime, double* headBC);
-int DLLEXPORT api_get_report_times(void * f_api, double * report_start_datetime, int * report_step, int * hydrology_step);
-int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value);
-int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value);
-int DLLEXPORT api_get_num_objects(void* f_api, int object_type);
-int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
+double DLLEXPORT api_get_flowBC(int node_idx, double current_datetime);
+int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* headBC);
+int DLLEXPORT api_get_report_times(double * report_start_datetime, int * report_step, int * hydrology_step);
+int DLLEXPORT api_get_node_attribute(int k, int attr, double* value);
+int DLLEXPORT api_get_link_attribute(int k, int attr, double* value);
+int DLLEXPORT api_get_num_objects(int object_type);
+int DLLEXPORT api_get_object_name(int k, char* object_name, int object_type);
 int DLLEXPORT api_get_next_entry_tseries(int k);
-int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type, int* len);
-int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type);
+int DLLEXPORT api_get_object_name_len(int k, int object_type, int* len);
+int DLLEXPORT api_get_object_name(int k, char* object_name, int object_type);
 
 // Output fcns
-int DLLEXPORT api_write_output_line(void* f_api, double t);
-int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, int resultType, double newNodeResult);
-int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, int resultType, double newLinkResult);
+int DLLEXPORT api_write_output_line(double t);
+int DLLEXPORT api_update_nodeResult(int node_idx, int resultType, double newNodeResult);
+int DLLEXPORT api_update_linkResult(int link_idx, int resultType, double newLinkResult);
 
 // --- Print-out
 void DLLEXPORT api_print_object_name(int k, int object_type);
 int add_link(int li_idx, int ni_idx, int direction, int* ni_N_link_u, int* ni_Mlink_u1, int* ni_Mlink_u2, int* ni_Mlink_u3, int* ni_N_link_d, int* ni_Mlink_d1, int* ni_Mlink_d2, int* ni_Mlink_d3);
-int DLLEXPORT api_export_linknode_properties(void* f_api, int units);
-int DLLEXPORT api_export_link_results(void* f_api, int link_idx);
-int DLLEXPORT api_export_node_results(void* f_api, int node_idx);
+int DLLEXPORT api_export_linknode_properties(int units);
+int DLLEXPORT api_export_link_results(int link_idx);
+int DLLEXPORT api_export_node_results(int node_idx);
 
 // --- Utils
 int DLLEXPORT api_find_object(int type, char *id);
-int check_api_is_initialized(Interface* api);
-int api_load_vars(void * f_api);
+int check_api_is_initialized();
+int api_load_vars();
 int getTokens(char *s);
 
 #ifdef __cplusplus

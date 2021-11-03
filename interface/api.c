@@ -59,12 +59,12 @@ int DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing)
         return 0;
     }
     api->IsInitialized = TRUE;
-    error = api_load_vars((void*) api);
+    error = api_load_vars();
     if (!run_routing) IgnoreRouting = TRUE;
-    return (void*) api;
+    return 0;
 }
 
-void DLLEXPORT api_finalize(void* f_api)
+void DLLEXPORT api_finalize()
 //
 //  Input: f_api is an Interface object passed as a void*
 //  Output: None
@@ -72,7 +72,6 @@ void DLLEXPORT api_finalize(void* f_api)
 //
 {
     int i;
-    Interface* api = (Interface*) f_api;
 
     swmm_end();
     swmm_close();
@@ -91,12 +90,11 @@ void DLLEXPORT api_finalize(void* f_api)
     //         free(api->int_vars[i]);
     // }
 
-    free((Interface*) f_api);
+    free(api);
 }
 
-double DLLEXPORT api_run_step(void* f_api)
+double DLLEXPORT api_run_step()
 {
-    Interface * api = (Interface*) f_api;
     swmm_step(&(api->elapsedTime));
     return api->elapsedTime;
 }
@@ -115,7 +113,7 @@ double DLLEXPORT api_get_end_datetime()
     return EndDateTime;
 }
 
-double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_datetime) {
+double DLLEXPORT api_get_flowBC(int node_idx, double current_datetime) {
 
     int ptype, pcount, i, j, p;
     int yy, mm, dd;
@@ -131,7 +129,7 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
     datetime_decodeTime(current_datetime, &h, &m, &s);
     dow = datetime_dayOfWeek(current_datetime);
 
-    api_get_node_attribute(f_api, node_idx, node_has_dwfInflow, &val);
+    api_get_node_attribute(node_idx, node_has_dwfInflow, &val);
     if (val == 1) { // node_has_dwfInflow
         for(i=0; i<4; i++)
         {
@@ -155,7 +153,7 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
         total_inflow += total_factor * CFTOCM(Node[node_idx].dwfInflow->avgValue);
     }
 
-    api_get_node_attribute(f_api, node_idx, node_has_extInflow, &val);
+    api_get_node_attribute(node_idx, node_has_extInflow, &val);
     if (val == 1) { // node_has_extInflow
         p = Node[node_idx].extInflow->basePat; // pattern
         bline = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline); // baseline value
@@ -190,7 +188,7 @@ double DLLEXPORT api_get_flowBC(void* f_api, int node_idx, double current_dateti
     return total_inflow;
 }
 
-int DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime, double* headBC)
+int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* headBC)
 {
     int i = Node[node_idx].subIndex;
 
@@ -209,15 +207,13 @@ int DLLEXPORT api_get_headBC(void* f_api, int node_idx, double current_datetime,
 }
 
 int DLLEXPORT api_get_report_times(
-    void * f_api,
     double * report_start_datetime,
     int * report_step,
     int * hydrology_step) // WET_STEP in SWMM 5.13
 {
     int error;
-    Interface * api = (Interface*) f_api;
 
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_get_report_times");
     if (error) return error;
     *report_start_datetime = ReportStart;
     *report_step = ReportStep;
@@ -225,12 +221,11 @@ int DLLEXPORT api_get_report_times(
     return 0;
 }
 
-int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value)
+int DLLEXPORT api_get_node_attribute(int k, int attr, double* value)
 {
     int error, bpat, tseries_idx;
-    Interface * api = (Interface*) f_api;
 
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_get_node_attribute");
     if (error) return error;
 
     if (attr == node_type)
@@ -255,9 +250,9 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     {
         if (Node[k].type == OUTFALL)
         {
-            error = api_get_headBC(f_api, k, StartDateTime, value);
+            error = api_get_headBC(k, StartDateTime, value);
             if (error) return error;
-            *value -= FTTOM(Node[k].invertElev;
+            *value -= FTTOM(Node[k].invertElev);
         }
         else
             *value = FTTOM(Node[k].initDepth);
@@ -427,12 +422,11 @@ int DLLEXPORT api_get_node_attribute(void* f_api, int k, int attr, double* value
     return 0;
 }
 
-int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value)
+int DLLEXPORT api_get_link_attribute(int k, int attr, double* value)
 {
     int error;
-    Interface * api = (Interface*) f_api;
 
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_get_link_attribute");
     if (error) return error;
 
     if (attr == link_subIndex)
@@ -530,23 +524,21 @@ int DLLEXPORT api_get_link_attribute(void* f_api, int k, int attr, double* value
     return 0;
 }
 
-int DLLEXPORT api_get_num_objects(void* f_api, int object_type)
+int DLLEXPORT api_get_num_objects(int object_type)
 {
     int error;
-    Interface * api = (Interface*) f_api;
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_get_num_objects");
     if (error) return error;
     // if (object_type > API_START_INDEX) // Objects for API purposes
     //     return api->num_objects[object_type - API_START_INDEX];
     return Nobjects[object_type];
 }
 
-int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type, int* len)
+int DLLEXPORT api_get_object_name_len(int k, int object_type, int* len)
 {
     int error;
-    Interface * api = (Interface*) f_api;
 
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_get_object_name_len");
     if (error) {
         *len = API_NULL_VALUE_I;
         return error;
@@ -571,24 +563,26 @@ int DLLEXPORT api_get_object_name_len(void* f_api, int k, int object_type, int* 
     }
 }
 
-int DLLEXPORT api_get_object_name(void* f_api, int k, char* object_name, int object_type)
+int DLLEXPORT api_get_object_name(int k, char* object_name, int object_type)
 {
     int error, i;
+    int obj_len = -1;
 
-    Interface * api = (Interface*) f_api;
-
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_get_object_name");
     if (error) return error;
+    error = api_get_object_name_len(k, object_type, &obj_len);
+    if (error) return error;
+
     if (object_type == NODE)
     {
-        for(i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
+        for(i=0; i<obj_len; i++)
         {
             object_name[i] = Node[k].ID[i];
         }
     }
     else if (object_type == LINK)
     {
-        for(i=0; i<api_get_object_name_len(f_api, k, object_type); i++)
+        for(i=0; i<obj_len; i++)
         {
             object_name[i] = Link[k].ID[i];
         }
@@ -619,7 +613,7 @@ int DLLEXPORT api_get_next_entry_tseries(int k)
     return success;
 }
 
-int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
+int DLLEXPORT api_export_linknode_properties(int units)
 {
     //  link
     int li_idx[Nobjects[LINK]];
@@ -663,21 +657,19 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
     int i;
     int error;
 
-    Interface * api = (Interface*) f_api;
-
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_export_linknode_properties");
     if (error) return error;
 
     // Initialization
     for (i = 0; i<Nobjects[NODE]; i++) {
         ni_N_link_u[i] = 0;
         ni_N_link_d[i] = 0;
-        ni_Mlink_u1[i] = API_NULL_VALUE_II;
-        ni_Mlink_u2[i] = API_NULL_VALUE_II;
-        ni_Mlink_u3[i] = API_NULL_VALUE_II;
-        ni_Mlink_d1[i] = API_NULL_VALUE_II;
-        ni_Mlink_d2[i] = API_NULL_VALUE_II;
-        ni_Mlink_d3[i] = API_NULL_VALUE_II;
+        ni_Mlink_u1[i] = API_NULL_VALUE_I;
+        ni_Mlink_u2[i] = API_NULL_VALUE_I;
+        ni_Mlink_u3[i] = API_NULL_VALUE_I;
+        ni_Mlink_d1[i] = API_NULL_VALUE_I;
+        ni_Mlink_d2[i] = API_NULL_VALUE_I;
+        ni_Mlink_d3[i] = API_NULL_VALUE_I;
     }
 
     // Choosing unit system
@@ -777,7 +769,7 @@ int DLLEXPORT api_export_linknode_properties(void* f_api, int units)
     return 0;
 }
 
-int DLLEXPORT api_export_link_results(void* f_api, int link_idx)
+int DLLEXPORT api_export_link_results(int link_idx)
 {
 	FILE* tmp;
     DateTime days;
@@ -786,9 +778,8 @@ int DLLEXPORT api_export_link_results(void* f_api, int link_idx)
     char theDate[20];
 	char path[50];
     int error;
-    Interface * api = (Interface*) f_api;
 
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_export_link_results");
     if (error) return error;
 
     /* File path writing */
@@ -817,7 +808,7 @@ int DLLEXPORT api_export_link_results(void* f_api, int link_idx)
     return 0;
 }
 
-int DLLEXPORT api_export_node_results(void* f_api, int node_idx)
+int DLLEXPORT api_export_node_results(int node_idx)
 {
 	FILE* tmp;
     DateTime days;
@@ -827,8 +818,7 @@ int DLLEXPORT api_export_node_results(void* f_api, int node_idx)
 	char path[50];
     int error;
 
-    Interface * api = (Interface*) f_api;
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_export_node_results");
     if (error) return error;
 
     if (stat("NodeResults", &st) == -1) {
@@ -868,10 +858,9 @@ int DLLEXPORT api_export_node_results(void* f_api, int node_idx)
 //   SWMM5+ report files is kept within the Fortran code to ensure
 //   compatibility with future updates of the SWMM5+ standard
 
-int DLLEXPORT api_write_output_line(void* f_api, double t)
+int DLLEXPORT api_write_output_line(double t)
 // t: elapsed time in seconds
 {
-    Interface * api = (Interface *) f_api;
 
     // --- check that simulation can proceed
     if ( ErrorCode ) return error_getCode(ErrorCode);
@@ -887,10 +876,8 @@ int DLLEXPORT api_write_output_line(void* f_api, double t)
     return 0;
 }
 
-int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, int resultType, double newNodeResult)
+int DLLEXPORT api_update_nodeResult(int node_idx, int resultType, double newNodeResult)
 {
-    Interface * api = (Interface *) f_api;
-
     // --- check that simulation can proceed
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
@@ -909,17 +896,15 @@ int DLLEXPORT api_update_nodeResult(void* f_api, int node_idx, int resultType, d
         Node[node_idx].inflow = newNodeResult;
     else
     {
-        sprintf(errmsg, "resultType %d [api.c -> api_update_nodeResult]", object_type);
+        sprintf(errmsg, "resultType %d [api.c -> api_update_nodeResult]", resultType);
         api_report_writeErrorMsg(api_err_not_developed, errmsg);
         return api_err_not_developed;
     }
     return 0;
 }
 
-int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, int resultType, double newLinkResult)
+int DLLEXPORT api_update_linkResult(int link_idx, int resultType, double newLinkResult)
 {
-    Interface * api = (Interface *) f_api;
-
     // --- check that simulation can proceed
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( ! api->IsInitialized )
@@ -938,7 +923,7 @@ int DLLEXPORT api_update_linkResult(void* f_api, int link_idx, int resultType, d
         Link[link_idx].direction = newLinkResult;
     else
     {
-        sprintf(errmsg, "resultType %d [api.c -> api_update_linkResult]", object_type);
+        sprintf(errmsg, "resultType %d [api.c -> api_update_linkResult]", resultType);
         api_report_writeErrorMsg(api_err_not_developed, errmsg);
         return api_err_not_developed;
     }
@@ -956,16 +941,15 @@ int DLLEXPORT api_find_object(int type, char *id)
     return project_findObject(type, id);
 }
 
-int api_load_vars(void * f_api)
+int api_load_vars()
 {
-    Interface * api = (Interface*) f_api;
     char  line[MAXLINE+1];        // line from input data file
     char  wLine[MAXLINE+1];       // working copy of input line
     int sect, i, j, k, error;
     int found = 0;
     double x[4];
 
-    error = check_api_is_initialized(api);
+    error = check_api_is_initialized("api_load_vars");
     if (error) return error;
 
     for (i = 0; i < NUM_API_DOUBLE_VARS; i++)
@@ -1072,12 +1056,13 @@ int add_link(
     return api_err_internal;
 }
 
-int check_api_is_initialized(Interface* api)
+int check_api_is_initialized(char * function_name)
 {
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( !api->IsInitialized )
     {
-        api_report_writeErrorMsg(api_err_not_initialized, "[api.c -> api_get_report_times]");
+        sprintf(errmsg, "[api.c -> %s -> check_api_is_initialized]", function_name);
+        api_report_writeErrorMsg(api_err_not_initialized, errmsg);
         return api_err_not_initialized;
     }
     return 0;
