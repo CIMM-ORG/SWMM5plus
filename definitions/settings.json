@@ -66,6 +66,8 @@
     },
     "Discretization" : {
         "NominalElemLength" : 50.00,
+        "MinElemLengthFactor" : 0.5,
+        "MinElemLengthMethod" : "ElemLengthAdjust",
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {
@@ -85,7 +87,7 @@
         "kFactor"  : 0.0,
         "HeadCoef" : 1.0,
         "CFLlimit" : 0.5,
-        "isDynamic" : true
+        "isDynamic" : false
     },
     "Limiter" : {
         "BC" : {
