@@ -21,6 +21,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $DEF_DIR/define_keys.f90\
               $DEF_DIR/define_settings.f90\
               $DEF_DIR/define_indexes.f90\
+              $DEF_DIR/define_xsect_tables.f90\
               $UTIL_DIR/utility.f90\
               $UTIL_DIR/utility_datetime.f90\
               $API_DIR/c_library.f90\

@@ -4,11 +4,12 @@ module circular_conduit
     use define_globals
     use define_indexes
     use define_keys
+    use define_xsect_tables
     use xsect_tables
 
     implicit none
 
-    !%----------------------------------------------------------------------------- 
+    !%-----------------------------------------------------------------------------
     !% Description:
     !% Circular conduit geometry
     !%
@@ -18,7 +19,7 @@ module circular_conduit
     public :: circular_depth_from_volume
     public :: circular_area_from_depth_singular
     public :: circular_topwidth_from_depth
-    public :: circular_topwidth_from_depth_singular 
+    public :: circular_topwidth_from_depth_singular
     public :: circular_perimeter_from_depth
     public :: circular_perimeter_from_hydradius_singular
     public :: circular_hyddepth_from_topwidth
@@ -46,7 +47,7 @@ module circular_conduit
         real(8), pointer :: depth(:), volume(:), length(:), AoverAfull(:)
         real(8), pointer :: YoverYfull(:), fullArea(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
-        thisP      => elemPGx(1:Npack,thisCol) 
+        thisP      => elemPGx(1:Npack,thisCol)
         depth      => elemR(:,er_Depth)
         volume     => elemR(:,er_Volume)
         length     => elemR(:,er_Length)
@@ -54,12 +55,12 @@ module circular_conduit
         fulldepth  => elemR(:,er_FullDepth)
         AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
-        !%-----------------------------------------------------------------------------  
+        !%-----------------------------------------------------------------------------
         if (icrash) return
         AoverAfull(thisP) = volume(thisP) / (length(thisP) * fullArea(thisP))
 
-        !% HACK: when AoverAfull < 4%, SWMM5 uses a special function to get the 
-        !% normalized depth using the central angle, theta 
+        !% HACK: when AoverAfull < 4%, SWMM5 uses a special function to get the
+        !% normalized depth using the central angle, theta
         !% (Page 82 in the SWMM5 Hydraulic manual)
         !% Figure out a way to implement this later.
 
@@ -71,7 +72,7 @@ module circular_conduit
         depth(thisP) = YoverYfull(thisP) * fulldepth(thisP)
 
     end subroutine circular_depth_from_volume
-!%  
+!%
 !%==========================================================================
 !%==========================================================================
 !%
@@ -91,7 +92,7 @@ module circular_conduit
         fulldepth  => elemR(:,er_FullDepth)
         AoverAfull => elemSGR(:,esgr_Circular_AoverAfull)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
-        !%----------------------------------------------------------------------------- 
+        !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
         YoverYfull(indx) = depth(indx) / fulldepth(indx)
@@ -99,7 +100,7 @@ module circular_conduit
         !% get A/Afull from the lookup table using Y/Yfull
         AoverAfull(indx) = xsect_table_lookup_singular (YoverYfull(indx), ACirc, NACirc)
 
-        !% finally get the area by multiplying the normalized area with full area 
+        !% finally get the area by multiplying the normalized area with full area
         outvalue = AoverAfull(indx) * fullArea(indx)
 
     end function circular_area_from_depth_singular
@@ -108,7 +109,7 @@ module circular_conduit
 !%==========================================================================
 !%
     subroutine circular_topwidth_from_depth (elemPGx, Npack, thisCol)
-        !%  
+        !%
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a circular conduit
@@ -118,12 +119,12 @@ module circular_conduit
         real(8), pointer :: depth(:), topwidth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
         if (icrash) return
-        thisP      => elemPGx(1:Npack,thisCol) 
+        thisP      => elemPGx(1:Npack,thisCol)
         depth      => elemR(:,er_Depth)
         topwidth   => elemR(:,er_Topwidth)
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
-        !%-----------------------------------------------------------------------------  
+        !%-----------------------------------------------------------------------------
 
         !% HACK: at this point, YoverYfull probably should be calculated already.
         YoverYfull(thisP) = depth(thisP) / fulldepth(thisP)
@@ -137,7 +138,7 @@ module circular_conduit
         topwidth(thisP) = max (topwidth(thisP) * fulldepth(thisP), setting%ZeroValue%Topwidth)
 
     end subroutine circular_topwidth_from_depth
-!%    
+!%
 !%==========================================================================
 !%==========================================================================
 !%
@@ -146,14 +147,14 @@ module circular_conduit
         !% Description:
         !% Computes the topwidth for a circular cross section of a single element
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx 
+        integer, intent(in) :: indx
         real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
         if (icrash) return
         depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
-        !%----------------------------------------------------------------------------- 
+        !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
         YoverYfull(indx) = depth(indx) / fulldepth(indx)
@@ -171,18 +172,18 @@ module circular_conduit
 !%==========================================================================
 !%
     subroutine circular_perimeter_from_depth (elemPGx, Npack, thisCol)
-        !%  
+        !%
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a circular conduit
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP(:)
-        real(8), pointer :: depth(:), hydRadius(:), YoverYfull(:) 
+        real(8), pointer :: depth(:), hydRadius(:), YoverYfull(:)
         real(8), pointer :: fulldepth(:), perimeter(:), area(:), fullperimeter(:)
         !%-----------------------------------------------------------------------------
         if (icrash) return
-        thisP      => elemPGx(1:Npack,thisCol) 
+        thisP      => elemPGx(1:Npack,thisCol)
         depth      => elemR(:,er_Depth)
         area       => elemR(:,er_Area)
         hydRadius  => elemR(:,er_HydRadius)
@@ -190,7 +191,7 @@ module circular_conduit
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
         fullperimeter => elemR(:,er_FullPerimeter)
-        !%-----------------------------------------------------------------------------  
+        !%-----------------------------------------------------------------------------
 
         !% HACK: at this point, YoverYfull probably should be calculated already.
         YoverYfull(thisP) = depth(thisP) / fulldepth(thisP)
@@ -207,16 +208,16 @@ module circular_conduit
 
         !% HACK: perimeter correction is needed when the pipe is empty.
     end subroutine circular_perimeter_from_depth
-!%    
-!%==========================================================================    
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     real(8) function circular_perimeter_from_hydradius_singular (indx) result (outvalue)
-        !%  
+        !%
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes wetted perimeter from known depth for a circular cross section of
-        !% a single element 
+        !% a single element
         !%-----------------------------------------------------------------------------
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: indx
@@ -227,16 +228,16 @@ module circular_conduit
         area          => elemR(:,er_Area)
         fullperimeter => elemR(:,er_FullPerimeter)
         !%-----------------------------------------------------------------------------
-        
+
         outvalue = min(area(indx) / hydRadius(indx), fullperimeter(indx))
         !% HACK: perimeter correction is needed when the pipe is empt
     end function circular_perimeter_from_hydradius_singular
-!%    
+!%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-        !%  
+        !%
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the hydraulic (average) depth from a known depth in a circular conduit
@@ -248,7 +249,7 @@ module circular_conduit
         real(8), pointer    :: depth(:), hyddepth(:)
         !%-----------------------------------------------------------------------------
         if (icrash) return
-        thisP        => elemPGx(1:Npack,thisCol) 
+        thisP        => elemPGx(1:Npack,thisCol)
         area         => elemR(:,er_Area)
         topwidth     => elemR(:,er_Topwidth)
         depth        => elemR(:,er_Depth)
@@ -271,18 +272,18 @@ module circular_conduit
         endwhere
 
     end subroutine circular_hyddepth_from_topwidth
-!%    
-!%==========================================================================  
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     real(8) function circular_hyddepth_from_topwidth_singular (indx) result (outvalue)
-        !%  
+        !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% Computes hydraulic depth from known depth for circular cross section of 
+        !% Computes hydraulic depth from known depth for circular cross section of
         !% a single element
-        !%-----------------------------------------------------------------------------   
-        integer, intent(in) :: indx   
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: indx
         real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:), depth(:)
         !%-----------------------------------------------------------------------------
         if (icrash) return
@@ -290,7 +291,7 @@ module circular_conduit
         area         => elemR(:,er_Area)
         topwidth     => elemR(:,er_Topwidth)
         fullHydDepth => elemR(:,er_FullHydDepth)
-        !%--------------------------------------------------  
+        !%--------------------------------------------------
 
         !% calculating hydraulic depth needs conditional since,
         !% topwidth can be zero in circular cross section for both
@@ -305,25 +306,25 @@ module circular_conduit
         endif
 
     end function circular_hyddepth_from_topwidth_singular
-!% 
+!%
 !%==========================================================================
 !%==========================================================================
 !%
     real(8) function circular_hydradius_from_depth_singular (indx) result (outvalue)
-        !%  
+        !%
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes hydraulic radius from known depth for a circular cross section of
-        !% a single element 
+        !% a single element
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: indx 
+        integer, intent(in) :: indx
         real(8), pointer    :: depth(:), YoverYfull(:), fulldepth(:)
         !%-----------------------------------------------------------------------------
         if (icrash) return
         depth      => elemR(:,er_Depth)
         fulldepth  => elemR(:,er_FullDepth)
         YoverYfull => elemSGR(:,esgr_Circular_YoverYfull)
-        !%----------------------------------------------------------------------------- 
+        !%-----------------------------------------------------------------------------
 
         !% find Y/Yfull
         YoverYfull(indx) = depth(indx) / fulldepth(indx)
@@ -334,63 +335,63 @@ module circular_conduit
                 xsect_table_lookup_singular (YoverYfull(indx), RCirc, NRCirc)
 
     end function circular_hydradius_from_depth_singular
-!%    
+!%
 !%==========================================================================
 
 !%
-!%    
+!%
 !%==========================================================================
 !%==========================================================================
 !%
-        !%  
+        !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% 
+        !%
         !%-----------------------------------------------------------------------------
 
         !%-----------------------------------------------------------------------------
-        !%  
+        !%
 !%
-!%    
+!%
 !%==========================================================================
 !%==========================================================================
 !%
-        !%  
+        !%
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% 
+        !%
         !%-----------------------------------------------------------------------------
 
         !%-----------------------------------------------------------------------------
-        !%  
+        !%
 !%
-!%    
+!%
 !%==========================================================================
 !%==========================================================================
 !%
-!%  
+!%
     !%-----------------------------------------------------------------------------
     !% Description:
-    !% 
+    !%
     !%-----------------------------------------------------------------------------
 
     !%-----------------------------------------------------------------------------
-    !%  
+    !%
 !%
-!%    
+!%
 !%==========================================================================
 !% PRIVATE
-!%==========================================================================   
-!%  
+!%==========================================================================
+!%
     !%-----------------------------------------------------------------------------
     !% Description:
-    !% 
+    !%
     !%-----------------------------------------------------------------------------
 
     !%-----------------------------------------------------------------------------
-    !%  
+    !%
 
-    !    !%==========================================================================   
+    !    !%==========================================================================
     ! ! !%
     ! ! subroutine circular_open_head_from_volume (elemPGx, Npack, thisCol)
     ! !     !%-----------------------------------------------------------------------------
@@ -403,18 +404,18 @@ module circular_conduit
     ! !     integer, pointer :: thisP(:)
     ! !     real(8), pointer :: head(:), volume(:), length(:), breadth(:), zbottom(:)
     ! !     !%-----------------------------------------------------------------------------
-    ! !     thisP   => elemPGx(1:Npack,thisCol) 
+    ! !     thisP   => elemPGx(1:Npack,thisCol)
     ! !     head    => elemR(:,er_Head)
     ! !     volume  => elemR(:,er_Volume)
     ! !     length  => elemR(:,er_Length)
     ! !     breadth => elemSGR(:,esgr_circular_Breadth)
     ! !     zbottom => elemR(:,er_Zbottom)
-    ! !     !%-----------------------------------------------------------------------------   
+    ! !     !%-----------------------------------------------------------------------------
 
     ! !     head(thisP) = zbottom(thisP) + volume(thisP) / (length(thisP) * breadth(thisP))
-   
+
     ! ! end subroutine circular_open_head_from_volume
-    ! !%  
+    ! !%
     ! !%==========================================================================
     ! !%    !%==========================================================================
     ! !%
@@ -429,7 +430,7 @@ module circular_conduit
     ! !     integer, pointer :: thisP(:)
     ! !     real(8), pointer :: area(:), depth(:), breadth(:)
     ! !     !%-----------------------------------------------------------------------------
-    ! !     thisP   => elemPGx(1:Npack,thisCol) 
+    ! !     thisP   => elemPGx(1:Npack,thisCol)
     ! !     area    => elemR(:,er_Area)
     ! !     depth   => elemR(:,er_Depth)
     ! !     breadth => elemSGR(:,esgr_circular_Breadth)

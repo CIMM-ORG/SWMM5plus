@@ -630,62 +630,80 @@ contains
 !%==========================================================================
 !%
     subroutine outputML_store_data (isLastStep)
-        !%-----------------------------------------------------------------------------
-        !% Description -- stores the multi-level output data in memory
-        !% Hiearchy of data for outpuot
-        !% --- elemR(:,:) is working data at the current time level on each image (coarray)
-        !% --- elemOutR(:,:,:) is multi-time-level storage data of elemR for each image (coarray)
-        !% --- OutElemDataR(:,:,:) combines the elements from different images into a global set (not coarray)
-        !% --- OutElemFixedI(:,:) is static integer data (e.g. indexes) that are needed for output (not coarray)
-        !% --- OutLink_ElemDataR(:,:,:,:) organizes OutElemDataR() by links, and add time as a data type (not coarray)
-        !% --- OutLink_ProcessedDataR(:,:,:) averages the OutLink_ElemDataR over the links (not coarray)
-        !%-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
+    !% Description -- stores the multi-level output data in memory
+    !% Hiearchy of data for outpuot
+    !% --- elemR(:,:) is working data at the current time level on each image (coarray)
+    !% --- elemOutR(:,:,:) is multi-time-level storage data of elemR for each image (coarray)
+    !% --- OutElemDataR(:,:,:) combines the elements from different images into a global set (not coarray)
+    !% --- OutElemFixedI(:,:) is static integer data (e.g. indexes) that are needed for output (not coarray)
+    !% --- OutLink_ElemDataR(:,:,:,:) organizes OutElemDataR() by links, and add time as a data type (not coarray)
+    !% --- OutLink_ProcessedDataR(:,:,:) averages the OutLink_ElemDataR over the links (not coarray)
+    !%-----------------------------------------------------------------------------
         logical, intent(in) :: isLastStep
         integer, pointer :: thisLevel, Npack, thisP(:), thisType(:)
         character(64)    :: subroutine_name = 'outputML_store_data'
-        !%-----------------------------------------------------------------------------
+    !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         !% --- do not execute if ML output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
 
+        print *, "HERE", 1
         !% --- increment the stored time level counter
         setting%Output%LastLevel = setting%Output%LastLevel+1
+        print *, "HERE", 2
         thisLevel => setting%Output%LastLevel
+        print *, "HERE", 3
 
         !% --- store the time for this data
         output_times(thisLevel) = setting%Time%Now
+        print *, "HERE", 4
 
         !% --- null the storage
         elemOutR(:,:,thisLevel) = nullvalueR
+        print *, "HERE", 5, thisLevel
+        print *, "face", faceOutR(:,:,:)
         faceOutR(:,:,thisLevel) = nullvalueR
 
+        print *, "HERE", 6
         !% --- store the element data
         if (setting%Output%OutputElementsExist) then
             !% --- get the pack size of output elements
+            print *, "HERE", 7
             Npack => npack_elemP(ep_Output_Elements)
             !% --- set of output elements
+            print *, "HERE", 8
             thisP => elemP(1:Npack,ep_Output_Elements)
             !% --- set of output types
+            print *, "HERE", 9
             thisType => output_types_elemR(:)
+            print *, "HERE", 10
             !% --- vector store
             elemOutR(1:Npack,:,thisLevel) = elemR(thisP,thisType)
+            print *, "HERE", 11
             !%
         end if
 
         !% --- store the face data
         if (setting%Output%OutputFacesExist) then
             !% --- get the pack size of faces
+            print *, "HERE", 12
             Npack => npack_faceP(fp_Output_Faces)
             !% --- set of output faces
+            print *, "HERE", 13
             thisP => faceP(1:Npack,fp_Output_Faces)
             !% --- set of output types
+            print *, "HERE", 14
             thisType => output_types_faceR(:)
+            print *, "HERE", 15
             !% --- vector store
             faceOutR(1:Npack,:,thisLevel) = faceR(thisP,thisType)
+            print *, "HERE", 16
         else
             setting%Output%OutputFacesExist = .false.
+            print *, "HERE", 17
         end if
 
         if (setting%Output%Verbose) write(*,"(A,i5)") &
