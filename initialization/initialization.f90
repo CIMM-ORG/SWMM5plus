@@ -9,7 +9,6 @@ module initialization
     use interface
     use network_define
     use partitioning
-    use pack_mask_arrays, only: pack_nodes
     use utility_allocate
     use utility_array
     use utility_datetime
@@ -69,7 +68,7 @@ contains
 
         !% --- input project paths and filenames from command line arguments
         !%     note that all files and folders must exist
-        call util_file_setup_input_paths_and_files()
+        ! call util_file_setup_input_paths_and_files()
 
         if (setting%Output%Verbose) &
             write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."
@@ -258,7 +257,7 @@ contains
         call cpu_time(setting%Time%CPU%EpochStartSeconds)
 
         !% store Real time
-        setting%Time%Real%EpochStartSeconds = time()
+        call system_clock(count=setting%Time%Real%EpochStartSeconds)
 
     end subroutine init_model_timer
 !%

@@ -1,6 +1,7 @@
 module utility_files
 
     use define_settings
+    USE ifport
 
     implicit none
 
@@ -246,7 +247,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // ' [Processor ', this_image(), ']'
 
         !% --- Use the current working directory as the base folder
-        call getcwd(setting%File%base_folder,ierr)
+        ierr = getcwd(setting%File%base_folder)
 
         if (ierr /= 0) then
             write(*,"(A,i5)") 'ERROR (SYSTEM): getcwd() call at start returned error code', ierr
@@ -425,7 +426,7 @@ contains
 
         !% --- check for clash if timestamp subfolder exists
         !% --- HACK --- replace with inquire()
-        call chdir(trim(setting%File%output_timestamp_subfolder),ierr)
+        ierr = chdir(trim(setting%File%output_timestamp_subfolder))
         if (ierr == 0) then
             write(*,"(A)") "ERROR (operational) -- code must create a unique time-stamp output folder,..."
             write(*,"(A)") "...but folder already exists. Either delete folder or wait one minute"
@@ -645,6 +646,7 @@ contains
         !% changes the input_path to an output path with respect to the project
         !% path and defaults
         !%-----------------------------------------------------------------------------
+        integer :: ierr
         character(len=256), intent(inout) :: full_path
         character(len=256), intent(in) :: input_path, project_path, default_path
         character(64) :: subroutine_name = "util_file_parse_folder_or_file_path"
@@ -657,7 +659,12 @@ contains
 
         !% --- if no project path entered, use the current working directory
         if (project_path .eq. "") then
-            call getcwd(project_path)
+            ierr = getcwd(project_path)
+            if (ierr /= 0) then
+                write(*,"(A,i5)") 'ERROR (SYSTEM): getcwd() call at start returned error code', ierr
+                write(*,"(A)") 'Unexpected system error, location 654632'
+                stop 'in ' // subroutine_name
+            end if
         endif
 
         if (input_path .eq. "") then
@@ -705,7 +712,7 @@ contains
         character(64) :: subroutine_name = "util_file_check_if_folder_exist"
         !%-----------------------------------------------------------------------------
 
-        inquire (FILE=trim(thisfolder),EXIST=folder_exist)
+        inquire (DIRECTORY=trim(thisfolder),EXIST=folder_exist)
 
         if (.not. folder_exist) then
             !% --- if ireturn == 0 we don't crash on non-existence

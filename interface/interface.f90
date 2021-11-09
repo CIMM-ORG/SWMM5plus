@@ -59,7 +59,7 @@ module interface
             character(len=*,kind=c_char), intent(in) :: inp_file
             character(len=*,kind=c_char), intent(in) :: report_file
             character(len=*,kind=c_char), intent(in) :: out_file
-            integer(c_int),               value      :: run_routing
+            integer(c_int),        value, intent(in) :: run_routing
             integer(c_int) :: api_initialize
         end function api_initialize
         !% -------------------------------------------------------------------------------
@@ -118,52 +118,51 @@ module interface
         function api_get_node_attribute(k, attr, value)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value :: k
-            integer(c_int), value :: attr
-            type(c_ptr), value, intent(in) :: value
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: attr
+            type(c_ptr),    value, intent(in) :: value
             integer(c_int) :: api_get_node_attribute
         end function api_get_node_attribute
         !% -------------------------------------------------------------------------------
         function api_get_link_attribute(k, attr, value)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value :: k
-            integer(c_int), value :: attr
-            type(c_ptr), value, intent(in) :: value
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: attr
+            type(c_ptr),    value, intent(in) :: value
             integer(c_int) :: api_get_link_attribute
         end function api_get_link_attribute
         !% -------------------------------------------------------------------------------
         function api_get_table_attribute(k, attr, value)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value :: k
-            integer(c_int), value :: attr
-            type(c_ptr), value, intent(in) :: value
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: attr
+            type(c_ptr),    value, intent(in) :: value
             integer(c_int) :: api_get_table_attribute
         end function api_get_table_attribute
         !% -------------------------------------------------------------------------------
-        function api_get_num_objects(obj_type)
+        integer function api_get_num_objects(obj_type)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value :: obj_type
-            integer(c_int) :: api_get_num_objects
+            integer(c_int), value, intent(in) :: obj_type
         end function api_get_num_objects
         !% -------------------------------------------------------------------------------
         function api_get_object_name_len(k, object_type, len_value)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value          :: k
-            integer(c_int), value          :: object_type
-            type(c_ptr), value, intent(in) :: len_value
-            integer(c_int)                 :: api_get_object_name_len
+            integer(c_int), value, intent(in) :: k
+            integer(c_int), value, intent(in) :: object_type
+            type(c_ptr),    value, intent(in) :: len_value
+            integer(c_int)                    :: api_get_object_name_len
         end function api_get_object_name_len
         !% -------------------------------------------------------------------------------
         function api_get_object_name(k, object_name, object_type)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value :: k
-            character(c_char), dimension(*) :: object_name
-            integer(c_int), value :: object_type
+            integer(c_int),           value, intent(in) :: k
+            character(c_char), dimension(*), intent(in) :: object_name
+            integer(c_int),           value, intent(in) :: object_type
             integer(c_int) :: api_get_object_name
         end function api_get_object_name
         !% -------------------------------------------------------------------------------
@@ -172,7 +171,7 @@ module interface
             implicit none
             integer(c_int), value, intent(in) :: k
             integer(c_int), value, intent(in) :: table_type
-            type(c_ptr), value, intent(in) :: num_entries
+            type(c_ptr),    value, intent(in) :: num_entries
             integer(c_int) :: api_get_num_table_entries
         end function api_get_num_table_entries
         !% -------------------------------------------------------------------------------
@@ -181,8 +180,8 @@ module interface
             implicit none
             integer(c_int), value, intent(in) :: k
             integer(c_int), value, intent(in) :: table_type
-            type(c_ptr), value, intent(in) :: x
-            type(c_ptr), value, intent(in) :: y
+            type(c_ptr),    value, intent(in) :: x
+            type(c_ptr),    value, intent(in) :: y
             integer(c_int) :: api_get_first_entry_table
         end function api_get_first_entry_table
         !% -------------------------------------------------------------------------------
@@ -191,8 +190,8 @@ module interface
             implicit none
             integer(c_int), value, intent(in) :: k
             integer(c_int), value, intent(in) :: table_type
-            type(c_ptr), value, intent(in) :: x
-            type(c_ptr), value, intent(in) :: y
+            type(c_ptr),    value, intent(in) :: x
+            type(c_ptr),    value, intent(in) :: y
             integer(c_int) :: api_get_next_entry_table
         end function api_get_next_entry_table
         !% -------------------------------------------------------------------------------
@@ -206,8 +205,8 @@ module interface
         function api_find_object(object_type, object_name)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value, intent(in) :: object_type
-            character(c_char), dimension(*)   :: object_name
+            integer(c_int),           value, intent(in) :: object_type
+            character(c_char), dimension(*), intent(in) :: object_name
             integer(c_int) :: api_find_object
         end function api_find_object
         !% -------------------------------------------------------------------------------
@@ -216,31 +215,31 @@ module interface
         function api_export_link_results(link_idx)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value             :: link_idx
+            integer(c_int), value, intent(in) :: link_idx
             integer(c_int)                    :: api_export_link_results
         end function api_export_link_results
         !% -------------------------------------------------------------------------------
         function api_write_output_line(t)
             use, intrinsic :: iso_c_binding
             implicit none
-            real(c_double),        intent(in) :: t
-            integer(c_int)                    :: api_write_output_line
+            real(c_double), intent(in) :: t
+            integer(c_int)             :: api_write_output_line
         end function api_write_output_line
         !% -------------------------------------------------------------------------------
         function api_update_nodeResult(node_idx, resultType, newNodeResult)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value             :: node_idx
-            integer(c_int), value             :: resultType
-            real(c_double), intent(in)        :: newNodeResult
+            integer(c_int), value, intent(in) :: node_idx
+            integer(c_int), value, intent(in) :: resultType
+            real(c_double),        intent(in) :: newNodeResult
             integer(c_int)                    :: api_update_nodeResult
         end function api_update_nodeResult
         !% -------------------------------------------------------------------------------
         function api_update_linkResult(link_idx, resultType, newLinkResult)
             use, intrinsic :: iso_c_binding
             implicit none
-            integer(c_int), value             :: link_idx
-            integer(c_int), value             :: resultType
+            integer(c_int), value, intent(in) :: link_idx
+            integer(c_int), value, intent(in) :: resultType
             real(c_double), value, intent(in) :: newLinkResult
             integer(c_int)                    :: api_update_linkResult
         end function api_update_linkResult
@@ -1501,7 +1500,9 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call load_api_procedure("api_get_num_objects")
+        print *, "HERE", obj_type
         get_num_objects = ptr_api_get_num_objects(obj_type)
+        print *, "HERE", 2
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"

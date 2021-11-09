@@ -2739,7 +2739,7 @@ contains
             endoffile = .false.
             !% ---loop through till the end of the file and save the valid links
             do while ((.not. endoffile) .and. (pp .le. setting%Output%max_links_csv))
-                inquire (unit=setting%File%UnitNumber%links_input_file, position=thispos)
+                inquire (FILE=setting%File%UnitNumber%links_input_file, position=thispos)
                 if (thispos .eq. 'APPEND') then
                     endoffile = .true.
                     pp = pp-1 !% so that pp=0 indicates nothing read (empty file)
@@ -2875,7 +2875,7 @@ contains
             ii = 1
             endoffile = .false.
             do while ((.not. endoffile) .and. (ii .le. setting%Output%max_nodes_csv))
-                inquire (unit=setting%File%UnitNumber%nodes_input_file, position=thispos)
+                inquire (FILE=setting%File%UnitNumber%nodes_input_file, position=thispos)
                 if (thispos .eq. 'APPEND') then
                     endoffile = .true.
                     ii = ii-1 !% so that ii=0 indicates nothing read (empty file)
@@ -3667,7 +3667,7 @@ contains
         if (setting%Output%UseFileNameFile) then
             !print *, 'need to read the filename file'
             fnunit   => setting%File%UnitNumber%outputML_filename_file
-            inquire(unit=fnunit,opened=isopen)
+            inquire(FILE=fnunit,opened=isopen)
             !% --- if previously open for writing, we want to close to switch to reading
             if (isopen) close(fnunit)
             open(unit=fnunit, &

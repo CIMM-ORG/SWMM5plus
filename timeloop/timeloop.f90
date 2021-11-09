@@ -47,7 +47,7 @@ contains
 
         if (setting%Output%Verbose) &
             write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
-        setting%Time%Real%EpochTimeLoopStartSeconds = time()
+        call system_clock(count=setting%Time%Real%EpochTimeLoopStartSeconds)
 
         doHydraulics = setting%simulation%useHydraulics
         doHydrology = setting%simulation%useHydrology
@@ -434,7 +434,7 @@ contains
         step          => setting%Time%Step
         interval      => setting%Output%CommandLine%interval
 
-        setting%Time%Real%EpochNowSeconds = time() ! Fortran function returns real epoch time
+        call system_clock(count=setting%Time%Real%EpochNowSeconds) ! Fortran function returns real epoch time
 
         ! estimate the remaining time
         execution_realtime = setting%Time%Real%EpochNowSeconds - setting%Time%Real%EpochTimeLoopStartSeconds
