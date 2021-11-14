@@ -40,14 +40,14 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
         call util_deallocate_linknode()
-        
+
         call util_deallocate_elemX_faceX()
 
         !stop 7504
         call util_deallocate_columns()
-        
+
         call util_deallocate_bc()
-        
+
         if (setting%Debug%File%utility_deallocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_network_data
@@ -120,7 +120,7 @@ contains
 
         deallocate(node_output_idx,stat=deallocation_status,errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'node_output_idx')
-        
+
         deallocate(link_output_idx,stat=deallocation_status,errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'link_output_idx')
 
@@ -133,7 +133,7 @@ contains
             deallocate(link%P%have_output,stat=deallocation_status,errmsg=emsg)
             call util_deallocate_check(deallocation_status, emsg, 'link%P%have_output')
         end if
-        
+
 
         if (setting%Debug%File%utility_deallocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -193,7 +193,7 @@ contains
         if (setting%Debug%File%utility_deallocate) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
-        
+
         !==== elem deallocation ====
         deallocate(elemR, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemR')
@@ -232,8 +232,8 @@ contains
         deallocate(elemSR, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemSR')
 
-        
-        
+
+
         !==== face deallocation ====
         deallocate(faceR, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'faceR')
@@ -247,7 +247,7 @@ contains
         deallocate(faceP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'faceP')
 
-        
+
 
         if (setting%Debug%File%utility_deallocate) &
         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -433,7 +433,7 @@ contains
             if (deallocation_status > 0) then
                 print *, trim(emsg)
                 print *, 'variable trying to deallocate = ',trim(locationstring)
-                stop "in " // subroutine_name 
+                stop
             end if
 
             if (setting%Debug%File%utility) &

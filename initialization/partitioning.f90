@@ -63,7 +63,7 @@ subroutine init_partitioning_method()
         call init_partitioning_BIPquick()
     else
         print *, "Error, partitioning method not supported"
-        stop "in " // subroutine_name
+        stop
     end if
 
     if (setting%Debug%File%partitioning) then
@@ -81,7 +81,7 @@ subroutine init_partitioning_method()
         print *, new_line("")
         do ii = 1, size(link%I, 1)
             if ( ii <= N_link ) then
-                print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), & 
+                print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
                     link%I(ii, li_Mnode_u:li_Mnode_d)
             else
                 print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &

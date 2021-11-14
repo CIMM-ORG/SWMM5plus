@@ -150,7 +150,7 @@ contains
                 case default
                     write (*,"(A)") 'ERROR (code): statement should be unreachable'
                     write (*,"(A)") ' invalid element type was ',elementType(ii)
-                    stop "in " // subroutine_name
+                    stop
             end select
         end do
 
@@ -464,7 +464,7 @@ contains
             case default
                 write(*,'(A)') 'ERROR (code, user) unknown value forsetting.Output.reportTimeUnits of...'
                 write(*,*) setting%Output%reportTimeUnits
-                stop 'in '//subroutine_name
+                stop
         end select
 
         if (setting%Debug%File%output) &
@@ -619,7 +619,7 @@ contains
             case default
                 write(*,'(A)') 'ERROR (code, user) unknown value setting.Output.reportTimeUnits of...'
                 write(*,*) setting%Output%reportTimeUnits
-                stop 'in '//subroutine_name
+                stop
         end select
 
         if (setting%Debug%File%output) &
@@ -880,7 +880,7 @@ contains
             write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(file_name)
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         !% ----------------------------------
@@ -991,7 +991,7 @@ contains
             write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(file_name)
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         !% --- BEGIN WRITING
@@ -1187,7 +1187,7 @@ contains
             write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(thisFile)
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         !% --- get the total number of combined files written
@@ -1243,7 +1243,7 @@ contains
         case default
             write(*,'(A)') 'ERROR (code) unknown value of setting%Output%reportTimeUnits of ...'
             write(*,*) setting%Output%reportTimeUnits
-            stop 'in '//subroutine_name
+            stop
         end select
 
         !% --- HACK to make this independent of globals, this call will have to be changed and files always written/read.
@@ -1269,7 +1269,7 @@ contains
                     write(*,"(A)") trim(thisFile)
                     write(*,"(A)") '... file is an unformated file of output data...'
                     write(*,"(A,i5)") '... iostat value = ',ios
-                    stop 'in '// subroutine_name
+                    stop
                 end if
 
                 !% -------------------------------
@@ -1284,7 +1284,7 @@ contains
                     write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                     write(*,"(A,i5)") '...output_times has size ',shape(output_times)
                     write(*,"(A,i5)") '...but needs to read in ',nLevel
-                    stop 'in ' // subroutine_name
+                    stop
                 end if
 
                 !% -------------------------------------------
@@ -1305,7 +1305,7 @@ contains
                         write(*,"(A)") 'ERROR (code, file), unexpected array size problem...'
                         write(*,"(A,i5)") '...output_types_elemR has size ',size(output_types_elemR)
                         write(*,"(A,i5)") '...but needs to read in ',nTypeElem
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
 
                     !% --- read and store the fixed integer data
@@ -1324,20 +1324,20 @@ contains
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(1) has value ',dimvector(1)
                         write(*,"(A,i5)") '...but nTotalElem is ',nTotalElem
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
                     if (dimvector(2) .ne. nTypeElem) then
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(2) has value ',dimvector(2)
                         write(*,"(A,i5)") '...but nTotalElem is ',nTypeElem
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
                     !% --- ensure that dimvector(3) is less than or equal to allocated
                     if (dimvector(3) > olddimvector(3)) then
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but olddimvector(3) is ',olddimvector(3)
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
                     !% --- check the dimvector(3) is consistent with lasttimestart and lasttimeread
                     if (dimvector(3) .ne. lasttimeread + 1 - lasttimestart) then
@@ -1345,7 +1345,7 @@ contains
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but lasttimeread is  ',lasttimeread
                         write(*,"(A,i5)") '...and lasttimestart is ',lasttimestart
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
                     nTotalElem = dimvector(1)
                     nTypeElem  = dimvector(2)
@@ -1374,7 +1374,7 @@ contains
                         write(*,"(A)") 'ERROR (code, file), unexpected array size problem...'
                         write(*,"(A,i5)") '...output_types_faceR has size ',size(output_types_faceR)
                         write(*,"(A,i5)") '...but needs to read in ',nTypeFace
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
 
                     !% --- read and store the fixed integer data
@@ -1392,20 +1392,20 @@ contains
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(1) has value ',dimvector(1)
                         write(*,"(A,i5)") '...but nTotalFace is ',nTotalFace
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
                     if (dimvector(2) .ne. nTypeFace) then
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(2) has value ',dimvector(2)
                         write(*,"(A,i5)") '...but nTotalElem is ',nTypeFace
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
                     !% --- ensure that dimvector(3) is less than or equal to allocated
                     if (dimvector(3) > olddimvector(3)) then
                         write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but olddimvector(3) is ',olddimvector(3)
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
                     !% --- check the dimvector(3) is consistent with lasttimestart and lasttimeread
                     if (dimvector(3) .ne. lasttimeread + 1 - lasttimestart) then
@@ -1413,7 +1413,7 @@ contains
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but lasttimeread is  ',lasttimeread
                         write(*,"(A,i5)") '...and lasttimestart is ',lasttimestart
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
                     nTotalFace = dimvector(1)
                     nTypeFace  = dimvector(2)
@@ -1464,7 +1464,7 @@ contains
                                     write(*,'(A)') '... appears to be neither a link nor a node.'
                                     write(*,'(A,i8)') '... kk = ',kk
                                     write(*,'(A,i8)') '... Global Element Index = ',pOutElem_Gidx(kk)
-                                    stop 'in '// subroutine_name
+                                    stop
                                 end if
                                 !% -- store the node index for each of the output elements
                                 !OutElem_SWMMnodeIdx(kk) = SWMMnode
@@ -1508,7 +1508,7 @@ contains
                             if (SWMMnode == nullvalueI) then !% then this is a face not pointing at a node
                                 write(*,'(A)') 'ERROR (code) unexpected nullvalue for an output face...'
                                 write(*,'(A)') '... appears to be not part of the SWMM node set.'
-                                stop 'in '// subroutine_name
+                                stop
                             else
                                 !% -- store the link index for each of the output elements
                                 !OutFace_SWMMnodeIdx(kk) = SWMMnode
@@ -1542,7 +1542,7 @@ contains
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... SWMM_N_link is ',SWMM_N_link
                             write(*,"(A)") ',... size(link%I(:,li_idx)) is ',(size(link%I(:,li_idx))-additional_rows)
-                            ! stop 'in ' // subroutine_name
+                            ! stop
                         end if
 
                         if (nOutLink > 0) then
@@ -1612,7 +1612,7 @@ contains
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... SWMM_N_node is ',SWMM_N_node
                             write(*,"(A)") ',... size(node%I(:,ni_idx)) is ',(size(node%I(:,ni_idx))-additional_rows)
-                            ! stop 'in ' // subroutine_name
+                            ! stop
                         end if
 
                         if (nOutNodeElem > 0) then
@@ -1674,7 +1674,7 @@ contains
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... SWMM_N_node is ',SWMM_N_node
                             write(*,"(A)") ',... size(node%I(:,ni_idx)) is ',(size(node%I(:,ni_idx))-additional_rows)
-                            ! stop 'in ' // subroutine_name
+                            ! stop
                         end if
 
                         if (nOutNodeFace > 0) then
@@ -1789,7 +1789,7 @@ contains
                                     case default
                                         write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_elemR of ...'
                                         write(*,*) output_typeProcessing_elemR(pp)
-                                        stop 'in '//subroutine_name
+                                        stop
                                 end select
                             end do
                         end if
@@ -1864,7 +1864,7 @@ contains
                                     case default
                                         write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_elemR of ...'
                                         write(*,*) output_typeProcessing_elemR(pp)
-                                        stop 'in '//subroutine_name
+                                        stop
                                 end select
                             end do
                         end if
@@ -1944,7 +1944,7 @@ contains
                                     case default
                                         write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_faceR of ...'
                                         write(*,*) output_typeProcessing_faceR(pp)
-                                        stop 'in '//subroutine_name
+                                        stop
                                 end select
                             end do
                         end if
@@ -1983,12 +1983,12 @@ contains
                     !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMlink)%str is a valid string
                     if (.not. allocated(link%Names(SWMMlink)%str)) then
                         write (*,"(A,i8)") 'ERROR (code): link%Name(SWMMlink)%str not allocated for SWMMlink=',SWMMlink
-                        stop 'in '// subroutine_name
+                        stop
                     end if
 
                     if (len(link%Names(SWMMlink)%str) == 0) then
                         write(*,"(A,i8)") 'ERROR (code)): link%Name(kk)%str is empty for SWMMlink= ',SWMMlink
-                        stop 'in '// subroutine_name
+                        stop
                     end if
 
                     if (len(link%Names(SWMMlink)%str) > len(tlinkname)) then
@@ -1997,7 +1997,7 @@ contains
                         write(*,"(A,i8)") '... max length is: ',len(link%Names(SWMMlink)%str)
                         write(*,"(A)") '... link name in SWMM is ...'
                         write(*,"(A)") trim(link%Names(SWMMlink)%str)
-                        stop 'in '// subroutine_name
+                        stop
                     end if
 
                     !% --- use a temporary name for convenience
@@ -2104,12 +2104,12 @@ contains
                     !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMlink)%str is a valid string
                     if (.not. allocated(node%Names(SWMMnode)%str)) then
                         write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
-                        stop 'in '// subroutine_name
+                        stop
                     end if
 
                     if (len(node%Names(SWMMnode)%str) == 0) then
                         write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
-                        stop 'in '// subroutine_name
+                        stop
                     end if
 
                     if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
@@ -2118,7 +2118,7 @@ contains
                         write(*,"(A,i8)") '... max length is: ',len(node%Names(SWMMnode)%str)
                         write(*,"(A)") '... node name in SWMM is ...'
                         write(*,"(A)") trim(node%Names(SWMMnode)%str)
-                        stop 'in '// subroutine_name
+                        stop
                     end if
 
                     !% --- use a temporary name for convenience
@@ -2225,12 +2225,12 @@ contains
                     !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMnode)%str is a valid string
                     if (.not. allocated(node%Names(SWMMnode)%str)) then
                         write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
-                        stop 'in '// subroutine_name
+                        stop
                     end if
 
                     if (len(node%Names(SWMMnode)%str) == 0) then
                         write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
-                        stop 'in '// subroutine_name
+                        stop
                     end if
 
                     if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
@@ -2239,7 +2239,7 @@ contains
                         write(*,"(A,i8)") '... max length is: ',len(node%Names(SWMMnode)%str)
                         write(*,"(A)") '... node name in SWMM is ...'
                         write(*,"(A)") trim(node%Names(SWMMnode)%str)
-                        stop 'in '// subroutine_name
+                        stop
                     end if
 
                     !% --- use a temporary name for convenience
@@ -2440,7 +2440,7 @@ contains
                 write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node(FVface)'
             case default
                 write(*,'(A)') 'ERROR (code): Unknown FeatureType of ',FeatureType
-                stop 'in' // subroutine_name
+                stop
         end select
 
         !% --- ROW 3 --- SWMM INDEX NUMBER IN CODE
@@ -2453,7 +2453,7 @@ contains
                 write(funitIn,fmt='(a,i8)') 'CODE(...node_Gidx_SWMM): ,', thisIndex
             case default
                 write(*,'(A)') 'ERROR (code): Unknown FeatureType of ',FeatureType
-                stop 'in' // subroutine_name
+                stop
         end select
 
         !% --- ROW 4 --- MODEL RUN ID (keyword, string)
@@ -2518,7 +2518,7 @@ contains
                     write(funitIn,fmt='(i8)') elementsInLink(thisType)
                 case default
                     write(*,*) 'ERROR (code): unexpected case default 389705'
-                    stop 'in '//subroutine_name
+                    stop
             end select
         end if
 
@@ -2733,7 +2733,7 @@ contains
                  iostat=rc)
             if (rc /= 0) then
                 write (*, '(3a, i0)') 'ERROR (user): Opening file ', trim(setting%File%links_input_file), ' failed: ', rc
-                stop "in " // subroutine_name
+                stop
             end if
             pp = 1 ! parent link
             endoffile = .false.
@@ -2753,7 +2753,7 @@ contains
                     !exit
                     write(*,"(A)") 'ERROR (user): reading file ', trim(setting%File%links_input_file)
                     write(*,"(A,i5)") 'failed before end of file with error ',rc
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
                 !% --- converting link name to link idx using the interface
@@ -2763,7 +2763,7 @@ contains
                     write(*, "(A)") "ERROR (user): Link " // trim(link_name) // " in " // &
                         trim(setting%File%links_input_file) // " couldn't be found"
                     !exit
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
                 !% --- store index of link for output and increase index
@@ -2870,7 +2870,7 @@ contains
                  iostat=rc)
             if (rc /= 0) then
                 write (*, '(3a, i0)') 'ERROR (user): Opening file ', trim(setting%File%nodes_input_file), ' failed: ', rc
-                stop "in " // subroutine_name
+                stop
             end if
             ii = 1
             endoffile = .false.
@@ -2889,14 +2889,14 @@ contains
                     !exit
                     write(*,"(A)") 'ERROR (user): reading file ', trim(setting%File%nodes_input_file)
                     write(*,"(A,i5)") 'failed before end of file with error ',rc
-                    stop "in " // subroutine_name
+                    stop
                 end if
                 !% --- converting node name to node idx using the interface
                 node_idx = interface_find_object(object_type=API_NODE, object_name = node_name)
                 if (node_idx == 0) then
                     write(*, "(A)") "Node " // trim(node_name) // " in " // &
                     trim(setting%File%nodes_input_file) // " couldn't be found"
-                    stop "in " // subroutine_name
+                    stop
                 end if
                 node_output_idx(ii) = node_idx
                 ii = ii + 1
@@ -2974,7 +2974,7 @@ contains
 
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
                 !% Write the header of the file, set end for next write and then close file
@@ -3033,7 +3033,7 @@ contains
                     write (*, '(A)') 'Opening file failed'
                     write (*, '(A)') trim(FILE_NAME)
                     write (*, '(i0)') open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
                 !% Write the header, this endfile and close the file
@@ -3175,7 +3175,7 @@ contains
 
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
                 !% temp value for easier to read code
@@ -3297,7 +3297,7 @@ contains
                         open(newunit=file_idx(ii), action='read', file=parent_file_name, iostat=rc)
                         if (rc /= 0) then
                             write (*, '(3a, i0)') 'Opening file "', trim(parent_file_name), '" failed: ', rc
-                            stop "in " // subroutine_name
+                            stop
                         end if
                         read (file_idx(ii), *, iostat=rc) str_time ! advance one line (skip header)
 
@@ -3311,7 +3311,7 @@ contains
                             form = 'formatted', action = 'write', iostat = open_status)
                         if (open_status /= 0) then
                             write (*, '(3a, i0)') 'Opening file "', trim(Final_File_NAME), '" failed: ', open_status
-                            stop "in " // subroutine_name
+                            stop
                         end if
                         write(file_idx(link_output_idx_length+pp), *) "Timestamp,Time_In_Secs,flowrate"
 
@@ -3334,7 +3334,7 @@ contains
                                 open(newunit=file_idx(ii+jj), action='read', file=phantom_file_name, iostat=rc)
                                 if (rc /= 0) then
                                     write (*, '(3a, i0)') 'Opening file "', trim(phantom_file_name), '" failed: ', rc
-                                    stop "in " // subroutine_name
+                                    stop
                                 end if
                                 read (file_idx(ii+jj), *, iostat=rc) str_time ! advance one line (skip header)
                             end do
@@ -3599,7 +3599,7 @@ contains
                     write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
                     write(*,"(A)") 'filename is ...'
                     write(*,"(A)") trim(file_name)
-                    stop 'in ' // subroutine_name
+                    stop
                 end if
                 !% --- write the filename
                 write(fnunit,"(A)") trim(file_name)
@@ -3623,7 +3623,7 @@ contains
                         write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
                         write(*,"(A)") 'filename is ...'
                         write(*,"(A)") trim(file_name)
-                        stop 'in ' // subroutine_name
+                        stop
                     end if
                 !% --- write the prior filenames from memory to the file and the delete
                 do kk=1,setting%Output%StoredFileNames
@@ -3678,7 +3678,7 @@ contains
                 write(*,"(A)") trim(setting%File%outputML_filename_file)
                 write(*,"(A)") '... file is the outputML_filename_file ...'
                 write(*,"(A,i5)") '... iostat value = ',ios
-                stop 'in ' // subroutine_name
+                stop
             end if
             rewind(unit=fnunit)
             do ii=1,nWritten

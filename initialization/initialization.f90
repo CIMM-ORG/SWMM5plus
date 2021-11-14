@@ -317,7 +317,7 @@ contains
         !     if (ios /= 0) then
         !         write(*,"(A)") 'ERROR (CODE) file temp_fortran.txt could not be opened for writing.'
         !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
-        !         stop 'in ' // subroutine_name
+        !         stop
         !     end if
         !     write(thisunit,"(A)") setting%Time%DateTimeStamp
         !     close(thisunit)
@@ -339,7 +339,7 @@ contains
         !     if (ios /= 0) then
         !         write(*,"(A)") 'ERROR (CODE) temp_fortran.txt file could not be opened for reading.'
         !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
-        !         stop 'in ' // subroutine_name
+        !         stop
         !     end if
         !     read(thisunit,"(A)") setting%Time%DateTimeStamp
         ! end do
@@ -373,7 +373,7 @@ contains
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% Allocate storage for link & node tables
@@ -505,7 +505,7 @@ contains
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% we create additional curves for functional storage as well
@@ -610,7 +610,7 @@ contains
                         BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                     else
                         print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
-                        stop "in " // subroutine_name
+                        stop
                     end if
 
                     BC%flowI(ii, bi_node_idx) = nidx
@@ -630,7 +630,7 @@ contains
                     end if
                 else
                     print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
-                    stop "in " // subroutine_name
+                    stop
                 end if
             end do
         end if
@@ -646,7 +646,7 @@ contains
                     BC%headI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                 else
                     print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
                 BC%headI(ii, bi_idx) = ii

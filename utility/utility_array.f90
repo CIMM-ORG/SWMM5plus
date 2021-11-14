@@ -55,7 +55,7 @@ module utility_array
 
         if ( nimgs_assign /= num_images() ) then
             print*, "There is a mismatch between the assigned images and num_images", nimgs_assign, num_images()
-            stop "in " // subroutine_name
+            stop
         end if
 
         if (setting%Debug%File%utility_array)  &

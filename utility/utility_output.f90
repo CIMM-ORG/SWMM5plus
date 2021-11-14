@@ -28,7 +28,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     !     subroutine util_output_clean_folders
     !         character(64) :: subroutine_name = 'util_output_clean_folders'
 
@@ -49,7 +49,7 @@ contains
 ! !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     ! subroutine util_output_create_folders
     !     character(64) :: subroutine_name = 'util_output_create_folders'
 
@@ -89,7 +89,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     subroutine util_output_export_linknode_input()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -105,7 +105,7 @@ contains
                    file=trim(setting%File%debug_setup_linkR_file), status='unknown', action='write')
 
         open(unit=setting%File%UnitNumber%debug_setup_linkI_file, &
-                   file=trim(setting%File%debug_setup_linkI_file), status='unknown', action='write') 
+                   file=trim(setting%File%debug_setup_linkI_file), status='unknown', action='write')
 
         write(setting%File%UnitNumber%debug_setup_linkR_file, '(A)')                            &
             "lr_Length,lr_AdjustedLength,lr_InletOffset,lr_OutletOffset,lr_BreadthScale," // &
@@ -140,7 +140,7 @@ contains
                    file=trim(setting%File%debug_setup_nodeI_file), status='unknown', action='write')
 
         open(unit=setting%File%UnitNumber%debug_setup_nodeYN_file, &
-                   file=trim(setting%File%debug_setup_nodeYN_file), status='unknown', action='write')    
+                   file=trim(setting%File%debug_setup_nodeYN_file), status='unknown', action='write')
 
         write(setting%File%UnitNumber%debug_setup_nodeR_file, '(A)')                                 &
             "nr_Zbottom,nr_InitialDepth,nr_FullDepth,nr_StorageConstant,nr_StorageCoeff,"         // &
@@ -171,7 +171,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     subroutine util_output_create_elemR_files
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -209,10 +209,10 @@ contains
 
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
                 form   = 'formatted', action = 'write', iostat = open_status)
-                
+
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
             else if(elemI(ii,ei_elementType) == orifice) then
@@ -228,7 +228,7 @@ contains
 
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
             else if (elemI(ii,ei_elementType) == JM) then
@@ -241,11 +241,11 @@ contains
                     "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
-                form   = 'formatted', action = 'write', iostat = open_status) 
+                form   = 'formatted', action = 'write', iostat = open_status)
 
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
             else if (elemI(ii,ei_elementType) == JB) then
@@ -258,11 +258,11 @@ contains
                      "_" // trim(ADJUSTL(str_elem_idx))//".csv"
 
                 open(newunit=fu, file = file_name, status = 'replace',access = 'sequential', &
-                    form   = 'formatted', action = 'write', iostat = open_status)      
+                    form   = 'formatted', action = 'write', iostat = open_status)
 
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
             end if
@@ -286,7 +286,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     subroutine util_output_create_faceR_files
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -319,7 +319,7 @@ contains
 
             if (open_status /= 0) then
                 write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                stop "in " // subroutine_name
+                stop
             end if
 
             write(fu, *) "Timestamp, Time_In_Secs, Area_d, Area_u, Flowrate, Flowrate_N0, Head_u, Head_d,"// &
@@ -336,7 +336,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     subroutine util_output_write_elemR_faceR
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -380,7 +380,7 @@ contains
 
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
             else if (elemI(ii,ei_elementType) == orifice) then
@@ -396,7 +396,7 @@ contains
 
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
             else if (elemI(ii,ei_elementType) == JM) then
@@ -413,7 +413,7 @@ contains
 
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
             else if (elemI(ii,ei_elementType) == JB) then
@@ -430,7 +430,7 @@ contains
 
                 if (open_status /= 0) then
                     write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
             end if
@@ -457,7 +457,7 @@ contains
 
             if (open_status /= 0) then
                 write (*, '(3a, i0)') 'Opening file "', trim(FILE_NAME), '" failed: ', open_status
-                stop "in " // subroutine_name
+                stop
             end if
 
             !write the data to the file
@@ -479,7 +479,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     subroutine util_output_create_summary_files
         integer :: fu, open_status
         character(512) :: file_name
@@ -506,7 +506,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     subroutine util_output_report
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -514,7 +514,7 @@ contains
         !%-----------------------------------------------------------------------------
         logical :: isLastStep
         character(64) :: subroutine_name = "util_output_report"
-        !%----------------------------------------------------------------------------- 
+        !%-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_output) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
 
@@ -525,7 +525,7 @@ contains
             !brh20211006 call outputD_write_link_files()
             !brh20211006 call outputD_write_node_files()
         end if
-       
+
 
         if (setting%Debug%File%utility_output) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
@@ -533,12 +533,12 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     subroutine util_output_report_summary()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Writes data for summary report
-        !%-----------------------------------------------------------------------------        
+        !%-----------------------------------------------------------------------------
         integer          :: fu, open_status, thisCol, Npack
         integer, pointer :: thisP(:)
         real(8)          :: thisCFL, max_velocity, max_wavespeed, max_PCelerity
@@ -548,12 +548,12 @@ contains
         !%---------------------------------------------------------------------------
         if (setting%Debug%File%utility_output) &
             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-            
+
         if (util_output_must_report() .and. setting%output%report) then
 
             !write(file_name, "(A,i5.5,A)") "debug_output/summary/summary_", this_image(), ".csv"
             write(file_name, "(A,i5.5,A)") "summary_", this_image(), ".csv"
-            
+
             file_name = trim(setting%File%debug_output_summary_folder)//'/'//trim(file_name)
 
             thisCol   = col_elemP(ep_CC_ALLtm)
@@ -570,10 +570,10 @@ contains
             ! thisCFL       = maxval((velocity(thisP) + wavespeed(thisP)) * dt / length(thisP))
             thisCFL = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * dt / length(thisP)), &
                            maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * dt / length(thisP)))
-            
+
             max_velocity  = maxval(abs(velocity(thisP)))
             max_wavespeed = maxval(abs(wavespeed(thisP)))
-            max_PCelerity = maxval(abs(PCelerity(thisP))) 
+            max_PCelerity = maxval(abs(PCelerity(thisP)))
 
             open(newunit=fu, file = trim(file_name), status = 'old',access = 'Append', &
                  form = 'formatted', action = 'write', iostat = open_status)
@@ -598,16 +598,16 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!% 
+!%
     function util_output_must_report() result(report)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% determines whether report is needed
-        !%-----------------------------------------------------------------------------        
+        !%-----------------------------------------------------------------------------
         logical :: report
         integer, pointer :: reportStep
         real(8) :: timeNow, reportDt, startReport
-        !%-----------------------------------------------------------------------------  
+        !%-----------------------------------------------------------------------------
         reportStep  => setting%Output%reportStep
         timeNow     = setting%Time%Now
         reportDt    = setting%Output%reportDt
@@ -627,7 +627,7 @@ contains
     end function util_output_must_report
 !%
 !%==========================================================================
-!% END MODULE    
+!% END MODULE
 !%==========================================================================
-!% 
+!%
 end module utility_output

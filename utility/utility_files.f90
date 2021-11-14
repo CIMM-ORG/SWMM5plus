@@ -155,7 +155,7 @@ contains
                     !% --- all other arguments are in pairs beginning with a flag
                     write(*,"(A,i3,A)") 'ERROR (USER): command line argument ',ii,' is '//argtype
                     write(*,"(A)") 'Expected a flag (e.g.), -i, -p, -s as the first of a pair: -flag string'
-                    stop 'in ' // subroutine_name
+                    stop
                 end if
             else
                 !% --- check if second argument is needed
@@ -178,7 +178,7 @@ contains
                         need2arg = .false.
                     case default
                         write(*,"(A,i3,A)") 'ERROR (USER): unknown command line argument of '//argtype
-                        stop 'in ' // subroutine_name
+                        stop
                 end select
             end if
 
@@ -189,7 +189,7 @@ contains
                 if (argstring(:1) .eq. '-') then
                     write(*,"(A,i3,A)") 'ERROR (USER): command line argument ',ii,' is '//argstring
                     write(*,"(A)") 'Expected a string (e.g.), as the second of a pair: -flag string'
-                    stop 'in ' // subroutine_name
+                    stop
                 end if
             end if
 
@@ -219,7 +219,7 @@ contains
                     setting%Output%Warning = .false.
                 case default
                     write(*,"(A,i3,A)") 'ERROR (USER): unknown command line argument of '//argtype
-                    stop 'in ' // subroutine_name
+                    stop
             end select
             ii = ii+1
         end do
@@ -252,7 +252,7 @@ contains
         if (ierr /= 0) then
             write(*,"(A,i5)") 'ERROR (SYSTEM): getcwd() call at start returned error code', ierr
             write(*,"(A)") 'Unexpected system error, location 3799812'
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         !% --- Start from the values stored in the setting structure
@@ -448,7 +448,7 @@ contains
                 write(*,"(A)") '...system returned an error message of...'
                 write(*,"(A)") trim(cmsg)
                 write(*,"(A,i5)") 'The cmdstat returned was ',istat
-                stop 'in ' // subroutine_name
+                stop
             end if
         end if
 
@@ -472,7 +472,7 @@ contains
                     write(*,"(A)") '...system returned an error message of...'
                     write(*,"(A)") trim(cmsg)
                     write(*,"(A,i5)") 'The cmdstat returned was ',istat
-                    stop 'in ' // subroutine_name
+                    stop
             end if
         end if
 
@@ -663,7 +663,7 @@ contains
             if (ierr /= 0) then
                 write(*,"(A,i5)") 'ERROR (SYSTEM): getcwd() call at start returned error code', ierr
                 write(*,"(A)") 'Unexpected system error, location 654632'
-                stop 'in ' // subroutine_name
+                stop
             end if
         endif
 
@@ -732,11 +732,11 @@ contains
                             if (thisfolder(:1) == '/') then
                                 write(*,"(A)") 'ERROR (user): the directory (see WARNING above) was an absolute directory...'
                                 write(*,"(A)") '... so code must stop here.'
-                                stop 'in ' // subroutine_name
+                                stop
                             else
                                 write(*,"(A)") '...code is continuing using default directories at command line or project folder'
                             end if
-                            !stop 'in ' // subroutine_name
+                            !stop
                         end if
                     end if
                 else
@@ -745,7 +745,7 @@ contains
                     write(*,"(A)") '...Required folder entered as: '
                     write(*,"(A)") trim(thisfolder)
                     write(*,"(A)") '...Folder purpose is: '//this_purpose
-                    stop 'in ' // subroutine_name
+                    stop
                 end if
             else
                 ireturn = 2
@@ -754,7 +754,7 @@ contains
                 write(*,"(A)") '...Required folder entered as: '
                 write(*,"(A)") trim(thisfolder)
                 write(*,"(A)") '...Folder purpose is: '//this_purpose
-                stop 'in ' // subroutine_name
+                stop
             end if
         else
             ireturn = 0
@@ -765,7 +765,7 @@ contains
         ! if (ierr /= 0) then
         !     write(*,"(A,i3)") 'ERROR (SYSTEM): getcwd() call when checking a folder path returned error code ',ierr
         !     write(*,"(A)") 'Unexpected system error, location 98733789'
-        !     stop 'in ' // subroutine_name
+        !     stop
         ! end if
 
         ! call chdir(thisfolder,ierr)
@@ -790,7 +790,7 @@ contains
         !             write(*,"(A)") 'It is likely that the path does not exist and must be created by user.'
         !             write(*,"(A)") 'Required folder entered as: '//trim(thisfolder)
         !             write(*,"(A)") 'Folder purpose is: '//this_purpose
-        !             stop 'in ' // subroutine_name
+        !             stop
         !         end if
         !     else
         !         ireturn = 2
@@ -837,7 +837,7 @@ contains
                 write(*,"(A)") 'Looking for file '//trim(thisfilename)
                 write(*,"(A)") 'File purpose is '//trim(thispurpose)
                 write(*,"(A)") 'File should have extension '//trim(fext)
-                stop 'in ' // subroutine_name
+                stop
             else
                 ireturn = 2
             end if
@@ -855,7 +855,7 @@ contains
         !         write(*,"(A)") 'ERROR (USER) file not found. Path or filename may be wrong'
         !         write(*,"(A)") 'Looking for file '//trim(thisfilename)
         !         write(*,"(A)") 'File purpose is '//trim(thispurpose)
-        !         stop 'in ' // subroutine_name
+        !         stop
         !     else
         !         ireturn = 2
         !     end if

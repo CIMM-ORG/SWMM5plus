@@ -346,7 +346,7 @@ contains
 
         if (setting%BC%slots < 2) then
             print *, "Error: the number of slots has to be greater than 2"
-            stop "in " // subroutine_name
+            stop
         end if
 
         if (N_headBC > 0) then
@@ -509,7 +509,7 @@ contains
                 write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeElem      ', N_OutTypeElem
                 write(*,"(A,i8)") '... etting%Output%OutputElementsExist ', setting%Output%OutputElementsExist
-                stop 'in ' // subroutine_name
+                stop
         end if
 
         !% --- allocate the output types for elements
@@ -570,7 +570,7 @@ contains
                 write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeFace      ', N_OutTypeFace
                 write(*,"(A,i8)") '... etting%Output%OutputElementsExist ', setting%Output%OutputFacesExist
-                stop 'in ' // subroutine_name
+                stop
         end if
 
         !% --- allocate the output types for faces
@@ -633,7 +633,7 @@ contains
             write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
             write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
             write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output ', setting%Output%suppress_MultiLevel_Output
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         allocate(output_times(nLevel), stat=allocation_status, errmsg=emsg)
@@ -670,7 +670,7 @@ contains
             write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
             write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
             write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output ', setting%Output%suppress_MultiLevel_Output
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         allocate(output_binary_filenames(nLevel), stat=allocation_status, errmsg=emsg)
@@ -728,7 +728,7 @@ contains
             write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
             write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
             write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output=', setting%Output%suppress_MultiLevel_Output
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         if (setting%Output%OutputElementsExist) then
@@ -741,7 +741,7 @@ contains
                 write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeElem       ', N_OutTypeElem
                 write(*,"(A,L)") '... etting%Output%sOutputElementsExist =', setting%Output%OutputElementsExist
-                stop 'in ' // subroutine_name
+                stop
             end if
 
             !% --- set the maximum number of output elements in any image
@@ -755,7 +755,7 @@ contains
                 write(*,"(A,L)") '... setting%Output%OutputElementsExist =', setting%Output%OutputElementsExist
                 write(*,"(A)") '... full listing of N_OutElem(:)...'
                 write(*,"(I8)") N_OutElem(:)
-                stop 'in ' // subroutine_name
+                stop
             end if
 
             !% allocate the multi-level element storage for each image
@@ -801,7 +801,7 @@ contains
                 write(*,"(A)") '... which should have caused Output.OutputFacseExist = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeNFaces     ', N_OutTypeFace
                 write(*,"(A,L)") '... setting%Output%OutputFacesExist =', setting%Output%OutputFacesExist
-                stop 'in ' // subroutine_name
+                stop
             end if
 
 
@@ -816,7 +816,7 @@ contains
                 write(*,"(A,L)") '... setting%Output%OutputFacesExist =', setting%Output%OutputFacesExist
                 write(*,"(A)") '... full listing of N_OutElem(:)...'
                 write(*,"(I8)") N_OutElem(:)
-                stop 'in ' // subroutine_name
+                stop
             end if
 
             !% allocate the multi-level element storage for each image
@@ -1663,7 +1663,7 @@ contains
                 print *, allocation_status
                 print *, trim(emsg)
                 print *, 'variable trying to allocate = ',trim(locationstring)
-                stop "in " // subroutine_name
+                stop
             end if
 
             if (setting%Debug%File%utility) &

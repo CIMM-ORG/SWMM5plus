@@ -340,7 +340,7 @@ contains
              print *, '...This can happen if nodes are renamed and some of the conduit connection did not get changed...'
              print *, '...This error might have been tripped accidently if the system has exactly...'
              print *, '...200 nodes and 200 links.'
-             stop 'in' // subroutine_name
+             stop
         end if
         print *
 
@@ -413,7 +413,7 @@ contains
     !     call c_lib_load(c_lib, errstat, errmsg)
     !     if (errstat /= 0) then
     !         print *, "ERROR: " // trim(errmsg)
-    !         stop "in " // subroutine_name
+    !         stop
     !     end if
     !     call c_f_procpointer(c_lib%procaddr, ptr_api_run_step)
 
@@ -447,7 +447,7 @@ contains
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
-                stop "in " // subroutine_name
+                stop
             end if
         end do
 
@@ -457,7 +457,7 @@ contains
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
-                stop "in " // subroutine_name
+                stop
             end if
         end do
 
@@ -541,12 +541,12 @@ contains
 
         if ((attr > N_api_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
-            stop "in " // subroutine_name
+            stop
         end if
 
         if ((node_idx > N_node) .or. (node_idx < 1)) then
             print *, "error: unexpected node index value", node_idx
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -594,12 +594,12 @@ contains
 
         if ((attr > N_api_total_link_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
-            stop "in " // subroutine_name
+            stop
         end if
 
         if ((link_idx > SWMM_N_link) .or. (link_idx < 1)) then
             print *, "error: unexpected link index value", link_idx
-            stop "in " // subroutine_name
+            stop
         end if
 
         if (attr <= N_api_link_attributes) then
@@ -854,12 +854,12 @@ contains
 
         if ((attr > N_api_total_table_attributes) .or. (attr < 1)) then
             print *, "error: unexpected table attribute value", attr
-            stop "in " // subroutine_name
+            stop
         end if
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -933,7 +933,7 @@ contains
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -977,7 +977,7 @@ contains
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1028,7 +1028,7 @@ contains
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1187,7 +1187,7 @@ contains
             tnext = setting%Time%End
         else
             print *, "Error, unsupported head boundary condition for node " // node%Names(nidx)%str
-            stop "in " // subroutine_name
+            stop
         end if
 
         if (setting%Debug%File%interface)  &
@@ -1554,7 +1554,7 @@ contains
 
         if (error /= 0) then
             write(*, "(A,i5,A)") new_line("") // "EPA-SWMM Error Code: ", error, " in "// subroutine_name
-            stop "in " // subroutine_name
+            stop
         end if
     end subroutine print_api_error
 !%

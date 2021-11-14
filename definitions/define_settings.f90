@@ -127,7 +127,7 @@ module define_settings
         real (8) :: EpochStartSeconds = 0.0
         real (8) :: EpochNowSeconds  = 0.0
         real (8) :: EpochFinishSeconds  = 0.0
-    end type CPUTimeType   
+    end type CPUTimeType
 
     !% setting%Output%DataLink
     type DataOutType
@@ -141,10 +141,10 @@ module define_settings
         logical :: isSlotWidthOut    = .false.
         logical :: isSlotDepthOut    = .false.
         logical :: isTopWidthOut     = .false.
-        logical :: isVelocityOut     = .true. 
-        logical :: isVolumeOut       = .true. 
-        logical :: isWaveSpeedOut    = .false.    
-    end type DataOutType  
+        logical :: isVelocityOut     = .true.
+        logical :: isVolumeOut       = .true.
+        logical :: isWaveSpeedOut    = .false.
+    end type DataOutType
 
     !% setting%Limiter%BC
     type LimiterBCType
@@ -202,7 +202,7 @@ module define_settings
     type TimeStepType
         real(8) :: Dt
         integer :: Step
-    end type TimeStepType   
+    end type TimeStepType
 
     !% setting%File%UnitNumber
     type UnitNumberType
@@ -213,7 +213,7 @@ module define_settings
         integer :: links_input_file
         integer :: nodes_input_file
         integer :: debug_setup_linkR_file
-        integer :: debug_setup_linkI_file     
+        integer :: debug_setup_linkI_file
         integer :: debug_setup_nodeR_file
         integer :: debug_setup_nodeI_file
         integer :: debug_setup_nodeYN_file
@@ -345,7 +345,7 @@ module define_settings
         type(DebugFileGroupYNType) :: FileGroup
         logical :: Setup
         logical :: Output
-    end type DebugType   
+    end type DebugType
 
     !% setting%Discretization
     type DiscretizationType
@@ -386,16 +386,16 @@ module define_settings
         logical              :: force_folder_creation = .false.
         integer              :: last_unit = 1000 !% starting point for assigning unit numbers
         type(UnitNumberType) :: UnitNumber
-    
+
         !% for multi-level output
         character(len=256) :: outputML_Link_kernel = "link"
-        character(len=256) :: outputML_Node_kernel = "node" 
+        character(len=256) :: outputML_Node_kernel = "node"
         character(len=256) :: outputML_combinedfile_kernel = "combined_output" !% filenames that combine across images
         character(len=256) :: outputML_filename_file = 'output_filenames.txt'  !% list of interim filenames used in combined output
         character(len=256) :: outputML_control_file = 'control.unf'  !% global parameters that control the processing of combined output
         integer            :: outputML_Ncombined_file_written = 0
         integer            :: outputML_total_timelevels_written = 0
-        
+
         !% for csv dump output
         character(len=256) :: debug_setup_link_folder = ""
         character(len=256) :: debug_setup_node_folder = ""
@@ -412,10 +412,10 @@ module define_settings
         character(len=256) :: debug_setup_linkI_file = "linkI.csv"
         character(len=256) :: debug_setup_nodeR_file = "nodeR.csv"
         character(len=256) :: debug_setup_nodeI_file = "nodeI.csv"
-        character(len=256) :: debug_setup_nodeYN_file = "nodeYN.csv"        
+        character(len=256) :: debug_setup_nodeYN_file = "nodeYN.csv"
         logical :: links_input_file_exist = .false.
         logical :: nodes_input_file_exist = .false.
-    end type FileType  
+    end type FileType
 
     ! setting%Junction
     type JunctionType
@@ -474,12 +474,12 @@ module define_settings
         logical :: Warning = .true.
         type(CommandLineType) :: CommandLine
         type(DataOutType) :: DataOut
-    end type OutputType    
+    end type OutputType
 
     !% setting%Partitioning
     type PartitioningType
         integer :: PartitioningMethod = BLink
-    endtype PartitioningType 
+    endtype PartitioningType
 
     !% setting%PreissmannSlot
     type PreissmannSlotType
@@ -526,7 +526,7 @@ module define_settings
         real(8) :: SwitchFractionDn = 0.8
         real(8) :: SwitchFractionUp = 0.9
     end type SolverType
- 
+
     type TestCaseType
         logical       :: UseTestCase = .false.
         character(64) :: TestName
@@ -651,7 +651,7 @@ contains
             write(*,"(A)") "this is first item in json file, which may indicate formatting problem in file"
             stop 970984
         end if
-    
+
         call json%get('ACmethod.Anomaly.DensityLowCutoff', real_value, found)
         setting%ACmethod%Anomaly%DensityLowCutoff = real_value
         if (.not. found) stop "Error - json file - setting " // 'ACmethod.Anomaly.DensityLowCutoff not found'
@@ -728,7 +728,7 @@ contains
         setting%ACmethod%Switch%Depth = real_value
         if (.not. found) stop "Error - json file - setting " // 'ACmethod.Switch.Depth not found'
 
-    !% Adjustments     
+    !% Adjustments
         !% --- Adjust flowrate settings
         call json%get('Adjust.Flowrate.Apply', logical_value, found)
         setting%Adjust%Flowrate%Apply = logical_value
@@ -759,7 +759,7 @@ contains
         setting%Adjust%Head%Coef = real_value
         if (.not. found) stop "Error - json file - setting " // 'Adjust.Head.Coef not found'
 
-    !% BC    
+    !% BC
         !% --- BC settings
         call json%get('BC.slots', real_value, found)
         setting%BC%slots = real_value
@@ -783,7 +783,7 @@ contains
         setting%Constant%gravity = real_value
         if (.not. found) stop "Error - json file - setting " // 'Constant.gravity not found'
 
-    !% Discretization    
+    !% Discretization
         !% -- Nominal element length adjustment
         call json%get('Discretization.NominalElemLength', real_value, found)
         setting%Discretization%NominalElemLength = real_value
@@ -804,7 +804,7 @@ contains
         setting%Discretization%LinkShortingFactor = real_value
         if (.not. found) stop "Error - json file - setting " // 'Discretization.LinkShortingFactor not found'
 
-    !% epsilon    
+    !% epsilon
         !% --- Eps Settings
         call json%get('Eps.FroudeJump', real_value, found)
         setting%Eps%FroudeJump = real_value
@@ -813,7 +813,7 @@ contains
         setting%Eps%InflowDepthIncreaseFroudeLimit = real_value
         if (.not. found) stop "Error - json file - setting " // 'Eps.InflowDepthIncreaseFroudeLimit not found'
 
-    !% Face interpolation    
+    !% Face interpolation
         !% --- FaceInterp settings
         call json%get('FaceInterp.DownJBFaceInterp', c, found)
         call util_lower_case(c)
@@ -823,12 +823,12 @@ contains
             setting%FaceInterp%DownJBFaceInterp = dynamic
         else
             print *, "Error, the setting '" // trim(c) // "' is not supported for DownJBFaceInterp"
-            stop "in " // subroutine_name
+            stop
         end if
-    
+
     !% Files
-        !% --- (filenames and paths should not be read)    
-        !% -- links and nodes input files exist 
+        !% --- (filenames and paths should not be read)
+        !% -- links and nodes input files exist
         call json%get('File.links_input_file_exist', logical_value, found)
         setting%File%links_input_file_exist = logical_value
         if (.not. found) stop "Error - json file - setting " // 'File.links_input_file_exist not found'
@@ -844,7 +844,7 @@ contains
         setting%File%library_folder = trim(c)
         if (.not. found) stop "Error - json file - setting "// 'File.library_folder not found'
 
-    !% Junctions    
+    !% Junctions
         !%--- Junction Settings
         call json%get('Junction.kFactor', real_value, found)
         setting%Junction%kFactor = real_value
@@ -866,7 +866,7 @@ contains
         setting%Junction%isDynamic = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Limiter.Junction.isDynamic not found'
 
-    !% Limiters    
+    !% Limiters
         !% --- Limiter settings
         call json%get('Limiter.BC.approach', c, found)
         call util_lower_case(c)
@@ -915,7 +915,7 @@ contains
         setting%Limiter%Dt%UseLimitMin = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Limiter.Dt.UseLimitMin not found'
 
-    !% Links    
+    !% Links
         ! Load Link settings
         call json%get('Link.DefaultInitDepthType', c, found)
         call util_lower_case(c)
@@ -927,7 +927,7 @@ contains
             setting%Link%DefaultInitDepthType = ExponentialDecay
         else
             print *, "Error, the setting '" // trim(c) // "' is not supported for Link.DefaultInitDepthType"
-            stop "in " // subroutine_name
+            stop 
         end if
         if (.not. found) stop "Error - json file - setting " // 'Link.DefaultInitDepthType not found'
 
@@ -935,7 +935,7 @@ contains
         setting%Link%PropertiesFile = c
         if (.not. found) stop "Error - json file - setting " // 'Link.PropertiesFile not found'
 
-    !% Output    
+    !% Output
         !% --- Report settings
         call json%get('Output.report', logical_value, found)
         setting%Output%report = logical_value
@@ -978,7 +978,7 @@ contains
         call json%get('Output.StoredFileNames', integer_value, found)
         setting%Output%StoredFileNames = integer_value
         if (.not. found) stop "Error - json file - setting " // 'Output.StoredFileNames not found'
-       
+
         call json%get('Output.UseFileNameFile', logical_value, found)
         setting%Output%UseFileNameFile = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Output.UseFileNameFile not found'
@@ -992,7 +992,7 @@ contains
         call json%get('Output.suppress_MultiLevel_Output', logical_value, found)
         setting%Output%suppress_MultiLevel_Output = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Output.suppress_MultiLevel_Output not found'
-        
+
 
         !% --- link and node text files
         call json%get('Output.print_links_csv', logical_value, found)
@@ -1002,7 +1002,7 @@ contains
         call json%get('Output.print_nodes_csv', logical_value, found)
         setting%Output%print_nodes_csv = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Output.print_nodes_csv not found'
-        
+
         !% --- command line
         call json%get('Output.CommandLine.quiet', logical_value, found)
         setting%Output%CommandLine%quiet = logical_value
@@ -1019,7 +1019,7 @@ contains
         !% --- warnings
         call json%get('Output.Warning', logical_value, found)
         setting%Output%Warning = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.Warning not found'    
+        if (.not. found) stop "Error - json file - setting " // 'Output.Warning not found'
 
         !% -------------------------
         !% --- data out ----
@@ -1027,43 +1027,43 @@ contains
         !% --- Area
         call json%get('Output.DataOut.isAreaOut', logical_value, found)
         setting%Output%DataOut%isAreaOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isAreaOut not found' 
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isAreaOut not found'
         !% --- Depth
         call json%get('Output.DataOut.isDepthOut', logical_value, found)
         setting%Output%DataOut%isDepthOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isDepthOut not found' 
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isDepthOut not found'
         !% --- Flowrate
         call json%get('Output.DataOut.isFlowrateOut', logical_value, found)
         setting%Output%DataOut%isFlowrateOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isFlowrateOut not found' 
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isFlowrateOut not found'
         !% --- Froude Number
         call json%get('Output.DataOut.isFroudeNumberOut', logical_value, found)
         setting%Output%DataOut%isFroudeNumberOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isFroudeNumberOut not found'  
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isFroudeNumberOut not found'
         !% --- Head
         call json%get('Output.DataOut.isHeadOut', logical_value, found)
         setting%Output%DataOut%isHeadOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isHeadOut not found'   
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isHeadOut not found'
         !% --- Hydraulic Radius
         call json%get('Output.DataOut.isHydRadiusOut', logical_value, found)
         setting%Output%DataOut%isHydRadiusOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isHydRadiusOut not found'  
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isHydRadiusOut not found'
         !% --- Perimeter
         call json%get('Output.DataOut.isPerimeterOut', logical_value, found)
         setting%Output%DataOut%isPerimeterOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isPerimeterOut not found'  
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isPerimeterOut not found'
         !% --- Slot width
         call json%get('Output.DataOut.isSlotWidthOut', logical_value, found)
         setting%Output%DataOut%isSlotWidthOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isSlotWidthOut not found'  
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isSlotWidthOut not found'
         !% --- Slot depth
         call json%get('Output.DataOut.isSlotDepthOut', logical_value, found)
         setting%Output%DataOut%isSlotDepthOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isSlotDepthOut not found'  
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isSlotDepthOut not found'
         !% --- Top Width
         call json%get('Output.DataOut.isTopWidthOut', logical_value, found)
         setting%Output%DataOut%isTopWidthOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isTopWidthOut not found'  
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isTopWidthOut not found'
         !% --- Velocity
         call json%get('Output.DataOut.isVelocityOut', logical_value, found)
         setting%Output%DataOut%isVelocityOut = logical_value
@@ -1071,7 +1071,7 @@ contains
         !% --- Volume
         call json%get('Output.DataOut.isVolumeOut', logical_value, found)
         setting%Output%DataOut%isVolumeOut = logical_value
-        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isVolumeOut not found'   
+        if (.not. found) stop "Error - json file - setting " // 'Output.DataOut.isVolumeOut not found'
 
         !-------------------------
         ! --- Orifice settings
@@ -1102,7 +1102,7 @@ contains
         end if
         if (.not. found) stop "Error - json file - setting " // 'Partitioning.PartitioningMethod not found'
 
-    !% Preissman slot    
+    !% Preissman slot
         ! Load PreissmanSlot settings
         call json%get('PreissmannSlot.PreissmannSlotMethod', c, found)
         call util_lower_case(c)
@@ -1120,7 +1120,7 @@ contains
         if (.not. found) stop "Error - json file - setting " // 'PreissmannSlot.CelerityFactor not found'
 
     !% Simulation controls
-        !% --- Hydrology and hydraulics simulation controls    
+        !% --- Hydrology and hydraulics simulation controls
         call json%get('Simulation.useHydrology', logical_value, found)
         setting%Simulation%useHydrology = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Simulation.useHydrology not found'
@@ -1135,7 +1135,7 @@ contains
         end if
         if (.not. found) stop "Error - json file - setting " // 'Simulation.useSWMMC not found'
 
-    !% Small volume    
+    !% Small volume
         !% --- SmallVolume settings
         call json%get('SmallVolume.DepthCutoff', real_value, found)
         setting%SmallVolume%DepthCutoff = real_value
@@ -1159,7 +1159,7 @@ contains
         setting%SmallVolume%UseSmallVolumes = logical_value
         if (.not. found) stop "Error - json file - setting " // 'SmallVolume.UseSmallVolumes not found'
 
-    !% Solver    
+    !% Solver
         !% ---Solver Settings
         ! call json%get('Solver.crk2', real_value, found)
         ! setting%Solver%crk2 = [real_value, real_value]
@@ -1208,7 +1208,7 @@ contains
         setting%Solver%SwitchFractionUp = real_value
         if (.not. found) stop "Error - json file - setting " // 'Solver.SwitchFractionUp not found'
 
-    !% Time    
+    !% Time
         !% --- Time settings
         call json%get('Time.matchHydrologyStep', logical_value, found)
         setting%Time%matchHydrologyStep = logical_value
@@ -1266,7 +1266,7 @@ contains
         !setting%Time%CPU%EpochFinishSeconds = real_value
         !if (.not. found) stop "Error - json file - setting " // 'Time.CPU.EpochFinishSeconds not found'
 
-    !% Weir    
+    !% Weir
         !% --- Transverse weir settings
         call json%get('Weir.Transverse.WeirExponent', real_value, found)
         setting%Weir%Transverse%WeirExponent = real_value
@@ -1323,7 +1323,7 @@ contains
         setting%Weir%Trapezoidal%VillemonteCorrectionExponent = real_value
         if (.not. found) stop "Error - json file - setting " // 'Weir.Trapezoidal.VillemonteCorrectionExponent not found'
 
-    !% Variable time step    
+    !% Variable time step
         !% ---variable time step settings
         call json%get('VariableDT.Apply', logical_value, found)
         setting%VariableDT%Apply = logical_value
@@ -1347,7 +1347,7 @@ contains
         setting%VariableDT%NstepsForCheck = integer_value
         if (.not. found) stop "Error - json file - setting " // 'VariableDT.NstepsForCheck not found'
 
-    !% Zero Value    
+    !% Zero Value
         !% --- ZeroValue settings
         call json%get('ZeroValue.Area', real_value, found)
         setting%ZeroValue%Area = real_value
@@ -1367,7 +1367,7 @@ contains
 
 
 
-    !% Debug    
+    !% Debug
         !% --- Debug Settings
         call json%get('Debug.Tests', logical_value, found)
         setting%Debug%Tests = logical_value
@@ -1525,7 +1525,7 @@ contains
         setting%Profile%YN = logical_value
         if (.not. found) stop "Error - json file - setting " // 'Profile.YN not found'
 
-     !% finished    
+     !% finished
         call json%destroy()
         if (json%failed()) stop "JSON failed to destroy"
 
@@ -1533,9 +1533,9 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
     end subroutine def_load_settings
 !%
-!%==========================================================================    
 !%==========================================================================
-!%    
+!%==========================================================================
+!%
     subroutine def_update_debug_options()
         if (setting%Debug%FileGroup%all) then
             setting%Debug%FileGroup%definitions = .true.
@@ -1606,5 +1606,5 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!%    
+!%
 end module define_settings

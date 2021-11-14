@@ -98,7 +98,7 @@ contains
         !% BIPquick sweeps through the network a finite number of times
         do mp = 1, num_images()
 
-            ! if ( mp == 6 ) then 
+            ! if ( mp == 6 ) then
 
             !     print*, "Node Partitioning"
             !     print*, new_line("")
@@ -109,7 +109,7 @@ contains
             !             print*, node%I(ii, ni_idx), node%I(ii, ni_P_image:ni_P_is_boundary)
             !         endif
             !     end do
-        
+
             !     print *, "Link Partitioning"
             !     print *, new_line("")
             !     do ii = 1, size(link%I, 1)
@@ -147,7 +147,7 @@ contains
                     endif
                 enddo
                 exit
-            endif    
+            endif
 
             !% Save the current processor as image (used as input to trav_subnetwork)
             image = mp
@@ -188,7 +188,7 @@ contains
                     .and. ( ideal_junction == nullValueI ) )
 
                     !% This subroutine houses the litany of steps that are required for a Case 3 partition
-                    call trav_casethree(effective_root, spanning_link, ideal_junction, image, & 
+                    call trav_casethree(effective_root, spanning_link, ideal_junction, image, &
                         partition_threshold, max_weight, ideal_exists)
 
                 end do
@@ -216,13 +216,13 @@ contains
                     phantom_link_idx = phantom_link_idx + 1
 
                 else if ( ideal_junction /= nullValueI ) then
-                    call trav_casethree(effective_root, spanning_link, ideal_junction, image, & 
+                    call trav_casethree(effective_root, spanning_link, ideal_junction, image, &
                         partition_threshold, max_weight, ideal_exists)
 
                 else
                     print*, "Something has gone wrong in BIPquick Case 3, there is no ideal exists or spanning link"
                     print*, "Suggestion: Use a different number of processors"
-                    stop "in " // subroutine_name
+                    stop
 
                 end if
 
@@ -304,11 +304,11 @@ contains
                     counter = counter + 1
                 endif
             enddo
-    
+
             ! where ( node%I(:, ni_node_type) == nBCdn )
             !     B_roots(:) = node%I(:, ni_idx)
             ! endwhere
-                
+
             if (setting%Debug%File%BIPquick) &
             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         end subroutine bip_find_roots
@@ -1061,7 +1061,7 @@ contains
     !==========================================================================
     !==========================================================================
     !
-    subroutine trav_casethree(effective_root, spanning_link, ideal_junction, image, & 
+    subroutine trav_casethree(effective_root, spanning_link, ideal_junction, image, &
         partition_threshold, max_weight, ideal_exists)
     !-----------------------------------------------------------------------------
     !
@@ -1131,7 +1131,7 @@ contains
 
         if ( total_clipped_weight <= zeroR ) then
             print*, "BIPquick Case 3: Haven't removed any weight"
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% Reduce the partition_threshold by the total_clipped_weight too
