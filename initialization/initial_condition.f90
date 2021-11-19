@@ -47,7 +47,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         solver => setting%Solver%SolverSelect
 
@@ -153,7 +153,7 @@ contains
         end if
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_IC_toplevel
     !
@@ -176,7 +176,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Setting the local image value
         image = this_image()
@@ -210,7 +210,7 @@ contains
         deallocate(packed_link_idx)
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_linkdata
     !
     !==========================================================================
@@ -234,7 +234,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% type of initial depth type
         LdepthType  => link%I(thisLink,li_InitialDepthType)
@@ -324,7 +324,7 @@ contains
         end select
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_depth_from_linkdata
     !
     !==========================================================================
@@ -343,7 +343,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !%  handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -354,7 +354,7 @@ contains
         endwhere
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_flow_roughness_from_linkdata
     !
     !==========================================================================
@@ -374,7 +374,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -431,7 +431,7 @@ contains
 
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_elemtype_from_linkdata
     !
     !==========================================================================
@@ -451,7 +451,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
@@ -490,7 +490,7 @@ contains
 
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_geometry_from_linkdata
     !
     !==========================================================================
@@ -511,7 +511,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -592,7 +592,7 @@ contains
         end select
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_channel_geometry
     !
     !==========================================================================
@@ -613,7 +613,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to geometry type
         geometryType => link%I(thisLink,li_geometry)
@@ -688,7 +688,7 @@ contains
         end select
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_conduit_geometry
     !
     !==========================================================================
@@ -708,7 +708,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific weir type
         specificWeirType => link%I(thisLink,li_weir_type)
@@ -791,7 +791,7 @@ contains
         end select
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_IC_get_weir_geometry
     !
@@ -812,7 +812,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointer to specific orifice type
         specificOrificeType => link%I(thisLink,li_orif_type)
@@ -877,7 +877,7 @@ contains
 
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_orifice_geometry
     !
     !==========================================================================
@@ -898,7 +898,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% HACK: this might not be right
         where ( (elemI(:,ei_link_Gidx_BIPquick) == thisLink) .and. &
@@ -920,7 +920,7 @@ contains
         endwhere
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_IC_get_channel_conduit_velocity
     !
@@ -942,7 +942,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Setting the local image value
         image = this_image()
@@ -966,7 +966,7 @@ contains
         deallocate(packed_nJm_idx)
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_nodedata
     !
     !==========================================================================
@@ -990,7 +990,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !%................................................................
         !% Junction main
@@ -1249,7 +1249,7 @@ contains
         call geo_assign_JB (ALLtm, ep_JM_ALLtm)
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_junction_data
     !
     !==========================================================================
@@ -1268,7 +1268,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
         select case (solver)
@@ -1304,7 +1304,7 @@ contains
 
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_solver_select
     !
     !==========================================================================
@@ -1324,7 +1324,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         where ( (elemI(:,ei_QeqType) == diagnostic) .or. (elemI(:,ei_HeqType) == diagnostic))
             !% HACK: settings%ZeroValues should be used here
@@ -1337,7 +1337,7 @@ contains
         endwhere
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_small_values_diagnostic_elements
     !
     !==========================================================================
@@ -1357,7 +1357,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
         !% Q-diagnostic elements will have minimum interp weights for Q
@@ -1407,7 +1407,7 @@ contains
         end if
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_diagnostic_interpolation_weights
     !
     !==========================================================================
@@ -1425,7 +1425,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%SmallVolume%UseSmallVolumes) then
             where (elemI(:,ei_geometryType) == rectangular)
@@ -1446,7 +1446,7 @@ contains
         end if
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_set_SmallVolumes
     !
     !==========================================================================
@@ -1464,12 +1464,12 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         elemR(1:size(elemR,1)-1,er_FlowrateLateral) = zeroR
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_set_zero_lateral_inflow
     !
     !==========================================================================
@@ -1487,12 +1487,12 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         elemR(1:size(elemR,1)-1,er_ones) = oneR
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_oneVectors
     !
     !==========================================================================
@@ -1510,7 +1510,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initial_condition) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
         elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
@@ -1520,7 +1520,7 @@ contains
         elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
 
         if (setting%Debug%File%initial_condition) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_slot
     !
     !==========================================================================

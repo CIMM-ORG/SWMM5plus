@@ -34,7 +34,7 @@ contains
 
     if (icrash) return
     if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
     !% fu stands for file unit which will be tied to the image and tells the system what file to open
@@ -99,7 +99,7 @@ contains
 
 
     if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
   end subroutine debug_2D_array_csv
 !%
@@ -114,7 +114,7 @@ contains
     character(64) :: subroutine_name = 'debug_Nface_check'
     if (icrash) return
     if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
     total_faces = 0
@@ -150,7 +150,7 @@ contains
     end if
 
     if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
   end subroutine debug_Nface_check
 !%

@@ -134,7 +134,7 @@ contains
         character(64) :: subroutine_name = "util_file_get_commandline"
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // ' [Processor ', this_image(), ']'
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // ' [Processor ', this_image(), ']'
 
         !% --- read the command line arguments (must be in pairs)
         ii = 1
@@ -225,7 +225,7 @@ contains
         end do
 
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_file_get_commandline
 !%
 !%==========================================================================
@@ -244,7 +244,7 @@ contains
         character(64) :: subroutine_name = "util_file_setup_input_paths_and_files"
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // ' [Processor ', this_image(), ']'
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // ' [Processor ', this_image(), ']'
 
         !% --- Use the current working directory as the base folder
         ierr = getcwd(setting%File%base_folder)
@@ -368,7 +368,7 @@ contains
         endif
 
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_file_setup_input_paths_and_files
 !%
 !%==========================================================================

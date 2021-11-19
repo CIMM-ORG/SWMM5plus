@@ -35,7 +35,7 @@ contains
     !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%discretization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         do ii =1, N_link
             temp_length = link%R(ii,lr_Length) ! lenght of link ii
@@ -58,7 +58,7 @@ contains
         end do
 
         if (setting%Debug%File%discretization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_discretization_adjustlinklength
     !
     !==========================================================================
@@ -79,7 +79,7 @@ contains
     !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%discretization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Adjusts the number of elements in a link based on the length
         remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
@@ -117,7 +117,7 @@ contains
         end if 
 
         if (setting%Debug%File%discretization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_discretization_nominal
     !

@@ -112,7 +112,7 @@ contains
         character(64) :: subroutine_name = 'outputML_element_selection'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         elementType => elemI(:,ei_elementType)
         link_idx    => elemI(:,ei_link_Gidx_SWMM)
         node_idx    => elemI(:,ei_node_Gidx_SWMM)
@@ -160,7 +160,7 @@ contains
         ! end do
         ! stop 80987
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_element_selection
 !%
 !%==========================================================================
@@ -178,7 +178,7 @@ contains
         character(64) :: subroutine_name = 'outputML_face_selection'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !elementType => elemI(:,ei_elementType)
         !link_idx    => elemI(:,ei_link_Gidx_SWMM)
         face_idx    => faceI(:,fi_Gidx)
@@ -206,7 +206,7 @@ contains
         end do
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_face_selection
 !%
 !%==========================================================================
@@ -221,7 +221,7 @@ contains
         character(64)    :: subroutine_name = 'outputML_size_OutElem_by_image'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -247,7 +247,7 @@ contains
         end if
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_size_OutElem_by_image
 !%
 !%==========================================================================
@@ -262,7 +262,7 @@ contains
         character(64)    :: subroutine_name = 'outputML_size_OutFace_by_image'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -288,7 +288,7 @@ contains
         end if
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_size_OutFace_by_image
 !%
 !%==========================================================================
@@ -303,7 +303,7 @@ contains
         character(64)        :: subroutine_name = 'outputML_element_outtype_selection'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -468,7 +468,7 @@ contains
         end select
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_element_outtype_selection
 !%
 !%==========================================================================
@@ -483,7 +483,7 @@ contains
         character(64)        :: subroutine_name = 'output_face_outtype_selection'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% don't do this is outpuot is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -623,7 +623,7 @@ contains
         end select
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_face_outtype_selection
 !%
 !%==========================================================================
@@ -645,65 +645,47 @@ contains
         character(64)    :: subroutine_name = 'outputML_store_data'
     !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- do not execute if ML output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
 
-        print *, "HERE", 1
         !% --- increment the stored time level counter
         setting%Output%LastLevel = setting%Output%LastLevel+1
-        print *, "HERE", 2
         thisLevel => setting%Output%LastLevel
-        print *, "HERE", 3
 
         !% --- store the time for this data
         output_times(thisLevel) = setting%Time%Now
-        print *, "HERE", 4
 
         !% --- null the storage
         elemOutR(:,:,thisLevel) = nullvalueR
-        print *, "HERE", 5, thisLevel
-        print *, "face", faceOutR(:,:,:)
         faceOutR(:,:,thisLevel) = nullvalueR
 
-        print *, "HERE", 6
         !% --- store the element data
         if (setting%Output%OutputElementsExist) then
             !% --- get the pack size of output elements
-            print *, "HERE", 7
             Npack => npack_elemP(ep_Output_Elements)
             !% --- set of output elements
-            print *, "HERE", 8
             thisP => elemP(1:Npack,ep_Output_Elements)
             !% --- set of output types
-            print *, "HERE", 9
             thisType => output_types_elemR(:)
-            print *, "HERE", 10
             !% --- vector store
             elemOutR(1:Npack,:,thisLevel) = elemR(thisP,thisType)
-            print *, "HERE", 11
             !%
         end if
 
         !% --- store the face data
         if (setting%Output%OutputFacesExist) then
             !% --- get the pack size of faces
-            print *, "HERE", 12
             Npack => npack_faceP(fp_Output_Faces)
             !% --- set of output faces
-            print *, "HERE", 13
             thisP => faceP(1:Npack,fp_Output_Faces)
             !% --- set of output types
-            print *, "HERE", 14
             thisType => output_types_faceR(:)
-            print *, "HERE", 15
             !% --- vector store
             faceOutR(1:Npack,:,thisLevel) = faceR(thisP,thisType)
-            print *, "HERE", 16
         else
             setting%Output%OutputFacesExist = .false.
-            print *, "HERE", 17
         end if
 
         if (setting%Output%Verbose) write(*,"(A,i5)") &
@@ -717,7 +699,7 @@ contains
         end if
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_store_data
 !%
 !%==========================================================================
@@ -751,7 +733,7 @@ contains
         character(64)    :: subroutine_name = 'outputML_combine_and_write_data'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- do not execute if ML output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -950,7 +932,7 @@ contains
         !% --- this is so that subsequent calls can write to it.
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_combine_and_write_data
 !%
 !%==========================================================================
@@ -973,7 +955,7 @@ contains
         character(64) :: subroutine_name = 'outputML_write_control_file'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- do not execute if ML output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -1017,7 +999,7 @@ contains
         close(thisunit)
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_write_control_file
 !%
 !%==========================================================================
@@ -1164,7 +1146,7 @@ contains
         character(64)      :: subroutine_name = 'outputML_convert_elements_to_linknode_and_write'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- do not execute if ML output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -2383,7 +2365,7 @@ contains
         !stop 897033
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_convert_elements_to_linknode_and_write
 !%
 !%==========================================================================
@@ -2425,7 +2407,7 @@ contains
         character(64) :: subroutine_name = 'outputML_csv_header'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% -- ROW 1 --- LINK OR NODE ID (keyword, string)
         write(funitIn,fmt='(2a)') 'SWMM_ID: ,', trim(tlinkname)
@@ -2551,7 +2533,7 @@ contains
         end if
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_csv_header
 !%
 !%==========================================================================
@@ -2586,7 +2568,7 @@ contains
         character(64) :: subroutine_name = 'outputML_unf_header'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% HACK --- THIS NEEDS TO BE REVISED
 
@@ -2626,7 +2608,7 @@ contains
         end if
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_unf_header
 !%
 !%==========================================================================
@@ -2651,7 +2633,7 @@ contains
         integer :: mm
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (isFV) then
             !% --- FV write is columns that are elements of the idx1 link
@@ -2668,7 +2650,7 @@ contains
         end if
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine  outputML_csv_writedata
 !%
 !%==========================================================================
@@ -2690,14 +2672,14 @@ contains
         character(64) :: subroutine_name = 'outputML_unf_writedata'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         do mm = 1,nLevel
             write(funitIn) OutLink_ProcessedDataR(klink,1:nType,mm)
         end do
 
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputML_unf_writedata
 !%
 !%==========================================================================
@@ -2716,7 +2698,7 @@ contains
         character(64)        :: subroutine_name = 'outputD_read_csv_link_names'
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- abandon procedure if printout of links not needed
         link_output_idx = nullvalueI
@@ -2832,7 +2814,7 @@ contains
         end if
 
         if (setting%Debug%File%output) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputD_read_csv_link_names
 !%
 !%==========================================================================
@@ -2852,7 +2834,7 @@ contains
         character(64) :: subroutine_name = 'outputD_read_csv_node_names'
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- abandon procedure if printout of nodes not needed
         node_output_idx = nullvalueI
@@ -2923,7 +2905,7 @@ contains
         end if
 
         if (setting%Debug%File%output) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputD_read_csv_node_names
 !%
 !%==========================================================================
@@ -2942,7 +2924,7 @@ contains
         character(64) :: subroutine_name = 'outputD_create_link_files'
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         write(str_image, '(i5.5)') this_image()
 
@@ -2985,7 +2967,7 @@ contains
         end do
 
         if (setting%Debug%File%output) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputD_create_link_files
 !%
 !%==========================================================================
@@ -3003,7 +2985,7 @@ contains
         character(64) :: subroutine_name = 'outputD_create_node_files'
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Get current image as a string
         write(str_image, '(i5.5)') this_image()
@@ -3044,7 +3026,7 @@ contains
         end do
 
         if (setting%Debug%File%output) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputD_create_node_files
 !%
 !%==========================================================================
@@ -3066,7 +3048,7 @@ contains
         character(64) :: subroutine_name = 'outputD_write_link_files'
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         write(str_image, '(i5.5)') this_image()
         time_secs = setting%Time%Now
@@ -3127,7 +3109,7 @@ contains
         end do
 
         if (setting%Debug%File%output) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine outputD_write_link_files
 !%
 !%==========================================================================
@@ -3149,7 +3131,7 @@ contains
 
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% converter image ID to string, as well as get current time
         write(str_image, '(i5.5)') this_image()
@@ -3213,7 +3195,7 @@ contains
         end do
 
         if (setting%Debug%File%output) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine outputD_write_node_files
 !%
@@ -3413,7 +3395,7 @@ contains
         character(64) :: subroutine_name = 'outputD_move_node_files'
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Get current image as a string
         write(str_image, '(i5.5)') this_image()
@@ -3438,7 +3420,7 @@ contains
         end do
 
         if (setting%Debug%File%output) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine outputD_move_node_files
 !%
@@ -3462,7 +3444,7 @@ contains
         character(64) :: subroutine_name = 'outputD_update_swmm_out'
         !%--------------------------------------------------------------------------
         if (setting%Debug%File%output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (this_image() == 1) then
             allocate(fus_nodes(size(node%P%have_output)))
@@ -3562,7 +3544,7 @@ contains
         end if
 
         if (setting%Debug%File%output) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine outputD_update_swmm_out
 !%

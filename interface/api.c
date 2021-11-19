@@ -231,7 +231,7 @@ int DLLEXPORT api_get_flowBC(int node_idx, double current_datetime, double* flow
 int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* headBC)
 {
     int i = Node[node_idx].subIndex;
-
+    
     switch (Outfall[i].type)
     {
         case FIXED_OUTFALL:
@@ -240,7 +240,7 @@ int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* head
 
         default:
             *headBC = API_NULL_VALUE_I;
-            sprintf(errmsg, "OUTFALL type %d at NODE %s", Outfall[i].type, Node[node_idx].ID);
+            sprintf(errmsg, "OUTFALL TYPE %d at NODE %s", Outfall[i].type, Node[node_idx].ID);
             api_report_writeErrorMsg(api_err_not_developed, errmsg);
             return api_err_not_developed;
     }

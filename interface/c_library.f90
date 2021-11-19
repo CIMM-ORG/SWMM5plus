@@ -68,7 +68,7 @@ contains
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%c_library) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         errmsg = ''
 
@@ -88,7 +88,7 @@ contains
         errstat = 0
 
         if (setting%Debug%File%c_library) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine c_lib_open
 
@@ -112,7 +112,7 @@ contains
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%c_library) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         errmsg = ''
 
@@ -127,7 +127,7 @@ contains
         errstat = 0
 
         if (setting%Debug%File%c_library) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine c_lib_load
 
     subroutine c_lib_close (c_lib, errstat, errmsg)
@@ -142,7 +142,7 @@ contains
     !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%c_library) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         errmsg = ''
         errstat = dlclose( c_lib%fileaddrx )
@@ -153,6 +153,6 @@ contains
         end if
 
         if (setting%Debug%File%c_library) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine c_lib_close
 end module c_library

@@ -12,6 +12,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #define WRITE(x) (report_writeLine((x)))
+#define API_FIRST_ERROR_CODE 1000
 #define api_err1001 "\n API Init Error: SWMM5 needs to be initialized before executing %s"
 #define api_err1002 "\n API Not Developed Error: have not developed the logic to handle %s"
 #define api_err1003 "\n API Type Error: Invalid property given object type. %s"
@@ -30,13 +31,13 @@ int APIErrCode = 0;
 
 char* api_error_getMsg(int i)
 {
-    if ( i >= 0 && i < api_max_err_msg ) return APIErrMsgs[i];
+    if ( i >= 0 && i < api_max_err_msg ) return APIErrMsgs[i-API_FIRST_ERROR_CODE];
     else return APIErrMsgs[0];
 };
 
 int  api_error_getCode(int i)
 {
-    if ( i >= 0 && i < api_max_err_msg ) return APIErrCodes[i];
+    if ( i >= 0 && i < api_max_err_msg ) return APIErrCodes[i-API_FIRST_ERROR_CODE];
     else return 0;
 }
 
@@ -79,7 +80,9 @@ void api_report_writeErrorMsg(int code, char* s)
     APIErrCode = code;
 
     if ( APIErrCode >= api_err_not_developed )
+    {
         sprintf(APIErrMsg, api_error_getMsg(APIErrCode), s);
+    }
 }
 
 void api_report_writeErrorCode()

@@ -40,7 +40,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call common_head_and_flowdirection_singular &
             (eIdx, esr_Orifice_Zcrest, esr_Orifice_NominalDownstreamHead, esi_Orifice_FlowDirection)
@@ -58,7 +58,7 @@ module orifice_elements
         call common_velocity_from_flowrate_singular (eIdx)
 
         if (setting%Debug%File%orifice_elements)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine orifice_toplevel
 ! %
 !%==========================================================================
@@ -80,7 +80,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% inputs
         SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
@@ -116,7 +116,7 @@ module orifice_elements
         end select
 
         if (setting%Debug%File%orifice_elements)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine orifice_effective_head_delta
 !%
 !%==========================================================================
@@ -139,7 +139,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         GeometryType          => elemI(eIdx,ei_geometryType)
         SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
@@ -210,7 +210,7 @@ module orifice_elements
         end if
 
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine orifice_flow
 !%
 !%==========================================================================
@@ -235,7 +235,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         GeometryType       => elemI(eIdx,ei_geometryType)
         Head               => elemR(eIdx,er_Head)
@@ -298,7 +298,7 @@ module orifice_elements
         call adjust_limit_by_zerovalues_singular (eIdx, er_Volume,    setting%ZeroValue%Volume)
 
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine  orifice_geometry_update
 !%==========================================================================
 !% END OF MODULE

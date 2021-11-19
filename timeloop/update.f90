@@ -39,7 +39,7 @@ module update
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%update) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%Profile%YN) call util_profiler_start (pfc_update_auxiliary_variables)    
         !%-----------------------------------------------------------------------------
@@ -99,7 +99,7 @@ module update
         if (setting%Profile%YN) call util_profiler_stop (pfc_update_auxiliary_variables)
 
         if (setting%Debug%File%update)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
     end subroutine update_auxiliary_variables
     !%
 !%==========================================================================
@@ -177,7 +177,7 @@ module update
         BranchExists => elemSI(:,esi_JunctionBranch_Exists)
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%update) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         Npack => npack_elemP(thisCol_JM)
         if (Npack > 0) then
@@ -195,7 +195,7 @@ module update
         end if
 
         if (setting%Debug%File%update)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine update_Froude_number_junction_branch
 !%
 !%==========================================================================
@@ -216,7 +216,7 @@ module update
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%update) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         velocity  => elemR(:,er_Velocity)
         wavespeed => elemR(:,er_WaveSpeed)
@@ -351,7 +351,7 @@ module update
         ! print *, elemR(ietmp(7), er_InterpWeight_dQ)
 
         if (setting%Debug%File%update)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine update_interpolation_weights_element
 !%
 !%==========================================================================
@@ -371,7 +371,7 @@ module update
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%update)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         w_uQ      => elemR(:,er_InterpWeight_uQ)
         w_dQ      => elemR(:,er_InterpWeight_dQ)
         w_uG      => elemR(:,er_InterpWeight_uG)
@@ -403,7 +403,7 @@ module update
         end if
 
         if (setting%Debug%File%update) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine update_interpolation_weights_ds_JB
     !%
     !%==========================================================================

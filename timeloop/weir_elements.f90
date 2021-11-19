@@ -35,7 +35,7 @@ module weir_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%weir_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         isSurcharged => elemYN(eIdx,eYN_isSurcharged)
         !%  
@@ -60,7 +60,7 @@ module weir_elements
         call common_velocity_from_flowrate_singular (eIdx)
         
         if (setting%Debug%File%weir_elements)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine weir_toplevel    
 !%
 !%==========================================================================

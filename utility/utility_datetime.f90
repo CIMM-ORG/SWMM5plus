@@ -32,7 +32,7 @@ module utility_datetime
         character(64)       :: subroutine_name = "util_datetime_get_next_time"
 
         if (setting%Debug%File%utility_datetime) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         epochTime = util_datetime_secs_to_epoch(secsTime)
         if (resolution_type == api_daily) then
@@ -54,7 +54,7 @@ module utility_datetime
         nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
 
         if (setting%Debug%File%utility_datetime) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end function util_datetime_get_next_time
 !%
 !%==========================================================================

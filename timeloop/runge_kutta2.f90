@@ -38,7 +38,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%runge_kutta2) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         !% RK2 solution step 1 -- single time advance step for CC and JM
         istep=1
@@ -167,7 +167,7 @@ module runge_kutta2
         call adjust_values (ETM)
 
         if (setting%Debug%File%runge_kutta2)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine rk2_toplevel_ETM
 !%
 !%==========================================================================
@@ -182,10 +182,10 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%runge_kutta2) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%runge_kutta2)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
         print *, "need rk2_toplevel_AC to be written"
@@ -207,7 +207,7 @@ module runge_kutta2
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%runge_kutta2) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         
         !% step 1 -- RK2 step 1 for ETM
 
@@ -285,7 +285,7 @@ module runge_kutta2
         call adjust_values (ALLtm)
 
         if (setting%Debug%File%runge_kutta2)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine rk2_toplevel_ETMAC
 !%
 !%==========================================================================

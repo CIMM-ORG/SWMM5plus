@@ -36,7 +36,7 @@ module jump
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%jump) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]" 
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
         !%-----------------------------------------------------------------------------
         !%  
         !% identify hydraulic jump (create pack facemap in global)
@@ -57,7 +57,7 @@ module jump
         end if
 
         if (setting%Debug%File%jump)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine jump_compute   
 !%
 !%==========================================================================

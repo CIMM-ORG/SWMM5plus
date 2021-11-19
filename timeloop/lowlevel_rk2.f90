@@ -359,7 +359,7 @@ module lowlevel_rk2
         character(64)    :: subroutine_name = "ll_momentum_source_CC"
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%lowlevel_rk2) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         thisP    => elemP(1:Npack,thisCol)
         fQ       => faceR(:,fr_Flowrate)
@@ -396,7 +396,7 @@ module lowlevel_rk2
                 + eKsource(thisP)
 
         if (setting%Debug%File%lowlevel_rk2) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine ll_momentum_source_CC
 !%
 !%==========================================================================

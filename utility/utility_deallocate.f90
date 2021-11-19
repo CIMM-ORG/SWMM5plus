@@ -37,7 +37,7 @@ contains
 
     !-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call util_deallocate_linknode()
 
@@ -49,7 +49,7 @@ contains
         call util_deallocate_bc()
 
         if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_network_data
 !
 !==========================================================================
@@ -78,7 +78,7 @@ contains
     !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         deallocate(node%I, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'node%I')
@@ -136,7 +136,7 @@ contains
 
 
         if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_deallocate_linknode
 
@@ -157,7 +157,7 @@ contains
     !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         deallocate(adjacent_links, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg,'adjacent_links')
@@ -169,7 +169,7 @@ contains
         call util_deallocate_check(deallocation_status, emsg, 'image_full')
 
         if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_partitioning_arrays
 
 !
@@ -191,7 +191,7 @@ contains
     !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
         !==== elem deallocation ====
@@ -250,7 +250,7 @@ contains
 
 
         if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_elemX_faceX
 
 !
@@ -272,7 +272,7 @@ contains
     !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !==== col_elemI====
         deallocate(col_elemI, stat=deallocation_status, errmsg=emsg)
@@ -343,7 +343,7 @@ contains
 
 
         if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_columns
 
 
@@ -358,7 +358,7 @@ contains
 
         if (icrash) return
         if (setting%Debug%File%utility_deallocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (N_flowBC > 0) then
             deallocate(BC%flowI, stat=deallocation_status, errmsg=emsg)
@@ -404,7 +404,7 @@ contains
         end if
 
         if (setting%Debug%File%utility_deallocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_deallocate_bc
 
 
@@ -428,7 +428,7 @@ contains
         !-----------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%utility) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
             if (deallocation_status > 0) then
                 print *, trim(emsg)
@@ -437,7 +437,7 @@ contains
             end if
 
             if (setting%Debug%File%utility) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_deallocate_check
 

@@ -43,7 +43,7 @@ contains
     !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%Output%Verbose) &
             write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
@@ -89,7 +89,7 @@ contains
         !% >>> END HACK
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine timeloop_toplevel
 !%
 !%==========================================================================
@@ -105,11 +105,11 @@ contains
     !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_hydrology
 !%
 !%==========================================================================
@@ -124,7 +124,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
@@ -157,7 +157,7 @@ contains
         end select
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_hydraulics
 !%
 !%==========================================================================
@@ -180,7 +180,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         maxCFL             = setting%VariableDT%CFL_hi_max
         targetCFL          = setting%VariableDT%CFL_target
@@ -259,7 +259,7 @@ contains
         end if
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_update_hydraulic_step
 !%
 !%==========================================================================
@@ -279,7 +279,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         hydraulicStep => setting%Time%Hydraulics%Step
         hydrologyStep => setting%Time%Hydrology%Step
@@ -327,7 +327,7 @@ contains
         call tl_command_line_step_output()
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end subroutine tl_increment_counters
 !%
 !%==========================================================================
@@ -349,7 +349,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         thiscol = ep_ALLtm
         Npack => npack_elemP(thisCol)
@@ -375,7 +375,7 @@ contains
         endwhere
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_solver_select
 !%
 !%==========================================================================
@@ -394,7 +394,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%  push the old values down the stack
         !%  N values is the present, N0 is the last time step, and N1
         !%  is the timestep before (needed only for backwards 3rd in velocity and volume)
@@ -406,7 +406,7 @@ contains
         elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_save_previous_values
 !%
 !%==========================================================================
@@ -427,7 +427,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         dt            => setting%Time%Dt
         timeNow       => setting%Time%Now
         timeEnd       => setting%Time%End
@@ -485,7 +485,7 @@ contains
         endif
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_command_line_step_output
 !%
 !%==========================================================================

@@ -59,7 +59,7 @@ contains
         ! -----------------------------------------------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !if (setting%Profile%File%BIPquick) print*, "BIPquick Profiler is on"
 
@@ -244,7 +244,7 @@ contains
         ! end if
 
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_partitioning_BIPquick
     !
     !==========================================================================
@@ -262,7 +262,7 @@ contains
     ! -----------------------------------------------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         B_nodeI(:,:) = nullValueI
         B_nodeR(:,:) = zeroR
@@ -275,7 +275,7 @@ contains
         phantom_link_tracker(:) = nullValueI
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine bip_initialize_arrays
     !
     !==========================================================================
@@ -294,7 +294,7 @@ contains
         ! -----------------------------------------------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%BIPquick) &
-                write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
             counter = 1
             do ii = 1, size(node%I, oneI)
@@ -310,7 +310,7 @@ contains
             ! endwhere
 
             if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end subroutine bip_find_roots
         !
         !==========================================================================
@@ -333,7 +333,7 @@ contains
     ! ----------------------------------------------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Iterate through the nodes array
         do ii= 1,size(node%I,1)
@@ -365,7 +365,7 @@ contains
         end do
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine bip_network_processing
     !
     !============================================================================
@@ -428,7 +428,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Calculates directweight for each node
         do ii = 1, size(node%I,1)
@@ -451,7 +451,7 @@ contains
         end do
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine calc_directweight
     !
     !============================================================================
@@ -474,7 +474,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% If the node has not been visited this traversal (protective against cross connection bugs)
         !% and the node has not already been partitioned
@@ -503,7 +503,7 @@ contains
         end if
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine calc_upstream_weight
     !
     !============================================================================
@@ -526,7 +526,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Calculates the totalweight for all nodes
         do ii=1, size(node%I,1)
@@ -559,7 +559,7 @@ contains
         enddo
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine calc_totalweight
     !
@@ -584,7 +584,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% If the root node has not been added to a partition
         if  ( partitioned_nodes(root) .eqv. .false. ) then
@@ -620,7 +620,7 @@ contains
 
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine trav_subnetwork
     !
     !============================================================================
@@ -643,7 +643,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Save the system nodes as potential endpoints
         potential_endpoints(:) = node%I(:, ni_idx)
@@ -683,7 +683,7 @@ contains
         end do
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine trav_assign_link
     !
     !============================================================================
@@ -709,7 +709,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% The nearest overestimate is set above the max_weight as a buffer
         nearest_overestimate = max_weight*1.1
@@ -758,7 +758,7 @@ contains
         endif
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end function calc_effective_root
     !
     !============================================================================
@@ -784,7 +784,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Check each link for spanning the partition threshold
         do jj=1, size(link%I,1)
@@ -823,7 +823,7 @@ contains
         end do
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine calc_spanning_link
     !
     !==========================================================================
@@ -847,7 +847,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         ideal_junction = nullValueI
 
@@ -883,7 +883,7 @@ contains
         end do
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end function calc_ideal_junction
     !
     !==========================================================================
@@ -956,7 +956,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         phantom_link_tracker(phantom_link_idx) = phantom_link_idx
 
@@ -1055,7 +1055,7 @@ contains
         link%YN(phantom_link_idx, lYN_isPhantomLink) = .true.
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine phantom_node_generator
     !
     !==========================================================================
@@ -1085,7 +1085,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% The upstream node list is used to chose a branch for removal
         !% The effective root is guaranteed to have at least one upstream node
@@ -1154,7 +1154,7 @@ contains
         ideal_junction = calc_ideal_junction(partition_threshold)
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine trav_casethree
     !
     !==========================================================================
@@ -1178,7 +1178,7 @@ contains
     !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% Initialize the ni_P_is_boundary column to 0
         node%I(:, ni_P_is_boundary) = zeroI
@@ -1208,7 +1208,7 @@ contains
         end do
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine calc_is_boundary
     !
@@ -1230,7 +1230,7 @@ contains
 
     !--------------------------------------------------------------------------
         if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         connectivity = 0
 
@@ -1240,7 +1240,7 @@ contains
         end do
 
         if (setting%Debug%File%BIPquick) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end function connectivity_metric
     !

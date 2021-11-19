@@ -55,7 +55,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- CPU and wall-clock timers
         call init_model_timer()
@@ -241,7 +241,7 @@ contains
         end if
 
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine initialize_toplevel
 !%
 !%==========================================================================
@@ -369,7 +369,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
@@ -481,7 +481,7 @@ contains
         call interface_update_linknode_names()
 
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_linknode_arrays
 !%
@@ -501,7 +501,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
@@ -535,7 +535,7 @@ contains
         end do
 
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_curves
 !%
@@ -569,7 +569,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%Profile%YN) call util_profiler_start (pfc_init_bc)
 
@@ -672,7 +672,7 @@ contains
         if (setting%Profile%YN) call util_profiler_stop (pfc_init_bc)
 
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_bc
 !%
 !%==========================================================================
@@ -693,7 +693,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning)
 
@@ -723,7 +723,7 @@ contains
         if (setting%Profile%YN) call util_profiler_stop (pfc_init_partitioning)
 
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_partitioning
 !%
@@ -748,7 +748,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_array) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
@@ -831,7 +831,7 @@ contains
         end if
 
         if (setting%Debug%File%utility_array)  &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_coarray_length
 !%

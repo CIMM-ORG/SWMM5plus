@@ -516,7 +516,7 @@ contains
         character(64) :: subroutine_name = "util_output_report"
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !if (setting%Debug%Output) call util_output_report_summary()
 
@@ -528,7 +528,7 @@ contains
 
 
         if (setting%Debug%File%utility_output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_output_report
 !%
 !%==========================================================================
@@ -547,7 +547,7 @@ contains
         character(64)    :: subroutine_name = "util_output_report_summary"
         !%---------------------------------------------------------------------------
         if (setting%Debug%File%utility_output) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (util_output_must_report() .and. setting%output%report) then
 
@@ -593,7 +593,7 @@ contains
         end if
 
         if (setting%Debug%File%utility_output) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_output_report_summary
 !%
 !%==========================================================================

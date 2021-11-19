@@ -40,7 +40,7 @@ module diagnostic_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%diagnostic_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%Profile%YN) call util_profiler_start (pfc_diagnostic_toplevel)
         !%-----------------------------------------------------------------------------
@@ -56,7 +56,7 @@ module diagnostic_elements
         if (setting%Profile%YN) call util_profiler_stop (pfc_diagnostic_toplevel)
 
         if (setting%Debug%File%diagnostic_elements)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine diagnostic_toplevel
 !%
 !%==========================================================================
