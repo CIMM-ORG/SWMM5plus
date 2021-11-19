@@ -42,8 +42,8 @@ extern "C" {
 #endif
 
 char* api_error_getMsg(int i);
-int  api_error_getCode(int i);
-int  api_error_setInpError(int api_errcode, char* s);
+int api_error_getCode(int i);
+int api_error_setInpError(int api_errcode, char* s);
 void api_report_writeErrorMsg(int code, char* s);
 void api_report_writeErrorCode();
 

@@ -163,6 +163,7 @@ extern "C" {
 
 int DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing);
 void DLLEXPORT api_finalize();
+double DLLEXPORT api_run_step();
 
 // --- Property-extraction
 
@@ -174,20 +175,19 @@ int DLLEXPORT api_get_link_results(char* link_name, float* flow, float* depth, f
 // * After Initialization
 double DLLEXPORT api_get_start_datetime();
 double DLLEXPORT api_get_end_datetime();
-double DLLEXPORT api_get_flowBC(int node_idx, double current_datetime);
+int DLLEXPORT api_get_flowBC(int node_idx, double current_datetime, double* flowBC);
 int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* headBC);
 int DLLEXPORT api_get_report_times(double * report_start_datetime, int * report_step, int * hydrology_step);
-int DLLEXPORT api_get_node_attribute(int k, int attr, double* value);
-int DLLEXPORT api_get_link_attribute(int k, int attr, double* value);
+int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value);
+int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value);
 int DLLEXPORT api_get_num_objects(int object_type);
-int DLLEXPORT api_get_object_name(int k, char* object_name, int object_type);
-int DLLEXPORT api_get_next_entry_tseries(int k);
-int DLLEXPORT api_get_object_name_len(int k, int object_type, int* len);
-int DLLEXPORT api_get_object_name(int k, char* object_name, int object_type);
-int DLLEXPORT api_get_num_table_entries(int k, int table_type, int * num_entries);
-int DLLEXPORT api_get_table_attribute(int k, int attr, double* value);
-int DLLEXPORT api_get_first_entry_table(int k, int table_type, double *x, double *y);
-int DLLEXPORT api_get_next_entry_table(int k, int table_type, double *x, double *y);
+int DLLEXPORT api_get_object_name(int object_idx, char* object_name, int object_type);
+int DLLEXPORT api_get_object_name_len(int object_idx, int object_type, int* len);
+int DLLEXPORT api_get_num_table_entries(int table_idx, int table_type, int* num_entries);
+int DLLEXPORT api_get_table_attribute(int table_idx, int attr, double* value);
+int DLLEXPORT api_get_first_entry_table(int table_idx, int table_type, double* x, double* y);
+int DLLEXPORT api_get_next_entry_table(int table_idx, int table_type, double* x, double* y);
+int DLLEXPORT api_get_next_entry_tseries(int tseries_idx);
 
 // Output fcns
 int DLLEXPORT api_write_output_line(double t);
@@ -195,14 +195,13 @@ int DLLEXPORT api_update_nodeResult(int node_idx, int resultType, double newNode
 int DLLEXPORT api_update_linkResult(int link_idx, int resultType, double newLinkResult);
 
 // --- Print-out
-void DLLEXPORT api_print_object_name(int k, int object_type);
 int add_link(int li_idx, int ni_idx, int direction, int* ni_N_link_u, int* ni_Mlink_u1, int* ni_Mlink_u2, int* ni_Mlink_u3, int* ni_N_link_d, int* ni_Mlink_d1, int* ni_Mlink_d2, int* ni_Mlink_d3);
 int DLLEXPORT api_export_linknode_properties(int units);
 int DLLEXPORT api_export_link_results(int link_idx);
 int DLLEXPORT api_export_node_results(int node_idx);
 
 // --- Utils
-int DLLEXPORT api_find_object(int type, char *id);
+int DLLEXPORT api_find_object(int object_type, char *id);
 int check_api_is_initialized();
 int api_load_vars();
 int getTokens(char *s);
