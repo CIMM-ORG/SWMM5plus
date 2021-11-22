@@ -97,8 +97,8 @@ if [[ -d swmm5_output ]]; then rm -rf swmm5_output; fi
 
 echo
 echo Complete!
+echo "To update number of processors in the system:"
 echo "Please execute >>> source ~/.bashrc"
-echo
 
 
 
