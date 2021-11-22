@@ -43,11 +43,11 @@ contains
     !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%Output%Verbose) &
             write(*,"(2A,i5,A)") new_line(" "), 'begin timeloop [Processor ', this_image(), "]"
-        setting%Time%Real%EpochTimeLoopStartSeconds = time()
+        call system_clock(count=setting%Time%Real%EpochTimeLoopStartSeconds)
 
         doHydraulics = setting%simulation%useHydraulics
         doHydrology = setting%simulation%useHydrology
@@ -58,13 +58,13 @@ contains
             if (doHydrology) call tl_hydrology()
             if (doHydraulics) then
                 call bc_update()
-                call tl_hydraulics()   
+                call tl_hydraulics()
             end if
             call util_output_report() !% Results must be reported before counter increment
             !% Multilevel time step output
             if ( (setting%Output%report) .and. &
                  (util_output_must_report()) .and. &
-                 (.not. setting%Output%suppress_MultiLevel_Output) ) then    
+                 (.not. setting%Output%suppress_MultiLevel_Output) ) then
                 call outputML_store_data (.false.)
             end if
             call tl_increment_counters(doHydraulics, doHydrology)
@@ -89,7 +89,7 @@ contains
         !% >>> END HACK
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine timeloop_toplevel
 !%
 !%==========================================================================
@@ -105,11 +105,11 @@ contains
     !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_hydrology
 !%
 !%==========================================================================
@@ -122,20 +122,20 @@ contains
         !%-----------------------------------------------------------------------------
         character(64)    :: subroutine_name = 'tl_hydraulics'
         !%-----------------------------------------------------------------------------
-        if (icrash) return 
+        if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-            
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
         !% check for where solver needs to switch in dual-solver model
         if (setting%Solver%SolverSelect == ETM_AC) then
             call tl_solver_select()
         end if
-        
+
         !% repack all the dynamic arrays
         !% FUTURE 20210609 brh need to decide where this goes
         call pack_dynamic_arrays()
         ! print *, "Need to decide on pack_dynamic_arrays 94837"
-        
+
         !%  push the old values down the stack for AC solver
         call tl_save_previous_values()
 
@@ -157,7 +157,7 @@ contains
         end select
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_hydraulics
 !%
 !%==========================================================================
@@ -180,7 +180,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         maxCFL             = setting%VariableDT%CFL_hi_max
         targetCFL          = setting%VariableDT%CFL_target
@@ -259,7 +259,7 @@ contains
         end if
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_update_hydraulic_step
 !%
 !%==========================================================================
@@ -279,7 +279,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         hydraulicStep => setting%Time%Hydraulics%Step
         hydrologyStep => setting%Time%Hydrology%Step
@@ -327,7 +327,7 @@ contains
         call tl_command_line_step_output()
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end subroutine tl_increment_counters
 !%
 !%==========================================================================
@@ -349,8 +349,8 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-       
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
         thiscol = ep_ALLtm
         Npack => npack_elemP(thisCol)
         thisP => elemP(1:Npack,thisCol)
@@ -375,7 +375,7 @@ contains
         endwhere
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_solver_select
 !%
 !%==========================================================================
@@ -394,7 +394,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%  push the old values down the stack
         !%  N values is the present, N0 is the last time step, and N1
         !%  is the timestep before (needed only for backwards 3rd in velocity and volume)
@@ -406,7 +406,7 @@ contains
         elemR(:,er_Volume_N0)    = elemR(:,er_Volume)
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_save_previous_values
 !%
 !%==========================================================================
@@ -427,19 +427,19 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         dt            => setting%Time%Dt
         timeNow       => setting%Time%Now
         timeEnd       => setting%Time%End
         step          => setting%Time%Step
         interval      => setting%Output%CommandLine%interval
 
-        setting%Time%Real%EpochNowSeconds = time() ! Fortran function returns real epoch time
+        call system_clock(count=setting%Time%Real%EpochNowSeconds) ! Fortran function returns real epoch time
 
         ! estimate the remaining time
         execution_realtime = setting%Time%Real%EpochNowSeconds - setting%Time%Real%EpochTimeLoopStartSeconds
         seconds_to_completion = execution_realtime * (setting%Time%End - setting%Time%Now) &
-                                                   / (setting%Time%Now - setting%Time%Start)                                
+                                                   / (setting%Time%Now - setting%Time%Start)
 
         if (setting%Output%Verbose) then
             if (this_image() == 1) then
@@ -450,12 +450,12 @@ contains
                         timeunit = 's  '
                     elseif (timeNow >= sixtyR .and. timeNow < seconds_per_hour) then
                         thistime = timeNow / sixtyR
-                        timeunit = 'min'    
+                        timeunit = 'min'
                     elseif (timeNow >= seconds_per_hour .and. timeNow < 3.0*seconds_per_day) then
                         thistime = timeNow / seconds_per_hour
                         timeunit = 'hr '
                     elseif (timeNow >= 3.0 * seconds_per_day) then
-                        thistime = timeNow / seconds_per_day    
+                        thistime = timeNow / seconds_per_day
                         timeunit = 'day'
                     endif
 
@@ -464,7 +464,7 @@ contains
                         'time step = ',step,'; model time = ',thistime, &
                         ' ',timeunit,'; dt = ',dt
 
-                    ! write estimate of time remaining    
+                    ! write estimate of time remaining
                     if (seconds_to_completion < sixtyR) then
                         timeunit = 's  '
                         time_to_completion = seconds_to_completion
@@ -485,7 +485,7 @@ contains
         endif
 
         if (setting%Debug%File%timeloop) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"   
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine tl_command_line_step_output
 !%
 !%==========================================================================

@@ -39,7 +39,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call mask_faces_whole_array_static()
         call pack_geometry_alltm_elements()
@@ -75,7 +75,7 @@ contains
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_mask_arrays_all
 !
 !==========================================================================
@@ -89,7 +89,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call pack_geometry_etm_elements()
         call pack_geometry_ac_elements()
@@ -98,7 +98,7 @@ contains
         call pack_dynamic_shared_faces()
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_arrays
 !    
 !==========================================================================    
@@ -114,7 +114,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
                         (node%I(:,ni_P_image) == this_image()))
@@ -136,7 +136,7 @@ contains
             (node%I(:,ni_P_image) == this_image()))
         end if
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_nodes
 !
 !==========================================================================
@@ -151,7 +151,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% BC packs
         !% zero out the number of upBC to get a new count of how many is in a given partition
@@ -190,7 +190,7 @@ contains
             end if
         end if
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_bc
 !
 !==========================================================================
@@ -283,7 +283,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         mcol => col_faceM(fm_all)
 
@@ -296,7 +296,7 @@ contains
             )
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine mask_faces_whole_array_static
 !
 !==========================================================================
@@ -311,7 +311,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -503,7 +503,7 @@ contains
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_alltm_elements
 !
 !==========================================================================
@@ -518,7 +518,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -692,7 +692,7 @@ contains
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_ac_elements
 !
 !==========================================================================
@@ -710,7 +710,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -884,7 +884,7 @@ contains
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_etm_elements
 !
 !==========================================================================
@@ -908,7 +908,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -1185,7 +1185,7 @@ contains
         end if
         
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_static_elements
 !
 !==========================================================================
@@ -1202,7 +1202,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
 
@@ -1897,7 +1897,7 @@ contains
         if (allocated(fdn)) deallocate(fdn)
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_nongeometry_dynamic_elements
 !
 !==========================================================================
@@ -1916,7 +1916,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -1970,7 +1970,7 @@ contains
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_static_interior_faces
 !
 !==========================================================================
@@ -1991,7 +1991,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -2057,7 +2057,7 @@ contains
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_interior_faces
 !
 !==========================================================================
@@ -2075,7 +2075,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% pointing to the number of faces in this image
         image  = this_image()
@@ -2145,7 +2145,7 @@ contains
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_static_shared_faces
 !
 !==========================================================================
@@ -2168,7 +2168,7 @@ contains
         !--------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         sync all
 
@@ -2251,7 +2251,7 @@ contains
         end if
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_dynamic_shared_faces
     !
     !==========================================================================
@@ -2267,7 +2267,7 @@ contains
 !         character(64)    :: subroutine_name = 'pack_nodes'
 !         !--------------------------------------------------------------------------
 !         if (setting%Debug%File%pack_mask_arrays) &
-!             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+!             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 !         N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
 !                         (node%I(:,ni_P_image) == this_image()))
@@ -2289,7 +2289,7 @@ contains
 !             (node%I(:,ni_P_image) == this_image()))
 !         end if
 !         if (setting%Debug%File%pack_mask_arrays) &
-!         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+!         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 !     end subroutine pack_nodes
 ! !
 !==========================================================================
@@ -2300,7 +2300,7 @@ contains
 !         integer :: psize
 !         character(64) :: subroutine_name = 'pack_bc'
 !         if (setting%Debug%File%pack_mask_arrays) &
-!             write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+!             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
 !         !% BC packs
@@ -2339,7 +2339,7 @@ contains
 !             end if
 !         end if
 !         if (setting%Debug%File%pack_mask_arrays) &
-!         write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+!         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 !     end subroutine pack_bc
 ! !
 !==========================================================================
@@ -2351,7 +2351,7 @@ contains
         !% --------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% count the amount of valid output links
         link_output_idx_length = count(link_output_idx(:) /= nullvalueI)
@@ -2368,7 +2368,7 @@ contains
             node%I(node_output_idx(1:node_output_idx_length), ni_P_image) == this_image())
 
         if (setting%Debug%File%pack_mask_arrays) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_link_node_output
 !
 !==========================================================================

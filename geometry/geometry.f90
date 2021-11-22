@@ -48,7 +48,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% set the packed geometry element array (elemPG) to use and columns of the
         !% packed elemP to use
@@ -155,7 +155,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geometry_toplevel
 
 !%==========================================================================
@@ -180,7 +180,7 @@ module geometry
         Npack => npack_elemP(thisColP)
         !%-------------------------------------------------
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (Npack > 0) then
             thisP => elemP(1:Npack,thisColP)
@@ -194,7 +194,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end subroutine geo_surcharged
 !%
 !%==========================================================================
@@ -213,7 +213,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !% cycle through different geometries
         !% RECTANGULAR
         thisCol => col_elemPGx(epg_CCJM_rectangular_nonsurcharged)
@@ -253,7 +253,7 @@ module geometry
         end if
   
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_depth_from_volume
 !%
 !%==========================================================================
@@ -276,7 +276,7 @@ module geometry
         fullvalue  => elemR(:,fullcol)
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (Npack > 0) then
             thisP      => elemP(1:Npack,thisColP)
@@ -286,7 +286,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_limit_incipient_surcharge
 !%
 !%==========================================================================
@@ -312,7 +312,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         !%
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (Npack > 0) then
             thisP     => elemP(1:Npack,thisColP)
@@ -320,7 +320,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_head_from_depth
 !%
 !%==========================================================================
@@ -363,7 +363,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%Profile%YN) call util_profiler_start (pfc_geo_assign_JB)
 
@@ -508,7 +508,7 @@ module geometry
         if (setting%Profile%YN) call util_profiler_stop (pfc_geo_assign_JB)
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_assign_JB
 !%
 !%==========================================================================
@@ -533,7 +533,7 @@ module geometry
         length => elemR(:,er_Length)
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (Npack > 0) then
             thisP  => elemP(1:Npack,thisColP)
@@ -541,7 +541,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_area_from_volume
     !%
     !%==========================================================================
@@ -562,7 +562,7 @@ module geometry
         !% cycle through different geometries
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
         if (Npack > 0) then
@@ -584,7 +584,7 @@ module geometry
 
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_topwidth_from_depth
 !%
 !%==========================================================================
@@ -604,7 +604,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% cycle through different geometries
         Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
@@ -628,7 +628,7 @@ module geometry
 
         !% HACK NEED OTHER GEOMETRIES
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_perimeter_from_depth
 !%
 !%==========================================================================
@@ -649,7 +649,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% cycle through different geometries
         Npack => npack_elemPGx(epg_CCJM_rectangular_nonsurcharged)
@@ -674,7 +674,7 @@ module geometry
 
         !% HACK need other geometries
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_hyddepth
 !%
 !%==========================================================================
@@ -694,7 +694,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         Npack     => npack_elemP(thisColP)
         area      => elemR(:,er_Area)
@@ -708,7 +708,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_hydradius_from_area_perimeter
 !%
 !%==========================================================================
@@ -728,7 +728,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         Npack               => npack_elemP(thisColP)
         ell                 => elemR(:,er_ell)
@@ -752,7 +752,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_ell
 !%
 !%==========================================================================
@@ -772,7 +772,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         head                => elemR(:,er_Head)
         area                => elemR(:,er_Area)
@@ -789,7 +789,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end function geo_ell_singular
 !%
 !%==========================================================================
@@ -810,7 +810,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         Npack    => npack_elemP(thisColP)
         dHdA     => elemR(:,er_dHdA)
@@ -823,7 +823,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_dHdA
 !%
 !%==========================================================================
@@ -844,7 +844,7 @@ module geometry
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%geometry) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         Npack      => npack_elemP(thisColP)
         volume     => elemR(:,er_Volume)
@@ -872,7 +872,7 @@ module geometry
         end if
 
         if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine geo_slot_adjustments
 !%
 !%==========================================================================

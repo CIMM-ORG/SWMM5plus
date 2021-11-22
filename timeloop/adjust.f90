@@ -40,7 +40,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
               
         !% ad hoc adjustments to flowrate 
         if (setting%Adjust%Flowrate%Apply) then   
@@ -68,7 +68,7 @@ module adjust
         end if
         
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_values
     !%
     !%==========================================================================
@@ -89,7 +89,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         Npack    => npack_elemP(thisCol)  
         geovalue => elemR(:,geocol)
@@ -115,7 +115,7 @@ module adjust
         end if    
 
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_limit_by_zerovalues
     !%
     !%==========================================================================  
@@ -134,7 +134,7 @@ module adjust
         if (icrash) return
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         geovalue => elemR(:,geocol)
         !%-----------------------------------------------------------------------------
@@ -149,7 +149,7 @@ module adjust
         end if 
 
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_limit_by_zerovalues_singular
     !%
     !%==========================================================================  
@@ -170,7 +170,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         select case (whichTM)
             case (ALLtm)
@@ -236,7 +236,7 @@ module adjust
         end if
         
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_velocity
     !%
     !%==========================================================================  
@@ -256,7 +256,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         f_area_u     => faceR(:,fr_Area_u)
         f_area_d     => faceR(:,fr_Area_d)
@@ -325,7 +325,7 @@ module adjust
         end if
         
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_face_dynamic_limit
     !%
     !%==========================================================================
@@ -348,7 +348,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return       
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------  
         select case (whichTM)
             case (ALLtm)
@@ -425,7 +425,7 @@ module adjust
         end if
         
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_Vshaped_flowrate
     !%
     !%==========================================================================  
@@ -447,7 +447,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return              
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         select case (whichTM)
             case (ALLtm)
@@ -508,7 +508,7 @@ module adjust
         end if
         
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]" 
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
     end subroutine
         !%    
     !%==========================================================================
@@ -526,7 +526,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return              
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         thisP => elemP(1:Npack,thisCol)
         !%----------------------------------------------------------------------------- 
@@ -534,7 +534,7 @@ module adjust
         elemR(thisP,er_SmallVolumeRatio) = nullvalueR
         
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine  adjust_smallvolumes_reset_old
     !%
     !%==========================================================================
@@ -555,7 +555,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return              
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------  
         thisP       => elemP(1:Npack,thisCol)
         volume      => elemR(:,thisVolumeCol)
@@ -575,7 +575,7 @@ module adjust
         endwhere
         
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_smallvolumes_identify
     !%  
     !%==========================================================================
@@ -596,7 +596,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return              
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         thisP      => elemP(1:Npack,thisColP)
         eIdx       => elemI(:,ei_Lidx)
@@ -611,7 +611,7 @@ module adjust
         end if
 
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_smallvolumes_pack
     !%
     !%==========================================================================
@@ -630,7 +630,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return              
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         thisP => elemP(1:Npack,thisCol)
         !%-----------------------------------------------------------------------------
@@ -638,7 +638,7 @@ module adjust
         elemYN(thisP,eYN_IsAdhocFlowrate) = .false.
     
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_velocity_limiter_reset_old
     !%
     !%==========================================================================
@@ -659,7 +659,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return              
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         thisP           => elemP(1:Npack,thisPackCol)
         velocity        => elemR(:,thisVelocityCol)
@@ -673,7 +673,7 @@ module adjust
         endwhere 
 
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_velocity_limiter
     !%==========================================================================
     !%==========================================================================
@@ -694,7 +694,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return              
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         thisP     => elemP(1:Npack,thisCol) !% only elements with small volumes
         fheadUp   => faceR(:,fr_Head_d)
@@ -738,7 +738,7 @@ module adjust
         velocityBlend(thisP) = nullvalueR
 
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_velocity_smallvolume_blended
     !%
     !%==========================================================================
@@ -760,7 +760,7 @@ module adjust
         !%-----------------------------------------------------------------------------
         if (icrash) return              
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%----------------------------------------------------------------------------- 
         thisP    => elemP(1:Npack,thisCol)
         volume   => elemR(:,thisVolumeCol)
@@ -774,7 +774,7 @@ module adjust
         endwhere    
 
         if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine adjust_zero_velocity_at_zero_volume
     !%
     !%==========================================================================

@@ -38,8 +38,8 @@ module utility_allocate
     public :: util_allocate_outputML_facetypes
     public :: util_allocate_outputML_storage
     public :: util_allocate_outputML_times
-    public :: util_allocate_outputML_filenames 
-    public :: util_allocate_curves 
+    public :: util_allocate_outputML_filenames
+    public :: util_allocate_curves
     public :: util_allocate_curve_entries
     public :: util_allocate_check
 
@@ -70,7 +70,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% If BIPquick is being used for Partitioning, include additional rows to the link-node arrays
         if (setting%Partitioning%PartitioningMethod == BQuick) then
@@ -133,7 +133,7 @@ contains
         call util_allocate_check(allocation_status, emsg, 'link_output_idx')
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_linknode
 !
 !==========================================================================
@@ -200,7 +200,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !==== elem allocation ====
         ncol => Ncol_elemR ! the maxmiumu number of columns
@@ -284,7 +284,7 @@ contains
         faceM(:,:) = nullvalueL
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_elemX_faceX
 !
 !==========================================================================
@@ -302,7 +302,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% allocation of the col_elemX and npack_elemX
         call util_allocate_col_elemI
@@ -325,7 +325,7 @@ contains
         call util_allocate_col_faceYN
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_columns
 !
@@ -342,11 +342,11 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%BC%slots < 2) then
             print *, "Error: the number of slots has to be greater than 2"
-            stop "in " // subroutine_name
+            stop
         end if
 
         if (N_headBC > 0) then
@@ -378,7 +378,7 @@ contains
         end if
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_bc
 !
@@ -386,14 +386,14 @@ contains
 !==========================================================================
 !
     subroutine util_allocate_profiler ()
-        !-----------------------------------------------------------------------------    
+        !-----------------------------------------------------------------------------
         character(64)      :: subroutine_name = 'util_allocate_profiler'
         integer            :: ii, allocation_status, bc_node
         character(len=99)  :: emsg
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%Profile%YN) then
             !% allocate profiler data
@@ -476,15 +476,15 @@ contains
             profiler_procedure_name(pfc_init_IC_diagnostic_interpolation_weights) = 'init_IC_diagnostic_interpolation_weights'
             profiler_procedure_level(pfc_init_IC_diagnostic_interpolation_weights) = 3
 
-            profiler_procedure_name(pfc_face_interpolation) = 'face_interpolation'  
-            profiler_procedure_level(pfc_face_interpolation) =  2   
+            profiler_procedure_name(pfc_face_interpolation) = 'face_interpolation'
+            profiler_procedure_level(pfc_face_interpolation) =  2
 
             profiler_procedure_name(pfc_diagnostic_toplevel) = 'diagnostic_toplevel'
             profiler_procedure_level(pfc_diagnostic_toplevel) = 2
         end if
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_profiler
 !%
 !%==========================================================================
@@ -495,11 +495,11 @@ contains
         !% allocates the output type arrays for the element data that are output
         !%-----------------------------------------------------------------------------
         integer            :: allocation_status
-        character(len=99)  :: emsg        
+        character(len=99)  :: emsg
         character(64)       :: subroutine_name = 'util_allocate_outputML_elemtypes'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !% --- don't execute if no output elements
         if (.not. setting%Output%OutputElementsExist) return
 
@@ -507,9 +507,9 @@ contains
         if (N_OutTypeElem < 1) then
             write(*,"(A)") 'ERROR (code) the N_OutTypeElem is less than 1 (i.e. no output types selected)'
                 write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
-                write(*,"(A,i8)") '... setting%Output%N_OutTypeElem      ', N_OutTypeElem 
+                write(*,"(A,i8)") '... setting%Output%N_OutTypeElem      ', N_OutTypeElem
                 write(*,"(A,i8)") '... etting%Output%OutputElementsExist ', setting%Output%OutputElementsExist
-                stop 'in ' // subroutine_name
+                stop
         end if
 
         !% --- allocate the output types for elements
@@ -544,7 +544,7 @@ contains
         output_typeUnits_withTime_elemR(:) = ""
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_outputML_elemtypes
 !%
 !%==========================================================================
@@ -555,11 +555,11 @@ contains
         !% allocates the output type arrays for the face data that are output
         !%-----------------------------------------------------------------------------
         integer            :: allocation_status
-        character(len=99)  :: emsg        
+        character(len=99)  :: emsg
         character(64)       :: subroutine_name = 'util_allocate_outputML_facetypes'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- don't execute if no output faces
         if (.not. setting%Output%OutputFacesExist) return
@@ -570,7 +570,7 @@ contains
                 write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeFace      ', N_OutTypeFace
                 write(*,"(A,i8)") '... etting%Output%OutputElementsExist ', setting%Output%OutputFacesExist
-                stop 'in ' // subroutine_name
+                stop
         end if
 
         !% --- allocate the output types for faces
@@ -604,23 +604,23 @@ contains
         output_typeUnits_withTime_faceR(:) = ""
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine util_allocate_outputML_facetypes  
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_allocate_outputML_facetypes
 !%
 !%==========================================================================
 !%==========================================================================
-!%    
+!%
     subroutine util_allocate_outputML_times ()
         !%-----------------------------------------------------------------------------
         !% allocates the output time array for multi-level output
-        !%-----------------------------------------------------------------------------  
+        !%-----------------------------------------------------------------------------
         integer            :: allocation_status
         integer, pointer   :: nLevel
-        character(len=99)  :: emsg  
+        character(len=99)  :: emsg
         character(64)      :: subroutine_name = 'utility_allocate_outputtype'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -631,9 +631,9 @@ contains
         if (nLevel < 1) then
             write(*,"(A)") 'ERROR (code) the Output.StoredLevels is less than 1...'
             write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
-            write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels 
+            write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
             write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output ', setting%Output%suppress_MultiLevel_Output
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         allocate(output_times(nLevel), stat=allocation_status, errmsg=emsg)
@@ -641,23 +641,23 @@ contains
         output_times(:) = nullvalueR
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine util_allocate_outputML_times   
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_allocate_outputML_times
 !%
 !%==========================================================================
 !%==========================================================================
-!%  
+!%
     subroutine util_allocate_outputML_filenames ()
         !%-----------------------------------------------------------------------------
         !% allocates the output filename array for multi-level output
-        !%----------------------------------------------------------------------------- 
+        !%-----------------------------------------------------------------------------
         integer, pointer   :: nLevel
         integer            :: allocation_status
-        character(len=99)  :: emsg  
+        character(len=99)  :: emsg
         character(64)      :: subroutine_name = 'utility_allocate_outputML_filenames'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -668,23 +668,23 @@ contains
         if (nLevel < 1) then
             write(*,"(A)") 'ERROR (code) the Output.StoredLevels is less than 1...'
             write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
-            write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels 
+            write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
             write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output ', setting%Output%suppress_MultiLevel_Output
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         allocate(output_binary_filenames(nLevel), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'output_binary_filenames')
         output_binary_filenames(:) = "null"
-        
+
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine util_allocate_outputML_filenames    
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_allocate_outputML_filenames
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine util_allocate_outputML_storage ()   
+    subroutine util_allocate_outputML_storage ()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Creates multi-time-level storage for output data
@@ -692,11 +692,11 @@ contains
         integer, pointer  :: nLevel, nType, nMaxLevel
         integer           :: nElem, nFace, nTotal
         integer           :: allocation_status
-        character(len=99) :: emsg  
+        character(len=99) :: emsg
         character(64)     :: subroutine_name = ' util_allocate_outputML_storage'
         !%-----------------------------------------------------------------------------
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% --- don't do this is output is suppressed
         if (setting%Output%suppress_MultiLevel_Output) return
@@ -704,7 +704,7 @@ contains
         !% --- shorthand for the stored levels
         nLevel => setting%Output%StoredLevels
 
-        !% --- get the total number of time levels for the report 
+        !% --- get the total number of time levels for the report
         !% --- increase by 2 for start and end files
         if (setting%Output%reportDt > zeroR) then
             setting%Output%MaxExpectedLevels = 2 + (setting%Time%End - setting%Output%reportStartTime) /setting%Output%reportDt
@@ -712,7 +712,7 @@ contains
             write (*,"(A)") 'SWMM report step less than zero, which will suppress multi-level binary output files'
             setting%Output%suppress_MultiLevel_Output = .true.
             return
-        end if    
+        end if
 
         !% --- check and adjust stored level output so as not to waste memory
         if ( setting%Output%StoredLevels > setting%Output%MaxExpectedLevels+ 2) then
@@ -726,9 +726,9 @@ contains
         if (nLevel < 1) then
             write(*,"(A)") 'ERROR (code) the Output.StoredLevels is less than 1...'
             write(*,"(A)") '... which should have caused Output.suppress_Multilevel_Output = .true.'
-            write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels 
+            write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
             write(*,"(A,i8)") '... etting%Output%suppress_MultiLevel_Output=', setting%Output%suppress_MultiLevel_Output
-            stop 'in ' // subroutine_name
+            stop
         end if
 
         if (setting%Output%OutputElementsExist) then
@@ -739,11 +739,11 @@ contains
             if (nType < 1) then
                 write(*,"(A)") 'ERROR (code) the N_OutTypeElem is less than 1 (i.e. no output types selected)'
                 write(*,"(A)") '... which should have caused Output.OutputElementsExist = .false.'
-                write(*,"(A,i8)") '... setting%Output%N_OutTypeElem       ', N_OutTypeElem 
+                write(*,"(A,i8)") '... setting%Output%N_OutTypeElem       ', N_OutTypeElem
                 write(*,"(A,L)") '... etting%Output%sOutputElementsExist =', setting%Output%OutputElementsExist
-                stop 'in ' // subroutine_name
+                stop
             end if
-            
+
             !% --- set the maximum number of output elements in any image
             nElem = maxval(N_OutElem(:))
 
@@ -755,7 +755,7 @@ contains
                 write(*,"(A,L)") '... setting%Output%OutputElementsExist =', setting%Output%OutputElementsExist
                 write(*,"(A)") '... full listing of N_OutElem(:)...'
                 write(*,"(I8)") N_OutElem(:)
-                stop 'in ' // subroutine_name
+                stop
             end if
 
             !% allocate the multi-level element storage for each image
@@ -770,7 +770,7 @@ contains
             !% --- get the total number of output elements on all images
             nTotal = sum(N_OutElem(:))
 
-            !% allocate the full network multi-level output array to one processor 
+            !% allocate the full network multi-level output array to one processor
             if (this_image() == 1) then
                 !% --- get space for combined element data
                 allocate(OutElemDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
@@ -780,14 +780,14 @@ contains
                 !brh rm !% --- get space for the indexes to the elemR() etc array
                 !brh rm allocate(OutElemGidx(nTotal), stat=allocation_status, errmsg=emsg)
                 !brh rm call util_allocate_check(allocation_status, emsg, 'OutElemGidx')
-                !brh rm OutElemGidx(:) = nullvalueI  
+                !brh rm OutElemGidx(:) = nullvalueI
 
                 !% --- get space for integer data for OutElemFixedI
                 allocate(OutElemFixedI(nTotal,Ncol_oefi), stat=allocation_status, errmsg=emsg)
                 call util_allocate_check(allocation_status, emsg, 'OutElemFixedI')
                 OutElemFixedI(:,:) = nullvalueI
             end if
-            
+
         end if
 
         if (setting%Output%OutputFacesExist) then
@@ -800,10 +800,10 @@ contains
                 write(*,"(A)") 'ERROR (code) the N_OutTypeFace is less than 1 (i.e. no output types selected)'
                 write(*,"(A)") '... which should have caused Output.OutputFacseExist = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeNFaces     ', N_OutTypeFace
-                write(*,"(A,L)") '... setting%Output%sOutputFacesExist =', setting%Output%OutputFacesExist
-                stop 'in ' // subroutine_name
+                write(*,"(A,L)") '... setting%Output%OutputFacesExist =', setting%Output%OutputFacesExist
+                stop
             end if
-            
+
 
             !% --- set the maximum number of output elements in any image
             nFace = maxval(N_OutFace(:))
@@ -816,7 +816,7 @@ contains
                 write(*,"(A,L)") '... setting%Output%OutputFacesExist =', setting%Output%OutputFacesExist
                 write(*,"(A)") '... full listing of N_OutElem(:)...'
                 write(*,"(I8)") N_OutElem(:)
-                stop 'in ' // subroutine_name
+                stop
             end if
 
             !% allocate the multi-level element storage for each image
@@ -831,7 +831,7 @@ contains
             !% --- get the total number of output elements on all images
             nTotal = sum(N_OutFace(:))
 
-            !% allocate the full network multi-level output array to one processor 
+            !% allocate the full network multi-level output array to one processor
             if (this_image() == 1) then
                 !% --- get space for combined element data
                 allocate(OutFaceDataR(nTotal,nType,nLevel), stat=allocation_status, errmsg=emsg)
@@ -841,7 +841,7 @@ contains
                 !brh rm !% --- get space for the indexes to the elemR() etc array
                 !brh rm  allocate(OutFaceGidx(nTotal), stat=allocation_status, errmsg=emsg)
                 !brh rm  call util_allocate_check(allocation_status, emsg, 'OutFaceGidx')
-                !brh rm  OutFaceGidx(:) = nullvalueI  
+                !brh rm  OutFaceGidx(:) = nullvalueI
 
                 !% --- get space for integer data for OutElemFixedI
                 allocate(OutFaceFixedI(nTotal,Ncol_offi), stat=allocation_status, errmsg=emsg)
@@ -852,11 +852,11 @@ contains
         end if
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
-    end subroutine util_allocate_outputML_storage 
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_allocate_outputML_storage
 !%
 !%==========================================================================
-!% PRIVATE    
+!% PRIVATE
 !%==========================================================================
 !%
     subroutine util_allocate_col_elemI()
@@ -873,7 +873,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         ncol => Ncol_elemI
 
@@ -898,7 +898,7 @@ contains
         !%--------------------------------------------------------------
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_col_elemI
 !
 !==========================================================================
@@ -923,7 +923,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemP
@@ -943,7 +943,7 @@ contains
         npack_elemP(:) = 0
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemP
 !
@@ -969,7 +969,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemPGalltm !% whatever the last item in the enumerator
@@ -989,7 +989,7 @@ contains
         npack_elemPGalltm(:) = 0
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemPGalltm
 !
@@ -1015,7 +1015,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemPGac!% whatever the last item in the enumerator
@@ -1035,7 +1035,7 @@ contains
         npack_elemPGac(:) = 0
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemPGac
 !
@@ -1061,7 +1061,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemPGetm   !% whatever the last item in the enumerator
@@ -1081,7 +1081,7 @@ contains
         npack_elemPGetm(:) = 0
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_allocate_col_elemPGetm
 !
 !==========================================================================
@@ -1103,7 +1103,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemR
@@ -1116,7 +1116,7 @@ contains
         col_elemR(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemR
 !
@@ -1139,7 +1139,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSI
@@ -1152,7 +1152,7 @@ contains
         col_elemSI(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemSI
 !
@@ -1175,7 +1175,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSR
@@ -1188,7 +1188,7 @@ contains
         col_elemSR(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemSR
 !
@@ -1211,7 +1211,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemSGR
@@ -1224,7 +1224,7 @@ contains
         col_elemSGR(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemSGR
 !
@@ -1247,7 +1247,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemWDI
@@ -1260,7 +1260,7 @@ contains
         col_elemWDI(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemWDI
 !
@@ -1283,7 +1283,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemWDR
@@ -1296,7 +1296,7 @@ contains
         col_elemWDR(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemWDR
 !
@@ -1319,7 +1319,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_elemYN
@@ -1332,7 +1332,7 @@ contains
         col_elemYN(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_elemYN
 !
@@ -1355,7 +1355,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_faceI
@@ -1368,7 +1368,7 @@ contains
         col_faceI(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceI
 !
@@ -1391,7 +1391,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_faceM
@@ -1404,7 +1404,7 @@ contains
         col_faceM(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceM
 !
@@ -1431,7 +1431,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_faceP
@@ -1451,7 +1451,7 @@ contains
         npack_faceP(:) = 0
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceP
 !
@@ -1481,7 +1481,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_faceP
@@ -1501,7 +1501,7 @@ contains
         npack_facePS(:) = 0
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_facePS
 !
@@ -1524,7 +1524,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_faceR  !global
@@ -1537,7 +1537,7 @@ contains
         col_faceR(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceR
 !
@@ -1560,7 +1560,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% define the maximum number of columns as
         ncol => Ncol_faceYN  !global
@@ -1573,7 +1573,7 @@ contains
         col_faceYN(:) = [(ii,ii=1,ncol)]
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_col_faceYN
 !
@@ -1591,12 +1591,12 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% allocate curves
         allocate( curve(N_curve), stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg, 'curve')
-        
+
         curve%ID = nullvalueI
         curve%Type = nullvalueI
         curve%RefersTo = nullvalueI
@@ -1605,7 +1605,7 @@ contains
         curve%FaceIdx = nullvalueI
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_curves
 !
@@ -1624,7 +1624,7 @@ contains
         !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_allocate) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% allocate the value array of curve
         allocate( curve(curve_idx)%ValueArray(num_entries,Ncol_curve), stat=allocation_status, errmsg= emsg)
@@ -1633,7 +1633,7 @@ contains
         curve(curve_idx)%ValueArray = nullvalueR
 
         if (setting%Debug%File%utility_allocate) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_curve_entries
 !
@@ -1657,17 +1657,17 @@ contains
         !-----------------------------------------------------------------------------
             if (icrash) return
             if (setting%Debug%File%utility) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
             if (allocation_status > 0) then
                 print *, allocation_status
                 print *, trim(emsg)
                 print *, 'variable trying to allocate = ',trim(locationstring)
-                stop "in " // subroutine_name
+                stop
             end if
 
             if (setting%Debug%File%utility) &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_allocate_check
 

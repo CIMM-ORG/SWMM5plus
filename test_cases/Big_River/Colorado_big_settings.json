@@ -80,7 +80,7 @@
     "File" : {
         "library_folder" : "",
         "links_input_file_exist" : false,
-        "nodes_input_file_exist" : false,  
+        "nodes_input_file_exist" : false,
         "force_folder_creation"  : true
     },
     "Junction" : {
@@ -324,6 +324,6 @@
         "Tests" : true
     },
     "Profile" : {
-        "YN" : true  
+        "YN" : true
     }
 }

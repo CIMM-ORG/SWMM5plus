@@ -27,7 +27,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call bc_step()
 
@@ -47,7 +47,7 @@ contains
             do ii = 1, setting%BC%slots
                 print *, BC%flowR_timeseries(:, ii, br_value)
             end do
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
             print *, "HEAD BC"
             print *, "BC times"
@@ -58,7 +58,7 @@ contains
             do ii = 1, setting%BC%slots
                 print *, BC%headR_timeseries(:, ii, br_value)
             end do
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end if
     end subroutine bc_update
 !%
@@ -74,7 +74,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         tnow = setting%Time%Now
         tend = setting%Time%End
@@ -159,7 +159,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         NN = setting%BC%slots
 
@@ -184,7 +184,7 @@ contains
             do ii = 1, NN
                 write(*, "(*(G0.4 : ','))") BC%flowR_timeseries(bc_idx, ii, :)
             end do
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end if
 
     end subroutine bc_fetch_flow
@@ -202,7 +202,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         NN = setting%BC%slots
 
@@ -223,7 +223,7 @@ contains
         BC%headIdx(bc_idx) = 2
 
         if (setting%Debug%File%boundary_conditions) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine bc_fetch_head
 !%
 !%==========================================================================
@@ -242,7 +242,7 @@ contains
     !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%boundary_conditions)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         tnow = setting%Time%Now
 
@@ -298,7 +298,7 @@ contains
         end do
 
         if (setting%Debug%File%boundary_conditions) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine bc_interpolate
 !%

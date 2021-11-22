@@ -9,7 +9,6 @@ module initialization
     use interface
     use network_define
     use partitioning
-    use pack_mask_arrays, only: pack_nodes
     use utility_allocate
     use utility_array
     use utility_datetime
@@ -56,9 +55,9 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !% --- CPU and wall-clock timers    
+        !% --- CPU and wall-clock timers
         call init_model_timer()
 
         !% --- assign and store unit numbers for files
@@ -69,10 +68,10 @@ contains
 
         !% --- input project paths and filenames from command line arguments
         !%     note that all files and folders must exist
-        call util_file_setup_input_paths_and_files()
+        ! call util_file_setup_input_paths_and_files()
 
         if (setting%Output%Verbose) &
-            write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."    
+            write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."
 
         !% --- set the branchsign global -- this is used for junction branches (JB)
         !%     for upstream (+1) and downstream (-1)
@@ -91,9 +90,9 @@ contains
 
 
         !% HACK
-        !% --- Read and process the command-line options a second time to prevent overwrite 
-        !%     from json file and reprocess. 
-        !%     Possibly replace this later with a set of settings that are saved 
+        !% --- Read and process the command-line options a second time to prevent overwrite
+        !%     from json file and reprocess.
+        !%     Possibly replace this later with a set of settings that are saved
         !%     and simply overwrite after the settings.json is loaded.
         call util_file_assign_unitnumber ()
         call util_file_get_commandline ()
@@ -108,15 +107,15 @@ contains
         if (setting%Output%Verbose) then
             write(*,"(A)") "Simulation Starts..."
             write(*,"(A)") 'Using the following files:'
-            write(*,"(A)") 'input file  : '//trim(setting%File%inp_file)
-            write(*,"(A)") 'setting file: '//trim(setting%File%setting_file)
-            write(*,"(A)") 'report file : '//trim(setting%File%rpt_file)
-            write(*,"(A)") 'output file : '//trim(setting%File%out_file)
+            write(*,"(A)") 'Input file  : '//trim(setting%File%inp_file)
+            write(*,"(A)") 'Report file : '//trim(setting%File%rpt_file)
+            write(*,"(A)") 'Output file : '//trim(setting%File%out_file)
+            write(*,"(A)") 'Settings file: '//trim(setting%File%setting_file)
         end if
 
         !% --- set up the profiler
         if (setting%Profile%YN) then
-            call util_allocate_profiler ()   
+            call util_allocate_profiler ()
             call util_profiler_start (pfc_initialize_all)
         end if
 
@@ -135,7 +134,7 @@ contains
 
         if (setting%Output%Verbose) print *, "begin partitioning"
         call init_partitioning()
-   
+
         !% --- HACK -- to this point the above could all be done on image(1) and then
         !% distributed to the other images. This might create problems in ensuring
         !% that all the data gets copied over when new stuff is added. Probably OK
@@ -153,10 +152,10 @@ contains
         ! else
         !     !% temporarily assign the node index to the Global swmm index
         !     !% only good for one processor operation
-        !     faceI(:,fi_node_Gidx_SWMM) = faceI(:,fi_node_idx)    
-        ! end if    
+        !     faceI(:,fi_node_Gidx_SWMM) = faceI(:,fi_node_idx)
+        ! end if
         !% ---- END HACK
-   
+
         !% --- setup for csv output of links and nodes
         !brh20211006 call outputD_read_csv_link_names()
         !brh20211006 call outputD_read_csv_node_names()
@@ -183,13 +182,13 @@ contains
         !% --- designate/select the nodes/links for output
         call output_COMMON_nodes_selection ()
         call output_COMMON_links_selection ()
-        !% --- designate the corresponding elements for output   
+        !% --- designate the corresponding elements for output
         call outputML_element_selection ()
         !% --- deisgnate the corresponding face to output
         call outputML_face_selection ()
-        !% --- create packed arrays of elem row numbers that are output  
+        !% --- create packed arrays of elem row numbers that are output
         call pack_element_outputML ()
-        !% --- create packed arrays of face row numbers that are output  
+        !% --- create packed arrays of face row numbers that are output
         call pack_face_outputML ()
 
         !print *, elemP(1:npack_elemP(ep_Output_Elements),ep_Output_Elements)
@@ -213,7 +212,7 @@ contains
         call util_allocate_outputML_filenames ()
 
         !if (setting%Output%Verbose) print *, "begin setup of output files"
-     
+
         !% creating output_folders and files
         !% brh 20211004 -- moved this functionality into util_file_setup_output_files
         !call util_output_clean_folders()
@@ -240,9 +239,9 @@ contains
             call outputML_store_data (.true.)
             return
         end if
-        
+
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine initialize_toplevel
 !%
 !%==========================================================================
@@ -258,24 +257,24 @@ contains
         call cpu_time(setting%Time%CPU%EpochStartSeconds)
 
         !% store Real time
-        setting%Time%Real%EpochStartSeconds = time()
+        call system_clock(count=setting%Time%Real%EpochStartSeconds)
 
-    end subroutine init_model_timer     
+    end subroutine init_model_timer
 !%
 !%==========================================================================
 !%==========================================================================
-!%   
+!%
     subroutine init_timestamp ()
         !%-----------------------------------------------------------------------------
         !% Description:
         !% initializes time stamp used for output files
-        !%-----------------------------------------------------------------------------           
+        !%-----------------------------------------------------------------------------
         integer :: thisTime(8), ii, thisunit, ios
         character(len=4) :: cyear
         character(len=2) :: cmonth, cday, chour, cmin
-        character(len=13) :: datetimestamp   
+        character(len=13) :: datetimestamp
         character(64) :: subroutine_name = 'init_timestamp'
-        !%-----------------------------------------------------------------------------  
+        !%-----------------------------------------------------------------------------
         if (icrash) return
         call date_and_time(values = thisTime)
         write(cyear, "(i4)") thisTime(1)
@@ -290,7 +289,7 @@ contains
             cday = '0'//adjustl(cday)
         end if
         if (thisTime(5) < 10) then
-            chour = '0'//adjustl(chour)  
+            chour = '0'//adjustl(chour)
         end if
         if (thisTime(6) < 10) then
             cmin = '0'//adjustl(cmin)
@@ -311,39 +310,39 @@ contains
         ! !% --- HACK using a write/read file as the setting varialble is not a coarray
         ! if (this_image() == 1) then
         !     open(newunit = thisunit, &
-        !         file = 'temp_fortran.txt',    &     
+        !         file = 'temp_fortran.txt',    &
         !         action = 'write', &
         !         iostat = ios)
         !     print*, 'ios', ios
         !     if (ios /= 0) then
         !         write(*,"(A)") 'ERROR (CODE) file temp_fortran.txt could not be opened for writing.'
         !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
-        !         stop 'in ' // subroutine_name  
-        !     end if    
+        !         stop
+        !     end if
         !     write(thisunit,"(A)") setting%Time%DateTimeStamp
         !     close(thisunit)
         ! end if
         ! !% testing
         ! !open(newunit = thisunit, &
-        ! !    file = 'temp_fortran.txt',    &     
+        ! !    file = 'temp_fortran.txt',    &
         ! !    action = 'read', &
         ! !    iostat = ios)
         ! !read(thisunit,"(A)")  datetimestamp
-        ! !print *, datetimestamp  
+        ! !print *, datetimestamp
 
         ! !% read sequentially into other images
         ! do ii = 2,num_images()
         !     open(newunit = thisunit, &
-        !         file = 'temp_fortran.txt',    &     
+        !         file = 'temp_fortran.txt',    &
         !         action = 'read', &
-        !         iostat = ios)       
+        !         iostat = ios)
         !     if (ios /= 0) then
         !         write(*,"(A)") 'ERROR (CODE) temp_fortran.txt file could not be opened for reading.'
         !         write(*,"(A)") 'File purpose is write/reading for syncing non-coarrays across images'
-        !         stop 'in ' // subroutine_name  
-        !     end if                       
-        !     read(thisunit,"(A)") setting%Time%DateTimeStamp  
-        ! end do   
+        !         stop
+        !     end if
+        !     read(thisunit,"(A)") setting%Time%DateTimeStamp
+        ! end do
 
         sync all
 
@@ -351,7 +350,7 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
-!%      
+!%
     subroutine init_linknode_arrays()
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -370,11 +369,11 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% Allocate storage for link & node tables
@@ -435,7 +434,7 @@ contains
                  (link%I(ii,li_geometry) == lPower_function) .or. &
                  (link%I(ii,li_geometry) == lRect_triang)    .or. &
                  (link%I(ii,li_geometry) == lRect_round)     .or. &
-                 (link%I(ii,li_geometry) == lMod_basket)     .or. &   
+                 (link%I(ii,li_geometry) == lMod_basket)     .or. &
                  (link%I(ii,li_geometry) == lIrregular)) ) then
 
                 link%I(ii,li_link_type) = lChannel
@@ -482,7 +481,7 @@ contains
         call interface_update_linknode_names()
 
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_linknode_arrays
 !%
@@ -502,11 +501,11 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (.not. api_is_initialized) then
             print *, "ERROR: API is not initialized"
-            stop "in " // subroutine_name
+            stop
         end if
 
         !% we create additional curves for functional storage as well
@@ -516,7 +515,7 @@ contains
 
         Total_Curves = additional_storage_curves + SWMM_N_Curve
         if (Total_Curves > SWMM_N_Curve) N_Curve = SWMM_N_Curve + additional_storage_curves
-        
+
         !% allocate the number of curve objets from SWMM5
         call util_allocate_curves()
 
@@ -536,7 +535,7 @@ contains
         end do
 
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_curves
 !%
@@ -570,7 +569,7 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if (setting%Profile%YN) call util_profiler_start (pfc_init_bc)
 
@@ -611,7 +610,7 @@ contains
                         BC%flowI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                     else
                         print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
-                        stop "in " // subroutine_name
+                        stop
                     end if
 
                     BC%flowI(ii, bi_node_idx) = nidx
@@ -631,7 +630,7 @@ contains
                     end if
                 else
                     print *, "There is an error, only nodes with extInflow or dwfInflow can have inflow BC"
-                    stop "in " // subroutine_name
+                    stop
                 end if
             end do
         end if
@@ -647,7 +646,7 @@ contains
                     BC%headI(ii, bi_face_idx) = node%I(nidx, ni_elemface_idx) !% face idx
                 else
                     print *, "Error, BC type can't be a head BC for node " // node%Names(nidx)%str
-                    stop "in " // subroutine_name
+                    stop
                 end if
 
                 BC%headI(ii, bi_idx) = ii
@@ -673,7 +672,7 @@ contains
         if (setting%Profile%YN) call util_profiler_stop (pfc_init_bc)
 
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_bc
 !%
 !%==========================================================================
@@ -694,9 +693,9 @@ contains
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning) 
+        if (setting%Profile%YN) call util_profiler_start (pfc_init_partitioning)
 
         !% find the number of elements in a link based on nominal element length
         do ii = 1, SWMM_N_link
@@ -724,7 +723,7 @@ contains
         if (setting%Profile%YN) call util_profiler_stop (pfc_init_partitioning)
 
         if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_partitioning
 !%
@@ -738,7 +737,7 @@ contains
         !% Determines the overall length of the common coarray to handle the different
         !% number of elements on each processor
         !%
-        !%-----------------------------------------------------------------------------        
+        !%-----------------------------------------------------------------------------
         integer :: nimgs_assign
         integer, allocatable :: unique_imagenum(:)
         integer :: ii, jj, kk, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
@@ -746,10 +745,10 @@ contains
         integer :: duplicated_face_counter=0
         integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
         character(64) :: subroutine_name = 'init_coarray_length'
-        !%----------------------------------------------------------------------------- 
+        !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%utility_array) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call util_image_number_calculation(nimgs_assign, unique_imagenum)
 
@@ -832,7 +831,7 @@ contains
         end if
 
         if (setting%Debug%File%utility_array)  &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_coarray_length
 !%
@@ -844,9 +843,9 @@ contains
         !%
         !% Description:
         !%
-        !%-----------------------------------------------------------------------------     
+        !%-----------------------------------------------------------------------------
 
-        !%-----------------------------------------------------------------------------  
+        !%-----------------------------------------------------------------------------
 
         setting%Time%Dt = setting%Time%Hydraulics%Dt
         setting%Time%Now = 0

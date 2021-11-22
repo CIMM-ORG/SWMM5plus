@@ -12,6 +12,7 @@
 *log*
 *.[0-9]*
 *.txt
+*_output
 
 # Dependencies
 cmake*

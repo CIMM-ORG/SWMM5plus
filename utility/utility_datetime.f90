@@ -16,8 +16,8 @@ module utility_datetime
     public :: util_datetime_secs_to_epoch
     public :: util_datetime_decodedate
     public :: util_datetime_decodetime
-    
-    
+
+
     contains
 !%
 !%==========================================================================
@@ -32,7 +32,7 @@ module utility_datetime
         character(64)       :: subroutine_name = "util_datetime_get_next_time"
 
         if (setting%Debug%File%utility_datetime) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         epochTime = util_datetime_secs_to_epoch(secsTime)
         if (resolution_type == api_daily) then
@@ -48,13 +48,13 @@ module utility_datetime
         else
             print *, "Resolution type not supported, use"
             print *, "(1) monthly, (2) daily, (3) hourly, (4) weekend"
-            stop "in " // subroutine_name
+            stop 
         end if
 
         nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
 
         if (setting%Debug%File%utility_datetime) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end function util_datetime_get_next_time
 !%
 !%==========================================================================
@@ -64,7 +64,7 @@ module utility_datetime
         real(8), intent(in) :: epochTime
         real(8) :: secsTime
         secsTime = (epochTime - setting%Time%StartEpoch) * real(secsperday)
-        
+
     end function util_datetime_epoch_to_secs
 !%
 !%==========================================================================
@@ -164,7 +164,7 @@ module utility_datetime
 !%==========================================================================
 !% PRIVATE
 !%==========================================================================
-!%    
+!%
     function util_datetime_isleapyear(year)
         integer, intent(in) :: year
         integer :: util_datetime_isleapyear
@@ -310,7 +310,7 @@ module utility_datetime
     end subroutine util_datetime_divmod
 !%
 !%==========================================================================
-!% END MODULE   
+!% END MODULE
 !%==========================================================================
 !%
 end module utility_datetime

@@ -33,7 +33,7 @@ module utility_array
 
         if (icrash) return
         if (setting%Debug%File%utility_array) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         allocate(img_arr(size(link%I,1)))
         allocate(unique(size(link%I,1)))
@@ -55,11 +55,11 @@ module utility_array
 
         if ( nimgs_assign /= num_images() ) then
             print*, "There is a mismatch between the assigned images and num_images", nimgs_assign, num_images()
-            stop "in " // subroutine_name
+            stop
         end if
 
         if (setting%Debug%File%utility_array)  &
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine util_image_number_calculation
     !
     !==========================================================================

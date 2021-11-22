@@ -63,7 +63,7 @@ subroutine init_partitioning_method()
         call init_partitioning_BIPquick()
     else
         print *, "Error, partitioning method not supported"
-        stop "in " // subroutine_name
+        stop
     end if
 
     if (setting%Debug%File%partitioning) then
@@ -81,7 +81,7 @@ subroutine init_partitioning_method()
         print *, new_line("")
         do ii = 1, size(link%I, 1)
             if ( ii <= N_link ) then
-                print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), & 
+                print*, link%Names(ii)%str, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
                     link%I(ii, li_Mnode_u:li_Mnode_d)
             else
                 print*, link%I(ii, li_idx), link%I(ii, li_P_image), link%I(ii, li_parent_link), &
@@ -95,7 +95,7 @@ subroutine init_partitioning_method()
         ! partition_correct = default_performance_check()
         connectivity = init_partitioning_metric_connectivity()
         ! part_size_balance = init_partitioning_metric_partsizebalance()
-        write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         write(*,"(2(A,i5),A)") &
         "completed partitioning (", connectivity, ") | [Processor ", this_image(), "]" ! part_size_balance
     end if
@@ -340,7 +340,7 @@ subroutine init_partitioning_linkbalance()
 !-----------------------------------------------------------------------------
     if (icrash) return
     if (setting%Debug%File%partitioning) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     if (SWMM_N_link < num_images()) then
         call init_partitioning_default()
@@ -387,7 +387,7 @@ subroutine init_partitioning_linkbalance()
     end if
 
     if (setting%Debug%File%partitioning)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 end subroutine init_partitioning_linkbalance
 !
 !==========================================================================

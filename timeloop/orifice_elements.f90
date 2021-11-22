@@ -6,15 +6,16 @@ module orifice_elements
     use define_settings, only: setting
     use common_elements
     use adjust
+    use define_xsect_tables
     use xsect_tables
 
 
     implicit none
 
-    !%----------------------------------------------------------------------------- 
+    !%-----------------------------------------------------------------------------
     !% Description:
     !% Computes diagnostic flow through orifice elements
-    !%----------------------------------------------------------------------------- 
+    !%-----------------------------------------------------------------------------
 
     private
 
@@ -30,7 +31,7 @@ module orifice_elements
     subroutine orifice_toplevel (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% We need a subroutine to get the new full depth (esr_EffectiveFullDepth) 
+        !% We need a subroutine to get the new full depth (esr_EffectiveFullDepth)
         !% crown (esr_Zcrown) and crest (esr_Zcrest) elevation from control setting.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx  !% must be a single element ID
@@ -39,35 +40,35 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         call common_head_and_flowdirection_singular &
             (eIdx, esr_Orifice_Zcrest, esr_Orifice_NominalDownstreamHead, esi_Orifice_FlowDirection)
-        
+
         !% find effective head on orifice element
          call orifice_effective_head_delta (eIdx)
-        
+
         !% find flow on orifice element
         call orifice_flow (eIdx)
-        
+
         !% update orifice geometry from head
         call orifice_geometry_update (eIdx)
-        
+
          !% update velocity from flowrate and area
         call common_velocity_from_flowrate_singular (eIdx)
 
         if (setting%Debug%File%orifice_elements)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine orifice_toplevel
 ! %
 !%==========================================================================
 !% PRIVATE
-!%========================================================================== 
-!%  
+!%==========================================================================
+!%
     subroutine orifice_effective_head_delta (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
-        !% 
+        !%
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% single ID of element
         real(8), pointer    :: EffectiveHeadDelta, NominalDownstreamHead, Head
@@ -79,7 +80,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         !% inputs
         SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
@@ -113,14 +114,14 @@ module orifice_elements
                     end if
                 end if
         end select
-        
+
         if (setting%Debug%File%orifice_elements)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine orifice_effective_head_delta
 !%
-!%========================================================================== 
-!%========================================================================== 
-!%   
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine orifice_flow (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description: calculates the flow in an orifice elements
@@ -138,7 +139,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         GeometryType          => elemI(eIdx,ei_geometryType)
         SpecificOrificeType   => elemSI(eIdx,esi_Orifice_SpecificType)
@@ -160,7 +161,7 @@ module orifice_elements
         select case (GeometryType)
             case (circular)
                 FullArea = pi * (onehalfR * EffectiveFullDepth) ** twoR
-                AoverL   = onefourthR * EffectiveFullDepth 
+                AoverL   = onefourthR * EffectiveFullDepth
             case (rectangular)
                 FullArea = EffectiveFullDepth * RectangularBreadth
                 AoverL   = FullArea / (twoR * (EffectiveFullDepth + RectangularBreadth))
@@ -168,11 +169,11 @@ module orifice_elements
                 print *, 'error, case default should not be reached.'
                 stop 5983
         end select
-        
+
         !% find critical depth to determine weir/orifice flow
         select case (SpecificOrificeType)
             case (bottom_orifice)
-                !% find critical height above opening where orifice flow turns into 
+                !% find critical height above opening where orifice flow turns into
                 !% weir flow for Bottom orifice = (C_orifice/C_weir)*(Area/Length)
                 !% where C_orifice = given orifice coeff, C_weir = weir_coeff/sqrt(2g),
                 !% Area is the area of the opening, and Length = circumference
@@ -184,9 +185,9 @@ module orifice_elements
                 FractionCritDepth = min(((Head - Zcrest) / EffectiveFullDepth), oneR)
                 !% another adjustment to critical depth is needed
                 !% for weir coeff calculation for side orifice
-                CriticalDepth = onehalfR * CriticalDepth 
+                CriticalDepth = onehalfR * CriticalDepth
             end select
-        
+
         !% flow calculation conditions through an orifice
         if ((EffectiveHeadDelta == zeroR) .or. (FractionCritDepth <= zeroR)) then
             !% no flow case
@@ -196,25 +197,25 @@ module orifice_elements
             !% orifice behaves as a rectangular transverse weir
             Coef     = DischargeCoeff * FullArea * sqrt(twoR * grav * CriticalDepth)
             Flowrate = FlowDirection * Coef * (FractionCritDepth ** WeirExponent)
-        else 
-            !% standard orifice flow condition 
+        else
+            !% standard orifice flow condition
             Coef      = DischargeCoeff * FullArea * sqrt(twoR * grav)
-            Flowrate  = FlowDirection * Coef * sqrt(EffectiveHeadDelta)       
-        end if    
+            Flowrate  = FlowDirection * Coef * sqrt(EffectiveHeadDelta)
+        end if
 
         !% applying Villemonte submergence correction for orifice having submerged weir flow
         if ((FractionCritDepth < oneR) .and. (NominalDownstreamHead > Zcrest)) then
             ratio = (NominalDownstreamHead - Zcrest) / (Head - Zcrest)
-            Flowrate = Flowrate * ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent) 
+            Flowrate = Flowrate * ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
         end if
 
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine orifice_flow
 !%
 !%==========================================================================
-!%==========================================================================    
-!%  
+!%==========================================================================
+!%
     subroutine orifice_geometry_update (eIdx)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -234,7 +235,7 @@ module orifice_elements
         !%-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         GeometryType       => elemI(eIdx,ei_geometryType)
         Head               => elemR(eIdx,er_Head)
@@ -251,7 +252,7 @@ module orifice_elements
         Zcrown             => elemSR(eIdx,esr_Orifice_Zcrown)
         Zcrest             => elemSR(eIdx,esr_Orifice_Zcrest)
         RectangularBreadth => elemSR(eIdx,esr_Orifice_RectangularBreadth)
-    
+
         !% find depth over bottom of orifice
         if (Head <= Zcrest) then
             Depth = zeroR
@@ -260,7 +261,7 @@ module orifice_elements
         else
             Depth = Zcrown - Zcrest
         end if
-    
+
         !% set geometry
         select case (GeometryType)
             case (rectangular)
@@ -286,7 +287,7 @@ module orifice_elements
                 print *, 'error, the default case should not be reached'
                 stop 9478
         end select
-        
+
         !% apply geometry limiters
         call adjust_limit_by_zerovalues_singular (eIdx, er_Area,      setting%ZeroValue%Area)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Depth,     setting%ZeroValue%Depth)
@@ -295,9 +296,9 @@ module orifice_elements
         call adjust_limit_by_zerovalues_singular (eIdx, er_Topwidth,  setting%ZeroValue%Topwidth)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Perimeter, setting%ZeroValue%Topwidth)
         call adjust_limit_by_zerovalues_singular (eIdx, er_Volume,    setting%ZeroValue%Volume)
-        
+
         if (setting%Debug%File%orifice_elements) &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine  orifice_geometry_update
 !%==========================================================================
 !% END OF MODULE

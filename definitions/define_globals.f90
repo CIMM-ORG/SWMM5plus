@@ -29,11 +29,11 @@ module define_globals
 !% VARIABLES
 !% ===================================================================================
 !% Developer note -- most variables are in setting%..., the only variables that should
-!% be in globals are ones that are internal to the code (no user setting) and always 
+!% be in globals are ones that are internal to the code (no user setting) and always
 !% referred to with a short name
 
-    
-    logical :: icrash = .false. !% error condition 
+
+    logical :: icrash = .false. !% error condition
 
 !% ===================================================================================
 !% ARRAYS
@@ -123,7 +123,7 @@ module define_globals
     logical, allocatable :: partitioned_links(:)
     logical, allocatable :: accounted_for_links(:)
     integer, allocatable :: phantom_link_tracker(:)
- 
+
     !% Partitioning module Allocatables - Allocated and Deallocated in execute_partitioning.f08
     integer, allocatable :: adjacent_links(:)
     integer, allocatable :: elem_per_image(:)
@@ -140,7 +140,7 @@ module define_globals
     character(len=16), allocatable         :: output_typeUnits_elemR(:)
     character(len=64), allocatable, target :: output_typeNames_withTime_elemR(:)
     character(len=15), allocatable, target :: output_typeUnits_withTime_elemR(:)
-    
+
 
     !% face output types
     integer, allocatable, target           :: output_types_faceR(:)
@@ -157,7 +157,7 @@ module define_globals
     character(len=256), allocatable, target :: output_binary_filenames_all(:)
 
     !% storage of global element index for output -- not coarray
-    !brh rm integer, allocatable, target :: OutElemGidx(:)   
+    !brh rm integer, allocatable, target :: OutElemGidx(:)
 
     !% storage for all real data on all output elements for limited time levels
     !% (outelement, type, time-level) real data -- not coarray
@@ -167,11 +167,11 @@ module define_globals
     integer, allocatable, target :: OutElemFixedI(:,:)
 
     !% storage of global face index for output -- not coarray
-    !brh rm integer, allocatable, target :: OutFaceGidx(:)      
-    
+    !brh rm integer, allocatable, target :: OutFaceGidx(:)
+
     !% storage for all real data on all output faces for limited time levels
     !% (outelement, type, time-level) real data -- not coarray
-    real(8), allocatable, target :: OutFaceDataR(:,:,:) 
+    real(8), allocatable, target :: OutFaceDataR(:,:,:)
     !% storage for fixed integer data needed in output faces -- not coarray
     !% (outface, dataindex)
     integer, allocatable, target :: OutFaceFixedI(:,:)
@@ -316,5 +316,5 @@ module define_globals
         reshape((/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, & ! normal years
         31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/), (/12,2/)) ! leap years
 
-    
+
 end module define_globals

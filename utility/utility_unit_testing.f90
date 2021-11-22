@@ -32,7 +32,7 @@ contains
     logical dup_found
     character(64) :: subroutine_name = 'local_global_unique'
     if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     !% Looping through the array and finding all of the unqiue values
     min_val = minval(link%I(:,li_idx)) - 1
@@ -150,7 +150,7 @@ contains
 
 
     if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
   end subroutine util_utest_local_global
 !%
@@ -164,7 +164,7 @@ contains
       logical dup_found
       character(64) :: subroutine_name = 'pack_arrays_unique'
       if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
 
 
@@ -1478,7 +1478,7 @@ contains
 
 
       if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_pack_arrays
 !%
@@ -1491,7 +1491,7 @@ contains
       integer :: ii, jj, kk, counter
       character(64) :: subroutine_name = 'init_face_check'
       if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
       kk = 1
       counter = 0
@@ -1549,7 +1549,7 @@ contains
          print *, "correct number in link%I images.  This_image :: ", this_image()
       end if
       if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_node_link_image
 !%
@@ -1564,7 +1564,7 @@ contains
       logical :: invalid_slope
       character(64) :: subroutine_name = 'slope_checking'
       if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
       invalid_slope = .false.
       do ii = 1, size(link%R(:,lr_Slope))
@@ -1582,7 +1582,7 @@ contains
       end if
 
       if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_slope_checking
 !%
@@ -1597,7 +1597,7 @@ contains
       character(64) :: subroutine_name = 'global_index_checking'
 
       if (setting%Debug%File%initialization) &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
       !% here we find the current length of the global index by looking at the first value of elemI on that image and subtracting one.
 
@@ -1645,7 +1645,7 @@ contains
       end do
 
       if (setting%Debug%File%initialization)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_utest_global_index_check
 !%
