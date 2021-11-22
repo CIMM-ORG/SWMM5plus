@@ -67,7 +67,7 @@
     "Discretization" : {
         "NominalElemLength" : 50.00,
         "MinElemLengthFactor" : 0.5,
-        "MinElemLengthMethod" : "ElemLengthAdjust",
+        "MinElemLengthMethod" : "RawElemLength", // RawElemLength, ElemLengthAdjust
         "LinkShortingFactor" : 0.33
     },
     "Eps" : {

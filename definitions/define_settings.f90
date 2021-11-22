@@ -796,6 +796,8 @@ contains
         call util_lower_case(c)
         if (c == 'elemlengthadjust') then
             setting%Discretization%MinElemLengthMethod = ElemLengthAdjust
+        elseif (c == 'rawelemlength') then
+            setting%Discretization%MinElemLengthMethod = RawElemLength
         else
             stop "Error, Discretization.MinElemLengthMethod not compatible. See data_keys.f90"
         end if
