@@ -1,12 +1,23 @@
 #!/bin/sh
 
+num_processors=1
+compile_fortran="true"
+compile_swmmc="true"
+
 # Check flags
-while getopts 'tmf' flag; do
-  case "${flag}" in
-    t) tacc="true" ;;
-    m) skip_swmm="true" ;;
-    f) skip_fortran="true" ;;
-  esac
+while [ ! $# -eq 0 ]
+do
+	case "$1" in
+		--swmmc | -s) # Compile SWMM C only
+			compile_fortran="false" ;;
+		--fortran | -f) # Compile SWMM5+ only
+			compile_swmmc="false" ;; 
+        --processors | -n)
+            num_processors="$2" ;;
+        --clean | -c)
+            clean="true" ;;
+	esac
+	shift
 done
 
 # Check OS
@@ -18,6 +29,20 @@ case "${unameOut}" in
     MINGW*)     machine=mingw;;
     *)          machine="UNKNOWN:${unameOut}"
 esac
+
+
+# --------------------------------------------------------------------------------------
+# Set number of processors
+
+if grep "export FOR_COARRAY_NUM_IMAGES" ~/.bashrc
+then
+    sed -i "s/export FOR_COARRAY_NUM_IMAGES=[0-9]*/export FOR_COARRAY_NUM_IMAGES=$num_processors/g" ~/.bashrc
+else
+    echo "export FOR_COARRAY_NUM_IMAGES=$num_processors" >> ~/.bashrc
+fi
+source ~/.bashrc
+# --------------------------------------------------------------------------------------
+
 
 # Directories
 SWMM5PLUS_DIR=$PWD
@@ -53,73 +78,7 @@ then
 fi
 
 # Compiler vars
-FC='gfortran'
-OUPTFLAGS=-g
-FFLAGS=-O3
 PROGRAM=SWMM
 
 # Dependencies source code
 JSON_DIR="$DDIR/json-fortran"
-MPICH_SOURCE="$DDIR/mpich"
-CMAKE_SOURCE="$DDIR/cmake"
-COARRAY_SOURCE="$DDIR/opencoarray"
-
-# Dependencies install
-MPICH_INSTALL="$MPICH_SOURCE/mpich-install"
-CMAKE_INSTALL="$CMAKE_SOURCE/cmake-install"
-COARRAY_INSTALL="$COARRAY_SOURCE/opencoarray-install"
-
-if [[ $machine = "linux" ]]
-then
-    CAF="$COARRAY_INSTALL/bin/caf"
-    echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
-elif [[ $machine = "mac" ]]
-then
-    CAF= "$COARRAY_INSTALL/bin/caf" #"caf"
-    echo "export CAF_RUN=$COARRAY_INSTALL/bin/cafrun" >> $INSTALLATION_LOG
-fi
-
-CAF_VERSION="0.0.0"
-CMAKE_VERSION="0.0.0" #initialize by using 0.0.0, not version can lower than 0.0.0
-MPICH_VERSION="0.0.0"
-
-#GCC_REQUIRE_VERSION="10.1.0"
-CMAKE_REQUIRE_VERSION="3.10.0"
-MPICH_REQUIRE_VERSION="3.2.0"
-
-package_executable_array=(
-    "cmake:cmake"
-    "mpich:mpifort"
-)
-
-# Version Comparison
-vercomp () {
-    if [[ $1 == $2 ]]
-    then
-        return 0
-    fi
-    local IFS=.
-    local i ver1=($1) ver2=($2)
-    # fill empty fields in ver1 with zeros
-    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++))
-    do
-        ver1[i]=0
-    done
-    for ((i=0; i<${#ver1[@]}; i++))
-    do
-        if [[ -z ${ver2[i]} ]]
-        then
-            # fill empty fields in ver2 with zeros
-            ver2[i]=0
-        fi
-        if ((10#${ver1[i]} > 10#${ver2[i]}))
-        then
-            return 1
-        fi
-        if ((10#${ver1[i]} < 10#${ver2[i]}))
-        then
-            return 2
-        fi
-    done
-    return 0
-}

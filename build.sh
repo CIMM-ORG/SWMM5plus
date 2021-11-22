@@ -81,22 +81,24 @@ echo
 echo Compiling SWMM5+ ...
 echo
 
-if [[ ! $skip_fortran = "true" ]]
+
+if [[ $compile_fortran = "true" ]]
 then
-    $CAF $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o $PROGRAM
+    ifort -coarray=distributed $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o SWMM
 fi
 
-# --------------------------------------------------------------------------------------
-
-$clean:
 echo
 echo Clean Object files ...
 echo
 rm -rf *.o *.mod *.out
-if [[ -d debug_input ]]; then rm -r debug_input; fi
-if [[ -d debug_output ]]; then rm -r debug_output; fi
-if [[ -d swmm5_output ]]; then rm -r swmm5_output; fi
+if [[ -d debug_input ]]; then rm -rf debug_input; fi
+if [[ -d debug_output ]]; then rm -rf debug_output; fi
+if [[ -d swmm5_output ]]; then rm -rf swmm5_output; fi
 
 echo
 echo Complete!
+echo "Please execute >>> source ~/.bashrc"
 echo
+
+
+
