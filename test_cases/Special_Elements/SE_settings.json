@@ -169,7 +169,7 @@
     },
     "PreissmannSlot" : {
         "PreissmannSlotMethod" : "VariableSlot",
-        "CelerityFactor" : 200.0
+        "CelerityFactor" : 10.0
     },
     "Simulation" : {
         "useHydrology" : true,

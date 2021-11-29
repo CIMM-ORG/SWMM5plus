@@ -149,7 +149,7 @@ contains
            print*, faceR(:,fr_Flowrate), 'face flowrate'
            print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
            print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
-           call execute_command_line('')
+           ! call execute_command_line('')
         end if
 
         if (setting%Debug%File%initial_condition) &

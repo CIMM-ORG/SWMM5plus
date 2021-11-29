@@ -2004,6 +2004,7 @@ contains
                     !%
                     if (.not. isOutLinkWriteFVOnly(kk)) then
                         !% --- set the filenames for output of SWMM links
+
                         fn_link_unf = trim(setting%File%outputML_Link_kernel) // '_' //trim(tlinkname) //'.unf'
                         fn_link_csv = trim(setting%File%outputML_Link_kernel) // '_' //trim(tlinkname) //'.csv'
 
@@ -2021,7 +2022,7 @@ contains
 
                             !% --- open formatted csv link file
                             open(newunit=fU_link_csv, file=trim(fn_link_csv), form='formatted', &
-                                action='write', access='append', status='new')
+                                action='write', access='append')
                             !% --- write header to csv link file
                             call outputML_csv_header( &
                                 fU_link_csv, nTypeElem, nTotalTimeLevels, dummyI, &
@@ -2036,7 +2037,7 @@ contains
                             ! open(newunit=fU_link_unf, file=trim(fn_link_unf), form='unformatted', &
                             !     action='write', access='append', status='old')
                             open(newunit=fU_link_csv, file=trim(fn_link_csv), form='formatted',  &
-                                action='write', access='append', status='old')
+                                action='write', access='append')
                         end if
 
                         !% --- write link data to the unformatted file
@@ -2064,7 +2065,7 @@ contains
                         if (ii==1) then
                             !% --- open a new file for this type and set the header
                             open(newunit=fU_linkFV_csv, file=trim(fn_linkFV_csv), form='formatted', &
-                                action='write', access='append', status='new')
+                                action='write', access='append')
                             !% --- write the header
                             call outputML_csv_header( &
                                 fU_linkFV_csv, OutLink_N_elem_in_link(kk), nLevel, mminc, &
@@ -2076,7 +2077,7 @@ contains
                             !% --- finished writing headers
                         else !% --- for ii> 2, open the existing FV file for this type and link
                             open(newunit=fU_linkFV_csv, file=trim(fn_linkFV_csv), form='formatted', &
-                                action='write', position='append', status='old')
+                                action='write', position='append')
                         end if
                         !% --- write the csv FV output for elements of kk link with mm type and the latest 1:nLevel
                         call outputML_csv_writedata ( &
@@ -2143,7 +2144,7 @@ contains
 
                             !% --- open formatted csv node file
                             open(newunit=fU_nodeElem_csv, file=trim(fn_nodeElem_csv), form='formatted', &
-                                action='write', access='append', status='new')
+                                action='write', access='append')
                             !% --- write header to csv node file
                             call outputML_csv_header( &
                                 fU_nodeElem_csv, nTypeElem, nTotalTimeLevels, dummyI, &
@@ -2157,7 +2158,7 @@ contains
                             ! open(newunit=fU_nodeElem_unf, file=trim(fn_nodeElem_unf), form='unformatted', &
                             !     action='write', access='append', status='old')
                             open(newunit=fU_nodeElem_csv, file=trim(fn_nodeElem_csv), form='formatted',  &
-                                action='write', access='append', status='old')
+                                action='write', access='append')
                         end if
 
                         !% --- write node data to the unformatted file
@@ -2186,7 +2187,7 @@ contains
                         if (ii==1) then
                             !% --- open a new file for this type and set the header
                             open(newunit=fU_nodeElemFV_csv, file=trim(fn_nodeElemFV_csv), form='formatted', &
-                                action='write', access='append', status='new')
+                                action='write', access='append')
                             !% --- write the header
                             call outputML_csv_header( &
                                 fU_nodeElemFV_csv, OutNodeElem_N_elem_in_node(kk), nLevel, mminc, &
@@ -2198,7 +2199,7 @@ contains
                             !% --- finished writing headers
                         else !% --- for ii> 2, open the existing FV file for this type and node
                             open(newunit=fU_nodeElemFV_csv, file=trim(fn_nodeElemFV_csv), form='formatted', &
-                                action='write', position='append', status='old')
+                                action='write', position='append')
                         end if
                         call outputML_csv_writedata ( &
                             fU_nodeElemFV_csv, kk, OutNodeElem_N_elem_in_node(kk), mminc, nLevel,  &
@@ -2265,7 +2266,7 @@ contains
 
                             !% --- open formatted csv node file
                             open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted', &
-                                action='write', access='append', status='new')
+                                action='write', access='append')
                             !% --- write header to csv node file
                             call outputML_csv_header( &
                                 fU_nodeFace_csv, nTypeFace, nTotalTimeLevels, dummyI, &
@@ -2280,7 +2281,7 @@ contains
                             ! open(newunit=fU_nodeFace_unf, file=trim(fn_nodeFace_unf), form='unformatted', &
                             !     action='write', access='append', status='old')
                             open(newunit=fU_nodeFace_csv, file=trim(fn_nodeFace_csv), form='formatted',  &
-                                action='write', access='append', status='old')
+                                action='write', access='append')
                         end if
 
                         !% --- write node data to the unformatted file
@@ -2309,7 +2310,7 @@ contains
                         if (ii==1) then
                             !% --- open a new file for this type and set the header
                             open(newunit=fU_nodeFaceFV_csv, file=trim(fn_nodeFaceFV_csv), form='formatted', &
-                                action='write', access='append', status='new')
+                                action='write', access='append')
                             !% --- write the header
                             call outputML_csv_header( &
                                 fU_nodeFaceFV_csv, OutNodeFace_N_face_in_node(kk), nLevel, mminc, &
@@ -2321,7 +2322,7 @@ contains
                             !% --- finished writing headers
                         else !% --- for ii> 2, open the existing FV file for this type and node
                             open(newunit=fU_nodeFaceFV_csv, file=trim(fn_nodeFaceFV_csv), form='formatted', &
-                                action='write', position='append', status='old')
+                                action='write', position='append')
                         end if
                         call outputML_csv_writedata ( &
                             fU_nodeFaceFV_csv, kk, OutNodeFace_N_face_in_node(kk), mminc, nLevel,  &
