@@ -7,9 +7,6 @@ module discretization
 
     implicit none
 
-    real(8), pointer :: elem_nominal_length => setting%Discretization%NominalElemLength
-    real(8), pointer :: elem_shorten_cof    => setting%Discretization%LinkShortingFactor
-
 contains
 
     !
@@ -30,12 +27,15 @@ contains
     !-----------------------------------------------------------------------------
         integer :: ii, Adjustment_flag
         real(8) :: temp_length
-
+        real(8), pointer :: elem_nominal_length, elem_shorten_cof
         character(64) :: subroutine_name = 'init_discretization_adjustlinklength'
     !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        elem_nominal_length => setting%Discretization%NominalElemLength
+        elem_shorten_cof    => setting%Discretization%LinkShortingFactor
 
         do ii =1, N_link
             temp_length = link%R(ii,lr_Length) ! lenght of link ii
@@ -74,12 +74,15 @@ contains
     !-----------------------------------------------------------------------------
         integer, intent(in) :: link_idx
         real(8) :: remainder
+        real(8), pointer :: elem_nominal_length
         character(64) :: subroutine_name = 'init_discretization_nominal'
 
     !-----------------------------------------------------------------------------
         if (icrash) return
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        elem_nominal_length => setting%Discretization%NominalElemLength
 
         !% Adjusts the number of elements in a link based on the length
         remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
