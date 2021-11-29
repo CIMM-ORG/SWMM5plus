@@ -252,6 +252,7 @@ module orifice_elements
         Zcrown             => elemSR(eIdx,esr_Orifice_Zcrown)
         Zcrest             => elemSR(eIdx,esr_Orifice_Zcrest)
         RectangularBreadth => elemSR(eIdx,esr_Orifice_RectangularBreadth)
+        EffectiveFullDepth => elemSR(eIdx,esr_Orifice_EffectiveFullDepth)
 
         !% find depth over bottom of orifice
         if (Head <= Zcrest) then

@@ -68,7 +68,7 @@ contains
                    print*, '.................face logicals......................'
                    print*, faceP(:,fp_all)[ii], 'all the interior faces'
                    print*, facePS(:,fp_all)[ii], 'all the shared faces'
-                   call execute_command_line('')
+                   ! call execute_command_line('')
                 end do
 
             end if

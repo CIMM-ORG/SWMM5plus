@@ -136,6 +136,20 @@ contains
                     else
                         isElemOut(ii) = .false.
                     end if
+                case (orifice)
+                    !% --- orifices always correspond to links
+                    if (isLinkOut(tlink)) then
+                        isElemOut(ii) = .true.
+                    else
+                        isElemOut(ii) = .false.
+                    end if
+                case (weir)
+                    !% --- weirs always correspond to links
+                    if (isLinkOut(tlink)) then
+                        isElemOut(ii) = .true.
+                    else
+                        isElemOut(ii) = .false.
+                    end if
                 case (JM)
                     tnode => node_idx(ii)
                     !% --- junction mains correspond to nodes

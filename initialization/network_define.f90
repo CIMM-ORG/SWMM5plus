@@ -107,7 +107,7 @@ contains
             print*, '===================================================================' //&
             '==================================================================='
             print*
-            call execute_command_line('')
+            ! call execute_command_line('')
         end if
 
         if (setting%Profile%YN) call util_profiler_stop (pfc_init_network_define_toplevel)
