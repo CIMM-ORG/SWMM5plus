@@ -40,6 +40,11 @@ module define_keys
         enumerator :: lType3Pump            !% type 3 pump link
         enumerator :: lType4Pump            !% type 4 pump link
         enumerator :: lTypeIdealPump        !% ideal pump link
+        enumerator :: lOutlet               !% outlet link
+        enumerator :: lFunctionalDepth      !% outlet having functional depth relationship  
+        enumerator :: lFunctionalHead       !% outlet having functional head relationship 
+        enumerator :: lTabularDepth         !% outlet having curve relationship to depth
+        enumerator :: lTabularHead          !% outlet having curve relationship to head
         !% open channel cross-sectional geometry types
         enumerator :: lRectangular           !% rectangular open channel
         enumerator :: lTrapezoidal           !% trapezoidal open channel
@@ -81,6 +86,7 @@ module define_keys
         enumerator :: weir                  !% weir element
         enumerator :: orifice               !% orifice element
         enumerator :: pump                  !% pump element
+        enumerator :: outlet                !% outlet element
         enumerator :: JM                    !% junction main element
         enumerator :: JB                    !% junction branch element
         enumerator :: ArtificalStorage      !% junction main storage is artificially created
@@ -135,6 +141,10 @@ module define_keys
         enumerator :: type2_Pump            !% type 2 pump type
         enumerator :: type3_Pump            !% type 3 pump type
         enumerator :: type4_Pump            !% type 4 pump type
+        enumerator :: functional_depth      !% outlet having functional depth relationship  
+        enumerator :: functional_head       !% outlet having functional head relationship 
+        enumerator :: tabular_depth         !% outlet having curve relationship to depth
+        enumerator :: tabular_head          !% outlet having curve relationship to head
         !% BC types
         enumerator :: BCFlow
         enumerator :: BCHead

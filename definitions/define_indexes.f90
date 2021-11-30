@@ -469,16 +469,26 @@ module define_indexes
     enum, bind(c)
         !% define the column indexes for elemSi(:,:) orifice elements
         enumerator :: esi_Orifice_FlowDirection = 1     !% orifice flow direction
-        enumerator :: esi_Orifice_SpecificType          !% specifc weir type
+        enumerator :: esi_Orifice_SpecificType          !% specifc orifice type
         enumerator :: esi_Orifice_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSI_orifice = esi_Orifice_lastplusone-1
+
+    enum, bind(c)
+        !% define the column indexes for elemSi(:,:) outlet elements
+        enumerator :: esi_Outlet_FlowDirection = 1     !% outlet flow direction
+        enumerator :: esi_Outlet_SpecificType          !% specifc outlet type
+        enumerator :: esi_Outlet_CurveID               !% outlet curve id
+        enumerator :: esi_Outlet_lastplusone !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSI_outlet = esi_Orifice_lastplusone-1
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSI = max(&
                             Ncol_elemSI_junction, &
                             Ncol_elemSI_orifice, &
-                            Ncol_elemSI_weir)
+                            Ncol_elemSI_weir, &
+                            Ncol_elemSI_outlet)
     !%-------------------------------------------------------------------------
     !% Define the column indexes for elemSr(:,:) arrays
     !% These are the full arrays if special real data
@@ -533,24 +543,28 @@ module define_indexes
     end enum
     integer, parameter :: Ncol_elemSR_Orifice = esr_Orifice_lastplusone-1
 
-    ! enum, bind(c)
-    !     enumerator ::  esr_conduit_SlotVolume = 1         !% slot volume
-    !     enumerator ::  esr_conduit_SlotWidth              !% slot width
-    !     enumerator ::  esr_conduit_SlotDepth              !% slot depth
-    !     enumerator ::  esr_conduit_SlotArea               !% slot area
-    !     enumerator ::  esr_conduit_SlotHydRadius          !% slot hydraulic radius
-    !     enumerator ::  esr_conduit_lastplusone !% must be last enum item
-    ! end enum
-    ! integer, parameter :: Ncol_elemSR_Conduit = esr_conduit_lastplusone-1
+    enum, bind(c)
+        enumerator ::  esr_Outlet_DischargeCoeff = 1       !% discharge coefficient outlet
+        enumerator ::  esr_Outlet_EffectiveFullDepth       !% effective full depth after control intervention
+        enumerator ::  esr_Outlet_EffectiveHeadDelta       !% effective head delta across outlet
+        enumerator ::  esr_Outlet_NominalDownstreamHead    !% nominal downstream head for outlet
+        enumerator ::  esr_Outlet_Exponent                 !% exponent for outlet dishcharge relation
+        enumerator ::  esr_Outlet_Power                    !% power for outlet dishcharge relation
+        enumerator ::  esr_Outlet_Zcrown                   !% orifice "crown" elevation - highest edge of outlet
+        enumerator ::  esr_Outlet_Zcrest                   !% orifice "crest" elevation - lowest edge of outlet
+        enumerator ::  esr_Outlet_lastplusone !% must be last enum item
+    end enum
+    integer, parameter :: Ncol_elemSR_Ooutlet = esr_Outlet_lastplusone-1
 
     !% NEED OTHER SPECIAL ELEMENTS HERE
 
     !% determine the largest number of columns for a special set
     integer, target :: Ncol_elemSR = max(&
                             Ncol_elemSR_JunctionBranch, &
-                            Ncol_elemSR_Storage, &
-                            Ncol_elemSR_Weir, &
-                            Ncol_elemSR_Orifice) !, &
+                            Ncol_elemSR_Storage,        &
+                            Ncol_elemSR_Weir,           &
+                            Ncol_elemSR_Orifice,        &
+                            Ncol_elemSR_Ooutlet) !, &
                             ! Ncol_elemSR_Conduit)
 
     !% HACK: Ncol_elemSR must be updated when other special elements
