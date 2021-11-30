@@ -422,10 +422,11 @@ contains
                 stop
 
             case (lOutlet)
-
-                elemI(:,ei_elementType)            = outlet
-                elemI(:,ei_QeqType)                = diagnostic
-                elemYN(:,eYN_canSurcharge)         = .true.
+                where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                    elemI(:,ei_elementType)            = outlet
+                    elemI(:,ei_QeqType)                = diagnostic
+                    elemYN(:,eYN_canSurcharge)         = .true.
+                endwhere
 
             case default
 

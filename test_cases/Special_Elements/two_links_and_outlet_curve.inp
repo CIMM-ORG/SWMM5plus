@@ -84,9 +84,9 @@ J1               FLOW             ""               FLOW     1.0      1.0      2.
 ;;Name           Type       X-Value    Y-Value   
 ;;-------------- ---------- ---------- ----------
 curve            Rating     0.1        1         
-curve                       0.2        1.1       
-curve                       0.5        1.5       
-curve                       2          1.8       
+curve                       0.2        1       
+curve                       0.5        1       
+curve                       2          1       
 curve                       4          2         
 
 [REPORT]

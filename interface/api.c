@@ -546,6 +546,10 @@ int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value)
             *value = 0.01;
         else if (Link[link_idx].type == WEIR)
             *value = 0.01;
+        else if (Link[link_idx].type == OUTLET)
+            *value = 0.01;
+        else if (Link[link_idx].type == PUMP)
+            *value = 0.01;
         else
             *value = 0;
     }

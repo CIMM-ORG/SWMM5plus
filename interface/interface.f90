@@ -533,7 +533,7 @@ contains
     integer(c_int) function interface_get_obj_name_len(obj_idx, obj_type) result(len_value)
     !%-----------------------------------------------------------------------------
     !% Description:
-    !%    Returns the lenght of the name string associated to the EPA-SWMM object.
+    !%    Returns the length of the name string associated to the EPA-SWMM object.
     !%    This function is necessary to allocate the entries of the link%Names and
     !%    node%Names arraysr. The function is currently compatible with NODE and
     !%    LINK types.

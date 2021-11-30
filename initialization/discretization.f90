@@ -110,8 +110,9 @@ contains
         end if
 
         !% treatment of for special links
-        if ((link%I(link_idx,li_link_type) == lWeir) .or. &
+        if ((link%I(link_idx,li_link_type) == lWeir)    .or. &
             (link%I(link_idx,li_link_type) == lOrifice) .or. &
+            (link%I(link_idx,li_link_type) == lOutlet)  .or. &
             (link%I(link_idx,li_link_type) == lPump) ) then
 
             link%I(link_idx, li_N_element) = oneI

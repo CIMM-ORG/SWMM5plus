@@ -807,6 +807,8 @@ contains
                     elemI(ElemLocalCounter,ei_elementType)      = orifice
                 elseif (link%I(thisLink,li_link_type) == lPump) then
                     elemI(ElemLocalCounter,ei_elementType)      = pump
+                elseif (link%I(thisLink,li_link_type) == lOutlet) then
+                    elemI(ElemLocalCounter,ei_elementType)      = outlet
                 endif
 
                 elemI(ElemLocalCounter,ei_Mface_uL)             = FaceLocalCounter

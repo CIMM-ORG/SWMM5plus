@@ -406,7 +406,6 @@ contains
             !% setting%Link%PropertiesFile
             link%I(ii,li_InitialDepthType) = setting%Link%DefaultInitDepthType
             link%R(ii,lr_Length) = interface_get_link_attribute(ii, api_conduit_length)
-
             !% link%R(ii,lr_TopWidth): defined in network_define.f08
             link%R(ii,lr_BreadthScale) = interface_get_link_attribute(ii, api_link_xsect_wMax)
             !% link%R(ii,lr_Slope): defined in network_define.f08
