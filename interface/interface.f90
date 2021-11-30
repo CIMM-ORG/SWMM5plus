@@ -716,15 +716,15 @@ contains
                     thisposition = trim(subroutine_name)//'_E05'
                     call print_api_error(error, thisposition)
                     if (link_value == API_TRANSVERSE_WEIR) then
-                        link_value = lType1Pump
+                        link_value = lTransverseWeir
                     else if (link_value == API_SIDEFLOW_WEIR) then
-                        link_value = lType2Pump
+                        link_value = lSideFlowWeir
                     else if (link_value == API_VNOTCH_WEIR) then
-                        link_value = lType3Pump
+                        link_value = lVnotchWeir
                     else if (link_value == API_TRAPEZOIDAL_WEIR) then
-                        link_value = lType4Pump
+                        link_value = lTrapezoidalWeir
                     else if (link_value == API_ROADWAY_WEIR) then
-                        link_value = lTypeIdealPump
+                        link_value = lRoadWayWeir
                     endif
                 else if (attr == api_orifice_type) then
                     link_value = nullvalueI

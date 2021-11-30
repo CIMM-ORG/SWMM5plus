@@ -96,6 +96,7 @@ enum api_link_attributes {
   link_left_slope,
   link_right_slope,
   weir_end_contractions,
+  weir_side_slope,
   discharge_coeff1,
   discharge_coeff2,
   conduit_roughness,

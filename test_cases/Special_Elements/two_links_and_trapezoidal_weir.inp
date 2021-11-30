@@ -20,7 +20,7 @@ END_TIME             01:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:00:01
+REPORT_STEP          00:01:00
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:00:01 
@@ -67,7 +67,7 @@ C2               J3               Out1             100        0.015      0      
 [WEIRS]
 ;;Name           From Node        To Node          Type         CrestHt    Qcoeff     Gated    EndCon   EndCoeff   Surcharge  RoadWidth  RoadSurf   Coeff. Curve
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- -------- ---------- ---------- ---------- ---------- ----------------
-TRAPEZOIDAL      J2               J3               TRAPEZOIDAL  0          3.33       NO       0        0          YES       
+TRAPEZOIDAL      J2               J3               TRAPEZOIDAL  0          1.84       NO       0        0.6          YES       
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
@@ -75,16 +75,6 @@ TRAPEZOIDAL      J2               J3               TRAPEZOIDAL  0          3.33 
 C1               RECT_OPEN    4                2          0          0          1                    
 C2               RECT_OPEN    4                2          0          0          1                    
 TRAPEZOIDAL      TRAPEZOIDAL  4                2          1          1         
-
-[CONTROLS]
-RULE R1
-
-IF SIMULATION TIME <= 00:30:00
-
-THEN ORIFICE O1 SETTING = 0.0
-
-ELSE ORIFICE O1 SETTING = 1.0
-
 
 [INFLOWS]
 ;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern

@@ -102,15 +102,14 @@ module weir_elements
         if ((Head > Zcrown) .and. (CanSurcharge)) then
             IsSurcharged = .true.
             Zmidpt = (Zcrest + Zcrown) / twoR
-                
             if (NominalDownstreamHead < Zmidpt) then
                 EffectiveHeadDelta = Head - Zmidpt       
             else
                 EffectiveHeadDelta = Head - NominalDownstreamHead    
             endif     
         endif
-        
-    end subroutine weir_effective_head_delta 
+
+    end subroutine weir_effective_head_delta
 !%
 !%========================================================================== 
 !%==========================================================================    
@@ -177,9 +176,9 @@ module weir_elements
         TriangularSideSlope   => elemSR(eIdx,esr_Weir_TriangularSideSlope)
         TrapezoidalLeftSlope  => elemSR(eIdx,esr_Weir_TrapezoidalLeftSlope)
         TrapezoidalRightSlope => elemSR(eIdx,esr_Weir_TrapezoidalRightSlope)
-        CoeffTriangular       => elemSR(eIdx,esr_Weir_DischargeCoeff1)
-        CoeffRectangular      => elemSR(eIdx,esr_Weir_DischargeCoeff2)
-        NominalDsHead => elemSR(eIdx,esr_Weir_NominalDownstreamHead)
+        CoeffTriangular       => elemSR(eIdx,esr_Weir_Triangular)
+        CoeffRectangular      => elemSR(eIdx,esr_Weir_Rectangular)
+        NominalDsHead         => elemSR(eIdx,esr_Weir_NominalDownstreamHead)
         !%-----------------------------------------------------------------------------
         !% initializing default local Villemonte submergence correction factors as 1
         !% These are changed below if needed
@@ -190,26 +189,21 @@ module weir_elements
             case (transverse_weir)
                 WeirExponent          => Setting%Weir%Transverse%WeirExponent
                 WeirContractionFactor => Setting%Weir%Transverse%WeirContractionFactor
-                !WeirCrestExponent     => Setting%Weir%Transverse%SideFlowWeirCrestExponent
                 VillemonteExponent    => Setting%Weir%Transverse%VillemonteCorrectionExponent
-            
-                !% effective crest length due to contraction for tranverse weir
-!% ERROR 20210613 brh something is wrong with the following. EndContractions is an integer, which
-!% should not be multiplied into a real expresssion. Similar in other sections.              
+
+                !% effective crest length due to contraction for tranverse weir             
                 CrestLength = max(zeroR, &
-                        RectangularBreadth - WeirContractionFactor * EndContractions * EffectiveHeadDelta)
-                        
+                        RectangularBreadth - WeirContractionFactor * real(EndContractions,8) * EffectiveHeadDelta) 
+
                 !% correction factor for nominal downstream submergence
                 if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-
-                    ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)
-                            
+                    ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)        
                     SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
                 endif
             
-                Flowrate = FlowDirection * SubCorrectionRectangular * CrestLength * &
+                Flowrate = real(FlowDirection,8) * SubCorrectionRectangular * CrestLength * &
                         CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
-                
+
             case (side_flow)
                 WeirExponent          => Setting%Weir%SideFlow%WeirExponent
                 WeirContractionFactor => Setting%Weir%SideFlow%WeirContractionFactor
@@ -218,19 +212,17 @@ module weir_elements
 
                 !% effective crest length due to contraction for sideflow weir   
                 CrestLength = max(zeroR, &
-                        RectangularBreadth - WeirContractionFactor * EndContractions * EffectiveHeadDelta)
+                        RectangularBreadth - WeirContractionFactor * real(EndContractions,8) * EffectiveHeadDelta)
                         
                 if (FlowDirection > zeroR) then
                     
                     !% correction factor for nominal downstream submergence
                     if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-                    
-                        ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)
-                                
+                        ratio = (NominalDsHead - Zcrest) / (Head - Zcrest) 
                         SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
                     endif
                 
-                    Flowrate = FlowDirection  * SubCorrectionRectangular * (CrestLength ** &
+                    Flowrate = real(FlowDirection,8)  * SubCorrectionRectangular * (CrestLength ** &
                         WeirCrestExponent) * CoeffRectangular * (EffectiveHeadDelta ** WeirExponent)
                 
                 else
@@ -239,14 +231,11 @@ module weir_elements
                     WeirExponent => Setting%Weir%Transverse%WeirExponent
 
                     if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-                
-                        ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)
-                                
+                        ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)      
                         SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
-                    
                     endif
                 
-                    Flowrate = FlowDirection * SubCorrectionRectangular * CrestLength * &
+                    Flowrate = real(FlowDirection,8) * SubCorrectionRectangular * CrestLength * &
                         CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
 
                 endif  
@@ -259,27 +248,23 @@ module weir_elements
                 VillemonteExponent    => Setting%Weir%Trapezoidal%VillemonteCorrectionExponent
 
                 !% effective crest length due for trapezoidal weir
-                CrestLength = TrapezoidalBreadth + &
-                        EffectiveHeadDelta * (TrapezoidalLeftSlope + TrapezoidalRightSlope)
-                        
+                !% HACK: the crest length changes if there is control present
+                CrestLength = TrapezoidalBreadth
+                
                 !% correction factor for nominal downstream submergence
                 if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-                    
-                    ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)
-                            
+                    ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)   
                     SubCorrectionRectangular = ((oneR - (ratio ** WeirExponent)) **  VillemonteExponent)
-                    
                     SubCorrectionTriangular  = ((oneR - (ratio ** WeirExponentVNotch)) ** VillemonteExponent)
-                
                 endif
-                
-                Flowrate = FlowDirection * &
-                        (SubCorrectionTriangular * CoeffTriangular * TriangularSideSlope * &
-                        (EffectiveHeadDelta ** WeirExponentVNotch) &
+
+                Flowrate = real(FlowDirection,8) * &
+                        (SubCorrectionTriangular * CoeffTriangular * ((TrapezoidalLeftSlope + &
+                        TrapezoidalRightSlope) / twoR) * (EffectiveHeadDelta ** WeirExponentVNotch) &
                         + &
                         SubCorrectionRectangular * CoeffRectangular * CrestLength * &
                         (EffectiveHeadDelta ** WeirExponent))
-            
+                             
             case (vnotch_weir)
                 WeirExponent          => Setting%Weir%VNotch%WeirExponent
                 WeirContractionFactor => Setting%Weir%VNotch%WeirContractionFactor
@@ -288,16 +273,13 @@ module weir_elements
 
                 !% correction factor for nominal downstream submergence
                 if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
-                    
                     ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)
-                
                     SubCorrectionTriangular = ((oneR - (ratio ** WeirExponent)) ** VillemonteExponent)
-                
                 endif
                 
-                Flowrate = FlowDirection * SubCorrectionTriangular * CoeffTriangular * &
-                        TriangularSideSlope * (EffectiveHeadDelta ** WeirExponent)
-                    
+                Flowrate = real(FlowDirection,8) * SubCorrectionTriangular * CoeffTriangular * &
+                        TriangularSideSlope * (EffectiveHeadDelta ** WeirExponent) 
+
         end Select
 
     end subroutine weir_flow

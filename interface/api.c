@@ -570,6 +570,13 @@ int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value)
         else
             *value = 0;
     }
+    else if (attr == weir_side_slope)
+    {
+        if (Link[link_idx].type == WEIR)
+            *value = Weir[Link[link_idx].subIndex].slope;
+        else
+            *value = 0;
+    }
     else if (attr == link_flow)
         *value = CFTOCM(Link[link_idx].newFlow);
     else if (attr == link_depth)
@@ -581,13 +588,9 @@ int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value)
     else if (attr == link_setting)
         *value = Link[link_idx].setting;
     else if (attr == link_left_slope)
-    {
         *value = api->double_vars[api_left_slope][link_idx];
-    }
     else if (attr == link_right_slope)
-    {
         *value = api->double_vars[api_right_slope][link_idx];
-    }
     else
         *value = API_NULL_VALUE_I;
     return 0;

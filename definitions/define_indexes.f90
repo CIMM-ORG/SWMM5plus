@@ -505,8 +505,8 @@ module define_indexes
     integer, parameter :: Ncol_elemSR_Storage = esr_Storage_lastplusone-1
 
     enum, bind(c)
-        enumerator ::  esr_Weir_DischargeCoeff1 = 1     !% discharge coefficient for triangular weir
-        enumerator ::  esr_Weir_DischargeCoeff2         !% discharge coefficient for rectangular weir part
+        enumerator ::  esr_Weir_Rectangular = 1         !% discharge coefficient for the rectangular portion
+        enumerator ::  esr_Weir_Triangular              !% discharge coefficient for triangular weir part
         enumerator ::  esr_Weir_EffectiveFullDepth      !% effective full depth after control intervention
         enumerator ::  esr_Weir_EffectiveHeadDelta      !% effective head delta across weir
         enumerator ::  esr_Weir_NominalDownstreamHead   !% nominal downstream head

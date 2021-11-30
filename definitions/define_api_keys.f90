@@ -173,6 +173,7 @@ module define_api_keys
         enumerator :: api_link_left_slope
         enumerator :: api_link_right_slope
         enumerator :: api_weir_end_contractions
+        enumerator :: api_weir_side_slope
         enumerator :: api_discharge_coeff1
         enumerator :: api_discharge_coeff2
         enumerator :: api_conduit_roughness
