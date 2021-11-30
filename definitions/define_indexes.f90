@@ -57,6 +57,7 @@ module define_indexes
         enumerator :: li_weir_type           ! type of weir link
         enumerator :: li_orif_type           ! type of orifice link
         enumerator :: li_pump_type           ! type of pump link
+        enumerator :: li_outlet_type         ! type of outlet link
         enumerator :: li_geometry
         enumerator :: li_roughness_type
         enumerator :: li_N_element           ! Number of elements in this link
@@ -69,6 +70,7 @@ module define_indexes
         enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
         enumerator :: li_num_phantom_links   ! Number of phantom links associated 
         enumerator :: li_weir_EndContrations
+        enumerator :: li_curve_id            ! cure id if the link is associated with any curve
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
         enumerator :: li_lastplusone !% must be last enum item

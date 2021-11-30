@@ -97,6 +97,7 @@ enum api_link_attributes {
   link_right_slope,
   weir_end_contractions,
   weir_side_slope,
+  link_curveid,
   discharge_coeff1,
   discharge_coeff2,
   conduit_roughness,
@@ -105,6 +106,7 @@ enum api_link_attributes {
   link_type,
   weir_type,
   orifice_type,
+  outlet_type,
   pump_type,
   // --- xsect attributes
   link_xsect_type,

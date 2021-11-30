@@ -388,6 +388,7 @@ contains
             link%I(ii,li_link_type) = interface_get_link_attribute(ii, api_link_type)
             link%I(ii,li_weir_type) = interface_get_link_attribute(ii, api_weir_type)
             link%I(ii,li_orif_type) = interface_get_link_attribute(ii, api_orifice_type)
+            link%I(ii,li_outlet_type) = interface_get_link_attribute(ii, api_outlet_type)
             link%I(ii,li_pump_type) = interface_get_link_attribute(ii, api_pump_type)
             link%I(ii,li_geometry) = interface_get_link_attribute(ii, api_link_geometry)
             link%I(ii,li_Mnode_u) = interface_get_link_attribute(ii, api_link_node1) + 1 ! node1 in C starts from 0
@@ -422,6 +423,7 @@ contains
 
             !% special element attributes
             link%I(ii,li_weir_EndContrations) = interface_get_link_attribute(ii, api_weir_end_contractions)
+            link%I(ii,li_curve_id) = interface_get_link_attribute(ii, api_link_curveid)
             link%R(ii,lr_DischargeCoeff1) = interface_get_link_attribute(ii, api_discharge_coeff1)
             link%R(ii,lr_DischargeCoeff2) = interface_get_link_attribute(ii, api_discharge_coeff2)
             link%R(ii,lr_SideSlope) = interface_get_link_attribute(ii, api_weir_side_slope)
@@ -473,7 +475,7 @@ contains
             node%R(ii,nr_StorageConstant)   = interface_get_node_attribute(ii, api_node_StorageConstant)
             node%R(ii,nr_StorageCoeff)      = interface_get_node_attribute(ii, api_node_StorageCoeff)
             node%R(ii,nr_StorageExponent)   = interface_get_node_attribute(ii, api_node_StorageExponent)
-            node%I(ii,ni_curve_ID)          = interface_get_node_attribute(ii, api_node_StorageCurveID) + 1
+            node%I(ii,ni_curve_ID)          = interface_get_node_attribute(ii, api_node_StorageCurveID)
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
         end do
 

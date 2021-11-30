@@ -421,6 +421,12 @@ contains
                 print*, 'pumps are not handeled yet'
                 stop
 
+            case (lOutlet)
+
+                elemI(:,ei_elementType)            = outlet
+                elemI(:,ei_QeqType)                = diagnostic
+                elemYN(:,eYN_canSurcharge)         = .true.
+
             case default
 
                 print*, 'In ', subroutine_name
@@ -478,6 +484,12 @@ contains
 
                 print*, 'In ', subroutine_name
                 print*, 'pumps are not handeled yet'
+                stop
+
+            case (lOutlet)
+
+                print*, 'In ', subroutine_name
+                print*, 'outlets are not handeled yet'
                 stop
 
             case default

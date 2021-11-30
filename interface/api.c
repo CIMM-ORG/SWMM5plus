@@ -322,7 +322,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     else if (attr == node_StorageCurveID)
     {
         if (Node[node_idx].type == STORAGE)
-            *value = Storage[Node[node_idx].subIndex].aCurve;
+            *value = Storage[Node[node_idx].subIndex].aCurve + 1;
         else
             *value = -1;
     }
@@ -523,9 +523,11 @@ int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value)
     else if (attr == link_type)
         *value =  Link[link_idx].type;
     else if (attr == pump_type)
-        *value =  Pump[Link[link_idx].subIndex].pumpCurve;
+        *value =  Pump[Link[link_idx].subIndex].type;
     else if (attr == orifice_type)
         *value = Orifice[Link[link_idx].subIndex].type;
+    else if (attr == outlet_type)
+        *value = Outlet[Link[link_idx].subIndex].curveType;
     else if (attr == weir_type)
         *value = Weir[Link[link_idx].subIndex].type;
     else if (attr == conduit_roughness)
@@ -554,12 +556,25 @@ int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value)
         else
             *value = 0;
     }
+    else if (attr == link_curveid)
+    {
+        if (Link[link_idx].type == WEIR)
+            *value = Weir[Link[link_idx].subIndex].cdCurve+1;
+        else if (Link[link_idx].type == PUMP)
+            *value = Pump[Link[link_idx].subIndex].pumpCurve+1;
+        else if (Link[link_idx].type == OUTLET)
+            *value = Outlet[Link[link_idx].subIndex].qCurve+1;
+        else
+            *value = 0;
+    }
     else if (attr == discharge_coeff1)
     {
         if (Link[link_idx].type == WEIR)
             *value = Weir[Link[link_idx].subIndex].cDisch1;
         else if (Link[link_idx].type == ORIFICE)
             *value = Orifice[Link[link_idx].subIndex].cDisch;
+        else if (Link[link_idx].type == OUTLET)
+            *value = Outlet[Link[link_idx].subIndex].qCoeff;
         else
             *value = 0;
     }
@@ -567,6 +582,8 @@ int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value)
     {
         if (Link[link_idx].type == WEIR)
             *value = Weir[Link[link_idx].subIndex].cDisch2;
+        else if (Link[link_idx].type == OUTLET)
+            *value = Outlet[Link[link_idx].subIndex].qExpon;
         else
             *value = 0;
     }

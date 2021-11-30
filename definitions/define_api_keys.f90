@@ -67,6 +67,13 @@ module define_api_keys
         enumerator :: API_ROADWAY_WEIR
     end enum
 
+    !% SWMM Computed node quantities ($API_DIR/src/enums.h) -> MAX_NODE_RESULTS
+    !% HACK: These keys are used for SWMM5 outlet type as well
+    enum, bind(c)
+        enumerator :: API_NODE_DEPTH = 0
+        enumerator :: API_NODE_HEAD
+    end enum
+
     !% SWMM Table types ($API_DIR/src/enums.h -> ObjectType)
     enum, bind(c)
         enumerator :: API_TIMEPATTERN = 6
@@ -149,7 +156,6 @@ module define_api_keys
         enumerator :: api_node_dwfInflow_weekend_pattern
         enumerator :: api_node_dwfInflow_avgvalue
         enumerator :: api_node_has_dwfInflow
-        enumerator :: api_node_depth
         enumerator :: api_node_fullDepth
         enumerator :: api_node_inflow
         enumerator :: api_node_volume
@@ -174,6 +180,7 @@ module define_api_keys
         enumerator :: api_link_right_slope
         enumerator :: api_weir_end_contractions
         enumerator :: api_weir_side_slope
+        enumerator :: api_link_curveid
         enumerator :: api_discharge_coeff1
         enumerator :: api_discharge_coeff2
         enumerator :: api_conduit_roughness
@@ -182,6 +189,7 @@ module define_api_keys
         enumerator :: api_link_type
         enumerator :: api_weir_type
         enumerator :: api_orifice_type
+        enumerator :: api_outlet_type
         enumerator :: api_pump_type
         ! --- xsect attributes
         enumerator :: api_link_xsect_type

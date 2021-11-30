@@ -652,6 +652,7 @@ contains
             error = ptr_api_get_link_attribute(link_idx-1, api_link_type, link_value)
             thisposition = trim(subroutine_name)//'_B02'
             call print_api_error(error, thisposition)
+            
             if (link_value == API_CONDUIT) then
                 if (attr == api_link_type) then
                     link_value = lPipe
@@ -660,6 +661,8 @@ contains
                 else if (attr == api_orifice_type) then
                     link_value = nullvalueI
                 else if (attr == api_pump_type) then
+                    link_value = nullvalueI
+                else if (attr == api_outlet_type) then
                     link_value = nullvalueI
                 end if
 
@@ -686,6 +689,8 @@ contains
                     else if (link_value == API_IDEAL_PUMP) then
                         link_value = lTypeIdealPump
                     endif
+                else if (attr == api_outlet_type) then
+                    link_value = nullvalueI
                 end if
 
             else if (link_value == API_ORIFICE) then
@@ -704,6 +709,8 @@ contains
                         link_value = lBottomOrifice
                     endif
                 else if (attr == api_pump_type) then
+                    link_value = nullvalueI
+                else if (attr == api_outlet_type) then
                     link_value = nullvalueI
                 end if
 
@@ -730,7 +737,31 @@ contains
                     link_value = nullvalueI
                 else if (attr == api_pump_type) then
                     link_value = nullvalueI
+                else if (attr == api_outlet_type) then
+                    link_value = nullvalueI
                 end if
+
+            else if (link_value == API_OUTLET) then
+                if (attr == api_link_type) then
+                    link_value = lOutlet
+                else if (attr == api_weir_type) then
+                    link_value = nullvalueI
+                else if (attr == api_orifice_type) then
+                    link_value = nullvalueI
+                else if (attr == api_pump_type) then
+                    link_value = nullvalueI
+                else if (attr == api_outlet_type) then
+                    call load_api_procedure("api_get_link_attribute")
+                    error = ptr_api_get_link_attribute(link_idx-1, api_outlet_type, link_value)
+                    thisposition = trim(subroutine_name)//'_F05'
+                    call print_api_error(error, thisposition)
+                    if (link_value == API_NODE_DEPTH) then
+                        link_value = lNodeDepth
+                    else if (link_value == API_NODE_HEAD) then
+                        link_value = lNodeHead
+                    endif
+                end if
+
             endif
 
         else

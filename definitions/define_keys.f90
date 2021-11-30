@@ -41,10 +41,8 @@ module define_keys
         enumerator :: lType4Pump            !% type 4 pump link
         enumerator :: lTypeIdealPump        !% ideal pump link
         enumerator :: lOutlet               !% outlet link
-        enumerator :: lFunctionalDepth      !% outlet having functional depth relationship  
-        enumerator :: lFunctionalHead       !% outlet having functional head relationship 
-        enumerator :: lTabularDepth         !% outlet having curve relationship to depth
-        enumerator :: lTabularHead          !% outlet having curve relationship to head
+        enumerator :: lNodeDepth            !% outlet having functional\curve flow vs depth relationship  
+        enumerator :: lNodeHead             !% outlet having functional\curve flow vs head relationship 
         !% open channel cross-sectional geometry types
         enumerator :: lRectangular           !% rectangular open channel
         enumerator :: lTrapezoidal           !% trapezoidal open channel
