@@ -309,7 +309,7 @@
             "weir_elements" : false
         },
         "FileGroup" : {
-            "all" : true,
+            "all" : false,
             "definitions" : false,
             "finalization" : false,
             "geometry" : false,

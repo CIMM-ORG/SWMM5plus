@@ -73,7 +73,7 @@ module weir_elements
         !% Computes the effective head difference flowing over the top of a weir
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx !% single ID of element
-        real(8), pointer :: EffectiveHeadDelta, Head, Zbottom, Zcrown, Zcrest
+        real(8), pointer :: EffectiveHeadDelta, Head, Zcrown, Zcrest
         real(8), pointer :: NominalDownstreamHead
         logical, pointer :: CanSurcharge, IsSurcharged
         real(8) :: Zmidpt

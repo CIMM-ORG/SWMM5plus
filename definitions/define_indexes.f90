@@ -547,13 +547,11 @@ module define_indexes
 
     enum, bind(c)
         enumerator ::  esr_Outlet_DischargeCoeff = 1       !% discharge coefficient outlet
-        enumerator ::  esr_Outlet_EffectiveFullDepth       !% effective full depth after control intervention
         enumerator ::  esr_Outlet_EffectiveHeadDelta       !% effective head delta across outlet
         enumerator ::  esr_Outlet_NominalDownstreamHead    !% nominal downstream head for outlet
         enumerator ::  esr_Outlet_Exponent                 !% exponent for outlet dishcharge relation
         enumerator ::  esr_Outlet_Coefficient              !% power for outlet dishcharge relation
-        enumerator ::  esr_Outlet_Zcrown                   !% orifice "crown" elevation - highest edge of outlet
-        enumerator ::  esr_Outlet_Zcrest                   !% orifice "crest" elevation - lowest edge of outlet
+        enumerator ::  esr_Outlet_Zcrest                   !% outlet "crest" elevation - lowest edge of outlet
         enumerator ::  esr_Outlet_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSR_Ooutlet = esr_Outlet_lastplusone-1
@@ -841,12 +839,21 @@ module define_indexes
         enumerator :: curve_pump_flowrate
         enumerator :: curve_pump_lastplusone !% must be the last enum item
     end enum
-    integer, parameter :: Ncol_pump_curve = curve_pump_lastplusone-1
+
+    !% define column indexes for outlet rating curve types
+    enum, bind(c)
+        enumerator :: curve_outlet_depth = 1
+        enumerator :: curve_outlet_flowrate
+        enumerator :: curve_pump_lastplusone !% must be the last enum item
+    end enum
+
+    integer, parameter :: Ncol_outlet_curve = curve_pump_lastplusone-1
 
     !% determine the largest number of columns for table data structure
     integer, target :: Ncol_curve = max(&
                             Ncol_storage_curve, &
-                            Ncol_pump_curve)
+                            Ncol_pump_curve, &
+                            Ncol_outlet_curve)
     !
     !==========================================================================
     ! definitions

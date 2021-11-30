@@ -8,6 +8,7 @@ module diagnostic_elements
     use weir_elements
     use pump_elements
     use orifice_elements
+    use outlet_elements
     use utility_profiler
 
     implicit none
@@ -98,8 +99,8 @@ module diagnostic_elements
                     ! call diagnostic_pump (thisP(ii))
 
                 case (outlet)
-                    ! call diagnostic_outlet (thisP(ii))
-                    stop
+                    call outlet_toplevel (thisP(ii))
+                    
                 case default
                     print *, 'error, default case should not be reached'
                     stop 9472

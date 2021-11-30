@@ -52,6 +52,7 @@ SOURCE_FILES="$JSON_DIR/json_kinds.F90\
               $TL_DIR/common_elements.f90\
               $TL_DIR/weir_elements.f90\
               $TL_DIR/orifice_elements.f90\
+              $TL_DIR/outlet_elements.f90\
               $TL_DIR/pump_elements.f90\
               $TL_DIR/lowlevel_rk2.f90\
               $TL_DIR/update.f90\
