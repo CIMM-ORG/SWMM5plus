@@ -139,10 +139,10 @@ module define_keys
         enumerator :: type2_Pump            !% type 2 pump type
         enumerator :: type3_Pump            !% type 3 pump type
         enumerator :: type4_Pump            !% type 4 pump type
-        enumerator :: functional_depth      !% outlet having functional depth relationship  
-        enumerator :: functional_head       !% outlet having functional head relationship 
-        enumerator :: tabular_depth         !% outlet having curve relationship to depth
-        enumerator :: tabular_head          !% outlet having curve relationship to head
+        enumerator :: func_depth_outlet     !% outlet having functional depth relationship  
+        enumerator :: func_head_outlet      !% outlet having functional head relationship 
+        enumerator :: tabl_depth_outlet     !% outlet having curve relationship to depth
+        enumerator :: tabl_head_outlet      !% outlet having curve relationship to head
         !% BC types
         enumerator :: BCFlow
         enumerator :: BCHead

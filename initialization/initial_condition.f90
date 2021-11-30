@@ -120,7 +120,7 @@ contains
 
         ! if (setting%Profile%YN) call util_profiler_stop (pfc_init_IC_setup)
 
-        if (setting%Debug%File%initial_condition) then
+        ! if (setting%Debug%File%initial_condition) then
            print*, '----------------------------------------------------'
            print*, 'image = ', this_image()
            print*, '.....................elements.......................'
@@ -150,8 +150,8 @@ contains
            print*, faceR(:,fr_Topwidth_u), 'face topwidth up'
            print*, faceR(:,fr_Topwidth_d), 'face topwidth dn'
            ! call execute_command_line('')
-        end if
-
+        ! end if
+        stop
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -487,10 +487,8 @@ contains
                 stop
 
             case (lOutlet)
-
-                print*, 'In ', subroutine_name
-                print*, 'outlets are not handeled yet'
-                stop
+                !% get geomety data for outlets
+                call init_IC_get_outlet_geometry (thisLink)
 
             case default
 
@@ -891,6 +889,71 @@ contains
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_get_orifice_geometry
+
+    !
+    !==========================================================================
+    !==========================================================================
+    !
+    subroutine init_IC_get_outlet_geometry (thisLink)
+    !--------------------------------------------------------------------------
+    !
+    !% get the geometry and other data data for orifice links
+    !
+    !--------------------------------------------------------------------------
+
+        integer, intent(in) :: thisLink
+        integer, pointer    :: specificOutletType, curveID
+
+        character(64) :: subroutine_name = 'init_IC_get_outlet_geometry'
+    !--------------------------------------------------------------------------
+        if (icrash) return
+        if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        !% pointer to specific outlet type
+        specificOutletType => link%I(thisLink,li_outlet_type)
+        curveID            => link%I(thisLink,li_curve_id)
+
+        if ((specificOutletType == lNodeDepth) .and. (curveID == zeroI)) then
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                !% integer data
+                elemSI(:,esi_Outlet_SpecificType)  = func_depth_outlet
+            endwhere
+        elseif ((specificOutletType == lNodeDepth) .and. (curveID /= zeroI)) then
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                !% integer data
+                elemSI(:,esi_Outlet_SpecificType)  = tabl_depth_outlet
+                elemSI(:,esi_Outlet_CurveID)       = curveID
+            endwhere
+        elseif ((specificOutletType == lNodeHead) .and. (curveID == zeroI)) then
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                !% integer data
+                elemSI(:,esi_Outlet_SpecificType)  = func_head_outlet
+            endwhere
+        elseif ((specificOutletType == lNodeHead) .and. (curveID /= zeroI)) then
+            where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                !% integer data
+                elemSI(:,esi_Outlet_SpecificType)  = tabl_head_outlet
+                elemSI(:,esi_Outlet_CurveID)       = curveID
+            endwhere
+        else
+            print*, 'In ', subroutine_name
+            print*, 'error: unknown orifice type, ', specificOutletType,'  in network'
+            stop
+        endif
+
+        !% Outlets does not have any specifice geomety.
+        where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            !% real data
+            elemSR(:,esr_Outlet_Coefficient) = link%R(thisLink,lr_DischargeCoeff1)
+            elemSR(:,esr_Outlet_Exponent)    = link%R(thisLink,lr_DischargeCoeff2)
+            elemSR(:,esr_Outlet_Zcrest)      = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
+        end where
+
+
+        if (setting%Debug%File%initial_condition) &
+        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_IC_get_outlet_geometry
     !
     !==========================================================================
     !==========================================================================

@@ -97,6 +97,9 @@ module diagnostic_elements
                 case (pump)
                     ! call diagnostic_pump (thisP(ii))
 
+                case (outlet)
+                    ! call diagnostic_outlet (thisP(ii))
+                    stop
                 case default
                     print *, 'error, default case should not be reached'
                     stop 9472

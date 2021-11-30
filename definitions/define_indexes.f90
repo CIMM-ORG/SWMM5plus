@@ -551,7 +551,7 @@ module define_indexes
         enumerator ::  esr_Outlet_EffectiveHeadDelta       !% effective head delta across outlet
         enumerator ::  esr_Outlet_NominalDownstreamHead    !% nominal downstream head for outlet
         enumerator ::  esr_Outlet_Exponent                 !% exponent for outlet dishcharge relation
-        enumerator ::  esr_Outlet_Power                    !% power for outlet dishcharge relation
+        enumerator ::  esr_Outlet_Coefficient              !% power for outlet dishcharge relation
         enumerator ::  esr_Outlet_Zcrown                   !% orifice "crown" elevation - highest edge of outlet
         enumerator ::  esr_Outlet_Zcrest                   !% orifice "crest" elevation - lowest edge of outlet
         enumerator ::  esr_Outlet_lastplusone !% must be last enum item
