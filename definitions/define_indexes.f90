@@ -840,14 +840,16 @@ module define_indexes
         enumerator :: curve_pump_lastplusone !% must be the last enum item
     end enum
 
+    integer, parameter :: Ncol_pump_curve = curve_pump_lastplusone-1
+    
     !% define column indexes for outlet rating curve types
     enum, bind(c)
         enumerator :: curve_outlet_depth = 1
         enumerator :: curve_outlet_flowrate
-        enumerator :: curve_pump_lastplusone !% must be the last enum item
+        enumerator :: curve_outlet_lastplusone !% must be the last enum item
     end enum
 
-    integer, parameter :: Ncol_outlet_curve = curve_pump_lastplusone-1
+    integer, parameter :: Ncol_outlet_curve = curve_outlet_lastplusone-1
 
     !% determine the largest number of columns for table data structure
     integer, target :: Ncol_curve = max(&

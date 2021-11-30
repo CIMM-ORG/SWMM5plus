@@ -85,7 +85,7 @@ module outlet_elements
             EffectiveHeadDelta = max(Head - max(NominalDownstreamHead,Zcrest), zeroR)
 
         elseif ((OutletType == func_depth_outlet) .or. (OutletType == tabl_depth_outlet)) then
-            EffectiveHeadDelta = max(Head - Zcrest, zrroR)
+            EffectiveHeadDelta = max(Head - Zcrest, zeroR)
         endif
 
     end subroutine outlet_effective_head_delta
@@ -123,6 +123,7 @@ module outlet_elements
             Depth = EffectiveHeadDelta
             call util_curve_lookup_singular(CurveID, er_Depth, er_Flowrate, &
                 curve_outlet_depth, curve_outlet_flowrate)
+            Flowrate = Flowrate * real(FlowDirection,8)
         endif
 
     end subroutine outlet_flow
@@ -135,22 +136,23 @@ module outlet_elements
         !% Description:
         !% an outlet element does not have any geomety fearures. 
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: eIdx, fUp, fdn
+        integer, intent(in) :: eIdx
+        integer, pointer :: fUp, fDn
         real(8), pointer :: fAUp, fADn, Area
         !%-----------------------------------------------------------------------------
         if (icrash) return
 
         fUp  => elemI(eIdx,ei_Mface_uL)
-        fdn  => elemI(eIdx,ei_Mface_dL)
-        fAUp => faceR(fUp,f_area_d)
-        fADn => faceR(fDn,f_area_u)
+        fDn  => elemI(eIdx,ei_Mface_dL)
+        fAUp => faceR(fUp,fr_area_d)
+        fADn => faceR(fDn,fr_area_u)
         Area => elemR(eIdx,er_Area)
 
         !% only putting this placeholder area for a paceholder velocity
         Area      =  (fAUp + fADn) / twoR
 
         !% apply geometry limiters
-        call adjust_limit_by_zerovalues_singular (eIdx, er_Area,      setting%ZeroValue%Area)
+        call adjust_limit_by_zerovalues_singular (eIdx, er_Area, setting%ZeroValue%Area)
 
     end subroutine outlet_geometry_update
 !%    
