@@ -954,7 +954,7 @@ contains
 !%=============================================================================
 !%=============================================================================
 !%
-    function interface_get_num_table_entries(table_idx) result(num_entries)
+    function interface_get_num_table_entries(table_idx)
     !%-----------------------------------------------------------------------------
     !% Description:
     !%    Retrieves table attributes from EPA-SWMM. API table attributes are
@@ -965,8 +965,7 @@ contains
     !%    start from 0.
     !%-----------------------------------------------------------------------------
         integer :: table_idx, table_type, error
-        integer :: num_entries
-
+        integer :: interface_get_num_table_entries
         integer(c_int), target :: table_entries
         character(64) :: thisposition
         character(64) :: subroutine_name = 'interface_get_num_table_entries'
@@ -984,11 +983,12 @@ contains
         call load_api_procedure("api_get_num_table_entries")
         error = ptr_api_get_num_table_entries(table_idx-1, API_CURVE, table_entries)
         call print_api_error(error, subroutine_name)
-
+        interface_get_num_table_entries = table_entries
         if (setting%Debug%File%interface)  then
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             print *, "table", table_entries
         end if
+        
     end function interface_get_num_table_entries
 !%
 !%=============================================================================

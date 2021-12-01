@@ -30,14 +30,11 @@ module outlet_elements
         !% Computes diagnostic flow and head delta across a outlet.
         !%-----------------------------------------------------------------------------
         integer, intent(in) :: eIdx  !% must be a single element ID
-        logical, pointer :: isSurcharged
         
         character(64) :: subroutine_name = 'outlet_toplevel'
         !%-----------------------------------------------------------------------------
         if (icrash) return
-        !%-----------------------------------------------------------------------------
-        isSurcharged => elemYN(eIdx,eYN_isSurcharged)
-        !%  
+        !%----------------------------------------------------------------------------- 
         !% get the flow direction and element head
         call  common_head_and_flowdirection_singular &
             (eIdx, esr_Outlet_Zcrest, esr_Outlet_NominalDownstreamHead, esi_Outlet_FlowDirection)

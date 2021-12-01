@@ -511,12 +511,11 @@ contains
 
         !% we create additional curves for functional storage as well
         !% this allocates the space for functional storage curve
-        additional_storage_curves = count((node%YN(:, nYN_has_storage)) .and. &
+        additional_storage_curves = count((node%YN(:,nYN_has_storage)) .and. &
                                           (node%I(:,ni_curve_ID) == 0))
 
         Total_Curves = additional_storage_curves + SWMM_N_Curve
         if (Total_Curves > SWMM_N_Curve) N_Curve = SWMM_N_Curve + additional_storage_curves
-
         !% allocate the number of curve objets from SWMM5
         call util_allocate_curves()
 

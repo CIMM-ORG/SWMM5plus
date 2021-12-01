@@ -20,7 +20,7 @@ END_TIME             01:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:00:01
+REPORT_STEP          00:01:00
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:00:01 
@@ -67,7 +67,7 @@ C2               J3               Out1             100        0.015      0      
 [OUTLETS]
 ;;Name           From Node        To Node          Offset     Type            QTable/Qcoeff    Qexpon     Gated   
 ;;-------------- ---------------- ---------------- ---------- --------------- ---------------- ---------- --------
-OUTLET           J2               J3               0          FUNCTIONAL/DEPTH 0.6              1.5        NO      
+OUTLET           J2               J3               0          FUNCTIONAL/HEAD 0.6              1.5        NO      
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   

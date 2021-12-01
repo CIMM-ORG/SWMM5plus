@@ -696,7 +696,7 @@ int DLLEXPORT api_get_num_table_entries(int table_idx, int table_type, int* num_
     int success;
 
     *num_entries = 0;
-    // printf("1 Number of entries in Curve %d: %d\n", k, *num_entries);
+    // printf("1 Number of entries in Curve %d\n", *num_entries);
     if (table_type == CURVE)
     {
         // ERROR handling
@@ -707,14 +707,14 @@ int DLLEXPORT api_get_num_table_entries(int table_idx, int table_type, int* num_
         {
             success = table_getNextEntry(&(Curve[table_idx]), &x, &y);
             if (success) (*num_entries)++;
-            // printf("0 Number of entries in Curve %d: %d\n", k, *num_entries);
+            // printf("0 Number of entries in Curve %d\n", *num_entries);
         }
     }
     else
     {
         return -1;
     }
-    // printf("Number of entries in Curve %d: %d\n", k, *num_entries);
+    // printf("Number of entries in Curve %d\n", *num_entries);
     // printf("SUCCESS %d\n", success);
 
     return 0;
