@@ -51,33 +51,36 @@ enum api_output_link_attribute {
 
 enum api_node_attributes {
   node_ID = 1,
-  node_type,
-  node_outfall_type,
-  node_invertElev,
-  node_initDepth,
-  node_StorageConstant,
-  node_StorageCoeff,
-  node_StorageExponent,
-  node_StorageCurveID,
-  node_extInflow_tSeries,
-  node_extInflow_tSeries_x1,
-  node_extInflow_tSeries_x2,
-  node_extInflow_basePat,
-  node_extInflow_basePat_type,
-  node_extInflow_baseline,
-  node_extInflow_sFactor,
-  node_has_extInflow,
-  node_dwfInflow_monthly_pattern,
-  node_dwfInflow_daily_pattern,
-  node_dwfInflow_hourly_pattern,
-  node_dwfInflow_weekend_pattern,
-  node_dwfInflow_avgvalue,
-  node_has_dwfInflow,
-  node_depth,
-  node_fullDepth,
-  node_inflow,
-  node_volume,
-  node_overflow
+  node_type,            // 2
+  node_outfall_type,    // 3
+  node_invertElev,      // 4
+  node_initDepth,       // 5
+  node_StorageConstant,    // 6
+  node_StorageCoeff,       // 7
+  node_StorageExponent,    // 8
+  node_StorageCurveID,     // 9
+  node_extInflow_tSeries,   // 10
+  node_extInflow_tSeries_x1,  // 11
+  node_extInflow_tSeries_x2,   // 12
+  node_extInflow_basePat,      // 13
+  node_extInflow_basePat_type,  // 14
+  node_extInflow_baseline,      // 15
+  node_extInflow_sFactor,       // 16
+  node_has_extInflow,             // 17
+  node_dwfInflow_monthly_pattern,  // 18
+  node_dwfInflow_daily_pattern,    // 19
+  node_dwfInflow_hourly_pattern,   // 20
+  node_dwfInflow_weekend_pattern,  // 21
+  node_dwfInflow_avgvalue,         // 22
+  node_has_dwfInflow,              // 23
+  // brh20211207s
+  //node_depth,                      // xx
+  node_newDepth,                   // 24
+  // brh20211207e
+  node_fullDepth,                  // 25
+  node_inflow,                     // 26
+  node_volume,                     // 27
+  node_overflow                    // 28
 };
 
 enum api_link_attributes {

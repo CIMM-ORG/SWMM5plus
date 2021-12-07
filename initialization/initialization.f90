@@ -68,7 +68,8 @@ contains
 
         !% --- input project paths and filenames from command line arguments
         !%     note that all files and folders must exist
-        ! call util_file_setup_input_paths_and_files()
+        !%     This is needed here so that -p command line option works
+        call util_file_setup_input_paths_and_files()
 
         if (setting%Output%Verbose) &
             write(*,"(2A,i5,A)") new_line(" "), 'begin initialization [Processor ', this_image(), "] ..."
@@ -413,7 +414,9 @@ contains
             link%R(ii,lr_RightSlope) = interface_get_link_attribute(ii, api_link_right_slope)
             link%R(ii,lr_Roughness) = interface_get_link_attribute(ii, api_conduit_roughness)
             link%R(ii,lr_InitialFlowrate) = interface_get_link_attribute(ii, api_link_q0)
+            write(*,*) 'api_node_initDepth 1'
             link%R(ii,lr_InitialUpstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_u), api_node_initDepth)
+            write(*,*) 'api_node_initDepth 2'
             link%R(ii,lr_InitialDnstreamDepth) = interface_get_node_attribute(link%I(ii,li_Mnode_d), api_node_initDepth)
             link%R(ii,lr_InitialDepth) = (link%R(ii,lr_InitialDnstreamDepth) + link%R(ii,lr_InitialUpstreamDepth)) / 2.0
             link%R(ii,lr_FullDepth) = interface_get_link_attribute(ii, api_link_xsect_yFull)
@@ -426,7 +429,7 @@ contains
             link%R(ii,lr_DischargeCoeff1) = interface_get_link_attribute(ii, api_discharge_coeff1)
             link%R(ii,lr_DischargeCoeff2) = interface_get_link_attribute(ii, api_discharge_coeff2)
             link%R(ii,lr_SideSlope) = interface_get_link_attribute(ii, api_weir_side_slope)
-            !% SWMM5 doesnot distinct between channel and conduit
+            !% SWMM5 doesnot distinguish between channel and conduit
             !% however we need that distinction to set up the init condition
             if ( (link%I(ii,li_link_type) == lPipe)          .and. &
                  ( &
@@ -442,9 +445,14 @@ contains
             end if
         end do
 
+        write(*,*) 
+        write(*,*) 'FINISHED WITH LINKS --------------------------------------------------------------------------------'
+        write(*,*)
+
         do ii = 1, N_node
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
+            write(*,*) 'api_node_type'
             if (interface_get_node_attribute(ii, api_node_type) == API_OUTFALL) then
                 node%I(ii, ni_node_type) = nBCdn
             else if (interface_get_node_attribute(ii, api_node_type) == API_STORAGE) then
@@ -458,8 +466,12 @@ contains
                 node%I(ii, ni_node_type) = nJm
             end if
 
+            write(*,*) 'api_node_has_extInflow'
             node%YN(ii, nYN_has_extInflow) = interface_get_node_attribute(ii, api_node_has_extInflow) == 1
+            write(*,*) 'node extInflow ',ii, node%YN(ii,nYN_has_extInflow)
+            write(*,*) 'api_node_has_dwfInflow'
             node%YN(ii, nYN_has_dwfInflow) = interface_get_node_attribute(ii, api_node_has_dwfInflow) == 1
+            write(*,*) 'node dwfInflow ',ii, node%YN(ii,nYN_has_dwfInflow)
 
             if (node%YN(ii, nYN_has_extInflow) .or. node%YN(ii, nYN_has_dwfInflow)) then
                 node%YN(ii, nYN_has_inflow) = .true.
@@ -468,13 +480,21 @@ contains
                 end if
             end if
 
+            write(*,*) 'api_node_initDepth'
             node%R(ii,nr_InitialDepth)      = interface_get_node_attribute(ii, api_node_initDepth)
+            write(*,*) 'api_node_invertElev'
             node%R(ii,nr_Zbottom)           = interface_get_node_attribute(ii, api_node_invertElev)
+            write(*,*) 'api_node_fullDepth'
             node%R(ii,nr_FullDepth)         = interface_get_node_attribute(ii, api_node_fullDepth)
+            write(*,*) 'api_node_StorageConstant'
             node%R(ii,nr_StorageConstant)   = interface_get_node_attribute(ii, api_node_StorageConstant)
+            write(*,*) 'api_node_StorageCoeff'
             node%R(ii,nr_StorageCoeff)      = interface_get_node_attribute(ii, api_node_StorageCoeff)
+            write(*,*) 'api_node_StorageExponent'
             node%R(ii,nr_StorageExponent)   = interface_get_node_attribute(ii, api_node_StorageExponent)
+            write(*,*) 'api_node_StorageCurveID'
             node%I(ii,ni_curve_ID)          = interface_get_node_attribute(ii, api_node_StorageCurveID)
+            write(*,*) '... calling interface_get_BC_resolution'
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
         end do
 

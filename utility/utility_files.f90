@@ -329,25 +329,26 @@ contains
             this_purpose, ireturn, fext)
 
         !print *, 'link'
+        !% 20211206brh --- I believe this is all obsolete.
         !% =======================
         !% --- links_input.csv and nodes_input.csv
         !% --- if they exist, these must be in the project directory
         !% --- if they don't exist, that will be handled in output.f90
-        if (setting%Output%print_links_csv) then
-            thisfile = 'links_input.csv'
-            default_path = "" ! added on to project_folder
-            call util_file_parse_folder_or_file_path ( &
-                thisfile, setting%File%project_folder, default_path,  setting%File%links_input_file)
-            this_purpose = 'link input csv file'
-            ireturn = 1
-            fext = '.csv'
-            call util_file_check_if_file_exist ( &
-                setting%File%UnitNumber%links_input_file, setting%File%links_input_file,&
-                this_purpose, ireturn, fext)
-            if (ireturn == 2) then
-                setting%File%links_input_file_exist = .false.
-            end if
-        endif
+        ! if (setting%Output%print_links_csv) then
+        !     thisfile = 'links_input.csv'
+        !     default_path = "" ! added on to project_folder
+        !     call util_file_parse_folder_or_file_path ( &
+        !         thisfile, setting%File%project_folder, default_path,  setting%File%links_input_file)
+        !     this_purpose = 'link input csv file'
+        !     ireturn = 1
+        !     fext = '.csv'
+        !     call util_file_check_if_file_exist ( &
+        !         setting%File%UnitNumber%links_input_file, setting%File%links_input_file,&
+        !         this_purpose, ireturn, fext)
+        !     if (ireturn == 2) then
+        !         setting%File%links_input_file_exist = .false.
+        !     end if
+        ! endif
 
         !print *, 'nodes'
         !% --- nodes_input.csv

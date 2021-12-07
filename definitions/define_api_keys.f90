@@ -134,32 +134,38 @@ module define_api_keys
     !% API Node Attributes
     enum, bind(c)
         enumerator :: api_node_ID = 1
-        enumerator :: api_node_type
-        enumerator :: api_node_outfall_type
-        enumerator :: api_node_invertElev
-        enumerator :: api_node_initDepth
-        enumerator :: api_node_StorageConstant
-        enumerator :: api_node_StorageCoeff
-        enumerator :: api_node_StorageExponent
-        enumerator :: api_node_StorageCurveID
-        enumerator :: api_node_extInflow_tSeries
-        enumerator :: api_node_extInflow_tSeries_x1
-        enumerator :: api_node_extInflow_tSeries_x2
-        enumerator :: api_node_extInflow_basePat
-        enumerator :: api_node_extInflow_baseline
-        enumerator :: api_node_extInflow_basePat_type
-        enumerator :: api_node_extInflow_sFactor
-        enumerator :: api_node_has_extInflow
-        enumerator :: api_node_dwfInflow_monthly_pattern
-        enumerator :: api_node_dwfInflow_daily_pattern
-        enumerator :: api_node_dwfInflow_hourly_pattern
-        enumerator :: api_node_dwfInflow_weekend_pattern
-        enumerator :: api_node_dwfInflow_avgvalue
-        enumerator :: api_node_has_dwfInflow
-        enumerator :: api_node_fullDepth
-        enumerator :: api_node_inflow
-        enumerator :: api_node_volume
-        enumerator :: api_node_overflow
+        enumerator :: api_node_type   ! 2
+        enumerator :: api_node_outfall_type  !3
+        enumerator :: api_node_invertElev    !4
+        enumerator :: api_node_initDepth     !5
+        enumerator :: api_node_StorageConstant   !6
+        enumerator :: api_node_StorageCoeff      !7
+        enumerator :: api_node_StorageExponent   !8
+        enumerator :: api_node_StorageCurveID    !9
+        enumerator :: api_node_extInflow_tSeries !10
+        enumerator :: api_node_extInflow_tSeries_x1  !11
+        enumerator :: api_node_extInflow_tSeries_x2  !12
+        enumerator :: api_node_extInflow_basePat     !13
+        !% brh20211707s 
+        !enumerator :: api_node_extInflow_baseline    !moved
+        enumerator :: api_node_extInflow_basePat_type   !13
+        enumerator :: api_node_extInflow_baseline    !15
+        !% brh202211207e
+        enumerator :: api_node_extInflow_sFactor        !16
+        enumerator :: api_node_has_extInflow            !17
+        enumerator :: api_node_dwfInflow_monthly_pattern  !18
+        enumerator :: api_node_dwfInflow_daily_pattern    !19
+        enumerator :: api_node_dwfInflow_hourly_pattern   !20
+        enumerator :: api_node_dwfInflow_weekend_pattern  !21
+        enumerator :: api_node_dwfInflow_avgvalue         !22
+        enumerator :: api_node_has_dwfInflow   !23
+        !% brh20211707s 
+        enumerator :: api_node_newDepth        !24
+        !% brh20211707e 
+        enumerator :: api_node_fullDepth       !25  x!24
+        enumerator :: api_node_inflow          !26  x!25
+        enumerator :: api_node_volume          !27  x!26
+        enumerator :: api_node_overflow        !28  x!27
     end enum
 
     !% API link attributes

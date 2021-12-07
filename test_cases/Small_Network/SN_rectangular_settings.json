@@ -125,8 +125,8 @@
         "PropertiesFile" : "" // HACK - TODO file for properties of specific links
     },
     "Output" : {
-        "print_links_csv" : true,
-        "print_nodes_csv" : true,
+        "print_links_csv" : false,
+        "print_nodes_csv" : false,
         "report" : true,
         "reportStartTime" : 0.0,
         "reportDt" : 900.0,

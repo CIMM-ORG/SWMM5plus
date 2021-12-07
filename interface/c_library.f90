@@ -57,15 +57,15 @@ module c_library
 contains
 
     subroutine c_lib_open(c_lib, errstat, errmsg)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Opens the EPA-SWMM shared library
-    !%-----------------------------------------------------------------------------
-        type (c_lib_type), intent(inout) :: c_lib ! pointer to shared library
-        integer, intent(out) :: errstat ! -1 ir there was an error, 0 if successful
-        character(*), intent(out) :: errmsg
-        character(64) :: subroutine_name = "c_lib_open"
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Opens the EPA-SWMM shared library
+        !%-----------------------------------------------------------------------------
+            type (c_lib_type), intent(inout) :: c_lib ! pointer to shared library
+            integer, intent(out) :: errstat ! -1 ir there was an error, 0 if successful
+            character(*), intent(out) :: errmsg
+            character(64) :: subroutine_name = "c_lib_open"
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%c_library) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -93,23 +93,23 @@ contains
     end subroutine c_lib_open
 
     subroutine c_lib_load(c_lib, errstat, errmsg)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Loads functions from the EPA-SWMM shared library. The name of the
-    !%    function that wants to be loaded has to be defined in c_lib%procname
-    !%    before executing c_lib_load.
-    !%
-    !%    For example:
-    !%
-    !%    c_lib%procname = "api_initialize"
-    !%    call c_lib_load(c_lib, errstat, errmsg)
-    !%
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Loads functions from the EPA-SWMM shared library. The name of the
+        !%    function that wants to be loaded has to be defined in c_lib%procname
+        !%    before executing c_lib_load.
+        !%
+        !%    For example:
+        !%
+        !%    c_lib%procname = "api_initialize"
+        !%    call c_lib_load(c_lib, errstat, errmsg)
+        !%
+        !%-----------------------------------------------------------------------------
         type (c_lib_type), intent(inout) :: c_lib ! pointer to shared library
         integer, intent(out) :: errstat ! -1 ir there was an error, 0 if successful
         character(*), intent(out) :: errmsg
         character(64) :: subroutine_name = "c_lib_load"
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%c_library) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -131,15 +131,15 @@ contains
     end subroutine c_lib_load
 
     subroutine c_lib_close (c_lib, errstat, errmsg)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Closes the shared library
-    !%-----------------------------------------------------------------------------
-        type (c_lib_type), intent(inout) :: c_lib
-        integer, intent(out) :: errstat ! -1 if error, 0 if successful
-        character(*), intent(out) :: errmsg
-        character(64) :: subroutine_name = "c_lib_close"
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Closes the shared library
+        !%-----------------------------------------------------------------------------
+            type (c_lib_type), intent(inout) :: c_lib
+            integer, intent(out) :: errstat ! -1 if error, 0 if successful
+            character(*), intent(out) :: errmsg
+            character(64) :: subroutine_name = "c_lib_close"
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%c_library) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

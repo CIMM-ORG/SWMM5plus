@@ -29,7 +29,9 @@ static char *Tok[MAXTOKS];             // String tokens from line of input
 static int  Ntokens;                   // Number of tokens in line of input
 char errmsg[1024];
 
+//===============================================================================
 // --- Simulation
+//===============================================================================
 
 // Initializes the EPA-SWMM simulation. It creates an Interface
 // variable (details about Interface in interface.h). The
@@ -44,7 +46,10 @@ char errmsg[1024];
 // is also used by the Fortran engine. Treating Interface as void*
 // facilitates interoperability
 
-int DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing)
+//===============================================================================
+int DLLEXPORT api_initialize(
+    char* f1, char* f2, char* f3, int run_routing)
+//===============================================================================
 {
     int error;
     api = (Interface*) malloc(sizeof(Interface));
@@ -64,12 +69,13 @@ int DLLEXPORT api_initialize(char* f1, char* f2, char* f3, int run_routing)
     return 0;
 }
 
+//===============================================================================
 void DLLEXPORT api_finalize()
-//
-//  Input: f_api is an Interface object passed as a void*
-//  Output: None
-//  Purpose: Closes the link with the EPA-SWMM library
-//3
+//===============================================================================
+    //
+    //  Input: f_api is an Interface object passed as a void*
+    //  Output: None
+    //  Purpose: Closes the link with the EPA-SWMM library
 {
     int i;
 
@@ -93,25 +99,30 @@ void DLLEXPORT api_finalize()
     free(api);
 }
 
+//===============================================================================
 double DLLEXPORT api_run_step()
+//===============================================================================
 {
     swmm_step(&(api->elapsedTime));
     return api->elapsedTime;
 }
 
+//===============================================================================
 // --- Property-extraction
-
 // * During Simulation
+//===============================================================================
 
-
-int DLLEXPORT api_get_node_results(char* node_name, float* inflow, float* overflow, float* depth, float* volume)
-//
-//  Input:    f_api = Interface object passed as a void*
-//            node_name = string identifier of node
-//            inflow, overflow, depth, volume =
-//  Output: None
-//  Purpose: Closes the link with the SWMM C library
-//
+//===============================================================================
+int DLLEXPORT api_get_node_results(
+    char* node_name, float* inflow, float* overflow, float* depth, float* volume)
+//===============================================================================
+    //
+    //  Input:    f_api = Interface object passed as a void*
+    //            node_name = string identifier of node
+    //            inflow, overflow, depth, volume =
+    //  Output: None
+    //  Purpose: Closes the link with the SWMM C library
+    //
 {
     int j, error;
 
@@ -126,7 +137,10 @@ int DLLEXPORT api_get_node_results(char* node_name, float* inflow, float* overfl
     return 0;
 }
 
-int DLLEXPORT api_get_link_results(char* link_name, float* flow, float* depth, float* volume)
+//===============================================================================
+int DLLEXPORT api_get_link_results(
+    char* link_name, float* flow, float* depth, float* volume)
+//===============================================================================
 {
     int j, error;
 
@@ -139,21 +153,33 @@ int DLLEXPORT api_get_link_results(char* link_name, float* flow, float* depth, f
     return 0;
 }
 
+//===============================================================================
+// --- Property-extraction
 // * After Initialization
+//===============================================================================
 
+//===============================================================================
 double DLLEXPORT api_get_start_datetime()
+//===============================================================================
+
 {
     return StartDateTime;
 }
 
+//===============================================================================
 double DLLEXPORT api_get_end_datetime()
+//===============================================================================
+
 {
     return EndDateTime;
 }
 
-int DLLEXPORT api_get_flowBC(int node_idx, double current_datetime, double* flowBC)
-{
+//===============================================================================
+int DLLEXPORT api_get_flowBC(
+    int node_idx, double current_datetime, double* flowBC)
+//===============================================================================
 
+{
     int ptype, pcount, i, j, p;
     int yy, mm, dd;
     int h, m, s, dow, attr;
@@ -228,7 +254,10 @@ int DLLEXPORT api_get_flowBC(int node_idx, double current_datetime, double* flow
     return 0;
 }
 
-int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* headBC)
+//===============================================================================
+int DLLEXPORT api_get_headBC(
+    int node_idx, double current_datetime, double* headBC)
+//===============================================================================
 {
     int i = Node[node_idx].subIndex;
     
@@ -246,7 +275,9 @@ int DLLEXPORT api_get_headBC(int node_idx, double current_datetime, double* head
     }
 }
 
-int DLLEXPORT api_get_report_times(double* report_start_datetime, int* report_step, int* hydrology_step) // WET_STEP in SWMM 5.13
+//===============================================================================
+int DLLEXPORT api_get_report_times(
+    double* report_start_datetime, int* report_step, int* hydrology_step) // WET_STEP in SWMM 5.13
 {
     int error;
 
@@ -257,18 +288,28 @@ int DLLEXPORT api_get_report_times(double* report_start_datetime, int* report_st
     *hydrology_step = WetStep;
     return 0;
 }
+//===============================================================================
 
-int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
+//===============================================================================
+int DLLEXPORT api_get_node_attribute(
+    int node_idx, int attr, double* value)
+//===============================================================================
 {
     int error, bpat, tseries_idx;
+
+    //printf("==== %d \n",attr);
 
     error = check_api_is_initialized("api_get_node_attribute");
     if (error) return error;
 
     if (attr == node_type)
+    {
+        printf("    node_type = 2 \n");
         *value = Node[node_idx].type;
+    }
     else if (attr == node_outfall_type)
     {
+        printf("    node_outfall_type = 3 \n");
         if (Node[node_idx].type == OUTFALL)
         {
             *value = Outfall[Node[node_idx].subIndex].type;
@@ -282,15 +323,21 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
         }
     }
     else if (attr == node_invertElev)
+    {
+        printf("    node_invertElev = 4 \n");
         *value = FTTOM(Node[node_idx].invertElev);
-
+    }
     else if (attr == node_fullDepth)
+    {
+        printf("   node_fullDepth = 25 \n ");
         *value = FTTOM(Node[node_idx].fullDepth);
-
+    }
     else if (attr == node_initDepth)
     {
+        printf("    node_initDepth = 5 \n");
         if (Node[node_idx].type == OUTFALL)
         {
+            printf("   calling api_get_headBC \n");
             error = api_get_headBC(node_idx, StartDateTime, value);
             if (error) return error;
             *value -= FTTOM(Node[node_idx].invertElev);
@@ -300,6 +347,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_StorageConstant)
     {
+        printf("   node_StorageConstant = 6 \n");
         if (Node[node_idx].type == STORAGE)
             *value = Storage[Node[node_idx].subIndex].aConst;
         else
@@ -307,6 +355,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_StorageCoeff)
     {
+        printf("   node_storage_Coeff = 7 \n");
         if (Node[node_idx].type == STORAGE)
             *value = Storage[Node[node_idx].subIndex].aCoeff;
         else
@@ -314,6 +363,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_StorageExponent)
     {
+        printf("   node_StorageExponent = 8 \n");
         if (Node[node_idx].type == STORAGE)
             *value = Storage[Node[node_idx].subIndex].aExpon;
         else
@@ -321,6 +371,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_StorageCurveID)
     {
+        printf("   node_StorageCurveID = 9 \n");
         if (Node[node_idx].type == STORAGE)
             *value = Storage[Node[node_idx].subIndex].aCurve + 1;
         else
@@ -328,6 +379,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_extInflow_tSeries)
     {
+        printf("   node_extInflow_tSeries = 10 \n");
         if (Node[node_idx].extInflow)
             *value = Node[node_idx].extInflow->tSeries;
         else
@@ -340,6 +392,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_extInflow_tSeries_x1)
     {
+        printf("   node_extInflow_tSeries_x1 = 11 \n");
         tseries_idx = Node[node_idx].extInflow->tSeries;
         if (tseries_idx >= 0)
             *value = Tseries[tseries_idx].x1;
@@ -353,6 +406,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_extInflow_tSeries_x2)
     {
+        printf("   node_extInflow_tSeries_x2 = 12 \n");
         tseries_idx = Node[node_idx].extInflow->tSeries;
         if (tseries_idx >= 0)
             *value = Tseries[tseries_idx].x2;
@@ -366,6 +420,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_extInflow_basePat)
     {
+        printf("   node_extInflow_basePat = 13 \n");
         if (Node[node_idx].extInflow)
             *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->basePat);
         else
@@ -378,19 +433,25 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_extInflow_basePat_type)
     {
+        printf("   node_extInflow_basePat_type = 14 \n");
         bpat = Node[node_idx].extInflow->basePat;
+        
+        printf(" bpat %d",bpat);
         if (bpat >= 0) // baseline pattern exists
             *value = Pattern[bpat].type;
         else
         {
             *value = API_NULL_VALUE_I;
-            sprintf(errmsg, "Extracting node_extInflow_basePat_type for NODE %s, which doesn't have an extInflow [api.c -> api_get_node_attribute]", Node[node_idx].ID);
-            api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-            return api_err_wrong_type;
+            // brh20211207s  commenting this so that it moves through with null result
+            //sprintf(errmsg, "Extracting node_extInflow_basePat_type for NODE %s, which doesn't have an extInflow [api.c -> api_get_node_attribute]", Node[node_idx].ID);
+            //api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+            //return api_err_wrong_type;
+            // brh20211207e
         }
     }
     else if (attr == node_extInflow_baseline)
     {
+        printf("   node_extInflow_baseline = 15 \n");
         if (Node[node_idx].extInflow)
         {
             *value = CFTOCM(Node[node_idx].extInflow->cFactor * Node[node_idx].extInflow->baseline);
@@ -400,6 +461,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_extInflow_sFactor)
     {
+        printf("   node_extInflow_sFactor = 16 \n");
         if (Node[node_idx].extInflow)
             *value = Node[node_idx].extInflow->sFactor;
         else
@@ -407,6 +469,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_has_extInflow)
     {
+        printf("   node_has_extInflow = 17 \n");
         if (Node[node_idx].extInflow)
         {
             *value = 1;
@@ -416,6 +479,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_dwfInflow_monthly_pattern)
     {
+        printf("   node_dwInflow_monthly_pattern = 18 \n");
         if (Node[node_idx].dwfInflow)
             *value = Node[node_idx].dwfInflow->patterns[0];
         else
@@ -428,6 +492,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_dwfInflow_daily_pattern)
     {
+        printf("   node_dwdInflow_daily_pattern = 19 \n");
         if (Node[node_idx].dwfInflow)
         {
             *value = Node[node_idx].dwfInflow->patterns[1];
@@ -442,6 +507,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_dwfInflow_hourly_pattern)
     {
+        printf("   node_dwInflow_hourly_pattern = 20 \n");
         if (Node[node_idx].dwfInflow)
             *value = Node[node_idx].dwfInflow->patterns[2];
         else
@@ -454,6 +520,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_dwfInflow_weekend_pattern)
     {
+        printf("   node_dwInflow_weekend_pattern = 21 \n");
         if (Node[node_idx].dwfInflow)
             *value = Node[node_idx].dwfInflow->patterns[3];
         else
@@ -466,6 +533,7 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_dwfInflow_avgvalue)
     {
+        printf("   node_dwInflow_avgvalue = 22 \n");
         if (Node[node_idx].dwfInflow)
             *value = CFTOCM(Node[node_idx].dwfInflow->avgValue);
         else
@@ -473,25 +541,49 @@ int DLLEXPORT api_get_node_attribute(int node_idx, int attr, double* value)
     }
     else if (attr == node_has_dwfInflow)
     {
+        printf("   node_has_dwfInflow = 23 \n");
         if (Node[node_idx].dwfInflow)
             *value = 1;
         else
             *value = 0;
     }
-    else if (attr == node_depth)
+    // brh20211207s
+    //else if (attr == node_depth)
+    else if (attr == node_newDepth)
+
+    {
+        // printf("   node_depth = 24 \n");
+        printf("   node_newDepth = 24 \n");
+    // brh20211207e
         *value = FTTOM(Node[node_idx].newDepth);
+    }         
     else if (attr == node_inflow)
+    {
+        printf("   node_inflow = 26 \n");
         *value = CFTOCM(Node[node_idx].inflow);
+    }
     else if (attr == node_volume)
+    {
+        printf("   node_volume = 27 \n");
         *value = CFTOCM(Node[node_idx].newVolume);
+    }    
     else if (attr == node_overflow)
+    {
+        printf("   node_overflow = 28 \n");
         *value = CFTOCM(Node[node_idx].overflow);
+    }
     else
+    {
+        printf(" ****** api_get_node_attribute called without supported attr at 3979874 %d ",attr);
         *value = API_NULL_VALUE_I;
+    } 
     return 0;
 }
 
-int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value)
+//===============================================================================
+int DLLEXPORT api_get_link_attribute(
+    int link_idx, int attr, double* value)
+//===============================================================================
 {
     int error;
 
@@ -616,8 +708,10 @@ int DLLEXPORT api_get_link_attribute(int link_idx, int attr, double* value)
         *value = API_NULL_VALUE_I;
     return 0;
 }
-
-int DLLEXPORT api_get_num_objects(int object_type)
+//===============================================================================
+int DLLEXPORT api_get_num_objects(
+    int object_type)
+//===============================================================================
 {
     int error;
     error = check_api_is_initialized("api_get_num_objects");
@@ -626,8 +720,10 @@ int DLLEXPORT api_get_num_objects(int object_type)
     //     return api->num_objects[object_type - API_START_INDEX];
     return Nobjects[object_type];
 }
-
-int DLLEXPORT api_get_object_name(int object_idx, char* object_name, int object_type)
+//===============================================================================
+int DLLEXPORT api_get_object_name(
+    int object_idx, char* object_name, int object_type)
+//===============================================================================
 {
     int error, i;
     int obj_len = -1;
@@ -660,8 +756,10 @@ int DLLEXPORT api_get_object_name(int object_idx, char* object_name, int object_
     }
     return 0;
 }
-
-int DLLEXPORT api_get_object_name_len(int object_idx, int object_type, int* len)
+//===============================================================================
+int DLLEXPORT api_get_object_name_len(
+    int object_idx, int object_type, int* len)
+//===============================================================================
 {
     int error;
 
@@ -689,8 +787,10 @@ int DLLEXPORT api_get_object_name_len(int object_idx, int object_type, int* len)
         return api_err_not_developed;
     }
 }
-
-int DLLEXPORT api_get_num_table_entries(int table_idx, int table_type, int* num_entries)
+//===============================================================================
+int DLLEXPORT api_get_num_table_entries(
+    int table_idx, int table_type, int* num_entries)
+//===============================================================================
 {
     double x, y;
     int success;
@@ -719,8 +819,10 @@ int DLLEXPORT api_get_num_table_entries(int table_idx, int table_type, int* num_
 
     return 0;
 }
-
-int DLLEXPORT api_get_table_attribute(int table_idx, int attr, double* value)
+//===============================================================================
+int DLLEXPORT api_get_table_attribute(
+    int table_idx, int attr, double* value)
+//===============================================================================
 {
     int error;
 
@@ -743,7 +845,10 @@ int DLLEXPORT api_get_table_attribute(int table_idx, int attr, double* value)
     return 0;
 }
 
-int DLLEXPORT api_get_first_entry_table(int table_idx, int table_type, double* x, double* y)
+//===============================================================================
+int DLLEXPORT api_get_first_entry_table(
+    int table_idx, int table_type, double* x, double* y)
+//===============================================================================
 {
     int success;
 
@@ -756,7 +861,10 @@ int DLLEXPORT api_get_first_entry_table(int table_idx, int table_type, double* x
     return success;
 }
 
-int DLLEXPORT api_get_next_entry_table(int table_idx, int table_type, double* x, double* y)
+//===============================================================================
+int DLLEXPORT api_get_next_entry_table(
+    int table_idx, int table_type, double* x, double* y)
+//===============================================================================
 {
     int success;
 
@@ -782,7 +890,10 @@ int DLLEXPORT api_get_next_entry_table(int table_idx, int table_type, double* x,
     return success;
 }
 
-int DLLEXPORT api_get_next_entry_tseries(int tseries_idx)
+//===============================================================================
+int DLLEXPORT api_get_next_entry_tseries(
+    int tseries_idx)
+//===============================================================================
 {
     int success;
     double x2, y2;
@@ -798,6 +909,7 @@ int DLLEXPORT api_get_next_entry_tseries(int tseries_idx)
     return success;
 }
 
+//===============================================================================
 // --- Output Writing (Post Processing)
 // * The follwing functions should only be executed after finishing
 //   and writing SWMM5+ report files. The following functions are
@@ -806,8 +918,12 @@ int DLLEXPORT api_get_next_entry_tseries(int tseries_idx)
 //   report files are not manipulated here, the manipulation of
 //   SWMM5+ report files is kept within the Fortran code to ensure
 //   compatibility with future updates of the SWMM5+ standard
+//===============================================================================
 
-int DLLEXPORT api_write_output_line(double t)
+//===============================================================================
+int DLLEXPORT api_write_output_line(
+    double t)
+//===============================================================================
 // t: elapsed time in seconds
 {
 
@@ -825,7 +941,10 @@ int DLLEXPORT api_write_output_line(double t)
     return 0;
 }
 
-int DLLEXPORT api_update_nodeResult(int node_idx, int resultType, double newNodeResult)
+//===============================================================================
+int DLLEXPORT api_update_nodeResult(
+    int node_idx, int resultType, double newNodeResult)
+//===============================================================================
 {
     // --- check that simulation can proceed
     if ( ErrorCode ) return error_getCode(ErrorCode);
@@ -852,7 +971,10 @@ int DLLEXPORT api_update_nodeResult(int node_idx, int resultType, double newNode
     return 0;
 }
 
-int DLLEXPORT api_update_linkResult(int link_idx, int resultType, double newLinkResult)
+//===============================================================================
+int DLLEXPORT api_update_linkResult(
+    int link_idx, int resultType, double newLinkResult)
+//===============================================================================
 {
     // --- check that simulation can proceed
     if ( ErrorCode ) return error_getCode(ErrorCode);
@@ -879,9 +1001,14 @@ int DLLEXPORT api_update_linkResult(int link_idx, int resultType, double newLink
     return 0;
 }
 
+//===============================================================================
 // --- Print-out
+//===============================================================================
 
-int DLLEXPORT api_export_linknode_properties(int units)
+//===============================================================================
+int DLLEXPORT api_export_linknode_properties(
+    int units)
+//===============================================================================
 {
     //  link
     int li_idx[Nobjects[LINK]];
@@ -1046,7 +1173,10 @@ int DLLEXPORT api_export_linknode_properties(int units)
     return 0;
 }
 
-int DLLEXPORT api_export_link_results(int link_idx)
+//===============================================================================
+int DLLEXPORT api_export_link_results(
+    int link_idx)
+//===============================================================================
 {
 	FILE* tmp;
     DateTime days;
@@ -1085,7 +1215,10 @@ int DLLEXPORT api_export_link_results(int link_idx)
     return 0;
 }
 
-int DLLEXPORT api_export_node_results(int node_idx)
+//===============================================================================
+int DLLEXPORT api_export_node_results(
+    int node_idx)
+//===============================================================================
 {
 	FILE* tmp;
     DateTime days;
@@ -1126,20 +1259,29 @@ int DLLEXPORT api_export_node_results(int node_idx)
     return 0;
 }
 
+//===============================================================================
 // --- Utils
+//===============================================================================
 
-int DLLEXPORT api_find_object(int object_type, char *id)
+//===============================================================================
+int DLLEXPORT api_find_object(
+    int object_type, char *id)
+//===============================================================================
 {
     return project_findObject(object_type, id);
 }
 
-// -------------------------------------------------------------------------
+//===============================================================================
+//===============================================================================
 // |
 // |  Private functionalities
 // v
-// -------------------------------------------------------------------------
+//===============================================================================
+//===============================================================================
 
+//===============================================================================
 int api_load_vars()
+//===============================================================================
 {
     char  line[MAXLINE+1];        // line from input data file
     char  wLine[MAXLINE+1];       // working copy of input line
@@ -1195,6 +1337,7 @@ int api_load_vars()
     return 0;
 }
 
+//===============================================================================
 int add_link(
     int li_idx,
     int ni_idx,
@@ -1207,8 +1350,8 @@ int add_link(
     int* ni_Mlink_d1,
     int* ni_Mlink_d2,
     int* ni_Mlink_d3)
+//===============================================================================
 {
-
     if (direction == UPSTREAM) {
         ni_N_link_u[ni_idx] ++;
         if (ni_N_link_u[ni_idx] <= 3) {
@@ -1254,7 +1397,10 @@ int add_link(
     return api_err_internal;
 }
 
-int check_api_is_initialized(char * function_name)
+//===============================================================================
+int check_api_is_initialized(
+    char * function_name)
+//===============================================================================
 {
     if ( ErrorCode ) return error_getCode(ErrorCode);
     if ( !api->IsInitialized )
@@ -1266,11 +1412,15 @@ int check_api_is_initialized(char * function_name)
     return 0;
 }
 
+
+
+//===============================================================================
+int getTokens(
+    char *s)
+//===============================================================================
 // Copy pasted getTokens from src/input.c to ensure independence
 // from the original EPA-SWMM code. In the original code
 // getTokens is not defined as an external API function
-
-int getTokens(char *s)
 //
 //  Input:   s = a character string
 //  Output:  returns number of tokens found in s
@@ -1316,3 +1466,6 @@ int getTokens(char *s)
     }
     return(n);
 }
+//===============================================================================
+// EOF
+//===============================================================================

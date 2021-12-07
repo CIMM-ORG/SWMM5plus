@@ -338,17 +338,17 @@ contains
 !%=============================================================================
 
     subroutine interface_init()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    initializes the EPA-SWMM shared library, creating input (.inp),
-    !%    report (.rpt), and output (.out) files, necessary to run simulation with
-    !%    EPA-SWMM. It also updates the number of objects in the SWMM model, i.e.,
-    !%    number of links, nodes, and tables, and defines the start and end
-    !%    simulation times.
-    !%-----------------------------------------------------------------------------
-        integer :: ppos, num_args, error
-        character(64) :: subroutine_name = 'interface_init'
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    initializes the EPA-SWMM shared library, creating input (.inp),
+        !%    report (.rpt), and output (.out) files, necessary to run simulation with
+        !%    EPA-SWMM. It also updates the number of objects in the SWMM model, i.e.,
+        !%    number of links, nodes, and tables, and defines the start and end
+        !%    simulation times.
+        !%-----------------------------------------------------------------------------
+            integer :: ppos, num_args, error
+            character(64) :: subroutine_name = 'interface_init'
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -389,7 +389,7 @@ contains
              print *, '...This can happen if nodes are renamed and some of the conduit connection did not get changed...'
              print *, '...This error might have been tripped accidently if the system has exactly...'
              print *, '...200 nodes and 200 links.'
-             stop
+             stop 2398760
         end if
         print *
 
@@ -423,12 +423,12 @@ contains
     !%=============================================================================
     !%
     subroutine interface_finalize()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    finalizes the EPA-SWMM shared library
-    !%-----------------------------------------------------------------------------
-        character(64) :: subroutine_name = 'interface_finalize'
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    finalizes the EPA-SWMM shared library
+        !%-----------------------------------------------------------------------------
+            character(64) :: subroutine_name = 'interface_finalize'
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -477,15 +477,15 @@ contains
 !%=============================================================================
 !%
     subroutine interface_update_linknode_names()
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Updates the link%Names and node%Names arrays which should've been
-    !%    allocated by the time the subroutine is executed. Names are copied
-    !%    from EPA-SWMM
-    !%-----------------------------------------------------------------------------
-        integer :: ii
-        character(64) :: subroutine_name = "interface_update_linknode_names"
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Updates the link%Names and node%Names arrays which should've been
+        !%    allocated by the time the subroutine is executed. Names are copied
+        !%    from EPA-SWMM
+        !%-----------------------------------------------------------------------------
+            integer :: ii
+            character(64) :: subroutine_name = "interface_update_linknode_names"
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -496,7 +496,7 @@ contains
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
-                stop
+                stop 8673489
             end if
         end do
 
@@ -506,7 +506,7 @@ contains
 
             if (errstat /= 0) then
                 write(*, "(A,i2,A)") "API ERROR : ", errstat, " [" // subroutine_name // "]"
-                stop
+                stop 48705
             end if
         end do
 
@@ -531,18 +531,18 @@ contains
 !%=============================================================================
 !%
     integer(c_int) function interface_get_obj_name_len(obj_idx, obj_type) result(len_value)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Returns the length of the name string associated to the EPA-SWMM object.
-    !%    This function is necessary to allocate the entries of the link%Names and
-    !%    node%Names arraysr. The function is currently compatible with NODE and
-    !%    LINK types.
-    !%-----------------------------------------------------------------------------
-        integer, intent(in) :: obj_idx  ! index of the EPA-SWMM object
-        integer, intent(in) :: obj_type ! type of EPA-SWMM object (API_NODE, API_LINK)
-        integer                :: error
-        character(64)          :: subroutine_name = "interface_get_obj_name_len"
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Returns the length of the name string associated to the EPA-SWMM object.
+        !%    This function is necessary to allocate the entries of the link%Names and
+        !%    node%Names arraysr. The function is currently compatible with NODE and
+        !%    LINK types.
+        !%-----------------------------------------------------------------------------
+            integer, intent(in) :: obj_idx  ! index of the EPA-SWMM object
+            integer, intent(in) :: obj_type ! type of EPA-SWMM object (API_NODE, API_LINK)
+            integer                :: error
+            character(64)          :: subroutine_name = "interface_get_obj_name_len"
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -563,19 +563,21 @@ contains
 !%=============================================================================
 !%
     function interface_get_node_attribute(node_idx, attr) result(node_value)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Retrieves node attributes from EPA-SWMM. API node attributes are
-    !%    defined in define_api_keys.f08.
-    !% Notes:
-    !%    Fortran indexes are translated to C indexes and viceversa when
-    !%    necessary. Fortran indexes always start from 1, whereas C indexes
-    !%    start from 0.
-    !%-----------------------------------------------------------------------------
-        integer :: node_idx, attr, error
-        real(c_double), target :: node_value
-        character(64) :: subroutine_name = 'interface_get_node_attribute'
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Retrieves node attributes from EPA-SWMM. API node attributes are
+        !%    defined in define_api_keys.f08.
+        !% Notes:
+        !%    Fortran indexes are translated to C indexes and viceversa when
+        !%    necessary. Fortran indexes always start from 1, whereas C indexes
+        !%    start from 0.
+        !%-----------------------------------------------------------------------------
+            integer :: node_idx, attr, error
+            real(c_double), target :: node_value
+            character(64) :: subroutine_name = 'interface_get_node_attribute'
+        !%-----------------------------------------------------------------------------
+
+        write(*,*) '--- interface_get_node_attribute', attr
 
         if (setting%Debug%File%interface)  &
             write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
@@ -583,17 +585,18 @@ contains
 
         if ((attr > N_api_node_attributes) .or. (attr < 1)) then
             print *, "error: unexpected node attribute value", attr
-            stop
+            stop 948705
         end if
 
         if ((node_idx > N_node) .or. (node_idx < 1)) then
             print *, "error: unexpected node index value", node_idx
-            stop
+            stop 397904
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
         call load_api_procedure("api_get_node_attribute")
         error = ptr_api_get_node_attribute(node_idx-1, attr, node_value)
+        print *, '   node value ',node_value
         call print_api_error(error, subroutine_name)
 
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
@@ -601,6 +604,7 @@ contains
             if (node_value /= -1) node_value = node_value + 1
         end if
 
+        write(*,*) '.................'
         if (setting%Debug%File%interface) &
             write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
             "(node_idx=", node_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
@@ -610,21 +614,21 @@ contains
 !%=============================================================================
 !%
     function interface_get_link_attribute(link_idx, attr) result(link_value)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Retrieves link attributes from EPA-SWMM. API link attributes are
-    !%    defined in define_api_keys.f08.
-    !% Notes:
-    !%    Fortran indexes are translated to C indexes and viceversa when
-    !%    necessary. Fortran indexes always start from 1, whereas C indexes
-    !%    start from 0.
-    !%-----------------------------------------------------------------------------
-        integer :: link_idx, attr, error
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Retrieves link attributes from EPA-SWMM. API link attributes are
+        !%    defined in define_api_keys.f08.
+        !% Notes:
+        !%    Fortran indexes are translated to C indexes and viceversa when
+        !%    necessary. Fortran indexes always start from 1, whereas C indexes
+        !%    start from 0.
+        !%-----------------------------------------------------------------------------
+            integer :: link_idx, attr, error
 
-        real(c_double), target :: link_value
-        character(64) :: thisposition
-        character(64) :: subroutine_name = 'interface_get_link_attribute'
-    !%-----------------------------------------------------------------------------
+            real(c_double), target :: link_value
+            character(64) :: thisposition
+            character(64) :: subroutine_name = 'interface_get_link_attribute'
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface) &
             write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
@@ -632,12 +636,12 @@ contains
 
         if ((attr > N_api_total_link_attributes) .or. (attr < 1)) then
             print *, "error: unexpected link attribute value", attr
-            stop
+            stop 49870555
         end if
 
         if ((link_idx > SWMM_N_link) .or. (link_idx < 1)) then
             print *, "error: unexpected link index value", link_idx
-            stop
+            stop 9987355
         end if
 
         if (attr <= N_api_link_attributes) then
@@ -657,21 +661,38 @@ contains
                 if (attr == api_link_type) then
                     link_value = lPipe
                 else if (attr == api_weir_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 837894'
                     link_value = nullvalueI
                 else if (attr == api_orifice_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 938765'
                     link_value = nullvalueI
                 else if (attr == api_pump_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 875323'
                     link_value = nullvalueI
                 else if (attr == api_outlet_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 3897895'
                     link_value = nullvalueI
+                !% brh20211207s
+                else
+                    link_value = nullvalueI
+                    write(*,*)
+                    write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at 45782987'
+                    write(*,*) '   attr = ',attr
+                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   skipping error condition!'
+                    write(*,*) '******'
+                    ! stop 45782987 
+                !% brh20211207e
                 end if
 
             else if (link_value == API_PUMP) then
                 if (attr == api_link_type) then
                     link_value = lPump
                 else if (attr == api_weir_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 478974'
                     link_value = nullvalueI
                 else if (attr == api_orifice_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 3695'
                     link_value = nullvalueI
                 else if (attr == api_pump_type) then
                     call load_api_procedure("api_get_link_attribute")
@@ -688,15 +709,39 @@ contains
                         link_value = lType4Pump
                     else if (link_value == API_IDEAL_PUMP) then
                         link_value = lTypeIdealPump
+                    !% brh20211207s    
+                    else
+                        link_value = nullvalueI
+                        write(*,*)
+                        write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  442789'
+                        write(*,*) '   link_value = ',link_value
+                        write(*,*) '   allowable are ',API_TYPE1_PUMP, API_TYPE2_PUMP, API_TYPE3_PUMP, API_TYPE4_PUMP, API_IDEAL_PUMP
+                        write(*,*) '   skipping error condition!'
+                        write(*,*) '******'
+                        ! stop 8836785 
+                    !% brh20211207e                       
                     endif
                 else if (attr == api_outlet_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 773682'
                     link_value = nullvalueI
+                !% brh20211207s    
+                else
+                    link_value = nullvalueI
+                    write(*,*)
+                    write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  8836785'
+                    write(*,*) '   attr = ',attr
+                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   skipping error condition!'
+                    write(*,*) '******'
+                    ! stop 8836785 
+                !% brh20211207e                   
                 end if
 
             else if (link_value == API_ORIFICE) then
                 if (attr == api_link_type) then
                     link_value = lOrifice
                 else if (attr == api_weir_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 82674'
                     link_value = nullvalueI
                 else if (attr == api_orifice_type) then
                     call load_api_procedure("api_get_link_attribute")
@@ -707,11 +752,35 @@ contains
                         link_value = lSideOrifice
                     else if (link_value == API_BOTTOM_ORIFICE) then
                         link_value = lBottomOrifice
+                    !% brh20211207s    
+                    else
+                        link_value = nullvalueI
+                        write(*,*)
+                        write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  442789'
+                        write(*,*) '   link_value = ',link_value
+                        write(*,*) '   allowable are ',API_SIDE_ORIFICE, API_BOTTOM_ORIFICE
+                        write(*,*) '   skipping error condition!'
+                        write(*,*) '******'
+                        ! stop 8836785 
+                    !% brh20211207e       
                     endif
                 else if (attr == api_pump_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at  8378904'
                     link_value = nullvalueI
                 else if (attr == api_outlet_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 3446789'
                     link_value = nullvalueI
+                !% brh20211207s    
+                else
+                    link_value = nullvalueI
+                    write(*,*)
+                    write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  9937685'
+                    write(*,*) '   attr = ',attr
+                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   skipping error condition!'
+                    write(*,*) '******'
+                    ! stop 9937685 
+                !% brh20211207e                    
                 end if
 
             else if (link_value == API_WEIR) then
@@ -732,23 +801,51 @@ contains
                         link_value = lTrapezoidalWeir
                     else if (link_value == API_ROADWAY_WEIR) then
                         link_value = lRoadWayWeir
+                    !% brh20211207s    
+                    else
+                        link_value = nullvalueI
+                        write(*,*)
+                        write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at 620873'
+                        write(*,*) '   link_value = ',link_value
+                        write(*,*) '   allowable are ',API_TRANSVERSE_WEIR, API_SIDEFLOW_WEIR, API_VNOTCH_WEIR, API_TRAPEZOIDAL_WEIR, API_ROADWAY_WEIR
+                        write(*,*) '   skipping error condition!'
+                        write(*,*) '******'
+                        ! stop 620873 
+                    !% brh20211207e      
                     endif
                 else if (attr == api_orifice_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 836637'
                     link_value = nullvalueI
                 else if (attr == api_pump_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 6637892'
                     link_value = nullvalueI
                 else if (attr == api_outlet_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 826784'
                     link_value = nullvalueI
+                !% brh20211207s    
+                else
+                    link_value = nullvalueI
+                    write(*,*)
+                    write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  9937685'
+                    write(*,*) '   attr = ',attr
+                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   skipping error condition!'
+                    write(*,*) '******'
+                    ! stop 9937685 
+                !% brh20211207e       
                 end if
 
             else if (link_value == API_OUTLET) then
                 if (attr == api_link_type) then
                     link_value = lOutlet
                 else if (attr == api_weir_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 226784'
                     link_value = nullvalueI
                 else if (attr == api_orifice_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 737890'
                     link_value = nullvalueI
                 else if (attr == api_pump_type) then
+                    write(*,*) '****** Not clear why this is null brh20211207 at 827894'
                     link_value = nullvalueI
                 else if (attr == api_outlet_type) then
                     call load_api_procedure("api_get_link_attribute")
@@ -759,8 +856,30 @@ contains
                         link_value = lNodeDepth
                     else if (link_value == API_NODE_HEAD) then
                         link_value = lNodeHead
+                    !% brh20211207s    
+                    else
+                        link_value = nullvalueI
+                        write(*,*)
+                        write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at 220455'
+                        write(*,*) '   link_value = ',link_value
+                        write(*,*) '   allowable are ',API_NODE_DEPTH, API_NODE_HEAD
+                        write(*,*) '   skipping error condition!'
+                        write(*,*) '******'
+                        ! stop 220455
+                    !% brh20211207e                       
                     endif
-                end if
+                !% brh20211207s    
+                else
+                    link_value = nullvalueI
+                    write(*,*)
+                    write(*,*) '****** Unexpected else in ',trim(subroutine_name),' at  11947'
+                    write(*,*) '   attr = ',attr
+                    write(*,*) '   allowable are ',api_link_type, api_weir_type, api_orifice_type, api_pump_type, api_outlet_type
+                    write(*,*) '   skipping error condition!'
+                    write(*,*) '******'
+                    ! stop 11947
+                !% brh20211207e       
+                end if                
 
             endif
 
@@ -783,6 +902,7 @@ contains
                     thisposition = trim(subroutine_name)//'_G07'
                     call print_api_error(error, thisposition)
                 else
+                    write(*,*) '****** Not clear why this is null brh20211207 at 87438687'
                     link_value = nullvalueR
                 end if
             else if (link_value == API_RECT_OPEN) then
@@ -799,6 +919,7 @@ contains
                     thisposition = trim(subroutine_name)//'_I09'
                     call print_api_error(error, thisposition)
                 else
+                    write(*,*) '****** Not clear why this is null brh20211207 at 72678439'
                     link_value = nullvalueR
                 end if
             else if (link_value == API_TRAPEZOIDAL) then
@@ -815,6 +936,7 @@ contains
                     thisposition = trim(subroutine_name)//'_K11'
                     call print_api_error(error, thisposition)
                 else
+                    write(*,*) '****** Not clear why this is null brh20211207 at 55278093'
                     link_value = nullvalueR
                 end if
             else if (link_value == API_TRIANGULAR) then
@@ -831,6 +953,7 @@ contains
                     thisposition = trim(subroutine_name)//'_N13'
                     call print_api_error(error, thisposition)
                 else
+                    write(*,*) '****** Not clear why this is null brh20211207 at 267849'
                     link_value = nullvalueR
                 end if
             else if (link_value == API_PARABOLIC) then
@@ -847,6 +970,7 @@ contains
                     thisposition = trim(subroutine_name)//'_P15'
                     call print_api_error(error, thisposition)
                 else
+                    write(*,*) '****** Not clear why this is null brh20211207 at 8270894987'
                     link_value = nullvalueR
                 end if
             else if (link_value == API_CIRCULAR) then
@@ -863,9 +987,11 @@ contains
                     thisposition = trim(subroutine_name)//'_R17'
                     call print_api_error(error, thisposition)
                 else
+                    write(*,*) '****** Not clear why this is null brh20211207 at 8276438'
                     link_value = nullvalueR
                 end if
             else
+                write(*,*) '****** Not clear why this is null brh20211207 at 227589'
                 link_value = nullvalueR
             end if
         end if
@@ -879,34 +1005,34 @@ contains
 !%=============================================================================
 !%
     function interface_get_table_attribute(table_idx, attr)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Retrieves table attributes from EPA-SWMM. API table attributes are
-    !%    defined in define_api_keys.f08.
-    !% Notes:
-    !%    Fortran indexes are translated to C indexes and viceversa when
-    !%    necessary. Fortran indexes always start from 1, whereas C indexes
-    !%    start from 0.
-    !%-----------------------------------------------------------------------------
-        integer :: table_idx, attr, error
-        real(8) :: interface_get_table_attribute
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Retrieves table attributes from EPA-SWMM. API table attributes are
+        !%    defined in define_api_keys.f08.
+        !% Notes:
+        !%    Fortran indexes are translated to C indexes and viceversa when
+        !%    necessary. Fortran indexes always start from 1, whereas C indexes
+        !%    start from 0.
+        !%-----------------------------------------------------------------------------
+            integer :: table_idx, attr, error
+            real(8) :: interface_get_table_attribute
 
-        real(c_double), target :: table_value
-        character(64) :: thisposition
-        character(64) :: subroutine_name = 'interface_get_table_attribute'
-    !%-----------------------------------------------------------------------------
+            real(c_double), target :: table_value
+            character(64) :: thisposition
+            character(64) :: subroutine_name = 'interface_get_table_attribute'
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if ((attr > N_api_total_table_attributes) .or. (attr < 1)) then
             print *, "error: unexpected table attribute value", attr
-            stop
+            stop 28704
         end if
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop
+            stop 498734
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -936,6 +1062,7 @@ contains
             else if (table_value == API_PUMP4_CURVE) then
                 interface_get_table_attribute = Pump4Curve
             else
+                write(*,*) '****** Not clear why this is null brh20211207 at 873984'
                 interface_get_table_attribute = nullvalueI
             end if
         else
@@ -955,28 +1082,28 @@ contains
 !%=============================================================================
 !%
     function interface_get_num_table_entries(table_idx)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Retrieves table attributes from EPA-SWMM. API table attributes are
-    !%    defined in define_api_keys.f08.
-    !% Notes:
-    !%    Fortran indexes are translated to C indexes and viceversa when
-    !%    necessary. Fortran indexes always start from 1, whereas C indexes
-    !%    start from 0.
-    !%-----------------------------------------------------------------------------
-        integer :: table_idx, table_type, error
-        integer :: interface_get_num_table_entries
-        integer(c_int), target :: table_entries
-        character(64) :: thisposition
-        character(64) :: subroutine_name = 'interface_get_num_table_entries'
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Retrieves table attributes from EPA-SWMM. API table attributes are
+        !%    defined in define_api_keys.f08.
+        !% Notes:
+        !%    Fortran indexes are translated to C indexes and viceversa when
+        !%    necessary. Fortran indexes always start from 1, whereas C indexes
+        !%    start from 0.
+        !%-----------------------------------------------------------------------------
+            integer :: table_idx, table_type, error
+            integer :: interface_get_num_table_entries
+            integer(c_int), target :: table_entries
+            character(64) :: thisposition
+            character(64) :: subroutine_name = 'interface_get_num_table_entries'
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop
+            stop 835551
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -995,28 +1122,28 @@ contains
 !%=============================================================================
 !%
     function interface_get_first_entry_table(table_idx)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Retrieves first table entries from EPA-SWMM. API table attributes are
-    !%    defined in define_api_keys.f08.
-    !% Notes:
-    !%    Fortran indexes are translated to C indexes and viceversa when
-    !%    necessary. Fortran indexes always start from 1, whereas C indexes
-    !%    start from 0.
-    !%-----------------------------------------------------------------------------
-        integer :: table_idx, error, success
-        real(8) :: interface_get_first_entry_table(2)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Retrieves first table entries from EPA-SWMM. API table attributes are
+        !%    defined in define_api_keys.f08.
+        !% Notes:
+        !%    Fortran indexes are translated to C indexes and viceversa when
+        !%    necessary. Fortran indexes always start from 1, whereas C indexes
+        !%    start from 0.
+        !%-----------------------------------------------------------------------------
+            integer :: table_idx, error, success
+            real(8) :: interface_get_first_entry_table(2)
 
-        real(c_double), target :: x_entry, y_entry
-        character(64) :: subroutine_name = 'interface_get_first_entry_table'
-    !%-----------------------------------------------------------------------------
+            real(c_double), target :: x_entry, y_entry
+            character(64) :: subroutine_name = 'interface_get_first_entry_table'
+        !%-----------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop
+            stop 837014
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1042,28 +1169,28 @@ contains
 !%=============================================================================
 !%
     function interface_get_next_entry_table(table_idx, table_type)
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Retrieves next table entries from EPA-SWMM. API table attributes are
-    !%    defined in define_api_keys.f08.
-    !% Notes:
-    !%    Fortran indexes are translated to C indexes and viceversa when
-    !%    necessary. Fortran indexes always start from 1, whereas C indexes
-    !%    start from 0.
-    !%-----------------------------------------------------------------------------
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%    Retrieves next table entries from EPA-SWMM. API table attributes are
+        !%    defined in define_api_keys.f08.
+        !% Notes:
+        !%    Fortran indexes are translated to C indexes and viceversa when
+        !%    necessary. Fortran indexes always start from 1, whereas C indexes
+        !%    start from 0.
+        !%-----------------------------------------------------------------------------
         integer :: table_idx, table_type, error, success
         real(8) :: interface_get_next_entry_table(2)
 
         real(c_double), target :: x_entry, y_entry
-        character(64) :: subroutine_name = 'interface_get_next_entry_table'
-    !%-----------------------------------------------------------------------------
-
+        character(64) :: subroutine_name
+        !%-----------------------------------------------------------------------------
+        subroutine_name = 'interface_get_next_entry_table'
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if ((table_idx > SWMM_N_Curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            stop
+            stop 8367894
         end if
 
         !% Substracts 1 to every Fortran index (it becomes a C index)
@@ -1106,7 +1233,12 @@ contains
         integer             :: p0, p1, p2, p3, p4
         integer             :: resolution
         real(8)             :: baseline
+        character(64)       :: subroutine_name
         !%-----------------------------------------------------------------------------
+        subroutine_name = 'interface_get_BC_resolution'
+        if (setting%Debug%File%interface)  &
+        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name)  //  &
+            " [Processor ", this_image(), "]"
 
         resolution = nullvalueI
 
@@ -1116,7 +1248,10 @@ contains
 
             if (node%YN(node_idx, nYN_has_extInflow)) then
 
+                write(*,*) 'api_node_extInflow_basePat_type',api_node_extInflow_basePat_type
                 p0 = interface_get_node_attribute(node_idx, api_node_extInflow_basePat_type)
+                write(*,*), p0
+                write(*,*), api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
 
                 if (p0 == api_hourly_pattern) then
                     resolution = api_hourly
@@ -1125,17 +1260,31 @@ contains
                 else if (p0 == api_daily_pattern) then
                     resolution = api_daily
                 else if (p0 == api_monthly_pattern) then
+                    write(*,*) 'api_node_extInflow_baseline',api_node_extInflow_baseline
                     baseline = interface_get_node_attribute(node_idx, api_node_extInflow_baseline)
                     if (baseline > 0) resolution = api_monthly
+                !% brh20211207s
+                else
+                    write(*,*) '****** unexpected else in ',trim(subroutine_name), ' at 9873094'
+                    write(*,*), '   p0 read is ',p0
+                    write(*,*), '   p0 allowed are ',api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
+                    write(*,*), '   skipping error condition!'
+                    write(*,*) '******'
+                    !stop 9873094
+                !% brh20211207e    
                 end if
 
             end if
 
             if (node%YN(node_idx, nYN_has_dwfInflow)) then
 
+                write(*,*) 'api_node_dwfInflow_hourly_pattern',api_node_dwfInflow_hourly_pattern
                 p1 = interface_get_node_attribute(node_idx, api_node_dwfInflow_hourly_pattern)
+                write(*,*) 'api_node_dwfInflow_weekend_pattern',api_node_dwfInflow_weekend_pattern
                 p2 = interface_get_node_attribute(node_idx, api_node_dwfInflow_weekend_pattern)
+                write(*,*) 'api_node_dwfInflow_daily_pattern',api_node_dwfInflow_daily_pattern
                 p3 = interface_get_node_attribute(node_idx, api_node_dwfInflow_daily_pattern)
+                write(*,*) 'api_node_dwfInflow_monthly_pattern',api_node_dwfInflow_monthly_pattern
                 p4 = interface_get_node_attribute(node_idx, api_node_dwfInflow_monthly_pattern)
 
                 if (p1 > 0) then
@@ -1146,6 +1295,14 @@ contains
                     resolution = max(api_daily, resolution)
                 else if (p4 > 0) then
                     resolution = max(api_monthly, resolution)
+                else
+                    write(*,*) '***** unexpected else in ',trim(subroutine_name), 'at 3987044'
+                    write(*,*), '   p0 read is ',p0
+                    write(*,*), '   p0 allowed are ',api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
+                    write(*,*), '   skipping error condition!'
+                    write(*,*) '******'
+                    !stop 3987044
+                !% brh20211207e    
                 end if
 
             end if
@@ -1157,14 +1314,16 @@ contains
 !%=============================================================================
 !%
     function interface_get_next_inflow_time(bc_idx, tnow) result(tnext)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer, intent(in) :: bc_idx
         real(8), intent(in) :: tnow
         real(8)             :: tnext, t1, t2, tnextp
         integer             :: nidx, nres, tseries, success
-        character(64) :: subroutine_name
-
+        character(64) :: subroutine_name 
+        !%---------------------------------------------------------------------
         subroutine_name = 'interface_get_next_inflow_time'
-
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1187,7 +1346,26 @@ contains
                         if (tnext == tnow) then
                             tnext = setting%Time%End
                             setting%BC%disableInterpolation = .true.
+                        !% brh20211207s
+                        else
+                            write(*,*)
+                            write(*,*) '****** Unexpected else in ',subroutine_name,' at 4479823'
+                            write(*,*) '   tnext = ', tnext
+                            write(*,*) '   tnow  = ', tnow
+                            write(*,*) '   skipping error condition'
+                            write(*,*) '******'
+                            ! stop 4479823
+                        !% brh20211207e    
                         end if
+                    !% brh20211207s
+                    else
+                        write(*,*)
+                        write(*,*) '****** Unexpected else in ',subroutine_name,' at 4589709'
+                        write(*,*) '   success = ', success
+                        write(*,*) '   skipping error condition'
+                        write(*,*) '******'
+                        ! stop 4589709
+                    !% brh20211207e                          
                     end if
                 else
                     tnext = setting%Time%End
@@ -1206,14 +1384,16 @@ contains
 !%=============================================================================
 !%
     function interface_get_next_head_time(bc_idx, tnow) result(tnext)
+        !%---------------------------------------------------------------------
+        !% Description
+        !%---------------------------------------------------------------------
         integer, intent(in) :: bc_idx
         real(8), intent(in) :: tnow
         real(8)             :: tnext, tnextp
         integer             :: nidx, nres, tseries
         character(64) :: subroutine_name
-
+        !%---------------------------------------------------------------------
         subroutine_name = 'interface_get_next_head_time'
-
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1234,14 +1414,16 @@ contains
 !%=============================================================================
 !%
     function interface_get_flowBC(bc_idx, tnow) result(bc_value)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer, intent(in) :: bc_idx
         real(8), intent(in) :: tnow
         integer             :: error, nidx
         real(8)             :: epochNow, bc_value
         character(64) :: subroutine_name
-
+        !%---------------------------------------------------------------------
         subroutine_name = 'interface_get_flowBC'
-
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1260,14 +1442,16 @@ contains
 !%=============================================================================
 !%
     function interface_get_headBC(bc_idx, tnow) result(bc_value)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer, intent(in) :: bc_idx
         real(8), intent(in) :: tnow
         integer             :: error, nidx
         real(8)             :: epochNow, bc_value
         character(64) :: subroutine_name
-
+        !%---------------------------------------------------------------------
         subroutine_name = 'interface_get_headBC'
-
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1287,9 +1471,13 @@ contains
 !%=============================================================================
 !%
     subroutine interface_export_link_results(link_idx)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer, intent(in) :: link_idx
         integer :: error
         character(64) :: subroutine_name = 'interface_export_link_results'
+        !%---------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1306,12 +1494,14 @@ contains
 !%=============================================================================
 !%
     subroutine interface_update_nodeResult(node_idx, result_type, node_result)
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: node_idx, result_type
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
+               integer, intent(in) :: node_idx, result_type
         real(8), intent(in) :: node_result
         integer             :: error
         character(64)       :: subroutine_name = "interface_update_nodeResult"
-        !%-----------------------------------------------------------------------------
+        !%----------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1327,12 +1517,14 @@ contains
 !%=============================================================================
 !%
     subroutine interface_update_linkResult(link_idx, result_type, link_result)
-        !%-----------------------------------------------------------------------------
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer, intent(in) :: link_idx, result_type
         real(8), intent(in) :: link_result
         integer             :: error
         character(64)       :: subroutine_name = "interface_update_linkResult"
-        !%-----------------------------------------------------------------------------
+        !%----------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1349,14 +1541,14 @@ contains
 !%=============================================================================
 !%
     subroutine interface_write_output_line(reportTime)
-    !%-----------------------------------------------------------------------------
+    !%--------------------------------------------------------------------------
     !% Description:
     !%    Writes .out file with SWMM5+ data
-    !%-----------------------------------------------------------------------------
+    !%--------------------------------------------------------------------------
         real(c_double), intent(in) :: reportTime ! time in seconds
         integer                    :: error
         character(64)              :: subroutine_name = "interface_write_output_line"
-    !%-----------------------------------------------------------------------------
+    !%--------------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1373,12 +1565,14 @@ contains
 !%=============================================================================
 !%
     subroutine interface_get_report_times()
-    !%-----------------------------------------------------------------------------
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer                :: error
         real(c_double), target :: reportStart
         integer(c_int), target :: reportStep, hydroStep
         character(64)          :: subroutine_name = 'interface_get_report_times'
-    !%-----------------------------------------------------------------------------
+        !%----------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1408,13 +1602,15 @@ contains
 !%=============================================================================
 !%
     function interface_find_object(object_type, object_name) result(object_idx)
+        !%---------------------------------------------------------------------
+        !% Description:
         !% Returns the index of the object, or 0 if the object couldn't be found
+        !%---------------------------------------------------------------------
         character(*), intent(in) :: object_name
         integer, intent(in) :: object_type
         integer :: object_idx
-        character(64) :: subroutine_name
-
-        subroutine_name = 'interface_find_object'
+        character(64) :: subroutine_name = 'interface_find_object'
+        !%---------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1432,8 +1628,12 @@ contains
 !%=============================================================================
 !%
     subroutine load_api_procedure(api_procedure_name)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         character(kind=c_char, len=*) :: api_procedure_name
         character(64) :: subroutine_name = 'load_api_procedure'
+        !%---------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name)  // " (" // api_procedure_name // ")" // &
@@ -1501,14 +1701,19 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name)  // " (" // api_procedure_name // ")" // &
                 " [Processor ", this_image(), "]"
     end subroutine load_api_procedure
-
+!%
+!%=============================================================================
+!%=============================================================================
+!%
     function get_next_entry_tseries(k) result(success)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer, intent(in   ) :: k
         integer                :: success
         character(64)          :: subroutine_name
-
+        !%---------------------------------------------------------------------
         subroutine_name = 'get_next_entry_tseries'
-
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1523,13 +1728,14 @@ contains
 !%=============================================================================
 !%
     function get_num_objects(obj_type)
-
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer :: obj_type
         integer :: get_num_objects
         character(64) :: subroutine_name
-
+        !%---------------------------------------------------------------------
         subroutine_name = 'get_num_objects'
-
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1545,9 +1751,13 @@ contains
 !%=============================================================================
 !%
     function get_start_datetime()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         real(c_double) :: get_start_datetime
-        character(64) :: subroutine_name = 'get_start_datetime'
-
+        character(64) :: subroutine_name
+        !%---------------------------------------------------------------------
+        subroutine_name = 'get_start_datetime'
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1562,11 +1772,13 @@ contains
 !%=============================================================================
 !%
     function get_end_datetime()
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         real(8) :: get_end_datetime
-        character(64) :: subroutine_name
-
+        character(64) ::  subroutine_name
+        !%---------------------------------------------------------------------
         subroutine_name = 'get_end_datetime'
-
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
@@ -1581,14 +1793,18 @@ contains
 !%=============================================================================
 !%
     subroutine print_api_error(error, subroutine_name)
+        !%---------------------------------------------------------------------
+        !% Description:
+        !%---------------------------------------------------------------------
         integer, intent(in) :: error
         character(64), intent(in) :: subroutine_name
+        !%---------------------------------------------------------------------
 
         if (error /= 0) then
             write(*, "(A,i5,A)") new_line("") // "EPA-SWMM Error Code: ", error, " in "// subroutine_name &
                 // " (see SWMM report file for more details)"
             write(*, "(A)") "Report File Path: " // trim(setting%File%rpt_file)
-            stop
+            stop 
         end if
     end subroutine print_api_error
 !%
