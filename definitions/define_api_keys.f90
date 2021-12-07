@@ -148,7 +148,7 @@ module define_api_keys
         enumerator :: api_node_extInflow_basePat     !13
         !% brh20211707s 
         !enumerator :: api_node_extInflow_baseline    !moved
-        enumerator :: api_node_extInflow_basePat_type   !13
+        enumerator :: api_node_extInflow_basePat_type   !14
         enumerator :: api_node_extInflow_baseline    !15
         !% brh202211207e
         enumerator :: api_node_extInflow_sFactor        !16

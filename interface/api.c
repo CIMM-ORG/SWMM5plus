@@ -1271,8 +1271,24 @@ int DLLEXPORT api_find_object(
     return project_findObject(object_type, id);
 }
 
-//===============================================================================
-//===============================================================================
+int DLLEXPORT api_subcatch_runoff(int id, double *runoff)
+{
+
+    if ( ErrorCode ) return error_getCode(ErrorCode);
+    if ( ! api->IsInitialized )
+    {
+        report_writeErrorMsg(ERR_NOT_OPEN, "");
+        return error_getCode(ErrorCode);
+    }
+
+    runoff_execute();
+    *runoff = Subcatch[id].newRunoff;
+    
+    return 0;
+}
+
+
+// -------------------------------------------------------------------------
 // |
 // |  Private functionalities
 // v
