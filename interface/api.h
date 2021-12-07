@@ -209,6 +209,9 @@ int check_api_is_initialized();
 int api_load_vars();
 int getTokens(char *s);
 
+// --- Hydrology 
+int DLLEXPORT api_subcatch_runoff(int id, double *runoff);
+
 #ifdef __cplusplus
 }   // matches the linkage specification from above */
 #endif

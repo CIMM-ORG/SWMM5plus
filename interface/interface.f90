@@ -43,6 +43,7 @@ module interface
     public :: interface_update_linkResult
     public :: interface_write_output_line
     public :: interface_export_link_results
+    public :: interface_subcatchment_runoff
 
 !%==========================================================================
 !% PRIVATE
@@ -288,6 +289,15 @@ module interface
             character(kind=c_char), intent(in) :: object_name
         end function api_find_object
         !% -------------------------------------------------------------------------------
+        integer(c_int) function api_subcatch_runoff(id, runoff) &
+            BIND(C, name="api_subcatch_runoff")
+            use, intrinsic :: iso_c_binding
+            implicit none
+            integer(c_int), value, intent(in) :: id 
+            real(c_double),        intent(inout) :: runoff
+        end function api_subcatch_runoff
+
+
     end interface
 !%
 !%==========================================================================
@@ -322,7 +332,8 @@ module interface
     procedure(api_export_link_results),        pointer :: ptr_api_export_link_results
     procedure(api_export_node_results),        pointer :: ptr_api_export_node_results
     procedure(api_find_object),                pointer :: ptr_api_find_object
-
+    procedure(api_subcatch_runoff),            pointer :: ptr_api_subcatch_runoff 
+    
     !% Error handling
     character(len = 1024) :: errmsg
     integer :: errstat
@@ -1426,6 +1437,27 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end function interface_find_object
+
+    subroutine interface_subcatchment_runoff(id)
+        
+        integer, intent(in) :: id
+        integer             :: error
+        real(8)             :: runoff
+        character(64) :: subroutine_name        
+        subroutine_name = 'interface_find_object'
+        
+        if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        
+        call load_api_procedure("api_subcatch_runoff")
+        error = ptr_api_subcatch_runoff(id,runoff)   
+        call print_api_error(error, subroutine_name)
+        print *, "runoff :", runoff
+        
+        if (setting%Debug%File%interface)  &
+             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+        
+    end subroutine interface_subcatchment_runoff
 !%
 !%=============================================================================
 !% PRIVATE
@@ -1492,6 +1524,8 @@ contains
                 call c_f_procpointer(c_lib%procaddr, ptr_api_update_nodeResult)
             case ("api_update_linkResult")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_update_linkResult)
+            case ("api_subcatch_runoff")
+                call c_f_procpointer(c_lib%procaddr, ptr_api_subcatch_runoff)    
             case default
                 write(*,"(A,A)") "Error, procedure " // api_procedure_name // " cannot been handled"
                 stop
