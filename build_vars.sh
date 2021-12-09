@@ -3,6 +3,7 @@
 num_processors=1
 compile_fortran="true"
 compile_swmmc="true"
+download_swmmc="true" # brh20211209 allows skip of download (dangerous!)
 
 # Check flags
 while [ ! $# -eq 0 ]
@@ -16,6 +17,8 @@ do
             num_processors="$2" ;;
         --clean | -c)
             clean="true" ;;
+        --existing_swmm | -z) # compile existing SWMM C (no download)  brh2021209 
+            download_swmmc="false" ;; 
 	esac
 	shift
 done

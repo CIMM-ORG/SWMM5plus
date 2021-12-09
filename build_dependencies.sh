@@ -77,34 +77,40 @@ if [[ $compile_swmmc = "true" ]]
 then
     if [[ $compile_fortran = "true" ]]
     then
-        if [[ -d interface/src ]]
+        if [[ $download_swmmc = "true" ]] # false skips the delete of existing swmmc brh 20211209
         then
-            rm -rf interface/src
-        fi
+            if [[ -d interface/src ]]
+            then
+                rm -rf interface/src
+            fi
+        fi                            
     fi
 fi
 
 if [ ! -d "$API_DIR/src" ]
 then
-    echo
-    echo "Downloading SWMM 5.1.13"
-    echo
-    if [[ $machine = "linux" ]]
+    if [[ $download_swmmc = "true" ]]   # false skips the download brh20211209
     then
-        wget https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz
-    elif [[ $machine = "mac" ]]
-    then
-        curl -L "https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz" > v5.1.13.tar.gz
-    else
         echo
-        echo "OS is not supported (only mac, linux)"
+        echo "Downloading SWMM 5.1.13"
         echo
-        exit
-    fi
-    tar -xvf *.tar.gz
-    rm *.tar.gz
-    cp -r Stormwater*/src "$API_DIR/src"
-    rm -rf Stormwater*
+        if [[ $machine = "linux" ]]
+        then
+            wget https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz
+        elif [[ $machine = "mac" ]]
+        then
+            curl -L "https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz" > v5.1.13.tar.gz
+        else
+            echo
+            echo "OS is not supported (only mac, linux)"
+            echo
+            exit
+        fi
+        tar -xvf *.tar.gz
+        rm *.tar.gz
+        cp -r Stormwater*/src "$API_DIR/src"
+        rm -rf Stormwater*
+    fi     
 fi
  
 # Compile EPA-SWMM
