@@ -65,7 +65,7 @@
         "gravity" : 9.81
     },
     "Discretization" : {
-        "NominalElemLength" : 10.00,
+        "NominalElemLength" : 500.00,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "LinkShortingFactor" : 0.33
@@ -315,8 +315,8 @@
             "geometry" : false,
             "initialization" : false,
             "interface" : false,
-            "output" : false,
-            "timeloop" : false,
+            "output" : true,
+            "timeloop" : true,
             "utility" : false
         },
         "Setup"  : true,

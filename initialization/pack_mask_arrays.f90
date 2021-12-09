@@ -1196,8 +1196,7 @@ contains
         !% packed arrays for non geometry dynamic elements
         !--------------------------------------------------------------------------
         integer          :: ii
-        integer, pointer :: ptype, npack, eIDx(:)
-        integer, allocatable :: fup(:), fdn(:)
+        integer, pointer :: ptype, npack, fup, fdn, eIDx(:)
         character(64) :: subroutine_name = 'pack_nongeometry_dynamic_elements'
         !--------------------------------------------------------------------------
         if (icrash) return
@@ -1205,9 +1204,6 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
-
-        fup = pack(elemI(:,ei_Mface_uL), elemI(:,ei_Mface_uL) /= nullvalueI)
-        fdn = pack(elemI(:,ei_Mface_dL), elemI(:,ei_Mface_dL) /= nullvalueI)
 
         !% ep_AC
         !% - all elements that use AC
@@ -1458,37 +1454,25 @@ contains
         ptype => col_elemP(ep_CCJB_eETM_i_fAC)
         npack => npack_elemP(ptype)
 
-        npack = count( &
-                ( &
-                    (elemI(:,ei_elementType) == CC) &
-                    .or. &
-                    (elemI(:,ei_elementType) == JB)  &
-                 ) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM) &
-                .and. &
-                ( &
-                    (faceYN(fup,fYN_isAC_adjacent)) &
-                    .or. &
-                    (faceYN(fdn,fYN_isAC_adjacent)) &
-                ))
+        !% HACK: due to elements having u/s or d/s null faces, the code below
+        !% is written in do loop untill other fix is figured out
 
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx, &
-                ( &
-                    (elemI(:,ei_elementType) == CC) &
-                    .or. &
-                    (elemI(:,ei_elementType) == JB)  &
-                 ) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM) &
-                .and. &
-                ( &
-                    (faceYN(fup,fYN_isAC_adjacent)) &
-                    .or. &
-                    (faceYN(fdn,fYN_isAC_adjacent)) &
-                ))
-        end if
+        npack = zeroI
+        do ii = 1,N_elem(this_image())
+            fup => elemI(ii,ei_Mface_uL)
+            fdn => elemI(ii,ei_Mface_dL)
+            if ((fup /= nullvalueI) .and. (fdn /= nullValueI)) then
+                if (((elemI(ii,ei_elementType) == CC) .or. (elemI(ii,ei_elementType) == JB)) &
+                    .and. &
+                    (elemI(ii,ei_tmType) == ETM) &
+                    .and. &
+                    ((faceYN(fup,fYN_isAC_adjacent)) .or. (faceYN(fdn,fYN_isAC_adjacent)))) then
+                    
+                    npack = npack + oneI
+                    elemP(npack,ptype) = ii
+                end if
+            end if
+        end do
 
         !% ep_CCJB_ETM
         !% - all channel conduit or junction branch that are ETM
@@ -1892,9 +1876,6 @@ contains
                 .and. &
                 (elemI(:,ei_tmType) == ETM))
         end if
-
-        if (allocated(fup)) deallocate(fup)
-        if (allocated(fdn)) deallocate(fdn)
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

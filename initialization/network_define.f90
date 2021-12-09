@@ -75,26 +75,34 @@ contains
             print*, 'image = ', this_image()
             print*, '.......................Elements...............................'
             print*
-            print*, '     ei_Lidx       ei_Gidx     link_BQ    link_SWMM  node_BQ   node_SWMM      Mface_uL    Mface_dL'
+            print*, 'a)   ei_Lidx       ei_Gidx     link_BQ    link_SWMM  node_BQ   node_SWMM'
             do jj = 1,N_elem(this_image())
                 print*, elemI(jj,ei_Lidx), elemI(jj,ei_Gidx), elemI(jj,ei_link_Gidx_BIPquick), &
-                elemI(jj,ei_link_Gidx_SWMM),elemI(jj,ei_node_Gidx_BIPquick),elemI(jj,ei_node_Gidx_SWMM), &
-                elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL)
+                elemI(jj,ei_link_Gidx_SWMM),elemI(jj,ei_node_Gidx_BIPquick),elemI(jj,ei_node_Gidx_SWMM)
             end do
             print*
+            print*, 'b)   ei_Lidx      ei_Type      Mface_uL    Mface_dL     elem_length     Zbottom'
+            do jj = 1,N_elem(this_image())
+                print*, elemI(jj,ei_Lidx), elemI(jj,ei_elementType), elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL), &
+                elemR(jj,er_Length), elemR(jj,er_Zbottom)
+            end do
             print*, '.......................Faces.............................'
-            print*, 'a)     fi_Lidx     fi_Gidx    elem_uL     elem_dL   C_image' //&
-            '     GElem_up    GElem_dn     node_BQ   node_SWMM    link_BQ   link_SWMM      zbottom'
+            print*, 'c)     fi_Lidx     fi_Gidx    elem_uL     elem_dL   C_image'
             do jj = 1,N_face(this_image())
                 print*, faceI(jj,fi_Lidx),faceI(jj,fi_Gidx),faceI(jj,fi_Melem_uL), &
-                faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image), faceI(jj,fi_GhostElem_uL),&
+                faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image)
+            end do
+            print*
+            print*, 'd)     fi_Lidx     GElem_up    GElem_dn     node_BQ   node_SWMM    link_BQ   link_SWMM'
+            do jj = 1,N_face(this_image())
+                print*, faceI(jj,fi_Lidx),faceI(jj,fi_GhostElem_uL),&
                 faceI(jj,fi_GhostElem_dL),faceI(jj,fi_node_idx_BIPquick),faceI(jj, fi_node_idx_SWMM),&
-                faceI(jj,fi_link_idx_BIPquick),faceI(jj,fi_link_idx_SWMM),faceR(jj,fr_Zbottom)
+                faceI(jj,fi_link_idx_BIPquick),faceI(jj,fi_link_idx_SWMM)
             end do
 
             ! print*
             ! print*, '.......................Faces..................................'
-            ! print*, 'b)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
+            ! print*, 'e)     fi_Lidx     fi_BCtype   fYN_isInteriorFace    fYN_isSharedFace'//&
             ! '    fYN_isnull    fYN_isUpGhost    fYN_isDnGhost'
             ! do jj = 1,N_face(this_image())
             !     print*, faceI(jj,fi_Lidx),' ',faceI(jj,fi_BCtype),&
@@ -107,7 +115,7 @@ contains
             print*, '===================================================================' //&
             '==================================================================='
             print*
-            ! call execute_command_line('')
+            call execute_command_line('')
         end if
 
         if (setting%Profile%YN) call util_profiler_stop (pfc_init_network_define_toplevel)

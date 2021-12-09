@@ -805,7 +805,7 @@ contains
             end if
 
 
-            !% --- set the maximum number of output elements in any image
+            !% --- set the maximum number of output faces in any image
             nFace = maxval(N_OutFace(:))
 
             !% --- bug check
@@ -820,7 +820,7 @@ contains
             end if
 
             !% allocate the multi-level element storage for each image
-            allocate(faceOutR(nElem,nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
+            allocate(faceOutR(nFace,nType,nLevel)[*], stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'faceOutR')
             faceOutR(:,:,:) = nullvalueR
 
