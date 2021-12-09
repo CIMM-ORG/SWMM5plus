@@ -86,7 +86,7 @@ echo
 
 if [[ $compile_fortran = "true" ]]
 then
-    ifort -coarray=distributed $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -CB -o SWMM
+    ifort -coarray=distributed $SOURCE_FILES $TEST_FILES $MAIN_DIR/main.f90 -ldl -o SWMM
 fi
 
 echo
